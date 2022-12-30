@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+
+md2html2pdf() {
+    pandoc \
+    --katex \
+    --pdf-engine=${PDF_ENGINE} \
+    -V margin-top=10 \
+    -V margin-bottom=10 \
+    -V margin-left=8 \
+    -V margin-right=8 \
+    --css ~/.scripts/css/pandoc.css \
+    -f markdown-implicit_figures \
+    -t pdf \
+    "$1" \
+    -o $(echo "$1" | sed "s/.md$/.pdf/")
+}
+
+main() {
+    PDF_ENGINE="wkhtmltopdf"
+    while getopts "lxmhp" OPT; do
+        case $OPT in
+            l)
+                PDF_ENGINE="lualatex" ;;
+            x)
+                PDF_ENGINE="xelatex" ;;
+            m)
+                PDF_ENGINE="latexmk" ;;
+            h)
+                PDF_ENGINE="wkhtmltopdf" ;;
+            p)
+                PDF_ENGINE="pdflatex" ;;
+            \?)
+                echo "Usage: md2html2pdf [-l|-x|-m|-h|-p] files" >&2
+                exit 1 ;;
+        esac
+    done
+    shift $((OPTIND-1))
+
+    for file in "$@"; do
+        # Pictures in markdown cannot be fetched if
+        # we are not in the same directory.
+        cd $(dirname $(full_path "$file"))
+        md2html2pdf $(basename "$file")
+        cd -
+    done
+}
+
+main $@

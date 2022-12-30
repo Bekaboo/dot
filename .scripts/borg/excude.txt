@@ -1,0 +1,212 @@
+*/VirtualBox*
+*/.bash_history
+*/.gvfs
+*/.local/share/gvfs-metadata
+*/.Private
+*/.dbus
+*/.cache
+*/.var/app/*/cache
+*/.var/app/*/.cache
+*/.Trash
+*/.Trash-1*
+*/.local/share/Trash
+*/Trash
+*/.cddb
+*/.aptitude
+*/.npm
+*/.nvm
+*/.adobe
+*/.macromedia
+*/.xsession-errors
+*/.xsession-errors.old
+*/.wayland-errors
+*/.local/share/RecentDocuments
+*/.recently-used
+*/.recently-used.xbel
+*/recently-used.xbel
+*/.thumbnails
+*/.thumb
+*/Thumbs.db
+*/.DS_Store
+*/.localised
+*/.CFUserTextEncoding
+*/.zcompdump*
+*/.wget-hsts
+*/.cups
+*/.subversion
+*/.virtualenvs
+*/.Xauthority
+*/.ICEauthority
+*/.gksu.lock
+*/.pulse
+*/.pulse-cookie
+*/.esd_auth
+*/.kde/share/apps/RecentDocuments
+*/.kde4/share/apps/RecentDocuments
+*/.kde/share/apps/klipper
+*/.kde4/share/apps/klipper
+*/.local/share/klipper
+*/.kde/share/apps/okular/docdata
+*/.kde/share/apps/gwenview/recentfolders
+*/.kde4/share/apps/okular/docdata
+*/.kde4/share/apps/gwenview/recentfolders
+*/.local/share/okular/docdata
+*/.local/share/org.kde.gwenview/recentfolders
+*/.kde/share/apps/kmess/displaypics
+*/.kde4/share/apps/kmess/displaypics
+*/.kde/share/apps/kmess/customemoticons
+*/.kde4/share/apps/kmess/customemoticons
+*/.local/share/tracker
+*/.local/share/torbrowser
+*/.mozilla/firefox/*/Cache
+*/.mozilla/firefox/*/minidumps
+*/.mozilla/firefox/*/.parentlock
+*/.mozilla/firefox/*/urlclassifier3.sqlite
+*/.mozilla/firefox/*/blocklist.xml
+*/.mozilla/firefox/*/extensions.sqlite
+*/.mozilla/firefox/*/extensions.sqlite-journal
+*/.mozilla/firefox/*/extensions.rdf
+*/.mozilla/firefox/*/extensions.ini
+*/.mozilla/firefox/*/extensions.cache
+*/.mozilla/firefox/*/XUL.mfasl
+*/.mozilla/firefox/*/XPC.mfasl
+*/.mozilla/firefox/*/xpti.dat
+*/.mozilla/firefox/*/compreg.dat
+*/.mozilla/firefox/*/pluginreg.dat
+*/.mozilla/seamonkey/*/Cache
+*/.mozilla/seamonkey/*/minidumps
+*/.mozilla/seamonkey/*/.parentlock
+*/.mozilla/seamonkey/*/blocklist.xml
+*/.mozilla/seamonkey/*/extensions.sqlite
+*/.mozilla/seamonkey/*/extensions.rdf
+*/.mozilla/seamonkey/*/extensions.ini
+*/.mozilla/seamonkey/*/xpti.dat
+*/.mozilla/seamonkey/*/compreg.dat
+*/.mozilla/seamonkey/*/pluginreg.dat
+*/.thunderbird/*/Cache
+*/.opera/temporary_downloads
+*/.opera/cache
+*/.opera/thumbnails
+*/.opera/opcache
+*/.opera/icons
+*/.opera/application_cache
+*/.opera/widgets/*/cache
+*/.opera/lock
+*/.keychain
+*/.komodoedit/*/codeintel/db
+*/.komodoedit/*/host-*/*/codeintel
+*/.komodoedit/*/XRE/Cache
+*/.komodoedit/*/XRE/.activatestate/komodo edit/Crash Reports
+*/.komodoedit/*/XRE/.activatestate/komodo edit/*/Cache
+*/.komodoedit/*/XRE/.activatestate/komodo edit/*/minidump
+*/.komodoedit/*/XRE/.parentlock
+*/.komodoedit/*/XRE/extensions.rdf
+*/.komodoedit/*/XRE/extensions.ini
+*/.komodoedit/*/XRE/extensions.cache
+*/.komodoedit/*/XRE/XPC.mfasl
+*/.komodoedit/*/XRE/XUL.mfasl
+*/.komodoedit/*/XRE/xpti.dat
+*/.komodoedit/*/XRE/pluginreg.dat
+*/.komodoedit/*/XRE/compreg.dat
+*/.komodoedit/*/XRE/*.sqlite-journal
+*/.komodoedit/*/pystdout.log
+*/.komodoedit/*/pystderr.log
+*/.komodoedit/*/history.sqlite.bak
+*/.komodoedit/*/running.lock
+*/.komodoedit/*/mutex.lock
+*/.komodoedit/*/*.xmlc
+*/.komodoedit/*/startup-env.tmp
+*/.komodoedit/*/commandments.fifo
+*/.komodoedit/*/history.sqlite
+*/.gnupg/rnd
+*/.gnupg/random_seed
+*/.gnupg/.#*
+*/.gnupg/*.lock
+*/.gnupg/gpg-agent-info-*
+*/.googleearth/Temp
+*/.googleearth/Cache
+*/.config/google-chrome/ShaderCache
+*/.config/google-chrome/*/Local Storage
+*/.config/google-chrome/*/Session Storage
+*/.config/google-chrome/*/Application Cache
+*/.config/google-chrome/*/History Index *
+*/.config/google-chrome/*/Service Worker/CacheStorage
+*/.config/chromium/*/Local Storage
+*/.config/chromium/*/Session Storage
+*/.config/chromium/*/Service Worker/CacheStorage
+*/.config/chromium/*/Application Cache
+*/.config/chromium/*/History Index *
+*/snap/chromium/common/.cache
+*/snap/chromium/*/.config/chromium/*/Service Worker/CacheStorage
+*/snap/chromium/*/.local/share/
+*/snap/riot-web/
+*/.config/BraveSoftware/Brave-Browser/*/Feature Engagement Tracker/
+*/.config/BraveSoftware/Brave-Browser/*/Local Storage/
+*/.config/BraveSoftware/Brave-Browser/*/Service Worker/CacheStorage/
+*/.config/BraveSoftware/Brave-Browser/*/Session Storage/
+*/.config/BraveSoftware/Brave-Browser/Safe Browsing/
+*/.config/BraveSoftware/Brave-Browser/ShaderCache/
+*/.gradle/caches
+*/.m2/repository
+*/.local/share/baloo
+*/.local/share/zeitgeist
+*/.local/share/akonadi
+*/.purple/icons
+*/.guayadeque/cache.db
+*/.java/deployment/cache
+*/.icedteaplugin
+*/.icedtea
+*/.gnome2/epiphany/favicon_cache
+*/nohup.out
+*/.config/libreoffice/4/cache
+*/.config/freshwrapper-data/Shockwave Flash/WritableRoot/#SharedObjects
+*/.config/*/Cache
+*/.config/*/CacheStorage
+*/.config/Atom/*Cache
+*/.config/Atom/IndexedDB
+*/.atom/compile-cache/
+*/.vim/bundle/*
+*/.viminfo
+*/.vscode-oss/extensions/*
+*/.vscode/extensions/*
+*/.config/Code - OSS/logs/
+*/.config/Code/logs/
+*/.config/Code/CachedData/*
+*/.config/Code/Cache/*
+*/.config/Code/CachedExtensions/*
+*/.config/Code/GPUCache/*
+*/.config/Code/CachedExtensionVSIXs/*
+*/.config/Code/Code\ Cache/*
+*/.config/CachedConfigurations/*
+*/.config/VSCodium/CachedExtensionVSIXs
+*/.config/VirtualBox/VBoxSVC.log*
+*/.config/VirtualBox/VBoxGuestAdditions_*
+*/.cargo
+*/.rustup
+*/.kerl
+*/go/pkg/mod/cache
+*/.ccache/?
+*/.ccache/tmp
+*/.nv/GLCache
+*/.ICAClient/logs
+*/.ICAClient/.tmp
+*/.ICAClient/cache/zlcache
+*/.config/geany/geany_socket_*
+*/.config/lbry
+*/.local/share/lbry/lbrynet
+*/.config/*/blob_storage
+*/.config/*/Application Cache
+*/.config/*/Cache
+*/.config/*/CachedData
+*/.config/*/Code Cache
+*/.config/*/GPUCache
+*/.var/app/*/blob_storage
+*/.var/app/*/Application Cache
+*/.var/app/*/Cache
+*/.var/app/*/CachedData
+*/.var/app/*/Code Cache
+*/.var/app/*/GPUCache
+*/.deepinwine/*/Temp
+*/.deepinwine/*/temp
+*/.deepinwine/*/tempdir
+*/.deepinwine/*/Temporary Internet Files

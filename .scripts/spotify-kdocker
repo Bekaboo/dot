@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+
+if [ "$(id -u)" = "0" ]; then
+    echo "This script must be run as normal user" 1>&2
+    exit 1
+else
+
+APP="/opt/spotify/spotify"
+
+if ps ax | grep -v grep | grep $APP > /dev/null
+    then
+        echo "$APP application running, everything is fine" 1>&2
+    else
+        env LD_PRELOAD=/usr/lib/spotify-adblock.so spotify --force-device-scale-factor=2 &
+        kdocker -n Spotify -i /usr/share/icons/hicolor/64x64/apps/spotify.png -q
+    fi
+fi

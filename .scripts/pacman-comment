@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+
+prepare() {
+    if [[ "$EUID" -ne 0 ]]; then
+        echo "error: you cannot perform this operation unless you are root."
+        exit 1
+    fi
+    PKGS_LOGPATH="/var/log/"
+    PKGS_LOGFILE="/var/log/pacman-pkg-comments.log"
+    [[ ! -d "$PKGS_LOGPATH" ]] &&
+        echo -e "\033[1;33mwarning:\033[0m comment file does not exit" && exit 1
+    return 0
+}
+
+add_comments() {
+    # Is nvim/vim/vi available?
+    VEDITOR=$(command -v nvim || command -v vim || command -v vi)
+    if [[ -f "$VEDITOR" ]]; then
+        SEPARATOR="\|"
+        EXCMD="set expandtab softtabstop=4 tabstop=4 shiftwidth=4"
+        # Let vi search for the newly installed packages, redirect I/O to terminal
+        $VEDITOR -c "$EXCMD" "$PKGS_LOGFILE" < /dev/tty > /dev/tty
+    else
+        echo -e "\033[1;33mwarning:\033[0m vi not available -- add comments to ${PKGS_LOGFILE} manually"
+    fi
+    return 0
+}
+
+prepare
+add_comments

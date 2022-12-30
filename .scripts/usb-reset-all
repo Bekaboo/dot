@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+#
+# Source: https://askubuntu.com/questions/645/how-do-you-reset-a-usb-device-from-the-command-line
+# @Tamás Tapsonyi
+
+for i in /sys/bus/pci/drivers/[uoex]hci_hcd/*:*; do
+  [ -e "$i" ] || continue
+  echo "${i##*/}" > "${i%/*}/unbind"
+  echo "${i##*/}" > "${i%/*}/bind"
+done

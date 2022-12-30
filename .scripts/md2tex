@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+
+md2tex() {
+    pandoc \
+    --standalone \
+    -f markdown-implicit_figures \
+    -t latex \
+    "$1" \
+    -o $(echo "$1" | sed "s/.md$/.tex/")
+}
+
+main() {
+    for file in "$@"; do
+        # Pictures in markdown cannot be fetched if
+        # we are not in the same directory.
+        cd $(dirname $(full_path "$file"))
+        md2tex $(basename "$file")
+        cd -
+    done
+}
+
+main $@

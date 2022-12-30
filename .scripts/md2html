@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+
+md2html() {
+    pandoc \
+    --katex \
+    --standalone \
+    -f markdown-implicit_figures \
+    -t html \
+    "$1" \
+    -o $(echo "$1" | sed "s/.md$/.html/")
+}
+
+main() {
+    for file in "$@"; do
+        # Pictures in markdown cannot be fetched if
+        # we are not in the same directory.
+        cd $(dirname $(full_path "$file"))
+        md2html $(basename "$file")
+        cd -
+    done
+}
+
+main $@

@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+
+usagemsg="Usage: vpn [OPTIONS]
+OPTIONS:
+  -c  Connect to Illinois vpn
+  -k  Disconnect (kill all openconnect processes)
+  -s  Search for vpn processes
+  -h  Print this message"
+
+connect() {
+  if [ ! -z $(pgrep openconnect) ]; then
+    echo 'Killing Old Processes...'
+    killvpn
+    sleep 1s
+  fi
+  echo 'Connecting...'
+    sudo openconnect vpn.illinois.edu -u sceng3 \
+      --authgroup 3_TunnelAll -b --reconnect-timeout=120
+}
+
+searchproc() {
+  pgrep openconnect | xargs echo $@
+}
+
+printhelp() {
+  echo "$usagemsg" >&2
+  exit 1
+}
+
+killvpn() {
+  sudo killall -SIGINT openconnect
+}
+
+main() {
+  while getopts 'cCksh' OPT; do
+    case $OPT in
+      c)
+        connect ;;
+      k)
+        killvpn ;;
+      s)
+        searchproc ;;
+      h|?)
+        printhelp ;;
+    esac
+  done
+  if [ $OPTIND -eq 1 ]; then
+    printhelp;
+  fi
+  shift $((OPTIND-1))
+}
+
+main $@
+
+exit
