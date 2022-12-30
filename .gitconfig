@@ -1,0 +1,20 @@
+[http]
+	version = HTTP/1.1
+[user]
+	name = bekaboo
+	email = 18127878294@qq.com
+[init]
+	defaultBranch = master
+[alias]
+	a = add
+	A = add .
+	b = branch
+	cm = commit -m
+	ca = commit -a
+	cam = commit -a -m
+	d = diff
+	l = log --oneline --graph
+	p = push
+	P = push --force
+	s = status
+	r = restore

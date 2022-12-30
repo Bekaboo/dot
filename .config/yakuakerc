@@ -1,0 +1,36 @@
+[Animation]
+Frames=15
+
+[Appearance]
+BackgroundColor=3,11,30
+HideSkinBorders=true
+Skin=plastik_dark
+TerminalHighlightOnManualActivation=true
+
+[Behavior]
+FocusFollowsMouse=true
+
+[Desktop Entry]
+DefaultProfile=Zeng.profile
+
+[Dialogs]
+FirstRun=false
+
+[KFileDialog Settings]
+detailViewIconSize=16
+
+[Notification Messages]
+hinding_title_bar=false
+
+[Shortcuts]
+close-session=Ctrl+Shift+W; Ctrl+Alt+C
+file_quit=Ctrl+Shift+Q; Ctrl+Alt+Shift+C
+keep-open=Ctrl+Alt+P
+
+[Window]
+Height=40
+KeepOpen=false
+ShowTabBar=false
+ShowTitleBar=false
+ToggleToFocus=true
+Width=50
