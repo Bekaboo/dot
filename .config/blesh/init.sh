@@ -117,7 +117,7 @@ function my/vim-load-hook {
     bleopt vim_airline_section_c='\w'
     bleopt vim_airline_section_x=
     bleopt vim_airline_section_y='$_ble_util_locale_encoding'
-    bleopt vim_airline_section_z='\q{history-percentile} \e[1m!\q{history-index}/\!\e[22m \q{position}'
+    bleopt vim_airline_section_z='\e[1m!\q{history-index}/\!\e[22m \q{position} \q{history-percentile}'
     bleopt vim_airline_left_sep=
     bleopt vim_airline_left_alt_sep=
     bleopt vim_airline_right_sep=
@@ -125,12 +125,12 @@ function my/vim-load-hook {
     bleopt vim_airline_symbol_branch=$'\uE0A0 '
     bleopt vim_airline_symbol_dirty=' +'
 
-    ble-face -s vim_airline_a_normal               fg=magenta,bg=none
-    ble-face -s vim_airline_a_insert               fg=purple,bg=none
-    ble-face -s vim_airline_a_replace              fg=olive,bg=none
-    ble-face -s vim_airline_a_visual               fg=orange,bg=none
-    ble-face -s vim_airline_a_commandline          fg=purple,bg=none
-    ble-face -s vim_airline_a_inactive             fg=white,bg=none
+    ble-face -s vim_airline_a_normal               fg=magenta,bg=none,bold
+    ble-face -s vim_airline_a_insert               fg=purple,bg=none,bold
+    ble-face -s vim_airline_a_replace              fg=olive,bg=none,bold
+    ble-face -s vim_airline_a_visual               fg=orange,bg=none,bold
+    ble-face -s vim_airline_a_commandline          fg=purple,bg=none,bold
+    ble-face -s vim_airline_a_inactive             fg=white,bg=none,bold
 
     local modes=(normal insert replace visual commandline inactive)
     for mode in "${modes[@]}" ; do
