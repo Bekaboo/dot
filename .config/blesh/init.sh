@@ -3,9 +3,15 @@
 
 bleopt input_encoding=UTF-8
 bleopt prompt_eol_mark=
-bleopt filename_ls_colors=$LS_COLORS
+bleopt filename_ls_colors="$LS_COLORS"
 bleopt term_index_colors=auto
 # bleopt term_modifyOtherKeys_passthrough_kitty_protocol=1
+
+#
+# keymappings
+#
+ble-bind -m 'auto_complete' -f 'C-j' 'auto_complete/insert-on-end'
+
 
 #
 # Color settings
@@ -44,7 +50,7 @@ ble-face -s cmdinfo_cd_cdpath         fg="$ble_pigeon"
 ble-face -s command_alias             fg="$ble_aqua",italic
 ble-face -s command_builtin           fg="$ble_orange"
 ble-face -s command_builtin_dot       fg="$ble_orange",bold
-ble-face -s command_directory         fg="$ble_skyblue"
+ble-face -s command_directory         fg="$ble_skyblue",bold
 ble-face -s command_file              fg="$ble_tea",bold
 ble-face -s command_function          fg="$ble_yellow"
 ble-face -s command_jobs              fg="$ble_scarlet",bold
@@ -74,7 +80,7 @@ ble-face -s region_target             fg="$ble_pigeon"
 ble-face -s syntax_brace              fg="$ble_smoke"
 ble-face -s syntax_command            fg="$ble_smoke"
 ble-face -s syntax_comment            fg="$ble_steel"
-ble-face -s syntax_default            fg="$ble_pigeon"
+ble-face -s syntax_default            fg="$ble_white"
 ble-face -s syntax_delimiter          fg="$ble_smoke"
 ble-face -s syntax_document           fg="$ble_earth"
 ble-face -s syntax_document_begin     fg="$ble_earth",bold
@@ -84,7 +90,7 @@ ble-face -s syntax_expr               fg="$ble_orange"
 ble-face -s syntax_function_name      fg="$ble_yellow"
 ble-face -s syntax_glob               fg="$ble_orange"
 ble-face -s syntax_history_expansion  fg="$ble_steel"
-ble-face -s syntax_param_expansion    fg="$ble_beige",bold
+ble-face -s syntax_param_expansion    fg="$ble_white",bold
 ble-face -s syntax_quotation          fg="$ble_orange"
 ble-face -s syntax_quoted             fg="$ble_beige"
 ble-face -s syntax_tilde              fg="$ble_smoke"
@@ -125,7 +131,7 @@ function my/vim-load-hook {
     bleopt vim_airline_symbol_branch=$'\uE0A0 '
     bleopt vim_airline_symbol_dirty=' +'
 
-    ble-face -s vim_airline_a_normal               fg=magenta,bg=none,bold
+    ble-face -s vim_airline_a_normal               fg=silver,bg=none,bold
     ble-face -s vim_airline_a_insert               fg=purple,bg=none,bold
     ble-face -s vim_airline_a_replace              fg=olive,bg=none,bold
     ble-face -s vim_airline_a_visual               fg=orange,bg=none,bold
