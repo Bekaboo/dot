@@ -2,16 +2,18 @@ env:
   TERM: xterm-256color
 
 font:
-  size: 12
+  size: 13
 
   normal:
     family: 'Firacode Nerd Font'
   bold:
     family: 'Firacode Nerd Font'
   italic:
-    family: 'Firacode Nerd Font'
+    family: 'Fira Mono'
+    style:  'Regular Italic'
   bold_italic:
-    family: 'Firacode Nerd Font'
+    family: 'Fira Mono'
+    style:  'Bold Italic'
 
 custom_cursor_colors: true
 draw_bold_text_with_bright_colors: true
@@ -25,28 +27,33 @@ colors:
   cursor:
     text: '0x020221'
     cursor: '0xffffff'
+    style:
+      shape: Block
+      blinking: On
+    blink_interval: 500
+    blink_timeout: 0
 
   # Normal colors
   normal:
-    black:   '0x000000'
-    red:     '0xad2b27'
-    green:   '0x16a085'
-    yellow:  '0xf67400'
-    blue:    '0x1d99f3'
-    magenta: '0x8e44ad'
-    cyan:    '0x14b7d0'
-    white:   '0xfcfcfc'
+    black:   '0xe5e5eb'
+    red:     '0xb31f1f'
+    green:   '0x55abb3'
+    yellow:  '0xff761a'
+    blue:    '0x79a9f5'
+    magenta: '0x8966d1'
+    cyan:    '0x55abb3'
+    white:   '0x8f9fbc'
 
   # Bright colors
   bright:
-    black:   '0x161819'
-    red:     '0xed1515'
-    green:   '0x1abc9c'
-    yellow:  '0xfdbc4b'
-    blue:    '0x3daee9'
-    magenta: '0x9b59b6'
-    cyan:    '0x34d1d9'
-    white:   '0xffffff'
+    black:   '0x0f172b'
+    red:     '0xe84e31'
+    green:   '0xc1e587'
+    yellow:  '0xffd166'
+    blue:    '0x8ecaff'
+    magenta: '0xbb99e3'
+    cyan:    '0x6ec4cc'
+    white:   '0xe5e5eb'
 
 window:
   opacity: 0.8
