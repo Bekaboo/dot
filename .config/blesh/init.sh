@@ -117,7 +117,7 @@ function my/vim-load-hook {
     bleopt vim_airline_section_c='\w'
     bleopt vim_airline_section_x=
     bleopt vim_airline_section_y='$_ble_util_locale_encoding'
-    bleopt vim_airline_section_z='\e[1m!\q{history-index}/\!\e[22m \q{position} \q{history-percentile}'
+    bleopt vim_airline_section_z='\e[1m\q{history-index}/\!\e[22m \q{position} \q{history-percentile}'
     bleopt vim_airline_left_sep=
     bleopt vim_airline_left_alt_sep=
     bleopt vim_airline_right_sep=
