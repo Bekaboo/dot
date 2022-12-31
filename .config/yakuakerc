@@ -28,7 +28,6 @@ file_quit=Ctrl+Shift+Q; Ctrl+Alt+Shift+C
 keep-open=Ctrl+Alt+P
 
 [Window]
-Height=40
 KeepOpen=false
 ShowTabBar=false
 ShowTitleBar=false
