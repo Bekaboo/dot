@@ -144,8 +144,6 @@ cd() {
 
 # Aliases
 alias sudo="sudo -E "
-alias sb="source ~/.bashrc"
-alias eb="${EDITOR} ~/.bashrc"
 alias c="clear"
 alias cp="cp -i"        # confirm before overwriting something
 alias rm="\\trash"
