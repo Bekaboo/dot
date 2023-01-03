@@ -138,13 +138,14 @@ export LESS_TERMCAP_ue=$'\e[0m'
 export LESS_TERMCAP_us=$'\e[1;4;34m'
 
 # 'cd' and then 'ls' in one call
-cd() {
+cdls() {
     builtin cd "$@" && ls --color=auto;
 }
 
 # Aliases
 alias sudo="sudo -E "
 alias c="clear"
+alias cd="cdls"
 alias cp="cp -i"        # confirm before overwriting something
 alias rm="\\trash"
 alias l="ls"
