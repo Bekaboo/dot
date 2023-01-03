@@ -19,31 +19,50 @@ md2pdf() {
 
 main() {
     PDF_ENGINE="pdflatex"
-    while getopts "lxmhp" OPT; do
-        case $OPT in
-            l)
-                PDF_ENGINE="lualatex" ;;
-            x)
-                PDF_ENGINE="xelatex" ;;
-            m)
-                PDF_ENGINE="latexmk" ;;
-            h)
-                PDF_ENGINE="wkhtmltopdf" ;;
-            p)
-                PDF_ENGINE="pdflatex" ;;
-            \?)
+    while :; do
+        case $1 in
+            -l|--lualatex)
+                PDF_ENGINE="lualatex"
+                ;;
+            -x|--xelatex)
+                PDF_ENGINE="xelatex"
+                ;;
+            -m|--latexmk)
+                PDF_ENGINE="latexmk"
+                ;;
+            -w|--wkhtmltopdf)
+                PDF_ENGINE="wkhtmltopdf"
+                ;;
+            -p|--pdflatex)
+                PDF_ENGINE="pdflatex"
+                ;;
+            -h|--help|-\?)
                 echo "Usage: md2pdf [-l|-x|-m|-h|-p] files" >&2
-                exit 1 ;;
+                exit 1
+                ;;
+            --pdf-engine=*)
+                PDF_ENGINE="${1#*=}"
+                ;;
+            --pdf_engine)
+                PDF_ENGINE="$2"
+                shift
+                ;;
+            --)
+                shift
+                break
+                ;;
+            *)
+                break
         esac
+        shift
     done
-    shift $((OPTIND-1))
 
     for file in "$@"; do
         # Pictures in markdown cannot be fetched if
         # we are not in the same directory.
-        cd $(dirname $(full_path "$file"))
+        cd $(dirname $(full_path "$file")) >/dev/null 2>&1
         md2pdf $(basename "$file")
-        cd -
+        cd - >/dev/null 2>&1
     done
 }
 
