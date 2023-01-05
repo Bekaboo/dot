@@ -3,7 +3,7 @@
 
 prepare() {
     if [[ "$EUID" -ne 0 ]]; then
-        echo "error: you cannot perform this operation unless you are root."
+        >&2 echo "error: you cannot perform this operation unless you are root."
         exit 1
     fi
     PKGS_LOGPATH="/var/log/"

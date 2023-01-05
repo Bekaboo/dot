@@ -18,12 +18,12 @@ main() {
     FILE=$(full_path "$1")
     RUN_FILE=$(echo "$FILE" | sed -E 's/\.(c|cpp)$/.run/')
     if [[ "$FILE" == "$RUN_FILE" ]]; then
-        echo "run: error: file name cannot be the same as the run file name"
+        >&2 echo "run: error: file name cannot be the same as the run file name"
         exit 1
     fi
     build "$FILE" "$RUN_FILE"
     if [[ ! -f "$RUN_FILE" ]]; then
-        echo "run: error: cannot remove run file because it does not exist"
+        >&2 echo "run: error: cannot remove run file because it does not exist"
         exit 1
     fi
     exec "$RUN_FILE"
