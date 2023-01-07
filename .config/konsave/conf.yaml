@@ -91,9 +91,9 @@ save:
             - .kde4
 
     scripts:
-        location: "$HOME"
+        location: "$HOME/.scripts"
         entries:
-            - .scripts
+            - autostart.sh
 
     app_layouts:
         location: "$HOME/.local/share/kxmlgui5"
