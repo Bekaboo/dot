@@ -1,0 +1,7 @@
+export GDK_SCALE=1
+export GLFW_IM_MODULE=ibus
+export GTK_IM_MODULE=fcitx
+export GTK_USE_PORTAL=1
+export PLASMA_USE_QT_SCALING=1
+export QT_IM_MODULE=fcitx
+export XMODIFIERS=@im=fcitx
