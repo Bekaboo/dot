@@ -1,0 +1,71 @@
+-- vim: ft=lua:et:ts=2:sts=2:sw=2:
+
+Description = 'Falcon Theme'
+Categories = { 'dark' }
+
+-- palette from nvim-falcon colorscheme
+local palette = {
+  yellow      = '#FFC552',
+  earth       = '#c1933e',
+  orange      = '#FF761A',
+  scarlet     = '#FF3600',
+  ochre       = '#E84E31',
+  wine        = '#B31F1F',
+  pink        = '#F0989A',
+  tea         = '#C1E587',
+  flashlight  = '#B9DEFF',
+  aqua        = '#69C3EB',
+  cerulean    = '#79A9F5',
+  turquoise   = '#5C9EA1',
+  lavender    = '#BB99E3',
+  magenta     = '#DE05A1',
+  purple      = '#8966D1',
+  thunder     = '#2D1078',
+  white       = '#E5E5EB',
+  beige       = '#CFC1B2',
+  pigeon      = '#99A4BC',
+  steel       = '#666c84',
+  smoke       = '#B4B4B9',
+  iron        = '#373d4a',
+  deepsea     = '#12244c',
+  ocean       = '#07102b',
+  space       = '#030a27',
+  black       = '#000004',
+}
+
+Default = { Colour = palette.pigeon }
+Canvas = { Colour = palette.space }
+Number = { Colour = palette.smoke }
+Escape = { Colour = palette.orange }
+String = { Colour = palette.beige }
+BlockComment = { Colour = palette.steel }
+PreProcessor = { Colour = palette.beige, Bold = true }
+LineNum = { Colour = palette.steel }
+StringPreProc = String
+LineComment   = BlockComment
+Operator      = { Colour = palette.orange }
+Interpolation = Operator
+
+Keywords = {
+  { Colour= palette.magenta },
+  { Colour= palette.white },
+  { Colour= palette.tea },
+  { Colour= palette.yellow },
+  { Colour= palette.purple },
+  { Colour= palette.cerulean },
+}
+
+-- new LSP based elements:
+SemanticTokenTypes  = {
+  { Type = 'keyword', Style = { Colour = palette.lavender } },
+  { Type = 'type', Style = { Colour = palette.white } },
+  { Type = 'function', Style = { Colour = palette.yellow } },
+  { Type = 'method', Style = { Colour = palette.yellow } },
+  { Type = 'class', Style =  { Colour = palette.cerulean } },
+  { Type = 'struct', Style = { Colour = palette.aqua } },
+  { Type = 'parameter', Style = { Colour = palette.pigeon } },
+  { Type = 'variable', Style = { Colour = palette.pigeon } },
+  { Type = 'number', Style = Number },
+  { Type = 'regexp', Style = String },
+  { Type = 'operator', Style = Operator },
+}
