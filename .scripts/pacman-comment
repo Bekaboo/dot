@@ -17,7 +17,6 @@ add_comments() {
     # Is nvim/vim/vi available?
     VEDITOR=$(command -v nvim || command -v vim || command -v vi)
     if [[ -f "$VEDITOR" ]]; then
-        SEPARATOR="\|"
         EXCMD="set expandtab softtabstop=4 tabstop=4 shiftwidth=4"
         # Let vi search for the newly installed packages, redirect I/O to terminal
         $VEDITOR -c "$EXCMD" "$PKGS_LOGFILE" < /dev/tty > /dev/tty
