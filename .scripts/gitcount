@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+
+# Count number of lines in a git repository
+gitcount() {
+    if [[ -z "$@" ]]; then
+        wc -l $(git ls-files)
+    else
+        git ls-files | grep "$@" | xargs wc -l | tail -n 1
+        wc -l $(git ls-files | grep "$@")
+    fi
+    exit 0
+}
+
+gitcount "$@"
