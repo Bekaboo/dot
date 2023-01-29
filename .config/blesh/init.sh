@@ -16,33 +16,34 @@ ble-bind -m 'auto_complete' -f 'C-j' 'auto_complete/insert-on-end'
 #
 # Color settings
 #
-ble_yellow='#FFC552'
-ble_earth='#C1933E'
-ble_orange='#FF761A'
-ble_scarlet='#FF3600'
-ble_ochre='#E84E31'
-ble_wine='#B31F1F'
-ble_pink='#F0989A'
-ble_tea='#C1E587'
-ble_aqua='#6EC4CC'
-ble_skyblue='#8ECAFF'
-ble_turquoise='#55ABB3'
-ble_flashlight='#B9DEFF'
-ble_cerulean='#79A9F5'
-ble_lavender='#BB99E3'
-ble_magenta='#F131C4'
-ble_purple='#8966D1'
-ble_thunder='#2D1078'
-ble_white='#E5E5EB'
-ble_beige='#CFC1B2'
-ble_pigeon='#8F9FBC'
-ble_steel='#666C84'
-ble_smoke='#B4B4B9'
-ble_iron='#313742'
-ble_deepsea='#12244C'
-ble_ocean='#0F172B'
-ble_space='#070D1F'
-ble_black='#000004'
+ble_yellow='#e6bb86',
+ble_earth='#c1a575',
+ble_orange='#ffa569',
+ble_pink='#dfa6a8',
+ble_ochre='#e87c69',
+ble_scarlet='#d85959',
+ble_wine='#a52929',
+ble_tea='#a4bd84',
+ble_aqua='#79ada7',
+ble_turquoise='#7fa0af',
+ble_flashlight='#add0ef',
+ble_skyblue='#a5d5ff',
+ble_cerulean='#96bef7',
+ble_lavender='#caafeb',
+ble_purple='#a48fd1',
+ble_magenta='#f481e3',
+ble_pigeon='#8f9fbc',
+ble_thunder='#385372',
+ble_white='#e5e5eb',
+ble_smoke='#bebec3',
+ble_beige='#b1aca7',
+ble_steel='#5e6379',
+ble_iron='#313742',
+ble_deepsea='#293950',
+ble_ocean='#1f2b3b',
+ble_jeans='#171d2b',
+ble_space='#13161f',
+ble_black='#09080b',
 
 ble-face -s argument_option           fg="$ble_lavender"
 ble-face -s auto_complete             fg="$ble_steel"
@@ -128,7 +129,7 @@ function my/vim-load-hook {
     bleopt vim_airline_left_alt_sep=
     bleopt vim_airline_right_sep=
     bleopt vim_airline_right_alt_sep=
-    bleopt vim_airline_symbol_branch=$'\uE0A0 '
+    bleopt vim_airline_symbol_branch=$'\uE725 '
     bleopt vim_airline_symbol_dirty=' +'
 
     ble-face -s vim_airline_a_normal               fg=silver,bg=none,bold
@@ -140,7 +141,7 @@ function my/vim-load-hook {
 
     local modes=(normal insert replace visual commandline inactive)
     for mode in "${modes[@]}" ; do
-        ble-face -s vim_airline_b_"$mode"           fg=green,bg=none
+        ble-face -s vim_airline_b_"$mode"           fg=teal,bg=none
         ble-face -s vim_airline_c_"$mode"           fg=navy,bg=none,bold
         ble-face -s vim_airline_x_"$mode"           fg=silver,bg=none
         ble-face -s vim_airline_y_"$mode"           fg=silver,bg=none
