@@ -41,7 +41,7 @@ FILE_EXTENSION_LOWER="$(printf "%s" "${FILE_EXTENSION}" | tr '[:upper:]' '[:lowe
 ## Settings
 HIGHLIGHT_SIZE_MAX=262143  # 256KiB
 HIGHLIGHT_TABWIDTH="${HIGHLIGHT_TABWIDTH:-8}"
-HIGHLIGHT_STYLE="${HIGHLIGHT_STYLE:-pablo}"
+HIGHLIGHT_STYLE="${HIGHLIGHT_STYLE:-falcon}"
 HIGHLIGHT_OPTIONS="--replace-tabs=${HIGHLIGHT_TABWIDTH} --style=${HIGHLIGHT_STYLE} ${HIGHLIGHT_OPTIONS:-}"
 PYGMENTIZE_STYLE="${PYGMENTIZE_STYLE:-autumn}"
 OPENSCAD_IMGSIZE="${RNGR_OPENSCAD_IMGSIZE:-1000,1000}"
@@ -308,11 +308,11 @@ handle_mime() {
             pandoc -s -t markdown -- "${FILE_PATH}" && exit 5
             exit 1;;
 
-	## E-mails
-	message/rfc822)
-	    ## Parsing performed by mu: https://github.com/djcb/mu
-	    mu view -- "${FILE_PATH}" && exit 5
-	    exit 1;;
+        ## E-mails
+        message/rfc822)
+            ## Parsing performed by mu: https://github.com/djcb/mu
+            mu view -- "${FILE_PATH}" && exit 5
+            exit 1;;
 
         ## XLS
         *ms-excel)
@@ -363,7 +363,7 @@ handle_mime() {
             mediainfo "${FILE_PATH}" && exit 5
             exiftool "${FILE_PATH}" && exit 5
             exit 1;;
-            
+
         ## ELF files (executables and shared objects)
         application/x-executable | application/x-pie-executable | application/x-sharedlib)
             readelf -WCa "${FILE_PATH}" && exit 5
