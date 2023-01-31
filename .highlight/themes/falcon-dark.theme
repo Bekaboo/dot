@@ -1,0 +1,84 @@
+-- vim: ft=lua:et:ts=2:sts=2:sw=2:
+
+Description = 'Falcon Theme'
+Categories = { 'dark' }
+
+-- palette from nvim-falcon colorscheme
+local palette = {
+  yellow         = '#e6bb86',
+  earth          = '#c1a575',
+  orange         = '#ffa569',
+  pink           = '#dfa6a8',
+  ochre          = '#e87c69',
+  scarlet        = '#d85959',
+  wine           = '#a52929',
+  tea            = '#a4bd84',
+  aqua           = '#79ada7',
+  turquoise      = '#7fa0af',
+  flashlight     = '#add0ef',
+  skyblue        = '#a5d5ff',
+  cerulean       = '#96bef7',
+  lavender       = '#caafeb',
+  purple         = '#a48fd1',
+  magenta        = '#f481e3',
+  pigeon         = '#8f9fbc',
+  cumulonimbus   = '#486a91',
+  thunder        = '#385372',
+  white          = '#e5e5eb',
+  smoke          = '#bebec3',
+  beige          = '#b1aca7',
+  steel          = '#5e6379',
+  iron           = '#313742',
+  deepsea        = '#293950',
+  ocean          = '#1f2b3b',
+  jeans          = '#171d2b',
+  space          = '#13161f',
+  black          = '#09080b',
+
+  tea_blend      = '#425858',
+  aqua_blend     = '#293a44',
+  purple_blend   = '#2e324b',
+  lavender_blend = '#4d4d78',
+  scarlet_blend  = '#4b2c38',
+  wine_blend     = '#351f29',
+  earth_blend    = '#303032',
+  smoke_blend    = '#272d3a',
+  pigeon_blend   = '#262e3e',
+}
+
+Default = { Colour = palette.pigeon }
+Canvas = { Colour = palette.space }
+Number = { Colour = palette.smoke }
+Escape = { Colour = palette.orange }
+String = { Colour = palette.beige }
+BlockComment = { Colour = palette.steel }
+PreProcessor = { Colour = palette.beige, Bold = true }
+LineNum = { Colour = palette.steel }
+StringPreProc = String
+LineComment   = BlockComment
+Operator      = { Colour = palette.orange }
+Interpolation = Operator
+
+Keywords = {
+  { Colour= palette.magenta },
+  { Colour= palette.white },
+  { Colour= palette.tea },
+  { Colour= palette.yellow },
+  { Colour= palette.purple },
+  { Colour= palette.cerulean },
+}
+
+-- new LSP based elements:
+SemanticTokenTypes  = {
+  { Type = 'keyword', Style = { Colour = palette.lavender } },
+  { Type = 'type', Style = { Colour = palette.white } },
+  { Type = 'function', Style = { Colour = palette.yellow } },
+  { Type = 'method', Style = { Colour = palette.yellow } },
+  { Type = 'class', Style =  { Colour = palette.cerulean } },
+  { Type = 'struct', Style = { Colour = palette.aqua } },
+  { Type = 'parameter', Style = { Colour = palette.pigeon } },
+  { Type = 'variable', Style = { Colour = palette.pigeon } },
+  { Type = 'number', Style = Number },
+  { Type = 'regexp', Style = String },
+  { Type = 'operator', Style = Operator },
+}

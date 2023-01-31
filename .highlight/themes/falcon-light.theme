@@ -1,0 +1,84 @@
+-- vim: ft=lua:et:ts=2:sts=2:sw=2:
+
+Description = 'Falcon Theme'
+Categories = { 'dark' }
+
+-- palette from nvim-falcon colorscheme
+local palette = {
+  yellow       = '#a84a24',
+  earth        = '#b48327',
+  orange       = '#b48327',
+  pink         = '#c27e81',
+  ochre        = '#ba4e33',
+  scarlet      = '#d85959',
+  wine         = '#a52929',
+  tea          = '#5a863c',
+  aqua         = '#3b8f84',
+  turquoise    = '#3d7a93',
+  flashlight   = '#6ea6d0',
+  skyblue      = '#4c99d4',
+  cerulean     = '#3a6baf',
+  lavender     = '#9d7bca',
+  purple       = '#8b71c7',
+  magenta      = '#ac4ea1',
+  pigeon       = '#6666a8',
+  cumulonimbus = '#486a91',
+  thunder      = '#cac4bf',
+  white        = '#385372',
+  smoke        = '#404553',
+  beige        = '#385372',
+  steel        = '#989c8b',
+  iron         = '#b8b7b3',
+  deepsea      = '#c2b8b1',
+  ocean        = '#cac4bf',
+  jeans        = '#d9d6cf',
+  space        = '#e2dfd7',
+  black        = '#efefef',
+
+  tea_blend      = '#b4bea5',
+  aqua_blend     = '#bac2b8',
+  purple_blend   = '#c6bcc8',
+  lavender_blend = '#bab0c8',
+  scarlet_blend  = '#C59E99',
+  wine_blend     = '#cab1ab',
+  earth_blend    = '#CBC0AC',
+  smoke_blend    = '#B6B6B4',
+  pigeon_blend   = '#bcbac2',
+}
+
+Default = { Colour = palette.pigeon }
+Canvas = { Colour = palette.space }
+Number = { Colour = palette.smoke }
+Escape = { Colour = palette.orange }
+String = { Colour = palette.beige }
+BlockComment = { Colour = palette.steel }
+PreProcessor = { Colour = palette.beige, Bold = true }
+LineNum = { Colour = palette.steel }
+StringPreProc = String
+LineComment   = BlockComment
+Operator      = { Colour = palette.orange }
+Interpolation = Operator
+
+Keywords = {
+  { Colour= palette.magenta },
+  { Colour= palette.white },
+  { Colour= palette.tea },
+  { Colour= palette.yellow },
+  { Colour= palette.purple },
+  { Colour= palette.cerulean },
+}
+
+-- new LSP based elements:
+SemanticTokenTypes  = {
+  { Type = 'keyword', Style = { Colour = palette.lavender } },
+  { Type = 'type', Style = { Colour = palette.white } },
+  { Type = 'function', Style = { Colour = palette.yellow } },
+  { Type = 'method', Style = { Colour = palette.yellow } },
+  { Type = 'class', Style =  { Colour = palette.cerulean } },
+  { Type = 'struct', Style = { Colour = palette.aqua } },
+  { Type = 'parameter', Style = { Colour = palette.pigeon } },
+  { Type = 'variable', Style = { Colour = palette.pigeon } },
+  { Type = 'number', Style = Number },
+  { Type = 'regexp', Style = String },
+  { Type = 'operator', Style = Operator },
+}
