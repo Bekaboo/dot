@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+
+usage() {
+    echo "Usage: vim-startuptime [counts] [-p|--preserve-log]"
+}
+
+# test nvim startuptime
+vim-startuptime() {
+    local vim logfile preserve counts
+
+    vim=$(command -v nvim || command -v vim || command -v vi)
+    if [[ ! -x "$vim" ]]; then
+        echo "vim-startuptime: vim not found" >&2
+        return 1
+    fi
+
+    logfile=$(printf '%s.%s' "$(date +'%Y-%m-%d_%T')" 'vim.startuptime')
+    preserve=0
+    counts=100
+    if [[ $1 =~ ^[0-9]+$ ]]; then
+        counts=$1
+        shift
+    fi
+
+    while :; do
+        case "$1" in
+            -h|--help)
+                usage
+                return 0
+                ;;
+            -p|--preserve-log)
+                preserve=1
+                shift
+                ;;
+            -?*)
+                echo "Unknown option: $1" >&2
+                usage
+                return 1
+                ;;
+            *)
+                break
+                ;;
+        esac
+
+        shift
+    done
+
+    for _ in $(seq "$counts"); do
+        "$vim" --startuptime "$logfile" \
+            +'call timer_start(0, {-> execute('\''qall!'\'')})'
+    done
+
+    if command -v awk >/dev/null 2>&1; then
+        "$vim" "$logfile" \
+            +'v/--- N\?VIM STARTED ---/d' \
+            +'sort' \
+            +$ \
+            +'write!' \
+            +'r!awk '\''{sum+=$1} END {print "\nMean: ", sum, "/", NR, "=", sum/NR}'\'' %'
+    else
+        "$vim" "$logfile" \
+            +'v/--- N\?VIM STARTED ---/d' \
+            +'sort'
+    fi
+
+    if [[ "$preserve" == 0 ]]; then
+        rm "$logfile"
+    fi
+
+    return 0
+}
+
+vim-startuptime "$@"
