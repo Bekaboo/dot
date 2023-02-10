@@ -12,102 +12,69 @@ bleopt term_index_colors=auto
 #
 ble-bind -m 'auto_complete' -f 'C-j' 'auto_complete/insert-on-end'
 
-
-#
-# Color settings
-#
-ble_yellow='#e6bb86',
-ble_earth='#c1a575',
-ble_orange='#ffa569',
-ble_pink='#dfa6a8',
-ble_ochre='#e87c69',
-ble_scarlet='#d85959',
-ble_wine='#a52929',
-ble_tea='#a4bd84',
-ble_aqua='#79ada7',
-ble_turquoise='#7fa0af',
-ble_flashlight='#add0ef',
-ble_skyblue='#a5d5ff',
-ble_cerulean='#96bef7',
-ble_lavender='#caafeb',
-ble_purple='#a48fd1',
-ble_magenta='#f481e3',
-ble_pigeon='#8f9fbc',
-ble_thunder='#385372',
-ble_white='#e5e5eb',
-ble_smoke='#bebec3',
-ble_beige='#b1aca7',
-ble_steel='#5e6379',
-ble_iron='#313742',
-ble_deepsea='#293950',
-ble_ocean='#1f2b3b',
-ble_jeans='#171d2b',
-ble_space='#13161f',
-ble_black='#09080b',
-
-ble-face -s argument_option           fg="$ble_lavender"
-ble-face -s auto_complete             fg="$ble_steel"
-ble-face -s cmdinfo_cd_cdpath         fg="$ble_pigeon"
-ble-face -s command_alias             fg="$ble_aqua",italic
-ble-face -s command_builtin           fg="$ble_orange"
-ble-face -s command_builtin_dot       fg="$ble_orange",bold
-ble-face -s command_directory         fg="$ble_skyblue",bold
-ble-face -s command_file              fg="$ble_tea",bold
-ble-face -s command_function          fg="$ble_yellow"
-ble-face -s command_jobs              fg="$ble_scarlet",bold
-ble-face -s command_keyword           fg="$ble_magenta"
-ble-face -s disabled                  fg="$ble_iron"
-ble-face -s filename_block            fg="$ble_yellow",bg="$ble_black",bold
-ble-face -s filename_character        fg="$ble_yellow",bg="$ble_black",bold
-ble-face -s filename_directory        fg="$ble_skyblue",bold
-ble-face -s filename_directory_sticky fg="$ble_black",bg="$ble_tea"
-ble-face -s filename_executable       fg="$ble_tea",bold
-ble-face -s filename_link             fg="$ble_turquoise",bold
+ble-face -s argument_option           fg=magenta
+ble-face -s auto_complete             fg=silver
+ble-face -s cmdinfo_cd_cdpath         fg=silver
+ble-face -s command_alias             fg=teal,italic
+ble-face -s command_builtin           fg=brown
+ble-face -s command_builtin_dot       fg=brown,bold
+ble-face -s command_directory         fg=navy,bold
+ble-face -s command_file              fg=lime,bold
+ble-face -s command_function          fg=yellow
+ble-face -s command_jobs              fg=red,bold
+ble-face -s command_keyword           fg=magenta
+ble-face -s disabled                  fg=black
+ble-face -s filename_block            fg=yellow,bg=black,bold
+ble-face -s filename_character        fg=yellow,bg=black,bold
+ble-face -s filename_directory        fg=navy,bold
+ble-face -s filename_directory_sticky fg=black,bg=lime
+ble-face -s filename_executable       fg=lime,bold
+ble-face -s filename_link             fg=teal,bold
 ble-face -s filename_ls_colors        none
-ble-face -s filename_orphan           fg="$ble_white",bg="$ble_scarlet",bold,blink
-ble-face -s filename_other            fg="$ble_white"
-ble-face -s filename_pipe             fg="$ble_yellow"
-ble-face -s filename_setgid           fg="$ble_black",bg="$ble_yellow"
-ble-face -s filename_setuid           fg="$ble_white",bg="$ble_scarlet"
-ble-face -s filename_socket           fg="$ble_lavender",bold
-ble-face -s filename_url              fg="$ble_flashlight",underline
-ble-face -s filename_warning          fg="$ble_white",bg="$ble_wine",bold,blink
-ble-face -s overwrite_mode            fg="$ble_iron"
-ble-face -s prompt_status_line        fg="$ble_white"
-ble-face -s region                    fg="$ble_smoke",bg="$ble_thunder"
-ble-face -s region_insert             fg="$ble_pigeon"
-ble-face -s region_match              fg="$ble_flashlight",bold
-ble-face -s region_target             fg="$ble_pigeon"
-ble-face -s syntax_brace              fg="$ble_smoke"
-ble-face -s syntax_command            fg="$ble_smoke"
-ble-face -s syntax_comment            fg="$ble_steel"
-ble-face -s syntax_default            fg="$ble_white"
-ble-face -s syntax_delimiter          fg="$ble_smoke"
-ble-face -s syntax_document           fg="$ble_earth"
-ble-face -s syntax_document_begin     fg="$ble_earth",bold
-ble-face -s syntax_error              fg="$ble_steel",italic,strike
-ble-face -s syntax_escape             fg="$ble_orange"
-ble-face -s syntax_expr               fg="$ble_orange"
-ble-face -s syntax_function_name      fg="$ble_yellow"
-ble-face -s syntax_glob               fg="$ble_orange"
-ble-face -s syntax_history_expansion  fg="$ble_steel"
-ble-face -s syntax_param_expansion    fg="$ble_white",bold
-ble-face -s syntax_quotation          fg="$ble_orange"
-ble-face -s syntax_quoted             fg="$ble_beige"
-ble-face -s syntax_tilde              fg="$ble_smoke"
-ble-face -s syntax_varname            fg="$ble_white",bold
-ble-face -s varname_array             fg="$ble_white",bold
-ble-face -s varname_empty             fg="$ble_steel",bold
-ble-face -s varname_export            fg="$ble_white",bold
-ble-face -s varname_expr              fg="$ble_white",bold
-ble-face -s varname_hash              fg="$ble_beige",bold
-ble-face -s varname_number            fg="$ble_beige",bold
-ble-face -s varname_readonly          fg="$ble_beige",bold
-ble-face -s varname_transform         fg="$ble_white",bold
-ble-face -s varname_unset             fg="$ble_steel",bold
+ble-face -s filename_orphan           fg=white,bg=red,bold,blink
+ble-face -s filename_other            fg=white
+ble-face -s filename_pipe             fg=yellow
+ble-face -s filename_setgid           fg=black,bg=yellow
+ble-face -s filename_setuid           fg=silver,bg=red
+ble-face -s filename_socket           fg=magenta,bold
+ble-face -s filename_url              fg=silver,underline
+ble-face -s filename_warning          fg=silver,bg=wine,bold,blink
+ble-face -s overwrite_mode            fg=black
+ble-face -s prompt_status_line        fg=silver
+ble-face -s region                    fg=smoke,bg=thunder
+ble-face -s region_insert             fg=silver
+ble-face -s region_match              fg=silver,bold
+ble-face -s region_target             fg=silver
+ble-face -s syntax_brace              fg=smoke
+ble-face -s syntax_command            fg=smoke
+ble-face -s syntax_comment            fg=silver
+ble-face -s syntax_default            fg=silver
+ble-face -s syntax_delimiter          fg=smoke
+ble-face -s syntax_document           fg=brown
+ble-face -s syntax_document_begin     fg=brown,bold
+ble-face -s syntax_error              fg=white,italic,strike
+ble-face -s syntax_escape             fg=brown
+ble-face -s syntax_expr               fg=brown
+ble-face -s syntax_function_name      fg=yellow
+ble-face -s syntax_glob               fg=brown
+ble-face -s syntax_history_expansion  fg=silver
+ble-face -s syntax_param_expansion    fg=olive,bold
+ble-face -s syntax_quotation          fg=brown
+ble-face -s syntax_quoted             fg=silver
+ble-face -s syntax_tilde              fg=smoke
+ble-face -s syntax_varname            fg=silver,bold
+ble-face -s varname_array             fg=silver,bold
+ble-face -s varname_empty             fg=white,bold
+ble-face -s varname_export            fg=silver,bold
+ble-face -s varname_expr              fg=silver,bold
+ble-face -s varname_hash              fg=silver,bold
+ble-face -s varname_number            fg=silver,bold
+ble-face -s varname_readonly          fg=silver,bold
+ble-face -s varname_transform         fg=silver,bold
+ble-face -s varname_unset             fg=white,bold
 ble-face -s vbell                     reverse
 ble-face -s vbell_erase               invis
-ble-face -s vbell_flash               fg="$ble_yellow",reverse
+ble-face -s vbell_flash               fg=yellow,reverse
 
 #
 # Settings for vim editing mode
@@ -135,7 +102,7 @@ function my/vim-load-hook {
     ble-face -s vim_airline_a_normal               fg=silver,bg=none,bold
     ble-face -s vim_airline_a_insert               fg=purple,bg=none,bold
     ble-face -s vim_airline_a_replace              fg=olive,bg=none,bold
-    ble-face -s vim_airline_a_visual               fg=orange,bg=none,bold
+    ble-face -s vim_airline_a_visual               fg=brown,bg=none,bold
     ble-face -s vim_airline_a_commandline          fg=purple,bg=none,bold
     ble-face -s vim_airline_a_inactive             fg=white,bg=none,bold
 
