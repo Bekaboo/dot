@@ -35,25 +35,25 @@ colors:
 
   # Normal colors
   normal:
-    black:   '0xe5e5eb'
-    red:     '0xb31f1f'
-    green:   '0x55abb3'
-    yellow:  '0xff761a'
-    blue:    '0x79a9f5'
-    magenta: '0x8966d1'
-    cyan:    '0x55abb3'
-    white:   '0x8f9fbc'
+    black:   '0x1f2b3b'
+    red:     '0xe87c69'
+    green:   '0xa4bd84'
+    yellow:  '0xe6bb86'
+    blue:    '0x486a91'
+    magenta: '0xcaafeb'
+    cyan:    '0x79ada7'
+    white:   '0xe5e5eb'
 
   # Bright colors
   bright:
-    black:   '0x0f172b'
-    red:     '0xe84e31'
-    green:   '0xc1e587'
-    yellow:  '0xffd166'
-    blue:    '0x8ecaff'
-    magenta: '0xbb99e3'
-    cyan:    '0x6ec4cc'
-    white:   '0xe5e5eb'
+    black:   '0xe5e5eb'
+    red:     '0xe87c69'
+    green:   '0xa4bd84'
+    yellow:  '0xe6bb86'
+    blue:    '0x486a91'
+    magenta: '0xcaafeb'
+    cyan:    '0x79ada7'
+    white:   '0x8f9fbc'
 
 window:
   opacity: 0.8
