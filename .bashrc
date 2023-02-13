@@ -167,7 +167,12 @@ alias vs="vim-startuptime"
 alias r=". ranger"
 alias ranger=". ranger" # shell follows ranger directory
 alias winecfg-wechat="/opt/apps/com.qq.weixin.deepin/files/run.sh winecfg"
-alias home-backup="borg create --list -v --exclude-from ~/.scripts/borg/exclude.txt borg/home::{hostname}-{user}-{now:%Y-%m-%dT%H:%M:%S.%f} ~"
+alias home-backup="borg create \
+    --list -v \
+    --exclude-from ~/.scripts/borg/exclude.txt \
+    borg/home::{hostname}-{user}-{now:%Y-%m-%dT%H:%M:%S.%f} ~; \
+    borg prune --list -d 60 -w 24 -m 24 -y 10 borg/home; \
+    borg compact --cleanup-commits borg/home"
 alias kde-restart="kquitapp5 plasmashell || kstart5 plasmashell"
 alias kwin-restart="kwin_x11 --replace 2>/dev/null &"
 alias clean-tmp="find /tmp -ctime +7 -exec rm -rf {} +"
