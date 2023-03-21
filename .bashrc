@@ -3,9 +3,6 @@
 
 [[ $- != *i* ]] && return
 
-# Enable line editor ble.sh
-source "/usr/share/blesh/ble.sh" --noattach
-
 colors() {
     local fgc bgc vals seq0
 
@@ -161,7 +158,6 @@ alias translate="trans -shell -b -no-auto :zh"
 alias etalsnart="trans -shell -b -no-auto :en"
 alias nv="nvim"
 alias v="nvim"
-alias vim="nvim"
 alias vi="nvim --clean"
 alias vs="vim-startuptime"
 alias r=". ranger"
@@ -222,6 +218,3 @@ if command -v tmux &> /dev/null \
         exec tmux
     fi
 fi
-
-# Attach line editor ble.sh
-[[ ${BLE_VERSION-} ]] && ble-attach
