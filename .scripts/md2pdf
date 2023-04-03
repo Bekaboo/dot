@@ -3,8 +3,6 @@
 
 md2pdf() {
     pandoc \
-    --toc \
-    --number-sections \
     --lua-filter ${HOME}/.scripts/pandoc_filters/md2pdf_filter.lua \
     --pdf-engine=${PDF_ENGINE} \
     -V block-headings \
