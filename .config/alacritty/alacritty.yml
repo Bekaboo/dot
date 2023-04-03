@@ -20,12 +20,11 @@ draw_bold_text_with_bright_colors: true
 colors:
   # Default colors
   primary:
-    background: '0x030b1e'
-    foreground: '0xfcfcfc'
+    foreground: '0xbebec3'
+    background: '0x233040'
 
   # Colors the cursor will use if `custom_cursor_colors` is true
   cursor:
-    text: '0x020221'
     cursor: '0xffffff'
     style:
       shape: Block
@@ -35,7 +34,7 @@ colors:
 
   # Normal colors
   normal:
-    black:   '0x1f2b3b'
+    black:   '0x233040'
     red:     '0xe87c69'
     green:   '0xa4bd84'
     yellow:  '0xe6bb86'
@@ -56,7 +55,7 @@ colors:
     white:   '0x8f9fbc'
 
 window:
-  opacity: 0.8
+  opacity: 1
   padding:
     x: 0
     y: 0
