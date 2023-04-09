@@ -79,16 +79,6 @@ key_bindings:
   - { key: F,        mods: Command,       mode: ~Search,     action: ReceiveChar }
   - { key: B,        mods: Control|Shift, mode: ~Search,     action: ReceiveChar }
   - { key: B,        mods: Command,       mode: ~Search,     action: ReceiveChar }
-  # copy/paste
-  - { key: Paste,                                            action: ReceiveChar }
-  - { key: Copy,                                             action: ReceiveChar }
-  - { key: V,        mods: Control|Shift, mode: ~Vi,         action: ReceiveChar }
-  - { key: V,        mods: Command,                          action: ReceiveChar }
-  - { key: C,        mods: Control|Shift,                    action: ReceiveChar }
-  - { key: C,        mods: Command,                          action: ReceiveChar }
-  - { key: C,        mods: Control|Shift, mode: Vi|~Search,  action: ReceiveChar }
-  - { key: C,        mods: Command,       mode: Vi|~Search,  action: ReceiveChar }
-  - { key: Insert,   mods: Shift,                            action: ReceiveChar }
 
 mouse_bindings:
   - { mouse: Right,  action: ReceiveChar }
