@@ -20,6 +20,7 @@
 	r = restore
 [merge]
 	tool = vimdiff
+	ff = false
 [mergetool]
 	keepBackup = false
 [mergetool "vimdiff"]
