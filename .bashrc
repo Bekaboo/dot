@@ -161,7 +161,6 @@ alias v="nvim"
 alias vi="nvim --clean"
 alias vs="vim-startuptime"
 alias r=". ranger"
-alias ranger=". ranger" # shell follows ranger directory
 alias winecfg-wechat="/opt/apps/com.qq.weixin.deepin/files/run.sh winecfg"
 alias home-backup="borg create \
     --list -v \
