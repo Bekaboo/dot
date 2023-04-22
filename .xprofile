@@ -6,3 +6,4 @@ export QT_IM_MODULE=fcitx
 export XMODIFIERS=@im=fcitx
 export GDK_DPI_SCALE=0.5    # text
 export GDK_SCALE=2          # UI elements
+export MOZ_USE_XINPUT2=1    # firefox smooth scrolling
