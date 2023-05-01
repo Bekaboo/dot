@@ -2,7 +2,7 @@
 Frames=15
 
 [Appearance]
-BackgroundColor=3,11,30
+BackgroundColor=6,14,30
 HideSkinBorders=true
 Skin=plastik_dark
 TerminalHighlightOnManualActivation=true
