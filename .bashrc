@@ -193,8 +193,7 @@ dot config --local status.showUntrackedFiles no
 # dfiles config --local filter.plasma_cursor_size_filter.clean "sed '/cursorSize=\|cursor-theme-size=/d'"
 # dfiles config --local filter.plasma_cursor_size_filter.smudge "sed '/cursorSize=\|cursor-theme-size=/d'"
 
-# Use vim mode in bash
-set -o vi
+# Prevent Vim <Esc> lagging
 bind 'set keyseq-timeout 1'
 
 # Add execution permission to scripts
