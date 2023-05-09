@@ -141,7 +141,6 @@ cdls() {
 
 # Aliases
 alias sudo="sudo -E "
-alias c="clear"
 alias cd="cdls"
 alias cp="cp -i"        # confirm before overwriting something
 alias rm="\\trash"
