@@ -152,7 +152,9 @@ cdim() {
     fi
 
     local parent_dir="$(dirname "$VIRTUAL_ENV")"
-    if [[ "$PWD"/ != "$parent_dir"/* ]]; then
+    if
+        [[ ! -z "$(command -v deactivate)" && "$PWD"/ != "$parent_dir"/* ]]
+    then
         deactivate
     fi
 }
