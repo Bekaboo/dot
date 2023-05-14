@@ -134,14 +134,32 @@ export LESS_TERMCAP_so=$'\e[01;33m'
 export LESS_TERMCAP_ue=$'\e[0m'
 export LESS_TERMCAP_us=$'\e[1;4;34m'
 
-# 'cd' and then 'ls' in one call
-cdls() {
+# 'cd' improved, 'cd' and 'ls', then activate python virtualenv if '.env/' or
+# '.venv/' exists and deactivate it automatically on leaving the project
+# directory (this is unsafe)
+cdim() {
     builtin cd "$@" && ls --color=auto;
+
+    if [[ -z "$VIRTUAL_ENV" ]]; then
+        if [[ -e ./.env/bin/activate ]]; then
+            chmod +x ./.env/bin/activate
+            source ./.env/bin/activate
+        elif [[ -e ./.venv/bin/activate ]]; then
+            chmod +x ./.venv/bin/activate
+            source ./.venv/bin/activate
+        fi
+        return
+    fi
+
+    local parent_dir="$(dirname "$VIRTUAL_ENV")"
+    if [[ "$PWD"/ != "$parent_dir"/* ]]; then
+        deactivate
+    fi
 }
 
 # Aliases
 alias sudo="sudo -E "
-alias cd="cdls"
+alias cd="cdim"
 alias cp="cp -i"        # confirm before overwriting something
 alias rm="\\trash"
 alias l="ls"
