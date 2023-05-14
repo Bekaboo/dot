@@ -134,29 +134,50 @@ export LESS_TERMCAP_so=$'\e[01;33m'
 export LESS_TERMCAP_ue=$'\e[0m'
 export LESS_TERMCAP_us=$'\e[1;4;34m'
 
-# 'cd' improved, 'cd' and 'ls', then activate python virtualenv if '.env/' or
-# '.venv/' exists and deactivate it automatically on leaving the project
-# directory (this is unsafe)
-cdim() {
-    builtin cd "$@" && ls --color=auto;
-
+# Automatically activate or deactivate python virtualenvs
+pyenv() {
+    local activation_file=""
+    # $VIRTUAL_ENV not set -- python virtualenv not activated, try to
+    # activate it if '.env/bin/activate' or '.venv/bin/activate' exists
     if [[ -z "$VIRTUAL_ENV" ]]; then
         if [[ -e ./.env/bin/activate ]]; then
-            chmod +x ./.env/bin/activate
-            source ./.env/bin/activate
+            activation_file="./.env/bin/activate"
         elif [[ -e ./.venv/bin/activate ]]; then
-            chmod +x ./.venv/bin/activate
-            source ./.venv/bin/activate
+            activation_file="./.venv/bin/activate"
+        fi
+        if [[ -n "$activation_file" ]]; then
+            chmod +x "$activation_file"
+            source "$activation_file"
         fi
         return
     fi
 
+    # $VIRTUAL_ENV set but 'deactivate' not found -- python virtualenv
+    # activated in parent shell, try to activate in current shell if currently
+    # in project directory or a subdirectory of the project directory
     local parent_dir="$(dirname "$VIRTUAL_ENV")"
-    if
-        [[ ! -z "$(command -v deactivate)" && "$PWD"/ != "$parent_dir"/* ]]
-    then
+    if [[ -z "$(command -v deactivate)" ]]; then
+        if [[ "$PWD"/ == "$parent_dir"/* ]]; then
+            activation_file="$(command -v activate)"
+            chmod +x "$activation_file"
+            source "$activation_file"
+            return
+        fi
+    fi
+
+    # $VIRTUAL_ENV set and 'deactivate' found -- python virtualenv activated
+    # in current shell, try to deactivate it if currently not inside the
+    # project directory or a subdirectory of the project directory
+    if [[ "$PWD"/ != "$parent_dir"/* ]]; then
         deactivate
     fi
+}
+
+# 'cd' improved, 'cd' and 'ls', then automatically activate or deactivate
+# python virtualenvs
+cdim() {
+    builtin cd "$@" && ls --color=auto;
+    pyenv
 }
 
 # Aliases
@@ -237,3 +258,6 @@ if command -v tmux &> /dev/null \
         exec tmux
     fi
 fi
+
+# Automatically enable or disable python virtualenvs
+pyenv
