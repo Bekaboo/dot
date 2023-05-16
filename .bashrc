@@ -213,9 +213,6 @@ alias home-backup="borg create \
 alias kde-restart="kquitapp5 plasmashell || kstart5 plasmashell"
 alias kwin-restart="kwin_x11 --replace 2>/dev/null &"
 alias clean-tmp="find /tmp -ctime +7 -exec rm -rf {} +"
-# Quick cd
-alias sch="cd /home/zeng/School/"
-alias notes="cd /home/zeng/School/Notes/"
 # Save KDE plasma session
 alias plasma-save-session="qdbus org.kde.ksmserver /KSMServer saveCurrentSession"
 
