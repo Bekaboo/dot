@@ -237,7 +237,9 @@ dot config --local status.showUntrackedFiles no
 bind 'set keyseq-timeout 1'
 
 # Add execution permission to scripts
-chmod +x ~/.scripts/*
+if [[ -d ~/.scripts ]]; then
+    chmod +x ~/.scripts/*
+fi
 
 # Launch tmux automatically
 if command -v tmux &> /dev/null \
