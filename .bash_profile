@@ -3,5 +3,5 @@
 #
 
 [[ -f ~/.bashrc ]] && . ~/.bashrc
-export PATH="${PATH}:${HOME}/.local/bin"
-export PATH="${PATH}:${HOME}/.scripts"
+export PATH="${HOME}/.local/bin:${HOME}/.scripts:${PATH}"
+export MANPAGER=nvim-manpager
