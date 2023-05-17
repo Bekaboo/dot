@@ -211,25 +211,5 @@ if [[ -d ~/.scripts ]]; then
     chmod +x ~/.scripts/*
 fi
 
-# Launch tmux automatically
-if command -v tmux &> /dev/null \
-        && command -v xdotool &> /dev/null \
-        && [[ -n "$PS1" ]] \
-        && [[ -z "$TMUX" ]] \
-        && [[ ! "$TERM" =~ linux ]] \
-        && [[ ! "$TERM" =~ tmux ]] \
-        && [[ ! "$TERM" =~ screen ]] \
-        && [[ $(xdotool getactivewindow getwindowname) != *"Dolphin"* ]]; then
-    # Try attach to existing unattached session
-    # Create new session instead of attaching an existing session if
-    # working directory is not "$HOME" (in case the shell spawned by Dolphin's
-    # 'Open Terminal Here' action)
-    if (tmux ls 2> /dev/null | grep -vq attached) && [[ "$PWD" == "$HOME" ]]; then
-        exec tmux at
-    else
-        exec tmux
-    fi
-fi
-
 # Automatically enable or disable python virtualenvs
 pyenv

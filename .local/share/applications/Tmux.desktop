@@ -1,0 +1,16 @@
+[Desktop Entry]
+Name=Tmux
+Comment=Terminal multiplexer
+Comment[en_CA]=Terminal multiplexer
+Comment[en_GB]=Terminal multiplexer
+Comment[zh_CN]=终端复用器
+Comment[zh_TW]=終端複用器
+TryExec=tmux-attach
+Exec=tmux-attach
+Terminal=true
+Type=Application
+Keywords=terminal;shell;prompt;command;commandline;
+Icon=utilities-terminal
+Categories=System;TerminalEmulator;
+StartupNotify=false
+MimeType=application/x-shellscript;
