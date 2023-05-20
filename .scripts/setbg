@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+
+CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+
+force_slink() {
+    # $1: source path
+    # $2: target path
+    if [[ -L "$2" ]]; then
+        unlink "$2"
+    fi
+    ln -s "$1" "$2"
+}
+
+ensure_slink() {
+    # $1: source path
+    # $2: target path
+    # Conditions:
+    # 1. target not exists                              (create new link)
+    # 2. target exists
+    #     2.1 target is symlink
+    #         2.1.1 target is symlink and is broken     (unlink and create new link)
+    #         2.1.2 target is symlink and not broken    (keep)
+    #     2.2 target is directory                       (keep)
+    #     2.3 target is file                            (keep)
+    if [[ -e "$2" ]]; then  # case 2.1.2, 2.2, 2.3
+        return 0
+    fi
+    # case 1, 2.1.1
+    force_slink "$1" "$2"
+}
+
+setbg-alacritty() {
+    # $1: 'light' or 'dark'
+    local theme_path="$CONFIG_HOME/alacritty/theme.yml"
+    # If $1 is empty, only need to ensure symlink to color theme file exists
+    if [[ -z "$1" ]]; then
+        ensure_slink "$CONFIG_HOME/alacritty/themes/dark.yml" "$theme_path"
+    else
+        force_slink "$CONFIG_HOME/alacritty/themes/$1.yml" "$theme_path"
+    fi
+    touch "$CONFIG_HOME/alacritty/alacritty.yml" # Reload config
+}
+
+setbg-highlight() {
+    # $1: 'light' or 'dark'
+    local theme_path="$HOME/.highlight/themes/highlight.theme"
+    # If $1 is empty, only need to ensure symlink to color theme file exists
+    if [[ -z "$1" ]]; then
+        ensure_slink "$HOME/.highlight/themes/dark.theme" "$theme_path"
+    else
+        force_slink "$HOME/.highlight/themes/$1.theme" "$theme_path"
+    fi
+}
+
+setbg-nvim() {
+    # $1: 'light' or 'dark'
+    if [[ -z "$1" || -z "$(command -v nvim 2>/dev/null)" ]]; then
+        return 0
+    fi
+    # Send signal to running nvim instances to change their background
+    local sig="$([[ $1 == 'light' ]] && echo 'USR1' || echo 'WINCH')"
+    for pid in "$(pgrep nvim)"; do
+        kill -"$sig" $pid &>/dev/null
+    done
+    # Save background color to shada file, in case that no nvim instance is
+    # running
+    nvim --headless --noplugin +"let g:BACKGROUND='$1'" +wshada +quit
+}
+
+main() {
+    if [[ -n "$1" && "$1" != 'light' && "$1" != 'dark' ]]; then
+        echo 'Usage: setbg [light|dark]'
+        return 1
+    fi
+    setbg-alacritty "$1"
+    setbg-highlight "$1"
+    setbg-nvim "$1"
+    return 0
+}
+
+main "$@"

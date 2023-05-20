@@ -1,0 +1,39 @@
+# Light theme
+colors:
+  # Default colors
+  primary:
+    foreground: '0x404553'
+    background: '0xfaf4ed'
+
+  # Colors the cursor will use if `custom_cursor_colors` is true
+  cursor:
+    cursor: '0x385372'
+    style:
+      shape: Block
+      blinking: On
+    blink_interval: 500
+    blink_timeout: 0
+
+  # Normal colors
+  normal:
+    black:   '0xfaf4ed'
+    red:     '0xc84b2b'
+    green:   '0x5f8c3f'
+    yellow:  '0xc88500'
+    blue:    '0x29647a'
+    magenta: '0x9d7bca'
+    cyan:    '0x3b8f84'
+    white:   '0x385372'
+
+  # Bright colors
+  bright:
+    black:   '0x385372'
+    red:     '0xc84b2b'
+    green:   '0x5f8c3f'
+    yellow:  '0xc88500'
+    blue:    '0x76a2c2'
+    magenta: '0x9d7bca'
+    cyan:    '0x3b8f84'
+    white:   '0x6666a8'
+
+

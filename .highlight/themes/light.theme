@@ -1,9 +1,8 @@
 -- vim: ft=lua:et:ts=2:sts=2:sw=2:
 
-Description = 'Falcon Theme'
-Categories = { 'dark' }
+Description = 'Light Theme'
+Categories = { 'light' }
 
--- palette from nvim-falcon colorscheme
 local palette = {
   yellow       = '#a84a24',
   earth        = '#b48327',

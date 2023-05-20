@@ -210,5 +210,10 @@ if [[ -d ~/.scripts ]]; then
     chmod +x ~/.scripts/*
 fi
 
+# Ensure color theme files are correctly linked
+if command -v setbg &>/dev/null; then
+    setbg
+fi
+
 # Automatically enable or disable python virtualenvs
 pyenv
