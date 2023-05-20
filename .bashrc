@@ -160,7 +160,6 @@ alias cp="cp -i"        # confirm before overwriting something
 alias rm="\\trash"
 alias l="ls"
 alias ll="ls -l"
-alias highlight="highlight --style falcon"
 alias df="df -h"        # human-readable sizes
 alias free="free -m"    # show sizes in MB
 alias tree="tree -N"    # Display Chinese characters
