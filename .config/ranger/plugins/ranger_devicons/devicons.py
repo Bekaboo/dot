@@ -12,7 +12,7 @@ import os
 xdgs_dirs = {
     os.path.basename(os.getenv(key).rstrip('/')): icon
     for key, icon in (
-        ('XDG_DOCUMENTS_DIR', '󰂻'),
+        ('XDG_DOCUMENTS_DIR', '󱧶'),
         ('XDG_DOWNLOAD_DIR', '󰉍'),
         ('XDG_CONFIG_DIR', '󱧼'),
         ('XDG_MUSIC_DIR', '󱍙'),
