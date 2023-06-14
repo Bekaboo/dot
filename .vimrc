@@ -81,25 +81,25 @@ omap if :silent! normal m`Vif<CR>:silent! normal! ``<CR>
 set nohlsearch
 set incsearch
 
-nnoremap <C-l> :set nohlsearch<CR><C-l>
+nnoremap <silent><C-l> <C-l>:set nohlsearch<CR>
 
-nnoremap n  :set hlsearch<CR>n
-nnoremap N  :set hlsearch<CR>N
-nnoremap *  :set hlsearch<CR>*
-nnoremap #  :set hlsearch<CR>#
-nnoremap /  :set hlsearch<CR>/
-nnoremap ?  :set hlsearch<CR>?
-nnoremap g* :set hlsearch<CR>g*
-nnoremap g# :set hlsearch<CR>g#
+nnoremap <silent>n  n:set hlsearch<CR>
+nnoremap <silent>N  N:set hlsearch<CR>
+nnoremap <silent>*  *:set hlsearch<CR>
+nnoremap <silent>#  #:set hlsearch<CR>
+nnoremap <silent>/  /:set hlsearch<CR>
+nnoremap <silent>?  ?:set hlsearch<CR>
+nnoremap <silent>g* g*:set hlsearch<CR>
+nnoremap <silent>g# g#:set hlsearch<CR>
 
-xnoremap n  :set hlsearch<CR>n
-xnoremap N  :set hlsearch<CR>N
-xnoremap *  :set hlsearch<CR>*
-xnoremap #  :set hlsearch<CR>#
-xnoremap /  :set hlsearch<CR>/
-xnoremap ?  :set hlsearch<CR>?
-xnoremap g* :set hlsearch<CR>g*
-xnoremap g# :set hlsearch<CR>g#
+xnoremap <silent>n  n:set hlsearch<CR>n
+xnoremap <silent>N  N:set hlsearch<CR>N
+xnoremap <silent>*  *:set hlsearch<CR>*
+xnoremap <silent>#  #:set hlsearch<CR>#
+xnoremap <silent>/  /:set hlsearch<CR>/
+xnoremap <silent>?  ?:set hlsearch<CR>?
+xnoremap <silent>g* g*:set hlsearch<CR>g*
+xnoremap <silent>g# g#:set hlsearch<CR>g#
 
 augroup AutoHlSearch
     au!
