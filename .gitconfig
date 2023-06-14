@@ -14,8 +14,8 @@
 	cam = commit -a -m
 	d = diff
 	l = log --oneline --graph
-	p = push
-	P = push --force
+	p = pull
+	P = push
 	s = status
 	r = restore
 [merge]
