@@ -175,7 +175,7 @@ alias vi="nvim --clean"
 alias vs="vim-startuptime"
 alias emacs="emacs -nw"
 alias em="emacs -nw"
-alias r=". ranger"
+alias r="ranger"
 alias winecfg-wechat="/opt/apps/com.qq.weixin.deepin/files/run.sh winecfg"
 alias home-backup="borg create \
     --list -v \
