@@ -98,9 +98,6 @@ main() {
                 ;;
         esac
     done
-    if [[ -z "$bg" ]]; then
-        usage
-    fi
     setbg-alacritty "$bg"
     setbg-highlight "$bg"
     setbg-nvim "$bg" "$exclude_nvim_processes"
