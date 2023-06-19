@@ -62,7 +62,7 @@ setbg-nvim() {
     # Send signal to running nvim instances to change their background
     local sig="$([[ $1 == 'light' ]] && echo 'USR1' || echo 'WINCH')"
     local nvim_pid_list="$(pgrep nvim)"
-    if [[ -z nvim_pid_list ]]; then
+    if [[ -z "$nvim_pid_list" ]]; then
         nvim --headless --noplugin +"let g:BACKGROUND='$1'" +wshada +quit
     else
         local excludes
