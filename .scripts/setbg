@@ -60,12 +60,14 @@ setbg-nvim() {
     fi
     # Send signal to running nvim instances to change their background
     local sig="$([[ $1 == 'light' ]] && echo 'USR1' || echo 'WINCH')"
-    for pid in "$(pgrep nvim)"; do
-        kill -"$sig" $pid &>/dev/null
-    done
-    # Save background color to shada file, in case that no nvim instance is
-    # running
-    nvim --headless --noplugin +"let g:BACKGROUND='$1'" +wshada +quit
+    local nvim_pid_list="$(pgrep nvim)"
+    if [[ -z nvim_pid_list ]]; then
+        nvim --headless --noplugin +"let g:BACKGROUND='$1'" +wshada +quit
+    else
+        for pid in "$nvim_pid_list"; do
+            kill -"$sig" $pid &>/dev/null
+        done
+    fi
 }
 
 main() {
