@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+
+CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+DEFAULT_COLOR='nano'
+
+setcolor-alacritty() {
+    # $1: name of the colorscheme
+    local themes_path="$CONFIG_HOME/alacritty/themes"
+    local dark_theme_path="$themes_path/dark.yml"
+    local light_theme_path="$themes_path/light.yml"
+    # If $1 is empty, only need to ensure symlink to color theme files exists
+    if [[ -z "$1" ]]; then
+        ensure-slink "$themes_path/$DEFAULT_COLOR-dark.yml" "$dark_theme_path"
+        ensure-slink "$themes_path/$DEFAULT_COLOR-light.yml" "$light_theme_path"
+    else
+        force-slink "$themes_path/$1-dark.yml" "$dark_theme_path"
+        force-slink "$themes_path/$1-light.yml" "$light_theme_path"
+    fi
+    touch "$CONFIG_HOME/alacritty/alacritty.yml" # Reload config
+}
+
+setcolor-highlight() {
+    # $1: name of the colorscheme
+    local themes_path="$HOME/.highlight/themes"
+    local dark_theme_path="$themes_path/dark.theme"
+    local light_theme_path="$themes_path/light.theme"
+    # If $1 is empty, only need to ensure symlink to color theme files exists
+    if [[ -z "$1" ]]; then
+        ensure-slink \
+            "$themes_path/$DEFAULT_COLOR-dark.theme" "$dark_theme_path"
+        ensure-slink \
+            "$themes_path/$DEFAULT_COLOR-light.theme" "$light_theme_path"
+    else
+        force-slink "$themes_path/$1-dark.theme" "$dark_theme_path"
+        force-slink "$themes_path/$1-light.theme" "$light_theme_path"
+    fi
+}
+
+setcolor-nvim() {
+    # $1: name of the colorscheme
+    if [[ -z "$1" || -z "$(command -v nvim 2>/dev/null)" ]]; then
+        return 0
+    fi
+    # Spawn an nvim instance to write the background to shada file
+    nvim --headless --noplugin +"let g:COLORSNAME='$1'" +wshada +quit
+    # List of pids to exclude from sending signal
+    local excludes
+    IFS=, read -r -a excludes <<<"$2"
+    # Send signal to running nvim instances to change their background
+    for pid in "$(pgrep nvim)"; do
+        if [[ ! " ${excludes[*]} " =~ " ${pid} " ]]; then
+            kill -USR1 $pid &>/dev/null
+        fi
+    done
+}
+
+usage() {
+    echo 'Usage: setcolor [<colorscheme>] [--exclude-nvim-processes=<pid1>,<pid2>,...]'
+    exit 1
+}
+
+main() {
+    local color=''
+    local exclude_nvim_processes=''
+    for arg in "$@"; do
+        case "$arg" in
+        -h | --help)
+            usage
+            ;;
+        --exclude-nvim-processes=*)
+            exclude_nvim_processes="${arg#*=}"
+            shift
+            ;;
+        *)
+            color="$arg"
+            shift
+            ;;
+        esac
+    done
+    setcolor-alacritty "$color"
+    setcolor-highlight "$color"
+    setcolor-nvim "$color" "$exclude_nvim_processes"
+    return 0
+}
+
+main "$@"

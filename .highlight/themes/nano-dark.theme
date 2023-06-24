@@ -1,0 +1,57 @@
+-- vim: ft=lua:et:ts=2:sts=2:sw=2:
+
+Description = "Nano Dark Theme"
+Categories = { "dark" }
+
+local palette = {
+  foreground = "#cbced2",
+  background = "#2e3440",
+  highlight  = "#3b4252",
+  critical   = "#ebcb8b",
+  salient    = "#81a1c0",
+  strong     = "#e5e7ec",
+  popout     = "#d08770",
+  subtle     = "#434c5e",
+  shaded     = "#4f596e",
+  faint      = "#566279",
+  faded      = "#99aac8",
+  grass      = "#374b50",
+  tea        = "#507178",
+  pine       = "#79968b",
+  lavender   = "#48506e",
+  violet     = "#5561a0",
+  vermillion = "#c85926",
+  black      = "#1c2027",
+}
+
+Default = { Colour = palette.foreground }
+Canvas = { Colour = palette.highlight }
+Number = { Colour = palette.faded }
+Escape = { Colour = palette.critical }
+String = { Colour = palette.popout }
+BlockComment = { Colour = palette.faint }
+PreProcessor = { Colour = palette.salient }
+LineNum = { Colour = palette.faint }
+StringPreProc = String
+LineComment   = BlockComment
+Operator      = { Colour = palette.critical }
+Interpolation = Operator
+
+Keywords = {
+  { Colour= palette.salient },
+}
+
+-- new LSP based elements:
+SemanticTokenTypes  = {
+  { Type = 'keyword', Style = { Colour = palette.salient } },
+  { Type = 'type', Style = { Colour = palette.salient } },
+  { Type = 'function', Style = { Colour = palette.strong, Bold = true } },
+  { Type = 'method', Style = { Colour = palette.strong, Bold = true } },
+  { Type = 'class', Style =  { Colour = palette.salient } },
+  { Type = 'struct', Style = { Colour = palette.salient } },
+  { Type = 'parameter', Style = { Colour = palette.foreground } },
+  { Type = 'variable', Style = { Colour = palette.foreground } },
+  { Type = 'number', Style = Number },
+  { Type = 'regexp', Style = String },
+  { Type = 'operator', Style = Operator },
+}

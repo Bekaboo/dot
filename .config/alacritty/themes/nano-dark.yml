@@ -1,0 +1,39 @@
+# Nano dark theme
+colors:
+  # Default colors
+  primary:
+    foreground: '0xcbced2'
+    background: '0x2e3440'
+
+  # Colors the cursor will use if `custom_cursor_colors` is true
+  cursor:
+    cursor: '0xcbced2'
+    style:
+      shape: Block
+      blinking: On
+    blink_interval: 500
+    blink_timeout: 0
+
+  # Normal colors
+  normal:
+    black:   '0x434c5e'
+    red:     '0xd08770'
+    green:   '0x79968b'
+    yellow:  '0xebcb8b'
+    blue:    '0x566279'
+    magenta: '0xe5e7ec'
+    cyan:    '0x81a1c0'
+    white:   '0x99aac8'
+
+  # Bright colors
+  bright:
+    black:   '0x99aac8'
+    red:     '0xd08770'
+    green:   '0x79968b'
+    yellow:  '0xebcb8b'
+    blue:    '0x99aac8'
+    magenta: '0xe5e7ec'
+    cyan:    '0x81a1c0'
+    white:   '0x99aac8'
+
+
