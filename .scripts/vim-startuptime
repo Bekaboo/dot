@@ -2,53 +2,45 @@
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
 usage() {
-    echo "Usage: vim-startuptime [counts] [-p|--preserve-log]"
+    echo "Usage: vim-startuptime [<vim_test_command>] [-n|--num-epochs=<epochs>] [-p|--preserve-log]"
 }
 
 # test nvim startuptime
 vim-startuptime() {
-    local vim logfile preserve counts
-
-    vim=$(command -v nvim || command -v vim || command -v vi)
+    local vim=$(command -v nvim || command -v vim || command -v vi)
     if [[ ! -x "$vim" ]]; then
         echo "vim-startuptime: vim not found" >&2
         return 1
     fi
 
-    logfile=$(printf '%s.%s' "$(date +'%Y-%m-%d_%T')" 'vim.startuptime')
-    preserve=0
-    counts=100
-    if [[ $1 =~ ^[0-9]+$ ]]; then
-        counts=$1
-        shift
-    fi
-
-    while :; do
-        case "$1" in
-            -h|--help)
-                usage
-                return 0
-                ;;
-            -p|--preserve-log)
-                preserve=1
-                shift
-                ;;
-            -?*)
-                echo "Unknown option: $1" >&2
-                usage
-                return 1
-                ;;
-            *)
-                break
-                ;;
+    local logfile=$(printf '%s_%s.log' 'vim_startuptime' "$(date +'%Y-%m-%d_%T')")
+    local preserve=0
+    local epochs=100
+    local vim_test_command=$vim
+    for arg in "$@"; do
+        case "$arg" in
+        -h | --help)
+            usage
+            return 0
+            ;;
+        -n=* | --num-epochs=*)
+            epochs="${arg#*=}"
+            shift
+            ;;
+        -p | --preserve-log)
+            preserve=1
+            shift
+            ;;
+        *)
+            vim_test_command="$arg"
+            shift
+            ;;
         esac
-
-        shift
     done
 
-    for _ in $(seq "$counts"); do
-        "$vim" --startuptime "$logfile" \
-            +'call timer_start(0, {-> execute('\''qall!'\'')})'
+    for _ in $(seq "$epochs"); do
+        $vim_test_command --startuptime "$logfile" \
+            +'call timer_start(0, {-> execute('\''qall!'\'')})' || return 1
     done
 
     if command -v awk >/dev/null 2>&1; then
