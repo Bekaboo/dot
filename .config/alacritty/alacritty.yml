@@ -11,7 +11,9 @@ font:
   size: 13
 
   normal:
-    family: 'Jetbrains Mono Nerd Font'
+    family: 'Jetbrains Mono NF Light'
+  bold:
+    family: 'Jetbrains Mono NF SemiBold'
 
 custom_cursor_colors: true
 draw_bold_text_with_bright_colors: true
