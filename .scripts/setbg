@@ -15,6 +15,17 @@ setbg-alacritty() {
     touch "$CONFIG_HOME/alacritty/alacritty.yml" # Reload config
 }
 
+setbg-kitty() {
+    # $1: 'light' or 'dark'
+    local theme_path="$CONFIG_HOME/kitty/current-theme.conf"
+    if [[ -z $1 ]]; then
+        ensure-slink "$CONFIG_HOME/kitty/themes/dark.conf" "$theme_path"
+    else
+        force-slink "$CONFIG_HOME/kitty/themes/$1.conf" "$theme_path"
+    fi
+    [[ -n "$(command -v kitty 2>/dev/null)" ]] && kill -SIGUSR1 $(pgrep kitty)
+}
+
 setbg-highlight() {
     # $1: 'light' or 'dark'
     local theme_path="$HOME/.highlight/themes/highlight.theme"
@@ -69,6 +80,7 @@ main() {
         esac
     done
     setbg-alacritty "$bg"
+    setbg-kitty "$bg"
     setbg-highlight "$bg"
     setbg-nvim "$bg" "$exclude_nvim_processes"
     return 0
