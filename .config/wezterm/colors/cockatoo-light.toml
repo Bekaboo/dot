@@ -1,0 +1,34 @@
+[colors]
+ansi = [
+    '#faf4ed',
+    '#c84b2b',
+    '#5f8c3f',
+    '#c88500',
+    '#29647a',
+    '#9d7bca',
+    '#3b8f84',
+    '#385372',
+]
+brights = [
+    '#385372',
+    '#c84b2b',
+    '#5f8c3f',
+    '#c88500',
+    '#76a2c2',
+    '#9d7bca',
+    '#3b8f84',
+    '#6666a8',
+]
+foreground = '#404553'
+background = '#faf4ed'
+cursor_bg = '#385372'
+cursor_border = '#385372'
+cursor_fg = '#faf4ed'
+selection_bg = '#e6ded6'
+selection_fg = '#404553'
+
+[colors.indexed]
+
+[metadata]
+name = 'Cockatoo Light'
+author = 'Bekaboo'

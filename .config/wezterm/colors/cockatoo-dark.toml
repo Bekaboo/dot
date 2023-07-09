@@ -1,0 +1,34 @@
+[colors]
+ansi = [
+    '#262f3e',
+    '#e87c69',
+    '#a4bd84',
+    '#e6bb86',
+    '#486a91',
+    '#caafeb',
+    '#79ada7',
+    '#e5e5eb',
+]
+brights = [
+    '#e5e5eb',
+    '#e87c69',
+    '#a4bd84',
+    '#e6bb86',
+    '#486a91',
+    '#caafeb',
+    '#79ada7',
+    '#8f9fbc',
+]
+foreground = '#bebec3'
+background = '#262f3e'
+cursor_bg = '#ffffff'
+cursor_border = '#ffffff'
+cursor_fg = '#262f3e'
+selection_bg = '#334154'
+selection_fg = '#bebec3'
+
+[colors.indexed]
+
+[metadata]
+name = 'Cockatoo Dark'
+author = 'Bekaboo'

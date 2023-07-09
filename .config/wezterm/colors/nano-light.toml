@@ -1,0 +1,34 @@
+[colors]
+ansi = [
+    '#ffffff',
+    '#ff6f00',
+    '#608c88',
+    '#f09276',
+    '#bec8cc',
+    '#000000',
+    '#673ab7',
+    '#9fadb4',
+]
+brights = [
+    '#9fadb4',
+    '#ff6f00',
+    '#608c88',
+    '#f09276',
+    '#9fadb4',
+    '#000000',
+    '#673ab7',
+    '#9fadb4',
+]
+foreground = '#404553'
+background = '#ffffff'
+cursor_bg = '#385372'
+cursor_border = '#385372'
+cursor_fg = '#ffffff'
+selection_bg = '#e9eef1'
+selection_fg = '#495b64'
+
+[colors.indexed]
+
+[metadata]
+name = 'Nano Light'
+author = 'Bekaboo'

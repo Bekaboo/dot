@@ -1,0 +1,34 @@
+[colors]
+ansi = [
+    '#2e3440',
+    '#d08770',
+    '#79968b',
+    '#ebcb8b',
+    '#566279',
+    '#e5e7ec',
+    '#81a1c0',
+    '#99aac8',
+]
+brights = [
+    '#99aac8',
+    '#d08770',
+    '#79968b',
+    '#ebcb8b',
+    '#99aac8',
+    '#e5e7ec',
+    '#81a1c0',
+    '#99aac8',
+]
+foreground = '#cbced2'
+background = '#2e3440'
+cursor_bg = '#cbced2'
+cursor_border = '#cbced2'
+cursor_fg = '#2e3440'
+selection_bg = '#434c5e'
+selection_fg = '#cbced2'
+
+[colors.indexed]
+
+[metadata]
+name = 'Nano Dark'
+author = 'Bekaboo'

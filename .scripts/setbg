@@ -30,6 +30,17 @@ setbg-kitty() {
     fi
 }
 
+setbg-wezterm() {
+    # $1: 'light' or 'dark'
+    local theme_path="$CONFIG_HOME/wezterm/theme.toml"
+    # If $1 is empty, only need to ensure symlink to color theme file exists
+    if [[ -z "$1" ]]; then
+        ensure-slink "$CONFIG_HOME/wezterm/colors/dark.toml" "$theme_path"
+    else
+        force-slink "$CONFIG_HOME/wezterm/colors/$1.toml" "$theme_path"
+    fi
+}
+
 setbg-highlight() {
     # $1: 'light' or 'dark'
     local theme_path="$HOME/.highlight/themes/highlight.theme"
@@ -85,6 +96,7 @@ main() {
     done
     setbg-alacritty "$bg"
     setbg-kitty "$bg"
+    setbg-wezterm "$bg"
     setbg-highlight "$bg"
     setbg-nvim "$bg" "$exclude_nvim_processes"
     return 0

@@ -40,6 +40,22 @@ setcolor-kitty() {
     fi
 }
 
+setcolor-wezterm() {
+    # $1: name of the colorscheme
+    local themes_path="$CONFIG_HOME/wezterm/colors"
+    local dark_theme_path="$themes_path/dark.toml"
+    local light_theme_path="$themes_path/light.toml"
+    # If $1 is empty, only need to ensure symlink to color theme files exists
+    if [[ -z "$1" ]]; then
+        ensure-slink "$themes_path/$DEFAULT_COLOR-dark.toml" "$dark_theme_path"
+        ensure-slink "$themes_path/$DEFAULT_COLOR-light.toml" "$light_theme_path"
+    else
+        force-slink "$themes_path/$1-dark.toml" "$dark_theme_path"
+        force-slink "$themes_path/$1-light.toml" "$light_theme_path"
+    fi
+    touch "$CONFIG_HOME/wezterm/wezterm.lua" # Reload config
+}
+
 setcolor-highlight() {
     # $1: name of the colorscheme
     local themes_path="$HOME/.highlight/themes"
@@ -100,6 +116,7 @@ main() {
     done
     setcolor-alacritty "$color"
     setcolor-kitty "$color"
+    setcolor-wezterm "$color"
     setcolor-highlight "$color"
     setcolor-nvim "$color" "$exclude_nvim_processes"
     return 0
