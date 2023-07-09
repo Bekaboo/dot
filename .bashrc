@@ -213,6 +213,7 @@ fi
 
 # Ensure color theme files are correctly linked
 if command -v setbg &>/dev/null; then
+    setcolors
     setbg
 fi
 
