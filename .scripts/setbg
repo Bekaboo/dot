@@ -23,7 +23,11 @@ setbg-kitty() {
     else
         force-slink "$CONFIG_HOME/kitty/themes/$1.conf" "$theme_path"
     fi
-    [[ -n "$(command -v kitty 2>/dev/null)" ]] && kill -SIGUSR1 $(pgrep kitty)
+    if [[ -n "$(command -v kitty 2>/dev/null)" ]]; then
+        for pid in $(pgrep kitty); do
+            kill -SIGUSR1 $pid
+        done
+    fi
 }
 
 setbg-highlight() {

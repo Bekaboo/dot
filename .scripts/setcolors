@@ -33,7 +33,11 @@ setcolor-kitty() {
         force-slink "$themes_path/$1-dark.conf" "$dark_theme_path"
         force-slink "$themes_path/$1-light.conf" "$light_theme_path"
     fi
-    [[ -n "$(command -v kitty 2>/dev/null)" ]] && kill -SIGUSR1 $(pgrep kitty)
+    if [[ -n "$(command -v kitty 2>/dev/null)" ]]; then
+        for pid in $(pgrep kitty); do
+            kill -SIGUSR1 $pid
+        done
+    fi
 }
 
 setcolor-highlight() {
