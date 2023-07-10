@@ -72,6 +72,9 @@ setbg-nvim() {
 }
 
 setbg-plasma() {
+    if [[ -z "$1" ]]; then
+        return 0
+    fi
     # $1: 'light' or 'dark'
     if [[ -n "$(command -v plasma-apply-desktoptheme 2>/dev/null)" ]]; then
         local current_theme=$(plasma-get-current-desktoptheme)
