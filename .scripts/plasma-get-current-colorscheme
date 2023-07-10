@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+
+main() {
+    if [[ -z "$(command -v plasma-apply-colorscheme 2>/dev/null)" ]]; then
+        echo "plasma-apply-colorscheme not found" >&2
+        exit 1
+    fi
+    # $output should be a multi-line string of scheme names like this:
+    # * air
+    # * default
+    # * breeze-dark
+    # * breeze-light (current scheme for this Plasma session)
+    local output=$(plasma-apply-colorscheme --list-schemes 2>/dev/null)
+    local current_scheme_line=$(echo "$output" |
+        grep -F "(current color scheme)")
+    local current_scheme=$(echo "$current_scheme_line" | \
+        sed -n 's/^ \* \(\S\+\) (current color scheme)/\1/p')
+    echo "$current_scheme"
+}
+
+main "$@"

@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+
+main() {
+    if [[ -z "$(command -v plasma-apply-desktoptheme 2>/dev/null)" ]]; then
+        echo "plasma-apply-desktoptheme not found" >&2
+        exit 1
+    fi
+    # $output should be a multi-line string of theme names like this:
+    # * air
+    # * default
+    # * breeze-dark
+    # * breeze-light (current theme for this Plasma session)
+    local output=$(plasma-apply-desktoptheme --list-themes 2>/dev/null)
+    # local output
+    local current_theme_line=$(echo "$output" |
+        grep -F "(current theme for this Plasma session)")
+    local current_theme=$(echo "$current_theme_line" | \
+        sed -n 's/^ \* \(\S\+\) (current theme for this Plasma session)/\1/p')
+    echo "$current_theme"
+}
+
+main "$@"

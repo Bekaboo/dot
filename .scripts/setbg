@@ -71,6 +71,25 @@ setbg-nvim() {
     done
 }
 
+setbg-plasma() {
+    # $1: 'light' or 'dark'
+    if [[ -n "$(command -v plasma-apply-desktoptheme 2>/dev/null)" ]]; then
+        local current_theme=$(plasma-get-current-desktoptheme)
+        local new_theme=$(echo "$current_theme" | sed "s/dark$\|light$/$bg/")
+        if [[ "$current_theme" != "$new_theme" ]]; then
+            plasma-apply-desktoptheme "$new_theme" &>/dev/null
+        fi
+    fi
+    if [[ -n "$(command -v plasma-apply-colorscheme 2>/dev/null)" ]]; then
+        local current_scheme=$(plasma-get-current-colorscheme)
+        local new_scheme=$(echo "$current_scheme" | \
+            sed "s/Dark$\|Light$/${1^}/")
+        if [[ "$current_scheme" != "$new_scheme" ]]; then
+            plasma-apply-colorscheme "$new_scheme" &>/dev/null
+        fi
+    fi
+}
+
 usage() {
     echo 'Usage: setbg [light|dark] [--exclude-nvim-processes=<pid1>,<pid2>,...]'
     exit 1
@@ -99,6 +118,7 @@ main() {
     setbg-wezterm "$bg"
     setbg-highlight "$bg"
     setbg-nvim "$bg" "$exclude_nvim_processes"
+    setbg-plasma "$bg"
     return 0
 }
 
