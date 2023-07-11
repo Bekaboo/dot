@@ -1,0 +1,48 @@
+swipe:
+  3:
+    left:
+      command: "xdotool key ctrl+super+Right" # Goto desktop on the right
+      keypress:
+        SHIFT:
+          command: "xdotool key ctrl+super+shift+Right" # Move window to desktop on the right
+    right:
+      command: "xdotool key ctrl+super+Left"
+      keypress:
+        SHIFT:
+          command: "xdotool key ctrl+super+shift+Left"
+    up:
+      command: "xdotool key ctrl+super+Down"
+      keypress:
+        SHIFT:
+          command: "xdotool key ctrl+super+shift+Down"
+    down:
+      command: "xdotool key ctrl+super+Up"
+      keypress:
+        SHIFT:
+          command: "xdotool key ctrl+super+shift+Up"
+  4:
+    up:
+      command: 'xdotool key super+F8' # Desktop preview
+    down:
+      command: 'xdotool key ctrl+F10' # Window preview
+
+pinch:
+  2:
+    in:
+      command: 'xdotool keydown ctrl click 4 keyup ctrl' # Zoom in
+    out:
+      command: 'xdotool keydown ctrl click 5 keyup ctrl' # Zoom out
+
+# hold:
+#   3:
+#     command: 'xdotool key ctrl+F10' # Window overview
+#   4:
+#     command: 'xdotool key super+F8' # Desktop overview
+
+threshold:
+  swipe: 0.4
+  pinch: 0.4
+
+interval:
+  swipe: 1
+  pinch: 1
