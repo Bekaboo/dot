@@ -17,8 +17,11 @@ main() {
         --group 'Desktop Entry' \
         --key DefaultProfile "$2.profile"
     for service in $(qdbus | grep -iP "$1"); do
-        for session in $(qdbus "$service" | grep -iP '/Sessions/\d'); do
-            qdbus "$service" "$session" setProfile "$2"
+        for session in $(qdbus "$service"); do
+            local methods=$(qdbus "$service" "$session")
+            if [[ "$methods" =~ setProfile ]]; then
+                qdbus "$service" "$session" setProfile "$2"
+            fi
         done
     done
 }
