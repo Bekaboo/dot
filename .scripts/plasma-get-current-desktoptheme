@@ -16,7 +16,7 @@ main() {
     local current_theme_line=$(echo "$output" |
         grep -F "(current theme for this Plasma session)")
     local current_theme=$(echo "$current_theme_line" | \
-        sed -n 's/^ \* \(\S\+\) (current theme for this Plasma session)/\1/p')
+        sed -n 's/^ \* \(.*\) (current theme for this Plasma session)/\1/p')
     echo "$current_theme"
 }
 

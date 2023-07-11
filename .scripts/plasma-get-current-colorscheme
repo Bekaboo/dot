@@ -15,7 +15,7 @@ main() {
     local current_scheme_line=$(echo "$output" |
         grep -F "(current color scheme)")
     local current_scheme=$(echo "$current_scheme_line" | \
-        sed -n 's/^ \* \(\S\+\) (current color scheme)/\1/p')
+        sed -n 's/^ \* \(.*\) (current color scheme)/\1/p')
     echo "$current_scheme"
 }
 
