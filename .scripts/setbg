@@ -72,10 +72,10 @@ setbg-nvim() {
 }
 
 setbg-plasma() {
+    # $1: 'light' or 'dark'
     if [[ -z "$1" ]]; then
         return 0
     fi
-    # $1: 'light' or 'dark'
     if [[ -n "$(command -v plasma-apply-desktoptheme 2>/dev/null)" ]]; then
         local current_theme=$(plasma-get-current-desktoptheme)
         local new_theme=$(echo "$current_theme" | sed "s/dark$\|light$/$bg/")
@@ -85,12 +85,21 @@ setbg-plasma() {
     fi
     if [[ -n "$(command -v plasma-apply-colorscheme 2>/dev/null)" ]]; then
         local current_scheme=$(plasma-get-current-colorscheme)
-        local new_scheme=$(echo "$current_scheme" | \
+        local new_scheme=$(echo "$current_scheme" |
             sed "s/Dark$\|Light$/${1^}/")
         if [[ "$current_scheme" != "$new_scheme" ]]; then
             plasma-apply-colorscheme "$new_scheme" &>/dev/null
         fi
     fi
+}
+
+setbg-konsole-yakuake() {
+    # $1: 'light' or 'dark'
+    if [[ -z "$1" ]]; then
+        return 0
+    fi
+    plasma-set-app-bg konsole "$1" &>/dev/null
+    plasma-set-app-bg yakuake "$1" &>/dev/null
 }
 
 usage() {
@@ -119,6 +128,7 @@ main() {
     setbg-alacritty "$bg"
     setbg-kitty "$bg"
     setbg-wezterm "$bg"
+    setbg-konsole-yakuake "$bg"
     setbg-highlight "$bg"
     setbg-nvim "$bg" "$exclude_nvim_processes"
     setbg-plasma "$bg"

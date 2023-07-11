@@ -91,6 +91,15 @@ setcolor-nvim() {
     done
 }
 
+setcolor-konsole-yakuake() {
+    # $1: name of the colorscheme
+    if [[ -z "$1" ]]; then
+        return 0
+    fi
+    plasma-set-app-colorscheme konsole "$1" &>/dev/null
+    plasma-set-app-colorscheme yakuake "$1" &>/dev/null
+}
+
 usage() {
     echo 'Usage: setcolor [<colorscheme>] [--exclude-nvim-processes=<pid1>,<pid2>,...]'
     exit 1
@@ -117,6 +126,7 @@ main() {
     setcolor-alacritty "$color"
     setcolor-kitty "$color"
     setcolor-wezterm "$color"
+    setcolor-konsole-yakuake "$color"
     setcolor-highlight "$color"
     setcolor-nvim "$color" "$exclude_nvim_processes"
     return 0
