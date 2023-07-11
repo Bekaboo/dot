@@ -93,13 +93,28 @@ setbg-plasma() {
     fi
 }
 
+plasma-set-app-profile-bg() {
+    # $1: name of the app
+    # $2: 'light' or 'dark'
+    if [[ -z "$(command -v kreadconfig5 2>/dev/null)" ]]; then
+        return 1
+    fi
+    local rc="${XDG_CONFIG_HOME:-$HOME/.config}/${1}rc"
+    local current_profile=$(kreadconfig5 --file "$rc" \
+        --group "Desktop Entry" --key "DefaultProfile")
+    local current_profile_name=${current_profile%\.profile}
+    local new_profile_name=$(echo "$current_profile_name" | \
+        sed "s/Dark\|Light/${2^}/" | sed "s/dark\|light/$2/")
+    plasma-set-app-profile "$1" "$new_profile_name"
+}
+
 setbg-konsole-yakuake() {
     # $1: 'light' or 'dark'
     if [[ -z "$1" ]]; then
         return 0
     fi
-    plasma-set-app-bg konsole "$1" &>/dev/null
-    plasma-set-app-bg yakuake "$1" &>/dev/null
+    plasma-set-app-profile-bg konsole "$1"
+    plasma-set-app-profile-bg yakuake "$1"
 }
 
 usage() {

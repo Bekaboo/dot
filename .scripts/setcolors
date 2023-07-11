@@ -91,13 +91,29 @@ setcolor-nvim() {
     done
 }
 
+plasma-set-app-profile-colorscheme() {
+    # $1: name of the app
+    # $2: colorscheme name
+    if [[ -z "$(command -v kreadconfig5 2>/dev/null)" ]]; then
+        return 1
+    fi
+    local rc="${XDG_CONFIG_HOME:-$HOME/.config}/${1}rc"
+    local current_profile=$(kreadconfig5 --file "$rc" \
+        --group "Desktop Entry" --key "DefaultProfile")
+    local current_profile_name=${current_profile%\.profile}
+    local new_profile_name=$(echo "$current_profile_name" | \
+        sed "s/^[A-Z_][a-z_]*\(.*\)\(Light\|Dark\|light\|dark\)/${2^}\1\2/" | \
+        sed "s/^[a-z_]\+\(.*\)\(Light\|Dark\|light\|dark\)/$2\1\2/")
+    plasma-set-app-profile "$1" "$new_profile_name"
+}
+
 setcolor-konsole-yakuake() {
     # $1: name of the colorscheme
     if [[ -z "$1" ]]; then
         return 0
     fi
-    plasma-set-app-colorscheme konsole "$1" &>/dev/null
-    plasma-set-app-colorscheme yakuake "$1" &>/dev/null
+    plasma-set-app-profile-colorscheme konsole "$1"
+    plasma-set-app-profile-colorscheme yakuake "$1"
 }
 
 usage() {
