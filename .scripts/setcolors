@@ -76,7 +76,7 @@ setcolor-highlight() {
 setcolor-nvim() {
     # $1: name of the colorscheme
     if [[ -z "$1" || -z "$(command -v nvim 2>/dev/null)" ]]; then
-        return 0
+        return 1
     fi
     # Spawn an nvim instance to write the background to shada file
     nvim --headless --noplugin +"let g:COLORSNAME='$1'" +wshada +quit
@@ -121,7 +121,7 @@ switch-profile-colorscheme() {
 setcolor-konsole-yakuake() {
     # $1: name of the colorscheme
     if [[ -z "$1" ]]; then
-        return 0
+        return 1
     fi
     switch-profile-colorscheme konsole "$1"
     switch-profile-colorscheme yakuake "$1"
