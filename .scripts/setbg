@@ -146,12 +146,12 @@ setbg-okular() {
         return 1
     fi
     # Code adapted from https://gitlab.com/LADlSLAV/yabotss
+    local changecolors=$([[ $1 == dark ]] && echo true || echo false)
     kwriteconfig5 --file "$CONFIG_HOME/okularpartrc" \
         --group Document \
-        --key ChangeColors \
-        --type bool "$1"
+        --key ChangeColors "$changecolors"
     qdbus-call-service-method okular slotSetChangeColors \
-        "$([[ $1 == dark ]] && echo true || echo false)"
+        "$changecolors"
 }
 
 setbg-vscode() {
