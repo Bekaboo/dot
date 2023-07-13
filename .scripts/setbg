@@ -96,6 +96,18 @@ setbg-plasma() {
     fi
 }
 
+get-new-profile-name() {
+    # $1: path to config file
+    # $2: 'light' or 'dark'
+    local current_profile=$(kreadconfig5 --file "$1" \
+        --group 'Desktop Entry' --key 'DefaultProfile')
+    local current_profile_name=${current_profile%\.profile}
+    local new_profile_name=$(echo "$current_profile_name" | \
+        sed "s/Dark\|Light/${2^}/" | \
+        sed "s/dark\|light/$2/")
+    echo "$new_profile_name"
+}
+
 switch-profile-bg() {
     # $1: name of the app
     # $2: 'light' or 'dark'
@@ -104,12 +116,7 @@ switch-profile-bg() {
         return 1
     fi
     local rc="$CONFIG_HOME/${1}rc"
-    local current_profile=$(kreadconfig5 --file "$rc" \
-        --group "Desktop Entry" --key "DefaultProfile")
-    local current_profile_name=${current_profile%\.profile}
-    local new_profile_name=$(echo "$current_profile_name" | \
-        sed "s/Dark\|Light/${2^}/" | \
-        sed "s/dark\|light/$2/")
+    local new_profile_name=$(get-new-profile-name "$rc" "$2")
     kwriteconfig5 --file "$rc" \
         --group 'Desktop Entry' \
         --key DefaultProfile "$new_profile_name.profile"
@@ -118,12 +125,18 @@ switch-profile-bg() {
 
 setbg-konsole-yakuake() {
     # $1: 'light' or 'dark'
-    if [[ -z "$1" ]]; then
+    if [[ -z "$1" || -z $(command -v kreadconfig5 2>/dev/null) || \
+            -z $(command -v kwriteconfig5 2>/dev/null) ]]; then
         return 0
     fi
     switch-profile-bg konsole "$1"
     switch-profile-bg yakuake "$1"
-    switch-profile-bg dolphin "$1"
+
+    # switch profiles for embedded konsole in dolphin and kate
+    local konsolerc="$CONFIG_HOME/konsolerc"
+    local new_profile_name=$(get-new-profile-name "$konsolerc" "$1")
+    qdbus-call-service-method dolphin setProfile "$new_profile_name"
+    qdbus-call-service-method kate setProfile "$new_profile_name"
 }
 
 setbg-okular() {

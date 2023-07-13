@@ -91,6 +91,18 @@ setcolor-nvim() {
     done
 }
 
+get-new-profile-name() {
+    # $1: path to config file
+    # $2: name of the colorscheme
+    local current_profile=$(kreadconfig5 --file "$1" \
+        --group 'Desktop Entry' --key 'DefaultProfile')
+    local current_profile_name=${current_profile%\.profile}
+    local new_profile_name=$(echo "$current_profile_name" | \
+        sed "s/^[A-Z_][a-z_]*\(.*\)\(Light\|Dark\|light\|dark\)/${2^}\1\2/" | \
+        sed "s/^[a-z_]\+\(.*\)\(Light\|Dark\|light\|dark\)/$2\1\2/")
+    echo "$new_profile_name"
+}
+
 switch-profile-colorscheme() {
     # $1: name of the app
     # $2: colorscheme name
@@ -99,12 +111,7 @@ switch-profile-colorscheme() {
         return 1
     fi
     local rc="$CONFIG_HOME/${1}rc"
-    local current_profile=$(kreadconfig5 --file "$rc" \
-        --group "Desktop Entry" --key "DefaultProfile")
-    local current_profile_name=${current_profile%\.profile}
-    local new_profile_name=$(echo "$current_profile_name" | \
-        sed "s/^[A-Z_][a-z_]*\(.*\)\(Light\|Dark\|light\|dark\)/${2^}\1\2/" | \
-        sed "s/^[a-z_]\+\(.*\)\(Light\|Dark\|light\|dark\)/$2\1\2/")
+    local new_profile_name=$(get-new-profile-name "$rc" "$2")
     kwriteconfig5 --file "$rc" \
         --group 'Desktop Entry' \
         --key DefaultProfile "$new_profile_name.profile"
@@ -118,6 +125,12 @@ setcolor-konsole-yakuake() {
     fi
     switch-profile-colorscheme konsole "$1"
     switch-profile-colorscheme yakuake "$1"
+
+    # switch profiles for embedded konsole in dolphin and kate
+    local konsolerc="$CONFIG_HOME/konsolerc"
+    local new_profile_name=$(get-new-profile-name "$konsolerc" "$1")
+    qdbus-call-service-method dolphin setProfile "$new_profile_name"
+    qdbus-call-service-method kate setProfile "$new_profile_name"
 }
 
 usage() {
