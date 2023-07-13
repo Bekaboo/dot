@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+
+main() {
+    # $1: name of the service
+    # $2: method name
+    # $3, $4, ...: method arguments
+    if [[ -z "$(command -v qdbus 2>/dev/null)" ]]; then
+        echo "qdbus not found" >&2
+        exit 1
+    fi
+    if [[ -z "$1" || -z "$2" ]]; then
+        echo "Usage: qdbus-call-service-method <service name> <method name> [method arguments]" >&2
+        exit 1
+    fi
+    for service in $(qdbus | grep -iP "$1"); do
+        for obj in $(qdbus "$service"); do
+            local methods=$(qdbus "$service" "$obj")
+            if [[ "$methods" =~ "$2" ]]; then
+                qdbus "$service" "$obj" "$2" "${@:3}"
+            fi
+        done
+    done
+}
+
+main "$@"

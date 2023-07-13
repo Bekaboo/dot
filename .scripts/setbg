@@ -78,34 +78,42 @@ setbg-plasma() {
     fi
     if [[ -n "$(command -v plasma-apply-desktoptheme 2>/dev/null)" ]]; then
         local current_theme=$(plasma-get-current-desktoptheme)
-        local new_theme=$(echo "$current_theme" | sed "s/dark$\|light$/$bg/")
+        local new_theme=$(echo "$current_theme" | \
+            sed "s/dark\|light/$1/" | \
+            sed "s/Dark\|Light/${1^}/")
         if [[ "$current_theme" != "$new_theme" ]]; then
             plasma-apply-desktoptheme "$new_theme" &>/dev/null
         fi
     fi
     if [[ -n "$(command -v plasma-apply-colorscheme 2>/dev/null)" ]]; then
         local current_scheme=$(plasma-get-current-colorscheme)
-        local new_scheme=$(echo "$current_scheme" |
-            sed "s/Dark$\|Light$/${1^}/")
+        local new_scheme=$(echo "$current_scheme" | \
+            sed "s/dark\|light/$1/" | \
+            sed "s/Dark\|Light/${1^}/")
         if [[ "$current_scheme" != "$new_scheme" ]]; then
             plasma-apply-colorscheme "$new_scheme" &>/dev/null
         fi
     fi
 }
 
-plasma-set-app-profile-bg() {
+switch-profile-bg() {
     # $1: name of the app
     # $2: 'light' or 'dark'
-    if [[ -z "$(command -v kreadconfig5 2>/dev/null)" ]]; then
+    if [[ -z "$(command -v kreadconfig5 2>/dev/null)" || \
+            -z "$(command -v kwriteconfig5 2>/dev/null)" ]]; then
         return 1
     fi
-    local rc="${XDG_CONFIG_HOME:-$HOME/.config}/${1}rc"
+    local rc="$CONFIG_HOME/${1}rc"
     local current_profile=$(kreadconfig5 --file "$rc" \
         --group "Desktop Entry" --key "DefaultProfile")
     local current_profile_name=${current_profile%\.profile}
     local new_profile_name=$(echo "$current_profile_name" | \
-        sed "s/Dark\|Light/${2^}/" | sed "s/dark\|light/$2/")
-    plasma-set-app-profile "$1" "$new_profile_name"
+        sed "s/Dark\|Light/${2^}/" | \
+        sed "s/dark\|light/$2/")
+    kwriteconfig5 --file "$rc" \
+        --group 'Desktop Entry' \
+        --key DefaultProfile "$new_profile_name.profile"
+    qdbus-call-service-method "$1" setProfile "$new_profile_name"
 }
 
 setbg-konsole-yakuake() {
@@ -113,8 +121,24 @@ setbg-konsole-yakuake() {
     if [[ -z "$1" ]]; then
         return 0
     fi
-    plasma-set-app-profile-bg konsole "$1"
-    plasma-set-app-profile-bg yakuake "$1"
+    switch-profile-bg konsole "$1"
+    switch-profile-bg yakuake "$1"
+    switch-profile-bg dolphin "$1"
+}
+
+setbg-okular() {
+    # $1: 'light' or 'dark'
+    if [[ -z "$1" || -z "$(command -v okular 2>/dev/null)" || \
+            -z "$(command -v kwriteconfig5 2>/dev/null)" ]]; then
+        return 0
+    fi
+    # Code adapted from https://gitlab.com/LADlSLAV/yabotss
+    kwriteconfig5 --file "$CONFIG_HOME/okularpartrc" \
+        --group Document \
+        --key ChangeColors \
+        --type bool "$1"
+    qdbus-call-service-method okular slotSetChangeColors \
+        "$([[ $1 == dark ]] && echo true || echo false)"
 }
 
 usage() {
@@ -147,6 +171,7 @@ main() {
     setbg-highlight "$bg"
     setbg-nvim "$bg" "$exclude_nvim_processes"
     setbg-plasma "$bg"
+    setbg-okular "$bg"
     return 0
 }
 
