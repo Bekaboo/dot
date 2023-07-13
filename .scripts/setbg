@@ -56,7 +56,7 @@ setbg-nvim() {
     # $1: 'light' or 'dark'
     # $2: comma-separated list of pids to exclude
     if [[ -z "$1" || -z "$(command -v nvim 2>/dev/null)" ]]; then
-        return 0
+        return 1
     fi
     # Spawn an nvim instance to write the background to shada file
     nvim --headless --noplugin +"let g:BACKGROUND='$1'" +wshada +quit
@@ -74,7 +74,7 @@ setbg-nvim() {
 setbg-plasma() {
     # $1: 'light' or 'dark'
     if [[ -z "$1" ]]; then
-        return 0
+        return 1
     fi
     if [[ -n "$(command -v plasma-apply-desktoptheme 2>/dev/null)" ]]; then
         local current_theme=$(plasma-get-current-desktoptheme)
@@ -127,7 +127,7 @@ setbg-konsole-yakuake() {
     # $1: 'light' or 'dark'
     if [[ -z "$1" || -z $(command -v kreadconfig5 2>/dev/null) || \
             -z $(command -v kwriteconfig5 2>/dev/null) ]]; then
-        return 0
+        return 1
     fi
     switch-profile-bg konsole "$1"
     switch-profile-bg yakuake "$1"
@@ -143,7 +143,7 @@ setbg-okular() {
     # $1: 'light' or 'dark'
     if [[ -z "$1" || -z "$(command -v okular 2>/dev/null)" || \
             -z "$(command -v kwriteconfig5 2>/dev/null)" ]]; then
-        return 0
+        return 1
     fi
     # Code adapted from https://gitlab.com/LADlSLAV/yabotss
     kwriteconfig5 --file "$CONFIG_HOME/okularpartrc" \
