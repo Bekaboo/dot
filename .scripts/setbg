@@ -154,6 +154,26 @@ setbg-okular() {
         "$([[ $1 == dark ]] && echo true || echo false)"
 }
 
+setbg-vscode() {
+    # $1: 'light' or 'dark'
+    local rc="$CONFIG_HOME/Code/User/settings.json"
+    if [[ -z "$1" || -z "$(command -v code 2>/dev/null)" || \
+            -z "$command -v jq 2>/dev/null" || \
+            ! -e "$rc" ]]; then
+        return 1
+    fi
+    local theme=$(jq -r '."workbench.colorTheme"' "$rc")
+    [[ -z "$theme" ]] && theme='Default Dark Modern'
+    local new_theme=$(echo "$theme" | \
+        sed "s/dark\|light/$1/" | \
+        sed "s/Dark\|Light/${1^}/")
+    if [[ "$theme" != "$new_theme" ]]; then
+        local tmp=$(mktemp)
+        jq ".\"workbench.colorTheme\" = \"$new_theme\"" "$rc" > "$tmp" && \
+            mv "$tmp" "$rc"
+    fi
+}
+
 usage() {
     echo 'Usage: setbg [light|dark] [--exclude-nvim-processes=<pid1>,<pid2>,...]'
     exit 1
@@ -183,6 +203,7 @@ main() {
     setbg-konsole-yakuake "$bg"
     setbg-highlight "$bg"
     setbg-nvim "$bg" "$exclude_nvim_processes"
+    setbg-vscode "$bg"
     setbg-plasma "$bg"
     setbg-okular "$bg"
     return 0
