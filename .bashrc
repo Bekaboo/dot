@@ -217,5 +217,9 @@ if command -v setbg &>/dev/null; then
     setbg
 fi
 
+# Source conda if it exists
+[[ -f "/opt/miniconda3/etc/profile.d/conda.sh" ]] \
+    && source "/opt/miniconda3/etc/profile.d/conda.sh"
+
 # Automatically enable or disable python virtualenvs
 pyenv
