@@ -83,25 +83,22 @@ set incsearch
 
 nnoremap <silent><C-l> <C-l>:set nohlsearch<CR>
 
-nnoremap <silent>n  n:set hlsearch<CR>
-nnoremap <silent>N  N:set hlsearch<CR>
-nnoremap <silent>*  *:set hlsearch<CR>
-nnoremap <silent>#  #:set hlsearch<CR>
-nnoremap <silent>/  /:set hlsearch<CR>
-nnoremap <silent>?  ?:set hlsearch<CR>
-nnoremap <silent>g* g*:set hlsearch<CR>
-nnoremap <silent>g# g#:set hlsearch<CR>
+nnoremap <silent> n  n:set hlsearch<CR>
+nnoremap <silent> N  N:set hlsearch<CR>
+nnoremap <silent> *  *:set hlsearch<CR>
+nnoremap <silent> #  #:set hlsearch<CR>
+nnoremap <silent> g* g*:set hlsearch<CR>
+nnoremap <silent> g# g#:set hlsearch<CR>
 
-xnoremap <silent>n  n:set hlsearch<CR>n
-xnoremap <silent>N  N:set hlsearch<CR>N
-xnoremap <silent>*  *:set hlsearch<CR>*
-xnoremap <silent>#  #:set hlsearch<CR>#
-xnoremap <silent>/  /:set hlsearch<CR>/
-xnoremap <silent>?  ?:set hlsearch<CR>?
-xnoremap <silent>g* g*:set hlsearch<CR>g*
-xnoremap <silent>g# g#:set hlsearch<CR>g#
+xnoremap <silent> n  n:set hlsearch<CR>
+xnoremap <silent> N  N:set hlsearch<CR>
+xnoremap <silent> *  *:set hlsearch<CR>
+xnoremap <silent> #  #:set hlsearch<CR>
+xnoremap <silent> g* g*:set hlsearch<CR>
+xnoremap <silent> g# g#:set hlsearch<CR>
 
 augroup AutoHlSearch
     au!
-    au InsertEnter * set nohlsearch
+    au InsertEnter  *   set nohlsearch
+    au CmdlineEnter /,? set hlsearch
 augroup END
