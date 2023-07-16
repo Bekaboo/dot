@@ -44,22 +44,22 @@ Color=213,170,49
 Color=200,133,0
 
 [Color4]
-Color=41,100,122
+Color=151,192,220
 
 [Color4Faint]
 Color=80,173,226
 
 [Color4Intense]
-Color=118,162,194
+Color=151,192,220
 
 [Color5]
-Color=157,123,202
+Color=102,102,168
 
 [Color5Faint]
 Color=223,92,158
 
 [Color5Intense]
-Color=157,123,202
+Color=102,102,168
 
 [Color6]
 Color=59,143,132
