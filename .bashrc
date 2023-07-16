@@ -3,8 +3,6 @@
 
 [[ $- != *i* ]] && return
 
-[ -r /usr/share/bash-completion/bash_completion ] && . /usr/share/bash-completion/bash_completion
-
 # Change the window title of X terminals
 case ${TERM} in
     xterm*|rxvt*|Eterm*|aterm|kterm|gnome*|interix|konsole*)
@@ -15,8 +13,6 @@ case ${TERM} in
         ;;
 esac
 
-use_color=true
-
 # Set colorful PS1 only on colorful terminals.
 # dircolors --print-database uses its own built-in database
 # instead of using /etc/DIR_COLORS.  Try to use the external file
@@ -26,59 +22,28 @@ safe_term=${TERM//[^[:alnum:]]/?}   # sanitize TERM
 match_lhs=""
 [[ -f ~/.dir_colors   ]] && match_lhs="${match_lhs}$(<~/.dir_colors)"
 [[ -f /etc/DIR_COLORS ]] && match_lhs="${match_lhs}$(</etc/DIR_COLORS)"
-[[ -z ${match_lhs}    ]] \
-    && type -P dircolors >/dev/null \
-    && match_lhs=$(dircolors --print-database)
-[[ $'\n'${match_lhs} == *$'\n'"TERM "${safe_term}* ]] && use_color=true
-
-if ${use_color} ; then
-    # Enable colors for ls, etc. Prefer ~/.dir_colors
-    if type -P dircolors >/dev/null ; then
-        if [[ -f ~/.dir_colors ]] ; then
-            eval $(dircolors -b ~/.dir_colors)
-        elif [[ -f /etc/DIR_COLORS ]] ; then
-            eval $(dircolors -b /etc/DIR_COLORS)
-        fi
-    fi
-
-    if [[ ${EUID} == 0 ]] ; then
-        PS1='\[\033[01;31m\][\h\[\033[01;36m\] \W\[\033[01;31m\]]\$\[\033[00m\] '
-    else
-        PS1='\[\033[01;35m\][\u@\h\[\033[01;37m\] \W\[\033[01;35m\]]\$\[\033[00m\] '
-    fi
-
-    alias ls='ls --color=auto'
-    alias grep='grep --colour=auto'
-    alias egrep='egrep --colour=auto'
-    alias fgrep='fgrep --colour=auto'
-else
-    if [[ ${EUID} == 0 ]] ; then
-        # show root@ when we don't have colors
-        PS1='\u@\h \W \$ '
-    else
-        PS1='\u@\h \w \$ '
+[[ -z ${match_lhs}    ]] && type -P dircolors >/dev/null &&
+    match_lhs=$(dircolors --print-database)
+[[ $'\n'${match_lhs} == *$'\n'"TERM "${safe_term}* ]]
+# Enable colors for ls, etc. Prefer ~/.dir_colors
+if type -P dircolors >/dev/null ; then
+    if [[ -f ~/.dir_colors ]] ; then
+        eval $(dircolors -b ~/.dir_colors)
+    elif [[ -f /etc/DIR_COLORS ]] ; then
+        eval $(dircolors -b /etc/DIR_COLORS)
     fi
 fi
-
-unset use_color safe_term match_lhs sh
+if [[ ${EUID} == 0 ]] ; then
+    PS1='\[\033[01;31m\][\h\[\033[01;36m\] \W\[\033[01;31m\]]\$\[\033[00m\] '
+else
+    PS1='\[\033[01;35m\][\u@\h\[\033[01;37m\] \W\[\033[01;35m\]]\$\[\033[00m\] '
+fi
+unset safe_term match_lhs
 
 xhost +local:root > /dev/null 2>&1
 
-# Bash won't get SIGWINCH if another process is in the foreground.
-# Enable checkwinsize so that bash will check the terminal size when
-# it regains control.  #65623
-# http://cnswww.cns.cwru.edu/~chet/bash/FAQ (E11)
-shopt -s checkwinsize
-
-shopt -s expand_aliases
-
-# export QT_SELECT=4
-
-# Enable history appending instead of overwriting.  #139609
-shopt -s histappend
-
 # TTY Terminal Colors
-if [ "$TERM" = "linux" ]; then
+if [[ "$TERM" == "linux" ]]; then
     echo -en "\e]P0000000" #black
     echo -en "\e]P82B2B2B" #darkgrey
     echo -en "\e]P1D75F5F" #darkred
@@ -98,14 +63,40 @@ if [ "$TERM" = "linux" ]; then
     clear #for background artifacting
 fi
 
-# 'less' highlights
-export LESS_TERMCAP_mb=$'\e[1;32m'
-export LESS_TERMCAP_md=$'\e[1;32m'
-export LESS_TERMCAP_me=$'\e[0m'
-export LESS_TERMCAP_se=$'\e[0m'
-export LESS_TERMCAP_so=$'\e[01;33m'
-export LESS_TERMCAP_ue=$'\e[0m'
-export LESS_TERMCAP_us=$'\e[1;4;34m'
+[[ -r '/usr/share/bash-completion/bash_completion' ]] &&
+    source '/usr/share/bash-completion/bash_completion'
+
+# Source conda if it exists
+[[ -r '/opt/miniconda3/etc/profile.d/conda.sh' ]] &&
+    source '/opt/miniconda3/etc/profile.d/conda.sh'
+
+# Add execution permission to scripts
+if [[ -d '~/.scripts' ]]; then
+    chmod +x ~/.scripts/*
+fi
+
+# Ensure color theme files are correctly linked
+[[ -n "$(command -v setbg 2>/dev/null)" ]] && setbg
+[[ -n "$(command -v setcolors 2>/dev/null)" ]] && setcolors
+
+# Prevent Vim <Esc> lagging
+bind 'set keyseq-timeout 1'
+
+# Launch fish shell for interactive sessions
+if [[ "$(ps --no-header --pid=$PPID --format=comm)" != fish &&
+        -z "${BASH_EXECUTION_STRING}" &&
+        -n "$(command -v fish 2>/dev/null)" ]]; then
+    shopt -q login_shell && exec fish --login || exec fish
+fi
+
+# Bash won't get SIGWINCH if another process is in the foreground.
+# Enable checkwinsize so that bash will check the terminal size when
+# it regains control.  #65623
+# http://cnswww.cns.cwru.edu/~chet/bash/FAQ (E11)
+shopt -s checkwinsize
+shopt -s expand_aliases
+shopt -s histappend
+shopt -s globstar
 
 # Automatically activate or deactivate python virtualenvs
 pyenv() {
@@ -145,6 +136,7 @@ pyenv() {
         deactivate
     fi
 }
+pyenv
 
 # 'cd' improved, 'cd' and 'ls', then automatically activate or deactivate
 # python virtualenvs
@@ -158,6 +150,10 @@ alias sudo="sudo -E "
 alias cd="cdim"
 alias cp="cp -i"        # confirm before overwriting something
 alias rm="\\trash"
+alias grep="grep --colour=auto"
+alias egrep="egrep --colour=auto"
+alias fgrep="fgrep --colour=auto"
+alias ls="ls --color=auto"
 alias l="ls"
 alias ll="ls -l"
 alias lc="wc -l"
@@ -196,30 +192,3 @@ dot() {
 source "/usr/share/bash-completion/completions/git"
 __git_complete dot __git_main
 dot config --local status.showUntrackedFiles no
-# dfiles config --local filter.plasma_appletsrc_filter.clean "sed '/popupWidth=\|popupHeight=\|PreloadWeight=/d'"
-# dfiles config --local filter.plasma_appletsrc_filter.smudge "sed '/popupWidth=\|popupHeight=\|PreloadWeight=/d'"
-# dfiles config --local filter.plasma_scale_filter.clean "sed '/forceFontDPI=\|ScaleFactor=\|ScreenScaleFactors=/d'"
-# dfiles config --local filter.plasma_scale_filter.smudge "sed '/forceFontDPI=\|ScaleFactor=\|ScreenScaleFactors=/d'"
-# dfiles config --local filter.plasma_cursor_size_filter.clean "sed '/cursorSize=\|cursor-theme-size=/d'"
-# dfiles config --local filter.plasma_cursor_size_filter.smudge "sed '/cursorSize=\|cursor-theme-size=/d'"
-
-# Prevent Vim <Esc> lagging
-bind 'set keyseq-timeout 1'
-
-# Add execution permission to scripts
-if [[ -d ~/.scripts ]]; then
-    chmod +x ~/.scripts/*
-fi
-
-# Ensure color theme files are correctly linked
-if command -v setbg &>/dev/null; then
-    setcolors
-    setbg
-fi
-
-# Source conda if it exists
-[[ -f "/opt/miniconda3/etc/profile.d/conda.sh" ]] \
-    && source "/opt/miniconda3/etc/profile.d/conda.sh"
-
-# Automatically enable or disable python virtualenvs
-pyenv
