@@ -5,3 +5,13 @@ gui:
       - bold
     inactiveBorderColor:
       - black
+    optionsTextColor:
+      - white
+    selectedLineBgColor:
+      - white
+      - bold
+    selectedRangeBgColor:
+      - white
+      - bold
+    unstagedChangesColor:
+      - magenta
