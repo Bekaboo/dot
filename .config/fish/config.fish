@@ -37,7 +37,7 @@ set -g fish_color_redirection               yellow
 set -g fish_color_search_match              normal  --background=yellow
 set -g fish_color_selection                 white   --background=brblack --bold
 set -g fish_color_status                    black   --background=yellow
-set -g fish_color_status_0                  black   --background=brblack
+set -g fish_color_status_0                  black   --background=white
 set -g fish_color_user                      brgreen
 set -g fish_color_valid_path                green
 set -g fish_color_vcs                       white   --background=blue
