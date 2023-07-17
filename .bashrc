@@ -3,6 +3,52 @@
 
 [[ $- != *i* ]] && return
 
+xhost +local:root > /dev/null 2>&1
+
+# Enable colors for ls, etc. Prefer ~/.dir_colors
+if type -P dircolors >/dev/null ; then
+    if [[ -f ~/.dir_colors ]] ; then
+        eval $(dircolors -b ~/.dir_colors)
+    elif [[ -f /etc/DIR_COLORS ]] ; then
+        eval $(dircolors -b /etc/DIR_COLORS)
+    fi
+fi
+
+# TTY Terminal Colors
+if [[ "$TERM" == "linux" ]]; then
+    echo -en "\e]P02E3440" #black
+    echo -en "\e]P899AAC8" #darkgrey
+    echo -en "\e]P1D08770" #darkred
+    echo -en "\e]P9D08770" #red
+    echo -en "\e]P279968B" #darkgreen
+    echo -en "\e]PA79968B" #green
+    echo -en "\e]P3EBCB8B" #brown
+    echo -en "\e]PBEBCB8B" #yellow
+    echo -en "\e]P4434C5E" #darkblue
+    echo -en "\e]PC99AAC8" #blue
+    echo -en "\e]P5E5E7EC" #darkmagenta
+    echo -en "\e]PDE5E7EC" #magenta
+    echo -en "\e]P681A1C0" #darkcyan
+    echo -en "\e]PE81A1C0" #cyan
+    echo -en "\e]P799AAC8" #lightgrey
+    echo -en "\e]PE99AAC8" #white
+    clear #for background artifacting
+fi
+
+# Add execution permission to scripts
+[[ -d '~/.scripts' ]] && chmod +x ~/.scripts/*
+
+# Ensure color theme files are correctly linked
+[[ -n "$(command -v setbg 2>/dev/null)" ]] && setbg
+[[ -n "$(command -v setcolors 2>/dev/null)" ]] && setcolors
+
+# Launch fish shell for interactive sessions
+if [[ "$(ps --no-header --pid=$PPID --format=comm)" != fish &&
+        -z "${BASH_EXECUTION_STRING}" &&
+        -n "$(command -v fish 2>/dev/null)" ]]; then
+    shopt -q login_shell && exec fish --login || exec fish
+fi
+
 # Change the window title of X terminals
 case ${TERM} in
     xterm*|rxvt*|Eterm*|aterm|kterm|gnome*|interix|konsole*)
@@ -25,69 +71,12 @@ match_lhs=""
 [[ -z ${match_lhs}    ]] && type -P dircolors >/dev/null &&
     match_lhs=$(dircolors --print-database)
 [[ $'\n'${match_lhs} == *$'\n'"TERM "${safe_term}* ]]
-# Enable colors for ls, etc. Prefer ~/.dir_colors
-if type -P dircolors >/dev/null ; then
-    if [[ -f ~/.dir_colors ]] ; then
-        eval $(dircolors -b ~/.dir_colors)
-    elif [[ -f /etc/DIR_COLORS ]] ; then
-        eval $(dircolors -b /etc/DIR_COLORS)
-    fi
-fi
 if [[ ${EUID} == 0 ]] ; then
     PS1='\[\033[01;31m\][\h\[\033[01;36m\] \W\[\033[01;31m\]]\$\[\033[00m\] '
 else
     PS1='\[\033[01;35m\][\u@\h\[\033[01;37m\] \W\[\033[01;35m\]]\$\[\033[00m\] '
 fi
 unset safe_term match_lhs
-
-xhost +local:root > /dev/null 2>&1
-
-# TTY Terminal Colors
-if [[ "$TERM" == "linux" ]]; then
-    echo -en "\e]P0000000" #black
-    echo -en "\e]P82B2B2B" #darkgrey
-    echo -en "\e]P1D75F5F" #darkred
-    echo -en "\e]P9E33636" #red
-    echo -en "\e]P287AF5F" #darkgreen
-    echo -en "\e]PA98E34D" #green
-    echo -en "\e]P3D7AF87" #brown
-    echo -en "\e]PBFFD75F" #yellow
-    echo -en "\e]P48787AF" #darkblue
-    echo -en "\e]PC7373C9" #blue
-    echo -en "\e]P5BD53A5" #darkmagenta
-    echo -en "\e]PDD633B2" #magenta
-    echo -en "\e]P65FAFAF" #darkcyan
-    echo -en "\e]PE44C9C9" #cyan
-    echo -en "\e]P7E5E5E5" #lightgrey
-    echo -en "\e]PEEEEEEE" #white
-    clear #for background artifacting
-fi
-
-[[ -r '/usr/share/bash-completion/bash_completion' ]] &&
-    source '/usr/share/bash-completion/bash_completion'
-
-# Source conda if it exists
-[[ -r '/opt/miniconda3/etc/profile.d/conda.sh' ]] &&
-    source '/opt/miniconda3/etc/profile.d/conda.sh'
-
-# Add execution permission to scripts
-if [[ -d '~/.scripts' ]]; then
-    chmod +x ~/.scripts/*
-fi
-
-# Ensure color theme files are correctly linked
-[[ -n "$(command -v setbg 2>/dev/null)" ]] && setbg
-[[ -n "$(command -v setcolors 2>/dev/null)" ]] && setcolors
-
-# Prevent Vim <Esc> lagging
-bind 'set keyseq-timeout 1'
-
-# Launch fish shell for interactive sessions
-if [[ "$(ps --no-header --pid=$PPID --format=comm)" != fish &&
-        -z "${BASH_EXECUTION_STRING}" &&
-        -n "$(command -v fish 2>/dev/null)" ]]; then
-    shopt -q login_shell && exec fish --login || exec fish
-fi
 
 # Bash won't get SIGWINCH if another process is in the foreground.
 # Enable checkwinsize so that bash will check the terminal size when
@@ -185,6 +174,9 @@ alias clean-tmp="find /tmp -ctime +7 -exec rm -rf {} +"
 # Save KDE plasma session
 alias plasma-save-session="qdbus org.kde.ksmserver /KSMServer saveCurrentSession"
 
+# Prevent Vim <Esc> lagging
+bind 'set keyseq-timeout 1'
+
 # Manage dotfiles
 dot() {
     /usr/bin/git --git-dir="$HOME/.dot" --work-tree="$HOME" "$@"
@@ -192,3 +184,10 @@ dot() {
 source "/usr/share/bash-completion/completions/git"
 __git_complete dot __git_main
 dot config --local status.showUntrackedFiles no
+
+[[ -r '/usr/share/bash-completion/bash_completion' ]] &&
+    source '/usr/share/bash-completion/bash_completion'
+
+# Source conda if it exists
+[[ -r '/opt/miniconda3/etc/profile.d/conda.sh' ]] &&
+    source '/opt/miniconda3/etc/profile.d/conda.sh'
