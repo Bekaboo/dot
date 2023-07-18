@@ -133,6 +133,24 @@ setcolor-konsole-yakuake() {
     qdbus-call-service-method kate setProfile "$new_profile_name"
 }
 
+setcolor-fish() {
+    # $1: name of the colorscheme
+    local themes_path="$CONFIG_HOME/fish/themes"
+    local dark_theme_path="$themes_path/Dark.theme"
+    local light_theme_path="$themes_path/Light.theme"
+    if [[ -z "$1" ]]; then
+        ensure-slink "$themes_path/${DEFAULT_COLOR^} Dark.theme" \
+            "$dark_theme_path"
+        ensure-slink "$themes_path/${DEFAULT_COLOR^} Light.theme" \
+            "$light_theme_path"
+    else
+        force-slink "$themes_path/${1^} Dark.theme" "$dark_theme_path"
+        force-slink "$themes_path/${1^} Light.theme" "$light_theme_path"
+    fi
+    [[ -n "$(command -v fish 2>/dev/null)" ]] &&
+        fish -c 'set -U __fish_reload_theme "$(head -c 16 /dev/urandom | base32)"'
+}
+
 usage() {
     echo 'Usage: setcolor [<colorscheme>] [--exclude-nvim-processes=<pid1>,<pid2>,...]'
     exit 1
@@ -162,6 +180,7 @@ main() {
     setcolor-konsole-yakuake "$color"
     setcolor-highlight "$color"
     setcolor-nvim "$color" "$exclude_nvim_processes"
+    setcolor-fish "$color"
     return 0
 }
 

@@ -1,0 +1,41 @@
+# name: 'Cockatoo Dark'
+# preferred_background: 2e3440
+
+fish_color_autosuggestion            606d86 --italics
+fish_color_cancel                           --reverse
+fish_color_command                   e6bb86
+fish_color_comment                   606d86
+fish_color_cwd                       e5e5eb --background=334154 --bold
+fish_color_cwd_root                  e87c69 --background=334154 --bold
+fish_color_end                       a4bd84
+fish_color_error                     e87c69
+fish_color_escape                    f0a16c
+fish_color_hg_added                  a4bd84
+fish_color_hg_clean                  a4bd84
+fish_color_hg_copied                 8f9fbc
+fish_color_hg_deleted                e87c69
+fish_color_hg_dirty                  e87c69
+fish_color_hg_modified               79ada7
+fish_color_hg_renamed                8f9fbc
+fish_color_hg_unmerged               e87c69
+fish_color_hg_untracked              e5e5eb
+fish_color_history_current                  --bold
+fish_color_host                      normal
+fish_color_host_remote               86aadc
+fish_color_normal                    normal
+fish_color_operator                  f0a16c
+fish_color_param                     caafeb
+fish_color_quote                     7fa0af
+fish_color_redirection               f49ba7
+fish_color_search_match              normal --background=334154
+fish_color_selection                 e5e5eb --background=e5e5eb --bold
+fish_color_status                    262a34 --background=f49ba7
+fish_color_status_0                  262a34 --background=606d86
+fish_color_user                      a4bd84
+fish_color_valid_path                a4bd84
+fish_color_vcs                       8f9fbc --background=334154
+fish_pager_color_completion          normal
+fish_pager_color_description         e5e5eb
+fish_pager_color_prefix              normal --bold              --underline
+fish_pager_color_progress            8f9fbc --bold
+fish_pager_color_selected_background 313742 --bold

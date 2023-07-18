@@ -1,0 +1,41 @@
+# name: 'Nano Dark'
+# preferred_background: 2e3440
+
+fish_color_autosuggestion            99aac8 --italics
+fish_color_cancel                           --reverse
+fish_color_command                   e5e7ec --bold
+fish_color_comment                   99aac8
+fish_color_cwd                       e5e7ec --background=434c5e --bold
+fish_color_cwd_root                  d08770 --background=434c5e --bold
+fish_color_end                       79968b
+fish_color_error                     d08770
+fish_color_escape                    ebcb8b
+fish_color_hg_added                  79968b
+fish_color_hg_clean                  79968b
+fish_color_hg_copied                 e5e7ec
+fish_color_hg_deleted                d08770
+fish_color_hg_dirty                  d08770
+fish_color_hg_modified               81a1c0
+fish_color_hg_renamed                e5e7ec
+fish_color_hg_unmerged               d08770
+fish_color_hg_untracked              99aac8
+fish_color_history_current                  --bold
+fish_color_host                      normal
+fish_color_host_remote               ebcb8b
+fish_color_normal                    normal
+fish_color_operator                  81a1c0
+fish_color_param                     81a1c0
+fish_color_quote                     99aac8
+fish_color_redirection               ebcb8b
+fish_color_search_match              normal --background=ebcb8b
+fish_color_selection                 99aac8 --background=99aac8 --bold
+fish_color_status                    2e3440 --background=d08770
+fish_color_status_0                  2e3440 --background=99aac8
+fish_color_user                      79968b
+fish_color_valid_path                79968b
+fish_color_vcs                       99aac8 --background=434c5e
+fish_pager_color_completion          normal
+fish_pager_color_description         99aac8
+fish_pager_color_prefix              normal --bold              --underline
+fish_pager_color_progress            e5e7ec --bold
+fish_pager_color_selected_background        --reverse
