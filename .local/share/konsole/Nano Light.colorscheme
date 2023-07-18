@@ -44,13 +44,13 @@ Color=240,146,118
 Color=240,146,118
 
 [Color4]
-Color=233,238,241
+Color=190,200,204
 
 [Color4Faint]
-Color=190,200,204
+Color=159,173,180
 
 [Color4Intense]
-Color=190,200,204
+Color=159,173,180
 
 [Color5]
 Color=0,0,0
