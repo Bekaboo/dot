@@ -1,4 +1,6 @@
-function dot --wraps git --description 'Manage dot files under home directory'
+function dot \
+        --wraps 'git --git-dir=$HOME/.dot/ --work-tree=$HOME' \
+        --description 'Manage dot files under home directory'
     git --git-dir=$HOME/.dot/ --work-tree=$HOME $argv
 end
 
