@@ -1,5 +1,5 @@
 function fish_greeting
-    if test (tput lines) -lt 32; or test (tput cols) -lt 64
+    if test $LINES -lt 32; or test $COLUMNS -lt 64
         return
     end
     echo '                   '(set_color brred)'___
