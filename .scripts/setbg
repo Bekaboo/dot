@@ -183,7 +183,7 @@ setbg-fish() {
         force-slink "$CONFIG_HOME/fish/themes/${1^}.theme" "$theme_path"
     fi
     [[ -n "$(command -v fish 2>/dev/null)" ]] &&
-        fish -c 'set -U __fish_reload_theme "$(head -c 16 /dev/urandom | base32)"'
+        fish -c 'set -U __fish_reload_theme (random)'
 }
 
 usage() {
