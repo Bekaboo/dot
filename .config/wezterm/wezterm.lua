@@ -14,6 +14,9 @@ config.font = wezterm.font_with_fallback({
     weight = 'Light',
   },
   {
+    family = 'Times New Roman',
+  },
+  {
     family = 'Microsoft YaHei',
   },
 })
