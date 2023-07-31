@@ -33,7 +33,7 @@ fish_color_status                    262a34 --background=f49ba7
 fish_color_status_0                  262a34 --background=606d86
 fish_color_user                      a4bd84
 fish_color_valid_path                a4bd84
-fish_color_vcs                       8f9fbc --background=334154
+fish_color_vcs                       8f9fbc
 fish_pager_color_completion          normal
 fish_pager_color_description         e5e5eb
 fish_pager_color_prefix              normal --bold              --underline

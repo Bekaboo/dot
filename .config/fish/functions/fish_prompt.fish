@@ -14,9 +14,6 @@ function fish_prompt --description 'Write out the prompt'
 
     echo -n -s \n '  ' \
         (set_color $color_status) ' ' $last_status ' ' \
-        (set_color normal) (set_color $color_cwd) ' ' (prompt_pwd) \
-        (set_color normal) (set_color $fish_color_vcs) \
-            (string replace -r '^(\s*\()(\w+)' '$1\#$2' \
-                (fish_vcs_prompt)) ' ' \
+        (set_color normal) (set_color $color_cwd) ' ' (prompt_pwd) ' ' \
         (set_color normal) ' '
 end

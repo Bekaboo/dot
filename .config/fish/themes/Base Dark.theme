@@ -33,7 +33,7 @@ fish_color_status                    black   --background=red
 fish_color_status_0                  black   --background=white
 fish_color_user                      brgreen
 fish_color_valid_path                green
-fish_color_vcs                       white   --background=blue
+fish_color_vcs                       white
 fish_pager_color_completion          normal
 fish_pager_color_description         white
 fish_pager_color_prefix              normal  --bold               --underline

@@ -33,7 +33,7 @@ fish_color_status                    2e3440 --background=d08770
 fish_color_status_0                  2e3440 --background=99aac8
 fish_color_user                      79968b
 fish_color_valid_path                99aac8
-fish_color_vcs                       99aac8 --background=434c5e
+fish_color_vcs                       99aac8
 fish_pager_color_completion          normal
 fish_pager_color_description         99aac8
 fish_pager_color_prefix              normal --bold              --underline
