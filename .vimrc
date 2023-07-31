@@ -70,6 +70,13 @@ nnoremap [b :exec v:count1 . 'bp'<CR>
 inoremap <C-L> <Esc>[szg`]a
 inoremap <C-l> <C-G>u<Esc>[s1z=`]a<C-G>u
 
+xmap a" 2i"
+xmap a' 2i'
+xmap a` 2i`
+omap a" 2i"
+omap a' 2i'
+omap a` 2i`
+
 xmap af :<C-u>keepjumps silent! normal! ggVG<CR>
 xmap if :<C-u>keepjumps silent! normal! ggVG<CR>
 omap af :silent! normal m`Vaf<CR>:silent! normal! ``<CR>
