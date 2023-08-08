@@ -5,7 +5,7 @@ function fish_greeting
     echo '                   '(set_color brred)'___
     ___======____='(set_color red)'-'(set_color bryellow)'-'(set_color red)'-='(set_color brred)')
   /T            \_'(set_color bryellow)'--='(set_color red)'=='(set_color brred)')    '(set_color red)(whoami)'@'(hostname)'
-  [ \ '(set_color red)'('(set_color bryellow)'0'(set_color red)')   '(set_color brred)'\~    \_'(set_color bryellow)'-='(set_color red)'='(set_color brred)')'(set_color yellow)'    Uptime: '(set_color white)(uptime | sed 's/.*up \([^,]*\), .*/\1/')(set_color red)'
+  [ \ '(set_color red)'('(set_color bryellow)'0'(set_color red)')   '(set_color brred)'\~    \_'(set_color bryellow)'-='(set_color red)'='(set_color brred)')'(set_color yellow)'    Uptime: '(set_color white)(string match -rg '.*up\s+([^,]*), .*' (uptime))(set_color red)'
    \      / )J'(set_color red)'~~    \\'(set_color bryellow)'-='(set_color brred)')    Terminal: '(set_color white)(echo $TERM)(set_color red)'
     \\\\___/  )JJ'(set_color red)'~'(set_color bryellow)'~~   '(set_color brred)'\)     '(set_color yellow)'Version: '(set_color white)(echo $FISH_VERSION)(set_color red)'
      \_____/JJJ'(set_color red)'~~'(set_color bryellow)'~~    '(set_color brred)'\\
