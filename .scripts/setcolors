@@ -17,7 +17,8 @@ setcolor-alacritty() {
         force-slink "$themes_path/$1-dark.yml" "$dark_theme_path"
         force-slink "$themes_path/$1-light.yml" "$light_theme_path"
     fi
-    touch "$CONFIG_HOME/alacritty/alacritty.yml" # Reload config
+    local config="$CONFIG_HOME/alacritty/alacritty.yml"
+    [[ -e "$config" ]] && touch "$config" # Reload config
 }
 
 setcolor-kitty() {
@@ -53,7 +54,8 @@ setcolor-wezterm() {
         force-slink "$themes_path/$1-dark.toml" "$dark_theme_path"
         force-slink "$themes_path/$1-light.toml" "$light_theme_path"
     fi
-    touch "$CONFIG_HOME/wezterm/wezterm.lua" # Reload config
+    local config="$CONFIG_HOME/wezterm/wezterm.lua"
+    [[ -e "$config" ]] && touch "$config" # Reload config
 }
 
 setcolor-highlight() {
@@ -100,6 +102,8 @@ get-new-profile-name() {
     local new_profile_name=$(echo "$current_profile_name" | \
         sed "s/^[A-Z_][a-z_]*\(.*\)\(Light\|Dark\|light\|dark\)/${2^}\1\2/" | \
         sed "s/^[a-z_]\+\(.*\)\(Light\|Dark\|light\|dark\)/$2\1\2/")
+    # If new profile name is empty, use default profile 'Nano Dark'
+    [[ -z "$new_profile_name" ]] && new_profile_name='Nano Dark'
     echo "$new_profile_name"
 }
 
@@ -125,12 +129,8 @@ setcolor-konsole-yakuake() {
     fi
     switch-profile-colorscheme konsole "$1"
     switch-profile-colorscheme yakuake "$1"
-
-    # switch profiles for embedded konsole in dolphin and kate
-    local konsolerc="$CONFIG_HOME/konsolerc"
-    local new_profile_name=$(get-new-profile-name "$konsolerc" "$1")
-    qdbus-call-service-method dolphin setProfile "$new_profile_name"
-    qdbus-call-service-method kate setProfile "$new_profile_name"
+    switch-profile-colorscheme dolphin "$1"
+    switch-profile-colorscheme kate "$1"
 }
 
 setcolor-fish() {
