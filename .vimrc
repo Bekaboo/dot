@@ -28,10 +28,10 @@ silent! set backup
 silent! set backupdir=~/.vimbackup
 let s:backupdir = expand('~/.vimbackup')
 if !isdirectory(s:backupdir)
-    if filereadable(s:backupdir)
-        call delete(s:backupdir)
-    endif
-    call mkdir(s:backupdir)
+  if filereadable(s:backupdir)
+    call delete(s:backupdir)
+  endif
+  call mkdir(s:backupdir)
 endif
 
 silent! set list
@@ -99,59 +99,58 @@ nnoremap <silent> <C-l> :nohlsearch\|diffupdate\|normal! <C-l><CR>
 nnoremap <silent> &     :&&<CR>
 xnoremap <silent> *     y/\V<C-R>=escape(@",'/')<CR><CR>
 xnoremap <silent> #     y?\V<C-R>=escape(@",'/')<CR><CR>
-
-" }}}
+" }}}2
 
 " Window keymaps {{{2
 for map in ['nnoremap', 'xnoremap']
-    exe map . '<Esc>w       <C-w>W'
-    exe map . '<Esc>h       <C-w>H'
-    exe map . '<Esc>J       <C-w>J'
-    exe map . '<Esc>K       <C-w>K'
-    exe map . '<Esc>L       <C-w>L'
-    exe map . '<Esc>=       <C-w>='
-    exe map . '<Esc>_       <C-w>_'
-    exe map . '<Esc><Bar>   <C-w>|'
-    exe map . '<Esc><       <C-w><'
-    exe map . '<Esc>p       <C-w>p'
-    exe map . '<Esc>r       <C-w>r'
-    exe map . '<Esc>v       <C-w>v'
-    exe map . '<Esc>s       <C-w>s'
-    exe map . '<Esc>x       <C-w>x'
-    exe map . '<Esc>z       <C-w>z'
-    exe map . '<Esc>c       <C-w>c'
-    exe map . '<Esc>n       <C-w>n'
-    exe map . '<Esc>o       <C-w>o'
-    exe map . '<Esc>t       <C-w>t'
-    exe map . '<Esc>T       <C-w>T'
-    exe map . '<Esc>]       <C-w>]'
-    exe map . '<Esc>^       <C-w>^'
-    exe map . '<Esc>b       <C-w>b'
-    exe map . '<Esc>d       <C-w>d'
-    exe map . '<Esc>f       <C-w>f'
-    exe map . '<Esc>}       <C-w>}'
-    exe map . '<Esc>g]      <C-w>g]'
-    exe map . '<Esc>g}      <C-w>g}'
-    exe map . '<Esc>gf      <C-w>gf'
-    exe map . '<Esc>gF      <C-w>gF'
-    exe map . '<Esc>gt      <C-w>gt'
-    exe map . '<Esc>gT      <C-w>gT'
-    exe map . '<Esc>w       <C-w><C-w>'
-    exe map . '<Esc>h       <C-w><C-h>'
-    exe map . '<Esc>j       <C-w><C-j>'
-    exe map . '<Esc>k       <C-w><C-k>'
-    exe map . '<Esc>l       <C-w><C-l>'
-    exe map . '<Esc>g<Esc>] <C-w>g<C-]>'
-    exe map . '<Esc>g<Tab>  <C-w>g<Tab>'
+  exe map . '<Esc>w       <C-w>W'
+  exe map . '<Esc>h       <C-w>H'
+  exe map . '<Esc>J       <C-w>J'
+  exe map . '<Esc>K       <C-w>K'
+  exe map . '<Esc>L       <C-w>L'
+  exe map . '<Esc>=       <C-w>='
+  exe map . '<Esc>_       <C-w>_'
+  exe map . '<Esc><Bar>   <C-w>|'
+  exe map . '<Esc><       <C-w><'
+  exe map . '<Esc>p       <C-w>p'
+  exe map . '<Esc>r       <C-w>r'
+  exe map . '<Esc>v       <C-w>v'
+  exe map . '<Esc>s       <C-w>s'
+  exe map . '<Esc>x       <C-w>x'
+  exe map . '<Esc>z       <C-w>z'
+  exe map . '<Esc>c       <C-w>c'
+  exe map . '<Esc>n       <C-w>n'
+  exe map . '<Esc>o       <C-w>o'
+  exe map . '<Esc>t       <C-w>t'
+  exe map . '<Esc>T       <C-w>T'
+  exe map . '<Esc>]       <C-w>]'
+  exe map . '<Esc>^       <C-w>^'
+  exe map . '<Esc>b       <C-w>b'
+  exe map . '<Esc>d       <C-w>d'
+  exe map . '<Esc>f       <C-w>f'
+  exe map . '<Esc>}       <C-w>}'
+  exe map . '<Esc>g]      <C-w>g]'
+  exe map . '<Esc>g}      <C-w>g}'
+  exe map . '<Esc>gf      <C-w>gf'
+  exe map . '<Esc>gF      <C-w>gF'
+  exe map . '<Esc>gt      <C-w>gt'
+  exe map . '<Esc>gT      <C-w>gT'
+  exe map . '<Esc>w       <C-w><C-w>'
+  exe map . '<Esc>h       <C-w><C-h>'
+  exe map . '<Esc>j       <C-w><C-j>'
+  exe map . '<Esc>k       <C-w><C-k>'
+  exe map . '<Esc>l       <C-w><C-l>'
+  exe map . '<Esc>g<Esc>] <C-w>g<C-]>'
+  exe map . '<Esc>g<Tab>  <C-w>g<Tab>'
 
-    exe map . '<expr> <Esc>> v:count ? "<C-w>>" : "4<C-w>>"'
-    exe map . '<expr> <Esc>< v:count ? "<C-w><" : "4<C-w><"'
-    exe map . '<expr> <Esc>+ v:count ? "<C-w>+" : "2<C-w>+"'
-    exe map . '<expr> <Esc>- v:count ? "<C-w>-" : "2<C-w>-"'
-    exe map . '<expr> <C-w>> v:count ? "<C-w>>" : "4<C-w>>"'
-    exe map . '<expr> <C-w>< v:count ? "<C-w><" : "4<C-w><"'
-    exe map . '<expr> <C-w>+ v:count ? "<C-w>+" : "2<C-w>+"'
-    exe map . '<expr> <C-w>- v:count ? "<C-w>-" : "2<C-w>-"'
+  exe map . '<expr> <Esc>> v:count ? "<C-w>>" : "4<C-w>>"'
+  exe map . '<expr> <Esc>< v:count ? "<C-w><" : "4<C-w><"'
+  exe map . '<expr> <Esc>+ v:count ? "<C-w>+" : "2<C-w>+"'
+  exe map . '<expr> <Esc>- v:count ? "<C-w>-" : "2<C-w>-"'
+  exe map . '<expr> <C-w>> v:count ? "<C-w>>" : "4<C-w>>"'
+  exe map . '<expr> <C-w>< v:count ? "<C-w><" : "4<C-w><"'
+  exe map . '<expr> <C-w>+ v:count ? "<C-w>+" : "2<C-w>+"'
+  exe map . '<expr> <C-w>- v:count ? "<C-w>-" : "2<C-w>-"'
 endfor
 " }}}2
 
