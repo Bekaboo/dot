@@ -397,7 +397,7 @@ augroup END
 """ Misc {{{1
 " Workaround to prevent <Esc> lag cause by Meta keymaps
 noremap  <nowait> <Esc> <Esc>
-noremap! <nowait> <Esc> <Esc>
+noremap! <nowait> <Esc> <C-\><C-n>
 " }}}1
 
 " vim:tw=79:ts=2:sts=2:sw=2:et:fdm=marker:ft=vim:norl:
