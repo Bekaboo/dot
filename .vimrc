@@ -70,8 +70,6 @@ nnoremap <expr> j v:count ? 'j' : 'gj'
 nnoremap <expr> k v:count ? 'k' : 'gk'
 xnoremap <expr> j v:count ? 'j' : 'gj'
 xnoremap <expr> k v:count ? 'k' : 'gk'
-onoremap <expr> j v:count ? 'j' : 'gj'
-onoremap <expr> k v:count ? 'k' : 'gk'
 
 nnoremap <silent> ]b :exec v:count1 . 'bn'<CR>
 nnoremap <silent> [b :exec v:count1 . 'bp'<CR>
@@ -86,10 +84,38 @@ omap a" 2i"
 omap a' 2i'
 omap a` 2i`
 
-xmap <silent> af :<C-u>keepjumps silent! normal! ggVG<CR>
-xmap <silent> if :<C-u>keepjumps silent! normal! ggVG<CR>
+" Text objects {{{2
+" Current buffer (file)
+xmap <silent> af :<C-u>silent! keepjumps normal! ggVG<CR>
+xmap <silent> if :<C-u>silent! keepjumps normal! ggVG<CR>
 omap <silent> af :silent! normal m`Vaf<CR>:silent! normal! ``<CR>
 omap <silent> if :silent! normal m`Vif<CR>:silent! normal! ``<CR>
+
+" Folds
+" Returns the key sequence to select around/inside a fold,
+" supposed to be called in visual mode
+" param: motion 'i'|'a'
+" return: string
+function! s:textobj_fold(motion) abort
+  let lnum = line('.')
+  let sel_start = line('v')
+  let foldlev = foldlevel(lnum)
+  let foldlev_prev = foldlevel(lnum - 1)
+  " Multi-line selection with cursor on top of selection
+  if sel_start > lnum
+    return (foldlev == 0 ? 'zk'
+          \ : (foldlev > foldlev_prev && foldlev_prev ? 'k' : ''))
+          \ . (a:motion == 'i' ? ']zkV[zj' : ']zV[z')
+  endif
+  return (foldlev == 0 ? 'zj'
+        \ : (foldlev > foldlev_prev ? 'j' : ''))
+        \ . (a:motion == 'i' ? '[zjV]zk' : '[zV]z')
+endfunction
+xmap <silent><expr> iz ':<C-u>silent! keepjumps normal! ' . <SID>textobj_fold('i') . '<CR>'
+xmap <silent><expr> az ':<C-u>silent! keepjumps normal! ' . <SID>textobj_fold('a') . '<CR>'
+omap <silent>       iz :silent! normal Viz<CR>
+omap <silent>       az :silent! normal Vaz<CR>
+" }}}2
 
 " Nvim default mappings {{{2
 nnoremap Y        y$
