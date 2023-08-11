@@ -13,6 +13,7 @@ UseCustomCursorColor=true
 
 [General]
 DimWhenInactive=false
+Environment=TERM=konsole,COLORTERM=truecolor
 Name=Cockatoo Light
 Parent=FALLBACK/
 TerminalCenter=true

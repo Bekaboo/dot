@@ -9,6 +9,7 @@ CustomCursorTextColor=244,244,244
 UseCustomCursorColor=true
 
 [General]
+Environment=TERM=konsole,COLORTERM=truecolor
 Name=Cockatoo Dark
 Parent=FALLBACK/
 TerminalCenter=true
