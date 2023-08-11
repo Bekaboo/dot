@@ -21,9 +21,6 @@ config.font = wezterm.font_with_fallback({
   },
 })
 config.font_size = 13.2
-config.set_environment_variables = {
-  WEZTERM = tostring(wezterm.procinfo.pid()),
-}
 config.term = 'wezterm'
 config.window_padding = {
   left = 0,
