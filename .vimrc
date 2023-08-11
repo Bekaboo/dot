@@ -57,9 +57,26 @@ syntax on
 " }}}1
 
 """ Abbreviations {{{1
-cnoreabbrev qa qa!
-cnoreabbrev bw bw!
-cnoreabbrev mks mks!
+" Set abbreviation that only expand when the trigger is at the start of the
+" command line or after a pipe '|', i.e. only when the trigger is at the
+" position of a command
+" param: trig string
+" param: command string
+" param: a:1 flags string? '<expr>'/'<buffer>',etc
+function! s:command_abbrev(trig, command, ...) abort
+  let flags = '<expr>' . substitute(get(a:, 1, ''), '<expr>', '', '')
+  let trig_escaped = escape(a:trig, '\"')
+  let trig_escaped_twice = escape(trig_escaped, '\"')
+  let command_escaped = escape(a:command, '\"')
+  exe 'cnoreabbrev ' . flags . ' ' . a:trig . ' '
+        \ . 'getcmdtype() ==# ":" && getcmdline()[:getcmdpos() - 1] =~# "\\(^\\\|\|\\)\\s*\\V' . trig_escaped_twice . '\\$" '
+        \ . '? "' . command_escaped . '" '
+        \ . ': "' . trig_escaped . '"'
+endfunction
+
+call s:command_abbrev('qa', 'qa!')
+call s:command_abbrev('bw', 'bw!')
+call s:command_abbrev('mks', 'mks!')
 " }}}
 
 """ Keymaps {{{1
