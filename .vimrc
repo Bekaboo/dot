@@ -436,6 +436,66 @@ augroup WinCloseJmp
   au WinClosed * wincmd p
 augroup END
 
+" Compute project directory for given path.
+" param: fpath string
+" param: a:1 patterns string[]? root patterns
+" return: string returns path of project root directory if found,
+"         else returns empty string
+function! s:proj_dir(fpath, ...) abort
+  if a:fpath == ''
+    return ''
+  endif
+  let patterns = get(a:, 1, [
+      \ '.git/',
+      \ '.svn/',
+      \ '.bzr/',
+      \ '.hg/',
+      \ '.project/',
+      \ '.pro',
+      \ '.sln',
+      \ '.vcxproj',
+      \ '.editorconfig'])
+  let dirpath = fnamemodify(a:fpath, ':p:h') .. ';'
+  for pattern in patterns
+    if pattern =~# '/$'
+      let target_path = finddir(pattern, dirpath)
+      if target_path !=# ''
+        return fnamemodify(target_path, ':p:h:h')
+      endif
+    else
+      let target_path = findfile(pattern, dirpath)
+      if target_path !=# ''
+        return fnamemodify(target_path, ':p:h')
+      endif
+    endif
+  endfor
+  return ''
+endfunction
+
+" Change current working directory to project root directory.
+" param: fpath string path to current file
+function! s:autocwd(fpath) abort
+  let fpath = fnamemodify(a:fpath, ':p')
+  if fpath ==# '' || !isdirectory(fpath) && !filereadable(fpath)
+    return
+  endif
+  let proj_dir = s:proj_dir(fpath)
+  if proj_dir !=# ''
+    exe 'lcd ' .. proj_dir
+    return
+  endif
+  let dirname = fnamemodify(fpath, ':p:h')
+  if isdirectory(dirname)
+    exe 'lcd ' .. dirname
+  endif
+endfunction
+
+augroup AutoCwd
+  au!
+  autocmd BufReadPost,BufWinEnter,WinEnter,FileChangedShellPost *
+        \ :call <SID>autocwd(expand('<afile>'))
+augroup END
+
 " Update folds for given buffer
 " param: bufnr integer
 function! s:update_folds_once(bufnr)
