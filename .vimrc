@@ -430,6 +430,12 @@ augroup LastPosJmp
         \ endif
 augroup END
 
+" Jump to last accessed window on closing the current one
+augroup WinCloseJmp
+  au!
+  au WinClosed * wincmd p
+augroup END
+
 " Update folds for given buffer
 " param: bufnr integer
 function! s:update_folds_once(bufnr)
