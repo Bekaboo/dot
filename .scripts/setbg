@@ -48,7 +48,7 @@ setbg-wezterm() {
 
 setbg-highlight() {
     # $1: 'light' or 'dark'
-    local config_dir="$CONFIG_HOME/highlight"
+    local config_dir="$HOME/.highlight"
     local themes_dir="$config_dir/themes"
     local theme_path="$themes_dir/highlight.theme"
     # If $1 is empty, only need to ensure symlink to color theme file exists
