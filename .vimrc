@@ -57,6 +57,16 @@ syntax on
 " }}}1
 
 """ Abbreviations {{{1
+" param: trig string
+" param: command string
+function s:_command_abbrev(trig, command) abort
+  return getcmdtype() ==# ':'
+          \ && getcmdline()[:getcmdpos() - 1]
+          \ =~# '\(^\||\)\s*\V' . escape(a:trig, '\') . '\$'
+        \ ? a:command
+        \ : a:trig
+endfunction
+
 " Set abbreviation that only expand when the trigger is at the start of the
 " command line or after a pipe '|', i.e. only when the trigger is at the
 " position of a command
@@ -64,14 +74,12 @@ syntax on
 " param: command string
 " param: a:1 flags string? '<expr>'/'<buffer>',etc
 function! s:command_abbrev(trig, command, ...) abort
-  let flags = '<expr>' . substitute(get(a:, 1, ''), '<expr>', '', '')
-  let trig_escaped = escape(a:trig, '\"')
-  let trig_escaped_twice = escape(trig_escaped, '\"')
-  let command_escaped = escape(a:command, '\"')
-  exe 'cnoreabbrev ' . flags . ' ' . a:trig . ' '
-        \ . 'getcmdtype() ==# ":" && getcmdline()[:getcmdpos() - 1] =~# "\\(^\\\|\|\\)\\s*\\V' . trig_escaped_twice . '\\$" '
-        \ . '? "' . command_escaped . '" '
-        \ . ': "' . trig_escaped . '"'
+  exe printf(
+        \ 'cnoreabbrev %s %s <SID>_command_abbrev("%s", "%s")',
+        \ '<expr>' . substitute(get(a:, 1, ''), '<expr>', '', ''),
+        \ a:trig,
+        \ escape(a:trig, '"\'),
+        \ escape(a:command, '"\'))
 endfunction
 
 call s:command_abbrev('qa', 'qa!')
