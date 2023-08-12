@@ -44,7 +44,7 @@ silent! set tabstop=4
 silent! set softtabstop=4
 silent! set shiftwidth=4
 silent! set expandtab
-silent! set smartindent
+silent! set cindent
 silent! set autoindent
 
 silent! set ignorecase
