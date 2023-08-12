@@ -55,6 +55,7 @@ silent! set spelllang=en_us
 silent! set spellsuggest=best,9
 
 syntax on
+filetype plugin indent on
 " }}}1
 
 """ Abbreviations {{{1
