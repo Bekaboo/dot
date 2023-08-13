@@ -61,7 +61,7 @@ filetype plugin indent on
 """ Abbreviations {{{1
 " param: trig string
 " param: command string
-function s:_command_abbrev(trig, command) abort
+function! s:_command_abbrev(trig, command) abort
   return getcmdtype() ==# ':'
           \ && getcmdline()[:getcmdpos() - 1]
           \ =~# '\(^\||\)\s*\V' . escape(a:trig, '\') . '\$'
