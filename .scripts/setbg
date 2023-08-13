@@ -2,6 +2,7 @@
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
 CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 
 setbg-alacritty() {
     # $1: 'light' or 'dark'
@@ -117,7 +118,7 @@ get-new-profile-name() {
     echo "$new_profile_name"
 }
 
-switch-profile-bg() {
+konsole-switch-profile-bg() {
     # $1: name of the app
     # $2: 'light' or 'dark'
     if [[ -z "$(command -v kreadconfig5 2>/dev/null)" ||
@@ -126,10 +127,12 @@ switch-profile-bg() {
     fi
     local rc="$CONFIG_HOME/${1}rc"
     local new_profile_name=$(get-new-profile-name "$rc" "$2")
-    kwriteconfig5 --file "$rc" \
-        --group 'Desktop Entry' \
-        --key DefaultProfile "$new_profile_name.profile"
-    qdbus-call-service-method "$1" setProfile "$new_profile_name"
+    if [[ -e "$DATA_HOME/konsole/$new_profile_name.profile" ]]; then
+        kwriteconfig5 --file "$rc" \
+            --group 'Desktop Entry' \
+            --key DefaultProfile "$new_profile_name.profile"
+        qdbus-call-service-method "$1" setProfile "$new_profile_name"
+    fi
 }
 
 setbg-konsole-yakuake() {
@@ -138,10 +141,10 @@ setbg-konsole-yakuake() {
     -z $(command -v kwriteconfig5 2>/dev/null) ]]; then
         return 1
     fi
-    switch-profile-bg konsole "$1"
-    switch-profile-bg yakuake "$1"
-    switch-profile-bg dolphin "$1"
-    switch-profile-bg kate "$1"
+    konsole-switch-profile-bg konsole "$1"
+    konsole-switch-profile-bg yakuake "$1"
+    konsole-switch-profile-bg dolphin "$1"
+    konsole-switch-profile-bg kate "$1"
 }
 
 setbg-okular() {

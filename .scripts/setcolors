@@ -107,7 +107,7 @@ get-new-profile-name() {
     echo "$new_profile_name"
 }
 
-switch-profile-colorscheme() {
+konsole-switch-profile-colorscheme() {
     # $1: name of the app
     # $2: colorscheme name
     if [[ -z "$(command -v kreadconfig5 2>/dev/null)" || \
@@ -116,10 +116,12 @@ switch-profile-colorscheme() {
     fi
     local rc="$CONFIG_HOME/${1}rc"
     local new_profile_name=$(get-new-profile-name "$rc" "$2")
-    kwriteconfig5 --file "$rc" \
-        --group 'Desktop Entry' \
-        --key DefaultProfile "$new_profile_name.profile"
-    qdbus-call-service-method "$1" setProfile "$new_profile_name"
+    if [[ -e "$DATA_HOME/konsole/$new_profile_name.profile" ]]; then
+        kwriteconfig5 --file "$rc" \
+            --group 'Desktop Entry' \
+            --key DefaultProfile "$new_profile_name.profile"
+        qdbus-call-service-method "$1" setProfile "$new_profile_name"
+    fi
 }
 
 setcolor-konsole-yakuake() {
@@ -127,10 +129,10 @@ setcolor-konsole-yakuake() {
     if [[ -z "$1" ]]; then
         return 1
     fi
-    switch-profile-colorscheme konsole "$1"
-    switch-profile-colorscheme yakuake "$1"
-    switch-profile-colorscheme dolphin "$1"
-    switch-profile-colorscheme kate "$1"
+    konsole-switch-profile-colorscheme konsole "$1"
+    konsole-switch-profile-colorscheme yakuake "$1"
+    konsole-switch-profile-colorscheme dolphin "$1"
+    konsole-switch-profile-colorscheme kate "$1"
 }
 
 setcolor-fish() {
