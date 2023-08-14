@@ -3,11 +3,11 @@
 
 md2tex() {
     pandoc \
-    --standalone \
-    -f markdown-implicit_figures \
-    -t latex \
-    "$1" \
-    -o $(echo "$1" | sed "s/.md$/.tex/")
+        --standalone \
+        -f markdown-implicit_figures \
+        -t latex \
+        "$1" \
+        -o $(echo "$1" | sed "s/.md$/.tex/")
 }
 
 main() {

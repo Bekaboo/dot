@@ -4,7 +4,7 @@
 main() {
     # Try attach to existing unattached session, or create a new one
     # if none exists.
-    if (tmux ls 2> /dev/null | grep -vq attached) && [[ "$PWD" == "$HOME" ]]; then
+    if (tmux ls 2>/dev/null | grep -vq attached) && [[ "$PWD" == "$HOME" ]]; then
         tmux at
     else
         tmux

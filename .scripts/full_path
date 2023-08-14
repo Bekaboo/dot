@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
-echo "$(cd "$(dirname "$1")"; pwd)/$(basename "$1")"
+echo "$(
+    cd "$(dirname "$1")"
+    pwd
+)/$(basename "$1")"

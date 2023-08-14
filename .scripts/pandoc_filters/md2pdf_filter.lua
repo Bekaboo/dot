@@ -37,8 +37,10 @@ local function math_filter(elem)
 end
 
 local function str_filter(elem)
-    if elem.text == '[[TOC]]' or            -- Remove Markdown TOC
-            elem.text:find(':%S+:') then    -- Remove emoji
+    if
+        elem.text == '[[TOC]]' -- Remove Markdown TOC
+        or elem.text:find(':%S+:') -- Remove emoji
+    then
         return {}
     end
     return nil

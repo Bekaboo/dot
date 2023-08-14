@@ -3,12 +3,12 @@
 
 md2html() {
     pandoc \
-    --katex \
-    --standalone \
-    -f markdown-implicit_figures \
-    -t html \
-    "$1" \
-    -o $(echo "$1" | sed "s/.md$/.html/")
+        --katex \
+        --standalone \
+        -f markdown-implicit_figures \
+        -t html \
+        "$1" \
+        -o $(echo "$1" | sed "s/.md$/.html/")
 }
 
 main() {

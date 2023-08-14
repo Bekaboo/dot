@@ -3,10 +3,12 @@
 
 build() {
     case "$1" in
-        *.c)
-            gcc "$1" -o "$2";;
-        *.cpp)
-            g++ "$1" -o "$2";;
+    *.c)
+        gcc "$1" -o "$2"
+        ;;
+    *.cpp)
+        g++ "$1" -o "$2"
+        ;;
     esac
 }
 
@@ -18,12 +20,12 @@ main() {
     FILE=$(full_path "$1")
     RUN_FILE=$(echo "$FILE" | sed -E 's/\.(c|cpp)$/.run/')
     if [[ "$FILE" == "$RUN_FILE" ]]; then
-        >&2 echo "run: error: file name cannot be the same as the run file name"
+        echo >&2 "run: error: file name cannot be the same as the run file name"
         exit 1
     fi
     build "$FILE" "$RUN_FILE"
     if [[ ! -f "$RUN_FILE" ]]; then
-        >&2 echo "run: error: cannot remove run file because it does not exist"
+        echo >&2 "run: error: cannot remove run file because it does not exist"
         exit 1
     fi
     exec "$RUN_FILE"

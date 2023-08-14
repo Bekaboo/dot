@@ -3,7 +3,7 @@
 
 prepare() {
     if [[ "$EUID" -ne 0 ]]; then
-        >&2 echo "error: you cannot perform this operation unless you are root."
+        echo >&2 "error: you cannot perform this operation unless you are root."
         exit 1
     fi
     PKGS_LOGPATH="/var/log/"
@@ -19,7 +19,7 @@ add_comments() {
     if [[ -f "$VEDITOR" ]]; then
         EXCMD="set expandtab softtabstop=4 tabstop=4 shiftwidth=4"
         # Let vi search for the newly installed packages, redirect I/O to terminal
-        $VEDITOR -c "$EXCMD" "$PKGS_LOGFILE" < /dev/tty > /dev/tty
+        $VEDITOR -c "$EXCMD" "$PKGS_LOGFILE" </dev/tty >/dev/tty
     else
         echo -e "\033[1;33mwarning:\033[0m vi not available -- add comments to ${PKGS_LOGFILE} manually"
     fi

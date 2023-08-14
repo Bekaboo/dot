@@ -12,7 +12,7 @@ ensure-slink() {
     #         2.1.2 target is symlink and not broken    (keep)
     #     2.2 target is directory                       (keep)
     #     2.3 target is file                            (keep)
-    if [[ -e "$2" ]]; then  # case 2.1.2, 2.2, 2.3
+    if [[ -e "$2" ]]; then # case 2.1.2, 2.2, 2.3
         return 0
     fi
     # case 1, 2.1.1

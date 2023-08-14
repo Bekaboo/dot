@@ -3,54 +3,55 @@
 
 md2pdf() {
     pandoc \
-    --lua-filter ${HOME}/.scripts/pandoc_filters/md2pdf_filter.lua \
-    --pdf-engine=${PDF_ENGINE} \
-    -V block-headings \
-    -V colorlinks=true \
-    -V CJKmainfont="Source Han Serif CN" \
-    -V geometry:margin=1in \
-    -f markdown-implicit_figures \
-    -t pdf \
-    "$1" \
-    -o $(echo "$1" | sed "s/.md$/.pdf/")
+        --lua-filter ${HOME}/.scripts/pandoc_filters/md2pdf_filter.lua \
+        --pdf-engine=${PDF_ENGINE} \
+        -V block-headings \
+        -V colorlinks=true \
+        -V CJKmainfont="Source Han Serif CN" \
+        -V geometry:margin=1in \
+        -f markdown-implicit_figures \
+        -t pdf \
+        "$1" \
+        -o $(echo "$1" | sed "s/.md$/.pdf/")
 }
 
 main() {
     PDF_ENGINE="pdflatex"
     while :; do
         case $1 in
-            -l|--lualatex)
-                PDF_ENGINE="lualatex"
-                ;;
-            -x|--xelatex)
-                PDF_ENGINE="xelatex"
-                ;;
-            -m|--latexmk)
-                PDF_ENGINE="latexmk"
-                ;;
-            -w|--wkhtmltopdf)
-                PDF_ENGINE="wkhtmltopdf"
-                ;;
-            -p|--pdflatex)
-                PDF_ENGINE="pdflatex"
-                ;;
-            -h|--help|-\?)
-                echo "Usage: md2pdf [-l|-x|-m|-h|-p] files" >&2
-                exit 1
-                ;;
-            --pdf-engine=*)
-                PDF_ENGINE="${1#*=}"
-                ;;
-            --pdf_engine)
-                PDF_ENGINE="$2"
-                shift
-                ;;
-            --)
-                shift
-                break
-                ;;
-            *)
-                break
+        -l | --lualatex)
+            PDF_ENGINE="lualatex"
+            ;;
+        -x | --xelatex)
+            PDF_ENGINE="xelatex"
+            ;;
+        -m | --latexmk)
+            PDF_ENGINE="latexmk"
+            ;;
+        -w | --wkhtmltopdf)
+            PDF_ENGINE="wkhtmltopdf"
+            ;;
+        -p | --pdflatex)
+            PDF_ENGINE="pdflatex"
+            ;;
+        -h | --help | -\?)
+            echo "Usage: md2pdf [-l|-x|-m|-h|-p] files" >&2
+            exit 1
+            ;;
+        --pdf-engine=*)
+            PDF_ENGINE="${1#*=}"
+            ;;
+        --pdf_engine)
+            PDF_ENGINE="$2"
+            shift
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            break
+            ;;
         esac
         shift
     done
@@ -60,7 +61,7 @@ main() {
         # we are not in the same directory.
         cd $(dirname $(full_path "$file")) >/dev/null 2>&1
         md2pdf $(basename "$file") || {
-            >&2 echo "md2pdf: error: pandoc failed to convert $file with edit code $?"
+            echo >&2 "md2pdf: error: pandoc failed to convert $file with edit code $?"
             exit 1
         }
         cd - >/dev/null 2>&1

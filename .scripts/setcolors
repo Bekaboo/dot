@@ -99,8 +99,8 @@ get-new-profile-name() {
     local current_profile=$(kreadconfig5 --file "$1" \
         --group 'Desktop Entry' --key 'DefaultProfile')
     local current_profile_name=${current_profile%\.profile}
-    local new_profile_name=$(echo "$current_profile_name" | \
-        sed "s/^[A-Z_][a-z_]*\(.*\)\(Light\|Dark\|light\|dark\)/${2^}\1\2/" | \
+    local new_profile_name=$(echo "$current_profile_name" |
+        sed "s/^[A-Z_][a-z_]*\(.*\)\(Light\|Dark\|light\|dark\)/${2^}\1\2/" |
         sed "s/^[a-z_]\+\(.*\)\(Light\|Dark\|light\|dark\)/$2\1\2/")
     # If new profile name is empty, use default profile 'Nano Dark'
     [[ -z "$new_profile_name" ]] && new_profile_name='Nano Dark'
@@ -110,8 +110,8 @@ get-new-profile-name() {
 konsole-switch-profile-colorscheme() {
     # $1: name of the app
     # $2: colorscheme name
-    if [[ -z "$(command -v kreadconfig5 2>/dev/null)" || \
-            -z "$(command -v kwriteconfig5 2>/dev/null)" ]]; then
+    if [[ -z "$(command -v kreadconfig5 2>/dev/null)" ||
+    -z "$(command -v kwriteconfig5 2>/dev/null)" ]]; then
         return 1
     fi
     local rc="$CONFIG_HOME/${1}rc"
