@@ -23,6 +23,7 @@ silent! set hlsearch
 silent! set incsearch
 silent! set ttimeoutlen=0
 silent! set autowriteall
+silent! set shortmess-=S
 silent! set clipboard+=unnamedplus
 
 silent! set backup
