@@ -455,6 +455,10 @@ function! s:proj_dir(fpath, ...) abort
       \ '.pro',
       \ '.sln',
       \ '.vcxproj',
+      \ 'Makefile',
+      \ 'makefile',
+      \ 'MAKEFILE',
+      \ '.gitignore',
       \ '.editorconfig'])
   let dirpath = fnamemodify(a:fpath, ':p:h') .. ';'
   for pattern in patterns
