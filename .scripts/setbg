@@ -165,16 +165,22 @@ setbg-okular() {
 setbg-vscode() {
     # $1: 'light' or 'dark'
     local rc="$CONFIG_HOME/Code/User/settings.json"
-    if [[ -z "$1" || -z "$(command -v code 2>/dev/null)" ||
-    -z "$command -v jq 2>/dev/null" ||
-    ! -e "$rc" ]]; then
+    if [[ -z "$1" ||
+        -z "$(command -v code 2>/dev/null)" ||
+        -z "$(command -v jq 2>/dev/null)" ||
+        ! -e "$rc" ]]; then
         return 1
     fi
-    local theme=$(jq -r '."workbench.colorTheme"' "$rc")
-    [[ -z "$theme" ]] && theme='Default Dark Modern'
-    local new_theme=$(echo "$theme" |
-        sed "s/dark\|light/$1/" |
-        sed "s/Dark\|Light/${1^}/")
+    local new_theme=$([[ "$1" == dark ]] &&
+        echo "$(jq -r '."workbench.preferredDarkColorTheme"' "$rc")" ||
+        echo "$(jq -r '."workbench.preferredLightColorTheme"' "$rc")")
+    if [[ -z "$new_theme" || "$new_theme" == null ]]; then
+        local theme=$(jq -r '."workbench.colorTheme"' "$rc")
+        [[ -z "$theme" || "$theme" == null ]] && theme='Default Dark Modern'
+        new_theme=$(echo "$theme" |
+            sed "s/dark\|light/$1/" |
+            sed "s/Dark\|Light/${1^}/")
+    fi
     if [[ "$theme" != "$new_theme" ]]; then
         local tmp=$(mktemp)
         jq ".\"workbench.colorTheme\" = \"$new_theme\"" "$rc" >"$tmp" &&
