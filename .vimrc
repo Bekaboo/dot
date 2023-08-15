@@ -24,6 +24,8 @@ silent! set incsearch
 silent! set ttimeoutlen=0
 silent! set autowriteall
 silent! set shortmess-=S
+silent! set sessionoptions+=globals
+silent! set viminfo=!,'100,<50,s10,h
 silent! set clipboard+=unnamedplus
 
 silent! set backup
@@ -517,14 +519,61 @@ augroup UpdateFolds
   au BufWinEnter * :call s:update_folds_once(expand('<abuf>'))
   au BufUnload   * :call setbufvar(expand('<abuf>'), 'foldupdated', 0)
 augroup END
+
+" Restore and switch background from viminfo file,
+" for this autocmd to work properly, 'viminfo' option must contain '!'
+if &viminfo =~# '!'
+  let g:preferred_colors = { 'dark': 'habamax', 'light': 'shine' }
+
+  " return: string
+  function! s:get_preferred_colors() abort
+    return get(g:preferred_colors, &bg, 'habamax')
+  endfunction
+
+  " Restore &background and colorscheme from viminfo file
+  function! s:theme_restore() abort
+    let BACKGROUND = get(g:, 'BACKGROUND', '')
+    if BACKGROUND !=# '' && BACKGROUND !=# &background
+      let &background=BACKGROUND
+    endif
+    let colors_name = get(g:, 'colors_name', '')
+    let COLORSNAME = get(g:, 'COLORSNAME', '')
+    if colors_name ==# '' || COLORSNAME != colors_name
+      exe 'silent! colorscheme ' ..
+            \ (COLORSNAME !=# '' ? COLORSNAME : s:get_preferred_colors())
+    endif
+  endfunction
+
+  " Save new choose preferred colorscheme according to background setting,
+  " then save the background and colorscheme settings to global variables,
+  " supposed to be called in an OptionSet " background event
+  " return: 0
+  function! s:theme_save_and_choose_preferred() abort
+    let g:BACKGROUND = v:option_new
+    exe 'silent! colorscheme ' .. s:get_preferred_colors()
+    call s:theme_save()
+  endfunction
+
+  " Save current &background and colorscheme to global variables
+  function! s:theme_save() abort
+    let g:BACKGROUND = &background
+    let g:COLORSNAME = get(g:, 'colors_name', '')
+    wviminfo
+  endfunction
+
+  augroup ThemeSwitch
+    au!
+    au VimEnter    * ++once   :call s:theme_restore()
+    au OptionSet   background :call s:theme_save_and_choose_preferred()
+    au ColorScheme *          :call s:theme_save()
+  augroup END
+endif
 " }}}1
 
 """ Misc {{{1
 " Workaround to prevent <Esc> lag cause by Meta keymaps
 noremap  <nowait> <Esc> <Esc>
 noremap! <nowait> <Esc> <C-\><C-n>
-silent! colorscheme shine " For light background
-" silent! colorscheme habamax " For dark background
 " }}}1
 
 " vim:tw=79:ts=2:sts=2:sw=2:et:fdm=marker:ft=vim:norl:
