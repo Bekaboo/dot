@@ -51,8 +51,10 @@ silent! set autoindent
 silent! set ignorecase
 silent! set smartcase
 
+silent! set spell
 silent! set spellcapcheck=''
 silent! set spelllang=en_us
+silent! set spelloptions=camel
 silent! set spellsuggest=best,9
 
 syntax on
