@@ -35,6 +35,115 @@ if [[ "$TERM" == "linux" ]]; then
     clear #for background artifacting
 fi
 
+# fzf config variables
+export FZF_DEFAULT_OPTS="--reverse \
+    --preview='fzf-file-previewer {}' \
+    --preview-window=right,55%,border-sharp,nocycle \
+    --pointer=→ \
+    --prompt=/\  \
+    --marker=+\  \
+    --no-info \
+    --no-separator \
+    --no-scrollbar \
+    --border=none \
+    --padding=1 \
+    --margin=0,1 \
+    --height=~45% \
+    --min-height=16 \
+    --scroll-off=4 \
+    --multi \
+    --ansi \
+    --color=fg:-1,bg:-1,hl:bold:yellow \
+    --color=fg+:-1,bg+:-1,hl+:bold:yellow \
+    --color=border:white,preview-border:white \
+    --color=marker:bold:cyan,prompt:bold:red,pointer:bold:red \
+    --color=gutter:-1,info:bold:red,spinner:cyan,header:white \
+    --bind=ctrl-k:kill-line \
+    --bind=shift-up:preview-half-page-up,shift-down:preview-half-page-down"
+
+if command -v fd 2>&1 >/dev/null; then
+    export FZF_DEFAULT_COMMAND='fd -p -H -L -td -tf -tl --mount -c=always'
+    export FZF_ALT_C_COMMAND='fd -p -H -L -td --mount -c=always'
+else
+    export FZF_DEFAULT_COMMAND="find -L . -mindepth 1 \\( \
+            -path '*%*'                \
+            -o -path '*.*Cache*/*'     \
+            -o -path '*.*cache*/*'     \
+            -o -path '*.*wine/*'       \
+            -o -path '*.cargo/*'       \
+            -o -path '*.conda/*'       \
+            -o -path '*.dot/*'         \
+            -o -path '*.fonts/*'       \
+            -o -path '*.git/*'         \
+            -o -path '*.ipython/*'     \
+            -o -path '*.java/*'        \
+            -o -path '*.jupyter/*'     \
+            -o -path '*.luarocks/*'    \
+            -o -path '*.mozilla/*'     \
+            -o -path '*.npm/*'         \
+            -o -path '*.nvm/*'         \
+            -o -path '*.steam*/*'      \
+            -o -path '*.thunderbird/*' \
+            -o -path '*.tmp/*'         \
+            -o -path '*.venv/*'        \
+            -o -path '*Cache*/*'       \
+            -o -path '*\\\$*'          \
+            -o -path '*\\~'            \
+            -o -path '*__pycache__/*'  \
+            -o -path '*cache*/*'       \
+            -o -path '*dosdevices/*'   \
+            -o -path '*node_modules/*' \
+            -o -path '*vendor/*'       \
+            -o -path '*venv/*'         \
+            -o -fstype 'sysfs'         \
+            -o -fstype 'devfs'         \
+            -o -fstype 'devtmpfs'      \
+            -o -fstype 'proc' \\) -prune \
+        -o -type f -print \
+        -o -type d -print \
+        -o -type l -print 2> /dev/null | cut -b3-"
+    export FZF_ALT_C_COMMAND="find -L . -mindepth 1 \\( \
+            -path '*%*'                \
+            -o -path '*.*Cache*/*'     \
+            -o -path '*.*cache*/*'     \
+            -o -path '*.*wine/*'       \
+            -o -path '*.cargo/*'       \
+            -o -path '*.conda/*'       \
+            -o -path '*.dot/*'         \
+            -o -path '*.fonts/*'       \
+            -o -path '*.git/*'         \
+            -o -path '*.ipython/*'     \
+            -o -path '*.java/*'        \
+            -o -path '*.jupyter/*'     \
+            -o -path '*.luarocks/*'    \
+            -o -path '*.mozilla/*'     \
+            -o -path '*.npm/*'         \
+            -o -path '*.nvm/*'         \
+            -o -path '*.steam*/*'      \
+            -o -path '*.thunderbird/*' \
+            -o -path '*.tmp/*'         \
+            -o -path '*.venv/*'        \
+            -o -path '*Cache*/*'       \
+            -o -path '*\\\$*'          \
+            -o -path '*\\~'            \
+            -o -path '*__pycache__/*'  \
+            -o -path '*cache*/*'       \
+            -o -path '*dosdevices/*'   \
+            -o -path '*node_modules/*' \
+            -o -path '*vendor/*'       \
+            -o -path '*venv/*'         \
+            -o -fstype 'sysfs'         \
+            -o -fstype 'devfs'         \
+            -o -fstype 'devtmpfs'      \
+            -o -fstype 'proc' \\) -prune \
+        -o -type d -print 2> /dev/null | cut -b3-"
+fi
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+export FZF_CTRL_R_OPTS='--no-preview'
+
+[[ -r /usr/share/fzf/key-bindings.bash ]] && . /usr/share/fzf/key-bindings.bash
+[[ -r /usr/share/fzf/completion.bash ]] && . /usr/share/fzf/completion.bash
+
 # Add execution permission to scripts
 [[ -d '~/.scripts' ]] && chmod +x ~/.scripts/*
 
@@ -132,6 +241,66 @@ pyenv
 cdim() {
     builtin cd "$@" && ls --color=auto;
     pyenv
+}
+
+fzf() {
+    if command -v fzf-wrapper 2>&1 > /dev/null; then
+        fzf-wrapper "$@"
+    else
+        command fzf "$@"
+    fi
+}
+
+# Use fzf to open files or cd to directories
+fo() {
+    # $1: base directory, default to $PWD
+    # Exit if fzf or fd is not installed
+    if ! command -v fzf 2>&1 >/dev/null || ! command -v fd 2>&1 >/dev/null
+    then
+        echo 'fzf or fd is not installed' >&2
+        return 1
+    fi
+
+    local tmpfile="$(mktemp)"
+    fd -p -H -L -td -tf -tl --mount -c=always --search-path="$1" \
+        | fzf --ansi --query="$2" >$tmpfile
+
+    local targets="$(cat "$tmpfile")"; rm -f "$tmpfile"
+    [[ -z "$targets" ]] && return 0
+    # Split targets into a list at newline
+    local -a targets_list=()
+    IFS=$'\n' read -rd '' -a targets_list <<< "$targets"
+
+    # If only one target and it is a directory, cd into it
+    if [[ "${#targets_list[@]}" = 1 && -d "$targets_list[0]" ]]; then
+        cdim "$targets_list[0]"
+        return $?
+    fi
+
+    # Copy text files and directories to a separate array and
+    # use $EDITOR to open them; open other files with xdg-open
+    local -a text_or_dirs=()
+    local -a others=()
+    for target in "${targets_list[@]}"; do
+        if [[ -d "$target" || "$(file -b "$target")" =~ text|empty ]]; then
+            text_or_dirs+=("$target")
+        else
+            others+=("$target")
+        fi
+    done
+
+    if command -v xdg-open 2>&1 >/dev/null; then
+        for target in "${others[@]}"; do
+            xdg-open "$target" >/dev/null 2>&1
+        done
+    elif [[ "${#others[@]}" > 0 ]]; then
+        echo "xdg-open not found, omit opening files ${targets_list[@]}" >&2
+    fi
+    if [[ "${#text_or_dirs[@]}" > 0 ]]; then
+        command -v "$EDITOR" 2>&1 >/dev/null &&
+            "$EDITOR" "${text_or_dirs[@]}" ||
+            echo "\$EDITOR not found, omit opening files ${text_or_dirs[@]}" >&2
+    fi
 }
 
 # Aliases

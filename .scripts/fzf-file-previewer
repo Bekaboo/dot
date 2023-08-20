@@ -1,0 +1,188 @@
+#!/usr/bin/env bash
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+
+has() {
+    # $1: command to test
+    command -v "$1" >/dev/null 2>&1
+}
+
+which-exe() {
+    # $@: list of commands to test
+    for cmd in "$@"; do
+        if has "$cmd"; then
+            echo "$cmd"
+            return
+        fi
+    done
+}
+
+fzf-file-previewer() {
+    # $1: file to preview
+
+    # In case that the file name starts with a hyphen
+    # and command does not support '--' convention
+    local fpath=$(realpath -- "$1")
+
+    if [[ ! -r "$1" ]]; then
+        printf "\e[1m%s\e[0m\n" "File not readable:" >&2
+        printf "%s\n" "$1" >&2
+        return 1
+    fi
+
+    # Clear possible ueberzugpp image preview so that it does not
+    # overlap with the text preview
+    if [[ -S "$UB_SOCK" ]] && has ueberzugpp; then
+        ueberzugpp cmd -s "$UB_SOCK" -a remove \
+            -i fzf-file-preview-ub 2>/dev/null
+    fi
+
+    # Preview directories
+    if [[ -d "$1" ]]; then
+        if has tree; then
+            local tree_output=$(tree -N -L 4 -C -- "$1")
+            local info=$(echo "$tree_output" | tail -n 1)
+            printf "\e[1m%s\e[0m\n\n" "$info"
+            printf "%s\n" "$tree_output" | head -n -1
+        else
+            if has find && has wc; then
+                local num_files=$(find "$1" -type f | wc -l)
+                local num_dirs=$(find "$1" -type d | wc -l)
+                printf "\e[1m%d directories, %d files\e[0m\n" \
+                    "$num_dirs" "$num_files"
+            fi
+            ls -l --color=always "$1"
+        fi
+        return
+    fi
+
+    # Preview regular files
+    if [[ -f "$1" ]]; then
+        case "$(file -b --mime -- "$1")" in
+        image\/*)
+            # ueberzugpp is up and fzf is called from wrapper
+            if [[ -S "$UB_SOCK" ]] && has ueberzugpp; then
+                local ub_x ub_y
+                if (($FZF_MARGIN_RIGHT + $FZF_MARGIN_LEFT + \
+                    $FZF_PADDING_RIGHT + $FZF_PADDING_LEFT < \
+                    $FZF_TERM_COLUMNS)); then
+                    [[ "$FZF_PREVIEW_ORIENTATION" = 'right' ]] &&
+                        ub_x=$(($FZF_TERM_COLUMNS - $FZF_PREVIEW_COLUMNS - \
+                            $FZF_MARGIN_RIGHT - $FZF_PADDING_RIGHT - 2)) ||
+                        ub_x=$(($FZF_MARGIN_LEFT + $FZF_PADDING_LEFT + 2))
+                fi
+                if (($FZF_MARGIN_UP + $FZF_MARGIN_BOTTOM + \
+                    $FZF_PADDING_UP + $FZF_PADDING_BOTTOM < \
+                    $FZF_TERM_LINES)); then
+                    [[ "$FZF_PREVIEW_ORIENTATION" = 'up' ]] &&
+                        ub_y=$(($FZF_TERM_LINES - $FZF_HEIGHT + \
+                            $FZF_MARGIN_TOP + $FZF_PADDING_TOP + 1)) ||
+                        ub_y=$(($FZF_TERM_LINES - $FZF_MARGIN_BOTTOM - \
+                            $FZF_PADDING_BOTTOM - $FZF_PREVIEW_LINES - 1))
+                fi
+                if [[ -n "$ub_x" && -n "$ub_y" ]]; then
+                    ueberzugpp cmd \
+                        -s "$UB_SOCK" \
+                        -i fzf-file-preview-ub \
+                        -a add \
+                        -x "$ub_x" \
+                        -y "$ub_y" \
+                        --max-width "$FZF_PREVIEW_COLUMNS" \
+                        --max-height $(($FZF_PREVIEW_LINES - 1)) \
+                        -f "$1" 2>/dev/null
+                    return
+                fi
+            fi
+
+            # ueberzugpp not found or not launched by wrapper, use
+            # ASCII image previewers instead
+            case "$(which-exe chafa imgcat tiv)" in
+            chafa)
+                chafa -s "$FZF_PREVIEW_COLUMNS"x"$FZF_PREVIEW_LINES" "$fpath"
+                ;;
+            imgcat)
+                imgcat -H -w "$FZF_PREVIEW_COLUMNS" \
+                    -r "$FZF_PREVIEW_LINES" "$fpath"
+                ;;
+            tiv)
+                tiv -w "$FZF_PREVIEW_COLUMNS" -h "$FZF_PREVIEW_LINES" "$fpath"
+                ;;
+            *)
+                echo "No ascii image previewer found, " \
+                    "install chafa, imgcat or tiv" >&2
+                ;;
+            esac
+            ;;
+
+        application\/pdf*)
+            # Use pdftotext for pdf files
+            if has pdftotext; then
+                pdftotext -l 10 -nopgbrk -nodiag -q "$1" -
+                return
+            else
+                echo 'pdftotext not found' >&2
+            fi
+            ;;
+
+        application\/zip*)
+            if has unzip; then
+                unzip -l "$fpath"
+            elif has zip; then
+                zip -sf -- "$1"
+            else
+                echo 'unzip and zip not found' >&2
+            fi
+            ;;
+
+        application\/x-tar* | application\/gzip*)
+            if has tar; then
+                tar --ignore-command-error -tf "$1" 2>/dev/null
+            else
+                echo 'tar not found' >&2
+            fi
+            ;;
+
+        text\/html*)
+            if has w3m; then
+                w3m -dump "$fpath"
+                return
+            elif has html2text; then
+                html2text -- "$1"
+                return
+            fi
+            ;&
+
+        *)
+            # Use glow for markdown files
+            if has glow && [[ "$1" =~ \.md$ ]]; then
+                # Set -s (style) explicitly to force colored output,
+                # for unknown reason glow does not detect the background
+                # color correctly, so we need to grep the style from its
+                # config file
+                local glow_config="${XDG_CONFIG_HOME-$HOME/.config}/glow/glow.yml"
+                [[ -e "$glow_config" ]] &&
+                    local style=$(grep -Po '(?<=style: ")[^"]+' "$glow_config") ||
+                    local style='auto'
+                glow -s="$style" -w="$FZF_PREVIEW_COLUMNS" -- "$1"
+                return
+            fi
+
+            # Use highlight or cat for the remaining file types
+            if has highlight; then
+                local highlight_config="$HOME/.highlight/themes/highlight.theme"
+                [[ ! -e "$highlight_config" ]] &&
+                    highlight -O ansi --force -- "$1" ||
+                    highlight -O ansi --force \
+                        --config-file "$highlight_config" -- "$1"
+                return
+            fi
+
+            if has cat; then
+                cat "$1"
+                return
+            fi
+            ;;
+        esac
+    fi
+}
+
+fzf-file-previewer "$@"
