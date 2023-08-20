@@ -19,6 +19,7 @@ silent! set breakindent
 silent! set smoothscroll
 silent! set completeopt=menuone
 silent! set wildmenu
+silent! set wildoptions+=fuzzy,pum
 silent! set hlsearch
 silent! set incsearch
 silent! set ttimeoutlen=0
@@ -89,6 +90,7 @@ function! s:command_abbrev(trig, command, ...) abort
         \ escape(a:command, '"\'))
 endfunction
 
+call s:command_abbrev('S', '%s')
 call s:command_abbrev('qa', 'qa!')
 call s:command_abbrev('bw', 'bw!')
 call s:command_abbrev('mks', 'mks!')
@@ -219,6 +221,7 @@ noremap! <C-d> <Del>
 noremap! <expr> <C-y> pumvisible() ? "<C-y>" : "<C-r>-"
 cnoremap <C-b> <Left>
 cnoremap <C-f> <Right>
+cnoremap <C-g> <C-\><C-n>
 cnoremap <C-k> <C-\>e(strpart(getcmdline(), 0, getcmdpos() - 1))<CR>
 noremap! <Esc>[3;3~ <C-w>
 
@@ -541,6 +544,7 @@ if &viminfo =~# '!'
     if colors_name ==# '' || COLORSNAME != colors_name
       exe 'silent! colorscheme ' ..
             \ (COLORSNAME !=# '' ? COLORSNAME : s:get_preferred_colors())
+      call s:theme_fix_hlspellbad()
     endif
   endfunction
 
@@ -551,6 +555,7 @@ if &viminfo =~# '!'
   function! s:theme_save_and_choose_preferred() abort
     let g:BACKGROUND = v:option_new
     exe 'silent! colorscheme ' .. s:get_preferred_colors()
+    call s:theme_fix_hlspellbad()
     call s:theme_save()
   endfunction
 
@@ -561,13 +566,30 @@ if &viminfo =~# '!'
     wviminfo
   endfunction
 
+  " Override hl-SpellBad
+  function! s:theme_fix_hlspellbad() abort
+    hi clear SpellBad
+    hi SpellBad term=underline gui=underline
+  endfunction
+
   augroup ThemeSwitch
     au!
     au VimEnter    * ++once   :call s:theme_restore()
     au OptionSet   background :call s:theme_save_and_choose_preferred()
     au ColorScheme *          :call s:theme_save()
+    au ColorScheme *          :call s:theme_fix_hlspellbad()
   augroup END
 endif
+
+" Automatically open quickfix window of loclist if there are results
+augroup QuickFixAutoOpen
+  au!
+  au QuickFixCmdPost * if expand('<amatch>') =~# '^l' |
+        \ lwindow |
+        \ else |
+        \ botright cwindow |
+        \ endif
+augroup END
 " }}}1
 
 """ Misc {{{1
