@@ -3,8 +3,9 @@
 #
 
 [[ -f ~/.bashrc ]] && . ~/.bashrc
+
 export PATH="${HOME}/.local/bin:${HOME}/.scripts:${PATH}"
-export MANPAGER=nvim-manpager
+command -v nvim-manpager 2>&1 >/dev/null && export MANPAGER=nvim-manpager
 
 # 'less' highlights
 export LESS_TERMCAP_mb=$'\e[1;32m'
