@@ -4,6 +4,12 @@
 CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 
+get-theme-variant() {
+    # $1: name of the old theme
+    # $2: 'light' or 'dark'
+    echo "$1" | sed "s/dark\|light/$2/" | sed "s/Dark\|Light/${2^}/"
+}
+
 setbg-alacritty() {
     # $1: 'light' or 'dark'
     local config_dir="$CONFIG_HOME/alacritty"
@@ -86,18 +92,14 @@ setbg-plasma() {
     fi
     if [[ -n "$(command -v plasma-apply-desktoptheme 2>/dev/null)" ]]; then
         local current_theme=$(plasma-get-current-desktoptheme)
-        local new_theme=$(echo "$current_theme" |
-            sed "s/dark\|light/$1/" |
-            sed "s/Dark\|Light/${1^}/")
+        local new_theme=$(get-theme-variant "$current_theme" "$1")
         if [[ "$current_theme" != "$new_theme" ]]; then
             plasma-apply-desktoptheme "$new_theme" &>/dev/null
         fi
     fi
     if [[ -n "$(command -v plasma-apply-colorscheme 2>/dev/null)" ]]; then
         local current_scheme=$(plasma-get-current-colorscheme)
-        local new_scheme=$(echo "$current_scheme" |
-            sed "s/dark\|light/$1/" |
-            sed "s/Dark\|Light/${1^}/")
+        local new_scheme=$(get-theme-variant "$current_scheme" "$1")
         if [[ "$current_scheme" != "$new_scheme" ]]; then
             plasma-apply-colorscheme "$new_scheme" &>/dev/null
         fi
@@ -110,9 +112,7 @@ get-new-profile-name() {
     local current_profile=$(kreadconfig5 --file "$1" \
         --group 'Desktop Entry' --key 'DefaultProfile')
     local current_profile_name=${current_profile%\.profile}
-    local new_profile_name=$(echo "$current_profile_name" |
-        sed "s/Dark\|Light/${2^}/" |
-        sed "s/dark\|light/$2/")
+    local new_profile_name=$(get-theme-variant "$current_profile_name" "$2")
     # If new profile name is empty, use default profile 'Nano Dark'
     [[ -z "$new_profile_name" ]] && new_profile_name='Nano Dark'
     echo "$new_profile_name"
@@ -175,9 +175,7 @@ setbg-vscode() {
     if [[ -z "$new_theme" || "$new_theme" == null ]]; then
         local theme=$(jq -r '."workbench.colorTheme"' "$rc")
         [[ -z "$theme" || "$theme" == null ]] && theme='Default Dark Modern'
-        new_theme=$(echo "$theme" |
-            sed "s/dark\|light/$1/" |
-            sed "s/Dark\|Light/${1^}/")
+        new_theme=$(get-theme-variant "$theme" "$1")
     fi
     if [[ "$theme" != "$new_theme" ]]; then
         local tmp=$(mktemp)
@@ -196,6 +194,24 @@ setbg-fish() {
     fi
     [[ -n "$(command -v fish 2>/dev/null)" ]] &&
         fish -c 'set -U __fish_reload_theme (random)'
+}
+
+setbg-glow() {
+    # $1: 'light' or 'dark'
+    local config="$CONFIG_HOME/glow/glow.yml"
+    if [[ -z "$1" ]]; then
+        return 1
+    fi
+    if [[ ! -e "$config" ]]; then
+        mkdir -p "$(dirname "$config")"
+        echo 'style: "dark"' >"$config"
+    fi
+    # style: "<style_name>"
+    local theme=$(grep -Po '(?<=style: ")[^"]+' "$config")
+    local new_theme=$(get-theme-variant "$theme" "$1")
+    if [[ "$theme" != "$new_theme" ]]; then
+        sed -i "s/style: \"$theme\"/style: \"$new_theme\"/" "$config"
+    fi
 }
 
 usage() {
@@ -228,6 +244,7 @@ main() {
     setbg-highlight "$bg"
     setbg-nvim "$bg" "$exclude_nvim_processes"
     setbg-fish "$bg"
+    setbg-glow "$bg"
     setbg-vscode "$bg"
     setbg-plasma "$bg"
     setbg-okular "$bg"
