@@ -21,7 +21,7 @@ fzf-file-previewer() {
 
     # In case that the file name starts with a hyphen
     # and command does not support '--' convention
-    local fpath=$(realpath -- "$1")
+    local fpath=$(realpath -- "$1") 2>/dev/null
 
     if [[ ! -r "$1" ]]; then
         printf "\e[1m%s\e[0m\n" "File not readable:" >&2
