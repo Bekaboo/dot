@@ -1,2 +1,0 @@
-complete -F -c f
-
