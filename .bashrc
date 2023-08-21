@@ -282,7 +282,7 @@ fo() {
     local -a text_or_dirs=()
     local -a others=()
     for target in "${targets_list[@]}"; do
-        if [[ -d "$target" || "$(file -b "$target")" =~ text|empty ]]; then
+        if [[ -d "$target" || "$(file -b -- "$target")" =~ text|empty ]]; then
             text_or_dirs+=("$target")
         else
             others+=("$target")
@@ -296,7 +296,7 @@ fo() {
     elif [[ "${#others[@]}" > 0 ]]; then
         echo "xdg-open not found, omit opening files ${targets_list[@]}" >&2
     fi
-    if [[ "${#text_or_dirs[@]}" > 0 ]]; then
+    if (("${#text_or_dirs[@]}" > 0)); then
         command -v "$EDITOR" 2>&1 >/dev/null &&
             "$EDITOR" "${text_or_dirs[@]}" ||
             echo "\$EDITOR not found, omit opening files ${text_or_dirs[@]}" >&2
