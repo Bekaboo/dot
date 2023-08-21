@@ -7,17 +7,26 @@
 	defaultBranch = master
 [alias]
 	a = add
-	A = add .
 	b = branch
+	c = commit
 	cm = commit -m
 	ca = commit -a
 	cam = commit -a -m
 	d = diff
 	l = log --oneline --graph
-	p = pull
-	P = push
-	s = status
-	r = restore
+	pl = pull
+	ps = push
+	st = status
+	ss = stash
+	ssm = stash -m
+	ssp = stash pop
+	ssa = stash apply
+	rs = reset
+	rt = restore
+	rss = restore --staged
+	rb = rebase
+	rbp = rebase -i HEAD~5
+	lc = !git ls-files -z | xargs -0 wc -l
 [merge]
 	tool = vimdiff
 	ff = false
