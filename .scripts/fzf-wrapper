@@ -186,14 +186,9 @@ main() {
     # (which eventually depends on $FZF_DEFAULT_OPTS and arguments
     # passed to fzf via $@), it only ensures that ueberzugpp is up
     # when we need it
-    if
-        [[ "$preview_disabled" = 'false' ]] && has ueberzugpp
-        # HACK: launching ueberzugpp when searching through history
-        # make the first history item disappear, don't know why
-        # For reference check fzf-history-widget in
-        # /usr/share/fish/vendor_functions.d/fzf_key_bindings.fish
-        [[ "$(get-fzf-long-opt-no-space scheme)" != 'history' ]]
-    then
+    if has ueberzugpp &&
+        [[ "$FZF_PREVIEW_DISABLE_UB" != 'true' &&
+            "$preview_disabled" = 'false' ]]; then
         local ub_pid_file="/tmp/.$(uuidgen)"
         # HACK: need to redirect stdout and stderr to /dev/null, else
         # ctrl-r history search will be messed up

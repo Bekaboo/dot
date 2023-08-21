@@ -140,6 +140,7 @@ else
 fi
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 export FZF_CTRL_R_OPTS='--no-preview'
+export FZF_PREVIEW_DISABLE_UB='true' # Disable ueberzug preview
 
 [[ -r /usr/share/fzf/key-bindings.bash ]] && . /usr/share/fzf/key-bindings.bash
 [[ -r /usr/share/fzf/completion.bash ]] && . /usr/share/fzf/completion.bash
