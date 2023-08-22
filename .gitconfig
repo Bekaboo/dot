@@ -23,7 +23,7 @@
 	ssa = stash apply
 	rs = reset
 	rt = restore
-	rss = restore --staged
+	rts = restore --staged
 	rb = rebase
 	rbp = rebase -i HEAD~5
 	lc = !git ls-files -z | xargs -0 wc -l
