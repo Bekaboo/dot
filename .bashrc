@@ -53,8 +53,8 @@ export FZF_DEFAULT_OPTS="--reverse \
     --scroll-off=4 \
     --multi \
     --ansi \
-    --color=fg:-1,bg:-1,hl:bold:yellow \
-    --color=fg+:-1,bg+:-1,hl+:bold:yellow \
+    --color=fg:-1,bg:-1,hl:bold:cyan \
+    --color=fg+:-1,bg+:-1,hl+:bold:cyan \
     --color=border:white,preview-border:white \
     --color=marker:bold:cyan,prompt:bold:red,pointer:bold:red \
     --color=gutter:-1,info:bold:red,spinner:cyan,header:white \
