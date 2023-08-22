@@ -254,7 +254,7 @@ fzf() {
 }
 
 # Use fzf to open files or cd to directories
-fo() {
+ff() {
     # $1: base directory, default to $PWD
     # Exit if fzf or fd is not installed
     if ! command -v fzf 2>&1 >/dev/null || ! command -v fd 2>&1 >/dev/null
@@ -264,7 +264,8 @@ fo() {
     fi
 
     local tmpfile="$(mktemp)"
-    fd -p -H -L -td -tf -tl --mount -c=always --search-path="$1" \
+    local path="${1:-$PWD}"
+    fd -p -H -L -td -tf -tl --mount -c=always --search-path="$path" \
         | fzf --ansi --query="$2" >$tmpfile
 
     local targets="$(cat "$tmpfile")"; rm -f "$tmpfile"
