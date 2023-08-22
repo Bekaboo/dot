@@ -1,4 +1,4 @@
-function fo --description 'Use fzf to open files or cd to directories'
+function ff --description 'Use fzf to open files or cd to directories'
     if not type -q fzf; or not type -q fd
         echo 'fzf or fd is not installed' 1>&2
         return 1
