@@ -59,6 +59,7 @@ export FZF_DEFAULT_OPTS="--reverse \
     --color=marker:bold:cyan,prompt:bold:red,pointer:bold:red \
     --color=gutter:-1,info:bold:red,spinner:cyan,header:white \
     --bind=ctrl-k:kill-line \
+    --bind=alt-a:toggle-all \
     --bind=shift-up:preview-half-page-up,shift-down:preview-half-page-down"
 
 if command -v fd 2>&1 >/dev/null; then
