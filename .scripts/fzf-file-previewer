@@ -45,12 +45,12 @@ fzf-file-previewer() {
             printf "%s\n" "$tree_output" | head -n -1
         else
             if has find && has wc; then
-                local num_files=$(find "$1" -type f | wc -l)
-                local num_dirs=$(find "$1" -type d | wc -l)
+                local num_files=$(find "$fpath" -type f | wc -l)
+                local num_dirs=$(find "$fpath" -type d | wc -l)
                 printf "\e[1m%d directories, %d files\e[0m\n" \
                     "$num_dirs" "$num_files"
             fi
-            ls -l --color=always "$1"
+            ls -l --color=always -- "$1"
         fi
         return
     fi
