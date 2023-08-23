@@ -593,6 +593,120 @@ augroup END
 " }}}1
 
 """ Misc {{{1
+" Navigate tmux panes using vim-style motions {{{2
+if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# ''
+  " return: string tmux socket path
+  function! s:tmux_get_socket() abort
+    return get(split($TMUX, ','), 0, '')
+  endfunction
+
+  " param: command string tmux command to execute
+  " return: string tmux command output
+  function! s:tmux_exec(command) abort
+    let command = printf('tmux -S %s %s', s:tmux_get_socket(), a:command)
+    return system(command)
+  endfunction
+
+  " return: 0/1
+  function! s:tmux_is_zoomed() abort
+    return s:tmux_exec('display-message -p "#{window_zoomed_flag}"') =~# '1'
+  endfunction
+
+  let s:tmux_pane_position_map = {
+        \ 'h': 'left',
+        \ 'j': 'bottom',
+        \ 'k': 'top',
+        \ 'l': 'right',
+        \ }
+
+  " param: direction string
+  " return: 0/1
+  function! s:tmux_at_border(direction) abort
+    let result = s:tmux_exec(printf("display-message -p -t '%s' '#{pane_at_%s}'",
+          \ $TMUX_PANE, s:tmux_pane_position_map[a:direction]))
+    return result =~# '1'
+  endfunction
+
+  " param: direction string
+  " return: 0/1
+  function! s:tmux_should_move(direction) abort
+    return ! s:tmux_is_zoomed() && ! s:tmux_at_border(a:direction)
+  endfunction
+
+  let s:tmux_direction_map = {
+        \ 'h': 'L',
+        \ 'j': 'D',
+        \ 'k': 'U',
+        \ 'l': 'R',
+        \ }
+
+  " param: direction string
+  " param: cnt integer? default to 1
+  function! s:tmux_navigate(direction, ...) abort
+    let cnt = get(a:, 1, 1)
+    for i in range(cnt)
+      call s:tmux_exec(printf("select-pane -t '%s' -%s",
+            \ $TMUX_PANE, s:tmux_direction_map[a:direction]))
+    endfor
+  endfunction
+
+  function! s:tmux_set_isvim() abort
+    call s:tmux_exec('set -p @is_vim yes')
+  endfunction
+
+  function! s:tmux_unset_isvim() abort
+    call s:tmux_exec('set -p -u @is_vim')
+  endfunction
+
+  " param: direction string
+  " return: 0/1
+  function! s:vim_at_border(direction) abort
+    return winnr() == winnr(a:direction)
+  endfunction
+
+  " return: 0/1
+  function! s:vim_in_popup_win() abort
+    return win_gettype() ==# 'popup'
+  endfunction
+
+  " param: direction integer
+  " param: cnt integer? default to 1
+  function! s:vim_navigate(direction, ...) abort
+    let cnt = get(a:, 1, 1)
+    exe cnt .. 'wincmd ' .. a:direction
+  endfunction
+
+  " param: direction integer
+  " param: cnt integer? default to 1
+  function! s:navigate(direction, ...) abort
+    let cnt = get(a:, 1, 1)
+    if (s:vim_at_border(a:direction) || s:vim_in_popup_win())
+          \ && s:tmux_should_move(a:direction)
+      call s:tmux_navigate(a:direction, cnt)
+    else
+      call s:vim_navigate(a:direction, cnt)
+    endif
+  endfunction
+
+  nnoremap <silent> <Esc>h :<C-u>call <SID>navigate('h', v:count1)<CR>
+  nnoremap <silent> <Esc>j :<C-u>call <SID>navigate('j', v:count1)<CR>
+  nnoremap <silent> <Esc>k :<C-u>call <SID>navigate('k', v:count1)<CR>
+  nnoremap <silent> <Esc>l :<C-u>call <SID>navigate('l', v:count1)<CR>
+  xnoremap <silent> <Esc>h :<C-u>call <SID>navigate('h', v:count1)<CR>
+  xnoremap <silent> <Esc>j :<C-u>call <SID>navigate('j', v:count1)<CR>
+  xnoremap <silent> <Esc>k :<C-u>call <SID>navigate('k', v:count1)<CR>
+  xnoremap <silent> <Esc>l :<C-u>call <SID>navigate('l', v:count1)<CR>
+
+  call s:tmux_set_isvim()
+
+  augroup TmuxNavSetIsVim
+    au!
+    au VimResume           * :call s:tmux_set_isvim()
+    au VimLeave,VimSuspend * :call s:tmux_unset_isvim()
+  augroup END
+endif
+" }}}2
+
 " Workaround to prevent <Esc> lag cause by Meta keymaps
 noremap  <nowait> <Esc> <Esc>
 noremap! <nowait> <Esc> <C-\><C-n>
