@@ -6,6 +6,8 @@ Font=JetBrainsMono NF Light,13,-1,5,25,0,0,0,0,0,Regular
 Environment=TERM=konsole,COLORTERM=truecolor
 Name=Nano Light
 Parent=FALLBACK/
+TerminalCenter=true
+TerminalMargin=8
 
 [Scrolling]
 ScrollBarPosition=2

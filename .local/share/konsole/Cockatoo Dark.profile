@@ -14,7 +14,7 @@ Name=Cockatoo Dark
 Parent=FALLBACK/
 TerminalCenter=true
 TerminalColumns=116
-TerminalMargin=0
+TerminalMargin=8
 TerminalRows=32
 
 [Interaction Options]

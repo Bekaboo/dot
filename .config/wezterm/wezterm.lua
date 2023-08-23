@@ -23,10 +23,10 @@ config.font = wezterm.font_with_fallback({
 config.font_size = 13.2
 config.term = 'wezterm'
 config.window_padding = {
-  left = 0,
-  right = 0,
-  top = 0,
-  bottom = 0,
+  left = '0.5cell',
+  right = '0.5cell',
+  top = '0.5cell',
+  bottom = '0.5cell',
 }
 
 -- theme.toml links to colors/light.toml or colors/dark.toml, which
