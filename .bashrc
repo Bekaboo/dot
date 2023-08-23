@@ -253,26 +253,11 @@ fzf() {
     fi
 }
 
-# Use fzf to open files or cd to directories
-ff() {
-    # $1: base directory, default to $PWD
-    # Exit if fzf or fd is not installed
-    if ! command -v fzf 2>&1 >/dev/null || ! command -v fd 2>&1 >/dev/null
-    then
-        echo 'fzf or fd is not installed' >&2
-        return 1
-    fi
-
-    local tmpfile="$(mktemp)"
-    local path="${1:-$PWD}"
-    fd -p -H -L -td -tf -tl --mount -c=always --search-path="$path" \
-        | fzf --ansi --query="$2" >$tmpfile
-
-    local targets="$(cat "$tmpfile")"; rm -f "$tmpfile"
-    [[ -z "$targets" ]] && return 0
+__ff_open_files_or_dir() {
+    # $@: files to open
     # Split targets into a list at newline
     local -a targets_list=()
-    IFS=$'\n' read -rd '' -a targets_list <<< "$targets"
+    IFS=$'\n' read -rd '' -a targets_list <<< "$@"
 
     # If only one target and it is a directory, cd into it
     if [[ "${#targets_list[@]}" = 1 && -d "$targets_list[0]" ]]; then
@@ -304,6 +289,34 @@ ff() {
             "$EDITOR" "${text_or_dirs[@]}" ||
             echo "\$EDITOR not found, omit opening files ${text_or_dirs[@]}" >&2
     fi
+}
+
+# Use fzf to open files or cd to directories
+ff() {
+    # $1: base directory
+    # If there is only one target and it is a file, open it directly
+    if (($# == 1)) && [[ -f "$1" ]]; then
+        __ff_open_files_or_dir "$@"
+        return
+    fi
+
+    # Exit if fzf or fd is not installed
+    if ! command -v fzf 2>&1 >/dev/null || ! command -v fd 2>&1 >/dev/null
+    then
+        echo 'fzf or fd is not installed' >&2
+        return 1
+    fi
+
+    local tmpfile="$(mktemp)"
+    local path="${1:-$PWD}"
+    fd -p -H -L -td -tf -tl --mount -c=always --search-path="$path" \
+        | fzf --ansi --query="$2" >$tmpfile
+
+    local targets="$(cat "$tmpfile")"; rm -f "$tmpfile"
+    [[ -z "$targets" ]] && return 0
+
+    __ff_open_files_or_dir "$targets"
+    return
 }
 
 # Aliases
