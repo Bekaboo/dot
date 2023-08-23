@@ -12,7 +12,7 @@ function fish_prompt --description 'Write out the prompt'
         and set -l color_status $fish_color_status_0
         or  set -l color_status $fish_color_status
 
-    echo -n -s \n '  ' \
+    echo -n -s \
         (set_color $color_status) ' ' $last_status ' ' \
         (set_color normal) (set_color $color_cwd) ' ' (prompt_pwd) ' ' \
         (set_color normal) ' '

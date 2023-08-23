@@ -7,6 +7,7 @@ Environment=TERM=konsole,COLORTERM=truecolor
 Name=Nano Dark
 Parent=FALLBACK/
 TerminalCenter=true
+TerminalMargin=8
 
 [Scrolling]
 ScrollBarPosition=2
