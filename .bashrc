@@ -50,7 +50,7 @@ export FZF_DEFAULT_OPTS="--reverse \
     --margin=0,1 \
     --height=~45% \
     --min-height=16 \
-    --scroll-off=4 \
+    --scroll-off=999 \
     --multi \
     --ansi \
     --color=fg:-1,bg:-1,hl:bold:cyan \
