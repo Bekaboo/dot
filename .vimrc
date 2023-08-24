@@ -594,6 +594,13 @@ augroup QuickFixAutoOpen
         \ botright cwindow |
         \ endif
 augroup END
+
+" Clear strange escape sequence shown when using alt keys to navigate away
+" from tmux panes running vim
+augroup FocusLostClearScreen
+  au!
+  au FocusLost * :silent! redraw!
+augroup END
 " }}}1
 
 """ Misc {{{1
