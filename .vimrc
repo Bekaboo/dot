@@ -529,7 +529,7 @@ augroup END
 
 " Restore and switch background from viminfo file,
 " for this autocmd to work properly, 'viminfo' option must contain '!'
-if $COLORTERM == 'truecolor'
+if $COLORTERM ==# 'truecolor'
   let g:preferred_colors = { 'dark': 'habamax', 'light': 'shine' }
 
   " return: string
