@@ -29,6 +29,10 @@ silent! set sessionoptions+=globals
 silent! set viminfo=!,'100,<50,s10,h
 silent! set clipboard+=unnamedplus
 
+" Focus events
+silent! let &t_fe = "\<Esc>[?1004h"
+silent! let &t_fd = "\<Esc>[?1004l"
+
 silent! set backup
 silent! set backupdir=~/.vimbackup
 let s:backupdir = expand('~/.vimbackup')
