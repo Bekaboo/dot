@@ -48,5 +48,5 @@ key_bindings:
 mouse_bindings:
   - { mouse: Right,  action: ReceiveChar }
 
-# scrolling:
-#   history: 0
+scrolling:
+  history: 0
