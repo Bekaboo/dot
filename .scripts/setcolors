@@ -2,6 +2,7 @@
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
 CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 DEFAULT_COLOR='nano'
 
 setcolor-alacritty() {
