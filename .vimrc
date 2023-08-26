@@ -24,6 +24,7 @@ silent! set hlsearch
 silent! set incsearch
 silent! set ttimeoutlen=0
 silent! set autowriteall
+silent! set virtualedit=block
 silent! set shortmess-=S
 silent! set sessionoptions+=globals
 silent! set viminfo=!,'100,<50,s10,h
@@ -600,6 +601,20 @@ augroup END
 augroup FocusLostClearScreen
   au!
   au FocusLost * :silent! redraw!
+augroup END
+
+augroup FixVirtualEditCursorPos
+  au!
+  " Record cursor position in visual mode if virtualedit is set and
+  " contains 'all' or 'block'
+  au CursorMoved * if &ve =~# 'all' |
+        \ let w:ve_cursor = getcurpos() |
+        \ endif
+  " Keep cursor position after entering normal mode from visual mode with
+  " virtualedit enabled
+  au ModeChanged [vV\x16]*:n if &ve =~# 'all' && exists('w:ve_cursor') |
+        \ call setpos('.', w:ve_cursor) |
+        \ endif
 augroup END
 " }}}1
 
