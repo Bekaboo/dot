@@ -14,6 +14,9 @@ if type -P dircolors >/dev/null ; then
     fi
 fi
 
+# Add execution permission to scripts
+[[ -d '~/.scripts' ]] && chmod +x ~/.scripts/*
+
 # TTY Terminal Colors
 if [[ "$TERM" == "linux" ]]; then
     echo -en "\e]P02E3440" #black
@@ -34,6 +37,28 @@ if [[ "$TERM" == "linux" ]]; then
     echo -en "\e]PE99AAC8" #white
     clear #for background artifacting
 fi
+
+pathadd() {
+    if [[ ":$PATH:" != *":$1:"* ]]; then
+        PATH="$1${PATH:+":$PATH"}"
+    fi
+}
+
+pathadd "${HOME}/.local/bin"
+pathadd "${HOME}/.scripts"
+export PATH
+
+command -v nvim-manpager 2>&1 >/dev/null && \
+    export MANPAGER=nvim-manpager
+
+# 'less' highlights
+export LESS_TERMCAP_mb=$'\e[1;32m'
+export LESS_TERMCAP_md=$'\e[1;32m'
+export LESS_TERMCAP_me=$'\e[0m'
+export LESS_TERMCAP_se=$'\e[0m'
+export LESS_TERMCAP_so=$'\e[01;33m'
+export LESS_TERMCAP_ue=$'\e[0m'
+export LESS_TERMCAP_us=$'\e[1;4;34m'
 
 # fzf config variables
 export FZF_DEFAULT_OPTS="--reverse \
@@ -145,9 +170,6 @@ export FZF_PREVIEW_DISABLE_UB='true' # Disable ueberzug preview
 
 [[ -r /usr/share/fzf/key-bindings.bash ]] && . /usr/share/fzf/key-bindings.bash
 [[ -r /usr/share/fzf/completion.bash ]] && . /usr/share/fzf/completion.bash
-
-# Add execution permission to scripts
-[[ -d '~/.scripts' ]] && chmod +x ~/.scripts/*
 
 # Ensure color theme files are correctly linked
 [[ -n "$(command -v setbg 2>/dev/null)" ]] && setbg
