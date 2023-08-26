@@ -186,14 +186,15 @@ setbg-vscode() {
 
 setbg-fish() {
     # $1: 'light' or 'dark'
-    local theme_path="$CONFIG_HOME/fish/themes/Current.theme"
+    local themes_dir="$CONFIG_HOME/fish/themes"
+    local theme_path="$themes_dir/Current.theme"
     if [[ -z "$1" ]]; then
-        ensure-slink "$CONFIG_HOME/fish/themes/Dark.theme" "$theme_path"
+        ensure-slink "$themes_dir/Dark.theme" "$theme_path"
     else
-        force-slink "$CONFIG_HOME/fish/themes/${1^}.theme" "$theme_path"
+        force-slink "$themes_dir/${1^}.theme" "$theme_path"
     fi
     [[ -n "$(command -v fish 2>/dev/null)" ]] &&
-        fish -c 'set -U __fish_reload_theme (random)'
+        fish -c 'set -U __fish_reload_theme "$(head -c 16 /dev/urandom | base32)"'
 }
 
 setbg-glow() {
