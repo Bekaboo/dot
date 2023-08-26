@@ -446,7 +446,9 @@ augroup END
 " Jump to last accessed window on closing the current one
 augroup WinCloseJmp
   au!
-  au WinClosed * if expand('<amatch>') == win_getid() | wincmd p | endif
+  au WinClosed * ++nested if expand('<amatch>') == win_getid() |
+        \ wincmd p |
+        \ endif
 augroup END
 
 " Compute project directory for given path.
