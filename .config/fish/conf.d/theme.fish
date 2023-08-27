@@ -19,6 +19,7 @@ function __fish_reload_theme \
         and test -f "$__fish_config_dir/themes/Current.theme"
         and fish_config theme choose Current
         or  fish_config theme choose 'Base Dark'
+    commandline -f repaint
 end
 
 __fish_reload_theme
