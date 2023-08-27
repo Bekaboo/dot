@@ -1,5 +1,8 @@
 function __term_supports_256color \
         --description 'Check if terminal supports 256 color'
+    if test "$COLORTERM" = 'truecolor'
+        return 0
+    end
     set -l colored_terms 256color wezterm alacritty kitty konsole yakuake
     for term in $colored_terms
         if string match -q --entire $term $TERM
