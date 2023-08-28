@@ -1,7 +1,13 @@
 gui:
+  border: 'single'
   theme:
     activeBorderColor:
       - green
       - bold
     inactiveBorderColor:
       - black
+refresher:
+  refreshInterval: 1
+update:
+  method: never
+promptToReturnFromSubprocess: false
