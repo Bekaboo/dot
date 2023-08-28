@@ -21,7 +21,7 @@ draw_bold_text_with_bright_colors: true
 window:
   opacity: 1
   padding:
-    x: 4
+    x: 8
     y: 2
   dynamic_padding: true
 

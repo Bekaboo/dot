@@ -23,8 +23,8 @@ config.font = wezterm.font_with_fallback({
 config.font_size = 13.2
 config.term = 'wezterm'
 config.window_padding = {
-  left = '0.5cell',
-  right = '0.5cell',
+  left = '1cell',
+  right = '1cell',
   top = '0.5cell',
   bottom = '0.5cell',
 }
