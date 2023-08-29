@@ -620,6 +620,44 @@ augroup FixVirtualEditCursorPos
 augroup END
 " }}}1
 
+""" Plugin Settings {{{1
+" Netrw {{{2
+let g:netrw_banner = 0
+let g:netrw_fastbrowse = 0
+let g:netrw_keepdir = 0
+let g:netrw_list_hide = netrw_gitignore#Hide()
+let g:netrw_liststyle = 3
+let g:netrw_localcopydircmd = 'cp -r'
+let g:netrw_winsize = 25
+
+augroup NetrwSettings
+  au!
+  au FileType netrw setlocal
+        \ bufhidden=wipe
+        \ buftype=nofile
+        \ nobuflisted
+        \ nolist
+        \ nonumber
+        \ norelativenumber
+        \ nospell
+        \ signcolumn=no
+augroup END
+
+nnoremap <silent> <Esc>e :Lexplore!<CR>
+" }}}2
+
+" FZF {{{2
+let g:fzf_layout = {
+      \ 'window': {
+        \ 'width': 0.7,
+        \ 'height': 0.7,
+        \ 'pos': 'center',
+        \ }
+      \ }
+let $FZF_DEFAULT_OPTS .= ' --border=sharp --margin=0 --padding=0'
+" }}}2
+" }}}1
+
 """ Misc {{{1
 " Navigate tmux panes using vim-style motions {{{2
 if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# ''
