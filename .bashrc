@@ -1,6 +1,20 @@
 # ~/.bashrc
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
+# Add execution permission to scripts
+[[ -d '~/.scripts' ]] && chmod +x ~/.scripts/*
+[[ -d '~/.local/bin' ]] && chmod +x ~/.local/bin/*
+
+pathadd() {
+    if [[ ":$PATH:" != *":$1:"* ]]; then
+        PATH="$1${PATH:+":$PATH"}"
+    fi
+}
+
+pathadd "${HOME}/.local/bin"
+pathadd "${HOME}/.scripts"
+export PATH
+
 [[ $- != *i* ]] && return
 
 xhost +local:root > /dev/null 2>&1
@@ -13,9 +27,6 @@ if type -P dircolors >/dev/null ; then
         eval $(dircolors -b /etc/DIR_COLORS)
     fi
 fi
-
-# Add execution permission to scripts
-[[ -d '~/.scripts' ]] && chmod +x ~/.scripts/*
 
 # TTY Terminal Colors
 if [[ "$TERM" == "linux" ]]; then
@@ -37,16 +48,6 @@ if [[ "$TERM" == "linux" ]]; then
     echo -en "\e]PE99AAC8" #white
     clear #for background artifacting
 fi
-
-pathadd() {
-    if [[ ":$PATH:" != *":$1:"* ]]; then
-        PATH="$1${PATH:+":$PATH"}"
-    fi
-}
-
-pathadd "${HOME}/.local/bin"
-pathadd "${HOME}/.scripts"
-export PATH
 
 command -v nvim-manpager 2>&1 >/dev/null && \
     export MANPAGER=nvim-manpager
