@@ -11,3 +11,4 @@ refresher:
 update:
   method: never
 promptToReturnFromSubprocess: false
+notARepository: 'skip'
