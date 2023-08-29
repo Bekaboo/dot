@@ -717,11 +717,11 @@ if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# ''
   endfunction
 
   function! s:tmux_set_isvim() abort
-    call s:tmux_exec('set -p @is_vim yes')
+    call s:tmux_exec(printf('set -pt %s @is_vim yes', $TMUX_PANE))
   endfunction
 
   function! s:tmux_unset_isvim() abort
-    call s:tmux_exec('set -p -u @is_vim')
+    call s:tmux_exec(printf('set -put %s @is_vim', $TMUX_PANE))
   endfunction
 
   " param: direction string
