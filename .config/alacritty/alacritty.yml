@@ -22,12 +22,12 @@ window:
   opacity: 1
   padding:
     x: 8
-    y: 2
+    y: 4
   dynamic_padding: true
 
   dimensions:
-    columns: 112
-    lines: 34
+    columns: 90
+    lines: 24
 
 env:
   TERM: alacritty
