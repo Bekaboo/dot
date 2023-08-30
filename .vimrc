@@ -210,12 +210,16 @@ for map in ['nnoremap', 'xnoremap']
   exe map . '<Esc>g<Esc>] <C-w>g<C-]>'
   exe map . '<Esc>g<Tab>  <C-w>g<Tab>'
 
-  exe map . '<expr> <Esc>> v:count ? "<C-w>>" : "4<C-w>>"'
-  exe map . '<expr> <Esc>< v:count ? "<C-w><" : "4<C-w><"'
+  exe map . '<expr> <Esc>> (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")'
+  exe map . '<expr> <Esc>< (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")'
+  exe map . '<expr> <Esc>. (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")'
+  exe map . '<expr> <Esc>, (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")'
   exe map . '<expr> <Esc>+ v:count ? "<C-w>+" : "2<C-w>+"'
   exe map . '<expr> <Esc>- v:count ? "<C-w>-" : "2<C-w>-"'
-  exe map . '<expr> <C-w>> v:count ? "<C-w>>" : "4<C-w>>"'
-  exe map . '<expr> <C-w>< v:count ? "<C-w><" : "4<C-w><"'
+  exe map . '<expr> <C-w>> (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")'
+  exe map . '<expr> <C-w>< (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")'
+  exe map . '<expr> <C-w>. (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")'
+  exe map . '<expr> <C-w>, (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")'
   exe map . '<expr> <C-w>+ v:count ? "<C-w>+" : "2<C-w>+"'
   exe map . '<expr> <C-w>- v:count ? "<C-w>-" : "2<C-w>-"'
 endfor
@@ -763,6 +767,14 @@ if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# ''
     return win_gettype() ==# 'popup'
   endfunction
 
+  function! s:vim_has_only_win() abort
+    return winnr('$') <= 1 && tabpagenr('$') <= 1
+  endfunction
+
+  function s:vim_tabpage_has_only_win() abort
+    return winnr('$') <= 1
+  endfunction
+
   " param: direction integer
   " param: cnt integer? default to 1
   function! s:vim_navigate(direction, ...) abort
@@ -791,6 +803,75 @@ if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# ''
   xnoremap <silent> <Esc>k :<C-u>call <SID>navigate('k', v:count1)<CR>
   xnoremap <silent> <Esc>l :<C-u>call <SID>navigate('l', v:count1)<CR>
 
+  " return: 0/1
+  function! s:tmux_mapkey_default_condition() abort
+    return ! s:tmux_is_zoomed() && s:vim_tabpage_has_only_win()
+  endfunction
+  let TmuxMapKeyDefaultConditionRef = function(
+        \ 's:tmux_mapkey_default_condition')
+
+  " return: 0/1
+  function! s:tmux_mapkey_close_win_condition() abort
+    return ! s:tmux_is_zoomed() && s:vim_has_only_win()
+  endfunction
+  let TmuxMapkeyCloseWinConditionRef = function(
+        \ 's:tmux_mapkey_close_win_condition')
+
+  " return: 0/1
+  function! s:tmux_mapkey_resize_pane_horiz_condition() abort
+    return ! s:tmux_is_zoomed() && (s:vim_at_border('l') &&
+          \ (s:vim_at_border('h') || ! s:tmux_at_border('l')))
+  endfunction
+  let TmuxMapkeyResizePaneHorizConditionRef = function(
+        \ 's:tmux_mapkey_resize_pane_horiz_condition')
+
+  " return: 0/1
+  function! s:tmux_mapkey_resize_pane_vert_condition() abort
+    return ! s:tmux_is_zoomed() && (s:vim_at_border('j') &&
+          \ (s:vim_at_border('k') || ! s:tmux_at_border('j')))
+  endfunction
+  let TmuxMapkeyResizePaneVertConditionRef = function(
+        \ 's:tmux_mapkey_resize_pane_vert_condition')
+
+  " param: command string
+  " param: key_fallback string
+  " param: condition? fun(): boolean
+  " return: string (rhs)
+  function! s:tmux_mapkey_fallback(command, key_fallback, ...) abort
+    let Condition = get(a:, 1, g:TmuxMapKeyDefaultConditionRef)
+    if Condition()
+      call s:tmux_exec(a:command)
+      return "\<Ignore>"
+    endif
+    return a:key_fallback
+  endfunction
+
+  nnoremap <expr><silent> <Esc>p <SID>tmux_mapkey_fallback('last-pane', '<C-w>p')
+  nnoremap <expr><silent> <Esc>R <SID>tmux_mapkey_fallback('swap-pane -U', '<C-w>R')
+  nnoremap <expr><silent> <Esc>r <SID>tmux_mapkey_fallback('swap-pane -D', '<C-w>r')
+  nnoremap <expr><silent> <Esc>o <SID>tmux_mapkey_fallback("confirm 'kill-pane -a'", '<C-w>o')
+  nnoremap <expr><silent> <Esc>= <SID>tmux_mapkey_fallback("confirm 'select-layout tiled'", '<C-w>=')
+  nnoremap <expr><silent> <Esc>c <SID>tmux_mapkey_fallback('confirm kill-pane', '<C-w>c', TmuxMapkeyCloseWinConditionRef)
+  nnoremap <expr><silent> <Esc>< <SID>tmux_mapkey_fallback('resize-pane -L 4', (v:count ? '' : 4) . (winnr() == winnr('l') ? '<C-w>>' : '<C-w><'), TmuxMapkeyResizePaneHorizConditionRef)
+  nnoremap <expr><silent> <Esc>> <SID>tmux_mapkey_fallback('resize-pane -R 4', (v:count ? '' : 4) . (winnr() == winnr('l') ? '<C-w><' : '<C-w>>'), TmuxMapkeyResizePaneHorizConditionRef)
+  nnoremap <expr><silent> <Esc>, <SID>tmux_mapkey_fallback('resize-pane -L 4', (v:count ? '' : 4) . (winnr() == winnr('l') ? '<C-w>>' : '<C-w><'), TmuxMapkeyResizePaneHorizConditionRef)
+  nnoremap <expr><silent> <Esc>. <SID>tmux_mapkey_fallback('resize-pane -R 4', (v:count ? '' : 4) . (winnr() == winnr('l') ? '<C-w><' : '<C-w>>'), TmuxMapkeyResizePaneHorizConditionRef)
+  nnoremap <expr><silent> <Esc>- <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') - 2))\"", v:count ? '<C-w>-' : '2<C-w>-', TmuxMapkeyResizePaneVertConditionRef)
+  nnoremap <expr><silent> <Esc>+ <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') + 2))\"", v:count ? '<C-w>+' : '2<C-w>+', TmuxMapkeyResizePaneVertConditionRef)
+
+  xnoremap <expr><silent> <Esc>p <SID>tmux_mapkey_fallback('last-pane', '<C-w>p')
+  xnoremap <expr><silent> <Esc>R <SID>tmux_mapkey_fallback('swap-pane -U', '<C-w>R')
+  xnoremap <expr><silent> <Esc>r <SID>tmux_mapkey_fallback('swap-pane -D', '<C-w>r')
+  xnoremap <expr><silent> <Esc>o <SID>tmux_mapkey_fallback("confirm 'kill-pane -a'", '<C-w>o')
+  xnoremap <expr><silent> <Esc>= <SID>tmux_mapkey_fallback("confirm 'select-layout tiled'", '<C-w>=')
+  xnoremap <expr><silent> <Esc>c <SID>tmux_mapkey_fallback('confirm kill-pane', '<C-w>c', TmuxMapkeyCloseWinConditionRef)
+  xnoremap <expr><silent> <Esc>< <SID>tmux_mapkey_fallback('resize-pane -L 4', (v:count ? '' : 4) . (winnr() == winnr('l') ? '<C-w>>' : '<C-w><'), TmuxMapkeyResizePaneHorizConditionRef)
+  xnoremap <expr><silent> <Esc>> <SID>tmux_mapkey_fallback('resize-pane -R 4', (v:count ? '' : 4) . (winnr() == winnr('l') ? '<C-w><' : '<C-w>>'), TmuxMapkeyResizePaneHorizConditionRef)
+  xnoremap <expr><silent> <Esc>, <SID>tmux_mapkey_fallback('resize-pane -L 4', (v:count ? '' : 4) . (winnr() == winnr('l') ? '<C-w>>' : '<C-w><'), TmuxMapkeyResizePaneHorizConditionRef)
+  xnoremap <expr><silent> <Esc>. <SID>tmux_mapkey_fallback('resize-pane -R 4', (v:count ? '' : 4) . (winnr() == winnr('l') ? '<C-w><' : '<C-w>>'), TmuxMapkeyResizePaneHorizConditionRef)
+  xnoremap <expr><silent> <Esc>- <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') - 2))\"", v:count ? '<C-w>-' : '2<C-w>-', TmuxMapkeyResizePaneVertConditionRef)
+  xnoremap <expr><silent> <Esc>+ <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') + 2))\"", v:count ? '<C-w>+' : '2<C-w>+', TmuxMapkeyResizePaneVertConditionRef)
+
   " Set @is_vim and register relevant autocmds callbacks if not already
   " in a vim/nvim session
   if s:tmux_get_pane_opt('@is_vim') ==# ''
@@ -802,6 +883,42 @@ if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# ''
     augroup END
   endif
 endif
+" }}}2
+
+" Terminal Settings {{{2
+" return: reltime() converted to ms
+function! s:reltime_ms() abort
+  let t = reltime()
+  return t[0] * 1000 + t[1] / 1000000
+endfunction
+
+" param: a:1 whether to store a timestamp in the terminal buffer
+" return: 0/1
+function! s:shall_esc(...) abort
+  if &buftype !~# 'terminal'
+    return 0
+  endif
+  if get(a:, 1, 0)
+    let b:t_esc = s:reltime_ms()
+  endif
+  let pid = job_info(term_getjob(bufnr())).process
+  let command = trim(system('ps h -o comm -g ' . pid . ' | tail -n1'))
+  if v:shell_error
+    return 0
+  endif
+  return match(command, '\v^((ba|da|fi|z)?sh|less|gawk|i?python3?)$') >= 0
+endfunction
+
+augroup TermOptions
+  au!
+  au TerminalWinOpen * setlocal nonu nornu signcolumn=no bufhidden=hide |
+        \ nnoremap <buffer> o i |
+        \ nnoremap <nowait><expr><buffer> <Esc> <SID>shall_esc()
+          \ && exists('b:t_esc')
+          \ && <SID>reltime_ms() - b:t_esc <= &tm ? 'i' : '<Esc>' |
+        \ tnoremap <expr><buffer> <Esc> <SID>shall_esc(1) ? '<C-\><C-n>' : '<Esc>' |
+        \ startinsert
+augroup END
 " }}}2
 
 " Workaround to prevent <Esc> lag cause by Meta keymaps
