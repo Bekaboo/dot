@@ -10,6 +10,7 @@ silent! set scrolloff=4
 silent! set sidescrolloff=8
 silent! set showtabline=0
 silent! set splitright
+silent! set nostartofline
 silent! set noswapfile
 silent! set undofile
 silent! set updatetime=10
