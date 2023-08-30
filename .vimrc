@@ -674,9 +674,44 @@ if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# ''
     return system(command)
   endfunction
 
+  " Get tmux option value in current pane
+  " param: opt string tmux pane option
+  " return: string tmux pane option value
+  function! s:tmux_get_pane_opt(opt) abort
+    return substitute(s:tmux_exec(printf(
+            \ "display-message -pt %s '#{%s}'",
+            \ $TMUX_PANE,
+            \ escape(a:opt, "'\\"))
+          \ ), '\n.*', '', '')
+  endfunction
+
+  " Set tmux option value in current pane
+  " param: opt string tmux pane option
+  " param: val string tmux pane option value
+  " return: 0
+  function! s:tmux_set_pane_opt(opt, val) abort
+    call s:tmux_exec(printf(
+            \ "set -pt %s %s '%s'",
+            \ $TMUX_PANE,
+            \ a:opt,
+            \ escape(a:val, "'\\")
+          \ ))
+  endfunction
+
+  " Unset a tmux pane option
+  " param: opt string tmux pane option
+  " return: 0
+  function! s:tmux_unset_pane_opt(opt) abort
+    call s:tmux_exec(printf(
+            \ "set -put %s '%s'",
+            \ $TMUX_PANE,
+            \ escape(a:opt, "'\\")
+          \ ))
+  endfunction
+
   " return: 0/1
   function! s:tmux_is_zoomed() abort
-    return s:tmux_exec('display-message -p "#{window_zoomed_flag}"') =~# '1'
+    return s:tmux_get_pane_opt('window_zoomed_flag') ==# '1'
   endfunction
 
   let s:tmux_pane_position_map = {
@@ -689,9 +724,8 @@ if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# ''
   " param: direction string
   " return: 0/1
   function! s:tmux_at_border(direction) abort
-    let result = s:tmux_exec(printf("display-message -p -t '%s' '#{pane_at_%s}'",
-          \ $TMUX_PANE, s:tmux_pane_position_map[a:direction]))
-    return result =~# '1'
+    return s:tmux_get_pane_opt(
+          \ 'pane_at_' .. s:tmux_pane_position_map[a:direction]) ==# '1'
   endfunction
 
   " param: direction string
@@ -715,14 +749,6 @@ if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# ''
       call s:tmux_exec(printf("select-pane -t '%s' -%s",
             \ $TMUX_PANE, s:tmux_direction_map[a:direction]))
     endfor
-  endfunction
-
-  function! s:tmux_set_isvim() abort
-    call s:tmux_exec(printf('set -pt %s @is_vim yes', $TMUX_PANE))
-  endfunction
-
-  function! s:tmux_unset_isvim() abort
-    call s:tmux_exec(printf('set -put %s @is_vim', $TMUX_PANE))
   endfunction
 
   " param: direction string
@@ -764,13 +790,16 @@ if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# ''
   xnoremap <silent> <Esc>k :<C-u>call <SID>navigate('k', v:count1)<CR>
   xnoremap <silent> <Esc>l :<C-u>call <SID>navigate('l', v:count1)<CR>
 
-  call s:tmux_set_isvim()
-
-  augroup TmuxNavSetIsVim
-    au!
-    au VimResume           * :call s:tmux_set_isvim()
-    au VimLeave,VimSuspend * :call s:tmux_unset_isvim()
-  augroup END
+  " Set @is_vim and register relevant autocmds callbacks if not already
+  " in a vim/nvim session
+  if s:tmux_get_pane_opt('@is_vim') ==# ''
+    call s:tmux_set_pane_opt('@is_vim', 'yes')
+    augroup TmuxNavSetIsVim
+      au!
+      au VimResume           * :call s:tmux_set_pane_opt('@is_vim', 'yes')
+      au VimLeave,VimSuspend * :call s:tmux_unset_pane_opt('@is_vim')
+    augroup END
+  endif
 endif
 " }}}2
 
