@@ -10,6 +10,7 @@ silent! set scrolloff=4
 silent! set sidescrolloff=8
 silent! set showtabline=0
 silent! set splitright
+silent! set splitbelow
 silent! set nostartofline
 silent! set noswapfile
 silent! set undofile
@@ -593,7 +594,7 @@ endif
 augroup QuickFixAutoOpen
   au!
   au QuickFixCmdPost * if expand('<amatch>') =~# '^l' |
-        \ lwindow |
+        \ belowright lwindow |
         \ else |
         \ botright cwindow |
         \ endif
