@@ -1,6 +1,6 @@
 function fish_greeting
     if not type -q tput
-        or test (tput lines) -lt 20
+        or test (tput lines) -lt 40
         or test (tput cols) -lt 112
         return
     end
