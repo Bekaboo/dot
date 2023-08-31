@@ -72,29 +72,17 @@ filetype plugin indent on
 " }}}1
 
 """ Abbreviations {{{1
-" param: trig string
-" param: command string
-function! s:_command_abbrev(trig, command) abort
-  return getcmdtype() ==# ':'
-          \ && getcmdline()[:getcmdpos() - 1]
-          \ =~# '\(^\||\)\s*\V' . escape(a:trig, '\') . '\$'
-        \ ? a:command
-        \ : a:trig
-endfunction
-
-" Set abbreviation that only expand when the trigger is at the start of the
-" command line or after a pipe '|', i.e. only when the trigger is at the
-" position of a command
+" Set abbreviation that only when the trigger is at the position of a command
 " param: trig string
 " param: command string
 " param: a:1 flags string? '<expr>'/'<buffer>',etc
 function! s:command_abbrev(trig, command, ...) abort
   exe printf(
-        \ 'cnoreabbrev %s %s <SID>_command_abbrev("%s", "%s")',
+        \ 'cnoreabbrev %s %s getcmdcompltype() ==# "command" ? "%s" : "%s"',
         \ '<expr>' . substitute(get(a:, 1, ''), '<expr>', '', ''),
         \ a:trig,
-        \ escape(a:trig, '"\'),
-        \ escape(a:command, '"\'))
+        \ escape(a:command, '"\'),
+        \ escape(a:trig, '"\'))
 endfunction
 
 call s:command_abbrev('S', '%s')
