@@ -5,6 +5,7 @@ end
 
 __command_abbr cmd         'command'
 __command_abbr cp          'cp -i'
+__command_abbr dc          'cd'
 __command_abbr df          'df -h'
 __command_abbr fd          'fd -H -L --mount'
 __command_abbr free        'free -m'
