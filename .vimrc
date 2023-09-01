@@ -36,6 +36,10 @@ silent! set clipboard+=unnamedplus
 silent! let &t_fe = "\<Esc>[?1004h"
 silent! let &t_fd = "\<Esc>[?1004l"
 
+" Set editor to vim
+silent! let $EDITOR = 'vim'
+silent! let $VISUAL = 'vim'
+
 silent! set backup
 silent! set backupdir=~/.vimbackup
 let s:backupdir = expand('~/.vimbackup')
@@ -882,14 +886,14 @@ function! s:shall_esc(...) abort
   let pid = job_info(term_getjob(bufnr())).process
   let command = trim(system('ps h -o comm -g ' . pid . ' | tail -n1'))
   if v:shell_error
-    return 0
+    return 1
   endif
   return match(command, '\v^((ba|da|fi|z)?sh|less|gawk|i?python3?)$') >= 0
 endfunction
 
 augroup TermOptions
   au!
-  au TerminalWinOpen * setlocal nonu nornu signcolumn=no bufhidden=hide |
+  au TerminalWinOpen * setlocal nonu nornu scl=no bh=hide so=0 siso=0 |
         \ nnoremap <buffer> o i |
         \ nnoremap <nowait><expr><buffer> <Esc> <SID>shall_esc()
           \ && exists('b:t_esc')
