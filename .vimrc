@@ -582,16 +582,6 @@ if $COLORTERM ==# 'truecolor' || has('gui_running')
   augroup END
 endif
 
-" Automatically open quickfix window of loclist if there are results
-augroup QuickFixAutoOpen
-  au!
-  au QuickFixCmdPost * if expand('<amatch>') =~# '^l' |
-        \ belowright lwindow |
-        \ else |
-        \ botright cwindow |
-        \ endif
-augroup END
-
 " Clear strange escape sequence shown when using alt keys to navigate away
 " from tmux panes running vim
 augroup FocusLostClearScreen
