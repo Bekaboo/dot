@@ -1,5 +1,6 @@
 """ Options {{{1
 silent! set colorcolumn=80
+silent! set helpheight=10
 silent! set laststatus=2
 silent! set mouse=a
 silent! set number
