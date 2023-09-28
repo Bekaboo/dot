@@ -51,8 +51,6 @@ if !isdirectory(s:backupdir)
   call mkdir(s:backupdir)
 endif
 
-silent! set list
-silent! set listchars=tab:→\ ,trail:·,nbsp:␣,extends:…,precedes:…
 silent! set fillchars=fold:·,diff:╱
 silent! set conceallevel=2
 
@@ -82,12 +80,14 @@ filetype plugin indent on
 " param: command string
 " param: a:1 flags string? '<expr>'/'<buffer>',etc
 function! s:command_abbrev(trig, command, ...) abort
-  exe printf(
-        \ 'cnoreabbrev %s %s getcmdcompltype() ==# "command" ? "%s" : "%s"',
-        \ '<expr>' . substitute(get(a:, 1, ''), '<expr>', '', ''),
-        \ a:trig,
-        \ escape(a:command, '"\'),
-        \ escape(a:trig, '"\'))
+  if exists('*getcmdcompltype')
+    exe printf(
+          \ 'cnoreabbrev %s %s getcmdcompltype() ==# "command" ? "%s" : "%s"',
+          \ '<expr>' . substitute(get(a:, 1, ''), '<expr>', '', ''),
+          \ a:trig,
+          \ escape(a:command, '"\'),
+          \ escape(a:trig, '"\'))
+  endif
 endfunction
 
 call s:command_abbrev('S', '%s')
@@ -203,16 +203,27 @@ for map in ['nnoremap', 'xnoremap']
   exe map . '<Esc>g<Esc>] <C-w>g<C-]>'
   exe map . '<Esc>g<Tab>  <C-w>g<Tab>'
 
-  exe map . '<expr> <Esc>> (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")'
-  exe map . '<expr> <Esc>< (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")'
-  exe map . '<expr> <Esc>. (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")'
-  exe map . '<expr> <Esc>, (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")'
   exe map . '<expr> <Esc>+ v:count ? "<C-w>+" : "2<C-w>+"'
   exe map . '<expr> <Esc>- v:count ? "<C-w>-" : "2<C-w>-"'
-  exe map . '<expr> <C-w>> (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")'
-  exe map . '<expr> <C-w>< (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")'
-  exe map . '<expr> <C-w>. (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")'
-  exe map . '<expr> <C-w>, (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")'
+  if has('patch-8.1.1140')
+    exe map . '<expr> <Esc>> (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")'
+    exe map . '<expr> <Esc>< (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")'
+    exe map . '<expr> <Esc>. (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")'
+    exe map . '<expr> <Esc>, (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")'
+    exe map . '<expr> <C-w>> (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")'
+    exe map . '<expr> <C-w>< (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")'
+    exe map . '<expr> <C-w>. (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")'
+    exe map . '<expr> <C-w>, (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")'
+  else
+    exe map . '<expr> <Esc>> (v:count ? "" : 4) . "<C-w>>"'
+    exe map . '<expr> <Esc>< (v:count ? "" : 4) . "<C-w><"'
+    exe map . '<expr> <Esc>. (v:count ? "" : 4) . "<C-w>>"'
+    exe map . '<expr> <Esc>, (v:count ? "" : 4) . "<C-w><"'
+    exe map . '<expr> <C-w>> (v:count ? "" : 4) . "<C-w>>"'
+    exe map . '<expr> <C-w>< (v:count ? "" : 4) . "<C-w><"'
+    exe map . '<expr> <C-w>. (v:count ? "" : 4) . "<C-w>>"'
+    exe map . '<expr> <C-w>, (v:count ? "" : 4) . "<C-w><"'
+  endif
   exe map . '<expr> <C-w>+ v:count ? "<C-w>+" : "2<C-w>+"'
   exe map . '<expr> <C-w>- v:count ? "<C-w>-" : "2<C-w>-"'
 endfor
@@ -420,118 +431,160 @@ noremap! <expr> <Esc>b <SID>ic_meta_b()
 " }}}1
 
 """ Autocmds {{{1
-augroup AutoSave
-  au!
-  au BufLeave,WinLeave,FocusLost * ++nested silent! wall
-augroup END
+" Check if an event or a list of events are supported
+" param: events string|string[] event or list of events
+" return: 0/1
+function! s:supportevents(events) abort
+  if type(a:events) == v:t_string
+    return exists('##' . a:events)
+  endif
+  if type(a:events) == v:t_list
+    for event in a:events
+      if !exists('##' . event)
+        return 0
+      endif
+    endfor
+    return 1
+  endif
+  return 0
+endfunction
 
-augroup EqualWinSize
-  au!
-  au VimResized * wincmd =
-augroup END
+if s:supportevents(['BufLeave', 'WinLeave', 'FocusLost'])
+  augroup AutoSave
+    au!
+    if has('patch-8.1113')
+      au BufLeave,WinLeave,FocusLost * ++nested silent! wall
+    else
+      au BufLeave,WinLeave,FocusLost * silent! wall
+    endif
+  augroup END
+endif
 
-augroup TextwidthRelativeColorcolumn
-  au!
-  au OptionSet textwidth if v:option_new | setlocal cc=+1 | endif
-augroup END
+if s:supportevents('VimResized')
+  augroup EqualWinSize
+    au!
+    au VimResized * wincmd =
+  augroup END
+endif
 
-augroup LastPosJmp
-  au!
-  au BufReadPost * if &ft !=# 'gitcommit' && &ft !=# 'gitrebase' |
-        \ exe 'silent! normal! g`"' |
-        \ endif
-augroup END
+if s:supportevents('OptionSet')
+  augroup TextwidthRelativeColorcolumn
+    au!
+    au OptionSet textwidth if v:option_new | setlocal cc=+1 | endif
+  augroup END
+endif
+
+if s:supportevents('BufReadPost')
+  augroup LastPosJmp
+    au!
+    au BufReadPost * if &ft !=# 'gitcommit' && &ft !=# 'gitrebase' |
+          \ exe 'silent! normal! g`"' |
+          \ endif
+  augroup END
+endif
 
 " Jump to last accessed window on closing the current one
-augroup WinCloseJmp
-  au!
-  au WinClosed * ++nested if expand('<amatch>') == win_getid() |
-        \ wincmd p |
-        \ endif
-augroup END
+if s:supportevents('WinClosed')
+  augroup WinCloseJmp
+    au!
+    au WinClosed * ++nested if expand('<amatch>') == win_getid() |
+          \ wincmd p |
+          \ endif
+  augroup END
+endif
 
-" Compute project directory for given path.
-" param: fpath string
-" param: a:1 patterns string[]? root patterns
-" return: string returns path of project root directory if found,
-"         else returns empty string
-function! s:proj_dir(fpath, ...) abort
-  if a:fpath == ''
-    return ''
-  endif
-  let patterns = get(a:, 1, [
-      \ '.git/',
-      \ '.svn/',
-      \ '.bzr/',
-      \ '.hg/',
-      \ '.project/',
-      \ '.pro',
-      \ '.sln',
-      \ '.vcxproj',
-      \ 'Makefile',
-      \ 'makefile',
-      \ 'MAKEFILE',
-      \ '.gitignore',
-      \ '.editorconfig'])
-  let dirpath = fnamemodify(a:fpath, ':p:h') .. ';'
-  for pattern in patterns
-    if pattern =~# '/$'
-      let target_path = finddir(pattern, dirpath)
-      if target_path !=# ''
-        return fnamemodify(target_path, ':p:h:h')
-      endif
-    else
-      let target_path = findfile(pattern, dirpath)
-      if target_path !=# ''
-        return fnamemodify(target_path, ':p:h')
-      endif
+if s:supportevents([
+      \ 'BufReadPost',
+      \ 'BufWinEnter',
+      \ 'WinEnter',
+      \ 'FileChangedShellPost'
+      \ ])
+  " Compute project directory for given path.
+  " param: fpath string
+  " param: a:1 patterns string[]? root patterns
+  " return: string returns path of project root directory if found,
+  "         else returns empty string
+  function! s:proj_dir(fpath, ...) abort
+    if a:fpath == ''
+      return ''
     endif
-  endfor
-  return ''
-endfunction
+    let patterns = get(a:, 1, [
+        \ '.git/',
+        \ '.svn/',
+        \ '.bzr/',
+        \ '.hg/',
+        \ '.project/',
+        \ '.pro',
+        \ '.sln',
+        \ '.vcxproj',
+        \ 'Makefile',
+        \ 'makefile',
+        \ 'MAKEFILE',
+        \ '.gitignore',
+        \ '.editorconfig'])
+    let dirpath = fnamemodify(a:fpath, ':p:h') . ';'
+    for pattern in patterns
+      if pattern =~# '/$'
+        let target_path = finddir(pattern, dirpath)
+        if target_path !=# ''
+          return fnamemodify(target_path, ':p:h:h')
+        endif
+      else
+        let target_path = findfile(pattern, dirpath)
+        if target_path !=# ''
+          return fnamemodify(target_path, ':p:h')
+        endif
+      endif
+    endfor
+    return ''
+  endfunction
 
-" Change current working directory to project root directory.
-" param: fpath string path to current file
-function! s:autocwd(fpath) abort
-  let fpath = fnamemodify(a:fpath, ':p')
-  if fpath ==# '' || !isdirectory(fpath) && !filereadable(fpath)
-    return
-  endif
-  let proj_dir = s:proj_dir(fpath)
-  if proj_dir !=# ''
-    exe 'lcd ' .. proj_dir
-    return
-  endif
-  let dirname = fnamemodify(fpath, ':p:h')
-  if isdirectory(dirname)
-    exe 'lcd ' .. dirname
-  endif
-endfunction
+  " Change current working directory to project root directory.
+  " param: fpath string path to current file
+  function! s:autocwd(fpath) abort
+    let fpath = fnamemodify(a:fpath, ':p')
+    if fpath ==# '' || !isdirectory(fpath) && !filereadable(fpath)
+      return
+    endif
+    let proj_dir = s:proj_dir(fpath)
+    if proj_dir !=# ''
+      exe 'lcd ' . proj_dir
+      return
+    endif
+    let dirname = fnamemodify(fpath, ':p:h')
+    if isdirectory(dirname)
+      exe 'lcd ' . dirname
+    endif
+  endfunction
 
-augroup AutoCwd
-  au!
-  autocmd BufReadPost,BufWinEnter,WinEnter,FileChangedShellPost *
-        \ :call <SID>autocwd(expand('<afile>'))
-augroup END
+  augroup AutoCwd
+    au!
+    autocmd BufReadPost,BufWinEnter,WinEnter,FileChangedShellPost *
+          \ :call <SID>autocwd(expand('<afile>'))
+  augroup END
+endif
 
-" Update folds for given buffer
-" param: bufnr integer
-function! s:update_folds_once(bufnr)
-  if !getbufvar(a:bufnr, 'foldupdated', 0)
-    call setbufvar(a:bufnr, 'foldupdated', 1)
-    exe 'normal! zx'
-  endif
-endfunction
+if s:supportevents(['BufWinEnter', 'BufUnload'])
+  " Update folds for given buffer
+  " param: bufnr integer
+  function! s:update_folds_once(bufnr)
+    if !getbufvar(a:bufnr, 'foldupdated', 0) && bufexists(a:bufnr)
+      call setbufvar(a:bufnr, 'foldupdated', 1)
+      exe 'normal! zx'
+    endif
+  endfunction
 
-augroup UpdateFolds
-  au!
-  au BufWinEnter * :call s:update_folds_once(expand('<abuf>'))
-  au BufUnload   * :call setbufvar(expand('<abuf>'), 'foldupdated', 0)
-augroup END
+  augroup UpdateFolds
+    au!
+    au BufWinEnter * :call s:update_folds_once(expand('<abuf>'))
+    au BufUnload   * :call setbufvar(expand('<abuf>'), 'foldupdated', 0)
+  augroup END
+endif
 
 " Restore and switch background from viminfo file,
 " for this autocmd to work properly, 'viminfo' option must contain '!'
-if $COLORTERM ==# 'truecolor' || has('gui_running')
+if ($COLORTERM ==# 'truecolor' || has('gui_running'))
+      \ && s:supportevents(['VimEnter', 'OptionSet', 'ColorScheme'])
   let g:preferred_colors = { 'dark': 'habamax', 'light': 'shine' }
 
   " return: string
@@ -548,7 +601,7 @@ if $COLORTERM ==# 'truecolor' || has('gui_running')
     let colors_name = get(g:, 'colors_name', '')
     let COLORSNAME = get(g:, 'COLORSNAME', '')
     if colors_name ==# '' || COLORSNAME != colors_name
-      exe 'silent! colorscheme ' ..
+      exe 'silent! colorscheme ' .
             \ (COLORSNAME !=# '' ? COLORSNAME : s:get_preferred_colors())
       call s:theme_fix_hlspellbad()
     endif
@@ -560,7 +613,7 @@ if $COLORTERM ==# 'truecolor' || has('gui_running')
   " return: 0
   function! s:theme_save_and_choose_preferred() abort
     let g:BACKGROUND = v:option_new
-    exe 'silent! colorscheme ' .. s:get_preferred_colors()
+    exe 'silent! colorscheme ' . s:get_preferred_colors()
     call s:theme_fix_hlspellbad()
     call s:theme_save()
   endfunction
@@ -589,24 +642,28 @@ endif
 
 " Clear strange escape sequence shown when using alt keys to navigate away
 " from tmux panes running vim
-augroup FocusLostClearScreen
-  au!
-  au FocusLost * :silent! redraw!
-augroup END
+if s:supportevents('FocusLost')
+  augroup FocusLostClearScreen
+    au!
+    au FocusLost * :silent! redraw!
+  augroup END
+endif
 
-augroup FixVirtualEditCursorPos
-  au!
-  " Record cursor position in visual mode if virtualedit is set and
-  " contains 'all' or 'block'
-  au CursorMoved * if &ve =~# 'all' |
-        \ let w:ve_cursor = getcurpos() |
-        \ endif
-  " Keep cursor position after entering normal mode from visual mode with
-  " virtualedit enabled
-  au ModeChanged [vV\x16]*:n if &ve =~# 'all' && exists('w:ve_cursor') |
-        \ call setpos('.', w:ve_cursor) |
-        \ endif
-augroup END
+if s:supportevents(['CursorMoved', 'ModeChanged'])
+  augroup FixVirtualEditCursorPos
+    au!
+    " Record cursor position in visual mode if virtualedit is set and
+    " contains 'all' or 'block'
+    au CursorMoved * if &ve =~# 'all' |
+          \ let w:ve_cursor = getcurpos() |
+          \ endif
+    " Keep cursor position after entering normal mode from visual mode with
+    " virtualedit enabled
+    au ModeChanged [vV\x16]*:n if &ve =~# 'all' && exists('w:ve_cursor') |
+          \ call setpos('.', w:ve_cursor) |
+          \ endif
+  augroup END
+endif
 " }}}1
 
 """ Plugin Settings {{{1
@@ -619,18 +676,20 @@ let g:netrw_liststyle = 3
 let g:netrw_localcopydircmd = 'cp -r'
 let g:netrw_winsize = 25
 
-augroup NetrwSettings
-  au!
-  au FileType netrw setlocal
-        \ bufhidden=wipe
-        \ buftype=nofile
-        \ nobuflisted
-        \ nolist
-        \ nonumber
-        \ norelativenumber
-        \ nospell
-        \ signcolumn=no
-augroup END
+if s:supportevents('FileType')
+  augroup NetrwSettings
+    au!
+    au FileType netrw setlocal
+          \ bufhidden=wipe
+          \ buftype=nofile
+          \ nobuflisted
+          \ nolist
+          \ nonumber
+          \ norelativenumber
+          \ nospell
+          \ signcolumn=no
+  augroup END
+endif
 
 nnoremap <silent> <Esc>e :Lexplore!<CR>
 " }}}2
@@ -649,7 +708,7 @@ let $FZF_DEFAULT_OPTS .= ' --border=sharp --margin=0 --padding=0'
 
 """ Misc {{{1
 " Navigate tmux panes using vim-style motions {{{2
-if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# ''
+if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.1140')
   " return: string tmux socket path
   function! s:tmux_get_socket() abort
     return get(split($TMUX, ','), 0, '')
@@ -713,7 +772,7 @@ if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# ''
   " return: 0/1
   function! s:tmux_at_border(direction) abort
     return s:tmux_get_pane_opt(
-          \ 'pane_at_' .. s:tmux_pane_position_map[a:direction]) ==# '1'
+          \ 'pane_at_' . s:tmux_pane_position_map[a:direction]) ==# '1'
   endfunction
 
   " param: direction string
@@ -762,7 +821,7 @@ if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# ''
   " param: cnt integer? default to 1
   function! s:vim_navigate(direction, ...) abort
     let cnt = get(a:, 1, 1)
-    exe cnt .. 'wincmd ' .. a:direction
+    exe cnt . 'wincmd ' . a:direction
   endfunction
 
   " param: direction integer
@@ -859,49 +918,54 @@ if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# ''
   " in a vim/nvim session
   if s:tmux_get_pane_opt('@is_vim') ==# ''
     call s:tmux_set_pane_opt('@is_vim', 'yes')
-    augroup TmuxNavSetIsVim
-      au!
-      au VimResume           * :call s:tmux_set_pane_opt('@is_vim', 'yes')
-      au VimLeave,VimSuspend * :call s:tmux_unset_pane_opt('@is_vim')
-    augroup END
+    if s:supportevents(['VimResume', 'VimLeave', 'VimSuspend'])
+      augroup TmuxNavSetIsVim
+        au!
+        au VimResume           * :call s:tmux_set_pane_opt('@is_vim', 'yes')
+        au VimLeave,VimSuspend * :call s:tmux_unset_pane_opt('@is_vim')
+      augroup END
+    endif
   endif
 endif
 " }}}2
 
 " Terminal Settings {{{2
-" return: reltime() converted to ms
-function! s:reltime_ms() abort
-  let t = reltime()
-  return t[0] * 1000 + t[1] / 1000000
-endfunction
+if s:supportevents('TerminalWinOpen')
+  " return: reltime() converted to ms
+  function! s:reltime_ms() abort
+    let t = reltime()
+    return t[0] * 1000 + t[1] / 1000000
+  endfunction
 
-" param: a:1 whether to store a timestamp in the terminal buffer
-" return: 0/1
-function! s:shall_esc(...) abort
-  if &buftype !~# 'terminal'
-    return 0
-  endif
-  if get(a:, 1, 0)
-    let b:t_esc = s:reltime_ms()
-  endif
-  let pid = job_info(term_getjob(bufnr())).process
-  let command = trim(system('ps h -o comm -g ' . pid . ' | tail -n1'))
-  if v:shell_error
-    return 1
-  endif
-  return match(command, '\v^((ba|da|fi|z)?sh|less|gawk|i?python3?)$') >= 0
-endfunction
+  " param: a:1 whether to store a timestamp in the terminal buffer
+  " return: 0/1
+  function! s:shall_esc(...) abort
+    if &buftype !~# 'terminal'
+      return 0
+    endif
+    if get(a:, 1, 0)
+      let b:t_esc = s:reltime_ms()
+    endif
+    let pid = job_info(term_getjob(bufnr())).process
+    let command = trim(system('ps h -o comm -g ' . pid . ' | tail -n1'))
+    if v:shell_error
+      return 1
+    endif
+    return match(command, '\v^((ba|da|fi|z)?sh|less|gawk|i?python3?)$') >= 0
+  endfunction
 
-augroup TermOptions
-  au!
-  au TerminalWinOpen * setlocal nonu nornu scl=no bh=hide so=0 siso=0 |
-        \ nnoremap <buffer> o i |
-        \ nnoremap <nowait><expr><buffer> <Esc> <SID>shall_esc()
-          \ && exists('b:t_esc')
-          \ && <SID>reltime_ms() - b:t_esc <= &tm ? 'i' : '<Esc>' |
-        \ tnoremap <expr><buffer> <Esc> <SID>shall_esc(1) ? '<C-\><C-n>' : '<Esc>' |
-        \ startinsert
-augroup END
+  augroup TermOptions
+    au!
+    au TerminalWinOpen * setlocal nonu nornu scl=no bh=hide so=0 siso=0 |
+          \ nnoremap <buffer> o i |
+          \ nnoremap <nowait><expr><buffer> <Esc> <SID>shall_esc()
+            \ && exists('b:t_esc')
+            \ && <SID>reltime_ms() - b:t_esc <= &tm ? 'i' : '<Esc>' |
+          \ tnoremap <expr><buffer> <Esc>
+            \ <SID>shall_esc(1) ? '<C-\><C-n>' : '<Esc>' |
+          \ startinsert
+  augroup END
+endif
 " }}}2
 
 " Workaround to prevent <Esc> lag cause by Meta keymaps
