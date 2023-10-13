@@ -914,6 +914,16 @@ if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.114
   xnoremap <expr><silent> <Esc>- <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') - 2))\"", v:count ? '<C-w>-' : '2<C-w>-', TmuxMapkeyResizePaneVertConditionRef)
   xnoremap <expr><silent> <Esc>+ <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') + 2))\"", v:count ? '<C-w>+' : '2<C-w>+', TmuxMapkeyResizePaneVertConditionRef)
 
+  " Use a unified keymap `<C-space>[` to escape from vim terminal mode or enter
+  " tmux visual mode
+  tnoremap                <C-@>[ <C-\><C-n>
+  nnoremap <expr><silent> <C-@>[ <SID>tmux_exec('copy-mode')
+  vnoremap <expr><silent> <C-@>[ <SID>tmux_exec('copy-mode')
+  onoremap <expr><silent> <C-@>[ <SID>tmux_exec('copy-mode')
+  inoremap <expr><silent> <C-@>[ <SID>tmux_exec('copy-mode')
+  cnoremap <expr><silent> <C-@>[ <SID>tmux_exec('copy-mode')
+  lnoremap <expr><silent> <C-@>[ <SID>tmux_exec('copy-mode')
+
   " Set @is_vim and register relevant autocmds callbacks if not already
   " in a vim/nvim session
   if s:tmux_get_pane_opt('@is_vim') ==# ''
@@ -958,6 +968,7 @@ if s:supportevents('TerminalWinOpen')
     au!
     au TerminalWinOpen * setlocal nonu nornu scl=no bh=hide so=0 siso=0 |
           \ nnoremap <buffer> o i |
+          \ tnoremap <buffer> <C-@>[ <C-\><C-n> |
           \ nnoremap <nowait><expr><buffer> <Esc> <SID>shall_esc()
             \ && exists('b:t_esc')
             \ && <SID>reltime_ms() - b:t_esc <= &tm ? 'i' : '<Esc>' |
