@@ -108,6 +108,32 @@ xnoremap <expr> k v:count ? 'k' : 'gk'
 nnoremap <silent> ]b :exec v:count1 . 'bn'<CR>
 nnoremap <silent> [b :exec v:count1 . 'bp'<CR>
 
+" Tabpages
+" param: default tab switch command 'tabnext'|'tabprev'
+" param: a:1 count_given number? default to v:count
+" return: 0
+function! TabSwitch(default, ...) abort
+  let count_given = get(a:, 1, v:count)
+  let tabcount = tabpagenr('$')
+  if tabcount >= count_given
+    exe printf('silent! %s %d', a:default, count_given)
+    return
+  endif
+  for _ in range(count_given - tabcount)
+    tabnew
+  endfor
+  tabnext $
+endfunction
+
+nnoremap <silent> gt :<C-u>call TabSwitch('tabnext')<CR>
+nnoremap <silent> gT :<C-u>call TabSwitch('tabprev')<CR>
+nnoremap <silent> gy :<C-u>call TabSwitch('tabprev')<CR>
+for i in range(1, 9)
+  exe printf("nnoremap <silent> <Esc>%d
+        \ :<C-u>call TabSwitch('tabnext', %d)<CR>", i, i)
+endfor
+
+
 inoremap <C-L> <Esc>[szg`]a
 inoremap <C-l> <C-g>u<Esc>[s1z=`]a<C-G>u
 
