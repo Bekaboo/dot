@@ -1,4 +1,4 @@
-function __dirchanged \
+function cdls \
         --on-variable PWD \
         --description 'List directory contents after changing cwd'
     if not type -q tput
