@@ -129,8 +129,10 @@ nnoremap <silent> gt :<C-u>call TabSwitch('tabnext')<CR>
 nnoremap <silent> gT :<C-u>call TabSwitch('tabprev')<CR>
 nnoremap <silent> gy :<C-u>call TabSwitch('tabprev')<CR>
 for i in range(1, 9)
-  exe printf("nnoremap <silent> <Esc>%d
-        \ :<C-u>call TabSwitch('tabnext', %d)<CR>", i, i)
+  for map in ['nnoremap', 'xnoremap', 'tnoremap']
+    exe printf("%s <silent> <Esc>%d
+          \ :<C-u>call TabSwitch('tabnext', %d)<CR>", map, i, i)
+  endfor
 endfor
 
 
