@@ -105,6 +105,12 @@ nnoremap <expr> k v:count ? 'k' : 'gk'
 xnoremap <expr> j v:count ? 'j' : 'gj'
 xnoremap <expr> k v:count ? 'k' : 'gk'
 
+nnoremap <expr> $      &wrap ? '$'      : 'g$'
+nnoremap <expr> 0      &wrap ? '0'      : 'g0'
+xnoremap <expr> ^      &wrap ? '^'      : 'g^'
+xnoremap <expr> <Home> &wrap ? '<Home>' : 'g<Home>'
+xnoremap <expr> <End>  &wrap ? '<End>'  : 'g<End>'
+
 nnoremap <silent> ]b :exec v:count1 . 'bn'<CR>
 nnoremap <silent> [b :exec v:count1 . 'bp'<CR>
 
