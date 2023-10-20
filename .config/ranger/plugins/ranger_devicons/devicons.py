@@ -82,6 +82,7 @@ file_node_extensions = {
     'eex'          : '',
     'efi'          : '',
     'ejs'          : '',
+    'el'           : '',
     'elf'          : '',
     'elm'          : '',
     'epub'         : '',
