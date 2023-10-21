@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+
+if ! command -v nvim >/dev/null 2>&1; then
+    echo 'nvim executable not found, cannot send messages' >&2
+    return 1
+fi
+
+RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+ls "$RUNTIME_DIR"/nvim.*.0 | xargs -I {} nvim --server {} --remote-send "$1"
