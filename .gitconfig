@@ -27,6 +27,7 @@
 	rb = rebase
 	rbp = rebase -i HEAD~5
 	lc = !git ls-files -z | xargs -0 wc -l
+	is-ancestor = merge-base --is-ancestor
 [merge]
 	tool = vimdiff
 	ff = false
