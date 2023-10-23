@@ -169,13 +169,13 @@ setbg-vscode() {
         -z "$(command -v jq 2>/dev/null)" ]]; then
         return 1
     fi
-    local new_theme=$([[ "$1" == dark ]] &&
+    local current_theme=$(jq -r '."workbench.colorTheme"' "$rc")
+    local new_theme=$(get-theme-variant "$current_theme" "$1")
+    [[ -z "$new_theme" ]] && new_theme=$([[ "$1" == dark ]] &&
         echo "$(jq -r '."workbench.preferredDarkColorTheme"' "$rc")" ||
         echo "$(jq -r '."workbench.preferredLightColorTheme"' "$rc")")
     if [[ -z "$new_theme" || "$new_theme" == null ]]; then
-        local theme=$(jq -r '."workbench.colorTheme"' "$rc")
-        [[ -z "$theme" || "$theme" == null ]] && theme='Default Dark Modern'
-        new_theme=$(get-theme-variant "$theme" "$1")
+        new_theme=$(get-theme-variant "${theme:-'Default Dark Modern'}" "$1")
     fi
     if [[ "$theme" != "$new_theme" ]]; then
         local tmp=$(mktemp)
