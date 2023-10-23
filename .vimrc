@@ -134,13 +134,11 @@ endfunction
 nnoremap <silent> gt :<C-u>call TabSwitch('tabnext')<CR>
 nnoremap <silent> gT :<C-u>call TabSwitch('tabprev')<CR>
 nnoremap <silent> gy :<C-u>call TabSwitch('tabprev')<CR>
-for i in range(1, 9)
-  for map in ['nnoremap', 'xnoremap', 'tnoremap']
-    exe printf("%s <silent> <Esc>%d
-          \ :<C-u>call TabSwitch('tabnext', %d)<CR>", map, i, i)
-  endfor
-endfor
 
+for i in range(1, 9)
+  exe printf("nnoremap <silent> <Leader>%d
+        \ :<C-u>call TabSwitch('tabnext', %d)<CR>", i, i)
+endfor
 
 inoremap <C-L> <Esc>[szg`]a
 inoremap <C-l> <C-g>u<Esc>[s1z=`]a<C-G>u
@@ -151,6 +149,95 @@ xmap a` 2i`
 omap a" 2i"
 omap a' 2i'
 omap a` 2i`
+
+" Return key seq to jump to the first line in paragraph
+" return: 0
+function! s:paragraph_first_line() abort
+  let chunk_size = 10
+  let init_linenr = line('.')
+  let linenr = init_linenr
+  let cnt = v:count1
+
+  " If current line is the first line of paragraph, move one line
+  " upwards first to goto the first line of previous paragraph
+  if linenr >= 2
+    let lines = getbufline(bufname(), linenr - 1, linenr)
+    if lines[0] =~# '^$' && lines[1] =~# '\S'
+      let linenr -= 1
+    endif
+  endif
+
+  while linenr >= 1
+    let chunk = getbufline(
+          \ bufname(),
+          \ max([0, linenr - chunk_size - 1]),
+          \ linenr - 1,
+          \ )
+    let i = 0
+    for line in reverse(chunk)
+      let i += 1
+      let current_linenr = linenr - i
+      if line =~# '^$'
+        let cnt -= 1
+        if cnt <= 0
+          return "m'" . (init_linenr - current_linenr - 1) . 'k'
+        endif
+      elseif current_linenr <= 1
+        return "m'gg"
+      endif
+    endfor
+    let linenr -= chunk_size
+  endwhile
+endfunction
+
+" Return key seq to jump to the last line in paragraph
+" return: 0
+function! s:paragraph_last_line() abort
+  let chunk_size = 10
+  let init_linenr = line('.')
+  let linenr = init_linenr
+  let buf_line_count = line('$')
+  let cnt = v:count1
+
+  " If current line is the last line of paragraph, move one line
+  " downwards first to goto the last line of next paragraph
+  if buf_line_count - linenr >= 1
+    let lines = getbufline(bufname(), linenr, linenr + 1)
+    if lines[0] =~# '\S' && lines[1] =~# '^$'
+      let linenr += 1
+    end
+  end
+
+  while linenr <= buf_line_count
+    let chunk = getbufline(
+          \ bufname(),
+          \ linenr + 1,
+          \ linenr + chunk_size + 1,
+          \ )
+    let i = 0
+    for line in chunk
+      let i += 1
+      let current_linenr = linenr + i
+      if line =~# '^$'
+        let cnt -= 1
+        if cnt <= 0
+          return "m'" . (current_linenr - init_linenr - 1) . 'j'
+        endif
+      elseif current_linenr >= buf_line_count
+        return "m'G"
+      endif
+    endfor
+    let linenr += chunk_size
+  endwhile
+endfunction
+
+" Use 'g{' or 'g}' to move to the first/last line of a paragraph
+nmap <silent><expr> g{ <SID>paragraph_first_line()
+nmap <silent><expr> g} <SID>paragraph_last_line()
+xmap <silent><expr> g{ <SID>paragraph_first_line()
+xmap <silent><expr> g} <SID>paragraph_last_line()
+omap <silent>       g{ :silent! normal Vg{<CR>
+omap <silent>       g} :silent! normal Vg}<CR>
 
 " Text objects {{{2
 " Current buffer (file)
