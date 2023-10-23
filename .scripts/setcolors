@@ -5,6 +5,19 @@ CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 DEFAULT_COLOR='nano'
 
+# Convert a color name to capital style
+# gruvbox-material -> Gruvbox Material
+get-cap-theme-name() {
+    # $1: name of the fish theme
+    if ! command -v awk &>/dev/null || ! command -v sed &>/dev/null; then
+        return 1
+    fi
+    local theme_name=$(echo "$1" |
+        sed 's/-/ /g' |
+        awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2));}1')
+    echo "$theme_name"
+}
+
 setcolor-alacritty() {
     # $1: name of the colorscheme
     local themes_path="$CONFIG_HOME/alacritty/themes"
@@ -100,9 +113,9 @@ get-new-profile-name() {
     local current_profile=$(kreadconfig5 --file "$1" \
         --group 'Desktop Entry' --key 'DefaultProfile')
     local current_profile_name=${current_profile%\.profile}
-    local new_profile_name=$(echo "$current_profile_name" |
-        sed "s/^[A-Z_][a-z_]*\(.*\)\(Light\|Dark\|light\|dark\)/${2^}\1\2/" |
-        sed "s/^[a-z_]\+\(.*\)\(Light\|Dark\|light\|dark\)/$2\1\2/")
+    local new_profile_name=$(get-cap-theme-name "$2")
+    new_profile_name=$(echo "$current_profile_name" |
+        sed "s/^\(.*\)\(Light\|Dark\|light\|dark\)/${new_profile_name} \2/")
     # If new profile name is empty, use default profile 'Nano Dark'
     [[ -z "$new_profile_name" ]] && new_profile_name='Nano Dark'
     echo "$new_profile_name"
@@ -141,14 +154,16 @@ setcolor-fish() {
     local themes_path="$CONFIG_HOME/fish/themes"
     local dark_theme_path="$themes_path/Dark.theme"
     local light_theme_path="$themes_path/Light.theme"
+    local default_theme_name=$(get-cap-theme-name "$DEFAULT_COLOR")
     if [[ -z "$1" ]]; then
-        ensure-slink "$themes_path/${DEFAULT_COLOR^} Dark.theme" \
+        ensure-slink "$themes_path/${default_theme_name} Dark.theme" \
             "$dark_theme_path"
-        ensure-slink "$themes_path/${DEFAULT_COLOR^} Light.theme" \
+        ensure-slink "$themes_path/${default_theme_name} Light.theme" \
             "$light_theme_path"
     else
-        force-slink "$themes_path/${1^} Dark.theme" "$dark_theme_path"
-        force-slink "$themes_path/${1^} Light.theme" "$light_theme_path"
+        local theme_name=$(get-cap-theme-name "$1")
+        force-slink "$themes_path/${theme_name} Dark.theme" "$dark_theme_path"
+        force-slink "$themes_path/${theme_name} Light.theme" "$light_theme_path"
     fi
     [[ -n "$(command -v fish 2>/dev/null)" ]] &&
         fish -c 'set -U __fish_reload_theme "$(head -c 16 /dev/urandom | base32)"'
