@@ -1,0 +1,21 @@
+[Desktop Entry]
+Comment=arch_grey
+
+Encoding=UTF-8
+Keywords=Desktop;Workspace;Appearance;Look and Feel;Logout;Lock;Suspend;Shutdown;Hibernate;
+Name=Arch Grey
+
+Type=Service
+
+X-KDE-ServiceTypes=Plasma/LookAndFeel
+X-KDE-ParentApp=
+X-KDE-PluginInfo-Author=zeng
+X-KDE-PluginInfo-Category=
+X-KDE-PluginInfo-Email=
+X-KDE-PluginInfo-License=GNU GPL v3
+X-KDE-PluginInfo-Name=arch_grey
+X-KDE-PluginInfo-Version=
+X-KDE-PluginInfo-Website=
+X-KDE-fallbackPackage=org.kde.breezedark.desktop
+X-Plasma-MainScript=defaults
+X-KPackage-Dependencies=
