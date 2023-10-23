@@ -1,0 +1,34 @@
+[colors]
+ansi = [
+    '#654735',
+    '#c14a4a',
+    '#6c782e',
+    '#b47109',
+    '#45707a',
+    '#945e80',
+    '#4c7a5d',
+    '#a89984',
+]
+brights = [
+    '#654735',
+    '#c14a4a',
+    '#6c782e',
+    '#b47109',
+    '#45707a',
+    '#945e80',
+    '#4c7a5d',
+    '#a89984',
+]
+foreground = '#654735'
+background = '#fbf1c7'
+cursor_bg = '#654735'
+cursor_border = '#654735'
+cursor_fg = '#fbf1c7'
+selection_bg = '#654735'
+selection_fg = '#fbf1c7'
+
+[colors.indexed]
+
+[metadata]
+name = 'Gruvbox Material Light'
+author = 'Bekaboo'

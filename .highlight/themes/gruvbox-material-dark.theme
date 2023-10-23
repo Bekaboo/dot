@@ -1,0 +1,54 @@
+-- vim: ft=lua:et:ts=2:sts=2:sw=2:
+
+Description = 'Gruvbox Material Dark Theme'
+Categories = { 'dark' }
+
+local palette = {
+    background = '#282828',
+    foreground = '#d4be98',
+    black      = '#6c645e',
+    red        = '#ea6962',
+    green      = '#a9b665',
+    yellow     = '#d8a657',
+    blue       = '#7daea3',
+    magenta    = '#d3869b',
+    cyan       = '#89b482',
+    white      = '#d4be98',
+    orange     = '#e78a4e',
+}
+
+Default       = { Colour   = palette.foreground }
+Canvas        = { Colour   = palette.background }
+Number        = { Colour   = palette.magenta }
+Escape        = { Colour   = palette.yellow }
+String        = { Colour   = palette.green }
+BlockComment  = { Colour   = palette.black }
+PreProcessor  = { Colour   = palette.magenta }
+LineNum       = { Colour   = palette.black }
+Operator      = { Colour   = palette.orange }
+Keywords      = {
+  { Colour = palette.green },
+  { Colour = palette.magenta },
+  { Colour = palette.yellow },
+  { Colour = palette.orange },
+  { Colour = palette.blue },
+  { Colour = palette.cyan },
+}
+Interpolation = Operator
+StringPreProc = String
+LineComment   = BlockComment
+
+-- new LSP based elements:
+SemanticTokenTypes  = {
+  { Type = 'keyword',   Style = { Colour = palette.red } },
+  { Type = 'type',      Style = { Colour = palette.yellow } },
+  { Type = 'function',  Style = { Colour = palette.green } },
+  { Type = 'method',    Style = { Colour = palette.green } },
+  { Type = 'class',     Style = { Colour = palette.yellow } },
+  { Type = 'struct',    Style = { Colour = palette.yellow } },
+  { Type = 'parameter', Style = { Colour = palette.foreground } },
+  { Type = 'variable',  Style = { Colour = palette.foreground } },
+  { Type = 'number',    Style = Number },
+  { Type = 'regexp',    Style = String },
+  { Type = 'operator',  Style = Operator },
+}

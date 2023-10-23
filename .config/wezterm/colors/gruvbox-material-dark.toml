@@ -1,0 +1,34 @@
+[colors]
+ansi = [
+    '#3c3836',
+    '#ea6962',
+    '#a9b665',
+    '#d8a657',
+    '#7daea3',
+    '#d3869b',
+    '#89b482',
+    '#d4be98',
+]
+brights = [
+    '#3c3836',
+    '#ea6962',
+    '#a9b665',
+    '#d8a657',
+    '#7daea3',
+    '#d3869b',
+    '#89b482',
+    '#d4be98',
+]
+foreground = '#d4be98'
+background = '#282828'
+cursor_bg = '#d4be98'
+cursor_border = '#d4be98'
+cursor_fg = '#282828'
+selection_bg = '#d4be98'
+selection_fg = '#282828'
+
+[colors.indexed]
+
+[metadata]
+name = 'Gruvbox Material Dark'
+author = 'Bekaboo'
