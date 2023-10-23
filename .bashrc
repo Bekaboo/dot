@@ -226,15 +226,19 @@ pyenv() {
     # $VIRTUAL_ENV not set -- python virtualenv not activated, try to
     # activate it if '.env/bin/activate' or '.venv/bin/activate' exists
     if [[ -z "$VIRTUAL_ENV" ]]; then
-        if [[ -e ./.env/bin/activate ]]; then
-            activation_file="./.env/bin/activate"
-        elif [[ -e ./.venv/bin/activate ]]; then
-            activation_file="./.venv/bin/activate"
-        fi
-        if [[ -n "$activation_file" ]]; then
-            chmod +x "$activation_file"
-            source "$activation_file"
-        fi
+        local path="$PWD"
+        while [[ "$path" != "$(dirname "$path")" ]]; do
+            if [[ -e "$path/.env/bin/activate" ]]; then
+                chmod +x "$path/.env/bin/activate"
+                source "$path/.env/bin/activate"
+                return
+            elif [[ -e "$path/.venv/bin/activate" ]]; then
+                chmod +x "$path/.venv/bin/activate"
+                source "$path/.venv/bin/activate"
+                return
+            fi
+            path="$(dirname "$path")"
+        done
         return
     fi
 

@@ -10,14 +10,18 @@ function python-activate-venv \
     # activate it if '.env/bin/activate.fish' or '.venv/bin/activate.fish'
     # exists
     if test -z "$VIRTUAL_ENV"
-        if test -e "./.env/bin/activate.fish"
-            set activation_file "./.env/bin/activate.fish"
-        else if test -e "./.venv/bin/activate.fish"
-            set activation_file "./.venv/bin/activate.fish"
-        end
-        if test -n "$activation_file"
-            chmod +x "$activation_file"
-            source "$activation_file"
+        set -l path "$PWD"
+        while test $path != (dirname $path)
+            if test -e "$path/.env/bin/activate.fish"
+                chmod +x "$path/.env/bin/activate.fish"
+                source "$path/.env/bin/activate.fish"
+                return
+            else if test -e "$path/.venv/bin/activate.fish"
+                chmod +x "$path/.venv/bin/activate.fish"
+                source "$path/.venv/bin/activate.fish"
+                return
+            end
+            set path (dirname $path)
         end
         return
     end
