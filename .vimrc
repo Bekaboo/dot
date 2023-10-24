@@ -115,20 +115,20 @@ nnoremap <silent> ]b :exec v:count1 . 'bn'<CR>
 nnoremap <silent> [b :exec v:count1 . 'bp'<CR>
 
 " Tabpages
-" param: default tab switch command 'tabnext'|'tabprev'
-" param: a:1 count_given number? default to v:count
+" param: tab_action tab switch command 'tabnext'|'tabprev'
+" param: a:1 default_count number? default to v:count
 " return: 0
-function! TabSwitch(default, ...) abort
-  let count_given = get(a:, 1, v:count)
-  let tabcount = tabpagenr('$')
-  if tabcount >= count_given
-    exe printf('silent! %s %d', a:default, count_given)
+function! TabSwitch(tab_action, ...) abort
+  let cnt = get(a:, 1, v:count)
+  let num_tabs = tabpagenr('$')
+  if num_tabs >= cnt
+    exe printf('silent! %s %s', a:tab_action, cnt == 0 ? '' : string(cnt))
     return
   endif
-  for _ in range(count_given - tabcount)
+  tablast
+  for _ in range(cnt - num_tabs)
     tabnew
   endfor
-  tabnext $
 endfunction
 
 nnoremap <silent> gt :<C-u>call TabSwitch('tabnext')<CR>
