@@ -169,6 +169,32 @@ setcolor-fish() {
         fish -c 'set -U __fish_reload_theme "$(head -c 16 /dev/urandom | base32)"'
 }
 
+setcolor-plasma() {
+    # $1: name of the colorscheme
+    if [[ -z "$1" ]]; then
+        return 1
+    fi
+    # gruvbox-material -> GruvboxMaterial
+    local new_theme_name=$(get-cap-theme-name "$1" | sed 's/ //g')
+    if [[ -n "$(command -v plasma-apply-desktoptheme 2>/dev/null)" ]]; then
+        local current_theme=$(plasma-get-current-desktoptheme)
+        local bg=$(echo "$current_theme" | grep -o 'Light\|Dark')
+        local new_theme="$new_theme_name${bg:-Dark}"
+        if [[ "$current_theme" != "$new_theme" ]]; then
+            plasma-apply-desktoptheme "$new_theme" &>/dev/null
+        fi
+    fi
+    if [[ -n "$(command -v plasma-apply-colorscheme 2>/dev/null)" ]]; then
+        local current_scheme=$(plasma-get-current-colorscheme)
+        local bg=$(echo "$current_scheme" | grep -o 'Light\|Dark')
+        local new_scheme="$new_theme_name${bg:-Dark}"
+        echo "$new_theme"
+        if [[ "$current_scheme" != "$new_scheme" ]]; then
+            plasma-apply-colorscheme "$new_scheme" &>/dev/null
+        fi
+    fi
+}
+
 usage() {
     echo 'Usage: setcolor [<colorscheme>] [--exclude-nvim-processes=<pid1>,<pid2>,...]'
     exit 1
@@ -199,6 +225,7 @@ main() {
     setcolor-highlight "$color"
     setcolor-nvim "$color" "$exclude_nvim_processes"
     setcolor-fish "$color"
+    setcolor-plasma "$color"
     return 0
 }
 
