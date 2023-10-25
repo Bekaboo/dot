@@ -8,16 +8,16 @@ fish_color_comment                   928374
 fish_color_cwd                       504945 --background=f2e5bc --bold
 fish_color_cwd_root                  ea6962 --background=f2e5bc --bold
 fish_color_end                       b47109
-fish_color_error                     6c782e
+fish_color_error                     c14a4a
 fish_color_escape                    45707a
 fish_color_hg_added                  b47109
 fish_color_hg_clean                  b47109
 fish_color_hg_copied                 4c7a5d
-fish_color_hg_deleted                6c782e
-fish_color_hg_dirty                  6c782e
+fish_color_hg_deleted                c14a4a
+fish_color_hg_dirty                  b47109
 fish_color_hg_modified               654735
 fish_color_hg_renamed                4c7a5d
-fish_color_hg_unmerged               6c782e
+fish_color_hg_unmerged               c14a4a
 fish_color_hg_untracked              928374
 fish_color_history_current                  --bold
 fish_color_host                      normal
@@ -32,7 +32,7 @@ fish_color_selection                 928374 --background=928374 --bold
 fish_color_status                    fbf1c7 --background=ea6962 --bold
 fish_color_status_0                  504945 --background=e5d5ad --bold
 fish_color_user                      b47109
-fish_color_valid_path                654735
+fish_color_valid_path                945e80
 fish_color_vcs                       928374
 fish_pager_color_completion          normal
 fish_pager_color_description         928374
