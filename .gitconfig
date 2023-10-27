@@ -38,4 +38,4 @@
 [pull]
 	rebase = true
 [diff]
-	algorithm = patience
+	algorithm = histogram
