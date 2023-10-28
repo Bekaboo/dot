@@ -17,7 +17,7 @@ exec() {
 }
 
 main() {
-    FILE=$(full_path "$1")
+    FILE=$(fullpath "$1")
     RUN_FILE=$(echo "$FILE" | sed -E 's/\.(c|cpp)$/.run/')
     if [[ "$FILE" == "$RUN_FILE" ]]; then
         echo >&2 "run: error: file name cannot be the same as the run file name"

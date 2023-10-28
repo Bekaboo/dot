@@ -97,7 +97,12 @@ fzf-file-previewer() {
             # ASCII image previewers instead
             case "$(which-exe chafa imgcat tiv)" in
             chafa)
-                chafa -s "$FZF_PREVIEW_COLUMNS"x"$FZF_PREVIEW_LINES" "$fpath"
+                if [[ -n "$TMUX" ]]; then
+                    chafa -f symbols \
+                        -s "$FZF_PREVIEW_COLUMNS"x"$FZF_PREVIEW_LINES" "$fpath"
+                else
+                    chafa -s "$FZF_PREVIEW_COLUMNS"x"$FZF_PREVIEW_LINES" "$fpath"
+                fi
                 ;;
             imgcat)
                 imgcat -H -w "$FZF_PREVIEW_COLUMNS" \

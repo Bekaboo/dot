@@ -59,7 +59,7 @@ main() {
     for file in "$@"; do
         # Pictures in markdown cannot be fetched if
         # we are not in the same directory.
-        cd $(dirname $(full_path "$file")) >/dev/null 2>&1
+        cd $(dirname $(fullpath "$file")) >/dev/null 2>&1
         md2pdf $(basename "$file") || {
             echo >&2 "md2pdf: error: pandoc failed to convert $file with edit code $?"
             exit 1

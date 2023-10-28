@@ -188,7 +188,6 @@ setcolor-plasma() {
         local current_scheme=$(plasma-get-current-colorscheme)
         local bg=$(echo "$current_scheme" | grep -o 'Light\|Dark')
         local new_scheme="$new_theme_name${bg:-Dark}"
-        echo "$new_theme"
         if [[ "$current_scheme" != "$new_scheme" ]]; then
             plasma-apply-colorscheme "$new_scheme" &>/dev/null
         fi

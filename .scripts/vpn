@@ -15,8 +15,10 @@ connect() {
         sleep 1s
     fi
     echo 'Connecting...'
-    sudo openconnect vpn.illinois.edu -u sceng3 \
-        --authgroup 3_TunnelAll -b --reconnect-timeout=120
+    echo "$VPN_PASSWORD" | \
+        sudo openconnect vpn.illinois.edu -u sceng3 \
+        --authgroup 3_TunnelAll -b --reconnect-timeout 120 \
+        --passwd-on-stdin
 }
 
 searchproc() {

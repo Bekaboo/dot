@@ -14,7 +14,7 @@ main() {
     for file in "$@"; do
         # Pictures in markdown cannot be fetched if
         # we are not in the same directory.
-        cd $(dirname $(full_path "$file"))
+        cd $(dirname $(fullpath "$file"))
         md2tex $(basename "$file")
         cd -
     done
