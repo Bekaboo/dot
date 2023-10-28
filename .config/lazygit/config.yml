@@ -12,3 +12,16 @@ update:
   method: never
 promptToReturnFromSubprocess: false
 notARepository: 'skip'
+keybinding:
+  universal:
+    gotoTop: 'g'
+    gotoBottom: 'G'
+  commits:
+    renameCommit: 'i'
+    renameCommitWithEditor: 'e'
+    viewResetOptions: 'r'
+    squashAboveCommits: 'S'
+    amendToCommit: 'A'
+  stash:
+    popStash: 'o'
+    renameStash: 'i'
