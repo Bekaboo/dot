@@ -349,7 +349,7 @@ ff() {
 alias sudo="sudo -E "
 alias cd="cdim"
 alias cp="cp -i"        # confirm before overwriting something
-alias rm="\\trash"
+alias t="trash"
 alias grep="grep --colour=auto"
 alias egrep="egrep --colour=auto"
 alias fgrep="fgrep --colour=auto"
