@@ -825,6 +825,37 @@ let g:fzf_layout = {
         \ }
       \ }
 let $FZF_DEFAULT_OPTS .= ' --border=sharp --margin=0 --padding=0'
+
+" Use fzf as file explorer
+if exists('*timer_start') && executable('fzf')
+  let g:loaded_netrw       = 1
+  let g:loaded_netrwPlugin = 1
+
+  " param: dir string
+  function! s:fzf_edit_dir(dir) abort
+    if !isdirectory(a:dir) || exists(':FZF') != 2
+      return
+    endif
+    " Switch to alternate buffer if current buffer is a directory
+    if isdirectory(bufname('%'))
+      let &bufhidden = 'wipe'
+      let buf0 = bufnr(0)
+      if buf0 > 0 && buf0 != bufnr('%')
+        buffer #
+      else
+        enew
+      endif
+    endif
+    " Open fzf window
+    call timer_start(0, {-> execute('FZF ' . fnameescape(a:dir))})
+    call timer_start(0, {-> execute('call feedkeys("\<Left>", "nt")')})
+  endfunction
+
+  augroup FzfFileExploer
+    au!
+    au BufEnter * :call s:fzf_edit_dir(expand('<amatch>'))
+  augroup END
+endif
 " }}}2
 " }}}1
 
