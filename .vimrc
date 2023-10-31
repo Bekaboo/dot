@@ -358,6 +358,7 @@ noremap! <C-d> <Del>
 noremap! <expr> <C-y> pumvisible() ? "<C-y>" : "<C-r>-"
 cnoremap <C-b> <Left>
 cnoremap <C-f> <Right>
+cnoremap <C-_> <C-f>
 cnoremap <C-g> <C-\><C-n>
 cnoremap <C-k> <C-\>e(strpart(getcmdline(), 0, getcmdpos() - 1))<CR>
 noremap! <Esc>[3;3~ <C-w>
