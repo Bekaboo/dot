@@ -9,25 +9,32 @@
 	a = add
 	b = branch
 	c = commit
-	cm = commit -m
-	ca = commit -a
-	cam = commit -a -m
 	d = diff
-	l = log --oneline --graph
-	pl = pull
-	ps = push
+	p = pull
+	s = stash
 	st = status
-	ss = stash
-	ssm = stash -m
-	ssp = stash pop
-	ssa = stash apply
 	rs = reset
 	rt = restore
-	rts = restore --staged
+	au = add -u
+	cm = commit -m
+	is-ancestor = merge-base --is-ancestor
+	l = log --oneline --graph
+	lc = !git ls-files -z | xargs -0 wc -l
 	rb = rebase
 	rbp = rebase -i HEAD~5
-	lc = !git ls-files -z | xargs -0 wc -l
-	is-ancestor = merge-base --is-ancestor
+	rsp = reset --mixed HEAD^
+	rts = restore --staged
+	sa = stash apply
+	sp = stash pop
+	when-added = log --diff-filter=A
+	when-copied = log --diff-filter=C
+	when-deleted = log --diff-filter=D
+	when-modified = log --diff-filter=M
+	when-pairing-broken = log --diff-filter=B
+	when-renamed = log --diff-filter=R
+	when-type-changed = log --diff-filter=T
+	when-unknown = log --diff-filter=X
+	when-unmerged = log --diff-filter=U
 [merge]
 	tool = vimdiff
 	ff = false
