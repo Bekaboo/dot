@@ -17,11 +17,11 @@ keybinding:
     gotoTop: 'g'
     gotoBottom: 'G'
   commits:
-    renameCommit: 'i'
+    renameCommit: 'A'
     renameCommitWithEditor: 'e'
     viewResetOptions: 'r'
     squashAboveCommits: 'S'
-    amendToCommit: 'A'
+    amendToCommit: 'a'
   stash:
     popStash: 'o'
     renameStash: 'i'
