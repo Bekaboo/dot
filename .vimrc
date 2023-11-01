@@ -832,6 +832,8 @@ if exists('*timer_start') && executable('fzf')
   let g:loaded_netrw       = 1
   let g:loaded_netrwPlugin = 1
 
+  let g:buf_created = {}
+
   " param: dir string
   function! s:fzf_edit_dir(dir) abort
     if !isdirectory(a:dir) || exists(':FZF') != 2
@@ -841,10 +843,11 @@ if exists('*timer_start') && executable('fzf')
     if isdirectory(bufname('%'))
       let &bufhidden = 'wipe'
       let buf0 = bufnr(0)
-      if buf0 > 0 && buf0 != bufnr('%')
-        buffer #
-      else
+      let bufcur = bufnr('%')
+      if buf0 == -1 || buf0 == bufcur || get(g:buf_created, bufcur, 0)
         enew
+      else
+        buffer #
       endif
     endif
     " Open fzf window
@@ -852,9 +855,23 @@ if exists('*timer_start') && executable('fzf')
     call timer_start(0, {-> execute('call feedkeys("\<Left>", "nt")')})
   endfunction
 
+  " param: buf integer
+  function! s:fzf_rm_defer_check_buf(buf) abort
+    if !bufexists(a:buf) && get(g:buf_created, a:buf, 0)
+      call remove(g:buf_created, a:buf)
+    endif
+  endfunction
+
+  " param: buf integer
+  function! s:fzf_rm_buf_record(buf) abort
+    call timer_start(0, {-> s:fzf_rm_defer_check_buf(a:buf)})
+  endfunction
+
   augroup FzfFileExploer
     au!
     au BufEnter * :call s:fzf_edit_dir(expand('<amatch>'))
+          \ | let g:buf_created[expand('<abuf>')] = 1
+    au BufWipeout * :call s:fzf_rm_buf_record(expand('<abuf>'))
   augroup END
 endif
 " }}}2
