@@ -827,6 +827,10 @@ let g:fzf_layout = {
       \ }
 let $FZF_DEFAULT_OPTS .= ' --border=sharp --margin=0 --padding=0'
 
+" Some keymaps
+nnoremap <silent> <Leader>ff :FZF<CR>
+nnoremap <silent> <Leader>.  :FZF<CR>
+
 " Use fzf as file explorer
 if exists('*timer_start') && executable('fzf')
   let g:loaded_netrw       = 1
