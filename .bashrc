@@ -14,6 +14,7 @@ pathadd() {
 pathadd "${HOME}/.local/bin"
 pathadd "${HOME}/.scripts"
 export PATH
+[[ -r '~/.bash_exports' ]] && source '~/.bash_exports'
 
 [[ $- != *i* ]] && return
 
