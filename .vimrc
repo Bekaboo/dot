@@ -95,6 +95,11 @@ call s:command_abbrev('S', '%s')
 call s:command_abbrev('qa', 'qa!')
 call s:command_abbrev('bw', 'bw!')
 call s:command_abbrev('mks', 'mks!')
+call s:command_abbrev('rm', '!rm')
+call s:command_abbrev('mv', '!mv')
+call s:command_abbrev('mkd', '!mkdir')
+call s:command_abbrev('mkdir', '!mkdir')
+call s:command_abbrev('touch', '!touch')
 " }}}
 
 """ Keymaps {{{1
