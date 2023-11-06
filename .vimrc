@@ -859,7 +859,8 @@ nnoremap <silent> <Leader>ff :FZF<CR>
 nnoremap <silent> <Leader>.  :FZF<CR>
 
 " Use fzf as file explorer
-if exists('*timer_start') && executable('fzf')
+runtime plugin/fzf.vim
+if exists('*timer_start') && exists(':FZF') == 2
   let g:loaded_netrw       = 1
   let g:loaded_netrwPlugin = 1
 
