@@ -4,7 +4,7 @@
 
 --glob=!*$*
 --glob=!*%*
---glob=!*.git/
+--glob=!.git/
 --glob=!*.venv/
 --glob=!*Cache*/
 --glob=!*~
