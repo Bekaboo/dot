@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+
+# Find a regex pattern using rg and fzf
+# $1: search root path
+fr() {
+    local root_path="$1"
+    local regex_query_file="/tmp/rg-fzf-r-$$"
+    local fuzzy_query_file="/tmp/rg-fzf-f-$$"
+    local output_file="/tmp/rg-fzf-o-$$"
+    rm -f "$regex_query_file" "$fuzzy_query_file" "$output_file"
+    local rg_prefix="rg --hidden --follow --smart-case --column \
+        --line-number --no-heading --color=always "
+    local initial_query="${*:-}"
+    local fzf='fzf'
+    if command -v fzf-wrapper >/dev/null 2>&1; then
+        fzf='fzf-wrapper'
+    fi
+    local vim='vim'
+    if command -v nvim >/dev/null 2>&1; then
+        vim='nvim'
+    fi
+    local regex_search_hint=$(printf ":: <\u001b[33;1mctrl-g\u001b[0m> to \u001b[33;1mRegex Search\u001b[0m")
+    local fuzzy_search_hint=$(printf ":: <\u001b[33;1mctrl-t\u001b[0m> to \u001b[33;1mFuzzy Search\u001b[0m")
+    local regex_prompt=' Rg> '
+    local fuzzy_prompt=' Fzf> '
+    : | "$fzf" --ansi --disabled --query "$initial_query" \
+        --bind "start:reload($rg_prefix {q} "$root_path")+unbind(ctrl-g)" \
+        --bind "change:reload:sleep 0.1; $rg_prefix {q} "$root_path"|| true" \
+        --bind "ctrl-t:unbind(change,ctrl-t)+change-prompt($fuzzy_prompt)+enable-search+rebind(ctrl-g)+transform-query(echo {q} > "$regex_query_file"; cat "$fuzzy_query_file")+change-header($regex_search_hint)" \
+        --bind "ctrl-g:unbind(ctrl-g)+change-prompt($regex_prompt)+disable-search+reload($rg_prefix {q} "$root_path"|| true)+rebind(change,ctrl-t)+transform-query(echo {q} > "$fuzzy_query_file"; cat "$regex_query_file")+change-header($fuzzy_search_hint)" \
+        --prompt "$regex_prompt" \
+        --delimiter ':' \
+        --header "$fuzzy_search_hint" \
+        --preview 'bat --theme base16 --paging never --style numbers,header-filename --color always {1} --highlight-line {2}' \
+        --preview-window '+{2}-6,~1' > "$output_file"
+    # Entries in output file: {file}:{line}:{column}:{text}
+    # Let vim read the output file as error file and jump to the first error
+    if [[ -s "$output_file" ]]; then
+        "$vim" +"cfile $output_file"
+    fi
+    rm -f "$regex_query_file" "$fuzzy_query_file" "$output_file"
+}
+
+fr "$@"
