@@ -576,9 +576,9 @@ if s:supportevents(['BufLeave', 'WinLeave', 'FocusLost'])
   augroup AutoSave
     au!
     if has('patch-8.1113')
-      au BufLeave,WinLeave,FocusLost * ++nested silent! wall
+      au BufLeave,WinLeave,FocusLost * ++nested if &bt ==# "" && &mod | silent! w | endif
     else
-      au BufLeave,WinLeave,FocusLost * silent! wall
+      au BufLeave,WinLeave,FocusLost * if &bt ==# "" && &mod | silent! w | endif
     endif
   augroup END
 endif
