@@ -1204,6 +1204,20 @@ if s:supportevents('TerminalWinOpen')
 endif
 " }}}2
 
+" Qflist / quickfix list settings {{{2
+if s:supportevents('FileType')
+  augroup QfSettings
+    au!
+    au FileType qf setlocal nobl nornu scl=no |
+          \ nnoremap <buffer> <Tab> <CR>zz<C-w>p |
+          \ nnoremap <buffer> <C-j> j<CR>zz<C-w>p |
+          \ nnoremap <buffer> <C-k> k<CR>zz<C-w>p |
+          \ nnoremap <buffer> <C-n> j<CR>zz<C-w>p |
+          \ nnoremap <buffer> <C-p> k<CR>zz<C-w>p
+  augroup END
+endif
+" }}}2
+
 " Workaround to prevent <Esc> lag cause by Meta keymaps
 noremap  <nowait> <Esc> <Esc>
 noremap! <nowait> <Esc> <C-\><C-n>
