@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+
+# Open a file using $EDITOR or xdg-open
+op() {
+    # $@: files to open
+    if ! command -v file >/dev/null 2>&1; then
+        echo "file executable not found" >&2
+        return 1
+    fi
+
+    local -a text_files=()
+    local -a other_files=()
+    for file in "$@"; do
+        [[ "$(file -b "$file")" =~ text|empty ]] &&
+            text_files+=("$file") ||
+            other_files+=("$file")
+    done
+
+    if command -v xdg-open >/dev/null 2>&1; then
+        for file in "${other_files[@]}"; do
+            xdg-open "$file" >/dev/null 2>&1
+        done
+    elif [[ "${#other_files[@]}" > 0 ]]; then
+        echo "xdg-open not found, omit opening files ${other_files[@]}" >&2
+    fi
+    if (("${#text_files[@]}" > 0)); then
+        if command -v "$EDITOR" 2>&1 >/dev/null; then
+            "$EDITOR" "${text_files[@]}"
+        else
+            echo "\$EDITOR not found, omit opening files ${text_files[@]}" >&2
+        fi
+    fi
+}
+
+op "$@"
