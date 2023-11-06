@@ -5,7 +5,6 @@ silent! set helpheight=10
 silent! set laststatus=2
 silent! set mouse=a
 silent! set number
-silent! set relativenumber
 silent! set pumheight=16
 silent! set ruler
 silent! set scrolloff=4
