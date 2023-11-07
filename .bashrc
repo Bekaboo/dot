@@ -69,7 +69,7 @@ export FZF_DEFAULT_OPTS="--reverse \
     --pointer=→ \
     --prompt=/\  \
     --marker=+\  \
-    --no-info \
+    --info=inline-right \
     --no-separator \
     --no-scrollbar \
     --border=none \
