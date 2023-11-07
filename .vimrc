@@ -100,6 +100,9 @@ call s:command_abbrev('mv', '!mv')
 call s:command_abbrev('mkd', '!mkdir')
 call s:command_abbrev('mkdir', '!mkdir')
 call s:command_abbrev('touch', '!touch')
+
+runtime ftplugin/man.vim
+call s:command_abbrev('man', 'Man')
 " }}}
 
 """ Keymaps {{{1
