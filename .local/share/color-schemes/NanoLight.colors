@@ -89,7 +89,7 @@ ForegroundPositive=163,190,140
 ForegroundVisited=180,142,173
 
 [General]
-Name=Nord Light
+Name=NanoLight
 shadeSortColumn=true
 
 [KDE]
