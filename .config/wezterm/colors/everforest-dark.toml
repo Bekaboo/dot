@@ -1,0 +1,34 @@
+[colors]
+ansi = [
+    '#3c474d',
+    '#e68183',
+    '#a7c080',
+    '#d9bb80',
+    '#83b6af',
+    '#d39bb6',
+    '#87c095',
+    '#868d80',
+]
+brights = [
+    '#868d80',
+    '#e68183',
+    '#a7c080',
+    '#d9bb80',
+    '#83b6af',
+    '#d39bb6',
+    '#87c095',
+    '#868d80',
+]
+foreground = '#d8caac'
+background = '#2d353b'
+cursor_bg = '#d8caac'
+cursor_border = '#d8caac'
+cursor_fg = '#2d353b'
+selection_bg = '#505a60'
+selection_fg = '#d8caac'
+
+[colors.indexed]
+
+[metadata]
+name = 'Everforest Dark'
+author = 'Bekaboo'

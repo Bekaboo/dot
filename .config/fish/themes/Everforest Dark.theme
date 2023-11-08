@@ -1,0 +1,41 @@
+# name: 'Everforest Dark'
+# preferred_background: 2d353b
+
+fish_color_autosuggestion            868d80 --italics
+fish_color_cancel                           --reverse
+fish_color_command                   a7c080 --bold
+fish_color_comment                   868d80
+fish_color_cwd                       d8caac --background=505a60 --bold
+fish_color_cwd_root                  e68183 --background=505a60 --bold
+fish_color_end                       a7c080
+fish_color_error                     e68183
+fish_color_escape                    d9bb80
+fish_color_hg_added                  a7c080
+fish_color_hg_clean                  a7c080
+fish_color_hg_copied                 d39bb6
+fish_color_hg_deleted                e68183
+fish_color_hg_dirty                  e68183
+fish_color_hg_modified               87c095
+fish_color_hg_renamed                d39bb6
+fish_color_hg_unmerged               e68183
+fish_color_hg_untracked              868d80
+fish_color_history_current                  --bold
+fish_color_host                      normal
+fish_color_host_remote               d9bb80
+fish_color_normal                    normal
+fish_color_operator                  87c095
+fish_color_param                     87c095
+fish_color_quote                     868d80
+fish_color_redirection               d9bb80
+fish_color_search_match                     --reverse
+fish_color_selection                 2d353b --background=404e54
+fish_color_status                    2d353b --background=e68183
+fish_color_status_0                  2d353b --background=868d80
+fish_color_user                      a7c080
+fish_color_valid_path                868d80
+fish_color_vcs                       868d80
+fish_pager_color_completion          normal
+fish_pager_color_description         868d80
+fish_pager_color_prefix              normal --bold              --underline
+fish_pager_color_progress            d39bb6 --bold
+fish_pager_color_selected_background        --reverse

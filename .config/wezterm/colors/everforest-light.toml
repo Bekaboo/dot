@@ -1,0 +1,34 @@
+[colors]
+ansi = [
+    '#5c6a72',
+    '#f85552',
+    '#8da101',
+    '#dfa000',
+    '#3a94c5',
+    '#df69ba',
+    '#35a77c',
+    '#b8bea5',
+]
+brights = [
+    '#b8bea5',
+    '#f85552',
+    '#8da101',
+    '#dfa000',
+    '#3a94c5',
+    '#df69ba',
+    '#35a77c',
+    '#b8bea5',
+]
+foreground = '#5c6a72'
+background = '#fdf6e3'
+cursor_bg = '#5c6a72'
+cursor_border = '#5c6a72'
+cursor_fg = '#fdf6e3'
+selection_bg = '#505a60'
+selection_fg = '#5c6a72'
+
+[colors.indexed]
+
+[metadata]
+name = 'Everforest Light'
+author = 'Bekaboo'
