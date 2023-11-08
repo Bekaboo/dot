@@ -27,8 +27,8 @@ fish_color_operator                  f0a16c
 fish_color_param                     caafeb
 fish_color_quote                     7fa0af
 fish_color_redirection               f49ba7
-fish_color_search_match              normal --background=334154
-fish_color_selection                 e5e5eb --background=e5e5eb --bold
+fish_color_search_match                     --reverse
+fish_color_selection                 e5e5eb --background=334154
 fish_color_status                    262a34 --background=e87c69
 fish_color_status_0                  262a34 --background=8f9fbc
 fish_color_user                      a4bd84

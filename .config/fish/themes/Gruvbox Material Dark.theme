@@ -27,8 +27,8 @@ fish_color_operator                  d4be98
 fish_color_param                     d4be98
 fish_color_quote                     928374
 fish_color_redirection               7daea3
-fish_color_search_match              normal --background=7daea3
-fish_color_selection                 928374 --background=928374 --bold
+fish_color_search_match                     --reverse
+fish_color_selection                 928374 --background=45403d
 fish_color_status                    282828 --background=d8a657 --bold
 fish_color_status_0                  282828 --background=928374 --bold
 fish_color_user                      d8a657

@@ -27,8 +27,8 @@ fish_color_operator                  brcyan
 fish_color_param                     cyan
 fish_color_quote                     white
 fish_color_redirection               yellow
-fish_color_search_match              normal  --background=yellow
-fish_color_selection                 white   --background=brblack --bold
+fish_color_search_match                     --reverse
+fish_color_selection                 white   --background=blue
 fish_color_status                    black   --background=yellow
 fish_color_status_0                  black   --background=white
 fish_color_user                      brgreen
