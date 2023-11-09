@@ -14,7 +14,7 @@ ColorAmount=0.47500000000000003
 ColorEffect=2
 ContrastAmount=0.1
 ContrastEffect=0
-Enable=true
+Enable=false
 IntensityAmount=0.1
 IntensityEffect=0
 
@@ -62,7 +62,7 @@ ForegroundInactive=167,180,67
 ForegroundLink=127,187,179
 ForegroundNegative=230,126,128
 ForegroundNeutral=219,188,127
-ForegroundNormal=211,198,170
+ForegroundNormal=92,106,114
 ForegroundPositive=141,161,1
 ForegroundVisited=214,153,182
 
@@ -105,7 +105,7 @@ contrast=4
 [WM]
 activeBackground=244,237,219
 activeBlend=244,237,219
-activeForeground=211,198,170
+activeForeground=92,106,114
 inactiveBackground=244,237,219
 inactiveBlend=244,237,219
-inactiveForeground=167,180,67
+inactiveForeground=92,106,114
