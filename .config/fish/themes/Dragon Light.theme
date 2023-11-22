@@ -1,0 +1,41 @@
+# name: 'Dragon Light'
+# preferred_background: e7e7e7
+
+fish_color_autosuggestion            b4b4b4 --italics
+fish_color_cancel                           --reverse
+fish_color_command                   537788 --bold
+fish_color_comment                   b4b4b4
+fish_color_cwd                       1b1b1b --background=f6f6f6 --bold
+fish_color_cwd_root                  b23b34 --background=f6f6f6 --bold
+fish_color_end                       6a824f
+fish_color_error                     b23b34
+fish_color_escape                    a0713c
+fish_color_hg_added                  6a824f
+fish_color_hg_clean                  6a824f
+fish_color_hg_copied                 938aa9
+fish_color_hg_deleted                b23b34
+fish_color_hg_dirty                  b23b34
+fish_color_hg_modified               586e62
+fish_color_hg_renamed                938aa9
+fish_color_hg_unmerged               b23b34
+fish_color_hg_untracked              f6f6f6
+fish_color_history_current                  --bold
+fish_color_host                      normal
+fish_color_host_remote               a0713c
+fish_color_normal                    normal
+fish_color_operator                  b23b34
+fish_color_param                     a06c4e
+fish_color_quote                     6a824f
+fish_color_redirection               a0713c
+fish_color_search_match                     --reverse
+fish_color_selection                 1b1b1b --background=d8d8d8
+fish_color_status                    f6f6f6 --background=b23b34
+fish_color_status_0                  f6f6f6 --background=a0a0a0
+fish_color_user                      6a824f
+fish_color_valid_path                a0a0a0
+fish_color_vcs                       a0a0a0
+fish_pager_color_completion          normal
+fish_pager_color_description         f6f6f6
+fish_pager_color_prefix              normal --bold              --underline
+fish_pager_color_progress            938aa9 --bold
+fish_pager_color_selected_background        --reverse

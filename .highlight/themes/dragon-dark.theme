@@ -1,0 +1,88 @@
+-- vim: ft=lua:et:ts=2:sts=2:sw=2:
+
+Description = "Dragon Dark Theme"
+Categories = { "dark" }
+
+local palette = {
+  autumnGreen    = '#76946a',
+  autumnRed      = '#c34043',
+  autumnYellow   = '#dca561',
+  carpYellow     = '#d2b788',
+  dragonAqua     = '#8ea4a2',
+  dragonAsh      = '#626462',
+  dragonBg0      = '#0d0c0c',
+  dragonBg1      = '#181616',
+  dragonBg2      = '#201d1d',
+  dragonBg3      = '#282727',
+  dragonBg4      = '#393836',
+  dragonBg5      = '#625e5a',
+  dragonBlue0    = '#658594',
+  dragonBlue1    = '#8ba4b0',
+  dragonGray0    = '#a6a69c',
+  dragonGray1    = '#9e9b93',
+  dragonGray2    = '#7a8382',
+  dragonGreen0   = '#87a987',
+  dragonGreen1   = '#6a785c',
+  dragonOrange0  = '#b6927b',
+  dragonOrange1  = '#b98d7b',
+  dragonPink     = '#a292a3',
+  dragonRed      = '#c4746e',
+  dragonTeal     = '#949fb5',
+  dragonViolet   = '#8992a7',
+  dragonFg0      = '#b4b8b4',
+  dragonFg1      = '#b4b3a7',
+  dragonFg2      = '#a09f95',
+  katanaGray     = '#717c7c',
+  lotusBlue      = '#9fb5c9',
+  lotusGray      = '#716e61',
+  lotusRed0      = '#d7474b',
+  lotusRed1      = '#e84444',
+  lotusRed2      = '#d9a594',
+  lotusWhite     = '#e7dba0',
+  roninYellow    = '#ff9e3b',
+  springBlue     = '#7fb4ca',
+  springGreen    = '#98bb6c',
+  springViolet   = '#938aa9',
+  sumiInk6       = '#54546d',
+  waveAqua0      = '#6a9589',
+  waveAqua1      = '#7aa89f',
+  waveBlue0      = '#223249',
+  waveBlue1      = '#2d4f67',
+  waveRed        = '#e46876',
+  winterBlue     = '#252535',
+  winterGreen    = '#2b3328',
+  winterRed      = '#43242b',
+  winterYellow   = '#322e29',
+}
+
+Default = { Colour = palette.dragonFg0 }
+Canvas = { Colour = palette.lotusRed2 }
+Number = { Colour = palette.dragonPink }
+Escape = { Colour = palette.lotusWhite }
+String = { Colour = palette.dragonGreen1 }
+BlockComment = { Colour = palette.dragonAsh }
+PreProcessor = { Colour = palette.dragonOrange0 }
+LineNum = { Colour = palette.dragonBg5 }
+StringPreProc = String
+LineComment   = BlockComment
+Operator      = { Colour = palette.carpYellow }
+Interpolation = Operator
+
+Keywords = {
+  { Colour = palette.dragonViolet },
+}
+
+-- new LSP based elements:
+SemanticTokenTypes  = {
+  { Type = 'keyword', Style = { Colour = palette.dragonViolet } },
+  { Type = 'type', Style = { Colour = palette.dragonAqua } },
+  { Type = 'function', Style = { Colour = palette.dragonBlue1, Bold = true } },
+  { Type = 'method', Style = { Colour = palette.dragonBlue1, Bold = true } },
+  { Type = 'class', Style = { Colour = palette.dragonAqua } },
+  { Type = 'struct', Style = { Colour = palette.dragonAqua } },
+  { Type = 'parameter', Style = { Colour = palette.dragonFg0 } },
+  { Type = 'variable', Style = { Colour = palette.dragonFg0 } },
+  { Type = 'number', Style = Number },
+  { Type = 'regexp', Style = String },
+  { Type = 'operator', Style = Operator },
+}
