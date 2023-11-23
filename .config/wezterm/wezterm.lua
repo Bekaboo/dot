@@ -33,7 +33,7 @@ config.window_padding = {
 -- further links to colors/<theme_name>-[light|dark].toml
 -- so that we can change the symlinks in a bash script to reload the
 -- colorschemes without modifying the config files
-local _, metadta = wezterm.color.load_scheme(config_dir .. '/theme.toml')
-config.color_scheme = metadta.name
+local _, metadata = wezterm.color.load_scheme(config_dir .. '/theme.toml')
+config.color_scheme = metadata.name
 
 return config
