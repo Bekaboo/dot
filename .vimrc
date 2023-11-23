@@ -101,6 +101,13 @@ call s:command_abbrev('mkd', '!mkdir')
 call s:command_abbrev('mkdir', '!mkdir')
 call s:command_abbrev('touch', '!touch')
 
+abbrev ture  true
+abbrev Ture  True
+abbrev flase false
+abbrev fasle false
+abbrev Flase False
+abbrev Fasle False
+
 runtime ftplugin/man.vim
 call s:command_abbrev('man', 'Man')
 " }}}
