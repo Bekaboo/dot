@@ -10,7 +10,7 @@ config.check_for_updates = false
 config.enable_tab_bar = false
 config.font = wezterm.font_with_fallback({
   {
-    family = 'Jetbrains Mono Nerd Font',
+    family = 'Jetbrains Mono NF',
     weight = 'Light',
   },
   {
