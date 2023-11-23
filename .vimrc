@@ -32,7 +32,7 @@ silent! set shortmess-=S
 silent! set sessionoptions+=globals
 silent! set viminfo=!,'100,<50,s10,h
 silent! set diffopt+=algorithm:histogram
-silent! set clipboard+=unnamedplus
+silent! set clipboard^=unnamedplus
 
 " Focus events
 silent! let &t_fe = "\<Esc>[?1004h"
