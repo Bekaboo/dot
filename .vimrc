@@ -922,6 +922,78 @@ endif
 " }}}1
 
 """ Misc {{{1
+" Terminal Settings {{{2
+if s:supportevents('TerminalWinOpen')
+  " return: reltime() converted to ms
+  function! s:reltime_ms() abort
+    let t = reltime()
+    return t[0] * 1000 + t[1] / 1000000
+  endfunction
+
+  " param: a:1 whether to store a timestamp in the terminal buffer
+  " return: 0/1
+  function! s:shall_esc(...) abort
+    if &buftype !~# 'terminal'
+      return 0
+    endif
+    if get(a:, 1, 0)
+      let b:t_esc = s:reltime_ms()
+    endif
+    let pid = job_info(term_getjob(bufnr())).process
+    let command = trim(system('ps h -o comm -g ' . pid . ' | tail -n1'))
+    if v:shell_error
+      return 1
+    endif
+    return match(command, '\v^((ba|da|fi|z)?sh|less|gawk|i?python3?)$') >= 0
+  endfunction
+
+  tnoremap <Esc>W  <C-\><C-n><C-w>Wi
+  tnoremap <Esc>H  <C-\><C-n><C-w>Hi
+  tnoremap <Esc>J  <C-\><C-n><C-w>Ji
+  tnoremap <Esc>K  <C-\><C-n><C-w>Ki
+  tnoremap <Esc>L  <C-\><C-n><C-w>Li
+  tnoremap <Esc>=  <C-\><C-n><C-w>=i
+  tnoremap <Esc>_  <C-\><C-n><C-w>_i
+  tnoremap <Esc>\| <C-\><C-n><C-w>\|i
+  if has('patch-8.1.1140')
+    tnoremap <expr> <Esc>> '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '<' : '>') . 'i'
+    tnoremap <expr> <Esc>< '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '>' : '<') . 'i'
+    tnoremap <expr> <Esc>. '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '<' : '>') . 'i'
+    tnoremap <expr> <Esc>, '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '>' : '<') . 'i'
+  else
+    tnoremap <Esc>> '<C-\><C-n><C-w>4>i'
+    tnoremap <Esc>< '<C-\><C-n><C-w>4<i'
+    tnoremap <Esc>. '<C-\><C-n><C-w>4>i'
+    tnoremap <Esc>, '<C-\><C-n><C-w>4<i'
+  endif
+  tnoremap <Esc>+  <C-\><C-n><C-w>2+i
+  tnoremap <Esc>-  <C-\><C-n><C-w>2-i
+  tnoremap <Esc>r  <C-\><C-n><C-w>ri
+  tnoremap <Esc>R  <C-\><C-n><C-w>Ri
+  tnoremap <Esc>x  <C-\><C-n><C-w>x
+  tnoremap <Esc>p  <C-\><C-n><C-w>p
+  tnoremap <Esc>c  <C-\><C-n><C-w>c
+  tnoremap <Esc>o  <C-\><C-n><C-w>o
+  tnoremap <Esc>w  <C-\><C-n><C-w>w
+  tnoremap <Esc>h  <C-\><C-n><C-w>h
+  tnoremap <Esc>j  <C-\><C-n><C-w>j
+  tnoremap <Esc>k  <C-\><C-n><C-w>k
+  tnoremap <Esc>l  <C-\><C-n><C-w>l
+
+  tnoremap <expr><buffer> <Esc>   <SID>shall_esc(1) ? '<C-\><C-n>' : '<Esc>'
+
+  augroup TermOptions
+    au!
+    au TerminalWinOpen * setlocal nonu nornu scl=no bh=hide so=0 siso=0 |
+          \ nnoremap <buffer> o i |
+          \ nnoremap <nowait><expr><buffer> <Esc> <SID>shall_esc()
+            \ && exists('b:t_esc')
+            \ && <SID>reltime_ms() - b:t_esc <= &tm ? 'i' : '<Esc>' |
+          \ startinsert
+  augroup END
+endif
+" }}}2
+
 " Navigate tmux panes using vim-style motions {{{2
 if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.1140')
   " return: string tmux socket path
@@ -1055,10 +1127,16 @@ if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.114
   nnoremap <silent> <Esc>j :<C-u>call <SID>navigate('j', v:count1)<CR>
   nnoremap <silent> <Esc>k :<C-u>call <SID>navigate('k', v:count1)<CR>
   nnoremap <silent> <Esc>l :<C-u>call <SID>navigate('l', v:count1)<CR>
+
   xnoremap <silent> <Esc>h :<C-u>call <SID>navigate('h', v:count1)<CR>
   xnoremap <silent> <Esc>j :<C-u>call <SID>navigate('j', v:count1)<CR>
   xnoremap <silent> <Esc>k :<C-u>call <SID>navigate('k', v:count1)<CR>
   xnoremap <silent> <Esc>l :<C-u>call <SID>navigate('l', v:count1)<CR>
+
+  tnoremap <silent> <Esc>h <C-\><C-n>:<C-u>call <SID>navigate('h', v:count1)<CR>
+  tnoremap <silent> <Esc>j <C-\><C-n>:<C-u>call <SID>navigate('j', v:count1)<CR>
+  tnoremap <silent> <Esc>k <C-\><C-n>:<C-u>call <SID>navigate('k', v:count1)<CR>
+  tnoremap <silent> <Esc>l <C-\><C-n>:<C-u>call <SID>navigate('l', v:count1)<CR>
 
   " return: 0/1
   function! s:tmux_mapkey_default_condition() abort
@@ -1129,6 +1207,19 @@ if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.114
   xnoremap <expr><silent> <Esc>- <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') - 2))\"", v:count ? '<C-w>-' : '2<C-w>-', TmuxMapkeyResizePaneVertConditionRef)
   xnoremap <expr><silent> <Esc>+ <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') + 2))\"", v:count ? '<C-w>+' : '2<C-w>+', TmuxMapkeyResizePaneVertConditionRef)
 
+  tnoremap <expr><silent> <Esc>p '<C-\><C-n>' . <SID>tmux_mapkey_fallback('last-pane', '<C-w>p')
+  tnoremap <expr><silent> <Esc>R '<C-\><C-n>' . <SID>tmux_mapkey_fallback('swap-pane -U', '<C-w>Ri')
+  tnoremap <expr><silent> <Esc>r '<C-\><C-n>' . <SID>tmux_mapkey_fallback('swap-pane -D', '<C-w>ri')
+  tnoremap <expr><silent> <Esc>o '<C-\><C-n>' . <SID>tmux_mapkey_fallback("confirm 'kill-pane -a'", '<C-w>oi')
+  tnoremap <expr><silent> <Esc>= '<C-\><C-n>' . <SID>tmux_mapkey_fallback("confirm 'select-layout tiled'", '<C-w>=i')
+  tnoremap <expr><silent> <Esc>c '<C-\><C-n>' . <SID>tmux_mapkey_fallback('confirm kill-pane', '<C-w>c', TmuxMapkeyCloseWinConditionRef)
+  tnoremap <expr><silent> <Esc>< '<C-\><C-n>' . <SID>tmux_mapkey_fallback('resize-pane -L 4', '4<C-w>' . (winnr() == winnr('l') ? '>' : '<') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
+  tnoremap <expr><silent> <Esc>> '<C-\><C-n>' . <SID>tmux_mapkey_fallback('resize-pane -R 4', '4<C-w>' . (winnr() == winnr('l') ? '<' : '>') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
+  tnoremap <expr><silent> <Esc>, '<C-\><C-n>' . <SID>tmux_mapkey_fallback('resize-pane -L 4', '4<C-w>' . (winnr() == winnr('l') ? '>' : '<') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
+  tnoremap <expr><silent> <Esc>. '<C-\><C-n>' . <SID>tmux_mapkey_fallback('resize-pane -R 4', '4<C-w>' . (winnr() == winnr('l') ? '<' : '>') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
+  tnoremap <expr><silent> <Esc>- '<C-\><C-n>' . <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') - 2))\"", '2<C-w>-i', TmuxMapkeyResizePaneVertConditionRef)
+  tnoremap <expr><silent> <Esc>+ '<C-\><C-n>' . <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') + 2))\"", '2<C-w>+i', TmuxMapkeyResizePaneVertConditionRef)
+
   " Use a unified keymap `<C-space>[` to escape from vim terminal mode or enter
   " tmux visual mode
   tnoremap                <C-@>[ <C-\><C-n>
@@ -1154,46 +1245,6 @@ if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.114
 endif
 " }}}2
 
-" Terminal Settings {{{2
-if s:supportevents('TerminalWinOpen')
-  " return: reltime() converted to ms
-  function! s:reltime_ms() abort
-    let t = reltime()
-    return t[0] * 1000 + t[1] / 1000000
-  endfunction
-
-  " param: a:1 whether to store a timestamp in the terminal buffer
-  " return: 0/1
-  function! s:shall_esc(...) abort
-    if &buftype !~# 'terminal'
-      return 0
-    endif
-    if get(a:, 1, 0)
-      let b:t_esc = s:reltime_ms()
-    endif
-    let pid = job_info(term_getjob(bufnr())).process
-    let command = trim(system('ps h -o comm -g ' . pid . ' | tail -n1'))
-    if v:shell_error
-      return 1
-    endif
-    return match(command, '\v^((ba|da|fi|z)?sh|less|gawk|i?python3?)$') >= 0
-  endfunction
-
-  augroup TermOptions
-    au!
-    au TerminalWinOpen * setlocal nonu nornu scl=no bh=hide so=0 siso=0 |
-          \ nnoremap <buffer> o i |
-          \ tnoremap <buffer> <C-@>[ <C-\><C-n> |
-          \ nnoremap <nowait><expr><buffer> <Esc> <SID>shall_esc()
-            \ && exists('b:t_esc')
-            \ && <SID>reltime_ms() - b:t_esc <= &tm ? 'i' : '<Esc>' |
-          \ tnoremap <expr><buffer> <Esc>
-            \ <SID>shall_esc(1) ? '<C-\><C-n>' : '<Esc>' |
-          \ startinsert
-  augroup END
-endif
-" }}}2
-
 " Qflist / quickfix list settings {{{2
 if s:supportevents('FileType')
   augroup QfSettings
@@ -1211,6 +1262,7 @@ endif
 " Workaround to prevent <Esc> lag cause by Meta keymaps
 noremap  <nowait> <Esc> <Esc>
 noremap! <nowait> <Esc> <C-\><C-n>
+tnoremap <nowait> <Esc> <Esc>
 " }}}1
 
 " vim:tw=79:ts=2:sts=2:sw=2:et:fdm=marker:ft=vim:norl:
