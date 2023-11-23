@@ -735,12 +735,6 @@ endif
 " for this autocmd to work properly, 'viminfo' option must contain '!'
 if ($COLORTERM ==# 'truecolor' || has('gui_running'))
       \ && s:supportevents(['VimEnter', 'OptionSet', 'ColorScheme'])
-  let g:preferred_colors = { 'dark': 'habamax', 'light': 'shine' }
-
-  " return: string
-  function! s:get_preferred_colors() abort
-    return get(g:preferred_colors, &bg, 'habamax')
-  endfunction
 
   " Restore &background and colorscheme from viminfo file
   function! s:theme_restore() abort
@@ -751,42 +745,32 @@ if ($COLORTERM ==# 'truecolor' || has('gui_running'))
     let colors_name = get(g:, 'colors_name', '')
     let COLORSNAME = get(g:, 'COLORSNAME', '')
     if colors_name ==# '' || COLORSNAME != colors_name
-      exe 'silent! colorscheme ' .
-            \ (COLORSNAME !=# '' ? COLORSNAME : s:get_preferred_colors())
-      call s:theme_fix_hlspellbad()
+      exe 'silent! colorscheme ' . COLORSNAME
+      call s:theme_fix_hlspell()
     endif
-  endfunction
-
-  " Save new choose preferred colorscheme according to background setting,
-  " then save the background and colorscheme settings to global variables,
-  " supposed to be called in an OptionSet " background event
-  " return: 0
-  function! s:theme_save_and_choose_preferred() abort
-    let g:BACKGROUND = v:option_new
-    exe 'silent! colorscheme ' . s:get_preferred_colors()
-    call s:theme_fix_hlspellbad()
-    call s:theme_save()
   endfunction
 
   " Save current &background and colorscheme to global variables
   function! s:theme_save() abort
     let g:BACKGROUND = &background
     let g:COLORSNAME = get(g:, 'colors_name', '')
-    wviminfo
+    silent! wviminfo
   endfunction
 
-  " Override hl-SpellBad
-  function! s:theme_fix_hlspellbad() abort
+  " Override hl-SpellBad, hl-SpellCap, hl-SpellRare, and hl-SpellLocalA
+  function! s:theme_fix_hlspell() abort
     hi clear SpellBad
-    hi SpellBad term=underline gui=underline
+    hi! SpellBad term=underline gui=underline
+    hi! link SpellCap SpellBad
+    hi! link SpellRare SpellBad
+    hi! link SpellLocal SpellBad
   endfunction
 
   augroup ThemeSwitch
     au!
-    au VimEnter    * ++once   :call s:theme_restore()
-    au OptionSet   background :call s:theme_save_and_choose_preferred()
-    au ColorScheme *          :call s:theme_save()
-    au ColorScheme *          :call s:theme_fix_hlspellbad()
+    au VimEnter    * ++once :call s:theme_restore()
+    au ColorScheme *        :call s:theme_save()
+    au ColorScheme *        :call s:theme_fix_hlspell()
   augroup END
 endif
 
