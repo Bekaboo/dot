@@ -412,7 +412,7 @@ endfunction
 function! s:get_word_after(...) abort
   let str = get(a:, 1, s:get_current_line())
   let colnr = get(a:, 2, s:get_current_col())
-  return s:match_nonempty(str[colnr - 1:], '^\s*\w*', '^\s*[^\ \t0-9A-Za-z_]*')
+  return s:match_nonempty(str[colnr - 1:], '^\s*\w*', '^\s*[^ \t0-9A-Za-z_]*')
 endfunction
 
 " Get word before cursor
@@ -425,7 +425,7 @@ function! s:get_word_before(...) abort
   return colnr == 0 ? '' : s:match_nonempty(
         \ str[:colnr - 1],
         \ '\w*\s*$',
-        \ '[^\ \t0-9A-Za-z_]*\s*$')
+        \ '[^ \t0-9A-Za-z_]*\s*$')
 endfunction
 
 " Check if current line is the last line
@@ -474,7 +474,7 @@ function! s:i_ctrl_f() abort
 endfunction
 
 function! s:i_ctrl_k() abort
-  return s:end_of_line() ? "\<C-g>u\<Del>" : "\<Esc>\<Right>Da"
+  return s:end_of_line() ? "\<C-g>u\<Del>" : "\<C-g>u\<C-o>D\<Right>"
 endfunction
 
 function! s:ic_ctrl_t() abort
