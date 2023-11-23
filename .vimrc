@@ -803,6 +803,7 @@ endif
 """ Plugin Settings {{{1
 " Netrw {{{2
 let g:netrw_banner = 0
+let g:netrw_cursor = 5
 let g:netrw_fastbrowse = 0
 let g:netrw_keepdir = 0
 let g:netrw_list_hide = netrw_gitignore#Hide()
