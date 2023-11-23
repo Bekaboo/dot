@@ -709,8 +709,8 @@ if s:supportevents([
 
   augroup AutoCwd
     au!
-    autocmd BufReadPost,BufWinEnter,WinEnter,FileChangedShellPost *
-          \ :call <SID>autocwd(expand('<afile>'))
+    autocmd BufReadPost,BufWinEnter,FileChangedShellPost *
+          \ if &bt == '' && &ma | call <SID>autocwd(expand('<afile>')) | endif
   augroup END
 endif
 
