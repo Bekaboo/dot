@@ -9,7 +9,7 @@ config.color_scheme = 'Nano Dark' -- Default colorscheme
 config.check_for_updates = false
 config.enable_tab_bar = false
 config.font = wezterm.font_with_fallback({
-  { family = 'Jetbrains Mono NF', weight = 'Light' },
+  { family = 'Jetbrains Mono NerdFont', weight = 'ExtraLight' },
   { family = 'Times New Roman' },
   { family = 'Microsoft YaHei' },
 })

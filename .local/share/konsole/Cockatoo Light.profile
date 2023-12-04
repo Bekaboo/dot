@@ -2,7 +2,7 @@
 BoldIntense=true
 ColorScheme=Cockatoo Light
 DimmValue=36
-Font=JetBrainsMono NF Light,13,-1,5,25,0,0,0,0,0,Regular
+Font=JetBrainsMono NF ExtraLight,13,-1,5,25,0,0,0,0,0,Regular
 LineSpacing=0
 
 [Cursor Options]
