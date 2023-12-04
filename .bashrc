@@ -347,7 +347,7 @@ ff() {
 }
 
 # Aliases
-alias sudo="sudo -E "
+alias sudoe="sudo -E "
 alias cd="cdim"
 alias cp="cp -i"        # confirm before overwriting something
 alias x="trash"
