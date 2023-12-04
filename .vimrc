@@ -93,9 +93,9 @@ function! s:command_abbrev(trig, command, ...) abort
 endfunction
 
 call s:command_abbrev('S', '%s')
-call s:command_abbrev('qa', 'qa!')
-call s:command_abbrev('bw', 'bw!')
-call s:command_abbrev('mks', 'mks!')
+call s:command_abbrev('ep', 'e%:p:h')
+call s:command_abbrev('xp', 'sp%:p:h')
+call s:command_abbrev('vp', 'vs%:p:h')
 call s:command_abbrev('rm', '!rm')
 call s:command_abbrev('mv', '!mv')
 call s:command_abbrev('mkd', '!mkdir')
