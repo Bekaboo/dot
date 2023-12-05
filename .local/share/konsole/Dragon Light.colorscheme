@@ -11,10 +11,10 @@ Color=240,240,240
 Color=231,231,231
 
 [Color0Faint]
-Color=160,160,160
+Color=216,216,216
 
 [Color0Intense]
-Color=160,160,160
+Color=216,216,216
 
 [Color1]
 Color=178,59,52
@@ -90,11 +90,11 @@ Color=40,40,40
 
 [General]
 Anchor=0.5,0.5
-Blur=false
+Blur=true
 ColorRandomization=false
 Description=Dragon Light
 FillStyle=Tile
-Opacity=1
+Opacity=0.8
 Wallpaper=
 WallpaperFlipType=NoFlip
 WallpaperOpacity=1
