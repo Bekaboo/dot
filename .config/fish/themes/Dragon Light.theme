@@ -30,7 +30,7 @@ fish_color_redirection               a0713c
 fish_color_search_match                     --reverse
 fish_color_selection                 1b1b1b --background=d8d8d8
 fish_color_status                    f6f6f6 --background=b23b34
-fish_color_status_0                  f6f6f6 --background=a0a0a0
+fish_color_status_0                  f6f6f6 --background=1b1b1b
 fish_color_user                      6a824f
 fish_color_valid_path                a0a0a0
 fish_color_vcs                       a0a0a0
