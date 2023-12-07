@@ -238,17 +238,17 @@ main() {
             ;;
         esac
     done
-    setbg-alacritty "$bg"
-    setbg-kitty "$bg"
-    setbg-wezterm "$bg"
-    setbg-konsole-yakuake "$bg"
-    setbg-highlight "$bg"
-    setbg-nvim "$bg" "$exclude_nvim_processes"
-    setbg-fish "$bg"
-    setbg-glow "$bg"
-    setbg-vscode "$bg"
-    setbg-plasma "$bg"
-    setbg-okular "$bg"
+    setbg-alacritty "$bg" &
+    setbg-kitty "$bg" &
+    setbg-wezterm "$bg" &
+    setbg-konsole-yakuake "$bg" &
+    setbg-highlight "$bg" &
+    setbg-nvim "$bg" "$exclude_nvim_processes" &
+    setbg-fish "$bg" &
+    setbg-glow "$bg" &
+    setbg-vscode "$bg" &
+    setbg-plasma "$bg" &
+    setbg-okular "$bg" &
     return 0
 }
 

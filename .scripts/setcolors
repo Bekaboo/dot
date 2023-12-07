@@ -217,14 +217,14 @@ main() {
             ;;
         esac
     done
-    setcolor-alacritty "$color"
-    setcolor-kitty "$color"
-    setcolor-wezterm "$color"
-    setcolor-konsole-yakuake "$color"
-    setcolor-highlight "$color"
-    setcolor-nvim "$color" "$exclude_nvim_processes"
-    setcolor-fish "$color"
-    setcolor-plasma "$color"
+    setcolor-alacritty "$color" &
+    setcolor-kitty "$color" &
+    setcolor-wezterm "$color" &
+    setcolor-konsole-yakuake "$color" &
+    setcolor-highlight "$color" &
+    setcolor-nvim "$color" "$exclude_nvim_processes" &
+    setcolor-fish "$color" &
+    setcolor-plasma "$color" &
     return 0
 }
 
