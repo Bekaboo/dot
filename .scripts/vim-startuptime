@@ -2,7 +2,9 @@
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
 usage() {
-    echo "Usage: vim-startuptime [<vim_test_command>] [-n|--num-epochs=<epochs>] [-p|--preserve-log]"
+    echo "\
+Usage: vim-startuptime [<vim_test_command>] [-h|--help]
+                       [-n|--num-epochs=<epochs>] [-p|--preserve-log]"
 }
 
 # test nvim startuptime
