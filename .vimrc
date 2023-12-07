@@ -636,7 +636,7 @@ if s:supportevents('BufReadPost')
   augroup LastPosJmp
     au!
     au BufReadPost * if &ft !=# 'gitcommit' && &ft !=# 'gitrebase' |
-          \ exe 'silent! normal! g`"' |
+          \ exe 'silent! normal! g`"zvzz' |
           \ endif
   augroup END
 endif
