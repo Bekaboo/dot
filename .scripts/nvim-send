@@ -7,4 +7,6 @@ if ! command -v nvim >/dev/null 2>&1; then
 fi
 
 RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
-ls "$RUNTIME_DIR"/nvim.*.0 | xargs -I {} nvim --server {} --remote-send "$1"
+for sock in "$RUNTIME_DIR"/nvim.*.0; do
+    nvim --clean --headless --server "$sock" --remote-send "$1" 2>/dev/null
+done

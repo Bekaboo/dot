@@ -3,13 +3,18 @@
 
 CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 DEFAULT_COLOR='nano'
+
+has() {
+    command -v "$1" >/dev/null 2>&1
+}
 
 # Convert a color name to capital style
 # gruvbox-material -> Gruvbox Material
 get-cap-theme-name() {
     # $1: name of the fish theme
-    if ! command -v awk &>/dev/null || ! command -v sed &>/dev/null; then
+    if ! has awk || ! has sed; then
         return 1
     fi
     local theme_name=$(echo "$1" |
@@ -48,7 +53,7 @@ setcolor-kitty() {
         force-slink "$themes_path/$1-dark.conf" "$dark_theme_path"
         force-slink "$themes_path/$1-light.conf" "$light_theme_path"
     fi
-    if [[ -n "$(command -v kitty 2>/dev/null)" ]]; then
+    if has kitty; then
         for pid in $(pgrep kitty); do
             kill -SIGUSR1 $pid
         done
@@ -91,20 +96,28 @@ setcolor-highlight() {
 
 setcolor-nvim() {
     # $1: name of the colorscheme
-    if [[ -z "$1" || -z "$(command -v nvim 2>/dev/null)" ]]; then
+    if [[ -z "$1" ]] || ! has nvim; then
         return 1
     fi
-    # Spawn an nvim instance to write the background to shada file
-    nvim --headless --noplugin +"let g:COLORSNAME='$1'" +wshada +quit
-    # List of pids to exclude from sending signal
-    local excludes
-    IFS=, read -r -a excludes <<<"$2"
-    # Send signal to running nvim instances to change their background
-    for pid in "$(pgrep nvim)"; do
-        if [[ ! " ${excludes[*]} " =~ " ${pid} " ]]; then
-            kill -USR1 $pid &>/dev/null
-        fi
+    local runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+    for sock in "$runtime_dir"/nvim.*.0; do
+        nvim --clean --headless --server "$sock" \
+            --remote-send "<Cmd>if get(g:, 'colors_name', '') !=# '$1' | \
+                let g:script_set_colors=1 | silent! colors $1 | \
+                unlet g:script_set_colors | endif<CR>" 2>/dev/null
     done
+    if has jq; then
+        local colors_json="$STATE_HOME/nvim/colors.json"
+        if [[ ! -e "$colors_json" ]]; then
+            touch "$colors_json"
+        fi
+        local colors_name=$(jq -r '.colors_name' "$colors_json")
+        if [[ "$colors_name" != "$1" ]]; then
+            jq --arg colors_name "$1" '.colors_name = $colors_name' \
+                "$colors_json" >"$colors_json.tmp"
+            mv "$colors_json.tmp" "$colors_json"
+        fi
+    fi
 }
 
 get-new-profile-name() {
@@ -124,8 +137,7 @@ get-new-profile-name() {
 konsole-switch-profile-colorscheme() {
     # $1: name of the app
     # $2: colorscheme name
-    if [[ -z "$(command -v kreadconfig5 2>/dev/null)" ||
-    -z "$(command -v kwriteconfig5 2>/dev/null)" ]]; then
+    if ! has kreadconfig5 || ! has kwriteconfig5; then
         return 1
     fi
     local rc="$CONFIG_HOME/${1}rc"
@@ -165,7 +177,7 @@ setcolor-fish() {
         force-slink "$themes_path/${theme_name} Dark.theme" "$dark_theme_path"
         force-slink "$themes_path/${theme_name} Light.theme" "$light_theme_path"
     fi
-    [[ -n "$(command -v fish 2>/dev/null)" ]] &&
+    has fish &&
         fish -c 'set -U __fish_reload_theme "$(head -c 16 /dev/urandom | base32)"'
 }
 
@@ -176,7 +188,7 @@ setcolor-plasma() {
     fi
     # gruvbox-material -> GruvboxMaterial
     local new_theme_name=$(get-cap-theme-name "$1" | sed 's/ //g')
-    if [[ -n "$(command -v plasma-apply-desktoptheme 2>/dev/null)" ]]; then
+    if has plasma-apply-desktoptheme; then
         local current_theme=$(plasma-get-current-desktoptheme)
         local bg=$(echo "$current_theme" | grep -o 'Light\|Dark')
         local new_theme="$new_theme_name${bg:-Dark}"
@@ -184,7 +196,7 @@ setcolor-plasma() {
             plasma-apply-desktoptheme "$new_theme" &>/dev/null
         fi
     fi
-    if [[ -n "$(command -v plasma-apply-colorscheme 2>/dev/null)" ]]; then
+    if has plasma-apply-colorscheme; then
         local current_scheme=$(plasma-get-current-colorscheme)
         local bg=$(echo "$current_scheme" | grep -o 'Light\|Dark')
         local new_scheme="$new_theme_name${bg:-Dark}"
@@ -195,21 +207,16 @@ setcolor-plasma() {
 }
 
 usage() {
-    echo 'Usage: setcolor [<colorscheme>] [--exclude-nvim-processes=<pid1>,<pid2>,...]'
+    echo 'Usage: setcolor [<colorscheme>]'
     exit 1
 }
 
 main() {
     local color=''
-    local exclude_nvim_processes=''
     for arg in "$@"; do
         case "$arg" in
         -h | --help)
             usage
-            ;;
-        --exclude-nvim-processes=*)
-            exclude_nvim_processes="${arg#*=}"
-            shift
             ;;
         *)
             color="$arg"
@@ -222,7 +229,7 @@ main() {
     setcolor-wezterm "$color" &
     setcolor-konsole-yakuake "$color" &
     setcolor-highlight "$color" &
-    setcolor-nvim "$color" "$exclude_nvim_processes" &
+    setcolor-nvim "$color" &
     setcolor-fish "$color" &
     setcolor-plasma "$color" &
     return 0

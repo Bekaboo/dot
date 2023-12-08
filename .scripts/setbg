@@ -3,6 +3,11 @@
 
 CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+
+has() {
+    command -v "$1" >/dev/null 2>&1
+}
 
 get-theme-variant() {
     # $1: name of the old theme
@@ -33,7 +38,7 @@ setbg-kitty() {
     else
         force-slink "$themes_dir/$1.conf" "$theme_path"
     fi
-    if [[ -n "$(command -v kitty 2>/dev/null)" ]]; then
+    if has kitty; then
         for pid in $(pgrep kitty); do
             kill -SIGUSR1 $pid
         done
@@ -68,21 +73,27 @@ setbg-highlight() {
 
 setbg-nvim() {
     # $1: 'light' or 'dark'
-    # $2: comma-separated list of pids to exclude
-    if [[ -z "$1" || -z "$(command -v nvim 2>/dev/null)" ]]; then
+    if [[ -z "$1" ]] || ! has nvim; then
         return 1
     fi
-    # Spawn an nvim instance to write the background to shada file
-    nvim --headless --noplugin +"let g:BACKGROUND='$1'" +wshada +quit
-    # List of pids to exclude from sending signal
-    local excludes
-    IFS=, read -r -a excludes <<<"$2"
-    # Send signal to running nvim instances to change their background
-    for pid in "$(pgrep nvim)"; do
-        if [[ ! " ${excludes[*]} " =~ " ${pid} " ]]; then
-            kill -USR1 $pid &>/dev/null
-        fi
+    local runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+    for sock in "$runtime_dir"/nvim.*.0; do
+        nvim --clean --headless --server "$sock" \
+            --remote-send "<Cmd>if &bg !=# '$1' | let g:script_set_bg=1 \
+                | set bg=$1 | unlet g:script_set_bg | endif<CR>" 2>/dev/null
     done
+    if has jq; then
+        local colors_json="$STATE_HOME/nvim/colors.json"
+        if [[ ! -e "$colors_json" ]]; then
+            touch "$colors_json"
+        fi
+        local bg=$(jq -r '.bg' "$colors_json")
+        if [[ "$bg" != "$1" ]]; then
+            jq --arg bg "$1" '.bg = $bg' \
+                "$colors_json" >"$colors_json.tmp"
+            mv "$colors_json.tmp" "$colors_json"
+        fi
+    fi
 }
 
 setbg-plasma() {
@@ -90,14 +101,14 @@ setbg-plasma() {
     if [[ -z "$1" ]]; then
         return 1
     fi
-    if [[ -n "$(command -v plasma-apply-desktoptheme 2>/dev/null)" ]]; then
+    if has plasma-apply-desktoptheme; then
         local current_theme=$(plasma-get-current-desktoptheme)
         local new_theme=$(get-theme-variant "$current_theme" "$1")
         if [[ "$current_theme" != "$new_theme" ]]; then
             plasma-apply-desktoptheme "$new_theme" &>/dev/null
         fi
     fi
-    if [[ -n "$(command -v plasma-apply-colorscheme 2>/dev/null)" ]]; then
+    if has plasma-apply-colorscheme; then
         local current_scheme=$(plasma-get-current-colorscheme)
         local new_scheme=$(get-theme-variant "$current_scheme" "$1")
         if [[ "$current_scheme" != "$new_scheme" ]]; then
@@ -121,8 +132,7 @@ get-new-profile-name() {
 konsole-switch-profile-bg() {
     # $1: name of the app
     # $2: 'light' or 'dark'
-    if [[ -z "$(command -v kreadconfig5 2>/dev/null)" ||
-    -z "$(command -v kwriteconfig5 2>/dev/null)" ]]; then
+    if ! has kreadconfig5 || ! has kwriteconfig5; then
         return 1
     fi
     local rc="$CONFIG_HOME/${1}rc"
@@ -137,10 +147,6 @@ konsole-switch-profile-bg() {
 
 setbg-konsole-yakuake() {
     # $1: 'light' or 'dark'
-    if [[ -z "$1" || -z $(command -v kreadconfig5 2>/dev/null) ||
-    -z $(command -v kwriteconfig5 2>/dev/null) ]]; then
-        return 1
-    fi
     konsole-switch-profile-bg konsole "$1"
     konsole-switch-profile-bg yakuake "$1"
     konsole-switch-profile-bg dolphin "$1"
@@ -149,8 +155,7 @@ setbg-konsole-yakuake() {
 
 setbg-okular() {
     # $1: 'light' or 'dark'
-    if [[ -z "$1" || -z "$(command -v okular 2>/dev/null)" ||
-    -z "$(command -v kwriteconfig5 2>/dev/null)" ]]; then
+    if [[ -z "$1" ]] || ! has okular || ! has kwriteconfig5; then
         return 1
     fi
     # Code adapted from https://gitlab.com/LADlSLAV/yabotss
@@ -165,8 +170,7 @@ setbg-okular() {
 setbg-vscode() {
     # $1: 'light' or 'dark'
     local rc="$CONFIG_HOME/Code/User/settings.json"
-    if [[ -z "$1" || ! -e "$rc" ||
-        -z "$(command -v jq 2>/dev/null)" ]]; then
+    if [[ -z "$1" ]] || [[ ! -e "$rc" ]] || ! has jq; then
         return 1
     fi
     local current_theme=$(jq -r '."workbench.colorTheme"' "$rc")
@@ -193,7 +197,7 @@ setbg-fish() {
     else
         force-slink "$themes_dir/${1^}.theme" "$theme_path"
     fi
-    [[ -n "$(command -v fish 2>/dev/null)" ]] &&
+    has fish &&
         fish -c 'set -U __fish_reload_theme "$(head -c 16 /dev/urandom | base32)"'
 }
 
@@ -216,21 +220,16 @@ setbg-glow() {
 }
 
 usage() {
-    echo 'Usage: setbg [light|dark] [--exclude-nvim-processes=<pid1>,<pid2>,...]'
+    echo 'Usage: setbg [light|dark]'
     exit 1
 }
 
 main() {
     local bg=''
-    local exclude_nvim_processes=''
     for arg in "$@"; do
         case "$arg" in
         light | dark)
             bg="$arg"
-            shift
-            ;;
-        --exclude-nvim-processes=*)
-            exclude_nvim_processes="${arg#*=}"
             shift
             ;;
         *)
@@ -243,7 +242,7 @@ main() {
     setbg-wezterm "$bg" &
     setbg-konsole-yakuake "$bg" &
     setbg-highlight "$bg" &
-    setbg-nvim "$bg" "$exclude_nvim_processes" &
+    setbg-nvim "$bg" &
     setbg-fish "$bg" &
     setbg-glow "$bg" &
     setbg-vscode "$bg" &
