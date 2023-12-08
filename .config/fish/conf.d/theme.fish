@@ -17,8 +17,8 @@ function __fish_reload_theme \
         --description 'Switch fish theme'
     __term_supports_256color;
         and test -f "$__fish_config_dir/themes/Current.theme"
-        and fish_config theme choose Current
-        or  fish_config theme choose 'Base Dark'
+        and fish_config theme choose 'Current' 2> /dev/null
+        or  fish_config theme choose 'Base Dark' 2> /dev/null
     commandline -f repaint
 end
 
