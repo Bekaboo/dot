@@ -1,4 +1,4 @@
-function python-activate-venv \
+function __python_venv \
     --on-variable PWD \
     --description 'Automatically activate or deactivate python virtualenvs'
     if not type -q python3
@@ -47,4 +47,4 @@ function python-activate-venv \
     end
 end
 
-python-activate-venv
+__python_venv

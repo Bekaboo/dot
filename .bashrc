@@ -222,7 +222,7 @@ shopt -s histappend
 shopt -s globstar
 
 # Automatically activate or deactivate python virtualenvs
-pyenv() {
+__python_venv() {
     local activation_file=""
     # $VIRTUAL_ENV not set -- python virtualenv not activated, try to
     # activate it if '.env/bin/activate' or '.venv/bin/activate' exists
@@ -263,15 +263,37 @@ pyenv() {
         deactivate
     fi
 }
-pyenv
+__python_venv
 
-# 'cd' improved, 'cd' and 'ls', then automatically activate or deactivate
+# Improved 'cd', automatically list directory contents and activate
 # python virtualenvs
-cdim() {
-    builtin cd "$@" && ls --color=auto;
-    pyenv
+cd() {
+    builtin cd "$@"
+    if ! command -v tput 2>&1 >/dev/null ||
+            ! command -v wc 2>&1 >/dev/null; then
+        ls -C --color
+        __python_venv
+        return
+    fi
+
+    local lines="$(tput lines)"
+    local cols="$(tput cols)"
+    local max_lines="$(($lines / 4))"
+    local num_lines="$(ls -C --width="$cols" | wc -l)"
+    if [[ "$num_lines" -le "$max_lines" ]]; then
+        ls -C --color
+        __python_venv
+        return
+    fi
+
+    ls -C --color --width="$cols" | head -n "$max_lines";
+    __python_venv
+    echo
+    echo "... $num_lines lines total"
 }
 
+
+# Settings for fzf
 fzf() {
     if command -v fzf-wrapper 2>&1 > /dev/null; then
         fzf-wrapper "$@"
@@ -288,7 +310,7 @@ __ff_open_files_or_dir() {
 
     # If only one target and it is a directory, cd into it
     if [[ "${#targets_list[@]}" = 1 && -d "$targets_list[0]" ]]; then
-        cdim "$targets_list[0]"
+        cd "$targets_list[0]"
         return $?
     fi
 
@@ -348,13 +370,12 @@ ff() {
 
 # Aliases
 alias sudoe="sudo -E "
-alias cd="cdim"
 alias cp="cp -i"        # confirm before overwriting something
 alias x="trash"
-alias grep="grep --colour=auto"
-alias egrep="egrep --colour=auto"
-alias fgrep="fgrep --colour=auto"
-alias ls="ls --color=auto"
+alias grep="grep --color"
+alias egrep="egrep --color"
+alias fgrep="fgrep --color"
+alias ls="ls --color"
 alias l="ls"
 alias ll="ls -l"
 alias lc="wc -l"

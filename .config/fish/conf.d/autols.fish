@@ -1,8 +1,8 @@
-function cdls \
+function __auto_ls \
         --on-variable PWD \
         --description 'List directory contents after changing cwd'
     if not type -q tput
-        ls -C --color=auto
+        ls -C --color
         return
     end
 
@@ -11,9 +11,9 @@ function cdls \
     set -l max_lines (math ceil $lines / 4)
     set -l num_lines (count (ls -C --width=$cols))
     if test $num_lines -le $max_lines
-        ls --color=auto
+        ls --color
     else
-        ls -C --color=auto --width=$cols | head -n $max_lines
+        ls -C --color --width=$cols | head -n $max_lines
         echo
         echo ... $num_lines lines total
     end
