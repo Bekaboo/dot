@@ -77,7 +77,8 @@ setbg-nvim() {
         return 1
     fi
     local runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
-    for sock in "$runtime_dir"/nvim.*.0; do
+    local appname="${NVIM_APPNAME:-nvim}"
+    for sock in "$runtime_dir"/"$appname".*.0; do
         nvim --clean --headless --server "$sock" \
             --remote-send "<Cmd>if &bg !=# '$1' | let g:script_set_bg=1 \
                 | set bg=$1 | unlet g:script_set_bg | endif<CR>" 2>/dev/null

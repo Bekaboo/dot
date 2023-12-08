@@ -100,7 +100,8 @@ setcolor-nvim() {
         return 1
     fi
     local runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
-    for sock in "$runtime_dir"/nvim.*.0; do
+    local appname="${NVIM_APPNAME:-nvim}"
+    for sock in "$runtime_dir"/"$appname".*.0; do
         nvim --clean --headless --server "$sock" \
             --remote-send "<Cmd>if get(g:, 'colors_name', '') !=# '$1' | \
                 let g:script_set_colors=1 | silent! colors $1 | \
