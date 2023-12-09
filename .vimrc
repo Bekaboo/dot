@@ -590,14 +590,20 @@ function! s:supportevents(events) abort
 endfunction
 
 if s:supportevents(['BufLeave', 'WinLeave', 'FocusLost'])
+  function! s:auto_save(buf, file) abort
+    if getbufvar(a:buf, '&bt', '') ==# ''
+          \ && filereadable(a:file) && filewritable(a:file)
+      silent! update
+    endif
+  endfunction
   augroup AutoSave
     au!
     if has('patch-8.1113')
-      au BufLeave,WinLeave,FocusLost * ++nested if &bt ==# "" |
-            \ silent! up |
-            \ endif
+      au BufLeave,WinLeave,FocusLost * ++nested
+            \ :call s:auto_save(expand('<abuf>'), expand('<afile>'))
     else
-      au BufLeave,WinLeave,FocusLost * if &bt ==# "" | silent! up | endif
+      au BufLeave,WinLeave,FocusLost *
+            \ :call s:auto_save(expand('<abuf>'), expand('<afile>'))
     endif
   augroup END
 endif
