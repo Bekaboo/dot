@@ -652,9 +652,15 @@ endif
 if s:supportevents('WinClosed')
   augroup WinCloseJmp
     au!
-    au WinClosed * ++nested if expand('<amatch>') == win_getid() |
-          \ wincmd p |
-          \ endif
+    if has('patch-8.1113')
+      au WinClosed * ++nested if expand('<amatch>') == win_getid() |
+            \ wincmd p |
+            \ endif
+    else
+      au WinClosed * if expand('<amatch>') == win_getid() |
+            \ wincmd p |
+            \ endif
+    endif
   augroup END
 endif
 
@@ -783,9 +789,9 @@ if ($COLORTERM ==# 'truecolor' || has('gui_running'))
 
   augroup ThemeSwitch
     au!
-    au VimEnter    * ++once :call s:theme_restore()
-    au ColorScheme *        :call s:theme_save()
-    au ColorScheme *        :call s:theme_fix_hlspell()
+    au VimEnter    * :call s:theme_restore()
+    au ColorScheme * :call s:theme_save()
+    au ColorScheme * :call s:theme_fix_hlspell()
   augroup END
 endif
 
