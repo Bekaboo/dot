@@ -1,4 +1,5 @@
 """ Options {{{1
+silent! set hidden
 silent! set foldlevelstart=99
 silent! set colorcolumn=80
 silent! set helpheight=10
