@@ -988,8 +988,6 @@ if s:supportevents('TerminalWinOpen')
   tnoremap <Esc>k  <C-\><C-n><C-w>k
   tnoremap <Esc>l  <C-\><C-n><C-w>l
 
-  tnoremap <expr><buffer> <Esc>   <SID>shall_esc(1) ? '<C-\><C-n>' : '<Esc>'
-
   augroup TermOptions
     au!
     au TerminalWinOpen * setlocal nonu nornu scl=no bh=hide so=0 siso=0 |
@@ -997,6 +995,8 @@ if s:supportevents('TerminalWinOpen')
           \ nnoremap <nowait><expr><buffer> <Esc> <SID>shall_esc()
             \ && exists('b:t_esc')
             \ && <SID>reltime_ms() - b:t_esc <= &tm ? 'i' : '<Esc>' |
+          \ tnoremap <nowait><expr><buffer> <Esc>
+            \ <SID>shall_esc(1) ? '<C-\><C-n>' : '<Esc>' |
           \ startinsert
   augroup END
 endif
