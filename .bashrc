@@ -391,15 +391,7 @@ alias nv="nvim"
 alias v="nvim"
 alias vi="nvim --clean"
 alias vs="vim-startuptime"
-alias emacs="emacs -nw"
-alias em="emacs -nw"
 alias r="ranger"
-alias home-backup="borg create \
-    --list -v \
-    --exclude-from ~/.scripts/borg/exclude.txt \
-    borg/home::{hostname}-{user}-{now:%Y-%m-%dT%H:%M:%S.%f} ~; \
-    borg prune --list -d 60 -w 24 -m 24 -y 10 borg/home; \
-    borg compact --cleanup-commits borg/home"
 alias clean-tmp="find /tmp -ctime +7 -exec rm -rf {} +"
 # Save KDE plasma session
 alias plasma-save-session="qdbus org.kde.ksmserver /KSMServer saveCurrentSession"
