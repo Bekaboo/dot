@@ -164,7 +164,7 @@ file_node_extensions = {
     'ogg'          : '󰎈',
     'org'          : '',
     'part'         : '',
-    'pdf'          : '',
+    'pdf'          : '',
     'php'          : '',
     'pickle'       : '',
     'pl'           : '',
