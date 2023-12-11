@@ -884,6 +884,19 @@ if s:supportevents(['CursorMoved', 'ModeChanged'])
           \ endif
   augroup END
 endif
+
+" Consistent &iskeyword in command-line
+if s:supportevents(['CmdlineEnter', 'CmdlineLeave'])
+  augroup FixCmdLineIskeyword
+    au!
+    au CmdlineEnter * let g:_isk_buf = expand('<abuf>') |
+          \ let g:_isk_save = getbufvar(expand('<abuf>'), '&isk', '') |
+          \ setlocal isk&
+    au CmdlineLeave * if exists('g:_isk_buf') && bufexists(g:_isk_buf) |
+          \ call setbufvar(g:_isk_buf, '&isk', g:_isk_save) |
+          \ unlet g:_isk_buf g:_isk_save |
+          \ endif
+endif
 " }}}1
 
 """ Plugin Settings {{{1
