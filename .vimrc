@@ -485,7 +485,8 @@ endfunction
 function! s:get_word_after(...) abort
   let str = get(a:, 1, s:get_current_line())
   let colnr = get(a:, 2, s:get_current_col())
-  return s:match_nonempty(str[colnr - 1:], '^\s*\w*', '^\s*[^ \t0-9A-Za-z_]*')
+  return s:match_nonempty(str[colnr - 1:],
+        \ '^\s*[[:keyword:]]*', '^\s*[^[:keyword:] ]*')
 endfunction
 
 " Get word before cursor
@@ -497,8 +498,8 @@ function! s:get_word_before(...) abort
   let colnr = get(a:, 2, s:get_current_col() - 1)
   return colnr == 0 ? '' : s:match_nonempty(
         \ str[:colnr - 1],
-        \ '\w*\s*$',
-        \ '[^ \t0-9A-Za-z_]*\s*$')
+        \ '[[:keyword:]]*\s*$',
+        \ '[^[:keyword:] ]*\s*$')
 endfunction
 
 " Check if current line is the last line
