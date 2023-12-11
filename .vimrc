@@ -880,7 +880,7 @@ if s:supportevents(['CursorMoved', 'ModeChanged'])
     " Keep cursor position after entering normal mode from visual mode with
     " virtualedit enabled
     au ModeChanged [vV\x16]*:n if &ve =~# 'all' && exists('w:ve_cursor') |
-          \ call setpos('.', w:ve_cursor) |
+          \ call cursor([w:ve_cursor[1], w:ve_cursor[2] + w:ve_cursor[3]]) |
           \ endif
   augroup END
 endif
