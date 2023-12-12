@@ -912,7 +912,7 @@ let g:netrw_banner = 0
 let g:netrw_cursor = 5
 let g:netrw_fastbrowse = 0
 let g:netrw_keepdir = 0
-let g:netrw_list_hide = netrw_gitignore#Hide()
+let g:netrw_list_hide = netrw_gitignore#Hide() . '\(^\|\s\s\)\zs\.\S\+'
 let g:netrw_liststyle = 1
 let g:netrw_localcopydircmd = 'cp -r'
 
