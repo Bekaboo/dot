@@ -121,8 +121,15 @@ let g:maplocalleader = ' '
 " param: a:1 linenr string?
 " return: 0/1
 function! s:is_wrapped(...) abort
+  if ! &wrap
+    return 0
+  endif
   let linenr = get(a:, 1, line('.'))
-  return &wrap && strdisplaywidth(getline(linenr)) >= winwidth(0)
+  let wininfo = getwininfo()[0]
+  let win_available_width = has('patch-8.2.3627')
+        \ ? wininfo.width - wininfo.textoff
+        \ : winfinfo.width
+  return &wrap && strdisplaywidth(getline(linenr)) >= win_available_width
 endfunction
 
 " param: key string
