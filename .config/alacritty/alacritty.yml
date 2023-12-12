@@ -16,9 +16,10 @@ font:
     family: 'Jetbrains Mono NF Extra Light'
     style: Italic
   bold:
-    family: 'Jetbrains Mono NF SemiBold'
+    family: 'Jetbrains Mono NF'
+    style: Regular
   bold_italic:
-    family: 'Jetbrains Mono NF SemiBold'
+    family: 'Jetbrains Mono NF'
     style: Italic
 
 custom_cursor_colors: true
