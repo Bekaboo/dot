@@ -1,12 +1,12 @@
 # name: 'Base Light'
-# preferred_background: black
+# preferred_background: light
 
-fish_color_autosuggestion            brblue  --italics
+fish_color_autosuggestion            white   --italics
 fish_color_cancel                            --reverse
 fish_color_command                   magenta --bold
 fish_color_comment                   white
-fish_color_cwd                       magenta --background=blue    --bold
-fish_color_cwd_root                  red     --background=blue    --bold
+fish_color_cwd                       magenta --background=black
+fish_color_cwd_root                  red     --background=black
 fish_color_end                       green
 fish_color_error                     brred
 fish_color_escape                    yellow

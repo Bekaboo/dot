@@ -5,8 +5,8 @@ fish_color_autosuggestion            bec8cc --italics
 fish_color_cancel                           --reverse
 fish_color_command                   000000 --bold
 fish_color_comment                   9fadb4
-fish_color_cwd                       000000 --background=e9eef1 --bold
-fish_color_cwd_root                  ff6f00 --background=e9eef1 --bold
+fish_color_cwd                       000000 --background=e9eef1
+fish_color_cwd_root                  ff6f00 --background=e9eef1
 fish_color_end                       608c88
 fish_color_error                     ff6f00
 fish_color_escape                    f09276

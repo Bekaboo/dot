@@ -4,6 +4,8 @@
 CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+DEFAULT_COLOR='dragon'
+DEFAULT_BG='dark'
 
 has() {
     command -v "$1" >/dev/null 2>&1
@@ -23,7 +25,7 @@ setbg-alacritty() {
     local themes_dir="$config_dir/themes"
     # If $1 is empty, only need to ensure symlink to color theme file exists
     [[ -z "$1" ]] &&
-        ensure-slink "$themes_dir/dark.yml" "$theme_path" ||
+        ensure-slink "$themes_dir/$DEFAULT_BG.yml" "$theme_path" ||
         force-slink "$themes_dir/$1.yml" "$theme_path"
     [[ -e "$config" ]] && touch "$config" # Reload config
 }
@@ -34,7 +36,7 @@ setbg-kitty() {
     local theme_path="$config_dir/current-theme.conf"
     local themes_dir="$config_dir/themes"
     if [[ -z $1 ]]; then
-        ensure-slink "$themes_dir/dark.conf" "$theme_path"
+        ensure-slink "$themes_dir/$DEFAULT_BG.conf" "$theme_path"
     else
         force-slink "$themes_dir/$1.conf" "$theme_path"
     fi
@@ -52,7 +54,7 @@ setbg-wezterm() {
     local themes_dir="$config_dir/colors"
     # If $1 is empty, only need to ensure symlink to color theme file exists
     if [[ -z "$1" ]]; then
-        ensure-slink "$themes_dir/dark.toml" "$theme_path"
+        ensure-slink "$themes_dir/$DEFAULT_BG.toml" "$theme_path"
     else
         force-slink "$themes_dir/$1.toml" "$theme_path"
     fi
@@ -65,7 +67,7 @@ setbg-highlight() {
     local theme_path="$themes_dir/highlight.theme"
     # If $1 is empty, only need to ensure symlink to color theme file exists
     if [[ -z "$1" ]]; then
-        ensure-slink "$themes_dir/dark.theme" "$theme_path"
+        ensure-slink "$themes_dir/$DEFAULT_BG.theme" "$theme_path"
     else
         force-slink "$themes_dir/$1.theme" "$theme_path"
     fi
@@ -125,8 +127,9 @@ get-new-profile-name() {
         --group 'Desktop Entry' --key 'DefaultProfile')
     local current_profile_name=${current_profile%\.profile}
     local new_profile_name=$(get-theme-variant "$current_profile_name" "$2")
-    # If new profile name is empty, use default profile 'Nano Dark'
-    [[ -z "$new_profile_name" ]] && new_profile_name='Nano Dark'
+    # If new profile name is empty, use default profile
+    [[ -z "$new_profile_name" ]] &&
+        new_profile_name="${DEFAULT_COLOR^} ${DEFAULT_BG^}"
     echo "$new_profile_name"
 }
 
@@ -180,7 +183,7 @@ setbg-vscode() {
         echo "$(jq -r '."workbench.preferredDarkColorTheme"' "$rc")" ||
         echo "$(jq -r '."workbench.preferredLightColorTheme"' "$rc")")
     if [[ -z "$new_theme" || "$new_theme" == null ]]; then
-        new_theme=$(get-theme-variant "${theme:-'Default Dark Modern'}" "$1")
+        new_theme=$(get-theme-variant "${theme:-"Default ${DEFAULT_BG^} Modern"}" "$1")
     fi
     if [[ "$theme" != "$new_theme" ]]; then
         local tmp=$(mktemp)
@@ -194,7 +197,7 @@ setbg-fish() {
     local themes_dir="$CONFIG_HOME/fish/themes"
     local theme_path="$themes_dir/Current.theme"
     if [[ -z "$1" ]]; then
-        ensure-slink "$themes_dir/Dark.theme" "$theme_path"
+        ensure-slink "$themes_dir/${DEFAULT_BG^}.theme" "$theme_path"
     else
         force-slink "$themes_dir/${1^}.theme" "$theme_path"
     fi

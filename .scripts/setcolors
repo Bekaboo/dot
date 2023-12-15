@@ -4,7 +4,8 @@
 CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
-DEFAULT_COLOR='nano'
+DEFAULT_COLOR='dragon'
+DEFAULT_BG='dark'
 
 has() {
     command -v "$1" >/dev/null 2>&1
@@ -130,8 +131,9 @@ get-new-profile-name() {
     local new_profile_name=$(get-cap-theme-name "$2")
     new_profile_name=$(echo "$current_profile_name" |
         sed "s/^\(.*\)\(Light\|Dark\|light\|dark\)/${new_profile_name} \2/")
-    # If new profile name is empty, use default profile 'Nano Dark'
-    [[ -z "$new_profile_name" ]] && new_profile_name='Nano Dark'
+    # If new profile name is empty, use default profile
+    [[ -z "$new_profile_name" ]] &&
+        new_profile_name="${DEFAULT_COLOR^} ${DEFAULT_BG^}"
     echo "$new_profile_name"
 }
 
@@ -192,7 +194,7 @@ setcolor-plasma() {
     if has plasma-apply-desktoptheme; then
         local current_theme=$(plasma-get-current-desktoptheme)
         local bg=$(echo "$current_theme" | grep -o 'Light\|Dark')
-        local new_theme="$new_theme_name${bg:-Dark}"
+        local new_theme="$new_theme_name${bg:-$DEFAULT_BG}"
         if [[ "$current_theme" != "$new_theme" ]]; then
             plasma-apply-desktoptheme "$new_theme" &>/dev/null
         fi
@@ -200,7 +202,7 @@ setcolor-plasma() {
     if has plasma-apply-colorscheme; then
         local current_scheme=$(plasma-get-current-colorscheme)
         local bg=$(echo "$current_scheme" | grep -o 'Light\|Dark')
-        local new_scheme="$new_theme_name${bg:-Dark}"
+        local new_scheme="$new_theme_name${bg:-$DEFAULT_BG}"
         if [[ "$current_scheme" != "$new_scheme" ]]; then
             plasma-apply-colorscheme "$new_scheme" &>/dev/null
         fi

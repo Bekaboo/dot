@@ -31,22 +31,22 @@ fi
 
 # TTY Terminal Colors
 if [[ "$TERM" == "linux" ]]; then
-    echo -en "\e]P02E3440" #black
-    echo -en "\e]P899AAC8" #darkgrey
-    echo -en "\e]P1D08770" #darkred
-    echo -en "\e]P9D08770" #red
-    echo -en "\e]P279968B" #darkgreen
-    echo -en "\e]PA79968B" #green
-    echo -en "\e]P3EBCB8B" #brown
-    echo -en "\e]PBEBCB8B" #yellow
-    echo -en "\e]P4434C5E" #darkblue
-    echo -en "\e]PC99AAC8" #blue
-    echo -en "\e]P5E5E7EC" #darkmagenta
-    echo -en "\e]PDE5E7EC" #magenta
-    echo -en "\e]P681A1C0" #darkcyan
-    echo -en "\e]PE81A1C0" #cyan
-    echo -en "\e]P799AAC8" #lightgrey
-    echo -en "\e]PE99AAC8" #white
+    echo -en "\e]P00D0C0C" #black
+    echo -en "\e]P1C4746E" #darkred
+    echo -en "\e]P28A9A7B" #darkgreen
+    echo -en "\e]P3D2B788" #brown
+    echo -en "\e]P48BA4B0" #darkblue
+    echo -en "\e]P5A292A3" #darkmagenta
+    echo -en "\e]P68EA4A2" #darkcyan
+    echo -en "\e]P7B4B3A7" #lightgrey
+    echo -en "\e]P8393836" #darkgrey
+    echo -en "\e]P9E46876" #red
+    echo -en "\e]PA87A987" #green
+    echo -en "\e]PBDCA561" #yellow
+    echo -en "\e]PC7FB4CA" #blue
+    echo -en "\e]PD938AA9" #magenta
+    echo -en "\e]PE7AA89F" #cyan
+    echo -en "\e]PFB4B8B4" #white
     clear #for background artifacting
 fi
 

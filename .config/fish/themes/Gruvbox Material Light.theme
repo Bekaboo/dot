@@ -5,8 +5,8 @@ fish_color_autosuggestion            928374 --italics
 fish_color_cancel                           --reverse
 fish_color_command                   4c7a5d --bold
 fish_color_comment                   928374
-fish_color_cwd                       504945 --background=f2e5bc --bold
-fish_color_cwd_root                  ea6962 --background=f2e5bc --bold
+fish_color_cwd                       504945 --background=f2e5bc
+fish_color_cwd_root                  ea6962 --background=f2e5bc
 fish_color_end                       b47109
 fish_color_error                     c14a4a
 fish_color_escape                    45707a
