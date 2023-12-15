@@ -955,6 +955,7 @@ if s:supportevents('FileType')
           \ nonumber
           \ norelativenumber
           \ nospell
+          \ colorcolumn=
           \ signcolumn=no
           \ | :nnoremap <buffer><expr> <C-o> <SID>netrw_ctrl_o()
           \ | :nnoremap <buffer><expr> <C-i> <SID>netrw_ctrl_i()
