@@ -95,8 +95,9 @@ endfunction
 
 call s:command_abbrev('S', '%s')
 call s:command_abbrev('ep', 'e%:p:h')
-call s:command_abbrev('xp', 'sp%:p:h')
-call s:command_abbrev('vp', 'vs%:p:h')
+call s:command_abbrev('sep', 'sp%:p:h')
+call s:command_abbrev('vep', 'vs%:p:h')
+call s:command_abbrev('tep', 'tabe%:p:h')
 call s:command_abbrev('rm', '!rm')
 call s:command_abbrev('mv', '!mv')
 call s:command_abbrev('mkd', '!mkdir')
