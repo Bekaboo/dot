@@ -93,7 +93,23 @@ function! s:command_abbrev(trig, command, ...) abort
   endif
 endfunction
 
-call s:command_abbrev('S', '%s')
+" Set keymap that only when the trigger is at the position of a command
+" param: trig string
+" param: command string
+" param: a:1 flags string? '<expr>'/'<buffer>',etc
+function! s:command_map(trig, command, ...) abort
+  if exists('*getcmdcompltype')
+    exe printf(
+          \ 'cnoremap %s %s getcmdcompltype() ==# "command" ? "%s" : "%s"',
+          \ '<expr>' . substitute(get(a:, 1, ''), '<expr>', '', ''),
+          \ a:trig,
+          \ escape(a:command, '"\'),
+          \ escape(a:trig, '"\'))
+  endif
+endfunction
+
+call s:command_map('S', '%s/')
+call s:command_map(':', 'lua ')
 call s:command_abbrev('ep', 'e%:p:h')
 call s:command_abbrev('sep', 'sp%:p:h')
 call s:command_abbrev('vep', 'vs%:p:h')
