@@ -5,7 +5,9 @@ md2html() {
     pandoc \
         --katex \
         --standalone \
+        --embed-resources \
         -f markdown-implicit_figures \
+        --css ~/.scripts/css/pandoc.css \
         -t html \
         "$1" \
         -o $(echo "$1" | sed "s/.md$/.html/")
