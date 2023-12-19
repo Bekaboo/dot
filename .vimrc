@@ -909,16 +909,18 @@ if s:supportevents(['CursorMoved', 'ModeChanged'])
   augroup END
 endif
 
-" Consistent &iskeyword in command-line
+" Consistent &iskeyword in Ex command-line
 if s:supportevents(['CmdlineEnter', 'CmdlineLeave'])
   augroup FixCmdLineIskeyword
     au!
-    au CmdlineEnter * let g:_isk_buf = expand('<abuf>') |
-          \ let g:_isk_save = getbufvar(expand('<abuf>'), '&isk', '') |
-          \ setlocal isk&
-    au CmdlineLeave * if exists('g:_isk_buf') && bufexists(g:_isk_buf) |
-          \ call setbufvar(g:_isk_buf, '&isk', g:_isk_save) |
-          \ unlet g:_isk_buf g:_isk_save |
+    au CmdlineEnter : let g:_isk_lisp_buf = str2nr(expand('<abuf>')) |
+          \ let g:_isk_save = getbufvar(g:_isk_lisp_buf, '&isk', '') |
+          \ let g:_lisp_save = getbufvar(g:_isk_lisp_buf, '&lisp', 0) |
+          \ setlocal isk& lisp&
+    au CmdlineLeave : if exists('g:_isk_lisp_buf') && bufexists(g:_isk_lisp_buf) |
+          \ call setbufvar(g:_isk_lisp_buf, '&isk', g:_isk_save) |
+          \ call setbufvar(g:_isk_lisp_buf, '&lisp', g:_lisp_save) |
+          \ unlet g:_isk_save g:_lisp_save g:_isk_lisp_buf |
           \ endif
 endif
 " }}}1
