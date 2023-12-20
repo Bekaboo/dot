@@ -52,5 +52,18 @@ __command_abbr pip-install 'pip install --user'
 __command_abbr r           'ranger'
 __command_abbr sudoe       'sudo -E'
 __command_abbr tree        'tree -N'
-__command_abbr v           'nvim'
 __command_abbr x           'trash'
+
+function __command_abbr_v_fn --description 'Abbreviation function for `v`'
+    if command -q nvim
+        echo nvim
+        return
+    end
+    if command -q vim
+        echo vim
+        return
+    end
+    echo vi
+end
+
+abbr --add 'v' --position command --function __command_abbr_v_fn
