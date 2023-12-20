@@ -246,6 +246,8 @@ for i in range(1, 9)
         \ :<C-u>call TabSwitch('tabnext', %d)<CR>", i, i)
 endfor
 
+inoremap <C-l> <C-x><C-l>
+
 inoremap <C-g>+ <Esc>[szg`]a
 inoremap <C-g>= <C-g>u<Esc>[s1z=`]a<C-G>u
 
