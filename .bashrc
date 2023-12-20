@@ -1,6 +1,10 @@
 # ~/.bashrc
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
+__has() {
+    command -v "$1" >/dev/null 2>&1
+}
+
 # Add execution permission to scripts
 [[ -d '~/.scripts' ]] && chmod +x ~/.scripts/*
 [[ -d '~/.local/bin' ]] && chmod +x ~/.local/bin/*
@@ -50,7 +54,7 @@ if [[ "$TERM" == "linux" ]]; then
     clear #for background artifacting
 fi
 
-command -v nvim-manpager 2>&1 >/dev/null && \
+__has nvim-manpager &&
     export MANPAGER=nvim-manpager
 
 # 'less' highlights
@@ -88,7 +92,7 @@ export FZF_DEFAULT_OPTS="--reverse \
     --bind=alt-a:toggle-all \
     --bind=shift-up:preview-half-page-up,shift-down:preview-half-page-down"
 
-if command -v fd 2>&1 >/dev/null; then
+if __has fd; then
     export FZF_DEFAULT_COMMAND='fd -p -H -L -td -tf -tl --mount -c=always'
     export FZF_ALT_C_COMMAND='fd -p -H -L -td --mount -c=always'
 else
@@ -173,13 +177,12 @@ export FZF_PREVIEW_DISABLE_UB='true' # Disable ueberzug preview
 [[ -r /usr/share/fzf/completion.bash ]] && . /usr/share/fzf/completion.bash
 
 # Ensure color theme files are correctly linked
-[[ -n "$(command -v setbg 2>/dev/null)" ]] && setbg
-[[ -n "$(command -v setcolors 2>/dev/null)" ]] && setcolors
+__has setbg && setbg
+__has setcolors && setcolors
 
 # Launch fish shell for interactive sessions
 if [[ "$(ps --no-header --pid=$PPID --format=comm)" != fish &&
-        -z "${BASH_EXECUTION_STRING}" &&
-        -n "$(command -v fish 2>/dev/null)" ]]; then
+        -z "${BASH_EXECUTION_STRING}" ]] && __has fish; then
     shopt -q login_shell && exec fish --login || exec fish
 fi
 
@@ -247,7 +250,7 @@ __python_venv() {
     # activated in parent shell, try to activate in current shell if currently
     # in project directory or a subdirectory of the project directory
     local parent_dir="$(dirname "$VIRTUAL_ENV")"
-    if [[ -z "$(command -v deactivate)" ]]; then
+    if ! __has deactivate; then
         if [[ "$PWD"/ == "$parent_dir"/* ]]; then
             activation_file="$(command -v activate)"
             chmod +x "$activation_file"
@@ -269,8 +272,7 @@ __python_venv
 # python virtualenvs
 cd() {
     builtin cd "$@"
-    if ! command -v tput 2>&1 >/dev/null ||
-            ! command -v wc 2>&1 >/dev/null; then
+    if ! __has tput || ! __has wc; then
         ls -C --color
         __python_venv
         return
@@ -295,7 +297,7 @@ cd() {
 
 # Settings for fzf
 fzf() {
-    if command -v fzf-wrapper 2>&1 > /dev/null; then
+    if __has fzf-wrapper; then
         fzf-wrapper "$@"
     else
         command fzf "$@"
@@ -326,7 +328,7 @@ __ff_open_files_or_dir() {
         fi
     done
 
-    if command -v xdg-open 2>&1 >/dev/null; then
+    if __has xdg-open; then
         for target in "${others[@]}"; do
             xdg-open "$target" >/dev/null 2>&1
         done
@@ -334,8 +336,7 @@ __ff_open_files_or_dir() {
         echo "xdg-open not found, omit opening files ${targets_list[@]}" >&2
     fi
     if (("${#text_or_dirs[@]}" > 0)); then
-        command -v "$EDITOR" 2>&1 >/dev/null &&
-            "$EDITOR" "${text_or_dirs[@]}" ||
+        __has "$EDITOR" && "$EDITOR" "${text_or_dirs[@]}" ||
             echo "\$EDITOR not found, omit opening files ${text_or_dirs[@]}" >&2
     fi
 }
@@ -350,8 +351,7 @@ ff() {
     fi
 
     # Exit if fzf or fd is not installed
-    if ! command -v fzf 2>&1 >/dev/null || ! command -v fd 2>&1 >/dev/null
-    then
+    if ! __has fzf || ! __has fd; then
         echo 'fzf or fd is not installed' >&2
         return 1
     fi
@@ -366,6 +366,20 @@ ff() {
 
     __ff_open_files_or_dir "$targets"
     return
+}
+
+# Open nvim/vim/vi
+v() {
+    if __has nvim; then
+        nvim "$@"
+    elif __has vim; then
+        vim "$@"
+    elif __has vi; then
+        vi "$@"
+    else
+        echo 'nvim/vim/vi not found' >&2
+        return 1
+    fi
 }
 
 # Aliases
@@ -388,7 +402,6 @@ alias pip-install="pip install --user"
 alias translate="trans -shell -b -no-auto :zh"
 alias etalsnart="trans -shell -b -no-auto :en"
 alias nv="nvim"
-alias v="nvim"
 alias vi="nvim --clean"
 alias vs="vim-startuptime"
 alias r="ranger"
