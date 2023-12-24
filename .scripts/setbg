@@ -83,7 +83,8 @@ setbg-nvim() {
     for sock in "$runtime_dir"/"$appname".*.0; do
         nvim --clean --headless --server "$sock" \
             --remote-send "<Cmd>if &bg !=# '$1' | let g:script_set_bg=1 \
-                | set bg=$1 | unlet g:script_set_bg | endif<CR>" 2>/dev/null
+                | set bg=$1 | unlet g:script_set_bg | endif<CR>" +'qa!' \
+            2>/dev/null
     done
     if has jq; then
         local colors_json="$STATE_HOME/nvim/colors.json"

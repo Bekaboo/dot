@@ -106,7 +106,7 @@ setcolor-nvim() {
         nvim --clean --headless --server "$sock" \
             --remote-send "<Cmd>if get(g:, 'colors_name', '') !=# '$1' | \
                 let g:script_set_colors=1 | silent! colors $1 | \
-                unlet g:script_set_colors | endif<CR>" 2>/dev/null
+                unlet g:script_set_colors | endif<CR>" +'qa!' 2>/dev/null
     done
     if has jq; then
         local colors_json="$STATE_HOME/nvim/colors.json"
