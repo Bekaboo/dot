@@ -294,6 +294,17 @@ cd() {
     echo "... $num_lines lines total"
 }
 
+# Clear scrollback in neovim terminal correctly
+# See https://github.com/neovim/neovim/issues/21403
+clear() {
+    command clear "$@"
+    if [[ -n "$NVIM" ]]; then
+        nvim --clean --headless --server $NVIM \
+            --remote-send "<Cmd>let scbk = &scbk | let &scbk = 1 | \
+                let &scbk = scbk | unlet scbk<CR>" +'qa!' 2>/dev/null
+    fi
+}
+
 
 # Settings for fzf
 fzf() {
