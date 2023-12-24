@@ -8,6 +8,7 @@ colors:
   # Colors the cursor will use if `custom_cursor_colors` is true
   cursor:
     cursor: '0x1b1b1b'
+    text: '0xe7e7e7'
     style:
       shape: Block
       blinking: On
