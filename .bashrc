@@ -66,6 +66,9 @@ export LESS_TERMCAP_so=$'\e[01;33m'
 export LESS_TERMCAP_ue=$'\e[0m'
 export LESS_TERMCAP_us=$'\e[1;4;34m'
 
+# Set rg config path
+export RIPGREP_CONFIG_PATH=${HOME}/.ripgreprc
+
 # fzf config variables
 export FZF_DEFAULT_OPTS="--reverse \
     --preview='fzf-file-previewer {}' \
