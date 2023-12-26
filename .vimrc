@@ -858,45 +858,17 @@ endif
 " Netrw {{{2
 let g:netrw_banner = 0
 let g:netrw_cursor = 5
-let g:netrw_fastbrowse = 0
 let g:netrw_keepdir = 0
-let g:netrw_list_hide = netrw_gitignore#Hide() . '\(^\|\s\s\)\zs\.\S\+'
+let g:netrw_keepj = ''
+let g:netrw_list_hide = '\(^\|\s\s\)\zs\.\S\+'
 let g:netrw_liststyle = 1
 let g:netrw_localcopydircmd = 'cp -r'
-
-" return: string
-function s:netrw_ctrl_o() abort
-  let jumplist = getjumplist()
-  let prevloc_idx = jumplist[1] - 1
-  if prevloc_idx < 0 || prevloc_idx >= len(jumplist[0])
-    return "\<Ignore>"
-  endif
-  let prevloc = jumplist[0][prevloc_idx]
-  if prevloc.bufnr != bufnr('%')
-    return "\<Ignore>"
-  end
-  return "\<C-o>"
-endfunction
-
-" return: string
-function s:netrw_ctrl_i() abort
-  let jumplist = getjumplist()
-  let newloc_idx = jumplist[1] + 1
-  if newloc_idx >= len(jumplist[0])
-    return "\<Ignore>"
-  endif
-  let newloc = jumplist[0][newloc_idx]
-  if newloc.bufnr != bufnr('%')
-    return "\<Ignore>"
-  end
-  return "\<C-i>"
-endfunction
 
 if s:supportevents('FileType')
   augroup NetrwSettings
     au!
     au FileType netrw setlocal
-          \ bufhidden=wipe
+          \ bufhidden=hide
           \ buftype=nofile
           \ nobuflisted
           \ nolist
@@ -905,8 +877,6 @@ if s:supportevents('FileType')
           \ nospell
           \ colorcolumn=
           \ signcolumn=no
-          \ | :nnoremap <buffer><expr> <C-o> <SID>netrw_ctrl_o()
-          \ | :nnoremap <buffer><expr> <C-i> <SID>netrw_ctrl_i()
   augroup END
 endif
 " }}}2
