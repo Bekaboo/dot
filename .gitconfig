@@ -25,7 +25,9 @@
 	rsp = reset --mixed HEAD^
 	rts = restore --staged
 	sa = stash apply
+	sl = stash list
 	sp = stash pop
+	sd = stash drop
 	when-added = log --diff-filter=A
 	when-copied = log --diff-filter=C
 	when-deleted = log --diff-filter=D
