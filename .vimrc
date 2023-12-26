@@ -135,87 +135,14 @@ call s:command_abbrev('man', 'Man')
 let g:mapleader = ' '
 let g:maplocalleader = ' '
 
-" param: a:1 linenr string?
-" return: 0/1
-function! s:is_wrapped(...) abort
-  if ! &wrap
-    return 0
-  endif
-  let linenr = get(a:, 1, line('.'))
-  let wininfo = getwininfo()[0]
-  let win_available_width = has('patch-8.2.3627')
-        \ ? wininfo.width - wininfo.textoff
-        \ : winfinfo.width
-  return &wrap && strdisplaywidth(getline(linenr)) >= win_available_width
-endfunction
-
-" param: key string
-" param: remap string
-" return: string
-function! s:map_wrapped(key, remap) abort
-  return s:is_wrapped() ? a:remap : a:key
-endfunction
-
-" param: key string
-" param: remap string
-" return: string
-function! s:map_wrapped_cur_or_prev_line_nocount(key, remap) abort
-  return v:count == 0 && (s:is_wrapped() || s:is_wrapped(line('.') - 1))
-        \ ? a:remap
-        \ : a:key
-endfunction
-
-" param: key string
-" param: remap string
-" return: string
-function! s:map_wrapped_cur_or_next_line_nocount(key, remap) abort
-  return v:count == 0 && (s:is_wrapped() || s:is_wrapped(line('.') + 1))
-        \ ? a:remap
-        \ : a:key
-endfunction
-
-" param: key string
-" param: remap string
-" return: string
-function! s:map_wrapped_first_line_nocount(key, remap) abort
-  return v:count == 0 && s:is_wrapped(1)
-        \ ? a:remap
-        \ : a:key
-endfunction
-
-" param: key string
-" param: remap string
-" return: string
-function! s:map_wrapped_last_line_nocount(key, remap) abort
-  return v:count == 0 && s:is_wrapped(line('$'))
-        \ ? a:remap
-        \ : a:key
-endfunction
-
-" param: key string
-" param: remap string
-" return: string
-function! s:map_wrapped_eol(key, remap) abort
-  if ! s:is_wrapped()
-    return a:key
-  endif
-  call feedkeys(a:remap, 'nx')
-  return col('.') == col('$') - 1 ? a:key : a:remap
-endfunction
-
-nnoremap <expr> j        <SID>map_wrapped_cur_or_next_line_nocount("j", "gj")
-nnoremap <expr> k        <SID>map_wrapped_cur_or_prev_line_nocount("k", "gk")
-nnoremap <expr> <Down>   <SID>map_wrapped_cur_or_next_line_nocount("\<Down>", "g\<Down>")
-nnoremap <expr> <Up>     <SID>map_wrapped_cur_or_prev_line_nocount("\<Up>", "g\<Up>")
-nnoremap <expr> gg       <SID>map_wrapped_first_line_nocount("gg", "gg99999gk")
-nnoremap <expr> G        <SID>map_wrapped_last_line_nocount("G", "G99999gj")
-nnoremap <expr> <C-Home> <SID>map_wrapped_first_line_nocount("\<C-Home>", "\<C-Home>99999gk")
-nnoremap <expr> <C-End>  <SID>map_wrapped_last_line_nocount("\<C-End>", "\<C-End>99999gj")
-nnoremap <expr> 0        <SID>map_wrapped("0", "g0")
-nnoremap <expr> $        <SID>map_wrapped_eol("$", "g$")
-nnoremap <expr> ^        <SID>map_wrapped("^", "g^")
-nnoremap <expr> <Home>   <SID>map_wrapped("\<Home>", "g\<Home>")
-nnoremap <expr> <End>    <SID>map_wrapped_eol("\<End>", "g\<End>")
+nnoremap <expr> j        v:count ? "j"      : "gj"
+xnoremap <expr> j        v:count ? "j"      : "gj"
+nnoremap <expr> k        v:count ? "k"      : "gk"
+xnoremap <expr> k        v:count ? "k"      : "gk"
+nnoremap <expr> <Down>   v:count ? "<Down>" : "g<Down>"
+xnoremap <expr> <Down>   v:count ? "<Down>" : "g<Down>"
+nnoremap <expr> <Up>     v:count ? "<Up>"   : "g<Up>"
+xnoremap <expr> <Up>     v:count ? "<Up>"   : "g<Up>"
 
 nnoremap <silent> ]b :exec v:count1 . 'bn'<CR>
 nnoremap <silent> [b :exec v:count1 . 'bp'<CR>
