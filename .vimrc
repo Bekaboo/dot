@@ -144,6 +144,9 @@ xnoremap <expr> <Down>   v:count ? "<Down>" : "g<Down>"
 nnoremap <expr> <Up>     v:count ? "<Up>"   : "g<Up>"
 xnoremap <expr> <Up>     v:count ? "<Up>"   : "g<Up>"
 
+inoremap <Down> <C-o>g<Down>
+inoremap <Up>   <C-o>g<Up>
+
 nnoremap <silent> ]b :exec v:count1 . 'bn'<CR>
 nnoremap <silent> [b :exec v:count1 . 'bp'<CR>
 
