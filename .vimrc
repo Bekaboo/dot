@@ -44,6 +44,78 @@ silent! let &t_fd = "\<Esc>[?1004l"
 silent! let $EDITOR = 'vim'
 silent! let $VISUAL = 'vim'
 
+" Align columns in quickfix window
+silent! set quickfixtextfunc=Qftf
+
+" param: info dict
+" return: string[]
+function! Qftf(info) abort
+  let qflist = a:info['quickfix']
+        \ ? getqflist(#{id: a:info.id, items: 0}).items
+        \ : getloclist(a:info.winid, #{id: a:info.id, items: 0}).items
+
+  if len(qflist) == 0
+    return []
+  endif
+
+  let fname_width = 0
+  let lnum_width  = 0
+  let col_width   = 0
+  let type_width  = 0
+  let nr_width    = 0
+  let max_width   = &columns / 2
+  for item in qflist
+    let fname = fnamemodify(bufname(item.bufnr), ':~:.')
+    let lnum = item.lnum == item.end_lnum || item.end_lnum == 0
+          \ ? item.lnum
+          \ : item.lnum . '-' . item.end_lnum
+    let col = item.col == item.end_col
+          \ ? item.col
+          \ : item.col . '-' . item.end_col
+    let type = trim(item.type) != '' ? ' ' .. trim(item.type) : ''
+    let nr = item.nr ? ' ' .. item.nr : ''
+
+    let fname_width = min([max_width, max([fname_width, strdisplaywidth(fname)])])
+    let lnum_width  = min([max_width, max([lnum_width,  strdisplaywidth(lnum)])])
+    let col_width   = min([max_width, max([col_width,   strdisplaywidth(col)])])
+    let type_width  = min([max_width, max([type_width,  strdisplaywidth(type)])])
+    let nr_width    = min([max_width, max([nr_width,    strdisplaywidth(nr)])])
+  endfor
+
+  let result = []
+  for item in qflist
+    if !item.valid
+      continue
+    endif
+
+    let fname = fnamemodify(bufname(item.bufnr), ':~:.')
+    if item.lnum == 0 && item.col == 0
+      call add(result, fname)
+      continue
+    endif
+
+    let lnum = item.lnum == item.end_lnum || item.end_lnum == 0
+          \ ? item.lnum
+          \ : item.lnum . '-' . item.end_lnum
+    let col = item.col == item.end_col
+          \ ? item.col
+          \ : item.col . '-' . item.end_col
+    let type = trim(item.type) != '' ? ' ' .. trim(item.type) : ''
+    let nr = item.nr ? ' ' .. item.nr : ''
+
+    let lnum  = repeat(' ', lnum_width - strdisplaywidth(lnum)) . lnum
+    let fname = fname . repeat(' ', fname_width - strdisplaywidth(fname))
+    let col   = col   . repeat(' ', col_width  - strdisplaywidth(col))
+    let type  = type  . repeat(' ', type_width - strdisplaywidth(type))
+    let nr    = nr    . repeat(' ', nr_width   - strdisplaywidth(nr))
+
+    call add(result, printf('%s|%s col %s%s%s| %s',
+          \ fname, lnum, col, type, nr, item.text))
+  endfor
+
+  return result
+endfunction
+
 silent! set backup
 silent! set backupdir=~/.vimbackup
 let s:backupdir = expand('~/.vimbackup')
@@ -1277,12 +1349,13 @@ endif
 if s:supportevents('FileType')
   augroup QfSettings
     au!
-    au FileType qf setlocal nobl nornu scl=no |
-          \ nnoremap <buffer> <Tab> <CR>zz<C-w>p |
+    au FileType qf silent! setlocal nobl nolist nospell nornu scl=no cc=0 |
+          \ nnoremap <buffer> =      <CR>zz<C-w>p |
           \ nnoremap <buffer> <C-j> j<CR>zz<C-w>p |
           \ nnoremap <buffer> <C-k> k<CR>zz<C-w>p |
           \ nnoremap <buffer> <C-n> j<CR>zz<C-w>p |
-          \ nnoremap <buffer> <C-p> k<CR>zz<C-w>p
+          \ nnoremap <buffer> <C-p> k<CR>zz<C-w>p |
+          \ silent! packadd cfilter
   augroup END
 endif
 " }}}2
