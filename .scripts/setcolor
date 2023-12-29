@@ -64,15 +64,15 @@ setcolor-kitty() {
 setcolor-wezterm() {
     # $1: name of the colorscheme
     local themes_path="$CONFIG_HOME/wezterm/colors"
-    local dark_theme_path="$themes_path/dark.toml"
-    local light_theme_path="$themes_path/light.toml"
+    local dark_theme_path="$themes_path/dark.yml"
+    local light_theme_path="$themes_path/light.yml"
     # If $1 is empty, only need to ensure symlink to color theme files exists
     if [[ -z "$1" ]]; then
-        ensure-slink "$themes_path/$DEFAULT_COLOR-dark.toml" "$dark_theme_path"
-        ensure-slink "$themes_path/$DEFAULT_COLOR-light.toml" "$light_theme_path"
+        ensure-slink "$themes_path/$DEFAULT_COLOR-dark.yml" "$dark_theme_path"
+        ensure-slink "$themes_path/$DEFAULT_COLOR-light.yml" "$light_theme_path"
     else
-        force-slink "$themes_path/$1-dark.toml" "$dark_theme_path"
-        force-slink "$themes_path/$1-light.toml" "$light_theme_path"
+        force-slink "$themes_path/$1-dark.yml" "$dark_theme_path"
+        force-slink "$themes_path/$1-light.yml" "$light_theme_path"
     fi
     local config="$CONFIG_HOME/wezterm/wezterm.lua"
     [[ -e "$config" ]] && touch "$config" # Reload config
@@ -184,6 +184,19 @@ setcolor-fish() {
         fish -c 'set -U __fish_reload_theme "$(head -c 16 /dev/urandom | base32)"'
 }
 
+declare -A plasma_color_wallpaper_map=(
+    ['nano']="$DATA_HOME/wallpapers/Fish"
+    ['dragon']="$DATA_HOME/wallpapers/Clouds"
+    ['everforest']="$DATA_HOME/wallpapers/Foggy Forest"
+    ['gruvbox-material']="$DATA_HOME/wallpapers/Foggy Forest"
+)
+
+declare -A plasma_color_splash_map=(
+    ['dragon']="$DATA_HOME/plasma/look-and-feel/arch_clouds"
+    ['everforest']="$DATA_HOME/plasma/look-and-feel/arch_foggy_forest"
+    ['gruvbox-material']="$DATA_HOME/plasma/look-and-feel/arch_foggy_forest"
+)
+
 setcolor-plasma() {
     # $1: name of the colorscheme
     if [[ -z "$1" ]]; then
@@ -205,6 +218,41 @@ setcolor-plasma() {
         local new_scheme="$new_theme_name${bg:-$DEFAULT_BG}"
         if [[ "$current_scheme" != "$new_scheme" ]]; then
             plasma-apply-colorscheme "$new_scheme" &>/dev/null
+        fi
+    fi
+    # Also change the wallpaper for different color schemes
+    local wallpaper="${plasma_color_wallpaper_map[$1]}"
+    if [[ -e "$wallpaper" ]]; then
+        if has dbus-send; then # Change normal wallpaper
+            dbus-send --session --dest=org.kde.plasmashell \
+                --type=method_call /PlasmaShell \
+                org.kde.PlasmaShell.evaluateScript "string:
+                var Desktops = desktops();
+                for (i=0; i < Desktops.length; i++) {
+                    d = Desktops[i];
+                    d.wallpaperPlugin = 'org.kde.image';
+                    d.currentConfigGroup = Array('Wallpaper', 'org.kde.image', 'General');
+                    d.writeConfig('Image', 'file://$wallpaper');
+                }"
+        fi
+        if has kwriteconfig5; then # Change lockscreen wallpaper
+            kwriteconfig5 --file "$CONFIG_HOME/kscreenlockerrc" \
+                --group Greeter \
+                --group Wallpaper \
+                --group org.kde.image \
+                --group General \
+                --key Image "$wallpaper"
+        fi
+    fi
+    # Change splash screen
+    local splash="${plasma_color_splash_map[$1]}"
+    if has kwriteconfig5 && has basename; then
+        if [[ -e "$splash" ]]; then
+            kwriteconfig5 --file "$CONFIG_HOME/ksplashrc" \
+                --group KSplash --key Theme "$(basename "$splash")"
+        else
+            kwriteconfig5 --file "$CONFIG_HOME/ksplashrc" \
+                --group KSplash --key Theme None
         fi
     fi
 }
