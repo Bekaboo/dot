@@ -73,7 +73,7 @@ function! Qftf(info) abort
           \ ? item.col
           \ : item.col . '-' . item.end_col
     let type = trim(item.type) != '' ? ' ' .. trim(item.type) : ''
-    let nr = item.nr ? ' ' .. item.nr : ''
+    let nr = item.nr > 0 ? ' ' .. item.nr : ''
 
     let fname_width = min([max_width, max([fname_width, strdisplaywidth(fname)])])
     let lnum_width  = min([max_width, max([lnum_width,  strdisplaywidth(lnum)])])
@@ -101,7 +101,7 @@ function! Qftf(info) abort
           \ ? item.col
           \ : item.col . '-' . item.end_col
     let type = trim(item.type) != '' ? ' ' .. trim(item.type) : ''
-    let nr = item.nr ? ' ' .. item.nr : ''
+    let nr = item.nr > 0 ? ' ' .. item.nr : ''
 
     let lnum  = repeat(' ', lnum_width - strdisplaywidth(lnum)) . lnum
     let fname = fname . repeat(' ', fname_width - strdisplaywidth(fname))
@@ -109,7 +109,7 @@ function! Qftf(info) abort
     let type  = type  . repeat(' ', type_width - strdisplaywidth(type))
     let nr    = nr    . repeat(' ', nr_width   - strdisplaywidth(nr))
 
-    call add(result, printf('%s|%s col %s%s%s| %s',
+    call add(result, printf('%s|%s:%s%s%s| %s',
           \ fname, lnum, col, type, nr, item.text))
   endfor
 
@@ -182,6 +182,7 @@ endfunction
 
 call s:command_map('S', '%s/')
 call s:command_map(':', 'lua ')
+call s:command_abbrev('bt', 'bel ter')
 call s:command_abbrev('ep', 'e%:p:h')
 call s:command_abbrev('sep', 'sp%:p:h')
 call s:command_abbrev('vep', 'vs%:p:h')
@@ -370,11 +371,11 @@ function! s:textobj_fold(motion) abort
   if sel_start > lnum
     return (foldlev == 0 ? 'zk'
           \ : (foldlev > foldlev_prev && foldlev_prev ? 'k' : ''))
-          \ . (a:motion == 'i' ? ']zkV[zj' : ']zV[z')
+          \ . (a:motion ==# 'i' ? ']zkV[zj' : ']zV[z')
   endif
   return (foldlev == 0 ? 'zj'
         \ : (foldlev > foldlev_prev ? 'j' : ''))
-        \ . (a:motion == 'i' ? '[zjV]zk' : '[zV]z')
+        \ . (a:motion ==# 'i' ? '[zjV]zk' : '[zV]z')
 endfunction
 xmap <silent><expr> iz ':<C-u>silent! keepjumps normal! ' . <SID>textobj_fold('i') . '<CR>'
 xmap <silent><expr> az ':<C-u>silent! keepjumps normal! ' . <SID>textobj_fold('a') . '<CR>'
@@ -1023,29 +1024,14 @@ nnoremap <silent> <Leader>.  :FZF<CR>
 
 """ Misc {{{1
 " Terminal Settings {{{2
-if s:supportevents('TerminalWinOpen')
-  " return: reltime() converted to ms
-  function! s:reltime_ms() abort
-    let t = reltime()
-    return t[0] * 1000 + t[1] / 1000000
-  endfunction
 
-  " param: a:1 whether to store a timestamp in the terminal buffer
-  " return: 0/1
-  function! s:shall_esc(...) abort
-    if &buftype !~# 'terminal'
-      return 0
-    endif
-    if get(a:, 1, 0)
-      let b:t_esc = s:reltime_ms()
-    endif
-    let pid = job_info(term_getjob(bufnr())).process
-    let command = trim(system('ps h -o comm -g ' . pid . ' | tail -n1'))
-    if v:shell_error
-      return 1
-    endif
-    return match(command, '\v^((ba|da|fi|z)?sh|less|gawk|i?python3?)$') >= 0
-  endfunction
+if exists(':tmap') == 2
+  " Default <C-w> is used as 'termwinkey' (see :h 'termwinkey')
+  " which conflicts with shell's keymap
+  tnoremap <nowait> <C-w> <C-\><C-w>
+
+  " Use <C-\><C-r> to insert contents of a register in terminal mode
+  tnoremap <expr> <C-\><C-r> (&twk ? &twk : '<C-w>') . '"' . nr2char(getchar())
 
   tnoremap <Esc>W  <C-\><C-n><C-w>Wi
   tnoremap <Esc>H  <C-\><C-n><C-w>Hi
@@ -1079,23 +1065,50 @@ if s:supportevents('TerminalWinOpen')
   tnoremap <Esc>j  <C-\><C-n><C-w>j
   tnoremap <Esc>k  <C-\><C-n><C-w>k
   tnoremap <Esc>l  <C-\><C-n><C-w>l
+endif
+
+if s:supportevents('TerminalWinOpen')
+  " return: reltime() converted to ms
+  function! s:reltime_ms() abort
+    let t = reltime()
+    return t[0] * 1000 + t[1] / 1000000
+  endfunction
+
+  " param: a:1 whether to store a timestamp in the terminal buffer
+  " return: 0/1
+  function! s:shall_esc(...) abort
+    if &buftype !~# 'terminal'
+      return 0
+    endif
+    if get(a:, 1, 0)
+      let b:t_esc = s:reltime_ms()
+    endif
+    let pid = job_info(term_getjob(bufnr())).process
+    let command = trim(system('ps h -o comm -g ' . pid . ' | tail -n1'))
+    if v:shell_error
+      return 1
+    endif
+    return match(command, '\v^((ba|da|fi|z)?sh|less|gawk|i?python3?)$') >= 0
+  endfunction
 
   augroup TermOptions
     au!
     au TerminalWinOpen * setlocal nonu nornu scl=no bh=hide so=0 siso=0 |
-          \ nnoremap <buffer> o i |
+          \ nnoremap <buffer> o i|
+          \ nnoremap <expr><buffer> p 'i' . (&twk ? &twk : '<C-w>') . '"' . v:register . '<C-\><C-n>'|
+          \ nnoremap <expr><buffer> P 'i' . (&twk ? &twk : '<C-w>') . '"' . v:register . '<C-\><C-n>'|
           \ nnoremap <nowait><expr><buffer> <Esc> <SID>shall_esc()
             \ && exists('b:t_esc')
-            \ && <SID>reltime_ms() - b:t_esc <= &tm ? 'i' : '<Esc>' |
+            \ && <SID>reltime_ms() - b:t_esc <= &tm ? 'i' : '<Esc>'|
           \ tnoremap <nowait><expr><buffer> <Esc>
-            \ <SID>shall_esc(1) ? '<C-\><C-n>' : '<Esc>' |
+            \ <SID>shall_esc(1) ? '<C-\><C-n>' : '<Esc>'|
           \ startinsert
   augroup END
 endif
 " }}}2
 
 " Navigate tmux panes using vim-style motions {{{2
-if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.1140')
+if $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.1140')
   " return: string tmux socket path
   function! s:tmux_get_socket() abort
     return get(split($TMUX, ','), 0, '')
@@ -1233,10 +1246,12 @@ if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.114
   xnoremap <silent> <Esc>k :<C-u>call <SID>navigate('k', v:count1)<CR>
   xnoremap <silent> <Esc>l :<C-u>call <SID>navigate('l', v:count1)<CR>
 
-  tnoremap <silent> <Esc>h <C-\><C-n>:<C-u>call <SID>navigate('h', v:count1)<CR>
-  tnoremap <silent> <Esc>j <C-\><C-n>:<C-u>call <SID>navigate('j', v:count1)<CR>
-  tnoremap <silent> <Esc>k <C-\><C-n>:<C-u>call <SID>navigate('k', v:count1)<CR>
-  tnoremap <silent> <Esc>l <C-\><C-n>:<C-u>call <SID>navigate('l', v:count1)<CR>
+  if exists(':tmap') == 2
+    tnoremap <silent> <Esc>h <C-\><C-n>:<C-u>call <SID>navigate('h', v:count1)<CR>
+    tnoremap <silent> <Esc>j <C-\><C-n>:<C-u>call <SID>navigate('j', v:count1)<CR>
+    tnoremap <silent> <Esc>k <C-\><C-n>:<C-u>call <SID>navigate('k', v:count1)<CR>
+    tnoremap <silent> <Esc>l <C-\><C-n>:<C-u>call <SID>navigate('l', v:count1)<CR>
+  endif
 
   " return: 0/1
   function! s:tmux_mapkey_default_condition() abort
@@ -1307,28 +1322,32 @@ if executable('tmux') && $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.114
   xnoremap <expr><silent> <Esc>- <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') - 2))\"", v:count ? '<C-w>-' : '2<C-w>-', TmuxMapkeyResizePaneVertConditionRef)
   xnoremap <expr><silent> <Esc>+ <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') + 2))\"", v:count ? '<C-w>+' : '2<C-w>+', TmuxMapkeyResizePaneVertConditionRef)
 
-  tnoremap <expr><silent> <Esc>p '<C-\><C-n>' . <SID>tmux_mapkey_fallback('last-pane', '<C-w>p')
-  tnoremap <expr><silent> <Esc>R '<C-\><C-n>' . <SID>tmux_mapkey_fallback('swap-pane -U', '<C-w>Ri')
-  tnoremap <expr><silent> <Esc>r '<C-\><C-n>' . <SID>tmux_mapkey_fallback('swap-pane -D', '<C-w>ri')
-  tnoremap <expr><silent> <Esc>o '<C-\><C-n>' . <SID>tmux_mapkey_fallback("confirm 'kill-pane -a'", '<C-w>oi')
-  tnoremap <expr><silent> <Esc>= '<C-\><C-n>' . <SID>tmux_mapkey_fallback("confirm 'select-layout tiled'", '<C-w>=i')
-  tnoremap <expr><silent> <Esc>c '<C-\><C-n>' . <SID>tmux_mapkey_fallback('confirm kill-pane', '<C-w>c', TmuxMapkeyCloseWinConditionRef)
-  tnoremap <expr><silent> <Esc>< '<C-\><C-n>' . <SID>tmux_mapkey_fallback('resize-pane -L 4', '4<C-w>' . (winnr() == winnr('l') ? '>' : '<') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
-  tnoremap <expr><silent> <Esc>> '<C-\><C-n>' . <SID>tmux_mapkey_fallback('resize-pane -R 4', '4<C-w>' . (winnr() == winnr('l') ? '<' : '>') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
-  tnoremap <expr><silent> <Esc>, '<C-\><C-n>' . <SID>tmux_mapkey_fallback('resize-pane -L 4', '4<C-w>' . (winnr() == winnr('l') ? '>' : '<') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
-  tnoremap <expr><silent> <Esc>. '<C-\><C-n>' . <SID>tmux_mapkey_fallback('resize-pane -R 4', '4<C-w>' . (winnr() == winnr('l') ? '<' : '>') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
-  tnoremap <expr><silent> <Esc>- '<C-\><C-n>' . <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') - 2))\"", '2<C-w>-i', TmuxMapkeyResizePaneVertConditionRef)
-  tnoremap <expr><silent> <Esc>+ '<C-\><C-n>' . <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') + 2))\"", '2<C-w>+i', TmuxMapkeyResizePaneVertConditionRef)
+  if exists(':tmap') == 2
+    tnoremap <expr><silent> <Esc>p '<C-\><C-n>' . <SID>tmux_mapkey_fallback('last-pane', '<C-w>p')
+    tnoremap <expr><silent> <Esc>R '<C-\><C-n>' . <SID>tmux_mapkey_fallback('swap-pane -U', '<C-w>Ri')
+    tnoremap <expr><silent> <Esc>r '<C-\><C-n>' . <SID>tmux_mapkey_fallback('swap-pane -D', '<C-w>ri')
+    tnoremap <expr><silent> <Esc>o '<C-\><C-n>' . <SID>tmux_mapkey_fallback("confirm 'kill-pane -a'", '<C-w>oi')
+    tnoremap <expr><silent> <Esc>= '<C-\><C-n>' . <SID>tmux_mapkey_fallback("confirm 'select-layout tiled'", '<C-w>=i')
+    tnoremap <expr><silent> <Esc>c '<C-\><C-n>' . <SID>tmux_mapkey_fallback('confirm kill-pane', '<C-w>c', TmuxMapkeyCloseWinConditionRef)
+    tnoremap <expr><silent> <Esc>< '<C-\><C-n>' . <SID>tmux_mapkey_fallback('resize-pane -L 4', '4<C-w>' . (winnr() == winnr('l') ? '>' : '<') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
+    tnoremap <expr><silent> <Esc>> '<C-\><C-n>' . <SID>tmux_mapkey_fallback('resize-pane -R 4', '4<C-w>' . (winnr() == winnr('l') ? '<' : '>') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
+    tnoremap <expr><silent> <Esc>, '<C-\><C-n>' . <SID>tmux_mapkey_fallback('resize-pane -L 4', '4<C-w>' . (winnr() == winnr('l') ? '>' : '<') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
+    tnoremap <expr><silent> <Esc>. '<C-\><C-n>' . <SID>tmux_mapkey_fallback('resize-pane -R 4', '4<C-w>' . (winnr() == winnr('l') ? '<' : '>') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
+    tnoremap <expr><silent> <Esc>- '<C-\><C-n>' . <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') - 2))\"", '2<C-w>-i', TmuxMapkeyResizePaneVertConditionRef)
+    tnoremap <expr><silent> <Esc>+ '<C-\><C-n>' . <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') + 2))\"", '2<C-w>+i', TmuxMapkeyResizePaneVertConditionRef)
+  endif
 
   " Use a unified keymap `<C-space>[` to escape from vim terminal mode or enter
   " tmux visual mode
-  tnoremap                <C-@>[ <C-\><C-n>
   nnoremap <expr><silent> <C-@>[ <SID>tmux_exec('copy-mode')
   vnoremap <expr><silent> <C-@>[ <SID>tmux_exec('copy-mode')
   onoremap <expr><silent> <C-@>[ <SID>tmux_exec('copy-mode')
   inoremap <expr><silent> <C-@>[ <SID>tmux_exec('copy-mode')
   cnoremap <expr><silent> <C-@>[ <SID>tmux_exec('copy-mode')
   lnoremap <expr><silent> <C-@>[ <SID>tmux_exec('copy-mode')
+  if exists(':tmap') == 2
+    tnoremap <C-@>[ <C-\><C-n>
+  endif
 
   " Set @is_vim and register relevant autocmds callbacks if not already
   " in a vim/nvim session
@@ -1349,12 +1368,13 @@ endif
 if s:supportevents('FileType')
   augroup QfSettings
     au!
-    au FileType qf silent! setlocal nobl nolist nospell nornu scl=no cc=0 |
-          \ nnoremap <buffer> =      <CR>zz<C-w>p |
-          \ nnoremap <buffer> <C-j> j<CR>zz<C-w>p |
-          \ nnoremap <buffer> <C-k> k<CR>zz<C-w>p |
-          \ nnoremap <buffer> <C-n> j<CR>zz<C-w>p |
-          \ nnoremap <buffer> <C-p> k<CR>zz<C-w>p |
+    au FileType qf if win_gettype() ==# 'quickfix' | wincmd J | endif |
+          \ silent! setlocal nobl nolist nospell nornu scl=no cc=0 |
+          \ nnoremap <buffer> =      <CR>zz<C-w>p|
+          \ nnoremap <buffer> <C-j> j<CR>zz<C-w>p|
+          \ nnoremap <buffer> <C-k> k<CR>zz<C-w>p|
+          \ nnoremap <buffer> <C-n> j<CR>zz<C-w>p|
+          \ nnoremap <buffer> <C-p> k<CR>zz<C-w>p|
           \ silent! packadd cfilter
   augroup END
 endif
@@ -1363,7 +1383,9 @@ endif
 " Workaround to prevent <Esc> lag cause by Meta keymaps
 noremap  <nowait> <Esc> <Esc>
 noremap! <nowait> <Esc> <C-\><C-n>
-tnoremap <nowait> <Esc> <Esc>
+if exists(':tmap') == 2
+  tnoremap <nowait> <Esc> <Esc>
+endif
 " }}}1
 
 " vim:tw=79:ts=2:sts=2:sw=2:et:fdm=marker:ft=vim:norl:
