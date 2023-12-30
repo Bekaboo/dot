@@ -42,7 +42,7 @@ function __python_venv \
     # $VIRTUAL_ENV set and 'deactivate' found -- python virtualenv activated
     # in current shell, try to deactivate it if currently not inside the
     # project directory or a subdirectory of the project directory
-    if not issubdir "$PWD" "$parent_dir"
+    if not issubdir "$PWD" "$parent_dir"; and type -q deactivate
         deactivate
     end
 end
