@@ -43,7 +43,7 @@ if [[ "$TERM" == "linux" ]]; then
     echo -en "\e]P5A292A3" #darkmagenta
     echo -en "\e]P68EA4A2" #darkcyan
     echo -en "\e]P7B4B3A7" #lightgrey
-    echo -en "\e]P8393836" #darkgrey
+    echo -en "\e]P87F827F" #darkgrey
     echo -en "\e]P9E46876" #red
     echo -en "\e]PA87A987" #green
     echo -en "\e]PBDCA561" #yellow
