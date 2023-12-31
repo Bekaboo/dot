@@ -89,7 +89,8 @@ export FZF_DEFAULT_OPTS="--reverse \
     --color=gutter:-1,info:bold:red,spinner:cyan,header:white \
     --bind=ctrl-k:kill-line \
     --bind=alt-a:toggle-all \
-    --bind=shift-up:preview-half-page-up,shift-down:preview-half-page-down"
+    --bind=alt-{:first,alt-}:last \
+    --bind=alt-[:preview-half-page-up,alt-]:preview-half-page-down"
 
 if __has fd; then
     export FZF_DEFAULT_COMMAND='fd -p -H -L -td -tf -tl --mount -c=always'
