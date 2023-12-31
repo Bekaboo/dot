@@ -5,10 +5,6 @@ __has() {
     command -v "$1" >/dev/null 2>&1
 }
 
-# Add execution permission to scripts
-[[ -d '~/.scripts' ]] && chmod +x ~/.scripts/*
-[[ -d '~/.local/bin' ]] && chmod +x ~/.local/bin/*
-
 pathadd() {
     if [[ ":$PATH:" != *":$1:"* ]]; then
         PATH="$1${PATH:+":$PATH"}"
