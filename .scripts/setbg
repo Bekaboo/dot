@@ -20,13 +20,13 @@ get-theme-variant() {
 setbg-alacritty() {
     # $1: 'light' or 'dark'
     local config_dir="$CONFIG_HOME/alacritty"
-    local config="$config_dir/alacritty.yml"
-    local theme_path="$config_dir/theme.yml"
+    local config="$config_dir/alacritty.toml"
+    local theme_path="$config_dir/theme.toml"
     local themes_dir="$config_dir/themes"
     # If $1 is empty, only need to ensure symlink to color theme file exists
     [[ -z "$1" ]] &&
-        ensure-slink "$themes_dir/$DEFAULT_BG.yml" "$theme_path" ||
-        force-slink "$themes_dir/$1.yml" "$theme_path"
+        ensure-slink "$themes_dir/$DEFAULT_BG.toml" "$theme_path" ||
+        force-slink "$themes_dir/$1.toml" "$theme_path"
     [[ -e "$config" ]] && touch "$config" # Reload config
 }
 
@@ -208,7 +208,7 @@ setbg-fish() {
 
 setbg-glow() {
     # $1: 'light' or 'dark'
-    local config="$CONFIG_HOME/glow/glow.yml"
+    local config="$CONFIG_HOME/glow/glow.toml"
     if [[ -z "$1" ]]; then
         return 1
     fi

@@ -1,0 +1,27 @@
+# Everforest dark theme
+[colors.bright]
+black = "0x868d80"
+blue = "0x83b6af"
+cyan = "0x87c095"
+green = "0xa7c080"
+magenta = "0xd39bb6"
+red = "0xe68183"
+white = "0x868d80"
+yellow = "0xd9bb80"
+
+[colors.cursor]
+cursor = "0xd8caac"
+
+[colors.normal]
+black = "0x3c474d"
+blue = "0x83b6af"
+cyan = "0x87c095"
+green = "0xa7c080"
+magenta = "0xd39bb6"
+red = "0xe68183"
+white = "0x868d80"
+yellow = "0xd9bb80"
+
+[colors.primary]
+background = "0x2d353b"
+foreground = "0xd8caac"

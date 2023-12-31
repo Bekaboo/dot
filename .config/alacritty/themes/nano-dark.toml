@@ -1,0 +1,27 @@
+# Nano dark theme
+[colors.bright]
+black = "0x99aac8"
+blue = "0x99aac8"
+cyan = "0x81a1c0"
+green = "0x79968b"
+magenta = "0xe5e7ec"
+red = "0xd08770"
+white = "0x99aac8"
+yellow = "0xebcb8b"
+
+[colors.cursor]
+cursor = "0xcbced2"
+
+[colors.normal]
+black = "0x2e3440"
+blue = "0x6d7d9a"
+cyan = "0x81a1c0"
+green = "0x79968b"
+magenta = "0xe5e7ec"
+red = "0xd08770"
+white = "0x99aac8"
+yellow = "0xebcb8b"
+
+[colors.primary]
+background = "0x2e3440"
+foreground = "0xcbced2"

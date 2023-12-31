@@ -1,0 +1,27 @@
+# Cockatoo light theme
+[colors.bright]
+black = "0x385372"
+blue = "0x97c0dc"
+cyan = "0x3b8f84"
+green = "0x5f8c3f"
+magenta = "0x6666a8"
+red = "0xc84b2b"
+white = "0x6666a8"
+yellow = "0xc88500"
+
+[colors.cursor]
+cursor = "0x385372"
+
+[colors.normal]
+black = "0xfaf4ed"
+blue = "0x97c0dc"
+cyan = "0x3b8f84"
+green = "0x5f8c3f"
+magenta = "0x6666a8"
+red = "0xc84b2b"
+white = "0x385372"
+yellow = "0xc88500"
+
+[colors.primary]
+background = "0xfaf4ed"
+foreground = "0x404553"

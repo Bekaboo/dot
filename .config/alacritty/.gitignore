@@ -1,3 +1,3 @@
-theme.yml
-themes/dark.yml
-themes/light.yml
+theme.toml
+themes/dark.toml
+themes/light.toml

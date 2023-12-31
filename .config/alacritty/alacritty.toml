@@ -1,0 +1,104 @@
+import = [
+    "~/.config/alacritty/themes/dark.toml",
+    "~/.config/alacritty/theme.toml",
+    "$XDG_CONFIG_HOME/.config/alacritty/themes/dark.toml",
+    "$XDG_CONFIG_HOME/.config/alacritty/theme.toml",
+]
+
+[colors]
+draw_bold_text_with_bright_colors = true
+transparent_background_colors = true
+
+[env]
+TERM = "alacritty"
+
+[font]
+size = 13
+
+[font.bold]
+family = "Jetbrains Mono NF"
+style = "Regular"
+
+[font.bold_italic]
+family = "Jetbrains Mono NF"
+style = "Italic"
+
+[font.italic]
+family = "Jetbrains Mono NF Light"
+style = "Italic"
+
+[font.normal]
+family = "Jetbrains Mono NF Light"
+
+[[keyboard.bindings]]
+action = "ReceiveChar"
+key = "PageUp"
+mode = "~Alt"
+mods = "Shift"
+
+[[keyboard.bindings]]
+action = "ReceiveChar"
+key = "PageDown"
+mode = "~Alt"
+mods = "Shift"
+
+[[keyboard.bindings]]
+action = "ReceiveChar"
+key = "Home"
+mode = "~Alt"
+mods = "Shift"
+
+[[keyboard.bindings]]
+action = "ReceiveChar"
+key = "End"
+mode = "~Alt"
+mods = "Shift"
+
+[[keyboard.bindings]]
+action = "ReceiveChar"
+key = "K"
+mode = "~Vi|~Search"
+mods = "Command"
+
+[[keyboard.bindings]]
+action = "ReceiveChar"
+key = "F"
+mode = "~Search"
+mods = "Control|Shift"
+
+[[keyboard.bindings]]
+action = "ReceiveChar"
+key = "F"
+mode = "~Search"
+mods = "Command"
+
+[[keyboard.bindings]]
+action = "ReceiveChar"
+key = "B"
+mode = "~Search"
+mods = "Control|Shift"
+
+[[keyboard.bindings]]
+action = "ReceiveChar"
+key = "B"
+mode = "~Search"
+mods = "Command"
+
+[[mouse.bindings]]
+action = "ReceiveChar"
+mouse = "Right"
+
+[scrolling]
+history = 0
+
+[window]
+dynamic_padding = true
+opacity = 1
+
+[window.dimensions]
+columns = 90
+lines = 24
+
+[window.padding]
+x = 8
+y = 8
