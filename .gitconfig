@@ -12,10 +12,12 @@
 	d = diff
 	p = pull
 	s = stash
+	w = show
 	st = status
 	rs = reset
 	rt = restore
 	au = add -u
+	ca = commit --amend
 	cm = commit -m
 	is-ancestor = merge-base --is-ancestor
 	l = log --oneline --graph
@@ -24,10 +26,15 @@
 	rbp = rebase -i HEAD~5
 	rsp = reset --mixed HEAD^
 	rts = restore --staged
+	sm = stash -m
 	sa = stash apply
 	sl = stash list
 	sp = stash pop
 	sd = stash drop
+	sw = stash show
+	sww = stash show -p
+	ss = stash --staged
+	ssm = stash --staged -m
 	when-added = log --diff-filter=A
 	when-copied = log --diff-filter=C
 	when-deleted = log --diff-filter=D
