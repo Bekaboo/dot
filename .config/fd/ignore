@@ -1,9 +1,6 @@
-*$*
-*%*
-.git/*
+*.git/
 *.venv/
 *Cache*/
-*~
 *cache*/
 .*Cache*/
 .*cache*/
