@@ -64,8 +64,23 @@ function! Qftf(info) abort
   let type_width  = 0
   let nr_width    = 0
   let max_width   = &columns / 2
+
+  let fname_str_cache = []
+  let lnum_str_cache  = []
+  let col_str_cache   = []
+  let type_str_cache  = []
+  let nr_str_cache    = []
+
+  let fname_width_cache = []
+  let lnum_width_cache  = []
+  let col_width_cache   = []
+  let type_width_cache  = []
+  let nr_width_cache    = []
+
   for item in qflist
-    let fname = fnamemodify(bufname(item.bufnr), ':~:.')
+    let fname = get(item, 'module')
+          \ ? item.module : (get(item, 'filename')
+            \ ? item.filename : fnamemodify(bufname(item.bufnr), ':~:.'))
     let lnum = item.lnum == item.end_lnum || item.end_lnum == 0
           \ ? item.lnum
           \ : item.lnum . '-' . item.end_lnum
@@ -75,42 +90,64 @@ function! Qftf(info) abort
     let type = trim(item.type) != '' ? ' ' .. trim(item.type) : ''
     let nr = item.nr > 0 ? ' ' .. item.nr : ''
 
-    let fname_width = min([max_width, max([fname_width, strdisplaywidth(fname)])])
-    let lnum_width  = min([max_width, max([lnum_width,  strdisplaywidth(lnum)])])
-    let col_width   = min([max_width, max([col_width,   strdisplaywidth(col)])])
-    let type_width  = min([max_width, max([type_width,  strdisplaywidth(type)])])
-    let nr_width    = min([max_width, max([nr_width,    strdisplaywidth(nr)])])
+    let fname_cur_width = strdisplaywidth(fname)
+    let lnum_cur_width  = strdisplaywidth(lnum)
+    let col_cur_width   = strdisplaywidth(col)
+    let type_cur_width  = strdisplaywidth(type)
+    let nr_cur_width    = strdisplaywidth(nr)
+
+    let fname_width = min([max_width, max([fname_width, fname_cur_width])])
+    let lnum_width  = min([max_width, max([lnum_width,  lnum_cur_width])])
+    let col_width   = min([max_width, max([col_width,   col_cur_width])])
+    let type_width  = min([max_width, max([type_width,  type_cur_width])])
+    let nr_width    = min([max_width, max([nr_width,    nr_cur_width])])
+
+    call add(fname_str_cache, fname)
+    call add(lnum_str_cache,  lnum)
+    call add(col_str_cache,   col)
+    call add(type_str_cache,  type)
+    call add(nr_str_cache,    nr)
+
+    call add(fname_width_cache, fname_cur_width)
+    call add(lnum_width_cache,  lnum_cur_width)
+    call add(col_width_cache,   col_cur_width)
+    call add(type_width_cache,  type_cur_width)
+    call add(nr_width_cache,    nr_cur_width)
   endfor
 
   let result = []
-  for item in qflist
+  for idx in range(len(qflist))
+    let item = qflist[idx]
+
     if !item.valid
       continue
     endif
 
-    let fname = fnamemodify(bufname(item.bufnr), ':~:.')
-    if item.lnum == 0 && item.col == 0
+    let fname = fname_str_cache[idx]
+    let fname_cur_width = fname_width_cache[idx]
+
+    if item.lnum == 0 && item.col == 0 && item.text == ''
       call add(result, fname)
       continue
     endif
 
-    let lnum = item.lnum == item.end_lnum || item.end_lnum == 0
-          \ ? item.lnum
-          \ : item.lnum . '-' . item.end_lnum
-    let col = item.col == item.end_col
-          \ ? item.col
-          \ : item.col . '-' . item.end_col
-    let type = trim(item.type) != '' ? ' ' .. trim(item.type) : ''
-    let nr = item.nr > 0 ? ' ' .. item.nr : ''
+    let lnum = lnum_str_cache[idx]
+    let col = col_str_cache[idx]
+    let type = type_str_cache[idx]
+    let nr = nr_str_cache[idx]
 
-    let lnum  = repeat(' ', lnum_width - strdisplaywidth(lnum)) . lnum
-    let fname = fname . repeat(' ', fname_width - strdisplaywidth(fname))
-    let col   = col   . repeat(' ', col_width  - strdisplaywidth(col))
-    let type  = type  . repeat(' ', type_width - strdisplaywidth(type))
-    let nr    = nr    . repeat(' ', nr_width   - strdisplaywidth(nr))
+    let lnum_cur_width = lnum_width_cache[idx]
+    let col_cur_width = col_width_cache[idx]
+    let type_cur_width = type_width_cache[idx]
+    let nr_cur_width = nr_width_cache[idx]
 
     call add(result, printf('%s|%s:%s%s%s| %s',
-          \ fname, lnum, col, type, nr, item.text))
+          \ fname . repeat(' ', fname_width - fname_cur_width),
+          \ repeat(' ', lnum_width - lnum_cur_width) . lnum,
+          \ col . repeat(' ', col_width - col_cur_width),
+          \ type . repeat(' ', type_width - type_cur_width),
+          \ nr . repeat(' ', nr_width   - nr_cur_width),
+          \ item.text))
   endfor
 
   return result
