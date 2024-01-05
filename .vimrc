@@ -189,6 +189,7 @@ call s:command_abbrev('vep', 'vs%:p:h')
 call s:command_abbrev('tep', 'tabe%:p:h')
 call s:command_abbrev('rm', '!rm')
 call s:command_abbrev('mv', '!mv')
+call s:command_abbrev('git', '!git')
 call s:command_abbrev('mkd', '!mkdir')
 call s:command_abbrev('mkdir', '!mkdir')
 call s:command_abbrev('touch', '!touch')
@@ -387,10 +388,10 @@ omap <silent>       az :silent! normal Vaz<CR>
 nnoremap Y        y$
 inoremap <C-u>    <C-g>u<C-u>
 inoremap <C-w>    <C-g>u<C-w>
-nnoremap <silent> <C-l> :nohlsearch\|diffupdate\|normal! <C-l><CR>
 nnoremap <silent> &     :&&<CR>
 xnoremap <silent> *     y/\V<C-R>=escape(@",'/')<CR><CR>
 xnoremap <silent> #     y?\V<C-R>=escape(@",'/')<CR><CR>
+nnoremap <silent> <C-l> :nohlsearch\|diffupdate<CR><C-l>
 " }}}2
 
 " Window keymaps {{{2
@@ -1033,6 +1034,9 @@ if exists(':tmap') == 2
 
   " Use <C-\><C-r> to insert contents of a register in terminal mode
   tnoremap <expr> <C-\><C-r> (&twk ? &twk : '<C-w>') . '"' . nr2char(getchar())
+
+  tnoremap <C-6> <C-\><C-n>:b#<CR>
+  tnoremap <C-^> <C-\><C-n>:b#<CR>
 
   tnoremap <Esc>W  <C-\><C-n><C-w>Wi
   tnoremap <Esc>H  <C-\><C-n><C-w>Hi
