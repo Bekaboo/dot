@@ -64,15 +64,15 @@ setcolor-kitty() {
 setcolor-wezterm() {
     # $1: name of the colorscheme
     local themes_path="$CONFIG_HOME/wezterm/colors"
-    local dark_theme_path="$themes_path/dark.yml"
-    local light_theme_path="$themes_path/light.yml"
-    # If $1 is empty, only need to ensure symlink to color theme files exists
+    local dark_theme_path="$themes_path/dark.toml"
+    local light_theme_path="$themes_path/light.toml"
+    # If $1 is empty, only need to ensure stomlink to color theme files exists
     if [[ -z "$1" ]]; then
-        ensure-slink "$themes_path/$DEFAULT_COLOR-dark.yml" "$dark_theme_path"
-        ensure-slink "$themes_path/$DEFAULT_COLOR-light.yml" "$light_theme_path"
+        ensure-slink "$themes_path/$DEFAULT_COLOR-dark.toml" "$dark_theme_path"
+        ensure-slink "$themes_path/$DEFAULT_COLOR-light.toml" "$light_theme_path"
     else
-        force-slink "$themes_path/$1-dark.yml" "$dark_theme_path"
-        force-slink "$themes_path/$1-light.yml" "$light_theme_path"
+        force-slink "$themes_path/$1-dark.toml" "$dark_theme_path"
+        force-slink "$themes_path/$1-light.toml" "$light_theme_path"
     fi
     local config="$CONFIG_HOME/wezterm/wezterm.lua"
     [[ -e "$config" ]] && touch "$config" # Reload config
