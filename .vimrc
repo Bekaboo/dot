@@ -281,10 +281,15 @@ endfunction
 nnoremap <silent> gt :<C-u>call TabSwitch('tabnext')<CR>
 nnoremap <silent> gT :<C-u>call TabSwitch('tabprev')<CR>
 nnoremap <silent> gy :<C-u>call TabSwitch('tabprev')<CR>
+xnoremap <silent> gt :<C-u>call TabSwitch('tabnext')<CR>
+xnoremap <silent> gT :<C-u>call TabSwitch('tabprev')<CR>
+xnoremap <silent> gy :<C-u>call TabSwitch('tabprev')<CR>
 
 for i in range(1, 9)
-  exe printf("nnoremap <silent> <Leader>%d
-        \ :<C-u>call TabSwitch('tabnext', %d)<CR>", i, i)
+  for map in ['nnoremap', 'xnoremap']
+    exe printf("%s <silent> <Leader>%d
+          \ :<C-u>call TabSwitch('tabnext', %d)<CR>", map, i, i)
+  endfor
 endfor
 
 inoremap <C-l> <C-x><C-l>
@@ -298,6 +303,9 @@ xmap a` 2i`
 omap a" 2i"
 omap a' 2i'
 omap a` 2i`
+
+nnoremap -      :e%:p:h<CR>
+xnoremap - <Esc>:e%:p:h<CR>
 
 " Return key seq to jump to the first line in paragraph
 " return: 0
