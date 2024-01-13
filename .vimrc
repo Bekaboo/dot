@@ -1116,21 +1116,40 @@ if s:supportevents('TerminalWinOpen')
     return t[0] * 1000 + t[1] / 1000000
   endfunction
 
+  " Get the names of processes running in current terminal
+  " return: string[]: process names
+  function! s:proc_names() abort
+    if &buftype !~# 'terminal'
+      return []
+    endif
+    let pid = job_info(term_getjob(bufnr())).process
+    return split(system('ps h -o comm -g ' . pid), '\n')
+  endfunction
+
+  let s:tui = {
+        \ 'fzf': 1,
+        \ 'vim' : 1,
+        \ 'nvim' : 1,
+        \ 'sudo' : 1,
+        \ 'nmtui' : 1,
+        \ 'emacs' : 1,
+        \ 'lazygit' : 1,
+        \ 'emacsclient' : 1,
+        \ }
+
+  " Check if any of the processes in current terminal is a TUI app
   " param: a:1 whether to store a timestamp in the terminal buffer
   " return: 0/1
-  function! s:shall_esc(...) abort
-    if &buftype !~# 'terminal'
-      return 0
-    endif
+  function! s:running_tui(...) abort
     if get(a:, 1, 0)
       let b:t_esc = s:reltime_ms()
     endif
-    let pid = job_info(term_getjob(bufnr())).process
-    let command = trim(system('ps h -o comm -g ' . pid . ' | tail -n1'))
-    if v:shell_error
-      return 1
-    endif
-    return match(command, '\v^((ba|da|fi|z)?sh|less|gawk|i?python3?)$') >= 0
+    let names = s:proc_names()
+    for name in names
+      if has_key(s:tui, name)
+        return 1
+      endif
+    endfor
   endfunction
 
   augroup TermOptions
@@ -1139,11 +1158,11 @@ if s:supportevents('TerminalWinOpen')
           \ nnoremap <buffer> o i|
           \ nnoremap <expr><buffer> p 'i' . (&twk ? &twk : '<C-w>') . '"' . v:register . '<C-\><C-n>'|
           \ nnoremap <expr><buffer> P 'i' . (&twk ? &twk : '<C-w>') . '"' . v:register . '<C-\><C-n>'|
-          \ nnoremap <nowait><expr><buffer> <Esc> <SID>shall_esc()
-            \ && exists('b:t_esc')
-            \ && <SID>reltime_ms() - b:t_esc <= &tm ? 'i' : '<Esc>'|
+          \ nnoremap <nowait><expr><buffer> <Esc> exists('b:t_esc')
+            \ && <SID>reltime_ms() - b:t_esc <= &tm
+            \ && ! <SID>running_tui() ? 'i' : '<Esc>'|
           \ tnoremap <nowait><expr><buffer> <Esc>
-            \ <SID>shall_esc(1) ? '<C-\><C-n>' : '<Esc>'|
+            \ <SID>running_tui(1) ? '<Esc>' : '<C-\><C-n>'|
           \ startinsert
   augroup END
 endif
