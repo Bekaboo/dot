@@ -1,7 +1,7 @@
 """ Options {{{1
 silent! set hidden
 silent! set foldlevelstart=99
-silent! set colorcolumn=80
+silent! set colorcolumn=+1
 silent! set helpheight=10
 silent! set laststatus=2
 silent! set mouse=a
@@ -733,7 +733,6 @@ endfunction
 if s:supportevents(['BufLeave', 'WinLeave', 'FocusLost'])
   function! s:auto_save(buf, file) abort
     if getbufvar(a:buf, '&bt', '') ==# ''
-          \ && filereadable(a:file) && filewritable(a:file)
       silent! update
     endif
   endfunction
@@ -770,13 +769,6 @@ if s:supportevents('VimResized')
   augroup EqualWinSize
     au!
     au VimResized * wincmd =
-  augroup END
-endif
-
-if s:supportevents('OptionSet')
-  augroup TextwidthRelativeColorcolumn
-    au!
-    au OptionSet textwidth if v:option_new | setlocal cc=+1 | endif
   augroup END
 endif
 
@@ -953,8 +945,8 @@ if s:supportevents(['CursorMoved', 'ModeChanged'])
     au CursorMoved * if &ve =~# 'all' |
           \ let w:ve_cursor = getcurpos() |
           \ endif
-    " Keep cursor position after entering normal mode from visual mode with
-    " virtualedit enabled
+    " Keep cursor position after finishing visual mode replacement when virtual
+    " edit is enabled
     au ModeChanged [vV\x16]*:n if &ve =~# 'all' && exists('w:ve_cursor') |
           \ call cursor([w:ve_cursor[1], w:ve_cursor[2] + w:ve_cursor[3]]) |
           \ endif
