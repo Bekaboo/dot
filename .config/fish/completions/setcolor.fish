@@ -1,1 +1,1 @@
-complete -f -c setcolor -a 'cockatoo nano everforest dragon gruvbox-material'
+complete -f -c setcolor -a 'cockatoo nano everforest macro gruvbox-material'

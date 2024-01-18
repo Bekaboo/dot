@@ -1,8 +1,8 @@
 import = [
-    "~/.config/alacritty/themes/dragon-dark.toml",
+    "~/.config/alacritty/themes/macro-dark.toml",
     "~/.config/alacritty/themes/dark.toml",
     "~/.config/alacritty/theme.toml",
-    "$XDG_CONFIG_HOME/.config/alacritty/themes/dragon-dark.toml",
+    "$XDG_CONFIG_HOME/.config/alacritty/themes/macro-dark.toml",
     "$XDG_CONFIG_HOME/.config/alacritty/themes/dark.toml",
     "$XDG_CONFIG_HOME/.config/alacritty/theme.toml",
 ]
@@ -18,11 +18,11 @@ TERM = "alacritty"
 size = 13
 
 [font.bold]
-family = "Jetbrains Mono NF"
+family = "Jetbrains Mono NF ExtraLight"
 style = "Regular"
 
 [font.bold_italic]
-family = "Jetbrains Mono NF"
+family = "Jetbrains Mono NF ExtraLight"
 style = "Italic"
 
 [font.italic]

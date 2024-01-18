@@ -1,23 +1,23 @@
 [Background]
-Color=24,22,22
+Color=231,231,231
 
 [BackgroundFaint]
-Color=30,29,29
+Color=240,240,240
 
 [BackgroundIntense]
-Color=30,29,29
+Color=240,240,240
 
 [Color0]
-Color=13,12,12
+Color=231,231,231
 
 [Color0Faint]
-Color=57,56,54
+Color=216,216,216
 
 [Color0Intense]
-Color=57,56,54
+Color=216,216,216
 
 [Color1]
-Color=196,116,110
+Color=178,59,52
 
 [Color1Faint]
 Color=228,104,118
@@ -26,7 +26,7 @@ Color=228,104,118
 Color=228,104,118
 
 [Color2]
-Color=106,120,92
+Color=106,130,79
 
 [Color2Faint]
 Color=135,169,135
@@ -35,16 +35,16 @@ Color=135,169,135
 Color=135,169,135
 
 [Color3]
-Color=210,183,136
+Color=160,113,60
 
 [Color3Faint]
-Color=220,165,97
+Color=222,190,151
 
 [Color3Intense]
-Color=220,165,97
+Color=222,190,151
 
 [Color4]
-Color=139,164,176
+Color=83,119,136
 
 [Color4Faint]
 Color=127,180,202
@@ -53,16 +53,16 @@ Color=127,180,202
 Color=127,180,202
 
 [Color5]
-Color=162,146,163
+Color=147,138,169
 
 [Color5Faint]
-Color=147,138,169
+Color=177,177,210
 
 [Color5Intense]
-Color=147,138,169
+Color=177,177,210
 
 [Color6]
-Color=142,164,162
+Color=88,110,98
 
 [Color6Faint]
 Color=122,168,159
@@ -71,28 +71,28 @@ Color=122,168,159
 Color=122,168,159
 
 [Color7]
-Color=180,179,167
+Color=160,160,160
 
 [Color7Faint]
-Color=180,184,180
+Color=27,27,27
 
 [Color7Intense]
-Color=180,184,180
+Color=27,27,27
 
 [Foreground]
-Color=180,184,180
+Color=27,27,27
 
 [ForegroundFaint]
-Color=146,150,146
+Color=40,40,40
 
 [ForegroundIntense]
-Color=146,150,146
+Color=40,40,40
 
 [General]
 Anchor=0.5,0.5
 Blur=true
 ColorRandomization=false
-Description=Dragon Dark
+Description=Macro Light
 FillStyle=Tile
 Opacity=0.8
 Wallpaper=

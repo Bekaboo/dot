@@ -89,8 +89,8 @@ ForegroundPositive=106,120,92
 ForegroundVisited=122,115,141
 
 [General]
-ColorScheme=DragonDark
-Name=DragonDark
+ColorScheme=MacroDark
+Name=MacroDark
 shadeSortColumn=true
 
 [KDE]

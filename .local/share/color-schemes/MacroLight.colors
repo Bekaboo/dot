@@ -89,8 +89,8 @@ ForegroundPositive=163,190,140
 ForegroundVisited=180,142,173
 
 [General]
-ColorScheme=DragonLight
-Name=DragonLight
+ColorScheme=MacroLight
+Name=MacroLight
 shadeSortColumn=true
 
 [KDE]

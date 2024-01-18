@@ -4,7 +4,7 @@
 CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
-DEFAULT_COLOR='dragon'
+DEFAULT_COLOR='macro'
 DEFAULT_BG='dark'
 
 has() {
@@ -186,13 +186,13 @@ setcolor-fish() {
 
 declare -A plasma_color_wallpaper_map=(
     ['nano']="$DATA_HOME/wallpapers/Fish"
-    ['dragon']="$DATA_HOME/wallpapers/Clouds"
+    ['macro']="$DATA_HOME/wallpapers/Clouds"
     ['everforest']="$DATA_HOME/wallpapers/Foggy Forest"
     ['gruvbox-material']="$DATA_HOME/wallpapers/Foggy Forest"
 )
 
 declare -A plasma_color_splash_map=(
-    ['dragon']="$DATA_HOME/plasma/look-and-feel/arch_clouds"
+    ['macro']="$DATA_HOME/plasma/look-and-feel/arch_clouds"
     ['everforest']="$DATA_HOME/plasma/look-and-feel/arch_foggy_forest"
     ['gruvbox-material']="$DATA_HOME/plasma/look-and-feel/arch_foggy_forest"
 )

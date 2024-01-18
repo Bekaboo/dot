@@ -1,0 +1,88 @@
+-- vim: ft=lua:et:ts=2:sts=2:sw=2:
+
+Description = "Macro Light Theme"
+Categories = { "light" }
+
+local palette = {
+  autumnGreen    = '#b4b366',
+  autumnRed      = '#b73242',
+  autumnYellow   = '#a0713c',
+  carpYellow     = '#debe97',
+  macroAqua     = '#586e62',
+  macroAsh      = '#a0a0a0',
+  macroBg0      = '#f6f6f6',
+  macroBg1      = '#e7e7e7',
+  macroBg2      = '#eeeeee',
+  macroBg3      = '#d8d8d8',
+  macroBg4      = '#c8c8c8',
+  macroBg5      = '#a0a0a0',
+  macroBlue0    = '#658594',
+  macroBlue1    = '#537788',
+  macroGray0    = '#827f79',
+  macroGray1    = '#6e6b66',
+  macroGray2    = '#7a8382',
+  macroGreen0   = '#87a987',
+  macroGreen1   = '#6a824f',
+  macroOrange0  = '#a06c4e',
+  macroOrange1  = '#825c45',
+  macroPink     = '#a292a3',
+  macroRed      = '#b23b34',
+  macroTeal     = '#445f96',
+  macroViolet   = '#373e50',
+  macroFg0      = '#1b1b1b',
+  macroFg1      = '#303030',
+  macroFg2      = '#787878',
+  katanaGray     = '#717c7c',
+  lotusBlue      = '#9fb5c9',
+  lotusGray      = '#716e61',
+  lotusRed0      = '#d7474b',
+  lotusRed1      = '#e84444',
+  lotusRed2      = '#d9a594',
+  lotusWhite     = '#b48e3c',
+  roninYellow    = '#ff9e3b',
+  springBlue     = '#7fb4ca',
+  springGreen    = '#98bb6c',
+  springViolet   = '#938aa9',
+  sumiInk6       = '#b1b1d2',
+  waveAqua0      = '#6a9589',
+  waveAqua1      = '#7aa89f',
+  waveBlue0      = '#223249',
+  waveBlue1      = '#2d4f67',
+  waveRed        = '#e46876',
+  winterBlue     = '#d4d4f0',
+  winterGreen    = '#d0dccb',
+  winterRed      = '#e6c2c7',
+  winterYellow   = '#e2dcd4',
+}
+
+Default = { Colour = palette.macroFg0 }
+Canvas = { Colour = palette.lotusRed2 }
+Number = { Colour = palette.macroPink }
+Escape = { Colour = palette.lotusWhite }
+String = { Colour = palette.macroGreen1 }
+BlockComment = { Colour = palette.macroAsh }
+PreProcessor = { Colour = palette.macroRed }
+LineNum = { Colour = palette.macroBg5 }
+StringPreProc = String
+LineComment   = BlockComment
+Operator      = { Colour = palette.macroRed }
+Interpolation = Operator
+
+Keywords = {
+  { Colour = palette.macroRed },
+}
+
+-- new LSP based elements:
+SemanticTokenTypes  = {
+  { Type = 'keyword', Style = { Colour = palette.macroRed } },
+  { Type = 'type', Style = { Colour = palette.macroAqua } },
+  { Type = 'function', Style = { Colour = palette.macroBlue1, Bold = true } },
+  { Type = 'method', Style = { Colour = palette.macroBlue1, Bold = true } },
+  { Type = 'class', Style = { Colour = palette.macroAqua } },
+  { Type = 'struct', Style = { Colour = palette.macroAqua } },
+  { Type = 'parameter', Style = { Colour = palette.macroFg0 } },
+  { Type = 'variable', Style = { Colour = palette.macroFg0 } },
+  { Type = 'number', Style = Number },
+  { Type = 'regexp', Style = String },
+  { Type = 'operator', Style = Operator },
+}
