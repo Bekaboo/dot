@@ -186,13 +186,13 @@ setcolor-fish() {
 
 declare -A plasma_color_wallpaper_map=(
     ['nano']="$DATA_HOME/wallpapers/Fish"
-    ['macro']="$DATA_HOME/wallpapers/Clouds"
+    ['macro']="$DATA_HOME/wallpapers/Rain on Glass"
     ['everforest']="$DATA_HOME/wallpapers/Foggy Forest"
     ['gruvbox-material']="$DATA_HOME/wallpapers/Foggy Forest"
 )
 
 declare -A plasma_color_splash_map=(
-    ['macro']="$DATA_HOME/plasma/look-and-feel/arch_clouds"
+    ['macro']="$DATA_HOME/plasma/look-and-feel/rain_on_glass"
     ['everforest']="$DATA_HOME/plasma/look-and-feel/arch_foggy_forest"
     ['gruvbox-material']="$DATA_HOME/plasma/look-and-feel/arch_foggy_forest"
 )
