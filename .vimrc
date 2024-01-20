@@ -1127,14 +1127,20 @@ if s:supportevents('TerminalWinOpen')
   endfunction
 
   let s:tui = {
+        \ 'vi': 1,
         \ 'fzf': 1,
-        \ 'vim' : 1,
-        \ 'nvim' : 1,
-        \ 'sudo' : 1,
-        \ 'nmtui' : 1,
-        \ 'emacs' : 1,
-        \ 'lazygit' : 1,
-        \ 'emacsclient' : 1,
+        \ 'nvi': 1,
+        \ 'kak': 1,
+        \ 'vim': 1,
+        \ 'nvim': 1,
+        \ 'sudo': 1,
+        \ 'nano': 1,
+        \ 'helix': 1,
+        \ 'nmtui': 1,
+        \ 'emacs': 1,
+        \ 'vimdiff': 1,
+        \ 'lazygit': 1,
+        \ 'emacsclient': 1,
         \ }
 
   " Check if any of the processes in current terminal is a TUI app
