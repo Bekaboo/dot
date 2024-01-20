@@ -32,7 +32,7 @@ silent! set virtualedit=block
 silent! set shortmess-=S
 silent! set sessionoptions+=globals
 silent! set viminfo=!,'100,<50,s10,h
-silent! set diffopt+=algorithm:histogram
+silent! set diffopt+=algorithm:histogram,indent-heuristic
 silent! set clipboard^=unnamedplus
 silent! set formatoptions+=n
 
