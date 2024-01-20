@@ -18,19 +18,19 @@ TERM = "alacritty"
 size = 13
 
 [font.bold]
-family = "Jetbrains Mono NF ExtraLight"
+family = "Jetbrains Mono NF"
 style = "Regular"
 
 [font.bold_italic]
-family = "Jetbrains Mono NF ExtraLight"
+family = "Jetbrains Mono NF"
 style = "Italic"
 
 [font.italic]
-family = "Jetbrains Mono NF Light"
+family = "Jetbrains Mono NF ExtraLight"
 style = "Italic"
 
 [font.normal]
-family = "Jetbrains Mono NF Light"
+family = "Jetbrains Mono NF ExtraLight"
 
 [[keyboard.bindings]]
 action = "ReceiveChar"
