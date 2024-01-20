@@ -1,0 +1,35 @@
+[colors]
+ansi = [
+    '#0d0c0c',
+    '#c4746e',
+    '#8a9a7b',
+    '#d2b788',
+    '#8ba4b0',
+    '#a292a3',
+    '#8ea4a2',
+    '#b4b3a7',
+]
+brights = [
+    '#393836',
+    '#e46876',
+    '#87a987',
+    '#dca561',
+    '#7fb4ca',
+    '#938aa9',
+    '#7aa89f',
+    '#b4b8b4',
+]
+
+foreground    = '#b4b8b4'
+background    = '#181616'
+cursor_fg     = '#181616'
+cursor_bg     = '#b4b8b4'
+cursor_border = '#1b1b1b'
+selection_fg  = '#181616'
+selection_bg  = '#b4b8b4'
+
+[colors.indexed]
+
+[metadata]
+name = 'Macro Dark'
+author = 'Bekaboo'

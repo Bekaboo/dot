@@ -1,0 +1,35 @@
+[colors]
+ansi = [
+    '#e7e7e7',
+    '#b23b34',
+    '#6a824f',
+    '#a0713c',
+    '#537788',
+    '#938aa9',
+    '#586e62',
+    '#a0a0a0',
+]
+brights = [
+    '#d8d8d8',
+    '#e46876',
+    '#87a987',
+    '#debe97',
+    '#7fb4ca',
+    '#b1b1d2',
+    '#7aa89f',
+    '#1b1b1b',
+]
+
+foreground    = '#1b1b1b'
+background    = '#e7e7e7'
+cursor_fg     = '#e7e7e7'
+cursor_bg     = '#1b1b1b'
+cursor_border = '#1b1b1b'
+selection_fg  = '#1b1b1b'
+selection_bg  = '#d8d8d8'
+
+[colors.indexed]
+
+[metadata]
+name = 'Macro Light'
+author = 'Bekaboo'
