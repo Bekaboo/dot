@@ -449,7 +449,6 @@ for map in ['nnoremap', 'xnoremap']
   exe map . '<Esc>=       <C-w>='
   exe map . '<Esc>_       <C-w>_'
   exe map . '<Esc><Bar>   <C-w>|'
-  exe map . '<Esc><       <C-w><'
   exe map . '<Esc>p       <C-w>p'
   exe map . '<Esc>r       <C-w>r'
   exe map . '<Esc>v       <C-w>v'
@@ -457,6 +456,7 @@ for map in ['nnoremap', 'xnoremap']
   exe map . '<Esc>x       <C-w>x'
   exe map . '<Esc>z       <C-w>z'
   exe map . '<Esc>c       <C-w>c'
+  exe map . '<Esc>q       <C-w>q'
   exe map . '<Esc>n       <C-w>n'
   exe map . '<Esc>o       <C-w>o'
   exe map . '<Esc>t       <C-w>t'
@@ -483,6 +483,8 @@ for map in ['nnoremap', 'xnoremap']
 
   exe map . '<expr> <Esc>+ v:count ? "<C-w>+" : "2<C-w>+"'
   exe map . '<expr> <Esc>- v:count ? "<C-w>-" : "2<C-w>-"'
+  exe map . '<expr> <C-w>+ v:count ? "<C-w>+" : "2<C-w>+"'
+  exe map . '<expr> <C-w>- v:count ? "<C-w>-" : "2<C-w>-"'
   if has('patch-8.1.1140')
     exe map . '<expr> <Esc>> (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")'
     exe map . '<expr> <Esc>< (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")'
@@ -502,8 +504,6 @@ for map in ['nnoremap', 'xnoremap']
     exe map . '<expr> <C-w>. (v:count ? "" : 4) . "<C-w>>"'
     exe map . '<expr> <C-w>, (v:count ? "" : 4) . "<C-w><"'
   endif
-  exe map . '<expr> <C-w>+ v:count ? "<C-w>+" : "2<C-w>+"'
-  exe map . '<expr> <C-w>- v:count ? "<C-w>-" : "2<C-w>-"'
 endfor
 " }}}2
 
@@ -1065,6 +1065,34 @@ nnoremap <silent> <Leader>.  :FZF<CR>
 " Terminal Settings {{{2
 
 if exists(':tmap') == 2
+  let s:tui = {
+        \ 'vi': 1,
+        \ 'fzf': 1,
+        \ 'nvi': 1,
+        \ 'kak': 1,
+        \ 'vim': 1,
+        \ 'nvim': 1,
+        \ 'sudo': 1,
+        \ 'nano': 1,
+        \ 'helix': 1,
+        \ 'nmtui': 1,
+        \ 'emacs': 1,
+        \ 'vimdiff': 1,
+        \ 'lazygit': 1,
+        \ 'emacsclient': 1,
+        \ }
+
+  " Check if any of the processes in current terminal is a TUI app
+  " return: 0/1
+  function! s:running_tui() abort
+    let names = s:proc_names()
+    for name in names
+      if has_key(s:tui, name)
+        return 1
+      endif
+    endfor
+  endfunction
+
   " Default <C-w> is used as 'termwinkey' (see :h 'termwinkey')
   " which conflicts with shell's keymap
   tnoremap <nowait> <C-w> <C-\><C-w>
@@ -1072,41 +1100,43 @@ if exists(':tmap') == 2
   " Use <C-\><C-r> to insert contents of a register in terminal mode
   tnoremap <expr> <C-\><C-r> (&twk ? &twk : '<C-w>') . '"' . nr2char(getchar())
 
-  tnoremap <C-6> <C-\><C-n>:b#<CR>
-  tnoremap <C-^> <C-\><C-n>:b#<CR>
-
-  tnoremap <Esc>W  <C-\><C-n><C-w>Wi
-  tnoremap <Esc>H  <C-\><C-n><C-w>Hi
-  tnoremap <Esc>J  <C-\><C-n><C-w>Ji
-  tnoremap <Esc>K  <C-\><C-n><C-w>Ki
-  tnoremap <Esc>L  <C-\><C-n><C-w>Li
-  tnoremap <Esc>=  <C-\><C-n><C-w>=i
-  tnoremap <Esc>_  <C-\><C-n><C-w>_i
-  tnoremap <Esc>\| <C-\><C-n><C-w>\|i
+  tnoremap <expr> <C-6>   <SID>running_tui() ? '<C-6>'   : '<C-\><C-n>:b#<CR>'
+  tnoremap <expr> <C-^>   <SID>running_tui() ? '<C-^>'   : '<C-\><C-n>:b#<CR>'
+  tnoremap <expr> <Esc>v  <SID>running_tui() ? '<Esc>v'  : '<C-\><C-n><C-w>vi'
+  tnoremap <expr> <Esc>s  <SID>running_tui() ? '<Esc>s'  : '<C-\><C-n><C-w>si'
+  tnoremap <expr> <Esc>W  <SID>running_tui() ? '<Esc>W'  : '<C-\><C-n><C-w>Wi'
+  tnoremap <expr> <Esc>H  <SID>running_tui() ? '<Esc>H'  : '<C-\><C-n><C-w>Hi'
+  tnoremap <expr> <Esc>J  <SID>running_tui() ? '<Esc>J'  : '<C-\><C-n><C-w>Ji'
+  tnoremap <expr> <Esc>K  <SID>running_tui() ? '<Esc>K'  : '<C-\><C-n><C-w>Ki'
+  tnoremap <expr> <Esc>L  <SID>running_tui() ? '<Esc>L'  : '<C-\><C-n><C-w>Li'
+  tnoremap <expr> <Esc>r  <SID>running_tui() ? '<Esc>r'  : '<C-\><C-n><C-w>ri'
+  tnoremap <expr> <Esc>R  <SID>running_tui() ? '<Esc>R'  : '<C-\><C-n><C-w>Ri'
+  tnoremap <expr> <Esc>o  <SID>running_tui() ? '<Esc>o'  : '<C-\><C-n><C-w>oi'
+  tnoremap <expr> <Esc>x  <SID>running_tui() ? '<Esc>x'  : '<C-\><C-n><C-w>x'
+  tnoremap <expr> <Esc>p  <SID>running_tui() ? '<Esc>p'  : '<C-\><C-n><C-w>p'
+  tnoremap <expr> <Esc>c  <SID>running_tui() ? '<Esc>c'  : '<C-\><C-n><C-w>c'
+  tnoremap <expr> <Esc>q  <SID>running_tui() ? '<Esc>q'  : '<C-\><C-n><C-w>q'
+  tnoremap <expr> <Esc>w  <SID>running_tui() ? '<Esc>w'  : '<C-\><C-n><C-w>w'
+  tnoremap <expr> <Esc>h  <SID>running_tui() ? '<Esc>h'  : '<C-\><C-n><C-w>h'
+  tnoremap <expr> <Esc>j  <SID>running_tui() ? '<Esc>j'  : '<C-\><C-n><C-w>j'
+  tnoremap <expr> <Esc>k  <SID>running_tui() ? '<Esc>k'  : '<C-\><C-n><C-w>k'
+  tnoremap <expr> <Esc>l  <SID>running_tui() ? '<Esc>l'  : '<C-\><C-n><C-w>l'
+  tnoremap <expr> <Esc>=  <SID>running_tui() ? '<Esc>='  : '<C-\><C-n><C-w>=i'
+  tnoremap <expr> <Esc>_  <SID>running_tui() ? '<Esc>_'  : '<C-\><C-n><C-w>_i'
+  tnoremap <expr> <Esc>\| <SID>running_tui() ? '<Esc>\|' : '<C-\><C-n><C-w>\|i'
+  tnoremap <expr> <Esc>+  <SID>running_tui() ? '<Esc>+'  : '<C-\><C-n><C-w>2+i'
+  tnoremap <expr> <Esc>-  <SID>running_tui() ? '<Esc>-'  : '<C-\><C-n><C-w>2-i'
   if has('patch-8.1.1140')
-    tnoremap <expr> <Esc>> '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '<' : '>') . 'i'
-    tnoremap <expr> <Esc>< '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '>' : '<') . 'i'
-    tnoremap <expr> <Esc>. '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '<' : '>') . 'i'
-    tnoremap <expr> <Esc>, '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '>' : '<') . 'i'
+    tnoremap <expr> <Esc>> <SID>running_tui() ? '<Esc>>' : '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '<' : '>') . 'i'
+    tnoremap <expr> <Esc>< <SID>running_tui() ? '<Esc><' : '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '>' : '<') . 'i'
+    tnoremap <expr> <Esc>. <SID>running_tui() ? '<Esc>.' : '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '<' : '>') . 'i'
+    tnoremap <expr> <Esc>, <SID>running_tui() ? '<Esc>,' : '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '>' : '<') . 'i'
   else
-    tnoremap <Esc>> '<C-\><C-n><C-w>4>i'
-    tnoremap <Esc>< '<C-\><C-n><C-w>4<i'
-    tnoremap <Esc>. '<C-\><C-n><C-w>4>i'
-    tnoremap <Esc>, '<C-\><C-n><C-w>4<i'
+    tnoremap <expr> <Esc>> <SID>running_tui() ? '<Esc>>' : '<C-\><C-n><C-w>4>i'
+    tnoremap <expr> <Esc>< <SID>running_tui() ? '<Esc><' : '<C-\><C-n><C-w>4<i'
+    tnoremap <expr> <Esc>. <SID>running_tui() ? '<Esc>.' : '<C-\><C-n><C-w>4>i'
+    tnoremap <expr> <Esc>, <SID>running_tui() ? '<Esc>,' : '<C-\><C-n><C-w>4<i'
   endif
-  tnoremap <Esc>+  <C-\><C-n><C-w>2+i
-  tnoremap <Esc>-  <C-\><C-n><C-w>2-i
-  tnoremap <Esc>r  <C-\><C-n><C-w>ri
-  tnoremap <Esc>R  <C-\><C-n><C-w>Ri
-  tnoremap <Esc>x  <C-\><C-n><C-w>x
-  tnoremap <Esc>p  <C-\><C-n><C-w>p
-  tnoremap <Esc>c  <C-\><C-n><C-w>c
-  tnoremap <Esc>o  <C-\><C-n><C-w>o
-  tnoremap <Esc>w  <C-\><C-n><C-w>w
-  tnoremap <Esc>h  <C-\><C-n><C-w>h
-  tnoremap <Esc>j  <C-\><C-n><C-w>j
-  tnoremap <Esc>k  <C-\><C-n><C-w>k
-  tnoremap <Esc>l  <C-\><C-n><C-w>l
 endif
 
 if s:supportevents('TerminalWinOpen')
@@ -1126,49 +1156,11 @@ if s:supportevents('TerminalWinOpen')
     return split(system('ps h -o comm -g ' . pid), '\n')
   endfunction
 
-  let s:tui = {
-        \ 'vi': 1,
-        \ 'fzf': 1,
-        \ 'nvi': 1,
-        \ 'kak': 1,
-        \ 'vim': 1,
-        \ 'nvim': 1,
-        \ 'sudo': 1,
-        \ 'nano': 1,
-        \ 'helix': 1,
-        \ 'nmtui': 1,
-        \ 'emacs': 1,
-        \ 'vimdiff': 1,
-        \ 'lazygit': 1,
-        \ 'emacsclient': 1,
-        \ }
-
-  " Check if any of the processes in current terminal is a TUI app
-  " param: a:1 whether to store a timestamp in the terminal buffer
-  " return: 0/1
-  function! s:running_tui(...) abort
-    if get(a:, 1, 0)
-      let b:t_esc = s:reltime_ms()
-    endif
-    let names = s:proc_names()
-    for name in names
-      if has_key(s:tui, name)
-        return 1
-      endif
-    endfor
-  endfunction
-
   augroup TermOptions
     au!
     au TerminalWinOpen * setlocal nonu nornu scl=no bh=hide so=0 siso=0 |
-          \ nnoremap <buffer> o i|
           \ nnoremap <expr><buffer> p 'i' . (&twk ? &twk : '<C-w>') . '"' . v:register . '<C-\><C-n>'|
           \ nnoremap <expr><buffer> P 'i' . (&twk ? &twk : '<C-w>') . '"' . v:register . '<C-\><C-n>'|
-          \ nnoremap <nowait><expr><buffer> <Esc> exists('b:t_esc')
-            \ && <SID>reltime_ms() - b:t_esc <= &tm
-            \ && ! <SID>running_tui() ? 'i' : '<Esc>'|
-          \ tnoremap <nowait><expr><buffer> <Esc>
-            \ <SID>running_tui(1) ? '<Esc>' : '<C-\><C-n>'|
           \ startinsert
   augroup END
 endif
@@ -1313,13 +1305,6 @@ if $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.1140')
   xnoremap <silent> <Esc>k :<C-u>call <SID>navigate('k', v:count1)<CR>
   xnoremap <silent> <Esc>l :<C-u>call <SID>navigate('l', v:count1)<CR>
 
-  if exists(':tmap') == 2
-    tnoremap <silent> <Esc>h <C-\><C-n>:<C-u>call <SID>navigate('h', v:count1)<CR>
-    tnoremap <silent> <Esc>j <C-\><C-n>:<C-u>call <SID>navigate('j', v:count1)<CR>
-    tnoremap <silent> <Esc>k <C-\><C-n>:<C-u>call <SID>navigate('k', v:count1)<CR>
-    tnoremap <silent> <Esc>l <C-\><C-n>:<C-u>call <SID>navigate('l', v:count1)<CR>
-  endif
-
   " return: 0/1
   function! s:tmux_mapkey_default_condition() abort
     return ! s:tmux_is_zoomed() && s:vim_tabpage_has_only_win()
@@ -1350,17 +1335,30 @@ if $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.1140')
   let TmuxMapkeyResizePaneVertConditionRef = function(
         \ 's:tmux_mapkey_resize_pane_vert_condition')
 
-  " param: command string
+  " return funcref
+  function! s:tmux_mapkey_navigate_condition(direction) abort
+    return {-> (s:vim_at_border(a:direction) || s:vim_in_popup_win())
+          \ && s:tmux_should_move(a:direction)}
+  endfunction
+  let TmuxMapkeyNavigateLeftCondition  = s:tmux_mapkey_navigate_condition('h')
+  let TmuxMapkeyNavigateDownCondition  = s:tmux_mapkey_navigate_condition('j')
+  let TmuxMapkeyNavigateUpCondition    = s:tmux_mapkey_navigate_condition('k')
+  let TmuxMapkeyNavigateRightCondition = s:tmux_mapkey_navigate_condition('l')
+
+  " param: command string|funcref
   " param: key_fallback string
   " param: condition? fun(): boolean
   " return: string (rhs)
   function! s:tmux_mapkey_fallback(command, key_fallback, ...) abort
     let Condition = get(a:, 1, g:TmuxMapKeyDefaultConditionRef)
-    if Condition()
-      call s:tmux_exec(a:command)
-      return "\<Ignore>"
+    if ! Condition() || mode() =~# '^t' && s:running_tui() || $VIM_TERMINAL
+      return a:key_fallback
     endif
-    return a:key_fallback
+    if type(a:command) == v:t_string
+      call s:tmux_exec(a:command)
+      return
+    endif
+    call a:command() " a:command is funcref
   endfunction
 
   nnoremap <expr><silent> <Esc>p <SID>tmux_mapkey_fallback('last-pane', '<C-w>p')
@@ -1369,6 +1367,7 @@ if $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.1140')
   nnoremap <expr><silent> <Esc>o <SID>tmux_mapkey_fallback("confirm 'kill-pane -a'", '<C-w>o')
   nnoremap <expr><silent> <Esc>= <SID>tmux_mapkey_fallback("confirm 'select-layout tiled'", '<C-w>=')
   nnoremap <expr><silent> <Esc>c <SID>tmux_mapkey_fallback('confirm kill-pane', '<C-w>c', TmuxMapkeyCloseWinConditionRef)
+  nnoremap <expr><silent> <Esc>q <SID>tmux_mapkey_fallback('confirm kill-pane', '<C-w>q', TmuxMapkeyCloseWinConditionRef)
   nnoremap <expr><silent> <Esc>< <SID>tmux_mapkey_fallback('resize-pane -L 4', (v:count ? '' : 4) . (winnr() == winnr('l') ? '<C-w>>' : '<C-w><'), TmuxMapkeyResizePaneHorizConditionRef)
   nnoremap <expr><silent> <Esc>> <SID>tmux_mapkey_fallback('resize-pane -R 4', (v:count ? '' : 4) . (winnr() == winnr('l') ? '<C-w><' : '<C-w>>'), TmuxMapkeyResizePaneHorizConditionRef)
   nnoremap <expr><silent> <Esc>, <SID>tmux_mapkey_fallback('resize-pane -L 4', (v:count ? '' : 4) . (winnr() == winnr('l') ? '<C-w>>' : '<C-w><'), TmuxMapkeyResizePaneHorizConditionRef)
@@ -1382,6 +1381,7 @@ if $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.1140')
   xnoremap <expr><silent> <Esc>o <SID>tmux_mapkey_fallback("confirm 'kill-pane -a'", '<C-w>o')
   xnoremap <expr><silent> <Esc>= <SID>tmux_mapkey_fallback("confirm 'select-layout tiled'", '<C-w>=')
   xnoremap <expr><silent> <Esc>c <SID>tmux_mapkey_fallback('confirm kill-pane', '<C-w>c', TmuxMapkeyCloseWinConditionRef)
+  xnoremap <expr><silent> <Esc>q <SID>tmux_mapkey_fallback('confirm kill-pane', '<C-w>q', TmuxMapkeyCloseWinConditionRef)
   xnoremap <expr><silent> <Esc>< <SID>tmux_mapkey_fallback('resize-pane -L 4', (v:count ? '' : 4) . (winnr() == winnr('l') ? '<C-w>>' : '<C-w><'), TmuxMapkeyResizePaneHorizConditionRef)
   xnoremap <expr><silent> <Esc>> <SID>tmux_mapkey_fallback('resize-pane -R 4', (v:count ? '' : 4) . (winnr() == winnr('l') ? '<C-w><' : '<C-w>>'), TmuxMapkeyResizePaneHorizConditionRef)
   xnoremap <expr><silent> <Esc>, <SID>tmux_mapkey_fallback('resize-pane -L 4', (v:count ? '' : 4) . (winnr() == winnr('l') ? '<C-w>>' : '<C-w><'), TmuxMapkeyResizePaneHorizConditionRef)
@@ -1390,18 +1390,24 @@ if $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.1140')
   xnoremap <expr><silent> <Esc>+ <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') + 2))\"", v:count ? '<C-w>+' : '2<C-w>+', TmuxMapkeyResizePaneVertConditionRef)
 
   if exists(':tmap') == 2
-    tnoremap <expr><silent> <Esc>p '<C-\><C-n>' . <SID>tmux_mapkey_fallback('last-pane', '<C-w>p')
-    tnoremap <expr><silent> <Esc>R '<C-\><C-n>' . <SID>tmux_mapkey_fallback('swap-pane -U', '<C-w>Ri')
-    tnoremap <expr><silent> <Esc>r '<C-\><C-n>' . <SID>tmux_mapkey_fallback('swap-pane -D', '<C-w>ri')
-    tnoremap <expr><silent> <Esc>o '<C-\><C-n>' . <SID>tmux_mapkey_fallback("confirm 'kill-pane -a'", '<C-w>oi')
-    tnoremap <expr><silent> <Esc>= '<C-\><C-n>' . <SID>tmux_mapkey_fallback("confirm 'select-layout tiled'", '<C-w>=i')
-    tnoremap <expr><silent> <Esc>c '<C-\><C-n>' . <SID>tmux_mapkey_fallback('confirm kill-pane', '<C-w>c', TmuxMapkeyCloseWinConditionRef)
-    tnoremap <expr><silent> <Esc>< '<C-\><C-n>' . <SID>tmux_mapkey_fallback('resize-pane -L 4', '4<C-w>' . (winnr() == winnr('l') ? '>' : '<') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
-    tnoremap <expr><silent> <Esc>> '<C-\><C-n>' . <SID>tmux_mapkey_fallback('resize-pane -R 4', '4<C-w>' . (winnr() == winnr('l') ? '<' : '>') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
-    tnoremap <expr><silent> <Esc>, '<C-\><C-n>' . <SID>tmux_mapkey_fallback('resize-pane -L 4', '4<C-w>' . (winnr() == winnr('l') ? '>' : '<') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
-    tnoremap <expr><silent> <Esc>. '<C-\><C-n>' . <SID>tmux_mapkey_fallback('resize-pane -R 4', '4<C-w>' . (winnr() == winnr('l') ? '<' : '>') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
-    tnoremap <expr><silent> <Esc>- '<C-\><C-n>' . <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') - 2))\"", '2<C-w>-i', TmuxMapkeyResizePaneVertConditionRef)
-    tnoremap <expr><silent> <Esc>+ '<C-\><C-n>' . <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') + 2))\"", '2<C-w>+i', TmuxMapkeyResizePaneVertConditionRef)
+    tnoremap <expr><silent> <Esc>h <SID>tmux_mapkey_fallback({-> <SID>navigate('h')}, <SID>running_tui() ? '<Esc>h' : '<C-\><C-n><C-w>h', TmuxMapkeyNavigateLeftCondition)
+    tnoremap <expr><silent> <Esc>j <SID>tmux_mapkey_fallback({-> <SID>navigate('j')}, <SID>running_tui() ? '<Esc>j' : '<C-\><C-n><C-w>j', TmuxMapkeyNavigateDownCondition)
+    tnoremap <expr><silent> <Esc>k <SID>tmux_mapkey_fallback({-> <SID>navigate('k')}, <SID>running_tui() ? '<Esc>k' : '<C-\><C-n><C-w>k', TmuxMapkeyNavigateUpCondition)
+    tnoremap <expr><silent> <Esc>l <SID>tmux_mapkey_fallback({-> <SID>navigate('l')}, <SID>running_tui() ? '<Esc>l' : '<C-\><C-n><C-w>l', TmuxMapkeyNavigateRightCondition)
+
+    tnoremap <expr><silent> <Esc>p <SID>tmux_mapkey_fallback('last-pane', <SID>running_tui() ? '<Esc>p'  : '<C-\><C-n><C-w>p')
+    tnoremap <expr><silent> <Esc>r <SID>tmux_mapkey_fallback('swap-pane -D', <SID>running_tui() ? '<Esc>r'  : '<C-\><C-n><C-w>ri')
+    tnoremap <expr><silent> <Esc>R <SID>tmux_mapkey_fallback('swap-pane -U', <SID>running_tui() ? '<Esc>R'  : '<C-\><C-n><C-w>Ri')
+    tnoremap <expr><silent> <Esc>o <SID>tmux_mapkey_fallback("confirm 'kill-pane -a'", <SID>running_tui() ? '<Esc>o'  : '<C-\><C-n><C-w>oi')
+    tnoremap <expr><silent> <Esc>= <SID>tmux_mapkey_fallback("confirm 'select-layout tiled'", <SID>running_tui() ? '<Esc>='  : '<C-\><C-n><C-w>=i')
+    tnoremap <expr><silent> <Esc>c <SID>tmux_mapkey_fallback('confirm kill-pane', <SID>running_tui() ? '<Esc>c'  : '<C-\><C-n><C-w>c', TmuxMapkeyCloseWinConditionRef)
+    tnoremap <expr><silent> <Esc>q <SID>tmux_mapkey_fallback('confirm kill-pane', <SID>running_tui() ? '<Esc>q'  : '<C-\><C-n><C-w>q', TmuxMapkeyCloseWinConditionRef)
+    tnoremap <expr><silent> <Esc>< <SID>tmux_mapkey_fallback('resize-pane -L 4', <SID>running_tui() ? '<Esc><' : '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '>' : '<') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
+    tnoremap <expr><silent> <Esc>> <SID>tmux_mapkey_fallback('resize-pane -R 4', <SID>running_tui() ? '<Esc>>' : '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '<' : '>') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
+    tnoremap <expr><silent> <Esc>, <SID>tmux_mapkey_fallback('resize-pane -L 4', <SID>running_tui() ? '<Esc>,' : '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '>' : '<') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
+    tnoremap <expr><silent> <Esc>. <SID>tmux_mapkey_fallback('resize-pane -R 4', <SID>running_tui() ? '<Esc>.' : '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '<' : '>') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
+    tnoremap <expr><silent> <Esc>- <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') - 2))\"", <SID>running_tui() ? '<Esc>-'  : '<C-\><C-n><C-w>2-i', TmuxMapkeyResizePaneVertConditionRef)
+    tnoremap <expr><silent> <Esc>+ <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') + 2))\"", <SID>running_tui() ? '<Esc>+'  : '<C-\><C-n><C-w>2+i', TmuxMapkeyResizePaneVertConditionRef)
   endif
 
   " Use a unified keymap `<C-space>[` to escape from vim terminal mode or enter
@@ -1449,9 +1455,10 @@ endif
 
 " Workaround to prevent <Esc> lag cause by Meta keymaps
 noremap  <nowait> <Esc> <Esc>
-noremap! <nowait> <Esc> <C-\><C-n>
+noremap! <nowait> <Esc> <Esc>
 if exists(':tmap') == 2
-  tnoremap <nowait> <Esc> <Esc>
+  tnoremap       <nowait> <Esc> <Esc>
+  tnoremap <expr><nowait> <Esc> <SID>running_tui() ? '<Esc>' : '<C-\><C-n>'
 endif
 " }}}1
 
