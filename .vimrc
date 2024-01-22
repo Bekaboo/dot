@@ -1443,11 +1443,6 @@ if s:supportevents('FileType')
     au!
     au FileType qf if win_gettype() ==# 'quickfix' | wincmd J | endif |
           \ silent! setlocal nobl nolist nospell nornu scl=no cc=0 |
-          \ nnoremap <buffer> =      <CR>zz<C-w>p|
-          \ nnoremap <buffer> <C-j> j<CR>zz<C-w>p|
-          \ nnoremap <buffer> <C-k> k<CR>zz<C-w>p|
-          \ nnoremap <buffer> <C-n> j<CR>zz<C-w>p|
-          \ nnoremap <buffer> <C-p> k<CR>zz<C-w>p|
           \ silent! packadd cfilter
   augroup END
 endif
