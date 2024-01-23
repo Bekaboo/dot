@@ -1100,6 +1100,14 @@ if exists(':tmap') == 2
   " Use <C-\><C-r> to insert contents of a register in terminal mode
   tnoremap <expr> <C-\><C-r> (&twk ? &twk : '<C-w>') . '"' . nr2char(getchar())
 
+  " Workaround to avoid <M-...> keymaps in terminal mode to be interpreted to
+  " <Esc> + ... (seperate keystrokes) given `<Esc>` is mapped to itself
+  " with argument `<nowait>` in terminal mode
+  for char in split("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`~!@#$%^&*()-_=+[]{}\\|;:'\",.<>/?", '.\zs')
+    let char_esc = escape(char, '\|')
+    exe printf('tnoremap <Esc>%s <Esc>%s', char_esc, char_esc)
+  endfor
+
   tnoremap <expr> <C-6>   <SID>running_tui() ? '<C-6>'   : '<C-\><C-n>:b#<CR>'
   tnoremap <expr> <C-^>   <SID>running_tui() ? '<C-^>'   : '<C-\><C-n>:b#<CR>'
   tnoremap <expr> <Esc>v  <SID>running_tui() ? '<Esc>v'  : '<C-\><C-n><C-w>vi'
