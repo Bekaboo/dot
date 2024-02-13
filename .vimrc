@@ -1079,6 +1079,7 @@ if exists(':tmap') == 2
         \ 'emacs': 1,
         \ 'vimdiff': 1,
         \ 'lazygit': 1,
+        \ 'sudoedit': 1,
         \ 'emacsclient': 1,
         \ }
 
