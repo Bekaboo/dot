@@ -34,7 +34,22 @@ fi
 [ -f /etc/xprofile ] && source /etc/xprofile
 [ -f "$HOME/.xprofile" ] && source "$HOME/.xprofile"
 
-if command -v startplasma-x11 >/dev/null 2>&1; then
+# make capslock (long press) another ctrl
+if command -v setxkbmap &> /dev/null; then
+  setxkbmap -option ctrl:nocaps,shift:both_capslock
+fi
+
+# make capslock (short press) another escape
+if command -v xcape &> /dev/null; then
+  xcape -e 'Control_L=Escape'
+fi
+
+# set keyboard delay and repeat rate
+if command -v xset &> /dev/null; then
+    xset r rate 240 80
+fi
+
+if command -v startplasma-x11 &> /dev/null; then
     export DESKTOP_SESSION=plasma
     exec startplasma-x11
 fi

@@ -7,18 +7,3 @@ export XMODIFIERS=@im=fcitx
 export GDK_DPI_SCALE=0.5    # text
 export GDK_SCALE=2          # UI elements
 export MOZ_USE_XINPUT2=1    # firefox smooth scrolling
-
-# make capslock (long press) another ctrl
-if command -v setxkbmap &> /dev/null; then
-  setxkbmap -option ctrl:nocaps,shift:both_capslock
-fi
-
-# make capslock (short press) another escape
-if command -v xcape &> /dev/null; then
-  xcape -e 'Control_L=Escape'
-fi
-
-# set keyboard delay and repeat rate
-if command -v xset &> /dev/null; then
-    xset r rate 240 80
-fi
