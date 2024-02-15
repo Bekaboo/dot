@@ -1457,13 +1457,14 @@ if s:supportevents('FileType')
 endif
 " }}}2
 
-" Workaround to prevent <Esc> lag cause by Meta keymaps
+" Workaround to prevent <Esc> lag cause by Meta keymaps {{{2
 noremap  <nowait> <Esc> <Esc>
 noremap! <nowait> <Esc> <Esc>
 if exists(':tmap') == 2
   tnoremap       <nowait> <Esc> <Esc>
   tnoremap <expr><nowait> <Esc> <SID>running_tui() ? '<Esc>' : '<C-\><C-n>'
 endif
+" }}}2
 " }}}1
 
 " vim:tw=79:ts=2:sts=2:sw=2:et:fdm=marker:ft=vim:norl:
