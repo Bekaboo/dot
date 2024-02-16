@@ -9,11 +9,11 @@ config.color_scheme = 'Dragon Dark' -- Default colorscheme
 config.check_for_updates = false
 config.enable_tab_bar = false
 config.font = wezterm.font_with_fallback({
-  { family = 'Jetbrains Mono NerdFont', weight = 'ExtraLight' },
+  { family = 'Iosevka NerdFont', weight = 'Light' },
   { family = 'Times New Roman' },
   { family = 'Microsoft YaHei' },
 })
-config.font_size = 13.2
+config.font_size = 13
 config.term = 'wezterm'
 config.window_padding = {
   left = '1cell',
