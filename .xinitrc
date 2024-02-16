@@ -41,7 +41,7 @@ fi
 
 # make capslock (short press) another escape
 if command -v xcape &> /dev/null; then
-  xcape -e 'Control_L=Escape'
+  xcape -e Control_L=Escape
 fi
 
 # set keyboard delay and repeat rate
