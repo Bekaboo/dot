@@ -39,11 +39,6 @@ if command -v setxkbmap &> /dev/null; then
   setxkbmap -option ctrl:nocaps,shift:both_capslock
 fi
 
-# make capslock (short press) another escape
-if command -v xcape &> /dev/null; then
-  xcape -e Control_L=Escape
-fi
-
 # set keyboard delay and repeat rate
 if command -v xset &> /dev/null; then
     xset r rate 240 80
