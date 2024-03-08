@@ -14,6 +14,8 @@ config.font = wezterm.font_with_fallback({
   { family = 'Microsoft YaHei' },
 })
 config.font_size = 13
+config.initial_rows = 24
+config.initial_cols = 112
 config.term = 'wezterm'
 config.window_padding = {
   left = '1cell',
