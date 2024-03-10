@@ -4,6 +4,6 @@ export GTK_USE_PORTAL=1
 export PLASMA_USE_QT_SCALING=1
 export QT_IM_MODULE=fcitx
 export XMODIFIERS=@im=fcitx
-export GDK_DPI_SCALE=0.5    # text
-export GDK_SCALE=2          # UI elements
-export MOZ_USE_XINPUT2=1    # firefox smooth scrolling
+export GDK_DPI_SCALE=0.5
+export GDK_SCALE=2
+export MOZ_USE_XINPUT2=1
