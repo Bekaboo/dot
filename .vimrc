@@ -1098,6 +1098,9 @@ if exists(':tmap') == 2
   " which conflicts with shell's keymap
   tnoremap <nowait> <C-w> <C-\><C-w>
 
+  " Use <C-Space>[ (same as tmux) to exit terminal mode
+  tnoremap <C-@>[ <C-\><C-n>
+
   " Use <C-\><C-r> to insert contents of a register in terminal mode
   tnoremap <expr> <C-\><C-r> (&twk ? &twk : '<C-w>') . '"' . nr2char(getchar())
 
