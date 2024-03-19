@@ -5,8 +5,10 @@ if not type -q fzf_key_bindings
 end
 
 if type -q fd
-    set -gx FZF_CTRL_T_COMMAND "fd -p -H -L -td -tf -tl --mount -c=always"
-    set -gx FZF_ALT_C_COMMAND "fd -p -H -L -td --mount -c=always"
+    set -gx FZF_CTRL_T_COMMAND "fd -p -H -L -td -tf -tl --mount \
+        -c=always --search-path=\$dir"
+    set -gx FZF_ALT_C_COMMAND "fd -p -H -L -td --mount \
+        -c=always --search-path=\$dir"
 else
     set -gx FZF_CTRL_T_COMMAND "find -L \$dir -mindepth 1 \\( \
         -path '*%*'                \
