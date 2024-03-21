@@ -1098,9 +1098,6 @@ if exists(':tmap') == 2
   " which conflicts with shell's keymap
   tnoremap <nowait> <C-w> <C-\><C-w>
 
-  " Use <C-Space>[ (same as tmux) to exit terminal mode
-  tnoremap <C-@>[ <C-\><C-n>
-
   " Use <C-\><C-r> to insert contents of a register in terminal mode
   tnoremap <expr> <C-\><C-r> (&twk ? &twk : '<C-w>') . '"' . nr2char(getchar())
 
@@ -1420,18 +1417,6 @@ if $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.1140')
     tnoremap <expr><silent> <Esc>. <SID>tmux_mapkey_fallback('resize-pane -R 4', <SID>running_tui() ? '<Esc>.' : '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '<' : '>') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
     tnoremap <expr><silent> <Esc>- <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') - 2))\"", <SID>running_tui() ? '<Esc>-'  : '<C-\><C-n><C-w>2-i', TmuxMapkeyResizePaneVertConditionRef)
     tnoremap <expr><silent> <Esc>+ <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') + 2))\"", <SID>running_tui() ? '<Esc>+'  : '<C-\><C-n><C-w>2+i', TmuxMapkeyResizePaneVertConditionRef)
-  endif
-
-  " Use a unified keymap `<C-space>[` to escape from vim terminal mode or enter
-  " tmux visual mode
-  nnoremap <expr><silent> <C-@>[ <SID>tmux_exec('copy-mode')
-  vnoremap <expr><silent> <C-@>[ <SID>tmux_exec('copy-mode')
-  onoremap <expr><silent> <C-@>[ <SID>tmux_exec('copy-mode')
-  inoremap <expr><silent> <C-@>[ <SID>tmux_exec('copy-mode')
-  cnoremap <expr><silent> <C-@>[ <SID>tmux_exec('copy-mode')
-  lnoremap <expr><silent> <C-@>[ <SID>tmux_exec('copy-mode')
-  if exists(':tmap') == 2
-    tnoremap <C-@>[ <C-\><C-n>
   endif
 
   " Set @is_vim and register relevant autocmds callbacks if not already
