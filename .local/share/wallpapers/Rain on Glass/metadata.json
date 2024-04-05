@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "kankefengjing@gmail.com",
+                "Name": "Bekaboo"
+            }
+        ],
+        "Id": "RainOnGlass",
+        "License": "LGPLv3",
+        "Name": "Rain on Glass"
+    }
+}

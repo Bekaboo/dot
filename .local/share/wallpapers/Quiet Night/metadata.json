@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "kankefengjing@gmail.com",
+                "Name": "Bekaboo"
+            }
+        ],
+        "Id": "QuietNight",
+        "License": "LGPLv3",
+        "Name": "Quiet Night"
+    }
+}

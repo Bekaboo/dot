@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "kankefengjing@gmail.com",
+                "Name": "Bekaboo"
+            }
+        ],
+        "Id": "FoggyForest",
+        "License": "LGPLv3",
+        "Name": "Foggy Forest"
+    }
+}
