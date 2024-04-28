@@ -220,6 +220,7 @@ endfunction
 call s:command_map('S', '%s/')
 call s:command_map(':', 'lua ')
 call s:command_abbrev('bt', 'bel ter')
+call s:command_abbrev('vt', 'vert ter')
 call s:command_abbrev('ep', 'e%:p:h')
 call s:command_abbrev('sep', 'sp%:p:h')
 call s:command_abbrev('vep', 'vs%:p:h')
