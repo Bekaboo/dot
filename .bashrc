@@ -397,6 +397,7 @@ v() {
 alias sudoe="sudo -E "
 alias cp="cp -i"        # confirm before overwriting something
 alias x="trash"
+alias g="git"
 alias grep="grep --color"
 alias egrep="egrep --color"
 alias fgrep="fgrep --color"
