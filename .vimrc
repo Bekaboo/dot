@@ -1069,6 +1069,7 @@ if exists(':tmap') == 2
   let s:tui = {
         \ 'vi': 1,
         \ 'fzf': 1,
+        \ 'ssh': 1,
         \ 'nvi': 1,
         \ 'kak': 1,
         \ 'vim': 1,
