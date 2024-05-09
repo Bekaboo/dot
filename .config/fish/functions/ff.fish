@@ -38,13 +38,16 @@ function ff --description 'Use fzf to open files or cd to directories'
         return
     end
 
-    if not type -q fzf; or not type -q fd
+    # Exit if fzf or fd is not installed
+    # On some systems, e.g. Ubuntu, fd executable is installed as 'fdfind'
+    set -l fd_cmd "$(type -q fd && echo fd || echo fdfind)"
+    if not type -q fzf; or not type -q $fd_cmd
         echo 'fzf or fd is not installed' 1>&2
         return 1
     end
 
     set -l tmpfile "$(mktemp)"
-    fd -p -H -L -td -tf -tl --mount -c=always --search-path=$argv[1] \
+    $fd_cmd -p -H -L -td -tf -tl --mount -c=always --search-path=$argv[1] \
         | fzf --ansi --query=$argv[2] >$tmpfile
 
     set -l targets (cat $tmpfile | string split "\n")

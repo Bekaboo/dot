@@ -95,6 +95,9 @@ export FZF_DEFAULT_OPTS="--reverse \
 if __has fd; then
     export FZF_DEFAULT_COMMAND='fd -p -H -L -td -tf -tl --mount -c=always'
     export FZF_ALT_C_COMMAND='fd -p -H -L -td --mount -c=always'
+elif __has fdfind; then
+    export FZF_DEFAULT_COMMAND='fdfind -p -H -L -td -tf -tl --mount -c=always'
+    export FZF_ALT_C_COMMAND='fdfind -p -H -L -td --mount -c=always'
 else
     export FZF_DEFAULT_COMMAND="find -L . -mindepth 1 \\( \
             -path '*%*'                \
@@ -362,14 +365,16 @@ ff() {
     fi
 
     # Exit if fzf or fd is not installed
-    if ! __has fzf || ! __has fd; then
+    # On some systems, e.g. Ubuntu, fd executable is installed as 'fdfind'
+    local fd_cmd=$(__has fd && echo fd || echo fdfind)
+    if ! __has fzf || ! __has "$fd_cmd"; then
         echo 'fzf or fd is not installed' >&2
         return 1
     fi
 
     local tmpfile="$(mktemp)"
     local path="${1:-$PWD}"
-    fd -p -H -L -td -tf -tl --mount -c=always --search-path="$path" \
+    "$fd_cmd" -p -H -L -td -tf -tl --mount -c=always --search-path="$path" \
         | fzf --ansi --query="$2" >$tmpfile
 
     local targets="$(cat "$tmpfile")"; rm -f "$tmpfile"

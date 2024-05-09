@@ -9,6 +9,11 @@ if type -q fd
         -c=always --search-path=\$dir"
     set -gx FZF_ALT_C_COMMAND "fd -p -H -L -td --mount \
         -c=always --search-path=\$dir"
+else if type -q fdfind
+    set -gx FZF_CTRL_T_COMMAND "fdfind -p -H -L -td -tf -tl --mount \
+        -c=always --search-path=\$dir"
+    set -gx FZF_ALT_C_COMMAND "fdfind -p -H -L -td --mount \
+        -c=always --search-path=\$dir"
 else
     set -gx FZF_CTRL_T_COMMAND "find -L \$dir -mindepth 1 \\( \
         -path '*%*'                \
