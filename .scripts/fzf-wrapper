@@ -221,8 +221,8 @@ main() {
     FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS $opts" fzf "$@"
 
     # Close ueberzugpp after fzf exits
-    [[ -n "$UB_SOCK" ]] && ueberzugpp cmd -s "$UB_SOCK" -a exit
-    [[ -e "$ub_pid_file" ]] && rm -f "$ub_pid_file"
+    [[ -n "$UB_SOCK" ]] && ueberzugpp cmd -s "$UB_SOCK" -a exit &
+    [[ -e "$ub_pid_file" ]] && rm -f "$ub_pid_file" &
 }
 
 main "$@"
