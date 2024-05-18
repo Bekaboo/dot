@@ -13,6 +13,7 @@ pathadd() {
 
 pathadd "${HOME}/.local/bin"
 pathadd "${HOME}/.scripts"
+pathadd "${HOME}/.cargo/bin"
 export PATH
 
 [[ -r "${HOME}/.bash_exports" ]] && source "${HOME}/.bash_exports"
