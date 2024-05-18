@@ -1066,31 +1066,12 @@ nnoremap <silent> <Leader>.  :FZF<CR>
 " Terminal Settings {{{2
 
 if exists(':tmap') == 2
-  let s:tui = {
-        \ 'vi': 1,
-        \ 'fzf': 1,
-        \ 'ssh': 1,
-        \ 'nvi': 1,
-        \ 'kak': 1,
-        \ 'vim': 1,
-        \ 'nvim': 1,
-        \ 'sudo': 1,
-        \ 'nano': 1,
-        \ 'helix': 1,
-        \ 'nmtui': 1,
-        \ 'emacs': 1,
-        \ 'vimdiff': 1,
-        \ 'lazygit': 1,
-        \ 'sudoedit': 1,
-        \ 'emacsclient': 1,
-        \ }
-
   " Check if any of the processes in current terminal is a TUI app
   " return: 0/1
   function! s:running_tui() abort
-    let names = s:proc_names()
-    for name in names
-      if has_key(s:tui, name)
+    let cmds = s:proc_cmds()
+    for cmd in cmds
+      if cmd =~# '\v^(sudo(\s+--?(\w|-)+((\s+|\=)\S+)?)*\s+)?(/usr/bin/)?(n?vim?|vimdiff|emacs(client)?|nano|helix|kak|lazygit|fzf|nmtui|sudoedit|ssh)'
         return 1
       endif
     endfor
@@ -1159,12 +1140,12 @@ if s:supportevents('TerminalWinOpen')
 
   " Get the names of processes running in current terminal
   " return: string[]: process names
-  function! s:proc_names() abort
+  function! s:proc_cmds() abort
     if &buftype !~# 'terminal'
       return []
     endif
     let pid = job_info(term_getjob(bufnr())).process
-    return split(system('ps h -o comm -g ' . pid), '\n')
+    return split(system('ps h -o args -g ' . pid), '\n')
   endfunction
 
   augroup TermOptions
