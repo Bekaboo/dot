@@ -217,7 +217,6 @@ function! s:command_map(trig, command, ...) abort
   endif
 endfunction
 
-call s:command_map('S', '%s/')
 call s:command_map(':', 'lua ')
 call s:command_abbrev('ht', 'hor ter')
 call s:command_abbrev('vt', 'vert ter')
