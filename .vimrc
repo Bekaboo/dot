@@ -1070,7 +1070,7 @@ if exists(':tmap') == 2
   function! s:running_tui() abort
     let cmds = s:proc_cmds()
     for cmd in cmds
-      if cmd =~# '\v^(sudo(\s+--?(\w|-)+((\s+|\=)\S+)?)*\s+)?(/usr/bin/)?(n?vim?|vimdiff|emacs(client)?|nano|helix|kak|lazygit|fzf|nmtui|sudoedit|ssh)'
+      if cmd =~# '\v^(sudo(\s+--?(\w|-)+((\s+|\=)\S+)?)*\s+)?(/usr/bin/)?(n?vim?|vimdiff|emacs(client)?|lem|nano|helix|kak|lazygit|fzf|nmtui|sudoedit|ssh)'
         return 1
       endif
     endfor
