@@ -186,7 +186,7 @@ setcolor-fish() {
 
 declare -A plasma_color_wallpaper_map=(
     ['nano']="$DATA_HOME/wallpapers/Fish"
-    ['macro']="$DATA_HOME/wallpapers/Rain on Glass"
+    ['macro']="$DATA_HOME/wallpapers/Clouds"
     ['everforest']="$DATA_HOME/wallpapers/Foggy Forest"
     ['gruvbox-material']="$DATA_HOME/wallpapers/Foggy Forest"
 )
