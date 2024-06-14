@@ -1070,7 +1070,10 @@ if exists(':tmap') == 2
   function! s:running_tui() abort
     let cmds = s:proc_cmds()
     for cmd in cmds
-      if cmd =~# '\v^(sudo(\s+--?(\w|-)+((\s+|\=)\S+)?)*\s+)?(/usr/bin/)?(n?vim?|vimdiff|emacs(client)?|lem|nano|helix|kak|lazygit|fzf|nmtui|sudoedit|ssh)'
+      if cmd =~# '\v^(sudo(\s+--?(\w|-)+((\s+|\=)\S+)?)*\s+)?
+            \(/usr/bin/)?
+            \(n?vim?|vimdiff|emacs(client)?|lem|nano
+            \|helix|kak|lazygit|fzf|nmtui|sudoedit|ssh)'
         return 1
       endif
     endfor
@@ -1086,7 +1089,9 @@ if exists(':tmap') == 2
   " Workaround to avoid <M-...> keymaps in terminal mode to be interpreted to
   " <Esc> + ... (seperate keystrokes) given `<Esc>` is mapped to itself
   " with argument `<nowait>` in terminal mode
-  for char in split("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`~!@#$%^&*()-_=+[]{}\\|;:'\",.<>/?", '.\zs')
+  for char in split("ABCDEFGHIJKLMNOPQRSTUVWXYZ
+        \abcdefghijklmnopqrstuvwxyz
+        \0123456789`~!@#$%^&*()-_=+[]{}\\|;:'\",.<>/?", '.\zs')
     let char_esc = escape(char, '\|')
     exe printf('tnoremap <Esc>%s <Esc>%s', char_esc, char_esc)
   endfor
