@@ -1434,7 +1434,7 @@ endif
 
 " Workaround to prevent <Esc> lag cause by Meta keymaps {{{2
 noremap  <nowait> <Esc> <Esc>
-noremap! <nowait> <Esc> <Esc>
+noremap! <nowait> <Esc> <C-\><C-n>
 if exists(':tmap') == 2
   tnoremap       <nowait> <Esc> <Esc>
   tnoremap <expr><nowait> <Esc> <SID>running_tui() ? '<Esc>' : '<C-\><C-n>'
