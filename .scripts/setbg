@@ -224,6 +224,31 @@ setbg-glow() {
     fi
 }
 
+setbg-libreoffice() {
+    if [[ -z "$1"  ]]; then
+        return 1
+    fi
+
+    local config="$CONFIG_HOME/libreoffice/4/user/registrymodifications.xcu"
+    if [[ ! -e "$config" ]]; then
+        mkdir -p "$(dirname "$config")"
+        echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<oor:items xmlns:oor=\"http://openoffice.org/2001/registry\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">
+</oor:items>" > "$config"
+    fi
+
+    # Add symbol style config if not found in the config file
+    if ! grep -qE '<item oor:path="/org.openoffice.Office.Common/Misc"><prop oor:name="SymbolStyle" oor:op="fuse"><value>[a-zA-Z0-9_-]+</value></prop></item>' "$config"; then
+        # Default style is 'breeze' or 'breeze_dark' depending on arg 1
+        local style=$([[ "$1" == "dark" ]] && echo "breeze_dark" || echo "breeze")
+        sed -i "/<\/oor:items>/i <item oor:path=\"/org.openoffice.Office.Common/Misc\"><prop oor:name=\"SymbolStyle\" oor:op=\"fuse\"><value>$style</value></prop></item>" "$config"
+    fi
+
+    [[ "$1" == "dark" ]] &&
+        sed -i -E 's/(<item oor:path="\/org.openoffice.Office.Common\/Misc"><prop oor:name="SymbolStyle" oor:op="fuse"><value>)([a-zA-Z0-9_-]+)(<\/value><\/prop><\/item>)/\1\2_dark\3/' $config ||
+        sed -i -E 's/(<item oor:path="\/org.openoffice.Office.Common\/Misc"><prop oor:name="SymbolStyle" oor:op="fuse"><value>)([a-zA-Z0-9_-]+)_dark(<\/value><\/prop><\/item>)/\1\2\3/' $config
+}
+
 usage() {
     echo 'Usage: setbg [light|dark]'
     exit 1
@@ -253,6 +278,7 @@ main() {
     setbg-vscode "$bg" &
     setbg-plasma "$bg" &
     setbg-okular "$bg" &
+    setbg-libreoffice "$bg" &
     return 0
 }
 
