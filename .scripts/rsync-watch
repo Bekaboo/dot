@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# vim:ft=sh:ts=4:sw=4:sts=4:et:
+# Automatically sync files between remote and local filesystem using rsync
+# and inotifywait
+
+main() {
+    if ! command -v rsync &>/dev/null ||
+        ! command -v inotifywait &>/dev/null; then
+        echo 'rsync or inotifywait not found, exit'
+        exit 1
+    fi
+
+    local src="$1"
+    local dst="$2"
+    if [[ -z "$1" || -z "$2" ]]; then
+        echo "Usage: $(basename $0) <src> <dst>"
+        exit 1
+    fi
+
+    while inotifywait -r -e modify,create,delete,move "$src" &>/dev/null; do
+        echo "Detected changes, syncing $src to $dst..."
+        rsync -azvP --filter=":- $src/.gitignore" "$src" "$dst"
+    done
+}
+
+main "$@"
