@@ -35,7 +35,7 @@ main() {
             PDF_ENGINE="pdflatex"
             ;;
         -h | --help | -\?)
-            echo "Usage: md2pdf [-l|-x|-m|-h|-p] files" >&2
+            echo "Usage: $(basename $0) [-l|-x|-m|-h|-p] files" >&2
             exit 1
             ;;
         --pdf-engine=*)

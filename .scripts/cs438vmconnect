@@ -14,7 +14,7 @@ connect() {
 main() {
     # If no argument is given, print usage and exit
     if [ -z "$1" ]; then
-        echo "Usage: $0 [client|server]"
+        echo "Usage: $(basename $0) [client|server]"
         exit 1
     fi
 

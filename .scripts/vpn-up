@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+connectionname="$(nmcli -t -g type,name connection | grep -Po '^vpn:\K.*' | sed 's/\\:/:/g' | fzf)"
+eval "$(nmcli -t -g vpn.data connection show "$connectionname" | grep -Po '(^|[ ,])(protocol|gateway)\ =\ [^,]*' | sed 's/ //g')"
+eval "$(openconnect --authenticate --protocol="$protocol" "$gateway")"
+nmcli connection up "$connectionname" passwd-file <(echo "vpn.secrets.cookie:$COOKIE")

@@ -10,7 +10,7 @@ main() {
         exit 1
     fi
     if [[ -z "$1" || -z "$2" ]]; then
-        echo "Usage: qdbus-call-service-method <service name> <method name> [method arguments]" >&2
+        echo "Usage: $(basename $0) <service name> <method name> [method arguments]" >&2
         exit 1
     fi
     for service in $(qdbus | grep -iP "$1"); do

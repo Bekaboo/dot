@@ -3,8 +3,8 @@
 
 usage() {
     echo "\
-Usage: vim-startuptime [<vim_test_command>] [-h|--help]
-                       [-n|--num-epochs=<epochs>] [-p|--preserve-log]"
+Usage: $(basename $0) [<vim_test_command>] [-h|--help]
+       [-n|--num-epochs=<epochs>] [-p|--preserve-log]"
 }
 
 # test nvim startuptime
