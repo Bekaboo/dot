@@ -1068,15 +1068,10 @@ if exists(':tmap') == 2
   " Check if any of the processes in current terminal is a TUI app
   " return: 0/1
   function! s:running_tui() abort
-    let cmds = s:proc_cmds()
-    for cmd in cmds
-      if cmd =~# '\v^(sudo(\s+--?(\w|-)+((\s+|\=)\S+)?)*\s+)?
-            \(/usr/bin/)?
-            \(n?vim?|vimdiff|emacs(client)?|lem|nano
-            \|helix|kak|lazygit|fzf|nmtui|sudoedit|ssh)'
-        return 1
-      endif
-    endfor
+    return s:fg_cmd() =~# '\v^(sudo(\s+--?(\w|-)+((\s+|\=)\S+)?)*\s+)?
+          \(/usr/bin/)?
+          \(n?vim?|vimdiff|emacs(client)?|lem|nano
+          \|helix|kak|lazygit|fzf|nmtui|sudoedit|ssh)'
   endfunction
 
   " Default <C-w> is used as 'termwinkey' (see :h 'termwinkey')
@@ -1142,14 +1137,22 @@ if s:supportevents('TerminalWinOpen')
     return t[0] * 1000 + t[1] / 1000000
   endfunction
 
-  " Get the names of processes running in current terminal
-  " return: string[]: process names
-  function! s:proc_cmds() abort
+  " Get the command running in the foreground in current terminal
+  " return: string: command string
+  function! s:fg_cmd() abort
     if &buftype !~# 'terminal'
-      return []
+      return ''
     endif
-    let pid = job_info(term_getjob(bufnr())).process
-    return split(system('ps h -o args -g ' . pid), '\n')
+
+    for stat_cmd_str in split(system('ps h -o stat,args -g '
+          \ . job_info(term_getjob(bufnr())).process), '\n')
+      let stat_cmd = split(stat_cmd_str, '\s\+', 0)
+      if stat_cmd[0] =~# '^\w\++' " check if this is a foreground process
+        return stat_cmd[1]
+      endif
+    endfor
+
+    return ''
   endfunction
 
   augroup TermOptions
