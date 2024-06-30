@@ -20,9 +20,9 @@ function __rsync_watch_complete_ssh_paths \
     set -l user_server $input_list[1]
     set -l path_part $input_list[2]
     set -l compl_prefix (string replace -r "$path_part\$" '' $input)
-    test -z $path_part
-    and set -l path_glob '*'
-    or set -l path_glob "*$path_part*"
+    string match -arq '^[^/]' -- $path_part
+    and set -l path_glob "*$path_part*"
+    or set -l path_glob "$path_part*"
     set -l paths (command ssh $user_server "ls -dp $path_glob" 2>/dev/null)
     for path in $paths
         echo "$compl_prefix$path"
