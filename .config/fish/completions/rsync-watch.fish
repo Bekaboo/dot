@@ -5,9 +5,7 @@ function __rsync_watch_complete_ssh_servers \
     set -l server_part (string replace -r '^([^@]*)@([^:]*)' '$2' $input)
     set -l compl_prefix (string replace -r "$server_part\$" '' $input)
     for server in $servers
-        if string match -qr ".*$server_part.*" -- $server
-            echo "$compl_prefix$server:"
-        end
+        echo "$compl_prefix$server:"
     end
 end
 
