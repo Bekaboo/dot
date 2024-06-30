@@ -259,7 +259,7 @@ setcolor-plasma() {
 
 usage() {
     echo "Usage: $(basename $0) [<colorscheme>]"
-    exit 1
+    exit 0
 }
 
 main() {

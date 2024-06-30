@@ -251,7 +251,7 @@ setbg-libreoffice() {
 
 usage() {
     echo "Usage: $(basename $0) [light|dark]"
-    exit 1
+    exit 0
 }
 
 main() {
