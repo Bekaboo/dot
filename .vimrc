@@ -1010,7 +1010,7 @@ let $FZF_DEFAULT_OPTS .= ' --border=sharp --margin=0 --padding=0'
 nnoremap <silent> <Leader>ff :FZF<CR>
 nnoremap <silent> <Leader>.  :FZF<CR>
 
-" Use fzf as file explorer
+" " Use fzf as file explorer
 " runtime plugin/fzf.vim
 " if exists('*timer_start') && exists(':FZF') == 2
 "   let g:loaded_netrw       = 1
@@ -1058,8 +1058,8 @@ nnoremap <silent> <Leader>.  :FZF<CR>
 "     au BufWipeout * :call s:fzf_rm_buf_record(expand('<abuf>'))
 "   augroup END
 " endif
-" }}}2
-" }}}1
+" " }}}2
+" " }}}1
 
 """ Misc {{{1
 " Terminal Settings {{{2
