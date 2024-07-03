@@ -10,7 +10,7 @@
 	b = branch
 	c = commit
 	d = diff
-	p = pull
+	p = push
 	s = stash
 	w = show
 	st = status
