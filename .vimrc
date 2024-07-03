@@ -176,12 +176,6 @@ silent! set autoindent
 silent! set ignorecase
 silent! set smartcase
 
-silent! set spell
-silent! set spellcapcheck=''
-silent! set spelllang=en_us
-silent! set spelloptions=camel
-silent! set spellsuggest=best,9
-
 syntax on
 filetype plugin indent on
 " }}}1
@@ -729,6 +723,15 @@ function! s:supportevents(events) abort
   endif
   return 0
 endfunction
+
+if s:supportevents('FileType')
+  augroup EnableSpellCheck
+    au!
+    au FileType text,tex,markdown,gitcommit,xml,html
+          \ silent! setlocal spell spellcapcheck='' spelllang=en_us
+          \                  spelloptions=camel spellsuggest=best,9
+  augroup END
+endif
 
 if s:supportevents(['BufLeave', 'WinLeave', 'FocusLost'])
   function! s:auto_save(buf, file) abort
