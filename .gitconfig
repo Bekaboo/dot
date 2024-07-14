@@ -19,6 +19,7 @@
 	au = add -u
 	ca = commit --amend
 	cm = commit -m
+	mt = mergetool
 	is-ancestor = merge-base --is-ancestor
 	l = log --oneline --graph
 	lc = !git ls-files -z | xargs -0 wc -l
