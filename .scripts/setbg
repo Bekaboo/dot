@@ -240,13 +240,15 @@ setbg-libreoffice() {
     # Add symbol style config if not found in the config file
     if ! grep -qE '<item oor:path="/org.openoffice.Office.Common/Misc"><prop oor:name="SymbolStyle" oor:op="fuse"><value>[a-zA-Z0-9_-]+</value></prop></item>' "$config"; then
         # Default style is 'breeze' or 'breeze_dark' depending on arg 1
-        local style=$([[ "$1" == "dark" ]] && echo "breeze_dark" || echo "breeze")
-        sed -i "/<\/oor:items>/i <item oor:path=\"/org.openoffice.Office.Common/Misc\"><prop oor:name=\"SymbolStyle\" oor:op=\"fuse\"><value>$style</value></prop></item>" "$config"
+        local theme=$([[ "$1" == "dark" ]] && echo "breeze_dark" || echo "breeze")
+        sed -i "/<\/oor:items>/i <item oor:path=\"/org.openoffice.Office.Common/Misc\"><prop oor:name=\"SymbolStyle\" oor:op=\"fuse\"><value>$theme</value></prop></item>" "$config"
     fi
 
-    [[ "$1" == "dark" ]] &&
-        sed -i -E 's/(<item oor:path="\/org.openoffice.Office.Common\/Misc"><prop oor:name="SymbolStyle" oor:op="fuse"><value>)([a-zA-Z0-9_-]+)(<\/value><\/prop><\/item>)/\1\2_dark\3/' $config ||
-        sed -i -E 's/(<item oor:path="\/org.openoffice.Office.Common\/Misc"><prop oor:name="SymbolStyle" oor:op="fuse"><value>)([a-zA-Z0-9_-]+)_dark(<\/value><\/prop><\/item>)/\1\2\3/' $config
+    local theme=$(grep -Po '(?<=\<item oor:path="/org.openoffice.Office.Common/Misc">\<prop oor:name="SymbolStyle" oor:op="fuse">\<value>)[a-zA-Z0-9_-]+' "$config")
+    local theme_no_suffix=$(echo "$theme" | sed -E 's/(_dark)+//')
+    local new_theme=$([[ "$1" == 'dark' ]] && echo "${theme_no_suffix}_dark" || echo "$theme_no_suffix")
+
+    sed -i -E "s/(<item oor:path=\"\/org.openoffice.Office.Common\/Misc\"><prop oor:name=\"SymbolStyle\" oor:op=\"fuse\"><value>)([a-zA-Z0-9_-]+)(<\/value><\/prop><\/item>)/\1$new_theme\3/" "$config"
 }
 
 usage() {
