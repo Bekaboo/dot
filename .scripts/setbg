@@ -225,7 +225,7 @@ setbg-glow() {
 }
 
 setbg-libreoffice() {
-    if [[ -z "$1"  ]]; then
+    if [[ -z "$1" ]]; then
         return 1
     fi
 
@@ -234,7 +234,7 @@ setbg-libreoffice() {
         mkdir -p "$(dirname "$config")"
         echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <oor:items xmlns:oor=\"http://openoffice.org/2001/registry\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">
-</oor:items>" > "$config"
+</oor:items>" >"$config"
     fi
 
     # Add symbol style config if not found in the config file
