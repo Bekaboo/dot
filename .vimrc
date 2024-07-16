@@ -21,12 +21,18 @@ silent! set nowrap
 silent! set linebreak
 silent! set breakindent
 silent! set smoothscroll
+silent! set ignorecase
+silent! set smartcase
 silent! set completeopt=menuone
 silent! set wildmenu
 silent! set wildoptions+=fuzzy,pum
 silent! set hlsearch
 silent! set incsearch
 silent! set ttimeoutlen=0
+silent! set softtabstop=2
+silent! set shiftwidth=2
+silent! set expandtab
+silent! set autoindent
 silent! set autowriteall
 silent! set virtualedit=block
 silent! set shortmess-=S
@@ -165,16 +171,6 @@ endif
 
 silent! set fillchars=fold:·,diff:╱
 silent! set conceallevel=2
-
-silent! set tabstop=4
-silent! set softtabstop=4
-silent! set shiftwidth=4
-silent! set expandtab
-silent! set cindent
-silent! set autoindent
-
-silent! set ignorecase
-silent! set smartcase
 
 syntax on
 filetype plugin indent on

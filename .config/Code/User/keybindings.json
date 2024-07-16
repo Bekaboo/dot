@@ -1,0 +1,211 @@
+// Place your key bindings in this file to override the defaultsauto[]
+// vim: set ft=jsonc :
+[
+    {
+        "key": "alt+h",
+        "command": "cursorLeft",
+        "when": "textInputFocus"
+    },
+    {
+        "key": "alt+k",
+        "command": "cursorUp",
+        "when": "textInputFocus"
+    },
+    {
+        "key": "alt+j",
+        "command": "cursorDown",
+        "when": "textInputFocus"
+    },
+    {
+        "key": "f8",
+        "command": "-editor.action.marker.nextInFiles",
+        "when": "editorFocus"
+    },
+    {
+        "key": "shift+f8",
+        "command": "-editor.action.marker.prevInFiles",
+        "when": "editorFocus"
+    },
+    {
+        "key": "ctrl+n",
+        "command": "selectNextSuggestion",
+        "when": "suggestWidgetMultipleSuggestions && suggestWidgetVisible && textInputFocus"
+    },
+    {
+        "key": "ctrl+down",
+        "command": "-selectNextSuggestion",
+        "when": "suggestWidgetMultipleSuggestions && suggestWidgetVisible && textInputFocus"
+    },
+    {
+        "key": "ctrl+p",
+        "command": "selectPrevSuggestion",
+        "when": "suggestWidgetMultipleSuggestions && suggestWidgetVisible && textInputFocus"
+    },
+    {
+        "key": "ctrl+up",
+        "command": "-selectPrevSuggestion",
+        "when": "suggestWidgetMultipleSuggestions && suggestWidgetVisible && textInputFocus"
+    },
+    {
+        "key": "ctrl+6",
+        "command": "workbench.action.quickOpenPreviousRecentlyUsedEditorInGroup",
+        "when": "!activeEditorGroupEmpty"
+    },
+    {
+        "key": "tab",
+        "command": "-editor.emmet.action.expandAbbreviation",
+        "when": "config.emmet.triggerExpansionOnTab && editorTextFocus && !editorReadonly && !editorTabMovesFocus"
+    },
+    {
+        "key": "tab",
+        "command": "-acceptSelectedSuggestion",
+        "when": "suggestWidgetHasFocusedSuggestion && suggestWidgetVisible && textInputFocus"
+    },
+    {
+        "key": "tab",
+        "command": "-insertBestCompletion",
+        "when": "atEndOfWord && textInputFocus && !hasOtherSuggestions && !inSnippetMode && !suggestWidgetVisible && config.editor.tabCompletion == 'on'"
+    },
+    {
+        "key": "tab",
+        "command": "-insertNextSuggestion",
+        "when": "hasOtherSuggestions && textInputFocus && !inSnippetMode && !suggestWidgetVisible && config.editor.tabCompletion == 'on'"
+    },
+    {
+        "key": "tab",
+        "command": "-insertSnippet",
+        "when": "editorTextFocus && hasSnippetCompletions && !editorTabMovesFocus && !inSnippetMode"
+    },
+    {
+        "key": "tab",
+        "command": "-jumpToNextSnippetPlaceholder",
+        "when": "editorTextFocus && hasNextTabstop && inSnippetMode"
+    },
+    {
+        "key": "ctrl+\\ ctrl+\\",
+        "command": "workbench.action.terminal.toggleTerminal",
+        "when": "terminal.active"
+    },
+    {
+        "key": "ctrl+`",
+        "command": "-workbench.action.terminal.toggleTerminal",
+        "when": "terminal.active"
+    },
+    {
+        "key": "enter",
+        "command": "-acceptSelectedSuggestion",
+        "when": "acceptSuggestionOnEnter && suggestWidgetHasFocusedSuggestion && suggestWidgetVisible && suggestionMakesTextEdit && textInputFocus"
+    },
+    {
+        "key": "enter",
+        "command": "-acceptSelectedCodeAction",
+        "when": "codeActionMenuVisible"
+    },
+    {
+        "key": "ctrl+y",
+        "command": "acceptSelectedSuggestion"
+    },
+    {
+        "key": "ctrl+j",
+        "command": "editor.action.inlineSuggest.commit",
+        "when": "inlineSuggestionHasIndentationLessThanTabSize && inlineSuggestionVisible && !editorTabMovesFocus"
+    },
+    {
+        "key": "tab",
+        "command": "-editor.action.inlineSuggest.commit",
+        "when": "inlineSuggestionHasIndentationLessThanTabSize && inlineSuggestionVisible && !editorTabMovesFocus"
+    },
+    {
+        "key": "alt+e",
+        "command": "workbench.view.explorer",
+        "when": "viewContainer.workbench.view.explorer.enabled"
+    },
+    {
+        "key": "alt+s",
+        "command": "workbench.action.splitEditorDown"
+    },
+    {
+        "key": "alt+v",
+        "command": "workbench.action.splitEditorRight"
+    },
+    {
+        "key": "alt+c",
+        "command": "workbench.action.closeActiveEditor"
+    },
+    {
+        "key": "alt+o",
+        "command": "workbench.action.joinAllGroups"
+    },
+    {
+        "key": "shift+alt+=",
+        "command": "workbench.action.increaseViewHeight"
+    },
+    {
+        "key": "alt+.",
+        "command": "workbench.action.increaseViewWidth"
+    },
+    {
+        "key": "shift+alt+.",
+        "command": "workbench.action.increaseViewWidth"
+    },
+    {
+        "key": "alt+,",
+        "command": "workbench.action.decreaseViewWidth"
+    },
+    {
+        "key": "shift+alt+,",
+        "command": "workbench.action.decreaseViewWidth"
+    },
+    {
+        "key": "alt+-",
+        "command": "workbench.action.decreaseViewHeight"
+    },
+    {
+        "key": "alt+h",
+        "command": "workbench.action.focusLeftGroup"
+    },
+    {
+        "key": "alt+l",
+        "command": "workbench.action.focusRightGroup"
+    },
+    {
+        "key": "alt+k",
+        "command": "workbench.action.focusAboveGroup"
+    },
+    {
+        "key": "alt+j",
+        "command": "workbench.action.focusBelowGroup"
+    },
+    {
+        "key": "shift+alt+h",
+        "command": "workbench.action.moveEditorToLeftGroup"
+    },
+    {
+        "key": "shift+alt+l",
+        "command": "workbench.action.moveActiveEditorGroupRight"
+    },
+    {
+        "key": "shift+alt+k",
+        "command": "workbench.action.moveActiveEditorGroupUp"
+    },
+    {
+        "key": "shift+alt+j",
+        "command": "workbench.action.moveActiveEditorGroupDown"
+    },
+    {
+        "key": "alt+w",
+        "command": "workbench.action.focusNextGroup"
+    },
+    {
+        "key": "shift+alt+w",
+        "command": "workbench.action.focusPreviousGroup"
+    },
+    {
+        "key": "alt+b",
+        "command": "workbench.action.focusLastEditorGroup"
+    },
+    {
+        "key": "alt+t",
+        "command": "workbench.action.focusFirstEditorGroup"
+    },
+]
