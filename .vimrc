@@ -1067,7 +1067,7 @@ if exists(':tmap') == 2
       if cmd =~# '\v^(sudo(\s+--?(\w|-)+((\s+|\=)\S+)?)*\s+)?
           \(/usr/bin/)?
           \(n?vim?|vimdiff|emacs(client)?|lem|nano
-          \|helix|kak|lazygit|fzf|nmtui|sudoedit|ssh)'
+          \|helix|kak|lazygit|h?top|gdb|fzf|nmtui|sudoedit|ssh)'
         return 1
       endif
     endfor
