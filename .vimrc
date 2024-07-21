@@ -622,10 +622,6 @@ function! s:i_ctrl_k() abort
 endfunction
 
 function! s:ic_ctrl_t() abort
-  let cmdtype = getcmdtype()
-  if cmdtype =~# '[?/]'
-    return "\<C-t>"
-  endif
   if s:start_of_line() && !first_line()
     let char_under_cur = s:get_char(0)
     if char_under_cur !=# ''
