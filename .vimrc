@@ -41,6 +41,7 @@ silent! set viminfo=!,'100,<50,s10,h
 silent! set diffopt+=algorithm:histogram,indent-heuristic
 silent! set clipboard^=unnamedplus
 silent! set formatoptions+=n
+silent! set jumpoptions=stack
 
 " Focus events
 silent! let &t_fe = "\<Esc>[?1004h"
