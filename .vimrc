@@ -510,7 +510,6 @@ cnoremap <C-b> <Left>
 cnoremap <C-f> <Right>
 cnoremap <C-_> <C-f>
 cnoremap <Esc>e <C-f>
-cnoremap <C-g> <C-\><C-n>
 cnoremap <C-k> <C-\>e(strpart(getcmdline(), 0, getcmdpos() - 1))<CR>
 noremap! <Esc>[3;3~ <C-w>
 
@@ -621,33 +620,6 @@ function! s:i_ctrl_k() abort
   return s:end_of_line() ? "\<C-g>u\<Del>" : "\<C-g>u\<C-o>D\<Right>"
 endfunction
 
-function! s:ic_ctrl_t() abort
-  if s:start_of_line() && !first_line()
-    let char_under_cur = s:get_char(0)
-    if char_under_cur !=# ''
-      return "\<Del>\<Up>\<End>" . char_under_cur . "\<Down>\<Home>"
-    else
-      let prev_line = getline(line(".") - 1)
-      let char_end_of_prev_line = prev_line[-1:]
-      if char_end_of_prev_line !=# ''
-        return "\<Up>\<End>\<BS>\<Down>\<Home>" . char_end_of_prev_line
-      endif
-      return ''
-    endif
-  endif
-  if s:end_of_line()
-    let  char_before = s:get_char(-1)
-    if s:get_char(-2) !=# '' || mode() ==# 'c'
-      return "\<BS>\<Left>" . char_before . "\<End>"
-    else
-      return "\<BS>\<Up>\<End>" . char_before . "\<Down>\<End>"
-    endif
-  endif
-  if s:mid_of_line()
-    return "\<BS>\<Right>" . s:get_char(-1)
-  endif
-endfunction
-
 function! s:ic_ctrl_u() abort
   if !s:start_of_line()
     call setreg('-', s:get_current_line()[:s:get_current_col() - 2])
@@ -693,7 +665,6 @@ endfunction
 inoremap <expr> <C-b>  <SID>i_ctrl_b()
 inoremap <expr> <C-f>  <SID>i_ctrl_f()
 inoremap <expr> <C-k>  <SID>i_ctrl_k()
-noremap! <expr> <C-t>  <SID>ic_ctrl_t()
 noremap! <expr> <C-u>  <SID>ic_ctrl_u()
 noremap! <expr> <Esc>f <SID>ic_meta_f()
 noremap! <expr> <Esc>d <SID>ic_meta_d()
