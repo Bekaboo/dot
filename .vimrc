@@ -10,6 +10,7 @@ silent! set pumheight=16
 silent! set ruler
 silent! set scrolloff=4
 silent! set sidescrolloff=8
+silent! set sidescroll=1
 silent! set showtabline=1
 silent! set splitright
 silent! set splitbelow
