@@ -293,6 +293,12 @@ omap a` 2i`
 nnoremap -      :e%:p:h<CR>
 xnoremap - <Esc>:e%:p:h<CR>
 
+" Enter insert mode, add a space after the cursor
+nnoremap <Esc>i i<Space><Left>
+xnoremap <Esc>I I<Space><Left>
+nnoremap <Esc>a a<Space><Left>
+xnoremap <Esc>A A<Space><Left>
+
 " Return key seq to jump to the first line in paragraph
 " return: 0
 function! s:paragraph_first_line() abort
