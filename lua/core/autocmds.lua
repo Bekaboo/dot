@@ -227,12 +227,9 @@ augroup('FixCmdLineIskeyword', {
     desc = 'Have consistent &iskeyword and &lisp in Ex command-line mode.',
     pattern = '[:>/?=@]',
     callback = function(info)
-      -- Don't set &iskeyword and &lisp settings in insert/append command-line
-      -- ('-'), if we are inserting into a lisp file, we want to have the same
-      -- behavior as in insert mode
-      --
-      -- Change &iskeyword in search command-line ('/' or '?'), because we are
-      -- searching for regex patterns not literal lisp words
+      -- Don't reset 'iskeyword' and 'lisp' in insert or append command-line
+      -- mode ('-'): if we are inserting into a lisp file, we want to have the
+      -- same behavior as in insert mode
       vim.g._isk_lisp_buf = info.buf
       vim.g._isk_save = vim.bo[info.buf].isk
       vim.g._lisp_save = vim.bo[info.buf].lisp
