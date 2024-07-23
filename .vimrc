@@ -502,15 +502,6 @@ endfor
 " }}}2
 
 " Readline keymaps {{{2
-noremap! <C-a> <Home>
-noremap! <C-e> <End>
-noremap! <C-d> <Del>
-noremap! <expr> <C-y> pumvisible() ? "<C-y>" : "<C-r>-"
-cnoremap <C-b> <Left>
-cnoremap <C-f> <Right>
-cnoremap <C-k> <C-\>e(strpart(getcmdline(), 0, getcmdpos() - 1))<CR>
-noremap! <Esc>[3;3~ <C-w>
-
 " Match non-empty string
 " param: str string
 " vararg: string patterns to match
@@ -614,17 +605,6 @@ function! s:i_ctrl_f() abort
   return s:end_of_line() ? "\<Down>\<Home>" : "\<Right>"
 endfunction
 
-function! s:i_ctrl_k() abort
-  return s:end_of_line() ? "\<C-g>u\<Del>" : "\<C-g>u\<C-o>D\<Right>"
-endfunction
-
-function! s:ic_ctrl_u() abort
-  if !s:start_of_line()
-    call setreg('-', s:get_current_line()[:s:get_current_col() - 2])
-  endif
-  return mode() ==# 'c' ? "\<C-u>" : "\<C-g>u\<C-u>"
-endfunction
-
 function! s:ic_meta_b() abort
   let word_before = s:get_word_before()
   if word_before =~# '\S' || mode() ==# 'c'
@@ -655,18 +635,171 @@ function! s:ic_meta_f() abort
         \ . repeat("\<Right>", strlen(s:get_word_after(line_str, 1)))
 endfunction
 
-function! s:ic_meta_d() abort
-  return (mode() == 'c' ? '' : "\<C-g>u")
-        \ . repeat("\<Del>", strlen(s:get_word_after()))
+" Callback function for small delete, e.g. `<C-w>`, `<M-BS>`, `<M-d>`, `<C-k>`,
+" `<C-u>`, etc keymaps; sets the small delete register '-' properly, should be used
+" with `{ expr = true }`
+" param: text_deleted string
+" param: forward 0/1
+" return: string
+function! s:ic_small_del(text_deleted, forward) abort
+  " Lock to prevent next deletion before current deletion action completes.
+  " If we don't set this lock we might get and save wrong (old) cursor position
+  " in CmdlineChanged/TextChangedI callbacks, which will cause the '-' register
+  " to be reset undesirably.
+  if get(g:, '_rl_del_lock') || a:text_deleted == ''
+    return ''
+  endif
+  let g:_rl_del_lock = 1
+
+  let in_cmdline = mode() == 'c'
+  " We want to concat the deleted text in the '-' register if we are deleting
+  " 'continuously'. In insert mode, 'continuously' means that, after previous
+  " deletion, ther is no changes in the buffer and the cursor stays in the
+  " same position; in cmdline mode, this means we are editing the same command
+  " line (both type and contents) and the cursor poistion is the same after
+  " previous deletion.
+  " In ohter cases, we reset the '-' register with the new deleted text.
+  let reset = !(in_cmdline
+        \ ? getcmdline() == get(g:, '_rl_cmd') &&
+          \ getcmdtype() == get(g:, '_rl_cmd_type') &&
+          \ getcmdpos() == get(g:, '_rl_cmd_pos')
+        \ : b:changedtick == get(b:, '_rl_changedtick') &&
+          \ getcurpos() == get(b:, '_rl_del_pos'))
+  let reg_contents = reset ? '' : getreg('-')
+  let reg_new_contents = a:forward ? reg_contents . a:text_deleted
+        \ : a:text_deleted . reg_contents
+  call setreg('-', reg_new_contents)
+
+  " Record the cursor position after deleting the text
+  if in_cmdline
+    if exists('*timer_start')
+      autocmd CmdlineChanged * ++once call timer_start(0,
+            \ {-> execute('let g:_rl_cmd = getcmdline() |'
+                      \ . 'let g:_rl_cmd_pos = getcmdpos() |'
+                      \ . 'let g:_rl_cmd_type = getcmdtype() |'
+                      \ . 'let g:_rl_del_lock = 0')})
+    endif
+  else
+    autocmd TextChangedI * ++once
+          \ let b:_rl_del_pos = getcurpos() |
+          \ let b:_rl_changedtick = b:changedtick |
+          \ let g:_rl_del_lock = 0
+  endif
+
+  " Set 'sts' and 'sw' to 1 temporarily to avoid removing multiple chars at
+  " once on one `<BS>`
+  if !a:forward && !in_cmdline
+    let b:_rl_sts = &sts
+    let b:_rl_sw = &sw
+    let &sts = 1
+    let &sw = 1
+    autocmd TextChangedI * ++once
+          \ if exists('b:_rl_sts') && exists('b:_rl_sw') |
+            \ let &sts = b:_rl_sts |
+            \ let &sw = b:_rl_sw |
+            \ unlet b:_rl_sts |
+            \ unlet b:_rl_sw |
+          \ endif
+  endif
+
+  " Use `<C-g>u` to start a new change for each word deletion
+  return (in_cmdline ? '' : "\<C-g>u")
+        \ . repeat(a:forward ? "\<Del>" : "\<BS>", strlen(a:text_deleted))
 endfunction
+
+function! s:ic_ctrl_u() abort
+  let line_before = s:get_current_line()[0:max([0, s:get_current_col() - 2])]
+  echom 'line_before: "' line_before . '"'
+  return s:ic_small_del(s:start_of_line() && !s:first_line()
+        \ ? "\n"
+        \ : (line_before =~# '\S'
+          \ ? substitute(line_before, '^\s*', '', '')
+          \ : line_before), 0)
+endfunction
+
+function! s:i_ctrl_y() abort
+  if pumvisible()
+    call feedkeys("\<C-y>", 'n')
+    return
+  endif
+
+  let linenr = line('.')
+  let colnr = col('.')
+  let current_line = getline('.')
+  let lines = split(getreg('-'), "\n", 1)
+  let lines[0] = current_line[:max([0, colnr - 2])] . lines[0]
+  let target_cursor = [
+        \ linenr + len(lines) - 1,
+        \ strlen(lines[len(lines) - 1]) + 1]
+  let lines[-1] = lines[-1] . current_line[colnr - 1:]
+
+  function! InoreCtrlYSetLines(_) abort closure
+    call feedkeys("\<C-g>u", 'n')
+    call setline(linenr, lines[0])
+    call append(linenr, lines[1:])
+    call cursor(target_cursor[0], target_cursor[1])
+  endfunction
+
+  call timer_start(0, 'InoreCtrlYSetLines')
+endfunction
+
+function! s:ic_ctrl_y() abort
+  return pumvisible() ? "\<C-y>" : "\<C-r>-"
+endfunction
+
+function! s:ic_ctrl_a() abort
+  let current_line = s:get_current_line()
+  return "\<Home>" . (current_line[:max([0, s:get_current_col() - 2])] =~# '\S'
+        \ ? repeat("\<Right>", strlen(matchstr(current_line, '^\s*')))
+        \ : '')
+endfunction
+
+function! s:ic_ctrl_e() abort
+  return pumvisible() ? "\<C-e>" : "\<End>"
+endfunction
+
+function! s:ic_ctrl_w() abort
+  return s:ic_small_del(s:start_of_line() && !s:first_line()
+        \ ? "\n"
+        \ : s:get_word_before(), 0)
+endfunction
+
+function! s:ic_ctrl_k() abort
+  return s:ic_small_del(s:end_of_line() && !s:last_line()
+        \ ? "\n"
+        \ : s:get_current_line()[s:get_current_col() - 1:], 1)
+endfunction
+
+function! s:ic_meta_d() abort
+  return s:ic_small_del(s:end_of_line() && !s:last_line()
+        \ ? "\n"
+        \ : s:get_word_after(), 1)
+endfunction
+
+" <M-Del>
+map! <Esc>[3;3~ <C-w>
+
+noremap! <C-d>  <Del>
+cnoremap <C-b>  <Left>
+cnoremap <C-f>  <Right>
 
 inoremap <expr> <C-b>  <SID>i_ctrl_b()
 inoremap <expr> <C-f>  <SID>i_ctrl_f()
-inoremap <expr> <C-k>  <SID>i_ctrl_k()
+noremap! <expr> <C-k>  <SID>ic_ctrl_k()
 noremap! <expr> <C-u>  <SID>ic_ctrl_u()
 noremap! <expr> <Esc>f <SID>ic_meta_f()
 noremap! <expr> <Esc>d <SID>ic_meta_d()
 noremap! <expr> <Esc>b <SID>ic_meta_b()
+noremap! <expr> <C-a>  <SID>ic_ctrl_a()
+noremap! <expr> <C-e>  <SID>ic_ctrl_e()
+noremap! <expr> <C-w>  <SID>ic_ctrl_w()
+
+if exists('*timer_start')
+  inoremap <expr> <C-y> <SID>i_ctrl_y()
+  cnoremap <expr> <C-y> <SID>ic_ctrl_y()
+else
+  noremap! <expr> <C-y> <SID>ic_ctrl_y()
+endif
 " }}}2
 " }}}1
 
