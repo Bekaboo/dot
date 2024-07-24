@@ -409,23 +409,6 @@ if s:supportevents([
 endif
 " }}}2
 
-if s:supportevents(['BufWinEnter', 'BufUnload'])
-  " Update folds for given buffer
-  " param: bufnr integer
-  function! s:update_folds_once(bufnr)
-    if !getbufvar(a:bufnr, 'foldupdated', 0) && bufexists(a:bufnr)
-      call setbufvar(a:bufnr, 'foldupdated', 1)
-      exe 'normal! zx'
-    endif
-  endfunction
-
-  augroup UpdateFolds
-    au!
-    au BufWinEnter * :call s:update_folds_once(expand('<abuf>'))
-    au BufUnload   * :call setbufvar(expand('<abuf>'), 'foldupdated', 0)
-  augroup END
-endif
-
 " Colorscheme persistence over restarts {{{2
 "
 " Restore and switch background from viminfo file,
