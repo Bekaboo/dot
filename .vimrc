@@ -230,6 +230,274 @@ runtime ftplugin/man.vim
 call s:command_abbrev('man', 'Man')
 " }}}
 
+""" Autocmds {{{1
+" Check if an event or a list of events are supported
+" param: events string|string[] event or list of events
+" return: 0/1
+function! s:supportevents(events) abort
+  if type(a:events) == v:t_string
+    return exists('##' . a:events)
+  endif
+  if type(a:events) == v:t_list
+    for event in a:events
+      if !exists('##' . event)
+        return 0
+      endif
+    endfor
+    return 1
+  endif
+  return 0
+endfunction
+
+if s:supportevents('FileType')
+  augroup EnableSpellCheck
+    au!
+    au FileType text,tex,markdown,gitcommit,xml,html
+          \ silent! setlocal spell spellcapcheck='' spelllang=en_us
+          \                  spelloptions=camel spellsuggest=best,9
+  augroup END
+endif
+
+if s:supportevents(['BufLeave', 'WinLeave', 'FocusLost'])
+  function! s:auto_save(buf, file) abort
+    if getbufvar(a:buf, '&bt', '') ==# ''
+      silent! update
+    endif
+  endfunction
+  augroup AutoSave
+    au!
+    if has('patch-8.1113')
+      au BufLeave,WinLeave,FocusLost * ++nested
+            \ :call s:auto_save(expand('<abuf>'), expand('<afile>'))
+    else
+      au BufLeave,WinLeave,FocusLost *
+            \ :call s:auto_save(expand('<abuf>'), expand('<afile>'))
+    endif
+  augroup END
+endif
+
+if s:supportevents('QuickFixCmdPost') && exists('*timer_start')
+  function! s:defer_open_qflist(type) abort
+    if expand(a:type) =~# '^l'
+      call timer_start(0, {-> execute('bel lwindow')})
+    else
+      call timer_start(0, {-> execute('bot cwindow')})
+    endif
+  endfunction
+
+  augroup QuickFixAutoOpen
+    au!
+    au QuickFixCmdPost * if len(getqflist()) > 1 |
+          \ call s:defer_open_qflist(expand('<amatch>')) |
+          \ endif
+  augroup END
+endif
+
+if s:supportevents('VimResized')
+  augroup EqualWinSize
+    au!
+    au VimResized * wincmd =
+  augroup END
+endif
+
+if s:supportevents('BufReadPost')
+  augroup LastPosJmp
+    au!
+    au BufReadPost * if &ft !=# 'gitcommit' && &ft !=# 'gitrebase' |
+          \ exe 'silent! normal! g`"zvzz' |
+          \ endif
+  augroup END
+endif
+
+" Jump to last accessed window on closing the current one
+if s:supportevents('WinClosed')
+  augroup WinCloseJmp
+    au!
+    if has('patch-8.1113')
+      au WinClosed * ++nested if expand('<amatch>') == win_getid() |
+            \ wincmd p |
+            \ endif
+    else
+      au WinClosed * if expand('<amatch>') == win_getid() |
+            \ wincmd p |
+            \ endif
+    endif
+  augroup END
+endif
+
+if s:supportevents([
+      \ 'BufReadPost',
+      \ 'BufWinEnter',
+      \ 'WinEnter',
+      \ 'FileChangedShellPost'
+      \ ])
+  " Compute project directory for given path.
+  " param: fpath string
+  " param: a:1 patterns string[]? root patterns
+  " return: string returns path of project root directory if found,
+  "         else returns empty string
+  function! s:proj_dir(fpath, ...) abort
+    if a:fpath == ''
+      return ''
+    endif
+    let patterns = get(a:, 1, [
+        \ '.git/',
+        \ '.svn/',
+        \ '.bzr/',
+        \ '.hg/',
+        \ '.project/',
+        \ '.pro',
+        \ '.sln',
+        \ '.vcxproj',
+        \ 'Makefile',
+        \ 'makefile',
+        \ 'MAKEFILE',
+        \ '.gitignore',
+        \ '.editorconfig'])
+    let dirpath = fnamemodify(a:fpath, ':p:h') . ';'
+    for pattern in patterns
+      if pattern =~# '/$'
+        let target_path = finddir(pattern, dirpath)
+        if target_path !=# ''
+          return fnamemodify(target_path, ':p:h:h')
+        endif
+      else
+        let target_path = findfile(pattern, dirpath)
+        if target_path !=# ''
+          return fnamemodify(target_path, ':p:h')
+        endif
+      endif
+    endfor
+    return ''
+  endfunction
+
+  " Change current working directory to project root directory.
+  " param: fpath string path to current file
+  function! s:autocwd(fpath) abort
+    let fpath = fnamemodify(a:fpath, ':p')
+    if fpath ==# '' || !isdirectory(fpath) && !filereadable(fpath)
+      return
+    endif
+    let proj_dir = s:proj_dir(fpath)
+    if proj_dir !=# ''
+      exe 'lcd ' . proj_dir
+      return
+    endif
+    let dirname = fnamemodify(fpath, ':p:h')
+    if isdirectory(dirname)
+      exe 'lcd ' . dirname
+    endif
+  endfunction
+
+  augroup AutoCwd
+    au!
+    autocmd BufReadPost,BufWinEnter,FileChangedShellPost *
+          \ if &bt == '' && &ma | call <SID>autocwd(expand('<afile>')) | endif
+  augroup END
+endif
+
+if s:supportevents(['BufWinEnter', 'BufUnload'])
+  " Update folds for given buffer
+  " param: bufnr integer
+  function! s:update_folds_once(bufnr)
+    if !getbufvar(a:bufnr, 'foldupdated', 0) && bufexists(a:bufnr)
+      call setbufvar(a:bufnr, 'foldupdated', 1)
+      exe 'normal! zx'
+    endif
+  endfunction
+
+  augroup UpdateFolds
+    au!
+    au BufWinEnter * :call s:update_folds_once(expand('<abuf>'))
+    au BufUnload   * :call setbufvar(expand('<abuf>'), 'foldupdated', 0)
+  augroup END
+endif
+
+" Restore and switch background from viminfo file,
+" for this autocmd to work properly, 'viminfo' option must contain '!'
+if ($COLORTERM ==# 'truecolor' || has('gui_running'))
+      \ && s:supportevents(['VimEnter', 'OptionSet', 'ColorScheme'])
+
+  " Restore &background and colorscheme from viminfo file
+  function! s:theme_restore() abort
+    let BACKGROUND = get(g:, 'BACKGROUND', '')
+    if BACKGROUND !=# '' && BACKGROUND !=# &background
+      let &background=BACKGROUND
+    endif
+    let colors_name = get(g:, 'colors_name', '')
+    let COLORSNAME = get(g:, 'COLORSNAME', '')
+    if colors_name ==# '' || COLORSNAME != colors_name
+      exe 'silent! colorscheme ' . COLORSNAME
+      call s:theme_fix_hlspell()
+    endif
+  endfunction
+
+  " Save current &background and colorscheme to global variables
+  function! s:theme_save() abort
+    let g:BACKGROUND = &background
+    let g:COLORSNAME = get(g:, 'colors_name', '')
+    silent! wviminfo
+  endfunction
+
+  " Override hl-SpellBad, hl-SpellCap, hl-SpellRare, and hl-SpellLocalA
+  function! s:theme_fix_hlspell() abort
+    hi clear SpellBad
+    hi! SpellBad term=underline gui=underline
+    hi! link SpellCap SpellBad
+    hi! link SpellRare SpellBad
+    hi! link SpellLocal SpellBad
+  endfunction
+
+  augroup ThemeSwitch
+    au!
+    au VimEnter    * :call s:theme_restore()
+    au ColorScheme * :call s:theme_save()
+    au ColorScheme * :call s:theme_fix_hlspell()
+  augroup END
+endif
+
+" Clear strange escape sequence shown when using alt keys to navigate away
+" from tmux panes running vim
+if s:supportevents('FocusLost')
+  augroup FocusLostClearScreen
+    au!
+    au FocusLost * :silent! redraw!
+  augroup END
+endif
+
+if s:supportevents(['CursorMoved', 'ModeChanged'])
+  augroup FixVirtualEditCursorPos
+    au!
+    " Record cursor position in visual mode if virtualedit is set and
+    " contains 'all' or 'block'
+    au CursorMoved * if &ve =~# 'all' |
+          \ let w:ve_cursor = getcurpos() |
+          \ endif
+    " Keep cursor position after finishing visual mode replacement when virtual
+    " edit is enabled
+    au ModeChanged [vV\x16]*:n if &ve =~# 'all' && exists('w:ve_cursor') |
+          \ call cursor([w:ve_cursor[1], w:ve_cursor[2] + w:ve_cursor[3]]) |
+          \ endif
+  augroup END
+endif
+
+" Consistent &iskeyword in Ex command-line
+if s:supportevents(['CmdlineEnter', 'CmdlineLeave'])
+  augroup FixCmdLineIskeyword
+    au!
+    au CmdlineEnter [:>/?=@] let g:_isk_lisp_buf = str2nr(expand('<abuf>')) |
+          \ let g:_isk_save = getbufvar(g:_isk_lisp_buf, '&isk', '') |
+          \ let g:_lisp_save = getbufvar(g:_isk_lisp_buf, '&lisp', 0) |
+          \ setlocal isk& lisp&
+    au CmdlineLeave [:>/?=@] if
+            \ exists('g:_isk_lisp_buf') && bufexists(g:_isk_lisp_buf) |
+          \ call setbufvar(g:_isk_lisp_buf, '&isk', g:_isk_save) |
+          \ call setbufvar(g:_isk_lisp_buf, '&lisp', g:_lisp_save) |
+          \ unlet g:_isk_save g:_lisp_save g:_isk_lisp_buf |
+          \ endif
+endif
+" }}}1
+
 """ Keymaps {{{1
 let g:mapleader = ' '
 let g:maplocalleader = ' '
@@ -617,7 +885,8 @@ function! s:ic_meta_b() abort
   let line_str = getline(target_linenr)
   return (current_linenr == target_linenr ? '' : "\<End>")
         \ . repeat("\<Up>", current_linenr - target_linenr)
-        \ . repeat("\<Left>", strlen(s:get_word_before(line_str, strlen(line_str))))
+        \ . repeat("\<Left>", strlen(s:get_word_before(line_str,
+                                                      \ strlen(line_str))))
 endfunction
 
 function! s:ic_meta_f() abort
@@ -636,8 +905,8 @@ function! s:ic_meta_f() abort
 endfunction
 
 " Callback function for small delete, e.g. `<C-w>`, `<M-BS>`, `<M-d>`, `<C-k>`,
-" `<C-u>`, etc keymaps; sets the small delete register '-' properly, should be used
-" with `{ expr = true }`
+" `<C-u>`, etc keymaps; sets the small delete register '-' properly, should be
+" used " with `{ expr = true }`
 " param: text_deleted string
 " param: forward 0/1
 " return: string
@@ -672,12 +941,20 @@ function! s:ic_small_del(text_deleted, forward) abort
 
   " Record the cursor position after deleting the text
   if in_cmdline
+    " Defer setting `g:_rl_cmd*` because CmdlineChanged is triggered BEFORE
+    " the actual change happens, however we want to get the command line
+    " contents, type and curosr position AFTER the change happens so that
+    " we can decide whether to concat the contents in the small-delete register
     if exists('*timer_start')
       autocmd CmdlineChanged * ++once call timer_start(0,
             \ {-> execute('let g:_rl_cmd = getcmdline() |'
                       \ . 'let g:_rl_cmd_pos = getcmdpos() |'
                       \ . 'let g:_rl_cmd_type = getcmdtype() |'
                       \ . 'let g:_rl_del_lock = 0')})
+    else
+      " If `timer_start()` does not exist, we still need to unlock
+      " `g:_rl_del_lock` to allow next small deletion
+      autocmd CmdlineChanged * ++once let g:_rl_del_lock = 0
     endif
   else
     autocmd TextChangedI * ++once
@@ -707,46 +984,6 @@ function! s:ic_small_del(text_deleted, forward) abort
         \ . repeat(a:forward ? "\<Del>" : "\<BS>", strlen(a:text_deleted))
 endfunction
 
-function! s:ic_ctrl_u() abort
-  let line_before = s:get_current_line()[0:max([0, s:get_current_col() - 2])]
-  echom 'line_before: "' line_before . '"'
-  return s:ic_small_del(s:start_of_line() && !s:first_line()
-        \ ? "\n"
-        \ : (line_before =~# '\S'
-          \ ? substitute(line_before, '^\s*', '', '')
-          \ : line_before), 0)
-endfunction
-
-function! s:i_ctrl_y() abort
-  if pumvisible()
-    call feedkeys("\<C-y>", 'n')
-    return
-  endif
-
-  let linenr = line('.')
-  let colnr = col('.')
-  let current_line = getline('.')
-  let lines = split(getreg('-'), "\n", 1)
-  let lines[0] = current_line[:max([0, colnr - 2])] . lines[0]
-  let target_cursor = [
-        \ linenr + len(lines) - 1,
-        \ strlen(lines[len(lines) - 1]) + 1]
-  let lines[-1] = lines[-1] . current_line[colnr - 1:]
-
-  function! InoreCtrlYSetLines(_) abort closure
-    call feedkeys("\<C-g>u", 'n')
-    call setline(linenr, lines[0])
-    call append(linenr, lines[1:])
-    call cursor(target_cursor[0], target_cursor[1])
-  endfunction
-
-  call timer_start(0, 'InoreCtrlYSetLines')
-endfunction
-
-function! s:ic_ctrl_y() abort
-  return pumvisible() ? "\<C-y>" : "\<C-r>-"
-endfunction
-
 function! s:ic_ctrl_a() abort
   let current_line = s:get_current_line()
   return "\<Home>" . (current_line[:max([0, s:get_current_col() - 2])] =~# '\S'
@@ -758,23 +995,42 @@ function! s:ic_ctrl_e() abort
   return pumvisible() ? "\<C-e>" : "\<End>"
 endfunction
 
-function! s:ic_ctrl_w() abort
-  return s:ic_small_del(s:start_of_line() && !s:first_line()
-        \ ? "\n"
-        \ : s:get_word_before(), 0)
+function! s:ic_ctrl_y() abort
+  return pumvisible() ? "\<C-y>" : "\<C-r>-"
 endfunction
 
-function! s:ic_ctrl_k() abort
-  return s:ic_small_del(s:end_of_line() && !s:last_line()
-        \ ? "\n"
-        \ : s:get_current_line()[s:get_current_col() - 1:], 1)
-endfunction
+if exists('*timer_start')
+  function! s:i_ctrl_y() abort
+    if pumvisible()
+      call feedkeys("\<C-y>", 'n')
+      return
+    endif
 
-function! s:ic_meta_d() abort
-  return s:ic_small_del(s:end_of_line() && !s:last_line()
-        \ ? "\n"
-        \ : s:get_word_after(), 1)
-endfunction
+    let linenr = line('.')
+    let colnr = col('.')
+    let current_line = getline('.')
+    let lines = split(getreg('-'), "\n", 1)
+    let lines[0] = current_line[:max([0, colnr - 2])] . lines[0]
+    let target_cursor = [
+          \ linenr + len(lines) - 1,
+          \ strlen(lines[len(lines) - 1]) + 1]
+    let lines[-1] = lines[-1] . current_line[colnr - 1:]
+
+    function! InoreCtrlYSetLines(_) abort closure
+      call feedkeys("\<C-g>u", 'n')
+      call setline(linenr, lines[0])
+      call append(linenr, lines[1:])
+      call cursor(target_cursor[0], target_cursor[1])
+    endfunction
+
+    call timer_start(0, 'InoreCtrlYSetLines')
+  endfunction
+
+  inoremap <expr> <C-y> <SID>i_ctrl_y()
+  cnoremap <expr> <C-y> <SID>ic_ctrl_y()
+else
+  noremap! <expr> <C-y> <SID>ic_ctrl_y()
+endif
 
 " <M-Del>
 map! <Esc>[3;3~ <C-w>
@@ -785,290 +1041,61 @@ cnoremap <C-f>  <Right>
 
 inoremap <expr> <C-b>  <SID>i_ctrl_b()
 inoremap <expr> <C-f>  <SID>i_ctrl_f()
-noremap! <expr> <C-k>  <SID>ic_ctrl_k()
-noremap! <expr> <C-u>  <SID>ic_ctrl_u()
 noremap! <expr> <Esc>f <SID>ic_meta_f()
-noremap! <expr> <Esc>d <SID>ic_meta_d()
 noremap! <expr> <Esc>b <SID>ic_meta_b()
 noremap! <expr> <C-a>  <SID>ic_ctrl_a()
 noremap! <expr> <C-e>  <SID>ic_ctrl_e()
-noremap! <expr> <C-w>  <SID>ic_ctrl_w()
 
-if exists('*timer_start')
-  inoremap <expr> <C-y> <SID>i_ctrl_y()
-  cnoremap <expr> <C-y> <SID>ic_ctrl_y()
+if s:supportevents(['TextChangedI', 'CmdlineChanged']) && has('patch-8.1.1113')
+  " `ic_small_del()` requires support for `TextChangedI`, `CmdlineChanged`
+  " events and the `++once` argument (patch-8.1.1113)
+  function! s:ic_ctrl_w() abort
+    return s:ic_small_del(s:start_of_line() && !s:first_line()
+          \ ? "\n"
+          \ : s:get_word_before(), 0)
+  endfunction
+
+  function! s:ic_ctrl_u() abort
+    let line_before = s:get_current_line()[0:max([0, s:get_current_col() - 2])]
+    return s:ic_small_del(s:start_of_line() && !s:first_line()
+          \ ? "\n"
+          \ : (line_before =~# '\S'
+            \ ? substitute(line_before, '^\s*', '', '')
+            \ : line_before), 0)
+  endfunction
+
+  function! s:ic_ctrl_k() abort
+    return s:ic_small_del(s:end_of_line() && !s:last_line()
+          \ ? "\n"
+          \ : s:get_current_line()[s:get_current_col() - 1:], 1)
+  endfunction
+
+  function! s:ic_meta_d() abort
+    return s:ic_small_del(s:end_of_line() && !s:last_line()
+          \ ? "\n"
+          \ : s:get_word_after(), 1)
+  endfunction
+
+  noremap! <expr> <C-w>  <SID>ic_ctrl_w()
+  noremap! <expr> <C-u>  <SID>ic_ctrl_u()
+  noremap! <expr> <C-k>  <SID>ic_ctrl_k()
+  noremap! <expr> <Esc>d <SID>ic_meta_d()
 else
-  noremap! <expr> <C-y> <SID>ic_ctrl_y()
+  function! s:ic_ctrl_k() abort
+    return (mode() == 'c' ? '' : "\<C-g>u")
+          \ . repeat("\<Del>",
+            \ strlen(s:get_current_line()[s:get_current_col() - 1:]))
+  endfunction
+
+  function! s:ic_meta_d() abort
+    return (mode() == 'c' ? '' : "\<C-g>u")
+          \ . repeat("\<Del>", strlen(s:get_word_after()))
+  endfunction
+
+  noremap! <expr> <C-k>  <SID>ic_ctrl_k()
+  noremap! <expr> <Esc>d <SID>ic_meta_d()
 endif
 " }}}2
-" }}}1
-
-""" Autocmds {{{1
-" Check if an event or a list of events are supported
-" param: events string|string[] event or list of events
-" return: 0/1
-function! s:supportevents(events) abort
-  if type(a:events) == v:t_string
-    return exists('##' . a:events)
-  endif
-  if type(a:events) == v:t_list
-    for event in a:events
-      if !exists('##' . event)
-        return 0
-      endif
-    endfor
-    return 1
-  endif
-  return 0
-endfunction
-
-if s:supportevents('FileType')
-  augroup EnableSpellCheck
-    au!
-    au FileType text,tex,markdown,gitcommit,xml,html
-          \ silent! setlocal spell spellcapcheck='' spelllang=en_us
-          \                  spelloptions=camel spellsuggest=best,9
-  augroup END
-endif
-
-if s:supportevents(['BufLeave', 'WinLeave', 'FocusLost'])
-  function! s:auto_save(buf, file) abort
-    if getbufvar(a:buf, '&bt', '') ==# ''
-      silent! update
-    endif
-  endfunction
-  augroup AutoSave
-    au!
-    if has('patch-8.1113')
-      au BufLeave,WinLeave,FocusLost * ++nested
-            \ :call s:auto_save(expand('<abuf>'), expand('<afile>'))
-    else
-      au BufLeave,WinLeave,FocusLost *
-            \ :call s:auto_save(expand('<abuf>'), expand('<afile>'))
-    endif
-  augroup END
-endif
-
-if s:supportevents('QuickFixCmdPost') && exists('*timer_start')
-  function! s:defer_open_qflist(type) abort
-    if expand(a:type) =~# '^l'
-      call timer_start(0, {-> execute('bel lwindow')})
-    else
-      call timer_start(0, {-> execute('bot cwindow')})
-    endif
-  endfunction
-
-  augroup QuickFixAutoOpen
-    au!
-    au QuickFixCmdPost * if len(getqflist()) > 1 |
-          \ call s:defer_open_qflist(expand('<amatch>')) |
-          \ endif
-  augroup END
-endif
-
-if s:supportevents('VimResized')
-  augroup EqualWinSize
-    au!
-    au VimResized * wincmd =
-  augroup END
-endif
-
-if s:supportevents('BufReadPost')
-  augroup LastPosJmp
-    au!
-    au BufReadPost * if &ft !=# 'gitcommit' && &ft !=# 'gitrebase' |
-          \ exe 'silent! normal! g`"zvzz' |
-          \ endif
-  augroup END
-endif
-
-" Jump to last accessed window on closing the current one
-if s:supportevents('WinClosed')
-  augroup WinCloseJmp
-    au!
-    if has('patch-8.1113')
-      au WinClosed * ++nested if expand('<amatch>') == win_getid() |
-            \ wincmd p |
-            \ endif
-    else
-      au WinClosed * if expand('<amatch>') == win_getid() |
-            \ wincmd p |
-            \ endif
-    endif
-  augroup END
-endif
-
-if s:supportevents([
-      \ 'BufReadPost',
-      \ 'BufWinEnter',
-      \ 'WinEnter',
-      \ 'FileChangedShellPost'
-      \ ])
-  " Compute project directory for given path.
-  " param: fpath string
-  " param: a:1 patterns string[]? root patterns
-  " return: string returns path of project root directory if found,
-  "         else returns empty string
-  function! s:proj_dir(fpath, ...) abort
-    if a:fpath == ''
-      return ''
-    endif
-    let patterns = get(a:, 1, [
-        \ '.git/',
-        \ '.svn/',
-        \ '.bzr/',
-        \ '.hg/',
-        \ '.project/',
-        \ '.pro',
-        \ '.sln',
-        \ '.vcxproj',
-        \ 'Makefile',
-        \ 'makefile',
-        \ 'MAKEFILE',
-        \ '.gitignore',
-        \ '.editorconfig'])
-    let dirpath = fnamemodify(a:fpath, ':p:h') . ';'
-    for pattern in patterns
-      if pattern =~# '/$'
-        let target_path = finddir(pattern, dirpath)
-        if target_path !=# ''
-          return fnamemodify(target_path, ':p:h:h')
-        endif
-      else
-        let target_path = findfile(pattern, dirpath)
-        if target_path !=# ''
-          return fnamemodify(target_path, ':p:h')
-        endif
-      endif
-    endfor
-    return ''
-  endfunction
-
-  " Change current working directory to project root directory.
-  " param: fpath string path to current file
-  function! s:autocwd(fpath) abort
-    let fpath = fnamemodify(a:fpath, ':p')
-    if fpath ==# '' || !isdirectory(fpath) && !filereadable(fpath)
-      return
-    endif
-    let proj_dir = s:proj_dir(fpath)
-    if proj_dir !=# ''
-      exe 'lcd ' . proj_dir
-      return
-    endif
-    let dirname = fnamemodify(fpath, ':p:h')
-    if isdirectory(dirname)
-      exe 'lcd ' . dirname
-    endif
-  endfunction
-
-  augroup AutoCwd
-    au!
-    autocmd BufReadPost,BufWinEnter,FileChangedShellPost *
-          \ if &bt == '' && &ma | call <SID>autocwd(expand('<afile>')) | endif
-  augroup END
-endif
-
-if s:supportevents(['BufWinEnter', 'BufUnload'])
-  " Update folds for given buffer
-  " param: bufnr integer
-  function! s:update_folds_once(bufnr)
-    if !getbufvar(a:bufnr, 'foldupdated', 0) && bufexists(a:bufnr)
-      call setbufvar(a:bufnr, 'foldupdated', 1)
-      exe 'normal! zx'
-    endif
-  endfunction
-
-  augroup UpdateFolds
-    au!
-    au BufWinEnter * :call s:update_folds_once(expand('<abuf>'))
-    au BufUnload   * :call setbufvar(expand('<abuf>'), 'foldupdated', 0)
-  augroup END
-endif
-
-" Restore and switch background from viminfo file,
-" for this autocmd to work properly, 'viminfo' option must contain '!'
-if ($COLORTERM ==# 'truecolor' || has('gui_running'))
-      \ && s:supportevents(['VimEnter', 'OptionSet', 'ColorScheme'])
-
-  " Restore &background and colorscheme from viminfo file
-  function! s:theme_restore() abort
-    let BACKGROUND = get(g:, 'BACKGROUND', '')
-    if BACKGROUND !=# '' && BACKGROUND !=# &background
-      let &background=BACKGROUND
-    endif
-    let colors_name = get(g:, 'colors_name', '')
-    let COLORSNAME = get(g:, 'COLORSNAME', '')
-    if colors_name ==# '' || COLORSNAME != colors_name
-      exe 'silent! colorscheme ' . COLORSNAME
-      call s:theme_fix_hlspell()
-    endif
-  endfunction
-
-  " Save current &background and colorscheme to global variables
-  function! s:theme_save() abort
-    let g:BACKGROUND = &background
-    let g:COLORSNAME = get(g:, 'colors_name', '')
-    silent! wviminfo
-  endfunction
-
-  " Override hl-SpellBad, hl-SpellCap, hl-SpellRare, and hl-SpellLocalA
-  function! s:theme_fix_hlspell() abort
-    hi clear SpellBad
-    hi! SpellBad term=underline gui=underline
-    hi! link SpellCap SpellBad
-    hi! link SpellRare SpellBad
-    hi! link SpellLocal SpellBad
-  endfunction
-
-  augroup ThemeSwitch
-    au!
-    au VimEnter    * :call s:theme_restore()
-    au ColorScheme * :call s:theme_save()
-    au ColorScheme * :call s:theme_fix_hlspell()
-  augroup END
-endif
-
-" Clear strange escape sequence shown when using alt keys to navigate away
-" from tmux panes running vim
-if s:supportevents('FocusLost')
-  augroup FocusLostClearScreen
-    au!
-    au FocusLost * :silent! redraw!
-  augroup END
-endif
-
-if s:supportevents(['CursorMoved', 'ModeChanged'])
-  augroup FixVirtualEditCursorPos
-    au!
-    " Record cursor position in visual mode if virtualedit is set and
-    " contains 'all' or 'block'
-    au CursorMoved * if &ve =~# 'all' |
-          \ let w:ve_cursor = getcurpos() |
-          \ endif
-    " Keep cursor position after finishing visual mode replacement when virtual
-    " edit is enabled
-    au ModeChanged [vV\x16]*:n if &ve =~# 'all' && exists('w:ve_cursor') |
-          \ call cursor([w:ve_cursor[1], w:ve_cursor[2] + w:ve_cursor[3]]) |
-          \ endif
-  augroup END
-endif
-
-" Consistent &iskeyword in Ex command-line
-if s:supportevents(['CmdlineEnter', 'CmdlineLeave'])
-  augroup FixCmdLineIskeyword
-    au!
-    au CmdlineEnter [:>/?=@] let g:_isk_lisp_buf = str2nr(expand('<abuf>')) |
-          \ let g:_isk_save = getbufvar(g:_isk_lisp_buf, '&isk', '') |
-          \ let g:_lisp_save = getbufvar(g:_isk_lisp_buf, '&lisp', 0) |
-          \ setlocal isk& lisp&
-    au CmdlineLeave [:>/?=@] if
-            \ exists('g:_isk_lisp_buf') && bufexists(g:_isk_lisp_buf) |
-          \ call setbufvar(g:_isk_lisp_buf, '&isk', g:_isk_save) |
-          \ call setbufvar(g:_isk_lisp_buf, '&lisp', g:_lisp_save) |
-          \ unlet g:_isk_save g:_lisp_save g:_isk_lisp_buf |
-          \ endif
-endif
 " }}}1
 
 """ Plugin Settings {{{1
