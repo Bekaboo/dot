@@ -249,6 +249,7 @@ function! s:supportevents(events) abort
   return 0
 endfunction
 
+" Enable spellcheck for some filetypes {{{2
 if s:supportevents('FileType')
   augroup EnableSpellCheck
     au!
@@ -257,7 +258,9 @@ if s:supportevents('FileType')
           \                  spelloptions=camel spellsuggest=best,9
   augroup END
 endif
+" }}}2
 
+" Autosave on focus lost, window/buf leave, etc. {{{2
 if s:supportevents(['BufLeave', 'WinLeave', 'FocusLost'])
   function! s:auto_save(buf, file) abort
     if getbufvar(a:buf, '&bt', '') ==# ''
@@ -275,7 +278,9 @@ if s:supportevents(['BufLeave', 'WinLeave', 'FocusLost'])
     endif
   augroup END
 endif
+" }}}2
 
+" Open quickfix/location list automatically when set with commands {{{2
 if s:supportevents('QuickFixCmdPost') && exists('*timer_start')
   function! s:defer_open_qflist(type) abort
     if expand(a:type) =~# '^l'
@@ -292,14 +297,18 @@ if s:supportevents('QuickFixCmdPost') && exists('*timer_start')
           \ endif
   augroup END
 endif
+" }}} 2
 
+" Make all widnows the same height/width on vim resized {{{2
 if s:supportevents('VimResized')
   augroup EqualWinSize
     au!
     au VimResized * wincmd =
   augroup END
 endif
+" }}}
 
+" Restore last position when opening a file {{{2
 if s:supportevents('BufReadPost')
   augroup LastPosJmp
     au!
@@ -308,8 +317,9 @@ if s:supportevents('BufReadPost')
           \ endif
   augroup END
 endif
+" }}}2
 
-" Jump to last accessed window on closing the current one
+" Jump to last accessed window on closing the current one {{{2
 if s:supportevents('WinClosed')
   augroup WinCloseJmp
     au!
@@ -324,7 +334,9 @@ if s:supportevents('WinClosed')
     endif
   augroup END
 endif
+" }}}2
 
+" Automatically setting cwd to the root directory {{{2
 if s:supportevents([
       \ 'BufReadPost',
       \ 'BufWinEnter',
@@ -395,6 +407,7 @@ if s:supportevents([
           \ if &bt == '' && &ma | call <SID>autocwd(expand('<afile>')) | endif
   augroup END
 endif
+" }}}2
 
 if s:supportevents(['BufWinEnter', 'BufUnload'])
   " Update folds for given buffer
@@ -413,6 +426,8 @@ if s:supportevents(['BufWinEnter', 'BufUnload'])
   augroup END
 endif
 
+" Colorscheme persistence over restarts {{{2
+"
 " Restore and switch background from viminfo file,
 " for this autocmd to work properly, 'viminfo' option must contain '!'
 if ($COLORTERM ==# 'truecolor' || has('gui_running'))
@@ -455,8 +470,9 @@ if ($COLORTERM ==# 'truecolor' || has('gui_running'))
     au ColorScheme * :call s:theme_fix_hlspell()
   augroup END
 endif
+" }}}2
 
-" Clear strange escape sequence shown when using alt keys to navigate away
+" Clear strange escape sequence shown when using alt keys to navigate away {{{2
 " from tmux panes running vim
 if s:supportevents('FocusLost')
   augroup FocusLostClearScreen
@@ -480,8 +496,9 @@ if s:supportevents(['CursorMoved', 'ModeChanged'])
           \ endif
   augroup END
 endif
+" }}}2
 
-" Consistent &iskeyword in Ex command-line
+" Consistent &iskeyword in Ex command-line {{{2
 if s:supportevents(['CmdlineEnter', 'CmdlineLeave'])
   augroup FixCmdLineIskeyword
     au!
@@ -496,12 +513,16 @@ if s:supportevents(['CmdlineEnter', 'CmdlineLeave'])
           \ unlet g:_isk_save g:_lisp_save g:_isk_lisp_buf |
           \ endif
 endif
+" }}}2
 " }}}1
 
 """ Keymaps {{{1
+" Leader & localleader keys {{{2
 let g:mapleader = ' '
 let g:maplocalleader = ' '
+" }}}2
 
+" Moving up & down in visual line {{{2
 nnoremap <expr> j        v:count ? "j"      : "gj"
 xnoremap <expr> j        v:count ? "j"      : "gj"
 nnoremap <expr> k        v:count ? "k"      : "gk"
@@ -513,11 +534,14 @@ xnoremap <expr> <Up>     v:count ? "<Up>"   : "g<Up>"
 
 inoremap <Down> <C-o>g<Down>
 inoremap <Up>   <C-o>g<Up>
+" }}}2
 
+" Switching buffers {{{2
 nnoremap <silent> ]b :exec v:count1 . 'bn'<CR>
 nnoremap <silent> [b :exec v:count1 . 'bp'<CR>
+" }}}
 
-" Tabpages
+" Tabpages {{{2
 " param: tab_action tab switch command 'tabnext'|'tabprev'
 " param: a:1 default_count number? default to v:count
 " return: 0
@@ -547,28 +571,37 @@ for i in range(1, 9)
           \ :<C-u>call TabSwitch('tabnext', %d)<CR>", map, i, i)
   endfor
 endfor
+" }}}2
 
 inoremap <C-l> <C-x><C-l>
 
+" Spell {{{2
 inoremap <C-g>+ <Esc>[szg`]a
 inoremap <C-g>= <C-g>u<Esc>[s1z=`]a<C-G>u
+" }}}
 
+" Selecting around quotes without extra spaces {{{2
 xmap a" 2i"
 xmap a' 2i'
 xmap a` 2i`
 omap a" 2i"
 omap a' 2i'
 omap a` 2i`
+" }}}2
 
+" Edit current file path {{{2
 nnoremap -      :e%:p:h<CR>
 xnoremap - <Esc>:e%:p:h<CR>
+" }}}2
 
-" Enter insert mode, add a space after the cursor
+" Enter insert mode with a space after the cursor {{{2
 nnoremap <Esc>i i<Space><Left>
 xnoremap <Esc>I I<Space><Left>
 nnoremap <Esc>a a<Space><Left>
 xnoremap <Esc>A A<Space><Left>
+" }}}2
 
+" Jump to the fisrt/last line in paragraph {{{2
 " Return key seq to jump to the first line in paragraph
 " return: 0
 function! s:paragraph_first_line() abort
@@ -657,6 +690,7 @@ xmap <silent><expr> g{ <SID>paragraph_first_line()
 xmap <silent><expr> g} <SID>paragraph_last_line()
 omap <silent>       g{ :silent! normal Vg{<CR>
 omap <silent>       g} :silent! normal Vg}<CR>
+" }}}2
 
 " Text objects {{{2
 " Current buffer (file)
