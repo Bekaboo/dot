@@ -17,8 +17,10 @@
 	rs = reset
 	rt = restore
 	au = add -u
+	ap = add -p
 	ca = commit --amend
 	cm = commit -m
+	pf = push --force
 	mt = mergetool
 	is-ancestor = merge-base --is-ancestor
 	l = log --oneline --graph
@@ -27,6 +29,7 @@
 	rbp = rebase -i HEAD~5
 	rsp = reset --mixed HEAD^
 	rts = restore --staged
+	rtp = restore -p
 	sm = stash -m
 	sa = stash apply
 	sl = stash list
