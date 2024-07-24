@@ -2,14 +2,10 @@
 ---@param fpath string
 ---@return boolean
 local function should_block_file(fpath)
-  fpath = vim.fs.normalize(fpath)
-  return (
-    fpath:find('.git/rebase-merge', 1, true)
-    or fpath:find('.git/COMMIT_EDITMSG', 1, true)
-    or fpath:find('^/tmp')
-  )
-      and true
-    or false
+  local fname = vim.fs.basename(fpath)
+  return fname == 'rebase-merge'
+    or fname == 'COMMIT_EDITMSG'
+    or vim.startswith(vim.fs.normalize(fpath), '/tmp/')
 end
 
 if tonumber(vim.fn.system({ 'id', '-u' })) == 0 then
@@ -50,7 +46,7 @@ require('flatten').setup({
         vim.bo[buf].bufhidden = 'wipe'
         local keymap_utils = require('utils.keymap')
         -- stylua: ignore start
-        keymap_utils.command_abbrev('q',  'b#', { buffer = buf })
+        keymap_utils.command_abbrev('x',  'b#', { buffer = buf })
         keymap_utils.command_abbrev('wq', 'b#', { buffer = buf })
         keymap_utils.command_abbrev('bw', 'b#', { buffer = buf })
         keymap_utils.command_abbrev('bd', 'b#', { buffer = buf })
