@@ -6,48 +6,48 @@
 [init]
 	defaultBranch = master
 [alias]
-	a = add
-	b = branch
-	c = commit
-	d = diff
-	p = push
-	s = stash
-	w = show
-	st = status
-	rs = reset
-	rt = restore
-	au = add -u
-	ap = add -p
-	ca = commit --amend
-	cm = commit -m
-	pf = push --force
-	mt = mergetool
-	is-ancestor = merge-base --is-ancestor
-	l = log --oneline --graph
-	lc = !git ls-files -z | xargs -0 wc -l
-	rb = rebase
-	rbp = rebase -i HEAD~5
-	rsp = reset --mixed HEAD^
-	rts = restore --staged
-	rtp = restore -p
-	sm = stash -m
-	sa = stash apply
-	sl = stash list
-	sp = stash pop
-	sd = stash drop
-	sw = stash show
-	sww = stash show -p
-	ss = stash --staged
-	ssm = stash --staged -m
-	when-added = log --diff-filter=A
-	when-copied = log --diff-filter=C
-	when-deleted = log --diff-filter=D
-	when-modified = log --diff-filter=M
+	a                   = add
+	ap                  = add -p
+	au                  = add -u
+	b                   = branch
+	c                   = commit
+	ca                  = commit --amend
+	cm                  = commit -m
+	d                   = diff
+	is-ancestor         = merge-base --is-ancestor
+	l                   = log --oneline --graph
+	lc                  = !git ls-files -z | xargs -0 wc -l
+	mt                  = mergetool
+	p                   = push
+	pf                  = push --force
+	rb                  = rebase
+	rbp                 = rebase -i HEAD~5
+	rs                  = reset
+	rsp                 = reset --mixed HEAD^
+	rt                  = restore
+	rtp                 = restore -p
+	rts                 = restore --staged
+	s                   = stash
+	sa                  = stash apply
+	sd                  = stash drop
+	sl                  = stash list
+	sm                  = stash -m
+	sp                  = stash pop
+	ss                  = stash --staged
+	ssm                 = stash --staged -m
+	st                  = status
+	sw                  = stash show
+	sww                 = stash show -p
+	w                   = show
+	when-added          = log --diff-filter=A
+	when-copied         = log --diff-filter=C
+	when-deleted        = log --diff-filter=D
+	when-modified       = log --diff-filter=M
 	when-pairing-broken = log --diff-filter=B
-	when-renamed = log --diff-filter=R
-	when-type-changed = log --diff-filter=T
-	when-unknown = log --diff-filter=X
-	when-unmerged = log --diff-filter=U
+	when-renamed        = log --diff-filter=R
+	when-type-changed   = log --diff-filter=T
+	when-unknown        = log --diff-filter=X
+	when-unmerged       = log --diff-filter=U
 [merge]
 	tool = vimdiff
 	ff = false
