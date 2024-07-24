@@ -556,8 +556,6 @@ for i in range(1, 9)
 endfor
 " }}}2
 
-inoremap <C-l> <C-x><C-l>
-
 " Spell {{{2
 inoremap <C-g>+ <Esc>[szg`]a
 inoremap <C-g>= <C-g>u<Esc>[s1z=`]a<C-G>u
