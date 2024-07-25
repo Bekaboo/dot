@@ -11,6 +11,7 @@ M.opts = {
         and not vim.b[buf].winbar_no_attach
         and vim.wo[win].winbar == ''
         and vim.fn.win_gettype(win) == ''
+        and vim.bo[buf].ft ~= 'help'
         and utils.treesitter.is_active(buf)
     end,
     attach_events = {

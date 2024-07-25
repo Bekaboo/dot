@@ -8,7 +8,7 @@ function M.is_active(buf)
   if not vim.api.nvim_buf_is_valid(buf) then
     return false
   end
-  local ok = pcall(vim.treesitter.get_parser, buf, vim.bo[buf].ft)
+  local ok = pcall(vim.treesitter.get_parser, buf)
   return ok and true or false
 end
 
