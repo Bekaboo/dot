@@ -821,7 +821,7 @@ vim.api.nvim_create_user_command('Tabs', fzf.tabs, {})
 local function set_default_hlgroups()
   local hl = utils.hl
   local hl_norm = hl.get(0, { name = 'Normal', link = false })
-  local hl_speical = hl.get(0, { name = 'Special', link = false })
+  local hl_special = hl.get(0, { name = 'Special', link = false })
   hl.set(0, 'FzfLuaBufFlagAlt', {})
   hl.set(0, 'FzfLuaBufFlagCur', {})
   hl.set(0, 'FzfLuaBufName', {})
@@ -837,7 +837,7 @@ local function set_default_hlgroups()
   hl.set_default(0, 'TelescopeCounter', { link = 'LineNr' })
   hl.set_default(0, 'TelescopeTitle', {
     fg = hl_norm.bg,
-    bg = hl_speical.fg,
+    bg = hl_special.fg,
     bold = true,
   })
 end
