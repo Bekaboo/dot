@@ -19,6 +19,7 @@
 	lc                  = !git ls-files -z | xargs -0 wc -l
 	mt                  = mergetool
 	p                   = push
+	pl                  = pull
 	pf                  = push --force
 	rb                  = rebase
 	rbp                 = rebase -i HEAD~5
