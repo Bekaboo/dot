@@ -17,57 +17,88 @@ end
 ---Setup LSP keymaps
 ---@return nil
 local function setup_keymaps()
-  ---@param direction 'prev'|'next'
-  ---@param level 'ERROR'|'WARN'|'INFO'|'HINT'
-  ---@return function
-  local function goto_diagnostic(direction, level)
-    return function()
-      vim.diagnostic['goto_' .. direction]({
-        severity = vim.diagnostic.severity[level],
-      })
-    end
-  end
-  ---@param method string LSP method
-  ---@param fn_name string function name, used to index vim.lsp.buf
-  ---@param fallback string fallback keymap
-  ---@return function
-  local function if_supports_lsp_method(method, fn_name, fallback)
-    return function()
-      return supports_method(method, 0)
-          and string.format(
-            '<Cmd>lua vim.lsp.buf["%s"]()<CR>',
-            vim.fn.escape(fn_name, '"\\')
-          )
-        or fallback
-    end
-  end
-  -- stylua: ignore start
   vim.keymap.set({ 'n' }, 'gq;', vim.lsp.buf.format)
+  vim.keymap.set({ 'n', 'x' }, 'g/', vim.lsp.buf.references)
+  vim.keymap.set({ 'n', 'x' }, 'g.', vim.lsp.buf.implementation)
+  vim.keymap.set({ 'n', 'x' }, 'gd', function()
+    if supports_method('textDocument/definition', 0) then
+      vim.lsp.buf.definition()
+      return '<Nop>'
+    end
+    return 'gd'
+  end, { expr = true })
+  vim.keymap.set({ 'n', 'x' }, 'gD', function()
+    if supports_method('textDocument/typeDefinition', 0) then
+      vim.lsp.buf.type_definition()
+      return '<Nop>'
+    end
+    return 'gD'
+  end, { expr = true })
   vim.keymap.set({ 'n', 'x' }, '<Leader>r', vim.lsp.buf.rename)
   vim.keymap.set({ 'n', 'x' }, '<Leader>a', vim.lsp.buf.code_action)
   vim.keymap.set({ 'n', 'x' }, '<Leader><', vim.lsp.buf.incoming_calls)
   vim.keymap.set({ 'n', 'x' }, '<Leader>>', vim.lsp.buf.outgoing_calls)
   vim.keymap.set({ 'n', 'x' }, '<Leader>s', vim.lsp.buf.document_symbol)
   vim.keymap.set({ 'n', 'x' }, '<Leader>S', vim.lsp.buf.workspace_symbol)
-  vim.keymap.set({ 'n', 'x' }, '<Leader>e', vim.diagnostic.setloclist)
-  vim.keymap.set({ 'n', 'x' }, '<Leader>E', vim.diagnostic.setqflist)
-  vim.keymap.set({ 'n', 'x' }, '[d', utils.keymap.count_wrap(vim.diagnostic.goto_prev))
-  vim.keymap.set({ 'n', 'x' }, ']d', utils.keymap.count_wrap(vim.diagnostic.goto_next))
-  vim.keymap.set({ 'n', 'x' }, '[e', utils.keymap.count_wrap(vim.diagnostic.goto_prev))
-  vim.keymap.set({ 'n', 'x' }, ']e', utils.keymap.count_wrap(vim.diagnostic.goto_next))
-  vim.keymap.set({ 'n', 'x' }, '[E', utils.keymap.count_wrap(goto_diagnostic('prev', 'ERROR')))
-  vim.keymap.set({ 'n', 'x' }, ']E', utils.keymap.count_wrap(goto_diagnostic('next', 'ERROR')))
-  vim.keymap.set({ 'n', 'x' }, '[W', utils.keymap.count_wrap(goto_diagnostic('prev', 'WARN')))
-  vim.keymap.set({ 'n', 'x' }, ']W', utils.keymap.count_wrap(goto_diagnostic('next', 'WARN')))
-  vim.keymap.set({ 'n', 'x' }, '[I', utils.keymap.count_wrap(goto_diagnostic('prev', 'INFO')))
-  vim.keymap.set({ 'n', 'x' }, ']I', utils.keymap.count_wrap(goto_diagnostic('next', 'INFO')))
-  vim.keymap.set({ 'n', 'x' }, '[H', utils.keymap.count_wrap(goto_diagnostic('prev', 'HINT')))
-  vim.keymap.set({ 'n', 'x' }, ']H', utils.keymap.count_wrap(goto_diagnostic('next', 'HINT')))
-  vim.keymap.set({ 'n', 'x' }, 'g/', vim.lsp.buf.references)
-  vim.keymap.set({ 'n', 'x' }, 'g.', vim.lsp.buf.implementation)
-  vim.keymap.set({ 'n', 'x' }, 'gd', if_supports_lsp_method('textDocument/definition', 'definition', 'gd'), { expr = true })
-  vim.keymap.set({ 'n', 'x' }, 'gD', if_supports_lsp_method('textDocument/typeDefinition', 'type_definition', 'gD'), { expr = true })
-  -- stylua: ignore end
+  vim.keymap.set({ 'n', 'x' }, '<Leader>d', vim.diagnostic.setloclist)
+  vim.keymap.set({ 'n', 'x' }, '<Leader>D', vim.diagnostic.setqflist)
+  vim.keymap.set({ 'n', 'x' }, 'gy', function()
+    local diags = vim.diagnostic.get(0, { lnum = vim.fn.line('.') - 1 })
+    local n_diags = #diags
+    if n_diags == 0 then
+      vim.notify(
+        '[LSP] no diagnostics found in current line',
+        vim.log.levels.WARN
+      )
+      return
+    end
+
+    ---@param msg string
+    local function _yank(msg)
+      vim.fn.setreg('"', msg)
+      vim.fn.setreg(vim.v.register, msg)
+    end
+
+    if n_diags == 1 then
+      local msg = diags[1].message
+      _yank(msg)
+      vim.notify(
+        string.format([[[LSP] yanked diagnostic message '%s']], msg),
+        vim.log.levels.INFO
+      )
+      return
+    end
+
+    vim.ui.select(
+      vim.tbl_map(function(d)
+        return d.message
+      end, diags),
+      { prompt = 'Select diagnostic message to yank: ' },
+      _yank
+    )
+  end, { desc = '[LSP] Yank diagnostic message on current line' })
+
+  local c = utils.keymap.count_wrap
+  ---@param direction 'prev'|'next'
+  ---@param level 'ERROR'|'WARN'|'INFO'|'HINT'
+  ---@return function
+  local function diag_goto(direction, level)
+    return function()
+      vim.diagnostic['goto_' .. direction]({
+        severity = vim.diagnostic.severity[level],
+      })
+    end
+  end
+  vim.keymap.set({ 'n', 'x' }, '[d', c(vim.diagnostic.goto_prev))
+  vim.keymap.set({ 'n', 'x' }, ']d', c(vim.diagnostic.goto_next))
+  vim.keymap.set({ 'n', 'x' }, '[e', c(diag_goto('prev', 'ERROR')))
+  vim.keymap.set({ 'n', 'x' }, ']e', c(diag_goto('next', 'ERROR')))
+  vim.keymap.set({ 'n', 'x' }, '[w', c(diag_goto('prev', 'WARN')))
+  vim.keymap.set({ 'n', 'x' }, ']w', c(diag_goto('next', 'WARN')))
+  vim.keymap.set({ 'n', 'x' }, '[i', c(diag_goto('prev', 'INFO')))
+  vim.keymap.set({ 'n', 'x' }, ']i', c(diag_goto('next', 'INFO')))
+  vim.keymap.set({ 'n', 'x' }, '[h', c(diag_goto('prev', 'HINT')))
+  vim.keymap.set({ 'n', 'x' }, ']h', c(diag_goto('next', 'HINT')))
 end
 
 ---Setup LSP handlers overrides
@@ -140,6 +171,15 @@ local function setup_lsp_overrides()
       _open_floating_preview(contents, syntax, opts)
     vim.wo[floating_winnr].concealcursor = 'nc'
     return floating_bufnr, floating_winnr
+  end
+
+  -- Use loclist instead of qflist by default when showing document symbols
+  local _lsp_document_symbol = vim.lsp.buf.document_symbol
+  vim.lsp.buf.document_symbol = function()
+    ---@diagnostic disable-next-line: redundant-parameter
+    _lsp_document_symbol({
+      loclist = true,
+    })
   end
 end
 
@@ -1416,11 +1456,11 @@ local function setup()
     return
   end
   vim.g.loaded_lsp_diags = true
-  setup_keymaps()
   setup_lsp_overrides()
   setup_lsp_autoformat()
   setup_lsp_stopdetached()
   setup_diagnostic()
+  setup_keymaps()
   setup_commands('Lsp', subcommands.lsp, function(name)
     return vim.lsp[name] or vim.lsp.buf[name]
   end)
