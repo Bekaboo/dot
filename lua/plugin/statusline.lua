@@ -342,8 +342,9 @@ end
 ---@type table<string, string>
 local components = {
   align        = [[%=]],
+  flag         = [[%{%&bt==#''?'':(&bt==#'terminal'?'[Terminal] ':(&bt==#'help'?'%h ':(&pvw?'%w ':'')))%}]],
   diag         = [[%{%v:lua.require'plugin.statusline'.diag()%}]],
-  fname        = [[%{%&bt==#''?'%t':(&bt==#'terminal'?'[Terminal] '.bufname()->substitute('^term://.\{-}//\d\+:\s*','',''):'%F')%} ]],
+  fname        = [[%{%&bt==#''?'%t':(&bt==#'terminal'?bufname()->substitute('^term://.\{-}//\d\+:\s*','',''):'%F')%} ]],
   info         = [[%{%v:lua.require'plugin.statusline'.info()%}]],
   lsp_progress = [[%{%v:lua.require'plugin.statusline'.lsp_progress()%}]],
   mode         = [[%{%v:lua.require'plugin.statusline'.mode()%}]],
@@ -355,6 +356,7 @@ local components = {
 
 local stl = table.concat({
   components.mode,
+  components.flag,
   components.fname,
   components.info,
   components.align,
@@ -366,6 +368,7 @@ local stl = table.concat({
 
 local stl_nc = table.concat({
   components.padding,
+  components.flag,
   components.fname,
   components.align,
   components.truncate,
