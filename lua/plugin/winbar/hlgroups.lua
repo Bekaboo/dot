@@ -120,12 +120,13 @@ local function init()
   })
 
   clear_winbar_bg()
+  local gid_clear_bg = vim.api.nvim_create_augroup('WinBarHlClearBg', {})
   vim.api.nvim_create_autocmd('ColorScheme', {
-    group = vim.api.nvim_create_augroup('WinBarHlClearBg', {}),
+    group = gid_clear_bg,
     callback = clear_winbar_bg,
   })
   vim.api.nvim_create_autocmd('OptionSet', {
-    group = vim.api.nvim_create_augroup('WinBarHlClearBg', {}),
+    group = gid_clear_bg,
     pattern = 'background',
     callback = clear_winbar_bg,
   })
