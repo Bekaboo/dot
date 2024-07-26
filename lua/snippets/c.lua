@@ -43,42 +43,12 @@ M.syntax = {
     },
     c(1, {
       un.fmtad('printf("<str>\\n"<args>);', {
-        str = i(1),
-        args = i(2),
+        str = r(1, 'str'),
+        args = r(2, 'args'),
       }),
       un.fmtad('printf("<str>"<args>);', {
-        str = i(1),
-        args = i(2),
-      }),
-    })
-  ),
-  us.sn(
-    {
-      trig = 'as',
-      desc = 'assert()',
-    },
-    c(1, {
-      un.fmtad('assert(<expr>);', {
-        expr = i(1),
-      }),
-      un.fmtad('assert((<expr>) && "<msg>\\n");', {
-        expr = i(1),
-        msg = i(2, 'Error'),
-      }),
-    })
-  ),
-  us.sn(
-    {
-      trig = 'da',
-      desc = 'dbg_assert()',
-    },
-    c(1, {
-      un.fmtad('dbg_assert(<expr>);', {
-        expr = i(1),
-      }),
-      un.fmtad('dbg_assert((<expr>) && "<msg>\\n");', {
-        expr = i(1),
-        msg = i(2, 'Error'),
+        str = r(1, 'str'),
+        args = r(2, 'args'),
       }),
     })
   ),
@@ -89,12 +59,42 @@ M.syntax = {
     },
     c(1, {
       un.fmtad('dbg_printf("<str>\\n"<args>);', {
-        str = i(1),
-        args = i(2),
+        str = r(1, 'str'),
+        args = r(2, 'args'),
       }),
       un.fmtad('dbg_printf("<str>"<args>);', {
-        str = i(1),
-        args = i(2),
+        str = r(1, 'str'),
+        args = r(2, 'args'),
+      }),
+    })
+  ),
+  us.sn(
+    {
+      trig = 'as',
+      desc = 'assert()',
+    },
+    c(1, {
+      un.fmtad('assert(<expr>);', {
+        expr = r(1, 'expr'),
+      }),
+      un.fmtad('assert((<expr>) && "<msg>\\n");', {
+        expr = r(1, 'expr'),
+        msg = r(2, 'msg'),
+      }),
+    })
+  ),
+  us.sn(
+    {
+      trig = 'da',
+      desc = 'dbg_assert()',
+    },
+    c(1, {
+      un.fmtad('dbg_assert(<expr>);', {
+        expr = r(1, 'expr'),
+      }),
+      un.fmtad('dbg_assert((<expr>) && "<msg>\\n");', {
+        expr = r(1, 'expr'),
+        msg = r(2, 'msg'),
       }),
     })
   ),
