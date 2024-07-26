@@ -621,7 +621,7 @@ vim.lsp.handlers['workspace/symbol'] = fzf.lsp_live_workspace_symbols
 vim.diagnostic.setqflist = fzf.diagnostics_workspace
 vim.diagnostic.setloclist = fzf.diagnostics_document
 
-vim.api.nvim_create_user_command('F', function(info)
+vim.api.nvim_create_user_command('FZF', function(info)
   fzf.files({ cwd = info.fargs[1] })
 end, {
   nargs = '?',

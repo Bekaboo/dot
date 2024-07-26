@@ -3,7 +3,7 @@ return {
     'ibhagwan/fzf-lua',
     cmd = {
       'FzfLua',
-      'F',
+      'FZF',
       'Ls',
       'Args',
       'Tabs',
