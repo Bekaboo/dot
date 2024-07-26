@@ -1353,7 +1353,7 @@ local function setup_lsp_autoformat()
 end
 
 local lsp_autostop_pending
----Automatically stop LSP servers that no longer attaches to any buffers
+---Automatically stop LSP servers that no longer attach to any buffers
 ---
 ---  Once `BufDelete` is triggered, wait for 60s before checking and
 ---  stopping servers, in this way the callback will be invoked once
@@ -1362,10 +1362,10 @@ local lsp_autostop_pending
 ---  clients on every `BufDelete` events
 ---
 ---@return nil
-local function setup_lsp_stopidle()
+local function setup_lsp_stopdetached()
   vim.api.nvim_create_autocmd('BufDelete', {
     group = vim.api.nvim_create_augroup('LspAutoStop', {}),
-    desc = 'Automatically stop idle language servers.',
+    desc = 'Automatically stop detached language servers.',
     callback = function()
       if lsp_autostop_pending then
         return
@@ -1419,7 +1419,7 @@ local function setup()
   setup_keymaps()
   setup_lsp_overrides()
   setup_lsp_autoformat()
-  setup_lsp_stopidle()
+  setup_lsp_stopdetached()
   setup_diagnostic()
   setup_commands('Lsp', subcommands.lsp, function(name)
     return vim.lsp[name] or vim.lsp.buf[name]
