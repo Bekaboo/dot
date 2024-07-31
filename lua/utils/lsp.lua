@@ -47,6 +47,10 @@ function M.start(config, opts)
 
   local name = cmd_exec
   local bufname = vim.api.nvim_buf_get_name(0)
+  if not vim.uv.fs_stat(bufname) then
+    return
+  end
+
   local root_dir = vim.fn.fnamemodify(
     vim.fs.root(
       bufname,
@@ -57,10 +61,6 @@ function M.start(config, opts)
     ) or vim.fs.dirname(bufname),
     '%:p'
   )
-
-  if not vim.uv.fs_stat(root_dir) then
-    return
-  end
 
   return vim.lsp.start(
     vim.tbl_deep_extend('keep', config or {}, {

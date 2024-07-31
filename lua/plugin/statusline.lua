@@ -136,14 +136,19 @@ function statusline.wordcount()
 end
 
 function statusline.fname()
+  -- Normal buffers, show file name
+  if vim.bo.bt == '' then
+    return '%t'
+  end
+
   -- Terminal buffer, show terminal command and id
   if vim.bo.bt == 'terminal' then
     local id, cmd = vim.api.nvim_buf_get_name(0):match('^term://.*/(%d+):(.*)')
     return (cmd or '') .. (id and string.format(' (%d)', id) or '')
   end
 
-  -- Non-terminal buffers, show file name
-  return '%t'
+  -- For all other buffers, show full path
+  return '%F'
 end
 
 ---Text filetypes
