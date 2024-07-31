@@ -11,13 +11,6 @@ vim.keymap.set('n', '<Leader>gd', '<Cmd>Gdiff<CR>')
 vim.keymap.set('n', '<Leader>gD', '<Cmd>Git diff<CR>')
 vim.keymap.set('n', '<Leader>gB', '<Cmd>Git blame<CR>')
 vim.keymap.set('n', '<Leader>gl', '<Cmd>0Gllog<CR>')
-vim.keymap.set('n', '<Leader>gq', function()
-  if vim.g.fugitive_prevbuf and (vim.bo.ft == 'git' or vim.bo.ft == 'qf') then
-    vim.cmd.cclose()
-    vim.cmd.lclose()
-    vim.cmd.buffer(vim.g.fugitive_prevbuf)
-  end
-end)
 
 local groupid = vim.api.nvim_create_augroup('FugitiveSettings', {})
 vim.api.nvim_create_autocmd('User', {
