@@ -46,6 +46,8 @@ vim.api.nvim_create_autocmd('User', {
         vim.cmd.cclose()
         vim.cmd.lclose()
         vim.cmd.buffer(vim.g.fugitive_prevbuf)
+        vim.g.fugitive_prevbuf = nil
+        vim.cmd.bw({ '#', bang = true, mods = { emsg_silent = true } })
       end
     end, { buffer = true })
   end,
