@@ -135,6 +135,17 @@ function statusline.wordcount()
       .. (words > 1 and ' words' or ' word')
 end
 
+function statusline.fname()
+  -- Terminal buffer, show terminal command and id
+  if vim.bo.bt == 'terminal' then
+    local id, cmd = vim.api.nvim_buf_get_name(0):match('^term://.*/(%d+):(.*)')
+    return (cmd or '') .. (id and string.format(' (%d)', id) or '')
+  end
+
+  -- Non-terminal buffers, show file name
+  return '%t'
+end
+
 ---Text filetypes
 ---@type table<string, true>
 local ft_text = {
@@ -344,7 +355,7 @@ local components = {
   align        = [[%=]],
   flag         = [[%{%&bt==#''?'':(&bt==#'terminal'?'[Terminal] ':(&bt==#'help'?'%h ':(&pvw?'%w ':'')))%}]],
   diag         = [[%{%v:lua.require'plugin.statusline'.diag()%}]],
-  fname        = [[%{%&bt==#''?'%t':(&bt==#'terminal'?bufname()->substitute('^term://.\{-}//\d\+:\s*','',''):'%F')%} ]],
+  fname        = [[%{%v:lua.require'plugin.statusline'.fname()%} ]],
   info         = [[%{%v:lua.require'plugin.statusline'.info()%}]],
   lsp_progress = [[%{%v:lua.require'plugin.statusline'.lsp_progress()%}]],
   mode         = [[%{%v:lua.require'plugin.statusline'.mode()%}]],
