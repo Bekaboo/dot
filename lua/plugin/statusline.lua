@@ -183,6 +183,10 @@ function statusline.fname()
   -- file name is not unique
   if vim.bo.bt == '' then
     local fname = vim.fs.basename(vim.api.nvim_buf_get_name(0))
+    -- Show buffer number for unnamed buffers
+    if fname == '' then
+      return '[Buffer %n]'
+    end
     if not fnames[fname] or fnames[fname] <= 1 then
       return '%t'
     end
