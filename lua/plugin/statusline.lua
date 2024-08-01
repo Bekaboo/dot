@@ -135,10 +135,61 @@ function statusline.wordcount()
       .. (words > 1 and ' words' or ' word')
 end
 
+---Record file name of normal buffers,
+---key:val = fname:num_buffers_using_this_fname
+---@type table<string, number>
+local fnames = {}
+for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+  if vim.bo[buf].bt == '' then
+    local fname = vim.fs.basename(vim.api.nvim_buf_get_name(buf))
+    fnames[fname] = (fnames[fname] or 0) + 1
+  end
+end
+
+vim.api.nvim_create_autocmd({ 'BufAdd', 'BufFilePost' }, {
+  group = groupid,
+  desc = 'Track new buffer file name.',
+  callback = function(info)
+    if vim.bo[info.buf].bt ~= '' then
+      return
+    end
+
+    local fname = vim.fs.basename(vim.api.nvim_buf_get_name(info.buf))
+    fnames[fname] = (fnames[fname] or 0) + 1
+  end,
+})
+
+vim.api.nvim_create_autocmd({ 'BufDelete', 'BufFilePre' }, {
+  group = groupid,
+  desc = 'Remove deleted buffer file name from record.',
+  callback = function(info)
+    if vim.bo[info.buf].bt ~= '' then
+      return
+    end
+
+    local fname = vim.fs.basename(vim.api.nvim_buf_get_name(info.buf))
+    if not fnames[fname] then
+      return
+    end
+    fnames[fname] = fnames[fname] - 1
+    if fnames[fname] == 0 then
+      fnames[fname] = nil
+    end
+  end,
+})
+
 function statusline.fname()
-  -- Normal buffers, show file name
+  -- Normal buffers, show file name; also show local cwd (proj dir) if the
+  -- file name is not unique
   if vim.bo.bt == '' then
-    return '%t'
+    local fname = vim.fs.basename(vim.api.nvim_buf_get_name(0))
+    if not fnames[fname] or fnames[fname] <= 1 then
+      return '%t'
+    end
+    return string.format(
+      '%%t %s',
+      string.format('[%s]', vim.fs.basename(vim.fn.getcwd(0)))
+    )
   end
 
   -- Terminal buffer, show terminal command and id
