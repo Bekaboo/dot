@@ -1,4 +1,36 @@
 #!/usr/bin/env bash
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
-trans -shell -b -no-auto :zh "$@"
+# Function to read input, concatenate it, and process it with 'trans'
+process_input() {
+    echo '----------------------------------------'
+    echo '•'
+
+    local input=""
+    # Concat all lines until an empty line is found
+    while IFS= read -r line; do
+        if [[ -z "$line" ]]; then
+            break
+        fi
+        input="$input $line"
+    done
+
+    # Remove leading whitespace
+    input=$(echo "$input" | sed 's/^ *//')
+    if [[ -z "$input" ]]; then
+        return 1
+    fi
+
+    local output=$(echo "$input" | trans -b -no-auto :zh)
+
+    echo "◦"
+    echo "$output"
+    echo
+}
+
+# Continuously receive input from user
+while true; do
+    if ! process_input; then
+        break
+    fi
+done
