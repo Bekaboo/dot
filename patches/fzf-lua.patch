@@ -1,5 +1,5 @@
 diff --git a/lua/fzf-lua/providers/buffers.lua b/lua/fzf-lua/providers/buffers.lua
-index aa0d18c..562b3ff 100644
+index b245f20..10c7dea 100644
 --- a/lua/fzf-lua/providers/buffers.lua
 +++ b/lua/fzf-lua/providers/buffers.lua
 @@ -62,8 +62,10 @@ end
@@ -88,10 +88,10 @@ index aa0d18c..562b3ff 100644
        if next(filtered) then
          local buffers = populate_buffer_entries(opts, filtered)
 diff --git a/lua/fzf-lua/providers/nvim.lua b/lua/fzf-lua/providers/nvim.lua
-index cb23b83..f889f6f 100644
+index b1ced58..192d5f0 100644
 --- a/lua/fzf-lua/providers/nvim.lua
 +++ b/lua/fzf-lua/providers/nvim.lua
-@@ -97,8 +97,8 @@ end
+@@ -96,8 +96,8 @@ end
  M.search_history = function(opts)
    opts = config.normalize_opts(opts, "search_history")
    if not opts then return end
@@ -103,10 +103,10 @@ index cb23b83..f889f6f 100644
    history(opts, "search")
  end
 diff --git a/lua/fzf-lua/win.lua b/lua/fzf-lua/win.lua
-index f17997a..cb516ef 100644
+index 1b6d2fc..d9d6fe6 100644
 --- a/lua/fzf-lua/win.lua
 +++ b/lua/fzf-lua/win.lua
-@@ -1418,10 +1418,10 @@ function FzfWin.toggle_help()
+@@ -1443,10 +1443,10 @@ function FzfWin.toggle_help()
      style = "minimal",
      width = vim.o.columns,
      height = height,
@@ -116,6 +116,6 @@ index f17997a..cb516ef 100644
      -- top border only
 -    border = { " ", "─", " ", " ", " ", " ", " ", " " },
 +    border = "single",
-     -- topmost popup
-     zindex = 999,
+     -- topmost popup (+2 for float border empty/full)
+     zindex = self.winopts.zindex + 2,
    }
