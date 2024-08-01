@@ -21,18 +21,14 @@ local function setup_keymaps()
   vim.keymap.set({ 'n', 'x' }, 'g/', vim.lsp.buf.references)
   vim.keymap.set({ 'n', 'x' }, 'g.', vim.lsp.buf.implementation)
   vim.keymap.set({ 'n', 'x' }, 'gd', function()
-    if supports_method('textDocument/definition', 0) then
-      vim.lsp.buf.definition()
-      return '<Nop>'
-    end
-    return 'gd'
+    return supports_method('textDocument/definition', 0)
+        and '<Cmd>lua vim.lsp.buf.definition()<CR>'
+      or 'gd'
   end, { expr = true })
   vim.keymap.set({ 'n', 'x' }, 'gD', function()
-    if supports_method('textDocument/typeDefinition', 0) then
-      vim.lsp.buf.type_definition()
-      return '<Nop>'
-    end
-    return 'gD'
+    return supports_method('textDocument/typeDefinition', 0)
+        and '<Cmd>lua vim.lsp.buf.type_definition()<CR>'
+      or 'gD'
   end, { expr = true })
   vim.keymap.set({ 'n', 'x' }, '<Leader>r', vim.lsp.buf.rename)
   vim.keymap.set({ 'n', 'x' }, '<Leader>a', vim.lsp.buf.code_action)
