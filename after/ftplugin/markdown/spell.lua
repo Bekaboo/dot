@@ -1,1 +1,0 @@
-../text/spell.lua

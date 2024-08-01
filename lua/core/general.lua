@@ -70,6 +70,13 @@ vim.api.nvim_create_autocmd('BufReadPre', { once = true, callback = _rshada })
 -- Recognize numbered lists when formatting text
 opt.formatoptions:append('n')
 
+-- Spell check
+vim.opt.spell = true
+vim.opt.spellcapcheck = ''
+vim.opt.spelllang = 'en,cjk'
+vim.opt.spelloptions = 'camel'
+vim.opt.spellsuggest = 'best,9'
+
 -- Cursor shape
 opt.gcr = {
   'i-c-ci-ve:blinkoff500-blinkon500-block-TermCursor',
