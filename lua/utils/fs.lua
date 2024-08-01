@@ -12,8 +12,6 @@ M.root_patterns = {
   'Makefile',
   'makefile',
   'MAKEFILE',
-  '.gitignore',
-  '.editorconfig',
 }
 
 ---Read file contents
