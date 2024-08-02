@@ -44,6 +44,13 @@ silent! set clipboard^=unnamedplus
 silent! set formatoptions+=n
 silent! set jumpoptions=stack
 
+" Spell check
+silent! set spell
+silent! set spellcapcheck=''
+silent! set spelllang=en_us
+silent! set spelloptions=camel
+silent! set spellsuggest=best,9
+
 " Focus events
 silent! let &t_fe = "\<Esc>[?1004h"
 silent! let &t_fd = "\<Esc>[?1004l"
@@ -248,17 +255,6 @@ function! s:supportevents(events) abort
   endif
   return 0
 endfunction
-
-" Enable spellcheck for some filetypes {{{2
-if s:supportevents('FileType')
-  augroup EnableSpellCheck
-    au!
-    au FileType text,tex,markdown,gitcommit,xml,html
-          \ silent! setlocal spell spellcapcheck='' spelllang=en_us
-          \                  spelloptions=camel spellsuggest=best,9
-  augroup END
-endif
-" }}}2
 
 " Autosave on focus lost, window/buf leave, etc. {{{2
 if s:supportevents(['BufLeave', 'WinLeave', 'FocusLost'])
