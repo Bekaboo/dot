@@ -555,21 +555,6 @@ M.syntax = {
   ),
   us.msn(
     {
-      { trig = 'fd' },
-      { trig = 'fnd' },
-      { trig = 'fund' },
-      { trig = 'funcd' },
-      { trig = 'functiond' },
-      common = { desc = 'Function declaration' },
-    },
-    un.fmtad('<type> <func>(<params>);', {
-      type = i(1, 'type'),
-      func = i(2, 'fn_name'),
-      params = i(3, 'void'),
-    })
-  ),
-  us.msn(
-    {
       { trig = 'st' },
       { trig = 'struct' },
       common = { desc = 'Struct definition/declaration' },
@@ -600,17 +585,6 @@ M.syntax = {
   ),
   us.msn(
     {
-      { trig = 'sd' },
-      { trig = 'std' },
-      { trig = 'structd' },
-      common = { desc = 'Struct declaration' },
-    },
-    un.fmtad('struct <name>;', {
-      name = i(1, 'struct_name'),
-    })
-  ),
-  us.msn(
-    {
       { trig = 'un' },
       { trig = 'union' },
       common = { desc = 'Union definition/declaration' },
@@ -638,17 +612,6 @@ M.syntax = {
         },
       },
     }
-  ),
-  us.msn(
-    {
-      { trig = 'ud' },
-      { trig = 'und' },
-      { trig = 'uniond' },
-      common = { desc = 'Union declaration' },
-    },
-    un.fmtad('union <name>;', {
-      name = i(1, 'union_name'),
-    })
   ),
   us.msn(
     {
@@ -717,21 +680,6 @@ M.syntax = {
   ),
   us.msn(
     {
-      { trig = 'tdsd' },
-      { trig = 'tdstd' },
-      { trig = 'tdstructd' },
-      { trig = 'typedefsd' },
-      { trig = 'typedefstd' },
-      { trig = 'typedefstructd' },
-      common = { desc = 'typedef struct declaration statement' },
-    },
-    un.fmtad('typedef struct <name> <alias>;', {
-      name = i(1, 'name'),
-      alias = i(2, 'alias'),
-    })
-  ),
-  us.msn(
-    {
       { trig = 'tdu' },
       { trig = 'tdun' },
       { trig = 'tdunion' },
@@ -766,21 +714,6 @@ M.syntax = {
         },
       },
     }
-  ),
-  us.msn(
-    {
-      { trig = 'tdud' },
-      { trig = 'tdund' },
-      { trig = 'tduniond' },
-      { trig = 'typedefud' },
-      { trig = 'typedefund' },
-      { trig = 'typedefuniond' },
-      common = { desc = 'typedef union declaration statement' },
-    },
-    un.fmtad('typedef union <name> <alias>;', {
-      name = i(1, 'name'),
-      alias = i(2, 'alias'),
-    })
   ),
 }
 
