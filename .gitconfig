@@ -24,6 +24,8 @@
 	pf                  = push --force
 	pl                  = pull
 	rb                  = rebase
+	rbo                 = rebase --onto
+	rbh                 = rebase --onto HEAD
 	rbp                 = rebase -i HEAD~5
 	rs                  = reset
 	rsp                 = reset --mixed HEAD^
