@@ -38,6 +38,7 @@ local function setup_keymaps()
   vim.keymap.set({ 'n', 'x' }, '<Leader>S', vim.lsp.buf.workspace_symbol)
   vim.keymap.set({ 'n', 'x' }, '<Leader>d', vim.diagnostic.setloclist)
   vim.keymap.set({ 'n', 'x' }, '<Leader>D', vim.diagnostic.setqflist)
+  vim.keymap.set({ 'n', 'x' }, '<Leader>i', vim.diagnostic.open_float)
   vim.keymap.set({ 'n', 'x' }, 'gy', function()
     local diags = vim.diagnostic.get(0, { lnum = vim.fn.line('.') - 1 })
     local n_diags = #diags
