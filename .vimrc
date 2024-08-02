@@ -388,12 +388,12 @@ if s:supportevents([
     endif
     let proj_dir = s:proj_dir(fpath)
     if proj_dir !=# ''
-      exe 'lcd ' . proj_dir
+      exe 'silent! lcd ' . proj_dir
       return
     endif
     let dirname = fnamemodify(fpath, ':p:h')
     if isdirectory(dirname)
-      exe 'lcd ' . dirname
+      exe 'silent! lcd ' . dirname
     endif
   endfunction
 
