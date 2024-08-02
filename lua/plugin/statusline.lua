@@ -179,30 +179,40 @@ vim.api.nvim_create_autocmd({ 'BufDelete', 'BufFilePre' }, {
 })
 
 function statusline.fname()
-  -- Normal buffers, show file name; also show local cwd (proj dir) if the
-  -- file name is not unique
+  local bname = vim.api.nvim_buf_get_name(0)
+
+  -- Normal buffer
   if vim.bo.bt == '' then
-    local fname = vim.fs.basename(vim.api.nvim_buf_get_name(0))
-    -- Show buffer number for unnamed buffers
-    if fname == '' then
+    -- Unnamed normal buffer
+    if bname == '' then
       return '[Buffer %n]'
     end
-    if not fnames[fname] or fnames[fname] <= 1 then
-      return '%t'
+    -- Named normal buffer, show file name, if the file name is not unique,
+    -- show local cwd (often project root) after the file name
+    local fname = vim.fs.basename(bname)
+    if fnames[fname] and fnames[fname] > 1 then
+      return string.format('%s [%s]', fname, vim.fs.basename(vim.fn.getcwd(0)))
     end
-    return string.format(
-      '%%t %s',
-      string.format('[%s]', vim.fs.basename(vim.fn.getcwd(0)))
-    )
+    return fname
   end
 
   -- Terminal buffer, show terminal command and id
   if vim.bo.bt == 'terminal' then
-    local id, cmd = vim.api.nvim_buf_get_name(0):match('^term://.*/(%d+):(.*)')
-    return (cmd or '') .. (id and string.format(' (%d)', id) or '')
+    local id, cmd = bname:match('^term://.*/(%d+):(.*)')
+    return id and cmd and string.format('[Terminal] %s (%s)', cmd, id)
+      or '[Terminal] %F'
   end
 
-  -- For all other buffers, show full path
+  -- Other special buffer types
+  local prefix, suffix = bname:match('^%s*(%S+)://(.*)')
+  if prefix and suffix then
+    return string.format(
+      '[%s] %s',
+      utils.string.snake_to_camel(prefix),
+      suffix
+    )
+  end
+
   return '%F'
 end
 
@@ -413,7 +423,7 @@ end
 ---@type table<string, string>
 local components = {
   align        = [[%=]],
-  flag         = [[%{%&bt==#''?'':(&bt==#'terminal'?'[Terminal] ':(&bt==#'help'?'%h ':(&pvw?'%w ':'')))%}]],
+  flag         = [[%{%&bt==#''?'':(&bt==#'help'?'%h ':(&pvw?'%w ':''))%}]],
   diag         = [[%{%v:lua.require'plugin.statusline'.diag()%}]],
   fname        = [[%{%v:lua.require'plugin.statusline'.fname()%} ]],
   info         = [[%{%v:lua.require'plugin.statusline'.info()%}]],
