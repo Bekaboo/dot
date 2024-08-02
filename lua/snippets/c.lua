@@ -534,20 +534,20 @@ M.syntax = {
         {
           type = r(1, 'type'),
           func = r(2, 'func'),
-          params = i(3, 'void'),
+          params = i(3, 'int'),
           body = un.body(4, 1),
         }
       ),
       un.fmtad('<type> <func>(<params>);', {
         type = r(1, 'type'),
         func = r(2, 'func'),
-        params = i(3, 'void'),
+        params = i(3, 'int'),
       }),
     }),
     {
       common_opts = {
         stored = {
-          type = i(1, 'void'),
+          type = i(1, 'int'),
           func = i(2, 'fn_name'),
         },
       },
