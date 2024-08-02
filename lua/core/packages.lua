@@ -127,7 +127,7 @@ if not bootstrap() then
   return
 end
 
--- Reverse/Apply local patches on updating/intalling plugins,
+-- Reverse/Apply local patches on updating/installing plugins,
 -- must be created before setting lazy to apply the patches properly
 vim.api.nvim_create_autocmd('User', {
   desc = 'Reverse/Apply local patches on updating/intalling plugins.',
