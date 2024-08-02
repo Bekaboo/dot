@@ -13,14 +13,16 @@
 	c                   = commit
 	ca                  = commit --amend
 	cm                  = commit -m
+	co                  = checkout
 	d                   = diff
+	f                   = fetch
 	is-ancestor         = merge-base --is-ancestor
 	l                   = log --oneline --graph
 	lc                  = !git ls-files -z | xargs -0 wc -l
 	mt                  = mergetool
 	p                   = push
-	pl                  = pull
 	pf                  = push --force
+	pl                  = pull
 	rb                  = rebase
 	rbp                 = rebase -i HEAD~5
 	rs                  = reset
