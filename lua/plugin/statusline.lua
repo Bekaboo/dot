@@ -326,7 +326,7 @@ end
 
 ---Id and additional info of language servers in progress
 ---@type table<integer, { name: string, timestamp: integer, type: 'begin'|'report'|'end' }>
-local server_info_in_progress = {}
+local server_info = {}
 
 vim.api.nvim_create_autocmd('LspProgress', {
   desc = 'Update LSP progress info for the status line.',
@@ -342,18 +342,21 @@ vim.api.nvim_create_autocmd('LspProgress', {
 
     local id = info.data.client_id
     local now = vim.uv.now()
-    server_info_in_progress[id] = {
+    server_info[id] = {
       name = vim.lsp.get_client_by_id(id).name,
       timestamp = now,
-      type = info.data.result and info.data.result.value.kind,
+      type = info.data
+        and info.data.params
+        and info.data.params.value
+        and info.data.params.value.kind,
     } -- Update LSP progress data
     -- Clear client message after a short time if no new message is received
     vim.defer_fn(function()
       -- No new report since the timer was set
-      local last_timestamp = (server_info_in_progress[id] or {}).timestamp
+      local last_timestamp = (server_info[id] or {}).timestamp
       if not last_timestamp or last_timestamp == now then
-        server_info_in_progress[id] = nil
-        if vim.tbl_isempty(server_info_in_progress) and spinner_timer then
+        server_info[id] = nil
+        if vim.tbl_isempty(server_info) and spinner_timer then
           spinner_timer:stop()
         end
         vim.cmd.redrawstatus()
@@ -364,13 +367,13 @@ vim.api.nvim_create_autocmd('LspProgress', {
 
 ---@return string
 function statusline.lsp_progress()
-  if vim.tbl_isempty(server_info_in_progress) then
+  if vim.tbl_isempty(server_info) then
     return ''
   end
 
   local buf = vim.api.nvim_get_current_buf()
   local server_ids = {}
-  for id, _ in pairs(server_info_in_progress) do
+  for id, _ in pairs(server_info) do
     if vim.tbl_contains(vim.lsp.get_buffers_by_client_id(id), buf) then
       table.insert(server_ids, id)
     end
@@ -386,10 +389,7 @@ function statusline.lsp_progress()
       or now - vim.b.spinner_state_changed > spinner_status_keep
   end
 
-  if
-    #server_ids == 1
-    and server_info_in_progress[server_ids[1]].type == 'end'
-  then
+  if #server_ids == 1 and server_info[server_ids[1]].type == 'end' then
     if vim.b.spinner_icon ~= spinner_icon_done and allow_changing_state() then
       vim.b.spinner_state_changed = now
       vim.b.spinner_icon = spinner_icon_done
@@ -410,7 +410,7 @@ function statusline.lsp_progress()
     '%s %s ',
     table.concat(
       vim.tbl_map(function(id)
-        return server_info_in_progress[id].name
+        return server_info[id].name
       end, server_ids),
       ', '
     ),
