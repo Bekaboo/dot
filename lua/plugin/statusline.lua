@@ -135,27 +135,50 @@ function statusline.wordcount()
       .. (words > 1 and ' words' or ' word')
 end
 
----Record file name of normal buffers,
----key:val = fname:num_buffers_using_this_fname
----@type table<string, number>
+---Record file name of normal buffers, key:val = fname:buffers_with_fname
+---@type table<string, number[]>
 local fnames = {}
-for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-  if vim.bo[buf].bt == '' then
-    local fname = vim.fs.basename(vim.api.nvim_buf_get_name(buf))
-    fnames[fname] = (fnames[fname] or 0) + 1
+
+---Add a normal buffer to `fnames`, calc diff for buffer with non-unique
+---file names
+---@param buf integer buffer number
+---@return nil
+local function add_buf(buf)
+  if not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].bt ~= '' then
+    return
   end
+
+  local fname = vim.fs.basename(vim.api.nvim_buf_get_name(buf))
+  if fname == '' then
+    return
+  end
+
+  if not fnames[fname] then
+    fnames[fname] = {}
+  end
+
+  local bufs = fnames[fname] -- buffers with the same name as the removed buf
+  table.insert(bufs, buf)
+
+  if #bufs > 1 then
+    local path_diffs =
+      utils.fs.diff(vim.tbl_map(vim.api.nvim_buf_get_name, bufs))
+    for i, path_diff in ipairs(path_diffs) do
+      local _buf = bufs[i]
+      vim.b[_buf]._stl_pdiff = path_diff
+    end
+  end
+end
+
+for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+  add_buf(buf)
 end
 
 vim.api.nvim_create_autocmd({ 'BufAdd', 'BufFilePost' }, {
   group = groupid,
   desc = 'Track new buffer file name.',
   callback = function(info)
-    if vim.bo[info.buf].bt ~= '' then
-      return
-    end
-
-    local fname = vim.fs.basename(vim.api.nvim_buf_get_name(info.buf))
-    fnames[fname] = (fnames[fname] or 0) + 1
+    add_buf(info.buf)
   end,
 })
 
@@ -168,11 +191,22 @@ vim.api.nvim_create_autocmd({ 'BufDelete', 'BufFilePre' }, {
     end
 
     local fname = vim.fs.basename(vim.api.nvim_buf_get_name(info.buf))
-    if not fnames[fname] then
+    local bufs = fnames[fname] -- buffers with the same name as the removed buf
+    if not bufs then
       return
     end
-    fnames[fname] = fnames[fname] - 1
-    if fnames[fname] == 0 then
+
+    for i, buf in ipairs(bufs) do
+      if buf == info.buf then
+        table.remove(bufs, i)
+        break
+      end
+    end
+
+    local num_bufs = #bufs
+    if num_bufs == 1 then
+      vim.b[bufs[1]]._stl_pdiff = nil
+    elseif num_bufs == 0 then
       fnames[fname] = nil
     end
   end,
@@ -190,8 +224,8 @@ function statusline.fname()
     -- Named normal buffer, show file name, if the file name is not unique,
     -- show local cwd (often project root) after the file name
     local fname = vim.fs.basename(bname)
-    if fnames[fname] and fnames[fname] > 1 then
-      return string.format('%s [%s]', fname, vim.fs.basename(vim.fn.getcwd(0)))
+    if vim.b._stl_pdiff then
+      return string.format('%s [%s]', fname, vim.b._stl_pdiff)
     end
     return fname
   end
