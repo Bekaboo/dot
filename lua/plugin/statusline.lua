@@ -107,7 +107,7 @@ function statusline.branch()
   ---@diagnostic disable-next-line: undefined-field
   local branch = vim.b.gitsigns_status_dict and vim.b.gitsigns_status_dict.head
     or utils.git.branch()
-  return branch == '' and '' or '#' .. branch
+  return branch == '' and '' or '#' .. utils.stl.escape(branch)
 end
 
 ---Get current filetype
@@ -225,15 +225,21 @@ function statusline.fname()
     -- show local cwd (often project root) after the file name
     local fname = vim.fs.basename(bname)
     if vim.b._stl_pdiff then
-      return string.format('%s [%s]', fname, vim.b._stl_pdiff)
+      return string.format(
+        '%s [%s]',
+        utils.stl.escape(fname),
+        vim.b._stl_pdiff
+      )
     end
-    return fname
+    return utils.stl.escape(fname)
   end
 
   -- Terminal buffer, show terminal command and id
   if vim.bo.bt == 'terminal' then
     local id, cmd = bname:match('^term://.*/(%d+):(.*)')
-    return id and cmd and string.format('[Terminal] %s (%s)', cmd, id)
+    return id
+        and cmd
+        and string.format('[Terminal] %s (%s)', utils.stl.escape(cmd), id)
       or '[Terminal] %F'
   end
 
@@ -242,8 +248,8 @@ function statusline.fname()
   if prefix and suffix then
     return string.format(
       '[%s] %s',
-      utils.string.snake_to_camel(prefix),
-      suffix
+      utils.stl.escape(utils.string.snake_to_camel(prefix)),
+      utils.stl.escape(suffix)
     )
   end
 
@@ -444,7 +450,7 @@ function statusline.lsp_progress()
     '%s %s ',
     table.concat(
       vim.tbl_map(function(id)
-        return server_info[id].name
+        return utils.stl.escape(server_info[id].name)
       end, server_ids),
       ', '
     ),
