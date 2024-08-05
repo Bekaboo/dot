@@ -173,6 +173,7 @@ return {
       'Gwq',
       'Gwrite',
     },
+    keys = { '<Leader>gL' },
     event = { 'BufWritePost', 'BufReadPre' },
     config = function()
       require('configs.vim-fugitive')
