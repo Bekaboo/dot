@@ -431,10 +431,11 @@ bind 'set keyseq-timeout 1'
 
 # Manage dotfiles
 dot() {
-    /usr/bin/git --git-dir="$HOME/.dot" --work-tree="$HOME" "$@"
+    git --git-dir="$HOME/.dot" --work-tree="$HOME" "$@"
 }
-source "/usr/share/bash-completion/completions/git"
-__git_complete dot __git_main
+[[ -r '/usr/share/bash-completion/completions/git' ]] &&
+    source '/usr/share/bash-completion/completions/git' &&
+    __git_complete dot __git_main
 dot config --local status.showUntrackedFiles no
 
 [[ -r '/usr/share/bash-completion/bash_completion' ]] &&
