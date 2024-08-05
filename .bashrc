@@ -20,13 +20,13 @@ export PATH
 
 [[ $- != *i* ]] && return
 
-xhost +local:root > /dev/null 2>&1
+xhost +local:root >/dev/null 2>&1
 
 # Enable colors for ls, etc. Prefer ~/.dir_colors
-if type -P dircolors >/dev/null ; then
-    if [[ -f ~/.dir_colors ]] ; then
+if type -P dircolors >/dev/null; then
+    if [[ -f ~/.dir_colors ]]; then
         eval $(dircolors -b ~/.dir_colors)
-    elif [[ -f /etc/DIR_COLORS ]] ; then
+    elif [[ -f /etc/DIR_COLORS ]]; then
         eval $(dircolors -b /etc/DIR_COLORS)
     fi
 fi
@@ -49,7 +49,7 @@ if [[ "$TERM" == "linux" ]]; then
     echo -en "\e]PD938AA9" #magenta
     echo -en "\e]PE7AA89F" #cyan
     echo -en "\e]PFB4B8B4" #white
-    clear #for background artifacting
+    clear                  #for background artifacting
 fi
 
 __has nvim-manpager &&
@@ -187,18 +187,18 @@ __has setcolors && setcolors
 
 # Launch fish shell for interactive sessions
 if [[ "$(ps --no-header --pid=$PPID --format=comm)" != fish &&
-        -z "${BASH_EXECUTION_STRING}" ]] && __has fish; then
+-z "${BASH_EXECUTION_STRING}" ]] && __has fish; then
     shopt -q login_shell && exec fish --login || exec fish
 fi
 
 # Change the window title of X terminals
 case ${TERM} in
-    xterm*|rxvt*|Eterm*|aterm|kterm|gnome*|interix|konsole*)
-        PROMPT_COMMAND='echo -ne "\033]0;${USER}@${HOSTNAME%%.*}:${PWD/#$HOME/\~}\007"'
-        ;;
-    screen*)
-        PROMPT_COMMAND='echo -ne "\033_${USER}@${HOSTNAME%%.*}:${PWD/#$HOME/\~}\033\\"'
-        ;;
+xterm* | rxvt* | Eterm* | aterm | kterm | gnome* | interix | konsole*)
+    PROMPT_COMMAND='echo -ne "\033]0;${USER}@${HOSTNAME%%.*}:${PWD/#$HOME/\~}\007"'
+    ;;
+screen*)
+    PROMPT_COMMAND='echo -ne "\033_${USER}@${HOSTNAME%%.*}:${PWD/#$HOME/\~}\033\\"'
+    ;;
 esac
 
 # Set colorful PS1 only on colorful terminals.
@@ -206,14 +206,14 @@ esac
 # instead of using /etc/DIR_COLORS.  Try to use the external file
 # first to take advantage of user additions.  Use internal bash
 # globbing instead of external grep binary.
-safe_term=${TERM//[^[:alnum:]]/?}   # sanitize TERM
+safe_term=${TERM//[^[:alnum:]]/?} # sanitize TERM
 match_lhs=""
-[[ -f ~/.dir_colors   ]] && match_lhs="${match_lhs}$(<~/.dir_colors)"
+[[ -f ~/.dir_colors ]] && match_lhs="${match_lhs}$(<~/.dir_colors)"
 [[ -f /etc/DIR_COLORS ]] && match_lhs="${match_lhs}$(</etc/DIR_COLORS)"
-[[ -z ${match_lhs}    ]] && type -P dircolors >/dev/null &&
+[[ -z ${match_lhs} ]] && type -P dircolors >/dev/null &&
     match_lhs=$(dircolors --print-database)
 [[ $'\n'${match_lhs} == *$'\n'"TERM "${safe_term}* ]]
-if [[ ${EUID} == 0 ]] ; then
+if [[ "$EUID" == 0 ]]; then
     PS1='\[\033[01;31m\][\h\[\033[01;36m\] \W\[\033[01;31m\]]\$\[\033[00m\] '
 else
     PS1='\[\033[01;35m\][\u@\h\[\033[01;37m\] \W\[\033[01;35m\]]\$\[\033[00m\] '
@@ -293,7 +293,7 @@ cd() {
         return
     fi
 
-    ls -C --color --width="$cols" | head -n "$max_lines";
+    ls -C --color --width="$cols" | head -n "$max_lines"
     __python_venv
     echo
     echo "... $num_lines lines total"
@@ -310,7 +310,6 @@ clear() {
     fi
 }
 
-
 # Settings for fzf
 fzf() {
     if __has fzf-wrapper; then
@@ -324,7 +323,7 @@ __ff_open_files_or_dir() {
     # $@: files to open
     # Split targets into a list at newline
     local -a targets_list=()
-    IFS=$'\n' read -rd '' -a targets_list <<< "$@"
+    IFS=$'\n' read -rd '' -a targets_list <<<"$@"
 
     # If only one target and it is a directory, cd into it
     if [[ "${#targets_list[@]}" = 1 && -d "$targets_list[0]" ]]; then
@@ -376,10 +375,11 @@ ff() {
 
     local tmpfile="$(mktemp)"
     local path="${1:-$PWD}"
-    "$fd_cmd" -p -H -L -td -tf -tl --mount -c=always --search-path="$path" \
-        | fzf --ansi --query="$2" >$tmpfile
+    "$fd_cmd" -p -H -L -td -tf -tl --mount -c=always --search-path="$path" |
+        fzf --ansi --query="$2" >$tmpfile
 
-    local targets="$(cat "$tmpfile")"; rm -f "$tmpfile"
+    local targets="$(cat "$tmpfile")"
+    rm -f "$tmpfile"
     [[ -z "$targets" ]] && return 0
 
     __ff_open_files_or_dir "$targets"
@@ -402,7 +402,7 @@ v() {
 
 # Aliases
 alias sudoe="sudo -E "
-alias cp="cp -i"        # confirm before overwriting something
+alias cp="cp -i" # confirm before overwriting something
 alias x="trash"
 alias g="git"
 alias d="dot"
@@ -413,9 +413,9 @@ alias ls="ls --color"
 alias l="ls"
 alias ll="ls -l"
 alias lc="wc -l"
-alias df="df -h"        # human-readable sizes
-alias free="free -m"    # show sizes in MB
-alias tree="tree -N"    # Display Chinese characters
+alias df="df -h"     # human-readable sizes
+alias free="free -m" # show sizes in MB
+alias tree="tree -N" # Display Chinese characters
 alias clip="xclip -sel clip"
 alias lzgit="lazygit"
 alias pip-install="pip install --user"
