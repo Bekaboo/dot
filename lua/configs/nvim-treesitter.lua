@@ -50,7 +50,6 @@ ts_configs.setup({
     'rust',
     'fish',
     'make',
-    'python',
   },
   sync_install = false,
   ignore_install = {},
