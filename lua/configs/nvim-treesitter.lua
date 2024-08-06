@@ -50,6 +50,8 @@ ts_configs.setup({
     'rust',
     'fish',
     'make',
+    'javascript',
+    'typescript',
   },
   sync_install = false,
   ignore_install = {},
