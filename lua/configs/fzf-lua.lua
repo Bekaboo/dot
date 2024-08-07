@@ -220,7 +220,7 @@ core.ACTION_DEFINITIONS[actions.toggle_dir] =
   { 'Include dirs', fn_reload = 'Exclude dirs' }
 core.ACTION_DEFINITIONS[actions.toggle_ignore] =
   { 'Disable .gitignore', fn_reload = 'Respect .gitignore' }
-core.ACTION_DEFINITIONS[actions.switch_cwd] = { 'Change Cwd', pos = 1 }
+core.ACTION_DEFINITIONS[actions.switch_cwd] = { 'Change cwd', pos = 1 }
 core.ACTION_DEFINITIONS[actions.arg_del] = { 'delete' }
 core.ACTION_DEFINITIONS[actions.del_autocmd] = { 'delete autocmd' }
 core.ACTION_DEFINITIONS[actions.arg_search_add] = { 'add new file' }
