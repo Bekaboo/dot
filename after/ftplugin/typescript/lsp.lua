@@ -85,8 +85,8 @@ if eslint_cmd then
 
   local eslint_lang_settings = {
     {
-      formatCommand = eslint_cmd
-        .. ' --fix-to-stdout --stdin --stdin-filename ${INPUT}',
+      formatCommand = eslint_cmd == 'eslint' and 'eslint --fix ${INPUT}'
+        or eslint_cmd .. ' --fix-to-stdout --stdin --stdin-filename ${INPUT}',
       formatStdin = true,
       lintCommand = eslint_cmd
         .. ' --no-color --format visualstudio --stdin --stdin-filename ${INPUT}',
