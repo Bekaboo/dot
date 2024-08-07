@@ -124,6 +124,17 @@ function actions.switch_cwd()
   actions.resume()
 end
 
+---Include directories, not only files when using the `files` picker
+---@return nil
+function actions.toggle_dir(_, opts)
+  local exe = opts.cmd:match('^%s*(%S+)')
+  local flag = opts.toggle_dir_flag
+    or (exe == 'fd' or exe == 'fdfind') and '--type d'
+    or (exe == 'find') and '-type d'
+    or ''
+  actions.toggle_flag(_, vim.tbl_extend('force', opts, { toggle_flag = flag }))
+end
+
 ---Delete selected autocmd
 ---@return nil
 function actions.del_autocmd(selected)
@@ -173,8 +184,8 @@ function actions.arg_search_add()
         fzf.args(opts)
       end,
     },
-    find_opts = [[-type f -type d -type l -not -path '*/\.git/*' -printf '%P\n']],
-    fd_opts = [[--color=never --type f --type d --type l --hidden --follow --exclude .git]],
+    find_opts = [[-type f -type l -not -path '*/\.git/*' -printf '%P\n']],
+    fd_opts = [[--color=never --type f --type l --hidden --follow --exclude .git]],
     rg_opts = [[--color=never --files --hidden --follow -g '!.git'"]],
   })
 end
@@ -205,6 +216,8 @@ function actions._file_sel_to_ll(selected, opts)
   end
 end
 
+core.ACTION_DEFINITIONS[actions.toggle_dir] =
+  { 'Include dirs', fn_reload = 'Exclude dirs' }
 core.ACTION_DEFINITIONS[actions.toggle_ignore] =
   { 'Disable .gitignore', fn_reload = 'Respect .gitignore' }
 core.ACTION_DEFINITIONS[actions.switch_cwd] = { 'Change Cwd', pos = 1 }
@@ -215,6 +228,7 @@ core.ACTION_DEFINITIONS[actions.search] = { 'edit' }
 core.ACTION_DEFINITIONS[actions.ex_run] = { 'edit' }
 
 -- stylua: ignore start
+config._action_to_helpstr[actions.toggle_dir] = 'toggle-dir'
 config._action_to_helpstr[actions.toggle_ignore] = 'toggle-ignore'
 config._action_to_helpstr[actions.switch_provider] = 'switch-provider'
 config._action_to_helpstr[actions.switch_cwd] = 'change-cwd'
@@ -468,13 +482,14 @@ fzf.setup({
   files = {
     actions = {
       ['alt-c'] = actions.switch_cwd,
+      ['ctrl-/'] = actions.toggle_dir,
       ['ctrl-g'] = actions.toggle_ignore,
     },
     fzf_opts = {
       ['--info'] = 'inline-right',
     },
-    find_opts = [[-type f -type d -type l -not -path '*/\.git/*' -printf '%P\n']],
-    fd_opts = [[--color=never --type f --type d --type l --hidden --follow --exclude .git]],
+    find_opts = [[-type f -type l -not -path '*/\.git/*' -printf '%P\n']],
+    fd_opts = [[--color=never --type f --type l --hidden --follow --exclude .git]],
     rg_opts = [[--color=never --files --hidden --follow -g '!.git'"]],
   },
   oldfiles = {
