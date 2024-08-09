@@ -62,7 +62,7 @@ function actions.switch_provider()
   }
   fzf.builtin({
     actions = {
-      ['default'] = function(selected)
+      ['enter'] = function(selected)
         fzf[selected[1]](opts)
       end,
       ['esc'] = actions.resume,
@@ -167,7 +167,7 @@ function actions.arg_search_add()
     headers = { 'actions', 'cwd' },
     prompt = 'Argadd> ',
     actions = {
-      ['default'] = function(selected, _opts)
+      ['enter'] = function(selected, _opts)
         local cmd = 'argadd'
         vim.ui.input({
           prompt = 'Argadd cmd: ',
@@ -378,10 +378,10 @@ fzf.setup({
       ['alt-t'] = actions.file_tabedit,
       ['alt-q'] = actions._file_sel_to_qf,
       ['alt-o'] = actions._file_sel_to_ll,
-      ['default'] = actions._file_edit_or_qf,
+      ['enter'] = actions._file_edit_or_qf,
     },
     buffers = {
-      ['default'] = actions.buf_edit,
+      ['enter'] = actions.buf_edit,
       ['alt-s'] = actions.buf_split,
       ['alt-v'] = actions.buf_vsplit,
       ['alt-t'] = actions.buf_tabedit,
@@ -437,7 +437,7 @@ fzf.setup({
   },
   helptags = {
     actions = {
-      ['default'] = actions.help,
+      ['enter'] = actions.help,
       ['alt-s'] = actions.help,
       ['alt-v'] = actions.help_vert,
       ['alt-t'] = actions.help_tab,
@@ -445,7 +445,7 @@ fzf.setup({
   },
   manpages = {
     actions = {
-      ['default'] = actions.man,
+      ['enter'] = actions.man,
       ['alt-s'] = actions.man,
       ['alt-v'] = actions.man_vert,
       ['alt-t'] = actions.man_tab,
@@ -453,7 +453,7 @@ fzf.setup({
   },
   keymaps = {
     actions = {
-      ['default'] = actions.keymap_edit,
+      ['enter'] = actions.keymap_edit,
       ['alt-s'] = actions.keymap_split,
       ['alt-v'] = actions.keymap_vsplit,
       ['alt-t'] = actions.keymap_tabedit,
@@ -461,12 +461,12 @@ fzf.setup({
   },
   colorschemes = {
     actions = {
-      ['default'] = actions.colorscheme,
+      ['enter'] = actions.colorscheme,
     },
   },
   highlights = {
     actions = {
-      ['default'] = function(selected)
+      ['enter'] = function(selected)
         vim.defer_fn(function()
           vim.cmd.hi(selected[1])
         end, 0)
