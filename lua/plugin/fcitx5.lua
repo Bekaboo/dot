@@ -1,10 +1,10 @@
----Setup input method auto switch
+---Setup input method (fcitx5) auto switch
 ---@return nil
 local function setup()
-  if vim.g.loaded_im ~= nil then
+  if vim.g.loaded_fcitx5 ~= nil then
     return
   end
-  vim.g.loaded_im = true
+  vim.g.loaded_fcitx5 = true
 
   if
     vim.env.SSH_TTY

@@ -6,13 +6,13 @@ if vim.g.vscode then
   return
 end
 
--- im
+-- fcitx5
 vim.api.nvim_create_autocmd('ModeChanged', {
   once = true,
   pattern = '*:[ictRss\x13]*',
   group = vim.api.nvim_create_augroup('IMSetup', {}),
   callback = function()
-    require('plugin.im').setup()
+    require('plugin.fcitx5').setup()
     return true
   end,
 })
