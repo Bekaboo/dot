@@ -42,7 +42,6 @@ opt.shiftwidth     = 2
 opt.expandtab      = true
 opt.autoindent     = true
 opt.autowriteall   = true
-opt.virtualedit    = 'block'
 opt.completeopt    = 'menuone'
 opt.jumpoptions    = 'stack,view'
 -- stylua: ignore end
