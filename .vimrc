@@ -35,7 +35,6 @@ silent! set shiftwidth=2
 silent! set expandtab
 silent! set autoindent
 silent! set autowriteall
-silent! set virtualedit=block
 silent! set shortmess-=S
 silent! set sessionoptions+=globals
 silent! set viminfo=!,'100,<50,s10,h
