@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Mon Jul 15 11:32:39 PM CST 2024
+-- Last Updated: Fri Aug 16 04:50:25 PM EDT 2024
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -371,7 +371,7 @@ local hlgroups = {
   ['@lsp.typemod.operator.controlFlow'] = { link = '@keyword.exception' },
   ['@lsp.typemod.operator.injected'] = { link = 'Operator' },
   ['@lsp.typemod.string.injected'] = { link = 'String' },
-  ['@lsp.typemod.variable.defaultLibrary'] = { link = 'Special' },
+  ['@lsp.typemod.variable.defaultLibrary'] = { link = '@variable.builtin' },
   ['@lsp.typemod.variable.global'] = { link = 'Constant' },
   ['@lsp.typemod.variable.injected'] = { link = '@variable' },
   ['@lsp.typemod.variable.static'] = { link = 'Constant' },
