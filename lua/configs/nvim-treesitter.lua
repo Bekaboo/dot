@@ -53,6 +53,7 @@ ts_configs.setup({
     'javascript',
     'typescript',
   },
+  auto_install = true,
   sync_install = false,
   ignore_install = {},
   highlight = {
