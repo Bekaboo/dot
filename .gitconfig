@@ -16,6 +16,7 @@
 	co                  = checkout
 	d                   = diff
 	f                   = fetch
+	g                   = log --oneline --graph
 	is-ancestor         = merge-base --is-ancestor
 	l                   = log --oneline --graph
 	lc                  = !git ls-files -z | xargs -0 wc -l
@@ -24,8 +25,9 @@
 	pf                  = push --force
 	pl                  = pull
 	rb                  = rebase
-	rbo                 = rebase --onto
 	rbh                 = rebase --onto HEAD
+	rbi                 = rebase -i
+	rbo                 = rebase --onto
 	rbp                 = rebase -i HEAD~5
 	rs                  = reset
 	rsp                 = reset --mixed HEAD^
