@@ -12,6 +12,7 @@ M.opts = {
         and vim.wo[win].winbar == ''
         and vim.fn.win_gettype(win) == ''
         and vim.bo[buf].ft ~= 'help'
+        and not vim.startswith(vim.bo[buf].ft, 'git')
         and utils.treesitter.is_active(buf)
     end,
     attach_events = {
@@ -312,7 +313,6 @@ M.opts = {
         'repeat',
         'scope',
         'specifier',
-        'string',
         'struct',
         'switch_statement',
         'type',
@@ -327,6 +327,7 @@ M.opts = {
         'object',
         'text',
         -- 'list',
+        -- 'string',
         -- 'statement',
       },
     },
