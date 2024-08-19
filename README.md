@@ -547,6 +547,8 @@ Total # of plugins: 47 (package manager included).
     - Remembers and restores previous background and colorscheme settings
     - Syncs background and colorscheme settings among multiple Neovim instances
       if scripts [setbg](https://github.com/Bekaboo/dot/blob/master/.scripts/setbg) and [setcolor](https://github.com/Bekaboo/dot/blob/master/.scripts/setcolor) are in `$PATH`
+- [session](https://github.com/Bekaboo/nvim/tree/master/plugin/session.lua)
+    - Automatically saves and restores sessions on exit and startup
 - [fcitx5](https://github.com/Bekaboo/nvim/tree/master/lua/plugin/fcitx5.lua)
     - Switches and restores fcitx5 state in each buffer asynchronously
 - [jupytext](https://github.com/Bekaboo/nvim/tree/master/lua/plugin/jupytext.lua)
