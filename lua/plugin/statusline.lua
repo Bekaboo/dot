@@ -178,7 +178,11 @@ vim.api.nvim_create_autocmd({ 'BufAdd', 'BufFilePost' }, {
   group = groupid,
   desc = 'Track new buffer file name.',
   callback = function(info)
-    add_buf(info.buf)
+    -- Delay adding buffer to fnames to ensure attributes, e.g.
+    -- `bt`, are set for special buffers, for example, terminal buffers
+    vim.schedule(function()
+      add_buf(info.buf)
+    end)
   end,
 })
 
