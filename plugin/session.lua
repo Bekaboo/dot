@@ -67,16 +67,27 @@ local function load_session()
 end
 
 ---Check if there are files opened
+---Note: temp files, e.g. gitcommit, gitrebase, and files under /tmp are ignored
 ---@return boolean?
 local function has_file_opened()
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-    if
-      vim.api.nvim_buf_is_valid(buf)
-      and (vim.uv.fs_stat(vim.api.nvim_buf_get_name(buf)) or {}).type
-        == 'file'
-    then
+    if not vim.api.nvim_buf_is_valid(buf) then
+      goto continue
+    end
+    local filetype = vim.bo[buf].filetype
+    if filetype == 'gitcommit' or filetype == 'gitrebase' then
+      goto continue
+    end
+    local bufname = vim.api.nvim_buf_get_name(buf)
+    if vim.startswith(bufname, '/tmp/') then
+      goto continue
+    end
+
+    local stat = vim.uv.fs_stat(bufname)
+    if stat and stat.type == 'file' then
       return true
     end
+    ::continue::
   end
 end
 
