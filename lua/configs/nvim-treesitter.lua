@@ -60,6 +60,7 @@ ts_configs.setup({
     enable = not vim.g.vscode,
     disable = function(ft, buf)
       return ft == 'latex'
+        or ft == 'tmux'
         or vim.b[buf].bigfile == true
         or vim.fn.win_gettype() == 'command'
     end,
