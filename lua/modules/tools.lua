@@ -174,7 +174,7 @@ return {
       'Gwrite',
     },
     keys = { '<Leader>gL' },
-    event = { 'BufWritePost', 'BufReadPre' },
+    event = { 'BufWinEnter', 'BufWritePost', 'BufReadPre' },
     config = function()
       require('configs.vim-fugitive')
     end,
@@ -207,29 +207,34 @@ return {
       vim.api.nvim_create_autocmd('BufWinEnter', {
         nested = true,
         callback = function(info)
-          local path = info.file
-          if path == '' then
-            return
-          end
-          local stat = vim.uv.fs_stat(path)
-          if not stat or stat.type ~= 'directory' then
-            return
+          for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+            local bufname = vim.api.nvim_buf_get_name(buf)
+            if
+              not vim.startswith(bufname, 'oil://')
+              and (vim.uv.fs_stat(bufname) or {}).type ~= 'directory'
+            then
+              goto continue
+            end
+
+            require('oil')
+            vim.api.nvim_del_autocmd(info.id)
+            vim.schedule(function()
+              if not vim.api.nvim_buf_is_valid(buf) then
+                return
+              end
+              vim.api.nvim_buf_call(buf, function()
+                vim.cmd.edit({
+                  bang = true,
+                  mods = { keepjumps = true },
+                })
+              end)
+            end)
+            ::continue::
           end
 
-          vim.api.nvim_del_autocmd(info.id)
-          require('oil')
-          vim.schedule(function()
-            if not vim.api.nvim_buf_is_valid(info.buf) then
-              return
-            end
-            vim.api.nvim_buf_call(info.buf, function()
-              vim.cmd.edit({
-                bang = true,
-                mods = { keepjumps = true },
-              })
-            end)
-          end)
-          return true
+          if package.loaded['oil'] then
+            return true
+          end
         end,
       })
     end,

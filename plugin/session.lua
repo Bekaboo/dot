@@ -66,10 +66,10 @@ local function load_session()
   end)
 end
 
----Check if there are files opened
+---Check if there is any named buffer
 ---Note: temp files, e.g. gitcommit, gitrebase, and files under /tmp are ignored
 ---@return boolean?
-local function has_file_opened()
+local function has_named_buffer()
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
     if not vim.api.nvim_buf_is_valid(buf) then
       goto continue
@@ -83,15 +83,14 @@ local function has_file_opened()
       goto continue
     end
 
-    local stat = vim.uv.fs_stat(bufname)
-    if stat and stat.type == 'file' then
+    if bufname ~= '' then
       return true
     end
     ::continue::
   end
 end
 
-if has_file_opened() then
+if has_named_buffer() then
   save_session()
 end
 
@@ -109,7 +108,7 @@ vim.api.nvim_create_autocmd({
   group = groupid,
   desc = 'Automatically save session.',
   callback = function()
-    if has_file_opened() then
+    if has_named_buffer() then
       save_session()
     else
       -- Remove current session if all 'file' buffers
