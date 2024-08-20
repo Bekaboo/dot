@@ -23,7 +23,7 @@ local function jupytext_convert(buf)
 
   local fpath_out = vim.fs.joinpath(
     fpath_cache_jupytext,
-    (vim.fn.fnamemodify(fpath_ipynb, ':r'):gsub('/', '%%'))
+    (vim.fn.fnamemodify(fpath_ipynb, ':r'):gsub('%%', '%%%%'):gsub('/', '%%'))
   )
   local fpath_md = fpath_out .. '.md'
   local fpath_sha = fpath_out .. '.sha256'
