@@ -104,7 +104,10 @@ vim.api.nvim_create_autocmd({
 }, {
   group = groupid,
   desc = 'Automatically save session.',
-  callback = function()
+  -- `BufDelete` event triggers just before the buffers is actually deleted from
+  -- the buffer list, delay to ensure that the buffer is deleted before checking
+  -- for named buffers
+  callback = vim.schedule_wrap(function()
     if has_named_buffer() then
       save_session()
     else
@@ -112,7 +115,7 @@ vim.api.nvim_create_autocmd({
       -- are deleted in the current nvim process
       remove_session()
     end
-  end,
+  end),
 })
 
 vim.api.nvim_create_autocmd({ 'StdinReadPre', 'SessionLoadPost' }, {
