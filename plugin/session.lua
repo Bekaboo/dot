@@ -36,10 +36,7 @@ end
 ---Remove session file
 ---@return nil
 local function remove_session()
-  local session = get_session()
-  if vim.uv.fs_stat(session) then
-    vim.fn.delete(session)
-  end
+  vim.fn.delete(get_session())
 end
 
 ---Load current session
