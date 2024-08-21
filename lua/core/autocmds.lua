@@ -100,48 +100,76 @@ augroup('LastPosJmp', {
 })
 
 augroup('AutoCwd', {
+  'LspAttach',
+  {
+    desc = 'Record LSP root directories in `vim.g._lsp_root_dirs`.',
+    callback = function(info)
+      local client = vim.lsp.get_client_by_id(info.data.client_id)
+      local root_dir = client and client.config and client.config.root_dir
+      if
+        not root_dir
+        or root_dir == vim.fs.normalize('~')
+        or root_dir == vim.fs.dirname(root_dir)
+      then
+        return
+      end
+
+      -- Keep only shortest root dir in `vim.g._lsp_root_dirs`,
+      -- e.g. if we have `~/project` and `~/project/subdir`, keep only
+      -- `~/project`
+      local lsp_root_dirs = vim.g._lsp_root_dirs or {}
+      for i, dir in ipairs(lsp_root_dirs) do
+        -- If the new root dir is a subdirectory of an existing root dir,
+        -- return early and don't add it
+        if vim.startswith(root_dir, dir) then
+          return
+        end
+        if vim.startswith(dir, root_dir) then
+          table.remove(lsp_root_dirs, i)
+        end
+      end
+      table.insert(lsp_root_dirs, root_dir)
+      vim.g._lsp_root_dirs = lsp_root_dirs
+
+      -- Execute BufWinEnter event on current buffer to trigger cwd change
+      vim.api.nvim_exec_autocmds('BufWinEnter', { buffer = info.buf })
+    end,
+  },
+}, {
   { 'BufWinEnter', 'FileChangedShellPost' },
   {
-    pattern = '*',
     desc = 'Automatically change local current directory.',
     callback = function(info)
       if info.file == '' or vim.bo[info.buf].bt ~= '' then
         return
       end
-      local buf = info.buf
-      local win = vim.api.nvim_get_current_win()
 
-      vim.schedule(function()
-        if
-          not vim.api.nvim_buf_is_valid(buf)
-          or not vim.api.nvim_win_is_valid(win)
-          or not vim.api.nvim_win_get_buf(win) == buf
-        then
-          return
+      local lsp_root_dir
+      local bufname = vim.api.nvim_buf_get_name(info.buf)
+      for _, dir in ipairs(vim.g._lsp_root_dirs or {}) do
+        if vim.startswith(bufname, dir) then
+          lsp_root_dir = dir
+          break
         end
-        vim.api.nvim_win_call(win, function()
-          local current_dir = vim.fn.getcwd(0)
-          local target_dir = vim.fs.root(
-            info.file,
-            require('utils.fs').root_patterns
-          ) or vim.fs.dirname(info.file)
-          local stat = target_dir and vim.uv.fs_stat(target_dir)
-          -- Prevent unnecessary directory change, which triggers
-          -- DirChanged autocmds that may update winbar unexpectedly
-          if
-            stat
-            and stat.type == 'directory'
-            and current_dir ~= target_dir
-          then
-            pcall(vim.cmd.lcd, {
-              target_dir,
-              mods = {
-                silent = true,
-                emsg_silent = true,
-              },
-            })
-          end
-        end)
+      end
+
+      local root_dir = lsp_root_dir
+        or vim.fs.root(info.file, require('utils.fs').root_patterns)
+        or vim.fs.dirname(info.file)
+
+      -- Prevent unnecessary directory change, which triggers
+      -- DirChanged autocmds that may update winbar unexpectedly
+      if not root_dir or root_dir == vim.fn.getcwd(0) then
+        return
+      end
+      vim.api.nvim_win_call(0, function()
+        pcall(vim.cmd.lcd, {
+          root_dir,
+          mods = {
+            silent = true,
+            emsg_silent = true,
+          },
+        })
       end)
     end,
   },
