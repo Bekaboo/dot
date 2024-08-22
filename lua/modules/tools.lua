@@ -229,8 +229,8 @@ return {
 
               if not dirbuf_found then
                 dirbuf_found = true
-                require('oil')
-                vim.api.nvim_del_autocmd(info.id)
+                pcall(require, 'oil')
+                pcall(vim.api.nvim_del_autocmd, info.id)
               end
 
               vim.api.nvim_buf_call(buf, function()
