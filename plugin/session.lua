@@ -88,9 +88,13 @@ local function has_named_buffer()
   end
 end
 
-if has_named_buffer() then
-  save_session()
-end
+-- Wait for buffer options & names to be set before checking for named buffers
+-- and saving the session
+vim.schedule(function()
+  if has_named_buffer() then
+    save_session()
+  end
+end)
 
 local groupid = vim.api.nvim_create_augroup('Session', {})
 vim.api.nvim_create_autocmd({
