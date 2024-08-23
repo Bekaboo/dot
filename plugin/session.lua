@@ -105,6 +105,8 @@ vim.api.nvim_create_autocmd({
   'TermClose',
   'WinNew',
   'WinClosed',
+  'DirChanged',
+  'FileChangedShellPost',
   'VimLeave',
 }, {
   group = groupid,
