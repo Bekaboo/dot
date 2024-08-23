@@ -161,8 +161,9 @@ local function add_buf(buf)
   table.insert(bufs, buf)
 
   if #bufs > 1 then
-    local path_diffs =
-      utils.fs.diff(vim.tbl_map(vim.api.nvim_buf_get_name, bufs))
+    local path_diffs = vim.tbl_filter(function(d)
+      return d ~= ''
+    end, utils.fs.diff(vim.tbl_map(vim.api.nvim_buf_get_name, bufs)))
     for i, path_diff in ipairs(path_diffs) do
       local _buf = bufs[i]
       vim.b[_buf]._stl_pdiff = path_diff
