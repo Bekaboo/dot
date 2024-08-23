@@ -195,7 +195,7 @@ local groupid_preview = vim.api.nvim_create_augroup('OilPreview', {})
 vim.api.nvim_create_autocmd({ 'CursorMoved', 'WinScrolled' }, {
   desc = 'Update floating preview window when cursor moves or window scrolls.',
   group = groupid_preview,
-  pattern = 'oil:///*',
+  pattern = 'oil://*',
   callback = function()
     local oil_win = vim.api.nvim_get_current_win()
     local preview_win = preview_wins[oil_win]
@@ -415,7 +415,7 @@ local groupid = vim.api.nvim_create_augroup('OilSyncCwd', {})
 vim.api.nvim_create_autocmd({ 'BufEnter', 'TextChanged' }, {
   desc = 'Set cwd to follow directory shown in oil buffers.',
   group = groupid,
-  pattern = 'oil:///*',
+  pattern = 'oil://*',
   callback = function(info)
     if vim.bo[info.buf].filetype == 'oil' then
       local cwd = vim.fs.normalize(vim.fn.getcwd(vim.fn.winnr()))
@@ -445,7 +445,7 @@ vim.api.nvim_create_autocmd('DirChanged', {
 vim.api.nvim_create_autocmd('BufEnter', {
   desc = 'Set last cursor position in oil buffers when editing parent dir.',
   group = vim.api.nvim_create_augroup('OilSetLastCursor', {}),
-  pattern = 'oil:///*',
+  pattern = 'oil://*',
   callback = function()
     -- Place cursor on the alternate buffer if we are opening
     -- the parent directory of the alternate buffer
