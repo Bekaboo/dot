@@ -233,6 +233,9 @@ return {
                 pcall(vim.api.nvim_del_autocmd, info.id)
               end
 
+              if not vim.api.nvim_buf_is_valid(buf) then
+                return
+              end
               vim.api.nvim_buf_call(buf, function()
                 vim.cmd.edit({
                   bang = true,
