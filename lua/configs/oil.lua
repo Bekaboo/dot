@@ -310,6 +310,9 @@ oil.setup({
       add_padding = false,
     },
   },
+  buf_options = {
+    buflisted = true,
+  },
   win_options = {
     number = false,
     relativenumber = false,
