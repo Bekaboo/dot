@@ -1,7 +1,15 @@
--- Disable default intro message
-vim.opt.shortmess:append('I')
+---Check if the intro message is disabled by user
+---@return boolean
+local function intro_disabled()
+  return vim.go.shortmess:find('I', 1, true) ~= nil
+end
 
-if vim.fn.argc() > 0 or not vim.g.has_ui then
+---@return boolean
+local function should_show_intro()
+  return vim.g.has_ui and vim.fn.argc() == 0 and not intro_disabled()
+end
+
+if not should_show_intro() then
   return
 end
 
@@ -115,11 +123,42 @@ for linenr, line in ipairs(lines) do
   end
 end
 
--- Open the window to show the intro message
-local win = vim.api.nvim_open_win(buf, false, win_config)
-vim.wo[win].winhl = 'NormalFloat:Normal,Search:,Incsearch:'
+local win -- Floating window showing the intro message
 
--- Clear the intro when the user does something
+---Wipe out the intro message buffer
+---@return nil
+local function clear_intro()
+  if buf and vim.api.nvim_buf_is_valid(buf) then
+    vim.api.nvim_buf_delete(buf, { force = true })
+  end
+end
+
+local groupid = vim.api.nvim_create_augroup('NvimIntro', {})
+vim.api.nvim_create_autocmd('UIEnter', {
+  group = groupid,
+  once = true,
+  desc = 'Show the intro message on entering the UI.',
+  callback = function()
+    if not should_show_intro() then
+      clear_intro()
+      return true
+    end
+
+    -- Disable default intro message
+    vim.opt.shortmess:append('I')
+
+    -- Intro message buffer can be deleted by user actions before the UIEnter
+    -- event, e.g. when nvim is launched using `nvim +split`
+    if not vim.api.nvim_buf_is_valid(buf) then
+      return
+    end
+
+    win = vim.api.nvim_open_win(buf, false, win_config)
+    vim.wo[win].winhl = 'NormalFloat:Normal,Search:,Incsearch:'
+    return true
+  end,
+})
+
 vim.api.nvim_create_autocmd({
   'BufModifiedSet',
   'BufReadPre',
@@ -132,13 +171,23 @@ vim.api.nvim_create_autocmd({
   'WinEnter',
 }, {
   once = true,
-  group = vim.api.nvim_create_augroup('NvimIntro', {}),
-  callback = function(info)
-    if vim.api.nvim_win_is_valid(win) then
-      vim.api.nvim_win_close(win, true)
-    end
-    vim.api.nvim_del_augroup_by_id(info.group)
+  group = groupid,
+  desc = 'Clear the intro on user action.',
+  callback = function()
+    clear_intro()
     return true
+  end,
+})
+
+vim.api.nvim_create_autocmd('OptionSet', {
+  group = groupid,
+  pattern = 'shortmess',
+  desc = 'Clear the intro if intro message is disabled by user.',
+  callback = function()
+    if intro_disabled() then
+      clear_intro()
+      return true
+    end
   end,
 })
 
