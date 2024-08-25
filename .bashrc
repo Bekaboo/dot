@@ -12,7 +12,7 @@ pathadd() {
 }
 
 pathadd "${HOME}/.local/bin"
-pathadd "${HOME}/.scripts"
+pathadd "${HOME}/.bin"
 pathadd "${HOME}/.cargo/bin"
 export PATH
 

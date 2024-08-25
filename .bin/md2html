@@ -7,7 +7,7 @@ md2html() {
         --standalone \
         --embed-resources \
         -f markdown-implicit_figures \
-        --css ~/.scripts/css/pandoc.css \
+        --css ~/.pandoc/css/paper.css \
         -t html \
         "$1" \
         -o $(echo "$1" | sed "s/.md$/.html/")

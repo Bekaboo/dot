@@ -9,7 +9,7 @@ md2html2pdf() {
         -V margin-bottom=10 \
         -V margin-left=8 \
         -V margin-right=8 \
-        --css ~/.scripts/css/pandoc.css \
+        --css ~/.pandoc/css/paper.css \
         -f markdown-implicit_figures \
         -t pdf \
         "$1" \

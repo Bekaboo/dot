@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
-borg create --list -v --exclude-from ~/.scripts/borg/exclude.txt \
+borg create --list -v --exclude-from ~/.borg/exclude.txt \
     borg/home::{hostname}-{user}-{now:%Y-%m-%dT%H:%M:%S.%f} ~
 borg prune --list -d 7 -w 4 -m 2 -y 2 borg/home
 borg compact --cleanup-commits borg/home
