@@ -7,9 +7,11 @@ process_input() {
     echo '•'
 
     local input=""
+    local line_empty=""
     # Concat all lines until an empty line is found
     while IFS= read -r line; do
         if [[ -z "$line" ]]; then
+            line_empty=1
             break
         fi
         input="$input $line"
@@ -17,8 +19,12 @@ process_input() {
 
     # Remove leading whitespace
     input=$(echo "$input" | sed 's/^ *//')
+
+    # If input is empty:
+    # 1. return 1 if the last line is not empty (received ctrl-d)
+    # 2. otherwise return 0
     if [[ -z "$input" ]]; then
-        return 1
+        return "$([[ "$line_empty" ]] && echo 0 || echo 1)"
     fi
 
     local output=$(echo "$input" | trans -b -no-auto :zh)
@@ -28,7 +34,7 @@ process_input() {
     echo
 }
 
-# Continuously receive input from user
+# Continuously receive input from user until receiving ctrl-d (EOF)
 while true; do
     if ! process_input; then
         break
