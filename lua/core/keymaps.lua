@@ -234,6 +234,7 @@ vim.api.nvim_create_autocmd('CmdlineEnter', {
     local utils = require('utils')
     utils.keymap.command_map(':', 'lua ')
     utils.keymap.command_abbrev('man', 'Man')
+    utils.keymap.command_abbrev('bt', 'bot te')
     utils.keymap.command_abbrev('ht', 'hor te')
     utils.keymap.command_abbrev('vt', 'vert te')
     utils.keymap.command_abbrev('rm', '!rm')
