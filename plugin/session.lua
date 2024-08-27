@@ -64,12 +64,12 @@ local function load_session()
 end
 
 ---Check if there is any named buffer
----Note: temp files, (gitcommit, gitrebase, and files under /tmp) and unlisted
----buffers are ignored
+---Note: temp files, (gitcommit, gitrebase, and files under /tmp) and hidden
+---unlisted buffers are ignored
 ---@return boolean?
 local function has_named_buffer()
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-    if vim.fn.buflisted(buf) == 0 then
+    if vim.fn.buflisted(buf) == 0 and vim.fn.bufwinid(buf) == -1 then
       goto continue
     end
     local filetype = vim.bo[buf].filetype
