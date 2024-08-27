@@ -216,6 +216,7 @@ function! s:command_map(trig, command, ...) abort
 endfunction
 
 call s:command_map(':', 'lua ')
+call s:command_abbrev('bt', 'bot ter')
 call s:command_abbrev('ht', 'hor ter')
 call s:command_abbrev('vt', 'vert ter')
 call s:command_abbrev('rm', '!rm')
