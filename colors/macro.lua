@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Fri Aug 16 04:50:25 PM EDT 2024
+-- Last Updated: Tue Aug 27 08:38:16 PM EDT 2024
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -220,8 +220,14 @@ local hlgroups = {
   CursorLineNr = { fg = c_macroGray0, bold = true },
   DebugPC = { bg = c_winterRed },
   DiffAdd = { bg = c_winterGreen },
+  DiffAdded = { fg = c_autumnGreen },
   DiffChange = { bg = c_winterBlue },
+  DiffChanged = { fg = c_autumnYellow },
   DiffDelete = { fg = c_macroBg4 },
+  DiffDeleted = { fg = c_autumnRed },
+  DiffNewFile = { fg = c_autumnGreen },
+  DiffOldFile = { fg = c_autumnRed },
+  DiffRemoved = { fg = c_autumnRed },
   DiffText = { bg = c_sumiInk6 },
   Directory = { fg = c_macroBlue1 },
   EndOfBuffer = { fg = c_macroBg1 },
@@ -320,8 +326,9 @@ local hlgroups = {
   ['@tag.attribute'] = { fg = c_macroFg0 },
   ['@tag.delimiter'] = { fg = c_macroGray1 },
   ['@comment.error'] = { bg = c_lotusRed1, fg = c_macroFg0, bold = true },
-  ['@diff.plug'] = { fg = c_autumnGreen },
-  ['@diff.minus'] = { fg = c_autumnRed },
+  ['@diff.delta'] = { link = 'DiffChanged' },
+  ['@diff.minus'] = { link = 'DiffRemoved' },
+  ['@diff.plus'] = { link = 'DiffAdded' },
   ['@markup.emphasis'] = { italic = true },
   ['@markup.environment'] = { link = 'Keyword' },
   ['@markup.environment.name'] = { link = 'String' },
@@ -516,12 +523,6 @@ local hlgroups = {
   GitSignsDeletePreview = { bg = c_winterRed },
 
   -- fugitive
-  DiffAdded = { fg = c_autumnGreen },
-  DiffChanged = { fg = c_autumnYellow },
-  DiffDeleted = { fg = c_autumnRed },
-  DiffNewFile = { fg = c_autumnGreen },
-  DiffOldFile = { fg = c_autumnRed },
-  DiffRemoved = { fg = c_autumnRed },
   fugitiveHash = { link = 'gitHash' },
   fugitiveHeader = { link = 'Title' },
   fugitiveStagedModifier = { fg = c_autumnGreen },

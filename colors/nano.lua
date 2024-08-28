@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Mon Mar  4 09:39:16 AM CST 2024
+-- Last Updated: Tue Aug 27 08:38:24 PM EDT 2024
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -126,6 +126,7 @@ local hlgroups = {
   CursorLineNr = { fg = c_faded, bold = true },
   DebugPC = { bg = c_subtle },
   DiffAdd = { bg = c_grass },
+  DiffAdded = { fg = c_pine },
   DiffChange = { bg = c_lavender },
   DiffDelete = { fg = c_faint },
   DiffText = { fg = c_foreground, bg = c_violet },
@@ -304,8 +305,9 @@ local hlgroups = {
   ['@comment.info'] = { link = 'SpecialComment' },
   ['@comment.warning'] = { link = 'WarningMsg' },
   ['@comment.error'] = { link = 'ErrorMsg' },
-  ['@diff.plug'] = { link = 'DiffAdded' },
+  ['@diff.delta'] = { link = 'DiffChanged' },
   ['@diff.minus'] = { link = 'DiffRemoved' },
+  ['@diff.plus'] = { link = 'DiffAdded' },
   ['@tag'] = { link = 'Tag' },
   ['@tag.attribute'] = { link = 'Identifier' },
   ['@tag.delimiter'] = { link = 'Delimiter' },
@@ -507,7 +509,6 @@ local hlgroups = {
   fugitiveStagedHeading = { fg = c_pine, bold = true },
   fugitiveUnstagedHeading = { fg = c_salient, bold = true },
   fugitiveUntrackedHeading = { fg = c_faded, bold = true },
-  DiffAdded = { fg = c_pine },
 
   -- telescope
   TelescopeNormal = { fg = c_faded, bg = c_subtle },

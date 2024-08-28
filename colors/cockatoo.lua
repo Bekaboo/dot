@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Sat Jan 20 03:12:58 PM CST 2024
+-- Last Updated: Tue Aug 27 08:38:05 PM EDT 2024
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -367,8 +367,9 @@ local hlgroups = {
   ['@comment.info'] = { link = 'SpecialComment' },
   ['@comment.warning'] = { link = 'WarningMsg' },
   ['@comment.error'] = { link = 'ErrorMsg' },
-  ['@diff.plug'] = { link = 'DiffAdded' },
+  ['@diff.delta'] = { link = 'DiffChanged' },
   ['@diff.minus'] = { link = 'DiffRemoved' },
+  ['@diff.plus'] = { link = 'DiffAdded' },
   ['@tag'] = { link = 'Tag' },
   ['@tag.attribute'] = { link = 'Identifier' },
   ['@tag.delimiter'] = { link = 'Delimiter' },
