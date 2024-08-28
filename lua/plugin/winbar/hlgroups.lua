@@ -15,6 +15,7 @@ local hlgroups = {
   WinBarIconKindDelete            = { link = 'Error' },
   WinBarIconKindDoStatement       = { link = 'Repeat' },
   WinBarIconKindElseStatement     = { link = 'Conditional' },
+  WinBarIconKindElement           = { link = 'NameSpace' },
   WinBarIconKindEnum              = { link = 'CmpItemKindEnum' },
   WinBarIconKindEnumMember        = { link = 'CmpItemKindEnumMember' },
   WinBarIconKindEvent             = { link = 'CmpItemKindEvent' },

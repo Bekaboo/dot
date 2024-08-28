@@ -287,6 +287,7 @@ M.opts = {
         'continue_statement',
         'delete',
         'do_statement',
+        'element',
         'enum',
         'enum_member',
         'event',

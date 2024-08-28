@@ -28,6 +28,7 @@ return {
     Declaration         = 'D ',
     Delete              = 'X ',
     DoStatement         = 'D ',
+    Element             = 'E ',
     Enum                = 'E ',
     EnumMember          = 'E ',
     Event               = 'E ',

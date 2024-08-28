@@ -28,6 +28,7 @@ return {
     Declaration         = '󰙠 ',
     Delete              = '󰩺 ',
     DoStatement         = '󰑖 ',
+    Element             = '󰅩 ',
     Enum                = ' ',
     EnumMember          = ' ',
     Event               = ' ',
