@@ -266,9 +266,11 @@ M.opts = {
       end,
     },
     treesitter = {
-      -- Lua pattern used to extract a short name from the node text
-      name_pattern = '[#~%*%w%._%->!@:]+%s*'
-        .. string.rep('[#~%*%w%._%->!@:]*', 4, '%s*'),
+      -- Vim pattern used to extract a short name from the node text
+      -- word with optional prefix and suffix: [#~!@\*&.]*[[:keyword:]]\+!\?
+      -- word separators: \(->\)\+\|-\+\|\.\+\|:\+\|\s\+
+      name_pattern = [=[[#~!@\*&.]*[[:keyword:]]\+!\?]=]
+        .. [=[\(\(\(->\)\+\|-\+\|\.\+\|:\+\|\s\+\)\?[#~!@\*&.]*[[:keyword:]]\+!\?\)*]=],
       -- The order matters! The first match is used as the type
       -- of the treesitter symbol and used to show the icon
       -- Types listed below must have corresponding icons
