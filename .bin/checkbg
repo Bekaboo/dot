@@ -13,11 +13,42 @@ fi
 
 # If `sunwait` is installed, use it to determine if it's day or night
 if __has sunwait; then
+    # Get latitude and longitude from ip address using `curl` or `wget`
+    # coords format is "latitude,longitude"
+    if __has curl; then
+        coords=$(curl -s ipinfo.io/loc)
+    elif __has wget; then
+        coords=$(wget -qO- ipinfo.io/loc)
+    fi
+
+    if [[ -n "$coords" ]]; then
+        # Extract latitude and longitude from coords
+        latitude=${coords%,*}
+        longitude=${coords#*,}
+
+        # Convert latitude and longitude format from [+-]0.0000 to
+        # 0.0000[NS] (latitude) or 0.0000[EW] (longitude)
+        latitude=$([[ "$latitude" == -* ]] &&
+            echo "${latitude#-}S" ||
+            echo "${latitude}N")
+        longitude=$([[ "$longitude" == -* ]] &&
+            echo "${longitude#-}W" ||
+            echo "${longitude}E")
+
+        setbg "$([[ "$(sunwait poll $latitude $longitude)" == DAY ]] &&
+            echo light ||
+            echo dark)"
+        exit
+    fi
+
+    # Let `sunwait` detect the location itself if we cannot get the coordinates
+    # from ipinfo.io
     setbg "$([[ "$(sunwait poll)" == DAY ]] && echo light || echo dark)"
-else
-    # Else use current time to determine if it's day or night
-    current_hour=$(date +%H)
-    setbg "$([[ "$current_hour" -gt 6 && "$current_hour" -lt 18 ]] &&
-        echo light ||
-        echo dark)"
+    exit
 fi
+
+# Else use current time to determine if it's day or night
+current_hour=$(date +%H)
+setbg "$([[ "$current_hour" -gt 6 && "$current_hour" -lt 18 ]] &&
+    echo light ||
+    echo dark)"
