@@ -54,6 +54,7 @@ local hlgroups = {
   WinBarIconKindProperty          = { link = 'CmpItemKindProperty' },
   WinBarIconKindReference         = { link = 'CmpItemKindReference' },
   WinBarIconKindRepeat            = { link = 'Repeat' },
+  WinBarIconKindRuleSet           = { link = 'NameSpace' },
   WinBarIconKindScope             = { link = 'NameSpace' },
   WinBarIconKindSpecifier         = { link = 'Keyword' },
   WinBarIconKindStatement         = { link = 'Statement' },

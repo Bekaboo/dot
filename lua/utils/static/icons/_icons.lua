@@ -75,6 +75,7 @@ return {
     Reference           = '󰦾 ',
     Regex               = ' ',
     Repeat              = '󰑖 ',
+    RuleSet             = '󰅩 ',
     Scope               = '󰅩 ',
     Snippet             = '󰩫 ',
     Specifier           = '󰦪 ',

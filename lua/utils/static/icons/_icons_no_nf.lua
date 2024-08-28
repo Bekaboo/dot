@@ -75,6 +75,7 @@ return {
     Reference           = 'R ',
     Regex               = 'R ',
     Repeat              = 'R ',
+    RuleSet             = 'R ',
     Scope               = 'S ',
     Snippet             = 'S ',
     Specifier           = 'S ',
