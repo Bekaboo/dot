@@ -142,10 +142,8 @@ local function get_symbols(buf, win, cursor)
     return {}
   end
 
-  local symbols = {}
-  local num_lines = vim.api.nvim_buf_line_count(buf)
+  local symbols = {} ---@type winbar_symbol_t[]
   local prev_type_rank = math.huge
-  local prev_row = math.huge
   local current_node =
     vim.treesitter.get_node({
       bufnr = buf,
@@ -159,28 +157,42 @@ local function get_symbols(buf, win, cursor)
   while current_node do
     local name = get_node_short_name(current_node, buf)
     local type, type_rank = get_node_short_type(current_node)
-    local range = { current_node:range() } ---@type Range4
-    local start_row = range[1]
-    local end_row = range[3]
-    if
-      valid_node(current_node, buf)
-      and not (start_row == 0 and end_row == num_lines)
-    then
-      local lsp_type = utils.string.snake_to_camel(type)
+    if valid_node(current_node, buf) then
+      -- Insert current node if symbol list is empty, or:
+      -- 1. Current node name is different from the first symbol name, to avoid
+      --    symbols with the same name shown multiple times in the winbar.
+      -- 2. Consider nested symbols with the same name, e.g. nested if statement
+      --    or html tags, rule 1 will wrongly filer out outer symbols in this
+      --    case. So, we also insert the current node if the start row of the
+      --    current node is less than the start row of the previous node even
+      --    if they share the same name. This is not perfect, though, consider
+      --    the following examples:
+      --    ```lua
+      --    if true then if true then end end
+      --    ```
+      --    or
+      --    ```html
+      --    <div><div></div></div>
+      --    ```
+      --    The outer symbols will be filtered out because they start in the
+      --    same row as the inner symbols.
+      --
+      -- TODO: Improve this logic to handle nested symbols on the same row with
+      -- the same name, a potential fix is to record the starting point of the
+      -- symbols' short names in the source code so that we can check if they
+      -- are have the same location in the source.
       if
         vim.tbl_isempty(symbols)
         or symbols[1].name ~= name
-        or start_row < prev_row
+        or current_node:start() < symbols[1].range.start.line
       then
         table.insert(symbols, 1, convert(current_node, buf, win))
-        prev_type_rank = type_rank
-        prev_row = start_row
       elseif type_rank < prev_type_rank then
+        local lsp_type = utils.string.snake_to_camel(type)
         symbols[1].icon = configs.opts.icons.kinds.symbols[lsp_type]
         symbols[1].icon_hl = 'WinBarIconKind' .. lsp_type
-        prev_type_rank = type_rank
-        prev_row = start_row
       end
+      prev_type_rank = type_rank
     end
     current_node = current_node:parent()
   end
