@@ -78,6 +78,15 @@ require('ultimate-autopair').setup({
     disable_start = true,
     disable_end = true,
   },
+  {
+    '>',
+    '<',
+    ft = { 'html', 'xml', 'markdown' },
+    disable_start = true,
+    disable_end = true,
+    newline = true,
+    space = true,
+  },
   -- Paring '$' and '*' are handled by snippets,
   -- only use autopair to delete matched pairs here
   {

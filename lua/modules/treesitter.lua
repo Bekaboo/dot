@@ -31,6 +31,15 @@ return {
   },
 
   {
+    'windwp/nvim-ts-autotag',
+    event = 'FileType',
+    dependencies = 'nvim-treesitter/nvim-treesitter',
+    config = function()
+      require('configs.nvim-ts-autotag')
+    end,
+  },
+
+  {
     'Wansmer/treesj',
     cmd = { 'TSJToggle', 'TSJSplit', 'TSJJoin' },
     keys = { '<M-C-K>', '<M-NL>', 'g<M-NL>' },
