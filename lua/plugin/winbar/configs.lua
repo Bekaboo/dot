@@ -328,7 +328,7 @@ M.opts = {
         'field',
         'identifier',
         'object',
-        'text',
+        -- 'text',
         -- 'list',
         -- 'string',
         -- 'statement',
