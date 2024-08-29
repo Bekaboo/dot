@@ -8,7 +8,7 @@ local utils = require('plugin.winbar.utils')
 local function get_node_short_name(node, buf)
   return vim.trim(
     vim.fn.matchstr(
-      vim.treesitter.get_node_text(node, buf):gsub('\n.*', ''),
+      vim.treesitter.get_node_text(node, buf):gsub('\n', ' '):gsub('\t', ' '),
       configs.opts.sources.treesitter.name_pattern
     )
   )
