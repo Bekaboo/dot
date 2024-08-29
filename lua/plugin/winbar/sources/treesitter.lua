@@ -20,7 +20,7 @@ end
 local function get_node_short_type(node)
   local ts_type = node:type()
   for _, type in ipairs(configs.opts.sources.treesitter.valid_types) do
-    if ts_type:find(type, 1, true) then
+    if vim.startswith(ts_type, type) then
       return type
     end
   end
