@@ -1,14 +1,3 @@
--- Fix oil setting window options for windows containing non-oil buffers
--- when loading a session with oil buffers
-local oil_view = require('oil.view')
-local _set_win_options = oil_view.set_win_options
----@diagnostic disable-next-line: duplicate-set-field
-function oil_view.set_win_options()
-  if vim.startswith(vim.api.nvim_buf_get_name(0), 'oil://') then
-    _set_win_options()
-  end
-end
-
 local oil = require('oil')
 local icons = require('utils.static').icons
 local icon_file = vim.trim(icons.File)
