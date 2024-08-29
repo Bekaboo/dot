@@ -124,7 +124,8 @@ end
 
 ---Restart and reattach LSP client
 ---@param client_or_id integer|vim.lsp.Client
-function M.restart(client_or_id)
+---@param opts { on_restart: fun(client_id: integer)? }?
+function M.restart(client_or_id, opts)
   local client = type(client_or_id) == 'number'
       and vim.lsp.get_client_by_id(client_or_id)
     or client_or_id --[[@as vim.lsp.Client]]
@@ -143,7 +144,10 @@ function M.restart(client_or_id)
           return
         end
         vim.api.nvim_buf_call(buf, function()
-          M.start(config)
+          local id = M.start(config)
+          if id and opts and opts.on_restart then
+            opts.on_restart(id)
+          end
         end)
       end
     end,

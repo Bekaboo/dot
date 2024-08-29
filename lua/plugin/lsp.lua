@@ -406,14 +406,18 @@ local subcommands = {
             end, ids)
           or vim.lsp.get_clients({ bufnr = 0 })
         for _, client in ipairs(clients) do
-          utils.lsp.restart(client)
-          vim.notify(
-            string.format(
-              '[LSP] restarted client %d (%s)',
-              client.id,
-              client.name
-            )
-          )
+          utils.lsp.restart(client, {
+            on_restart = function(new_client_id)
+              vim.notify(
+                string.format(
+                  '[LSP] restarted client %d (%s) as client %d',
+                  client.id,
+                  client.name,
+                  new_client_id
+                )
+              )
+            end,
+          })
         end
       end,
     },
