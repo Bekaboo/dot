@@ -1,13 +1,24 @@
+-- LSP config file for javascript, typescript, json, jsonc, html, and css
+
 local lsp = require('utils.lsp')
+local formatter
 
 -- Prefer biome over prettier as formatter
-local formatter = lsp.start({
-  cmd = { 'biome', 'lsp-proxy' },
-  root_patterns = {
-    'biome.json',
-    'biome.jsonc',
-  },
-})
+-- Biome currently only supports json, jsonc, javascript, and typescript
+if
+  vim.bo.ft == 'json'
+  or vim.bo.ft == 'jsonc'
+  or vim.bo.ft == 'javascript'
+  or vim.bo.ft == 'typescript'
+then
+  formatter = lsp.start({
+    cmd = { 'biome', 'lsp-proxy' },
+    root_patterns = {
+      'biome.json',
+      'biome.jsonc',
+    },
+  })
+end
 
 if not formatter then
   local prettier_cmd = vim.fn.executable('prettier_d') == 1 and 'prettier_d'
@@ -52,9 +63,14 @@ if not formatter then
       },
       settings = {
         languages = {
-          -- Setup both js & ts since this file is used for both
+          -- Setup all supported languages because this lsp config file
+          -- is shared between all these filetypes
           javascript = prettier_lang_settings,
           typescript = prettier_lang_settings,
+          jsonc = prettier_lang_settings,
+          json = prettier_lang_settings,
+          html = prettier_lang_settings,
+          css = prettier_lang_settings,
         },
       },
     })
@@ -118,6 +134,10 @@ if eslint_cmd then
       languages = {
         javascript = eslint_lang_settings,
         typescript = eslint_lang_settings,
+        jsonc = eslint_lang_settings,
+        json = eslint_lang_settings,
+        html = eslint_lang_settings,
+        css = eslint_lang_settings,
       },
     },
   })
@@ -125,12 +145,14 @@ if eslint_cmd then
   formatter = formatter or eslint
 end
 
-lsp.start({
-  cmd = { 'typescript-language-server', '--stdio' },
-  root_patterns = {
-    'tsconfig.json',
-    'jsconfig.json',
-    'package.json',
-  },
-  on_attach = formatter and disable_formatting,
-})
+if vim.bo.ft == 'typescript' or vim.bo.ft == 'javascript' then
+  lsp.start({
+    cmd = { 'typescript-language-server', '--stdio' },
+    root_patterns = {
+      'tsconfig.json',
+      'jsconfig.json',
+      'package.json',
+    },
+    on_attach = formatter and disable_formatting,
+  })
+end
