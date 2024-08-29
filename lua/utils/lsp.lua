@@ -106,17 +106,16 @@ function M.soft_stop(client_or_id, opts)
   opts.interval = opts.interval or 500
   opts.on_close = opts.on_close or function() end
 
-  if opts.retry <= 0 then
-    client.stop(true)
-    opts.on_close(client)
-    return
-  end
-  client.stop()
-  ---@diagnostic disable-next-line: invisible
   if client.is_stopped() then
     opts.on_close(client)
     return
   end
+
+  if opts.retry < 0 then
+    return
+  end
+
+  client.stop(opts.retry == 0)
   vim.defer_fn(function()
     opts.retry = opts.retry - 1
     M.soft_stop(client, opts)
@@ -132,8 +131,11 @@ function M.restart(client_or_id)
   if not client then
     return
   end
+
+  -- `client.attached_buffers` will be empty after client is stopped,
+  -- save it before stopping
+  local attached_buffers = vim.deepcopy(client.attached_buffers, true)
   local config = client.config
-  local attached_buffers = client.attached_buffers
   M.soft_stop(client, {
     on_close = function()
       for buf, _ in pairs(attached_buffers) do
