@@ -16,16 +16,15 @@ end
 
 ---Get valid treesitter node type name
 ---@param node TSNode
----@return string? type_name
----@return integer rank type rank
+---@return string type_name
 local function get_node_short_type(node)
   local ts_type = node:type()
-  for i, type in ipairs(configs.opts.sources.treesitter.valid_types) do
+  for _, type in ipairs(configs.opts.sources.treesitter.valid_types) do
     if ts_type:find(type, 1, true) then
-      return type, i
+      return type
     end
   end
-  return nil, math.huge
+  return ''
 end
 
 ---Check if treesitter node is valid
@@ -33,7 +32,7 @@ end
 ---@param buf integer buffer handler
 ---@return boolean
 local function valid_node(node, buf)
-  return get_node_short_type(node) ~= nil
+  return get_node_short_type(node) ~= ''
     and get_node_short_name(node, buf) ~= ''
 end
 
@@ -143,7 +142,6 @@ local function get_symbols(buf, win, cursor)
   end
 
   local symbols = {} ---@type winbar_symbol_t[]
-  local prev_type_rank = math.huge
   local current_node =
     vim.treesitter.get_node({
       bufnr = buf,
@@ -155,44 +153,8 @@ local function get_symbols(buf, win, cursor)
       },
     })
   while current_node do
-    local name = get_node_short_name(current_node, buf)
-    local type, type_rank = get_node_short_type(current_node)
     if valid_node(current_node, buf) then
-      -- Insert current node if symbol list is empty, or:
-      -- 1. Current node name is different from the first symbol name, to avoid
-      --    symbols with the same name shown multiple times in the winbar.
-      -- 2. Consider nested symbols with the same name, e.g. nested if statement
-      --    or html tags, rule 1 will wrongly filer out outer symbols in this
-      --    case. So, we also insert the current node if the start row of the
-      --    current node is less than the start row of the previous node even
-      --    if they share the same name. This is not perfect, though, consider
-      --    the following examples:
-      --    ```lua
-      --    if true then if true then end end
-      --    ```
-      --    or
-      --    ```html
-      --    <div><div></div></div>
-      --    ```
-      --    The outer symbols will be filtered out because they start in the
-      --    same row as the inner symbols.
-      --
-      -- TODO: Improve this logic to handle nested symbols on the same row with
-      -- the same name, a potential fix is to record the starting point of the
-      -- symbols' short names in the source code so that we can check if they
-      -- are have the same location in the source.
-      if
-        vim.tbl_isempty(symbols)
-        or symbols[1].name ~= name
-        or current_node:start() < symbols[1].range.start.line
-      then
-        table.insert(symbols, 1, convert(current_node, buf, win))
-      elseif type_rank < prev_type_rank then
-        local lsp_type = utils.string.snake_to_camel(type)
-        symbols[1].icon = configs.opts.icons.kinds.symbols[lsp_type]
-        symbols[1].icon_hl = 'WinBarIconKind' .. lsp_type
-      end
-      prev_type_rank = type_rank
+      table.insert(symbols, 1, convert(current_node, buf, win))
     end
     current_node = current_node:parent()
   end
