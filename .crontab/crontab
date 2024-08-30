@@ -1,0 +1,7 @@
+# Check time and set background every 10 minutes
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
+DISPLAY=:0
+
+*/10 * * * * PATH=$HOME/.local/bin:$HOME/.bin:$PATH checkbg
