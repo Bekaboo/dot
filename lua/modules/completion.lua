@@ -33,17 +33,6 @@ return {
   },
 
   {
-    'tzachar/cmp-fuzzy-path',
-    build = 'fd --version || fdfind --version',
-    event = { 'CmdlineEnter', 'InsertEnter' },
-    dependencies = {
-      'tzachar/fuzzy.nvim',
-      'hrsh7th/nvim-cmp',
-      'nvim-telescope/telescope-fzf-native.nvim',
-    },
-  },
-
-  {
     'hrsh7th/cmp-buffer',
     event = { 'CmdlineEnter', 'InsertEnter' },
     dependencies = 'hrsh7th/nvim-cmp',

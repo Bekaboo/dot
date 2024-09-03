@@ -188,47 +188,6 @@ local function jump_to_closer(snip_dest, tabout_dest, direction)
   return true
 end
 
----Options for fuzzy_path source
-local fuzzy_path_option = {
-  fd_cmd = {
-    vim.fn.executable('fd') == 1 and 'fd' or 'fdfind',
-    '-p',
-    '-H',
-    '-L',
-    '-td',
-    '-tf',
-    '-tl',
-    '--mount',
-    '-c=never',
-    '-E=*.git/',
-    '-E=*.venv/',
-    '-E=*Cache*/',
-    '-E=*cache*/',
-    '-E=.*Cache*/',
-    '-E=.*cache*/',
-    '-E=.*wine/',
-    '-E=.cargo/',
-    '-E=.conda/',
-    '-E=.dot/',
-    '-E=.fonts/',
-    '-E=.ipython/',
-    '-E=.java/',
-    '-E=.jupyter/',
-    '-E=.luarocks/',
-    '-E=.mozilla/',
-    '-E=.npm/',
-    '-E=.nvm/',
-    '-E=.steam*/',
-    '-E=.thunderbird/',
-    '-E=.tmp/',
-    '-E=__pycache__/',
-    '-E=dosdevices/',
-    '-E=node_modules/',
-    '-E=vendor/',
-    '-E=venv/',
-  },
-}
-
 local icon_dot = icons.DotLarge
 local icon_calc = icons.Calculator
 local icon_folder = icons.Folder
@@ -245,13 +204,6 @@ local function get_bufnrs()
   return vim.b.bigfile and {} or { vim.api.nvim_get_current_buf() }
 end
 
-local fuzzy_path_ok, fuzzy_path_comparator =
-  pcall(require, 'cmp_fuzzy_path.compare')
-
-if not fuzzy_path_ok then
-  fuzzy_path_comparator = function() end
-end
-
 cmp.setup({
   enabled = function()
     return vim.bo.ft ~= '' and not vim.b.bigfile
@@ -260,6 +212,7 @@ cmp.setup({
     async_budget = 64,
     max_view_entries = 64,
   },
+  preselect = cmp.PreselectMode.None,
   formatting = {
     fields = { 'kind', 'abbr', 'menu' },
     format = function(entry, cmp_item)
@@ -267,7 +220,7 @@ cmp.setup({
       local complpath = compltype_path[compltype]
       -- Use special icons for file / directory completions
       if cmp_item.kind == 'File' or cmp_item.kind == 'Folder' or complpath then
-        if string.sub(cmp_item.word, #cmp_item.word) == '/' then -- Directories
+        if (vim.uv.fs_stat(cmp_item.word) or {}).type == 'directory' then -- Directories
           cmp_item.kind = icon_folder
           cmp_item.kind_hl_group = 'CmpItemKindFolder'
         else -- Files
@@ -465,22 +418,11 @@ cmp.setup({
         get_bufnrs = get_bufnrs,
       },
     },
-    {
-      name = 'fuzzy_path',
-      option = fuzzy_path_option,
-      -- Don't show fuzzy-path entries in markdown/tex mathzone
-      entry_filter = function()
-        return vim.g.loaded_vimtex ~= 1
-          or vim.bo.ft ~= 'markdown' and vim.bo.ft ~= 'tex'
-          or vim.api.nvim_eval('vimtex#syntax#in_mathzone()') ~= 1
-      end,
-    },
     { name = 'calc' },
   },
   sorting = {
     ---@type table[]|function[]
     comparators = {
-      fuzzy_path_comparator,
       cmp.config.compare.kind,
       cmp.config.compare.locality,
       cmp.config.compare.recently_used,
@@ -525,11 +467,6 @@ cmp.setup.cmdline('?', {
 cmp.setup.cmdline(':', {
   enabled = true,
   sources = {
-    {
-      name = 'fuzzy_path',
-      group_index = 1,
-      option = fuzzy_path_option,
-    },
     {
       name = 'cmdline',
       option = {

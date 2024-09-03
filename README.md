@@ -480,7 +480,7 @@ and it should work out of the box.
 
 #### Third Party Plugins
 
-Total # of plugins: 47 (package manager included).
+Total # of plugins: 46 (package manager included).
 
 - **Lib**
     - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim)
@@ -491,8 +491,6 @@ Total # of plugins: 47 (package manager included).
     - [cmp-calc](https://github.com/hrsh7th/cmp-calc)
     - [cmp-cmdline](https://github.com/hrsh7th/cmp-cmdline)
     - [cmp-nvim-lsp](https://github.com/hrsh7th/cmp-nvim-lsp)
-    - [fuzzy.nvim](https://github.com/tzachar/fuzzy.nvim)
-    - [cmp-fuzzy-path](https://github.com/tzachar/cmp-fuzzy-path)
     - [cmp-buffer](https://github.com/hrsh7th/cmp-buffer)
     - [cmp_luasnip](https://github.com/saadparwaiz1/cmp_luasnip)
     - [cmp-nvim-lsp-signature-help](https://github.com/hrsh7th/cmp-nvim-lsp-signature-help)
