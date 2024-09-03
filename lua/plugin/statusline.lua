@@ -356,16 +356,14 @@ if vim.g.no_nf then
 else
   spinner_icon_done = vim.trim(utils.static.icons.Ok)
   spinner_icons = {
-    '⠋',
-    '⠙',
-    '⠹',
-    '⠸',
-    '⠼',
-    '⠴',
-    '⠦',
-    '⠧',
-    '⠇',
-    '⠏',
+    '⣷',
+    '⣯',
+    '⣟',
+    '⡿',
+    '⢿',
+    '⣻',
+    '⣽',
+    '⣾',
   }
 end
 
