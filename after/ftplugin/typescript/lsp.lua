@@ -153,6 +153,7 @@ if vim.bo.ft == 'typescript' or vim.bo.ft == 'javascript' then
       'jsconfig.json',
       'package.json',
     },
+    init_options = { hostInfo = 'neovim' },
     on_attach = formatter and disable_formatting,
   })
 end

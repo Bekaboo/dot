@@ -4,7 +4,6 @@ local M = {}
 ---@diagnostic disable-next-line: missing-fields
 M.default_config = {
   root_patterns = require('utils.fs').root_patterns,
-  init_options = { hostInfo = 'neovim' },
 }
 
 ---@class vim.lsp.ClientConfig: lsp_client_config_t
