@@ -174,7 +174,7 @@ return {
       'Gwrite',
     },
     keys = { '<Leader>gL' },
-    event = { 'BufWinEnter', 'BufWritePost', 'BufReadPre' },
+    event = { 'BufNew', 'BufWritePost', 'BufReadPre' },
     config = function()
       require('configs.vim-fugitive')
     end,
