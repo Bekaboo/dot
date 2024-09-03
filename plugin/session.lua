@@ -15,7 +15,7 @@ end
 local function get_session()
   return vim.fs.joinpath(
     session_dir,
-    vim.fs.normalize(vim.fn.getcwd(-1)):gsub('%%', '%%%%'):gsub('/', '%%')
+    vim.fs.normalize(vim.fn.getcwd(0)):gsub('%%', '%%%%'):gsub('/', '%%')
       .. '.vim'
   )
 end
