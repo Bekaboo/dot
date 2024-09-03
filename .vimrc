@@ -30,9 +30,6 @@ silent! set wildoptions+=fuzzy,pum
 silent! set hlsearch
 silent! set incsearch
 silent! set ttimeoutlen=0
-silent! set softtabstop=2
-silent! set shiftwidth=2
-silent! set expandtab
 silent! set autoindent
 silent! set autowriteall
 silent! set shortmess-=S
