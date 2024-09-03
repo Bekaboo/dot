@@ -50,7 +50,11 @@ local function load_session()
   -- Avoid intro message flickering before loading session,
   -- see `plugin/intro.lua` and `:h :intro`
   vim.opt.shortmess:append('I')
-  vim.api.nvim_exec_autocmds('WinEnter', {})
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    if vim.fn.win_id2win(win) ~= 1 then
+      vim.api.nvim_win_close(win, true)
+    end
+  end
 
   vim.schedule(function()
     vim.cmd.source({
