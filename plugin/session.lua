@@ -76,8 +76,12 @@ local function has_named_buffer()
     if vim.fn.buflisted(buf) == 0 and vim.fn.bufwinid(buf) == -1 then
       goto continue
     end
-    local filetype = vim.bo[buf].filetype
-    if filetype == 'gitcommit' or filetype == 'gitrebase' then
+    local bt = vim.bo[buf].bt
+    if bt == 'terminal' or bt == 'quickfix' or bt == 'prompt' then
+      goto continue
+    end
+    local ft = vim.bo[buf].ft
+    if ft == 'gitcommit' or ft == 'gitrebase' then
       goto continue
     end
     local bufname = vim.api.nvim_buf_get_name(buf)
