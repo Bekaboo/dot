@@ -33,10 +33,13 @@ local function save_session()
   })
 end
 
----Remove session file
+---Remove the loaded session file
 ---@return nil
 local function remove_session()
-  vim.fn.delete(get_session())
+  if vim.g._session_loaded then
+    vim.fn.delete(vim.g._session_loaded)
+    vim.g._session_loaded = nil
+  end
 end
 
 ---Load current session
@@ -46,6 +49,7 @@ local function load_session()
   if not vim.uv.fs_stat(session) then
     return
   end
+  vim.g._session_loaded = session
 
   -- Avoid intro message flickering before loading session,
   -- see `plugin/intro.lua` and `:h :intro`
