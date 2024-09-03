@@ -45,6 +45,7 @@ ts_configs.setup({
     'markdown',
     'markdown_inline',
     -- Additional parsers
+    'go',
     'cpp',
     'cuda',
     'rust',
