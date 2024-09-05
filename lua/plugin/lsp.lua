@@ -38,7 +38,30 @@ local function setup_keymaps()
   vim.keymap.set({ 'n', 'x' }, '<Leader>S', vim.lsp.buf.workspace_symbol)
   vim.keymap.set({ 'n', 'x' }, '<Leader>d', vim.diagnostic.setloclist)
   vim.keymap.set({ 'n', 'x' }, '<Leader>D', vim.diagnostic.setqflist)
-  vim.keymap.set({ 'n', 'x' }, '<Leader>i', vim.diagnostic.open_float)
+  vim.keymap.set({ 'n', 'x' }, '<Leader>i', function()
+    ---@param win integer
+    ---@return boolean
+    local function is_diag_win(win)
+      if vim.fn.win_gettype(win) ~= 'popup' then
+        return false
+      end
+      local buf = vim.api.nvim_win_get_buf(win)
+      return vim.bo[buf].bt == 'nofile'
+        and unpack(vim.api.nvim_buf_get_lines(buf, 0, 1, false))
+          == 'Diagnostics:'
+    end
+
+    -- If a diagnostic float window is already open, switch to it
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+      if is_diag_win(win) then
+        vim.api.nvim_set_current_win(win)
+        return
+      end
+    end
+
+    -- Else open diagnostic float
+    vim.diagnostic.open_float()
+  end)
   vim.keymap.set({ 'n', 'x' }, 'gy', function()
     local diags = vim.diagnostic.get(0, { lnum = vim.fn.line('.') - 1 })
     local n_diags = #diags
