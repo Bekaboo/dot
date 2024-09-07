@@ -615,7 +615,8 @@ M.syntax = {
   ),
   us.msn(
     {
-      { trig = 'td' },
+      { trig = 'tp' },
+      { trig = 'type' },
       { trig = 'typedef' },
       common = { desc = 'typedef statement' },
     },
@@ -643,9 +644,9 @@ M.syntax = {
   ),
   us.msn(
     {
-      { trig = 'tds' },
-      { trig = 'tdst' },
-      { trig = 'tdstruct' },
+      { trig = 'tps' },
+      { trig = 'tpst' },
+      { trig = 'tpstruct' },
       { trig = 'typedefs' },
       { trig = 'typedefst' },
       { trig = 'typedefstruct' },
@@ -680,9 +681,9 @@ M.syntax = {
   ),
   us.msn(
     {
-      { trig = 'tdu' },
-      { trig = 'tdun' },
-      { trig = 'tdunion' },
+      { trig = 'tpu' },
+      { trig = 'tpun' },
+      { trig = 'tpunion' },
       { trig = 'typedefu' },
       { trig = 'typedefun' },
       { trig = 'typedefunion' },

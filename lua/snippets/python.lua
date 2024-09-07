@@ -384,6 +384,8 @@ M.snippets = {
     {
       { trig = 'cls' },
       { trig = 'class' },
+      { trig = 'tp' },
+      { trig = 'type' },
       common = { desc = 'Class definition' },
     },
     c(1, {
