@@ -27,7 +27,6 @@
 	rbh                 = rebase --onto HEAD
 	rbi                 = rebase -i
 	rbo                 = rebase --onto
-	rbp                 = rebase -i HEAD~5
 	rs                  = reset
 	rsp                 = reset --mixed HEAD^
 	rt                  = restore
