@@ -16,7 +16,6 @@
 	co                  = checkout
 	d                   = diff
 	f                   = fetch
-	g                   = log --oneline --graph
 	is-ancestor         = merge-base --is-ancestor
 	l                   = log --oneline --graph
 	lc                  = !git ls-files -z | xargs -0 wc -l
