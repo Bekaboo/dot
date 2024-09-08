@@ -378,7 +378,6 @@ activate widget 521=none,none,Activate Better inline clock Widget
 activate widget 523=none,none,Activate Sticky Note Widget
 activate widget 527=none,none,Activate System Tray Widget
 activate widget 53=none,none,Activate Application Launcher Widget
-activate widget 551=Meta+N,none,Activate Sticky Note Widget
 activate widget 75=none,none,Activate Application Launcher Widget
 activate widget 97=none,none,Activate Application Launcher Widget
 clear-history=none,,Clear Clipboard History
