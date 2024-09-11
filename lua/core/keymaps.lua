@@ -175,7 +175,10 @@ vim.keymap.set({ 'o', 'x' }, 'a`', '2i`', { noremap = false })
 
 -- Close all floating windows
 vim.keymap.set({ 'n', 'x' }, 'q', function()
-  require('utils.misc').q()
+  require('utils.misc').close_floats('q')
+end)
+vim.keymap.set('n', '<Esc>', function()
+  require('utils.misc').close_floats('<Esc>')
 end)
 
 -- Edit current file's directory

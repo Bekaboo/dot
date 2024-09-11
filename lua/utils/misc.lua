@@ -261,12 +261,12 @@ function M.goto_paragraph_lastline()
   end
 end
 
----Close floating windows with 'q'
+---Close floating windows with a given key
 --- 1. If current window is a floating window, close it and return
 --- 2. Else, close all floating windows that can be focused
---- 3. Fallback to normal mode 'q' if no floating window can be focused
+--- 3. Fallback to `key` if no floating window can be focused
 ---@return nil
-function M.q()
+function M.close_floats(key)
   local count = 0
   local current_win = vim.api.nvim_get_current_win()
   -- Close current win only if it's a floating window
@@ -286,7 +286,7 @@ function M.q()
   end
   if count == 0 then -- Fallback
     vim.api.nvim_feedkeys(
-      vim.api.nvim_replace_termcodes('q', true, true, true),
+      vim.api.nvim_replace_termcodes(key, true, true, true),
       'n',
       false
     )
