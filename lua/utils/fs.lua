@@ -97,4 +97,15 @@ function M.diff(paths)
   return diffs
 end
 
+---Check if a given directory contains a file or subdirectory
+---@param dir string directory path
+---@param sub string sub file or directory path
+function M.contains(dir, sub)
+  -- `dir` must end with `/`, else when `sub` is `/foo/bar-baz/file.txt` and
+  -- `dir` is `/foo/bar`, the function gives false positive
+  dir = vim.fn.fnamemodify(vim.fs.normalize(dir), ':p'):gsub('/*$', '/')
+  sub = vim.fn.fnamemodify(vim.fs.normalize(sub), ':p')
+  return vim.startswith(sub, dir)
+end
+
 return M

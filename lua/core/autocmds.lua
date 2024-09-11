@@ -121,7 +121,7 @@ augroup('AutoCwd', {
       for i, dir in ipairs(lsp_root_dirs) do
         -- If the new root dir is a subdirectory of an existing root dir,
         -- return early and don't add it
-        if vim.startswith(root_dir, dir) then
+        if require('utils.fs').contains(dir, root_dir) then
           return
         end
         if vim.startswith(dir, root_dir) then
@@ -147,7 +147,7 @@ augroup('AutoCwd', {
       local lsp_root_dir
       local bufname = vim.api.nvim_buf_get_name(info.buf)
       for _, dir in ipairs(vim.g._lsp_root_dirs or {}) do
-        if vim.startswith(bufname, dir) then
+        if require('utils.fs').contains(dir, bufname) then
           lsp_root_dir = dir
           break
         end
