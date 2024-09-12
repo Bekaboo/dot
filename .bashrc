@@ -19,6 +19,15 @@ export PATH
 
 [[ -r "${HOME}/.bash_exports" ]] && source "${HOME}/.bash_exports"
 
+if __has nvim; then
+    export EDITOR=nvim
+    export MANPAGER=nvim\ +'Man!'
+elif __has vim; then
+    export EDITOR=vim
+elif __has vi; then
+    export EDITOR=vi
+fi
+
 [[ $- != *i* ]] && return
 
 xhost +local:root >/dev/null 2>&1
@@ -52,9 +61,6 @@ if [[ "$TERM" == "linux" ]]; then
     echo -en "\e]PFB4B8B4" #white
     clear                  #for background artifacting
 fi
-
-__has nvim-manpager &&
-    export MANPAGER=nvim-manpager
 
 # 'less' highlights
 export LESS_TERMCAP_mb=$'\e[1;32m'
