@@ -139,6 +139,22 @@ end
 ---@type table<string, number[]>
 local fnames = {}
 
+---Update path diffs for buffers with the same file name
+---@param bufs integer[]
+---@return nil
+local function update_pdiffs(bufs)
+  bufs = vim.tbl_filter(vim.api.nvim_buf_is_valid, bufs)
+
+  for i, path_diff in
+    ipairs(vim.tbl_filter(function(d)
+      return d ~= ''
+    end, utils.fs.diff(vim.tbl_map(vim.api.nvim_buf_get_name, bufs))))
+  do
+    local _buf = bufs[i]
+    vim.b[_buf]._stl_pdiff = path_diff
+  end
+end
+
 ---Add a normal buffer to `fnames`, calc diff for buffer with non-unique
 ---file names
 ---@param buf integer buffer number
@@ -160,15 +176,7 @@ local function add_buf(buf)
   local bufs = fnames[fname] -- buffers with the same name as the removed buf
   table.insert(bufs, buf)
 
-  if #bufs > 1 then
-    local path_diffs = vim.tbl_filter(function(d)
-      return d ~= ''
-    end, utils.fs.diff(vim.tbl_map(vim.api.nvim_buf_get_name, bufs)))
-    for i, path_diff in ipairs(path_diffs) do
-      local _buf = bufs[i]
-      vim.b[_buf]._stl_pdiff = path_diff
-    end
-  end
+  update_pdiffs(bufs)
 end
 
 for _, buf in ipairs(vim.api.nvim_list_bufs()) do
@@ -209,11 +217,19 @@ vim.api.nvim_create_autocmd({ 'BufDelete', 'BufFilePre' }, {
     end
 
     local num_bufs = #bufs
+    if num_bufs == 0 then
+      fnames[fname] = nil
+      return
+    end
+
     if num_bufs == 1 then
       vim.b[bufs[1]]._stl_pdiff = nil
-    elseif num_bufs == 0 then
-      fnames[fname] = nil
+      return
     end
+
+    -- Still have multiple buffers with the same file name,
+    -- update path diffs for the remaining buffers
+    update_pdiffs(bufs)
   end,
 })
 
