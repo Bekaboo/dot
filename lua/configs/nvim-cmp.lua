@@ -213,6 +213,12 @@ cmp.setup({
     max_view_entries = 64,
   },
   preselect = cmp.PreselectMode.None,
+  matching = {
+    disallow_partial_matching = false,
+    disallow_partial_fuzzy_matching = false,
+    disallow_prefix_unmatching = false,
+    disallow_symbol_nonprefix_matching = false,
+  },
   formatting = {
     fields = { 'kind', 'abbr', 'menu' },
     format = function(entry, cmp_item)
