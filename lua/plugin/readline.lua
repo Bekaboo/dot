@@ -6,9 +6,10 @@ local col = vim.fn.col
 local line = vim.fn.line
 
 local regex_keyword_at_beginning = vim.regex([=[^\s*[[:keyword:]]*]=])
-local regex_nonkeyword_at_beginning = vim.regex([=[^\s*[^[:keyword:] ]*]=])
+local regex_nonkeyword_at_beginning =
+  vim.regex([=[^\s*[^[:keyword:][:space:]]*]=])
 local regex_keyword_at_end = vim.regex([=[[[:keyword:]]*\s*$]=])
-local regex_nonkeyword_at_end = vim.regex([=[[^[:keyword:] ]*\s*$]=])
+local regex_nonkeyword_at_end = vim.regex([=[[^[:keyword:][:space:]]*\s*$]=])
 
 ---Check if string is empty
 ---@param str string
@@ -115,13 +116,13 @@ local function small_del(text_deleted, forward)
   vim.g._rl_del_lock = true
 
   local in_cmdline = vim.fn.mode() == 'c'
-  -- We want to concat the deleted text in the '-' register if we are deleting
-  -- 'continuously'. In insert mode, 'continuously' means that, after previous
-  -- deletion, ther is no changes in the buffer and the cursor stays in the
-  -- same position; in cmdline mode, this means we are editing the same command
-  -- line (both type and contents) and the cursor poistion is the same after
-  -- previous deletion.
-  -- In ohter cases, we reset the '-' register with the new deleted text.
+  -- We want to concatenate the deleted text in the '-' register if we are
+  -- deleting 'continuously'. In insert mode, 'continuously' means that, after
+  -- previous deletion, there is no changes in the buffer and the cursor stays
+  -- in the same position; in cmdline mode, this means we are editing the same
+  -- command line (both type and contents) and the cursor position is the same
+  -- after previous deletion.
+  -- In other cases, we reset the '-' register with the new deleted text.
   local reset = not (
     in_cmdline
       and fn.getcmdline() == vim.g._rl_cmd
@@ -162,21 +163,18 @@ local function small_del(text_deleted, forward)
     })
   end
 
-  -- Set 'sts' and 'sw' to 1 temporarily to avoid removing multiple chars at
-  -- once on one `<BS>`
+  -- Temporarily include '[' (left key) in 'whichwrap' to allow moving cursor
+  -- to the previous line on `<Left>`, this allows us to move to beginning
+  -- of the texts to be deleted then delete then with `<Del>` keys
   if not forward and not in_cmdline then
-    vim.b._rl_sts = vim.bo.sts
-    vim.b._rl_sw = vim.bo.sw
-    vim.bo.sts = 1
-    vim.bo.sw = 1
+    vim.g._rl_ww = vim.go.ww
+    vim.opt.ww:append('[')
     vim.api.nvim_create_autocmd('TextChangedI', {
       once = true,
       callback = function()
-        if vim.b._rl_sts and vim.b._rl_sw then
-          vim.bo.sts = vim.b._rl_sts
-          vim.bo.sw = vim.b._rl_sw
-          vim.b._rl_sts = nil
-          vim.b._rl_sw = nil
+        if vim.g._rl_ww then
+          vim.go.ww = vim.g._rl_ww
+          vim.g._rl_ww = nil
         end
         return true
       end,
@@ -184,9 +182,12 @@ local function small_del(text_deleted, forward)
   end
 
   -- Use `<C-g>u` to start a new change for each word deletion
+  -- Use `<Left>` and `<Del>` instead of `<BS>` to delete backward
+  -- to avoid deleting multiple indent backspaces in one `<BS>`
   return (
     (in_cmdline and '' or '<C-g>u')
-    .. string.rep(forward and '<Del>' or '<BS>', #text_deleted)
+    .. (forward and '' or string.rep('<Left>', #text_deleted))
+    .. string.rep('<Del>', #text_deleted)
   )
 end
 
