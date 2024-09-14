@@ -175,6 +175,11 @@ return {
     },
     keys = { '<Leader>gL' },
     event = { 'BufNew', 'BufWritePost', 'BufReadPre' },
+    dependencies = {
+      -- Enable :GBrowse command in GitHub/Gitlab repos
+      'tpope/vim-rhubarb',
+      'shumphrey/fugitive-gitlab.vim',
+    },
     config = function()
       require('configs.vim-fugitive')
     end,
