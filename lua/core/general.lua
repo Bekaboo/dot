@@ -139,16 +139,6 @@ g.fzf_layout = {
 env.FZF_DEFAULT_OPTS = (env.FZF_DEFAULT_OPTS or '')
   .. ' --border=sharp --margin=0 --padding=0'
 
--- Disable plugins shipped with neovim
-g.loaded_2html_plugin      = 0
-g.loaded_gzip              = 0
-g.loaded_tar               = 0
-g.loaded_tarPlugin         = 0
-g.loaded_tutor_mode_plugin = 0
-g.loaded_zip               = 0
-g.loaded_zipPlugin         = 0
--- stylua: ignore end
-
 ---Lazy-load runtime files
 ---@param runtime string
 ---@param flag string
