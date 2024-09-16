@@ -303,9 +303,11 @@ fzf.setup({
       ---@param name string
       ---@return nil
       local function _restore_global_opt(name)
-        if vim.g['_fzf_' .. name] then
-          vim.go[name] = vim.g['_fzf_' .. name]
-          vim.g['_fzf_' .. name] = nil
+        local backup_name = '_fzf_' .. name
+        local backup = vim.g[backup_name]
+        if backup ~= nil then
+          vim.go[name] = backup
+          vim.g[backup_name] = nil
         end
       end
 
