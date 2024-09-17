@@ -13,6 +13,57 @@ vim.g.molten_output_show_more = true
 vim.g.molten_virt_text_max_lines = 16
 vim.g.molten_wrap_output = true
 
+---Shows a warning message from molten
+---@param msg string Content of the notification to show to the user.
+---@param level integer|nil One of the values from |vim.log.levels|.
+---@param opts table|nil Optional parameters. Unused by default.
+---@return nil
+local function molten_warn(msg, level, opts)
+  vim.notify('[Molten] ' .. msg, level or vim.log.levels.WARN, opts)
+end
+
+local deps = {
+  'cairosvg',
+  'ipykernel',
+  'jupyter_client',
+  'kaleido',
+  'nbformat',
+  'plotly',
+  'pnglatex',
+  'pynvim',
+  'pyperclip',
+};
+
+---Check all dependencies, install them if they are missing
+(function()
+  if vim.fn.executable('pip') == 0 then
+    molten_warn('pip not found, skipping python dependency check')
+    return
+  end
+
+  for _, pkg in ipairs(deps) do
+    molten_warn('checking dependency ' .. pkg, vim.log.levels.INFO)
+    if vim.system({ 'pip', 'show', pkg }):wait().code == 0 then
+      goto continue
+    end
+
+    molten_warn('dependency ' .. pkg .. ' not found')
+    -- Install dependencies automatically only if we are in a virtual environment
+    if not vim.env.VIRTUAL_ENV then
+      goto continue
+    end
+
+    molten_warn('installing ' .. pkg, vim.log.levels.INFO)
+    if vim.system({ 'pip', 'install', pkg }):wait().code == 0 then
+      molten_warn('installed ' .. pkg, vim.log.levels.INFO)
+      goto continue
+    end
+
+    molten_warn('failed to install ' .. pkg)
+    ::continue::
+  end
+end)()
+
 -- Since rplugin is lazy-loaded on filetype (see lua/core/general.lua),
 -- we generate and source rplugin.vim if `MoltenStatusLineInit` is not
 -- registered as a function (should be registered in rplugin.vim)
@@ -69,44 +120,6 @@ vim.api.nvim_create_autocmd('BufEnter', {
     vim.opt_local.winhl:append('MoltenCell:')
   end,
 })
-
-local deps = {
-  'cairosvg',
-  'ipykernel',
-  'jupyter_client',
-  'kaleido',
-  'nbformat',
-  'plotly',
-  'pnglatex',
-  'pynvim',
-  'pyperclip',
-}
-
----Shows a warning message from molten
----@param msg string Content of the notification to show to the user.
----@param level integer|nil One of the values from |vim.log.levels|.
----@param opts table|nil Optional parameters. Unused by default.
----@return nil
-local function molten_warn(msg, level, opts)
-  vim.notify('[Molten] ' .. msg, level or vim.log.levels.WARN, opts)
-end
-
-vim.schedule(function()
-  if vim.fn.executable('pip') == 0 then
-    molten_warn('pip not found, skipping python dependency check')
-    return
-  end
-  for _, pkg in ipairs(deps) do
-    vim.system({ 'pip', 'show', pkg }, {}, function(obj)
-      if obj.code == 0 then
-        return
-      end
-      vim.schedule(function()
-        molten_warn(string.format('python dependency %s not found', pkg))
-      end)
-    end)
-  end
-end)
 
 ---Send code cell to molten
 ---@param cell code_cell_t
