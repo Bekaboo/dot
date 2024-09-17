@@ -23,15 +23,15 @@ local function molten_warn(msg, level, opts)
 end
 
 local deps = {
-  'cairosvg',
-  'ipykernel',
-  'jupyter_client',
-  'kaleido',
-  'nbformat',
-  'plotly',
-  'pnglatex',
-  'pynvim',
-  'pyperclip',
+  cairosvg = true,
+  ipykernel = true,
+  jupyter_client = true,
+  kaleido = true,
+  nbformat = true,
+  plotly = true,
+  pnglatex = true,
+  pynvim = true,
+  pyperclip = true,
 };
 
 ---Check all dependencies, install them if they are missing
@@ -41,28 +41,58 @@ local deps = {
     return
   end
 
-  for _, pkg in ipairs(deps) do
-    molten_warn('checking dependency ' .. pkg, vim.log.levels.INFO)
-    if vim.system({ 'pip', 'show', pkg }):wait().code == 0 then
-      goto continue
-    end
+  molten_warn('checking python dependencies...', vim.log.levels.INFO)
+  for pkg, _ in pairs(deps) do
+    vim.system(
+      { 'pip', 'show', pkg },
+      {},
+      vim.schedule_wrap(function(o)
+        if o.code == 0 then
+          deps[pkg] = nil
+          return
+        end
 
-    molten_warn('dependency ' .. pkg .. ' not found')
-    -- Install dependencies automatically only if we are in a virtual environment
-    if not vim.env.VIRTUAL_ENV then
-      goto continue
-    end
+        molten_warn('dependency ' .. pkg .. ' not found')
+        -- Install dependencies automatically only if we are in a virtual
+        -- environment
+        if not vim.env.VIRTUAL_ENV then
+          deps[pkg] = nil
+          return
+        end
 
-    molten_warn('installing ' .. pkg, vim.log.levels.INFO)
-    if vim.system({ 'pip', 'install', pkg }):wait().code == 0 then
-      molten_warn('installed ' .. pkg, vim.log.levels.INFO)
-      goto continue
-    end
-
-    molten_warn('failed to install ' .. pkg)
-    ::continue::
+        vim.system(
+          { 'pip', 'install', pkg },
+          {},
+          vim.schedule_wrap(function(_o)
+            if _o.code == 0 then
+              molten_warn('installed ' .. pkg, vim.log.levels.INFO)
+            else
+              molten_warn(
+                string.format('failed to install %s: %s', pkg, _o.stderr or '')
+              )
+            end
+            deps[pkg] = nil
+          end)
+        )
+      end)
+    )
   end
 end)()
+
+-- Block until all dependencies have been checked
+local CHECK_DEPS_TIMEOUT = 10000
+vim.wait(CHECK_DEPS_TIMEOUT, function()
+  return vim.tbl_isempty(deps)
+end)
+
+if not vim.tbl_isempty(deps) then
+  molten_warn(
+    'timed out installing dependencies: '
+      .. table.concat(vim.tbl_keys(deps), ', '),
+    vim.log.levels.ERROR
+  )
+  return
+end
 
 -- Since rplugin is lazy-loaded on filetype (see lua/core/general.lua),
 -- we generate and source rplugin.vim if `MoltenStatusLineInit` is not
