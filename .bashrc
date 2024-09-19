@@ -440,10 +440,14 @@ bind 'set keyseq-timeout 1'
 dot() {
     git --git-dir="$HOME/.dot" --work-tree="$HOME" "$@"
 }
+# Create remote branches (e.g. origin/master) on git fetch like normal repos
+# See https://stackoverflow.com/questions/36410044/fetch-from-origin-in-bare-repository-in-git-does-not-create-remote-branch
+dot config --local remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+dot config --local status.showUntrackedFiles no
+
 [[ -r '/usr/share/bash-completion/completions/git' ]] &&
     source '/usr/share/bash-completion/completions/git' &&
     __git_complete dot __git_main
-dot config --local status.showUntrackedFiles no
 
 [[ -r '/usr/share/bash-completion/bash_completion' ]] &&
     source '/usr/share/bash-completion/bash_completion'
