@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Wed 03 Jan 2024 01:53:29 AM CST
+-- Last Updated: Wed Sep 18 11:02:07 PM EDT 2024
 
 vim.cmd.hi('clear')
 vim.g.colors_name = 'default'
@@ -19,6 +19,8 @@ if vim.go.background == 'dark' then
     ctermfg = 0,
   })
 end
+
+vim.api.nvim_set_hl(0, 'MatchParen', { reverse = true })
 
 -- stylua: ignore start
 vim.api.nvim_set_hl(0, 'GitSignsAdd', { fg = 'NvimLightGreen', ctermfg = 10 })
