@@ -36,7 +36,6 @@ opt.breakindent    = true
 opt.smoothscroll   = true
 opt.ignorecase     = true
 opt.smartcase      = true
-opt.conceallevel   = 2
 opt.autoindent     = true
 opt.autowriteall   = true
 opt.completeopt    = 'menuone'
@@ -109,6 +108,7 @@ opt.fillchars = {
   eob       = ' ',
 }
 if g.modern_ui then
+  opt.conceallevel = 2
   opt.listchars:append({ nbsp = '␣' })
   opt.fillchars:append({ diff = '╱' })
 end
