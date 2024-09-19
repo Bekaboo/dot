@@ -1,6 +1,6 @@
 [Appearance]
 ColorScheme=Nano Dark
-Font=Iosevka NF Light,13,-1,5,25,0,0,0,0,0,Regular
+Font=Iosevka NF Light,12,-1,5,25,0,0,0,0,0,Regular
 
 [General]
 Environment=TERM=konsole,COLORTERM=truecolor

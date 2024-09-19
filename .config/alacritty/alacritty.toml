@@ -15,7 +15,7 @@ transparent_background_colors = true
 TERM = "alacritty"
 
 [font]
-size = 13
+size = 12
 
 [font.bold]
 family = "Iosevka NF"

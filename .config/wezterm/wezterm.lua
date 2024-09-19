@@ -13,7 +13,7 @@ config.font = wezterm.font_with_fallback({
   { family = 'Times New Roman' },
   { family = 'Microsoft YaHei' },
 })
-config.font_size = 13
+config.font_size = 12
 config.initial_rows = 24
 config.initial_cols = 112
 config.term = 'wezterm'
