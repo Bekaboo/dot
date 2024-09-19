@@ -49,6 +49,7 @@ fi
 
 # Else use current time to determine if it's day or night
 current_hour=$(date +%H)
+current_hour="${current_hour#*0}"
 setbg "$([[ "$current_hour" -gt 6 && "$current_hour" -lt 18 ]] &&
     echo light ||
     echo dark)"
