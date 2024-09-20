@@ -7,6 +7,13 @@ local function jupytext_convert(buf)
     return
   end
 
+  -- If jupytext is not installed, load the original buffer
+  if vim.fn.executable('jupytext') == 0 then
+    vim.cmd.edit(vim.fn.fnameescape(vim.api.nvim_buf_get_name(buf)))
+    vim.cmd.filetype('detect')
+    return
+  end
+
   local fpath_cache = vim.fn.stdpath('cache') --[[@as string]]
   local fpath_ipynb = vim.fs.normalize(vim.api.nvim_buf_get_name(buf))
   local fpath_cache_jupytext = vim.fs.joinpath(fpath_cache, 'jupytext')
@@ -149,7 +156,7 @@ end
 ---@param buf integer?
 local function setup(buf)
   buf = buf and buf ~= 0 and buf or vim.api.nvim_get_current_buf()
-  if vim.g.loaded_jupytext ~= nil or vim.fn.executable('jupytext') == 0 then
+  if vim.g.loaded_jupytext ~= nil then
     return
   end
   vim.g.loaded_jupytext = true
