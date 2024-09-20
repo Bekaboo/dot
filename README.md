@@ -503,7 +503,7 @@ Total # of plugins: 48 (package manager included).
     - [vim-table-mode](https://github.com/dhruvasagar/vim-table-mode)
     - [otter.nvim](https://github.com/jmbuhr/otter.nvim)
     - [molten-nvim](https://github.com/benlubas/molten-nvim)
-    - [headlines.nvim](https://github.com/lukas-reineke/headlines.nvim)
+    - [redner-markdown.nvim](https://github.com/MeanderingProgrammer/render-markdown.nvim)
 - **Edit**
     - [nvim-surround](https://github.com/kylechui/nvim-surround)
     - [vim-sleuth](https://github.com/tpope/vim-sleuth)
