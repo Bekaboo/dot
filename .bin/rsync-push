@@ -18,7 +18,7 @@ main() {
 
     while inotifywait -r -e modify,create,delete,move "$src" &>/dev/null; do
         echo "Detected changes, syncing $src to $dst..."
-        rsync -azvP --filter=":- $src/.gitignore" "$src" "$dst"
+        rsync -auzvP --filter=":- $src/.gitignore" "$src" "$dst"
     done
 }
 
