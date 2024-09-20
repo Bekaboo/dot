@@ -278,7 +278,7 @@ end
 ---Run current cell
 ---@return nil
 local function run_cell_current()
-  local y = vim.api.nvim_win_get_cursor(0)[1] - 1
+  local y = vim.api.nvim_win_get_cursor(0)[1]
   local r = { y, 0 }
   local range = { from = r, to = r }
   run_cell(range)
@@ -287,7 +287,7 @@ end
 ---Run current cell and all above
 ---@return nil
 local function run_cell_above()
-  local y = vim.api.nvim_win_get_cursor(0)[1] - 1
+  local y = vim.api.nvim_win_get_cursor(0)[1]
   local range = { from = { 0, 0 }, to = { y, 0 } }
   run_cell(range)
 end
@@ -295,7 +295,7 @@ end
 ---Run current cell and all below
 ---@return nil
 local function run_cell_below()
-  local y = vim.api.nvim_win_get_cursor(0)[1] - 1
+  local y = vim.api.nvim_win_get_cursor(0)[1]
   local range = { from = { y, 0 }, to = { math.huge, 0 } }
   run_cell(range)
 end
