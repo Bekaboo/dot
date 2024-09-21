@@ -161,7 +161,11 @@ local function preview()
           return (line:gsub('\x0d$', ''))
         end)
         :totable()
-  vim.api.nvim_buf_set_lines(preview_buf, 0, -1, false, lines)
+  do
+    vim.bo[preview_buf].modifiable = true
+    vim.api.nvim_buf_set_lines(preview_buf, 0, -1, false, lines)
+    vim.bo[preview_buf].modifiable = false
+  end
   vim.api.nvim_buf_set_name(preview_buf, preview_bufnewname)
   -- If previewing a directory, change cwd to that directory
   -- so that we can `gf` to files in the preview buffer;
