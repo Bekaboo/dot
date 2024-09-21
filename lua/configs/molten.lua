@@ -22,6 +22,12 @@ local function molten_warn(msg, level, opts)
   vim.notify('[Molten] ' .. msg, level or vim.log.levels.WARN, opts)
 end
 
+local essentials = {
+  pynvim = true,
+  ipykernel = true,
+  jupyter_client = true,
+}
+
 local deps = {
   cairosvg = true,
   ipykernel = true,
@@ -52,11 +58,10 @@ local deps = {
           return
         end
 
-        molten_warn('dependency ' .. pkg .. ' not found')
+        molten_warn('dependency ' .. pkg .. ' not found', vim.log.levels.INFO)
         -- Install dependencies automatically only if we are in a virtual
         -- environment
         if not vim.env.VIRTUAL_ENV then
-          deps[pkg] = nil
           return
         end
 
@@ -80,18 +85,29 @@ local deps = {
 end)()
 
 -- Block until all dependencies have been checked
-local CHECK_DEPS_TIMEOUT = 10000
+-- When in a virtual environment, we need to wait longer for the possible
+-- installation of dependencies
+local CHECK_DEPS_TIMEOUT = vim.env.VIRTUAL_ENV and 10000 or 4000
 vim.wait(CHECK_DEPS_TIMEOUT, function()
   return vim.tbl_isempty(deps)
 end)
 
 if not vim.tbl_isempty(deps) then
   molten_warn(
-    'timed out installing dependencies: '
-      .. table.concat(vim.tbl_keys(deps), ', '),
-    vim.log.levels.ERROR
+    'missing dependencies: ' .. table.concat(vim.tbl_keys(deps), ', ')
   )
-  return
+
+  local missing_essentials = vim.tbl_filter(function(pkg)
+    return essentials[pkg]
+  end, vim.tbl_keys(deps))
+  if not vim.tbl_isempty(missing_essentials) then
+    molten_warn(
+      'missing essential dependencies: '
+        .. table.concat(missing_essentials, ', ')
+    )
+    molten_warn('abort')
+    return
+  end
 end
 
 -- Molten is lazy-loaded, so we need to re-generate and source rplugin manifest
