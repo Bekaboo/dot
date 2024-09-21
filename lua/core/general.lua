@@ -11,36 +11,34 @@ g.has_gui = vim.fn.has('gui_running') == 1
 g.modern_ui = g.has_ui and env.DISPLAY ~= nil
 g.no_nf = not g.modern_ui or env.NVIM_NONF or false
 
--- stylua: ignore start
-opt.colorcolumn    = '+1'
-opt.cursorlineopt  = 'number'
-opt.cursorline     = true
+opt.colorcolumn = '+1'
+opt.cursorlineopt = 'number'
+opt.cursorline = true
 opt.foldlevelstart = 99
-opt.foldtext       = ''
-opt.helpheight     = 10
-opt.showmode       = false
+opt.foldtext = ''
+opt.helpheight = 10
+opt.showmode = false
 opt.mousemoveevent = true
-opt.number         = true
-opt.ruler          = true
-opt.pumheight      = 16
-opt.scrolloff      = 4
-opt.sidescrolloff  = 8
-opt.signcolumn     = 'yes:1'
-opt.splitright     = true
-opt.splitbelow     = true
-opt.swapfile       = false
-opt.undofile       = true
-opt.wrap           = false
-opt.linebreak      = true
-opt.breakindent    = true
-opt.smoothscroll   = true
-opt.ignorecase     = true
-opt.smartcase      = true
-opt.autoindent     = true
-opt.autowriteall   = true
-opt.completeopt    = 'menuone'
-opt.jumpoptions    = 'stack,view'
--- stylua: ignore end
+opt.number = true
+opt.ruler = true
+opt.pumheight = 16
+opt.scrolloff = 4
+opt.sidescrolloff = 8
+opt.signcolumn = 'yes:1'
+opt.splitright = true
+opt.splitbelow = true
+opt.swapfile = false
+opt.undofile = true
+opt.wrap = false
+opt.linebreak = true
+opt.breakindent = true
+opt.smoothscroll = true
+opt.ignorecase = true
+opt.smartcase = true
+opt.autoindent = true
+opt.autowriteall = true
+opt.completeopt = 'menuone'
+opt.jumpoptions = 'stack,view'
 
 -- nvim 0.10.0 automatically enables termguicolors. When using nvim inside
 -- tmux in Linux tty, where $TERM is set to 'tmux-256color' but $DISPLAY is
@@ -96,16 +94,15 @@ opt.quickfixtextfunc = [[v:lua.require'utils.misc'.qftf]]
 opt.backup = true
 opt.backupdir:remove('.')
 
--- stylua: ignore start
 opt.list = true
 opt.listchars = {
-  tab      = '→ ',
-  trail    = '·',
+  tab = '→ ',
+  trail = '·',
 }
 opt.fillchars = {
-  fold      = '·',
-  foldsep   = ' ',
-  eob       = ' ',
+  fold = '·',
+  foldsep = ' ',
+  eob = ' ',
 }
 if g.modern_ui then
   opt.conceallevel = 2
@@ -114,18 +111,18 @@ if g.modern_ui then
 end
 if not g.no_nf then
   opt.fillchars:append({
-    foldopen  = '',
+    foldopen = '',
     foldclose = '',
   })
 end
 
 -- Netrw settings
-g.netrw_banner          = 0
-g.netrw_cursor          = 5
-g.netrw_keepdir         = 0
-g.netrw_keepj           = ''
-g.netrw_list_hide       = [[\(^\|\s\s\)\zs\.\S\+]]
-g.netrw_liststyle       = 1
+g.netrw_banner = 0
+g.netrw_cursor = 5
+g.netrw_keepdir = 0
+g.netrw_keepj = ''
+g.netrw_list_hide = [[\(^\|\s\s\)\zs\.\S\+]]
+g.netrw_liststyle = 1
 g.netrw_localcopydircmd = 'cp -r'
 
 -- Fzf settings
