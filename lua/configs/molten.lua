@@ -94,13 +94,8 @@ if not vim.tbl_isempty(deps) then
   return
 end
 
--- Since rplugin is lazy-loaded on filetype (see lua/core/general.lua),
--- we generate and source rplugin.vim if `MoltenStatusLineInit` is not
--- registered as a function (should be registered in rplugin.vim)
+-- Molten is lazy-loaded, so we need to re-generate and source rplugin manifest
 if not pcall(vim.fn.MoltenStatusLineInit) then
-  if not pcall(vim.cmd.UpdateRemotePlugins) then
-    vim.cmd.runtime('plugin/rplugin.vim')
-  end
   vim.cmd.UpdateRemotePlugins()
   local manifest = vim.g.loaded_remote_plugins
   if manifest and (vim.uv.fs_stat(manifest) or {}).type == 'file' then

@@ -142,20 +142,52 @@ env.FZF_DEFAULT_OPTS = (env.FZF_DEFAULT_OPTS or '')
 ---Lazy-load runtime files
 ---@param runtime string
 ---@param flag string
----@param event string|string[]
-local function _load(runtime, flag, event)
-  if not g[flag] then
-    g[flag] = 0
-    vim.api.nvim_create_autocmd(event, {
+---@param events string|string[]
+local function _load(runtime, flag, events)
+  if g[flag] and g[flag] ~= 0 then
+    return
+  end
+
+  g[flag] = 0
+  if type(events) == 'string' then
+    events = { events }
+  end
+
+  local gid = vim.api.nvim_create_augroup('Load_' .. runtime, {})
+  for _, e in
+    ipairs(vim.tbl_map(function(e)
+      return vim.split(e, ' ', {
+        trimempty = true,
+        plain = true,
+      })
+    end, events))
+  do
+    vim.api.nvim_create_autocmd(e[1], {
       once = true,
+      pattern = e[2],
+      group = gid,
       callback = function()
-        g[flag] = nil
-        vim.cmd.runtime(runtime)
+        if g[flag] == 0 then
+          g[flag] = nil
+          vim.cmd.runtime(runtime)
+        end
+        vim.api.nvim_del_augroup_by_id(gid)
         return true
       end,
     })
   end
 end
 
-_load('plugin/rplugin.vim', 'loaded_remote_plugins', 'FileType')
-_load('provider/python3.vim', 'loaded_python3_provider', 'FileType')
+_load('plugin/rplugin.vim', 'loaded_remote_plugins', {
+  'FileType',
+  'BufNew',
+  'BufWritePost',
+  'BufReadPre',
+})
+_load('provider/python3.vim', 'loaded_python3_provider', {
+  'FileType python',
+  'BufNew *.py,*.ipynb',
+  'BufEnter *.py,*.ipynb',
+  'BufWritePost *.py,*.ipynb',
+  'BufReadPre *.py,*.ipynb',
+})
