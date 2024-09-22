@@ -265,12 +265,18 @@ function M.rgb2hex(rgb)
 end
 
 ---Blend two colors
----@param c1 string|number|table the first color, in hex, dec, or rgb
----@param c2 string|number|table the second color, in hex, dec, or rgb
+---@param c1 (string|number|table)? the first color, in hex, dec, or rgb
+---@param c2 (string|number|table)? the second color, in hex, dec, or rgb
 ---@param alpha number? between 0~1, weight of the first color, default to 0.5
----@return { hex: string, dec: integer, r: integer, g: integer, b: integer }
+---@return { hex: string, dec: integer, rgb: { [1]: integer, [2]: integer, [3]: integer } }?
 function M.cblend(c1, c2, alpha)
+  if not c1 and not c2 then
+    return
+  end
+
   alpha = alpha or 0.5
+  c1 = c1 or c2 --[[@as string|number|table]]
+  c2 = c2 or c1 --[[@as string|number|table]]
   c1 = type(c1) == 'number' and M.dec2hex(c1, 6) or c1
   c2 = type(c2) == 'number' and M.dec2hex(c2, 6) or c2
   local rgb1 = type(c1) == 'string' and M.hex2rgb(c1:gsub('#', '', 1)) or c1
@@ -284,9 +290,11 @@ function M.cblend(c1, c2, alpha)
   return {
     hex = '#' .. hex,
     dec = M.hex2dec(hex),
-    r = math.floor(rgb_blended[1]),
-    g = math.floor(rgb_blended[2]),
-    b = math.floor(rgb_blended[3]),
+    rgb = {
+      math.floor(rgb_blended[1]),
+      math.floor(rgb_blended[2]),
+      math.floor(rgb_blended[3]),
+    },
   }
 end
 
@@ -301,6 +309,58 @@ function M.blend(h1, h2, alpha)
   h2 = type(h2) == 'table' and h2 or M.get(0, { name = h2, winhl_link = false })
   local fg = h1.fg and h2.fg and M.cblend(h1.fg, h2.fg, alpha).dec or h1.fg or h2.fg
   local bg = h1.bg and h2.bg and M.cblend(h1.bg, h2.bg, alpha).dec or h1.bg or h2.bg
+  return vim.tbl_deep_extend('force', h1, h2, { fg = fg, bg = bg })
+  -- stylua: ignore end
+end
+
+---Separate two colors, e.g.
+---if c3 == M.cblend(c1, c2, alpha), then M.cseperate(c1, c3, alpha) == c2
+---@param c1 (string|number|table)? the first color, in hex, dec, or rgb
+---@param c2 (string|number|table)? the second color, in hex, dec, or rgb
+---@param alpha number? between 0~1, weight of the first color, default to 0.5
+---@return { hex: string, dec: integer, rgb: { [1]: integer, [2]: integer, [3]: integer } }?
+function M.cseperate(c1, c2, alpha)
+  if not c1 and not c2 then
+    return
+  end
+
+  alpha = alpha or 0.5
+  c1 = c1 or c2 --[[@as string|number|table]]
+  c2 = c2 or c1 --[[@as string|number|table]]
+  c1 = type(c1) == 'number' and M.dec2hex(c1, 6) or c1
+  c2 = type(c2) == 'number' and M.dec2hex(c2, 6) or c2
+  local rgb1 = type(c1) == 'string' and M.hex2rgb(c1:gsub('#', '', 1)) or c1
+  local rgb2 = type(c2) == 'string' and M.hex2rgb(c2:gsub('#', '', 1)) or c2
+  local rgb_seperated = {
+    (rgb2[1] - alpha * rgb1[1]) / (1 - alpha),
+    (rgb2[2] - alpha * rgb1[2]) / (1 - alpha),
+    (rgb2[3] - alpha * rgb1[3]) / (1 - alpha),
+  }
+  local hex = M.rgb2hex(rgb_seperated)
+  local result = {
+    hex = '#' .. hex,
+    dec = M.hex2dec(hex),
+    rgb = {
+      math.floor(rgb_seperated[1]),
+      math.floor(rgb_seperated[2]),
+      math.floor(rgb_seperated[3]),
+    },
+  }
+  return result
+end
+
+---Seperate two hlgroups, e.g.
+---if h3 == M.blend(h1, h2, alpha), then M.seperate(h1, h3, alpha) == h2
+---@param h1 string|table the first hlgroup name or highlight attribute table
+---@param h2 string|table the second hlgroup name or highlight attribute table
+---@param alpha number? between 0~1, weight of the first color, default to 0.5
+---@return table: merged color or highlight attributes
+function M.seperate(h1, h2, alpha)
+  -- stylua: ignore start
+  h1 = type(h1) == 'table' and h1 or M.get(0, { name = h1, winhl_link = false })
+  h2 = type(h2) == 'table' and h2 or M.get(0, { name = h2, winhl_link = false })
+  local fg = h1.fg and h2.fg and M.cseperate(h1.fg, h2.fg, alpha).dec or h1.fg or h2.fg
+  local bg = h1.bg and h2.bg and M.cseperate(h1.bg, h2.bg, alpha).dec or h1.bg or h2.bg
   return vim.tbl_deep_extend('force', h1, h2, { fg = fg, bg = bg })
   -- stylua: ignore end
 end
