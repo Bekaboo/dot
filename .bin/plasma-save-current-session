@@ -5,7 +5,7 @@ __has() {
     command -v "$1" >/dev/null 2>&1
 }
 
-qdbus_cmd=$(__has qdbus && echo qdbus ||
-    __has qdbus6 && echo qdbus6)
+local qdbus_cmd=$(__has qdbus && echo qdbus ||
+    { __has qdbus6 && echo qdbus6; })
 
 "$qdbus_cmd" org.kde.ksmserver /KSMServer saveCurrentSession

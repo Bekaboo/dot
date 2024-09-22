@@ -10,7 +10,7 @@ main() {
     # $2: method name
     # $3, $4, ...: method arguments
     local qdbus_cmd=$(__has qdbus && echo qdbus ||
-        __has qdbus6 && echo qdbus6)
+        { __has qdbus6 && echo qdbus6; })
     if [[ -z "$qdbus_cmd" ]]; then
         echo "qdbus not found" >&2
         exit 1
