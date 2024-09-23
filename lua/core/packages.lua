@@ -151,7 +151,10 @@ vim.api.nvim_create_autocmd('User', {
     -- -> LazyUpdate
     -- -> LazySync        <- apply patches
     vim.g._lz_syncing = vim.g._lz_syncing or info.match == 'LazySyncPre'
-    if vim.g._lz_syncing and not info.match:find('^LazySync') then
+    -- Avoid applying and reverting patches multiple times on `:LazySync` while
+    -- still being able to apply and revert patches correctly for
+    -- `:LazyInstall` and `:LazyUpdate`
+    if vim.g._lz_syncing and not vim.startswith(info.match, 'LazySync') then
       return
     end
     if info.match == 'LazySync' then
@@ -168,7 +171,7 @@ vim.api.nvim_create_autocmd('User', {
           'restore',
           '.',
         })
-        if not info.match:find('Pre$') then
+        if not vim.endswith(info.match, 'Pre') then
           vim.notify('[packages] applying patch ' .. patch)
           utils.git.dir_execute(plugin_path, {
             'apply',
