@@ -35,5 +35,32 @@ vim.fn.sign_define('DapLogPoint',            { text = vim.trim(static.icons.Log)
 vim.fn.sign_define('DapStopped',             { text = vim.trim(static.icons.ArrowRight), texthl = 'DiagnosticSignError' })
 -- stylua: ignore end
 
-dap.adapters = require('configs.dap-configs.adapters')
-dap.configurations = require('configs.dap-configs.configurations')
+dap.adapters = {}
+dap.configurations = {}
+
+---Load debug adapter specs for given filetype
+---@param ft string
+local function load_spec(ft)
+  if dap.configurations[ft] then
+    return
+  end
+
+  local ok, spec = pcall(require, 'dap.' .. ft)
+  if not ok then
+    return
+  end
+
+  dap.adapters[spec.config[1].type] = spec.adapter
+  dap.configurations[ft] = spec.config
+end
+
+for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+  load_spec(vim.bo[buf].ft)
+end
+
+vim.api.nvim_create_autocmd('FileType', {
+  group = vim.api.nvim_create_augroup('DapLoadSpecs', {}),
+  callback = function(info)
+    load_spec(info.match)
+  end,
+})
