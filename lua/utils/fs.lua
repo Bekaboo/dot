@@ -101,9 +101,10 @@ end
 ---@param dir string directory path
 ---@param sub string sub file or directory path
 function M.contains(dir, sub)
+  -- `fnamemodify()` adds trailing `/` to directories
   -- `dir` must end with `/`, else when `sub` is `/foo/bar-baz/file.txt` and
   -- `dir` is `/foo/bar`, the function gives false positive
-  dir = vim.fn.fnamemodify(vim.fs.normalize(dir), ':p'):gsub('/*$', '/')
+  dir = vim.fn.fnamemodify(vim.fs.normalize(dir), ':p')
   sub = vim.fn.fnamemodify(vim.fs.normalize(sub), ':p')
   return vim.startswith(sub, dir)
 end
