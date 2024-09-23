@@ -18,9 +18,9 @@ dapui.setup({
     {
       elements = {
         { id = 'scopes', size = 0.25 },
+        { id = 'watches', size = 0.25 },
         { id = 'breakpoints', size = 0.25 },
         { id = 'stacks', size = 0.25 },
-        { id = 'watches', size = 0.25 },
       },
       position = 'left',
       size = 0.3,
@@ -41,8 +41,8 @@ dapui.setup({
   },
   mappings = {
     -- Use a table to apply multiple mappings
-    expand = { '<CR>', '=', 'za' },
-    open = { 'o', 'zo' },
+    expand = { '=', 'za' },
+    open = { '<CR>', 'o', 'zo' },
     remove = { 'dd', 'x' },
     edit = { 's', 'cc' },
     repl = 'r',
