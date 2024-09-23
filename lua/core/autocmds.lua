@@ -136,7 +136,7 @@ augroup('AutoCwd', {
     end,
   },
 }, {
-  { 'BufWinEnter', 'FileChangedShellPost' },
+  { 'BufWinEnter', 'WinEnter', 'FileChangedShellPost' },
   {
     desc = 'Automatically change local current directory.',
     callback = function(info)
@@ -162,15 +162,17 @@ augroup('AutoCwd', {
       if not root_dir or root_dir == vim.fn.getcwd(0) then
         return
       end
-      vim.api.nvim_win_call(0, function()
-        pcall(vim.cmd.lcd, {
-          root_dir,
-          mods = {
-            silent = true,
-            emsg_silent = true,
-          },
-        })
-      end)
+      for _, win in ipairs(vim.fn.win_findbuf(info.buf)) do
+        vim.api.nvim_win_call(win, function()
+          pcall(vim.cmd.lcd, {
+            root_dir,
+            mods = {
+              silent = true,
+              emsg_silent = true,
+            },
+          })
+        end)
+      end
     end,
   },
 })
