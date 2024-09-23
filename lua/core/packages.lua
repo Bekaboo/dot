@@ -120,6 +120,10 @@ local function enable_modules(module_names)
   for _, module_name in ipairs(module_names) do
     vim.list_extend(modules, require('modules.' .. module_name))
   end
+
+  -- Use `=` instead of `<CR>` to view details in the floating window
+  require('lazy.view.config').keys.details = '='
+
   require('lazy').setup(modules, config)
 end
 

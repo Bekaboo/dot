@@ -1,8 +1,8 @@
 diff --git a/lua/lazy/core/config.lua b/lua/lazy/core/config.lua
-index 9319999..0a7da68 100644
+index 16cc012..6d42c65 100644
 --- a/lua/lazy/core/config.lua
 +++ b/lua/lazy/core/config.lua
-@@ -83,6 +83,7 @@ M.defaults = {
+@@ -96,6 +96,7 @@ M.defaults = {
      icons = {
        cmd = " ",
        config = "",
@@ -11,10 +11,10 @@ index 9319999..0a7da68 100644
        favorite = " ",
        ft = " ",
 diff --git a/lua/lazy/manage/task/git.lua b/lua/lazy/manage/task/git.lua
-index 4bd7134..d3e2629 100644
+index c54c809..e379998 100644
 --- a/lua/lazy/manage/task/git.lua
 +++ b/lua/lazy/manage/task/git.lua
-@@ -198,13 +198,18 @@ M.status = {
+@@ -258,13 +258,18 @@ M.status = {
              return line ~= ""
            end, lines)
            if #lines > 0 then
@@ -40,9 +40,40 @@ index 4bd7134..d3e2629 100644
          end
        end,
 diff --git a/lua/lazy/view/render.lua b/lua/lazy/view/render.lua
-index e1eec6c..b42d3ea 100644
+index e1eec6c..738c369 100644
 --- a/lua/lazy/view/render.lua
 +++ b/lua/lazy/view/render.lua
+@@ -189,24 +189,24 @@ function M:help()
+ 
+   self:append("Use "):append(ViewConfig.keys.abort, "LazySpecial"):append(" to abort all running tasks."):nl():nl()
+ 
+-  self:append("You can press "):append("<CR>", "LazySpecial"):append(" on a plugin to show its details."):nl():nl()
++  self:append("You can press "):append(ViewConfig.keys.details, "LazySpecial"):append(" on a plugin to show its details."):nl():nl()
+ 
+   self:append("Most properties can be hovered with ")
+-  self:append("<K>", "LazySpecial")
++  self:append(ViewConfig.keys.hover, "LazySpecial")
+   self:append(" to open links, help files, readmes and git commits."):nl()
+   self
+     :append("When hovering with ")
+-    :append("<K>", "LazySpecial")
++    :append(ViewConfig.keys.hover, "LazySpecial")
+     :append(" on a plugin anywhere else, a diff will be opened if there are updates")
+     :nl()
+   self:append("or the plugin was just updated. Otherwise the plugin webpage will open."):nl():nl()
+ 
+-  self:append("Use "):append("<d>", "LazySpecial"):append(" on a commit or plugin to open the diff view"):nl():nl()
++  self:append("Use "):append(ViewConfig.keys.diff, "LazySpecial"):append(" on a commit or plugin to open the diff view"):nl():nl()
+   self
+     :append("Use ")
+-    :append("<]]>", "LazySpecial")
++    :append(ViewConfig.keys.next, "LazySpecial")
+     :append(" and ")
+-    :append("<[[>", "LazySpecial")
++    :append(ViewConfig.keys.prev, "LazySpecial")
+     :append(" to navigate between plugins")
+     :nl()
+     :nl()
 @@ -761,7 +761,7 @@ function M:debug()
          ---@type string[]
          plugins = vim.tbl_values(plugins)
