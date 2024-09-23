@@ -9,7 +9,7 @@ return {
       'DapShowLog',
       'DapToggleBreakPoint',
     },
-    keys = { '<F5>', '<F8>', '<F9>', '<F21>', '<F45>' },
+    keys = { '<F5>', '<F8>', '<F9>', '<F21>', '<F45>', '<Leader>G' },
     dependencies = {
       'rcarriga/cmp-dap',
       'rcarriga/nvim-dap-ui',

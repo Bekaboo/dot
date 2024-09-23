@@ -7,10 +7,11 @@ dap.listeners.before.event_terminated['dapui_config'] = dapui.close
 dap.listeners.before.event_exited['dapui_config']     = dapui.close
 -- stylua: ignore end
 
--- Use menu key (Fn + left Ctrl) to open floating window
-vim.keymap.set('n', '<F16>', dapui.float_element)
--- Use shift + F12 to evaluate expression
-vim.keymap.set({ 'n', 'x' }, '<F24>', dapui.eval)
+vim.keymap.set({ 'n' }, '<F16>', dapui.float_element) -- <Menu>
+vim.keymap.set({ 'n', 'x' }, '<F24>', dapui.eval) -- <S-F12>
+
+vim.keymap.set({ 'n' }, '<Leader>Gf', dapui.float_element)
+vim.keymap.set({ 'n', 'x' }, '<Leader>GK', dapui.eval)
 
 dapui.setup({
   layouts = {

@@ -1,6 +1,14 @@
 local dap = require('dap')
 local static = require('utils.static')
 
+local function set_cond_breakpoint()
+  dap.set_breakpoint(nil, nil, vim.fn.input('Breakpoint condition: '))
+end
+
+local function set_logpoint()
+  dap.set_breakpoint(nil, nil, nil, vim.fn.input('Log point message: '))
+end
+
 vim.keymap.set('n', '<F1>', dap.up, { noremap = true })
 vim.keymap.set('n', '<F2>', dap.down, { noremap = true })
 vim.keymap.set('n', '<F5>', dap.continue, { noremap = true })
@@ -12,20 +20,30 @@ vim.keymap.set('n', '<F11>', dap.step_into, { noremap = true })
 vim.keymap.set('n', '<F17>', dap.terminate, { noremap = true })
 vim.keymap.set('n', '<F23>', dap.step_out, { noremap = true })
 vim.keymap.set('n', '<F41>', dap.restart, { noremap = true })
--- Use shift + <F9> to set breakpoint condition
-vim.keymap.set('n', '<F21>', function()
-  dap.set_breakpoint(vim.fn.input('Breakpoint condition: '))
-end, { noremap = true })
--- Use control + shift + <F9> to set breakpoint log message
-vim.keymap.set('n', '<F45>', function()
-  dap.set_breakpoint(nil, nil, vim.fn.input('Log point message: '))
-end, { noremap = true })
+vim.keymap.set('n', '<F21>', set_cond_breakpoint, { noremap = true }) -- <S-F9>
+vim.keymap.set('n', '<F45>', set_logpoint, { noremap = true }) -- <C-S-F9>
 
-vim.api.nvim_create_user_command(
-  'DapClear',
-  dap.clear_breakpoints,
-  { desc = 'Clear all breakpoints' }
-)
+vim.keymap.set('n', '<Leader>Gk', dap.up, { noremap = true })
+vim.keymap.set('n', '<Leader>Gj', dap.down, { noremap = true })
+vim.keymap.set('n', '<Leader>G<Up>', dap.up, { noremap = true })
+vim.keymap.set('n', '<Leader>G<Down>', dap.down, { noremap = true })
+vim.keymap.set('n', '<Leader>Gc', dap.continue, { noremap = true })
+vim.keymap.set('n', '<Leader>Gh', dap.pause, { noremap = true })
+vim.keymap.set('n', '<Leader>Gp', dap.pause, { noremap = true })
+vim.keymap.set('n', '<C-c>', dap.pause, { noremap = true })
+vim.keymap.set('n', '<Leader>Ge', dap.repl.open, { noremap = true })
+vim.keymap.set('n', '<Leader>Gb', dap.toggle_breakpoint, { noremap = true })
+vim.keymap.set('n', '<Leader>Gn', dap.step_over, { noremap = true })
+vim.keymap.set('n', '<Leader>Gi', dap.step_into, { noremap = true })
+vim.keymap.set('n', '<Leader>Go', dap.step_out, { noremap = true })
+vim.keymap.set('n', '<Leader>Gt', dap.terminate, { noremap = true })
+vim.keymap.set('n', '<Leader>Gr', dap.restart, { noremap = true })
+vim.keymap.set('n', '<Leader>GB', set_cond_breakpoint, { noremap = true })
+vim.keymap.set('n', '<Leader>Gl', set_logpoint, { noremap = true })
+
+vim.api.nvim_create_user_command('DapClear', dap.clear_breakpoints, {
+  desc = 'Clear all breakpoints',
+})
 
 -- stylua: ignore start
 vim.fn.sign_define('DapBreakpoint',          { text = vim.trim(static.icons.DotLarge), texthl = 'DiagnosticSignHint' })
