@@ -3,9 +3,7 @@
 
 ---@type table<string, winbar_source_t>
 return setmetatable({}, {
-  __index = function(self, key)
-    local source = require('plugin.winbar.sources.' .. key)
-    self[key] = source
-    return source
+  __index = function(_, key)
+    return require('plugin.winbar.sources.' .. key)
   end,
 })
