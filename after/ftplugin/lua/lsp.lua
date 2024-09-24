@@ -25,7 +25,7 @@ local efm = vim.fn.executable('stylua') == 1
     },
   })
 
--- Luanch lua-language-server, disable its formatting capabilities
+-- Launch lua-language-server, disable its formatting capabilities
 -- if efm launched successfully
 lsp.start({
   cmd = { 'lua-language-server' },
