@@ -209,6 +209,10 @@ end
 ---@param partial boolean?
 ---@return code_cell_t[]
 local function extract_cells(lang, code_chunks, range, partial)
+  if not code_chunks[lang] then
+    return {}
+  end
+
   local chunks = {}
 
   if partial then
