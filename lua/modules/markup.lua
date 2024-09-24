@@ -39,8 +39,61 @@ return {
 
   {
     'benlubas/molten-nvim',
-    ft = 'python',
-    event = 'BufEnter *.ipynb',
+    init = function()
+      ---Lazy-load molten plugin on keys
+      ---@param mode string in which mode to set the triggering keymap
+      ---@param key string the key to trigger molten plugin
+      ---@param buf number the buffer to set the keymap
+      local function load(mode, key, buf)
+        vim.keymap.set(mode, key, function()
+          require('molten.status')
+          vim.api.nvim_feedkeys(
+            vim.api.nvim_replace_termcodes(key, true, true, true),
+            'im',
+            false
+          )
+        end, { buffer = buf })
+      end
+
+      vim.api.nvim_create_autocmd('FileType', {
+        desc = 'Lazy-load molten on keys in python or markdown files.',
+        group = vim.api.nvim_create_augroup('MoltenLazyLoadKeys', {}),
+        pattern = { 'python', 'markdown' },
+        callback = function(info)
+          -- Markdown buffers that is not a Jupyter Notebook -- not something
+          -- that we want to load molten on
+          if
+            info.match == 'markdown'
+            and vim.fn.fnamemodify(vim.api.nvim_buf_get_name(info.buf), ':e')
+              ~= 'ipynb'
+          then
+            return
+          end
+
+          load('x', '<CR>', info.buf) -- for both python and notebook buffers
+          if info.match == 'markdown' then
+            load('x', '<CR>', info.buf)
+            load('n', '<CR>', info.buf)
+            load('n', '<LocalLeader>k', info.buf)
+            load('n', '<LocalLeader>j', info.buf)
+            load('n', '<LocalLeader><CR>', info.buf)
+          end
+          return true
+        end,
+      })
+    end,
+    -- No need to lazy load on molten's builtin commands (e.g. `:MoltenInit`)
+    -- since they are already registered in rplugin manifest,
+    -- see `:h $NVIM_RPLUGIN_MANIFEST`
+    -- Below are extra commands defined in `lua/configs/molten.lua`
+    cmd = {
+      'MoltenNotebookRunLine',
+      'MoltenNotebookRunCellAbove',
+      'MoltenNotebookRunCellBelow',
+      'MoltenNotebookRunCellCurrent',
+      'MoltenNotebookRunVisual',
+      'MoltenNotebookRunOperator',
+    },
     build = ':UpdateRemotePlugins',
     config = function()
       require('configs.molten')
