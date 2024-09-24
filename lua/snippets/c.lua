@@ -555,6 +555,29 @@ M.syntax = {
   ),
   us.msn(
     {
+      { trig = 'mn' },
+      { trig = 'main' },
+      common = { desc = 'main function' },
+    },
+    un.fmtad(
+      [[
+        int main(<args>) {
+        <body>
+        <idnt>return 0;
+        }
+      ]],
+      {
+        args = c(1, {
+          i(nil, 'void'),
+          i(nil, 'int argc, char **argv'),
+        }),
+        body = un.body(2, 1),
+        idnt = un.idnt(1),
+      }
+    )
+  ),
+  us.msn(
+    {
       { trig = 'st' },
       { trig = 'struct' },
       common = { desc = 'Struct definition/declaration' },
