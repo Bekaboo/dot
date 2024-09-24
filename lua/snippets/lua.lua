@@ -312,84 +312,12 @@ M.syntax = {
     i(1),
     t(')'),
   }),
-}
-
-M.nvim = {
-  us.sn(
-    { trig = 'spec' },
-    un.fmtad(
-      [[
-        {
-        <idnt><q><author>/<plugin_name><q>,<cont>
-        <idnt>config = function()
-        <idnt><idnt>require(<q>configs.<plugin_base_name><q>)
-        <idnt>end,
-        },<fin>
-      ]],
-      {
-        plugin_name = i(1),
-        plugin_base_name = f(function(text, _, _)
-          return text[1][1]:gsub('%..*', '')
-        end, { 1 }),
-        author = i(2),
-        cont = i(3),
-        fin = i(0),
-        idnt = t('\t'),
-        q = un.qt(),
-      }
-    )
-  ),
-  us.msn({
-    { trig = 'nt' },
-    { trig = 'not' },
-    { trig = 'noti' },
-    { trig = 'notify' },
-  }, {
-    t('vim.notify('),
-    i(1),
-    t(', vim.log.levels.'),
-    c(2, {
-      i(nil, 'DEBUG'),
-      i(nil, 'WARN'),
-      i(nil, 'ERROR'),
-      i(nil, 'INFO'),
-      i(nil, 'OFF'),
-      i(nil, 'TRACE'),
-    }),
-    t(')'),
-  }),
-  us.sn({ trig = 'api' }, {
-    t('vim.api.nvim_'),
-  }),
-  us.sn({ trig = 'vfn' }, {
-    t('vim.fn.'),
-  }),
-  us.msn({
-    { trig = 'in' },
-    { trig = 'ins' },
-    { trig = 'insp' },
-  }, {
-    t('vim.inspect('),
-    i(1),
-    t(')'),
-  }),
-  us.msn({
-    { trig = 'pin' },
-    { trig = 'pins' },
-    { trig = 'pinsp' },
-  }, {
-    t('print(vim.inspect('),
-    i(1),
-    t(')'),
-    i(2),
-    t(')'),
-  }),
   us.msn(
     {
       { trig = 'pck' },
       { trig = 'pcheck' },
     },
-    un.fmtad('print(<q><v_esc>: <q> .. vim.inspect(<v>)<e>)', {
+    un.fmtad('print(<q><v_esc>: <q> .. inspect(<v>)<e>)', {
       q = un.qt(),
       v = i(1),
       v_esc = d(2, function(texts)
@@ -405,7 +333,7 @@ M.nvim = {
       { trig = 'ck' },
       { trig = 'check' },
     },
-    un.fmtad('<q><v_esc>: <q> .. vim.inspect(<v>)', {
+    un.fmtad('<q><v_esc>: <q> .. inspect(<v>)', {
       q = un.qt(),
       v = i(1),
       v_esc = d(2, function(texts)
@@ -419,7 +347,7 @@ M.nvim = {
       { trig = '(%S*)(%s*)%.%.%s*ck' },
       { trig = '(%S*)(%s*)%.%.%s*check' },
     },
-    un.fmtad('<spc>.. <q>, <v_esc>: <q> .. vim.inspect(<v>)', {
+    un.fmtad('<spc>.. <q>, <v_esc>: <q> .. inspect(<v>)', {
       spc = f(function(_, snip, _)
         return snip.captures[1] == '' and snip.captures[2]
           or snip.captures[1] .. ' '
