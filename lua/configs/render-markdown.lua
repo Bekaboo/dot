@@ -12,7 +12,6 @@ require('render-markdown').setup({
     sign = false,
     width = 'full',
     position = 'inline',
-    border = true,
     icons = {
       icons.MarkdownH1,
       icons.MarkdownH2,
