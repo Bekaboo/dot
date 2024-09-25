@@ -1,6 +1,15 @@
 local utils = require('utils')
 local icons = utils.static.icons
 
+-- Disable render-markdown from setting 'concealcursor' to empty, which
+-- disables oil window cancellation, to reproduce:
+--  1. Open a markdown file
+--  2. `:e %:p:h` to open the oil buf
+--  3. Re-enter the markdown file from oil buf
+--  4. `:e %:p:h` again
+---@diagnostic disable-next-line: duplicate-set-field
+require('render-markdown.core.util').set_win = function() end
+
 require('render-markdown').setup({
   render_modes = true,
   signs = { enabled = false },
