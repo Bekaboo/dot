@@ -5,12 +5,8 @@ require('render-markdown').setup({
   render_modes = true,
   signs = { enabled = false },
   bullet = {
-    icons = {
-      icons.Diamond,
-      icons.DotLarge,
-      icons.Dot,
-    },
-    right_pad = 1,
+    icons = { icons.Dot },
+    right_pad = 0,
   },
   heading = {
     sign = false,
