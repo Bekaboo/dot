@@ -10,6 +10,12 @@ local icons = utils.static.icons
 ---@diagnostic disable-next-line: duplicate-set-field
 require('render-markdown.core.util').set_win = function() end
 
+-- Fix not rendering when scrolling fast
+---@diagnostic disable-next-line: duplicate-set-field
+require('render-markdown.core.buffer_state').debounce = function(_, _, cb)
+  vim.schedule(cb)
+end
+
 require('render-markdown').setup({
   render_modes = true,
   signs = { enabled = false },
