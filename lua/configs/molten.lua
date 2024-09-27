@@ -416,9 +416,28 @@ local function setup_buf_keymaps_and_commands(buf)
   vim.keymap.set('n', '<C-c>', vim.cmd.MoltenInterrupt, { buffer = buf })
   vim.keymap.set('n', '<C-j>', function()
     vim.cmd.MoltenEnterOutput({ mods = { noautocmd = true } })
-    if vim.bo.ft == 'molten_output' then
-      vim.keymap.set('n', '<C-k>', '<C-w>c', { buffer = true })
+    if vim.bo.ft ~= 'molten_output' then
+      return
     end
+
+    vim.keymap.set('n', '<C-k>', '<C-w>c', { buffer = true })
+
+    local src_win = vim.fn.win_getid(vim.fn.winnr('#'))
+    local output_win = vim.api.nvim_get_current_win()
+    vim.api.nvim_create_autocmd('WinScrolled', {
+      desc = 'Close molten output win when src win is scrolled.',
+      group = vim.api.nvim_create_augroup('MoltenCloseOutputWin' .. buf, {}),
+      buffer = buf,
+      callback = function(info)
+        if src_win == tonumber(info.match) then
+          vim.schedule(function()
+            if vim.api.nvim_win_is_valid(output_win) then
+              vim.api.nvim_win_close(output_win, false)
+            end
+          end)
+        end
+      end,
+    })
   end, { buffer = buf })
 
   local otk_ok
