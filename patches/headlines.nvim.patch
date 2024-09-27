@@ -1,0 +1,31 @@
+diff --git a/lua/headlines/init.lua b/lua/headlines/init.lua
+index 2e000b8..b5b9564 100644
+--- a/lua/headlines/init.lua
++++ b/lua/headlines/init.lua
+@@ -199,7 +199,7 @@ M.setup = function(config)
+ 
+     vim.cmd [[
+         augroup Headlines
+-        autocmd FileChangedShellPost,Syntax,TextChanged,InsertLeave,WinScrolled * lua require('headlines').refresh()
++        autocmd FileType,FileChangedShellPost,Syntax,TextChanged,InsertLeave * lua require('headlines').refresh()
+         augroup END
+     ]]
+ end
+@@ -213,7 +213,7 @@ M.refresh = function()
+     local bufnr = vim.api.nvim_get_current_buf()
+     vim.api.nvim_buf_clear_namespace(0, M.namespace, 0, -1)
+ 
+-    if not c or not c.query then
++    if not c or not c.query or vim.fn.win_gettype() ~= '' then
+         return
+     end
+ 
+@@ -313,7 +313,7 @@ M.refresh = function()
+                 if codeblock_padding > 0 then
+                     for i = start_row, end_row - 1 do
+                         nvim_buf_set_extmark(bufnr, M.namespace, i, 0, {
+-                            virt_text = { { string.rep(" ", codeblock_padding), "Normal" } },
++                            virt_text = { { string.rep(" ", codeblock_padding - 2), "Normal" } },
+                             virt_text_win_col = 0,
+                             priority = 1,
+                         })

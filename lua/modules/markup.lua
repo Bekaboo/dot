@@ -101,15 +101,11 @@ return {
   },
 
   {
-    'MeanderingProgrammer/render-markdown.nvim',
-    enabled = not vim.g.no_nf,
+    'lukas-reineke/headlines.nvim',
     ft = { 'markdown', 'norg', 'org', 'qml' },
-    dependencies = {
-      'nvim-treesitter/nvim-treesitter',
-      'nvim-tree/nvim-web-devicons',
-    },
+    dependencies = 'nvim-treesitter/nvim-treesitter',
     config = function()
-      require('configs.render-markdown')
+      require('configs.headlines')
     end,
   },
 }
