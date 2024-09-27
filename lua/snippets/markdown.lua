@@ -3,8 +3,10 @@ local un = require('utils.snippets.nodes')
 local us = require('utils.snippets.snips')
 local conds = require('utils.snippets.conds')
 local ls = require('luasnip')
+local sn = ls.snippet_node
 local t = ls.text_node
 local i = ls.insert_node
+local d = ls.dynamic_node
 local l = require('luasnip.extras').lambda
 local dl = require('luasnip.extras').dynamic_lambda
 
@@ -57,9 +59,13 @@ M.markers = {
     { trig = 'cdb' },
   }, {
     t('```'),
-    i(1),
+    d(1, function()
+      return vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':e') == 'ipynb'
+          and sn(nil, i(1, 'python'))
+        or sn(nil, i(1))
+    end, {}),
     t({ '', '' }),
-    i(0),
+    un.body(2, 0),
     t({ '', '```' }),
   }),
   us.sn({
@@ -67,7 +73,7 @@ M.markers = {
     desc = 'Inline code',
   }, {
     t('`'),
-    i(1),
+    un.body(1, 0),
     t('`'),
   }),
 }
