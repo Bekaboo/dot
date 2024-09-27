@@ -1,8 +1,8 @@
 diff --git a/rplugin/python3/molten/outputbuffer.py b/rplugin/python3/molten/outputbuffer.py
-index be6bf76..0b0efaa 100644
+index 2b36d30..b987ba2 100644
 --- a/rplugin/python3/molten/outputbuffer.py
 +++ b/rplugin/python3/molten/outputbuffer.py
-@@ -79,7 +79,10 @@ class OutputBuffer:
+@@ -112,7 +112,10 @@ class OutputBuffer:
              elif self.options.enter_output_behavior == "open_and_enter":
                  self.show_floating_win(anchor)
                  entered = True
@@ -14,7 +14,17 @@ index be6bf76..0b0efaa 100644
          elif self.options.enter_output_behavior != "no_open":
              entered = True
              self.nvim.funcs.nvim_set_current_win(self.display_win)
-@@ -342,7 +345,10 @@ class OutputBuffer:
+@@ -125,7 +128,8 @@ class OutputBuffer:
+ 
+     def clear_float_win(self) -> None:
+         if self.display_win is not None:
+-            self.nvim.funcs.nvim_win_close(self.display_win, True)
++            if self.display_win.valid:
++                self.nvim.funcs.nvim_win_close(self.display_win, True)
+             self.display_win = None
+             redraw = False
+             for chunk in self.output.chunks:
+@@ -373,7 +377,10 @@ class OutputBuffer:
                      win_opts,
                  )
                  hl = self.options.hl
