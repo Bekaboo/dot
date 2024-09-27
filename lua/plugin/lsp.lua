@@ -1398,13 +1398,12 @@ end
 
 ---@return nil
 local function setup_lsp_autoformat()
-  ---@type bufopt_t
-  local enabled = utils.classes.bufopt_t:new('lsp_autofmt_enabled', false)
-  ---@type bufopt_t
+  local enabled = utils.classes.bufopt_t:new('lsp_autofmt_enabled', false) ---@type bufopt_t
   local fmtopts = utils.classes.bufopt_t:new('lsp_autofmt_opts', {
     async = true,
     timeout_ms = 500,
-  })
+  }) ---@type bufopt_t
+
   vim.api.nvim_create_autocmd('BufWritePre', {
     desc = 'LSP format on save.',
     group = vim.api.nvim_create_augroup('LspAutoFmt', {}),
