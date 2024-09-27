@@ -10,6 +10,12 @@ if exists('b:current_syntax')
 endif
 
 exe 'source ' . $VIMRUNTIME . '/syntax/markdown.vim'
+
+" Disable indented code block syntax, use only fenced code block
+syn clear  markdownCodeBlock
+syn region markdownCodeBlock matchgroup=markdownCodeDelimiter start="^\s*\z(`\{3,\}\).*$" end="^\s*\z1\ze\s*$" keepend
+syn region markdownCodeBlock matchgroup=markdownCodeDelimiter start="^\s*\z(\~\{3,\}\).*$" end="^\s*\z1\ze\s*$" keepend
+
 unlet! b:current_syntax
 
 " Include tex math in markdown
