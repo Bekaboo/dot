@@ -38,6 +38,7 @@ local deps = {
   pnglatex = true,
   pynvim = true,
   pyperclip = true,
+  pyqt6 = true,
 };
 
 ---Check all dependencies, install them if they are missing
