@@ -300,6 +300,10 @@ augroup('SpecialBufHl', {
       if vim.bo[info.buf].bt == '' then
         return
       end
+      local stat = vim.uv.fs_stat(vim.api.nvim_buf_get_name(info.buf))
+      if stat and stat.type == 'file' then
+        return
+      end
       -- Current window isn't necessarily the window of the buffer that
       -- triggered the event, use `bufwinid()` to get the first window of
       -- the triggering buffer. We can also use `win_findbuf()` to get all
