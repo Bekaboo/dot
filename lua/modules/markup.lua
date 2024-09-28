@@ -60,16 +60,6 @@ return {
         group = vim.api.nvim_create_augroup('MoltenLazyLoadKeys', {}),
         pattern = { 'python', 'markdown' },
         callback = function(info)
-          -- Markdown buffers that is not a Jupyter Notebook -- not something
-          -- that we want to load molten on
-          if
-            info.match == 'markdown'
-            and vim.fn.fnamemodify(vim.api.nvim_buf_get_name(info.buf), ':e')
-              ~= 'ipynb'
-          then
-            return
-          end
-
           load('x', '<CR>', info.buf) -- for both python and notebook buffers
           if info.match == 'markdown' then
             load('x', '<CR>', info.buf)
