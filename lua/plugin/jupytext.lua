@@ -99,16 +99,44 @@ local function jupytext_convert(buf)
       end
     end
 
-    local undolevels = vim.bo[buf].undolevels
-    vim.bo[buf].undolevels = -1
+    local undolevels
+    -- Only set clear undo history on the first time loading the buffer
+    -- This is to prevent losing undo history when nvim reloads the buffer
+    -- from file when it detects the file has been changed outside of nvim,
+    -- either by jupytext, another nvim session, or other code editors, see
+    -- `:h autoread` and `:h timestamp`
+    if vim.bo[buf].ft ~= 'markdown' then
+      undolevels = vim.bo[buf].undolevels
+      vim.bo[buf].undolevels = -1
+    end
     vim.cmd.read({
       args = { vim.fn.fnameescape(fpath_md) },
       mods = { silent = true, keepalt = true },
     })
     vim.cmd.delete({ range = { 1 }, mods = { emsg_silent = true } })
-    vim.bo[buf].undolevels = undolevels
+    if undolevels then
+      vim.bo[buf].undolevels = undolevels
+      undolevels = nil
+    end
   end
 
+  -- Setting 'buftype' to 'acwrite' to indicate that the buffer will always be
+  -- written with BufWriteCmd, this also disable auto-reloading when the
+  -- jupyter notebook is changed outside of nvim
+  --
+  -- If 'buftype' is not set, when we unfocus the current nvim session with
+  -- unsaved changes in the notebook buffer, nvim saves the buffer automatically
+  -- (see the autosave augroup in `lua/core/autocmds`), then write the changes
+  -- to the notebook file asynchronously, resulting in a newer timestamp in the
+  -- notebook file than the buffer; when we refocus the nvim session,
+  -- nvim detects the newer timestamp in the notebook file and reloads the
+  -- buffer from the notebook file, removing extmarks and other buffer-local
+  -- settings -- which is not what we want, see `:h timestamp`, `:h autoread`
+  --
+  -- To avoid this we can either block until the write to the notebook is finished
+  -- in BufWriteCmd/FileWriteCmd, or set 'buftype' to 'acwrite' to disable
+  -- auto-reloading when the notebook file is changed outside of nvim
+  vim.bo[buf].bt = 'acwrite'
   vim.bo[buf].ft = 'markdown'
   vim.api.nvim_create_autocmd({ 'BufWriteCmd', 'FileWriteCmd' }, {
     group = vim.api.nvim_create_augroup('JupyText' .. buf, {}),
@@ -132,9 +160,6 @@ local function jupytext_convert(buf)
         },
         {},
         vim.schedule_wrap(function(obj)
-          if not vim.api.nvim_buf_is_valid(info.buf) then
-            return
-          end
           if obj.code ~= 0 then
             vim.notify(
               '[jupytext] error writing into notebook: ' .. obj.stderr,
