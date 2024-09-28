@@ -62,12 +62,10 @@ augroup('Autosave', {
   {
     nested = true,
     desc = 'Autosave on focus change.',
-    callback = function(info)
-      if vim.bo[info.buf].bt == '' then
-        vim.cmd.update({
-          mods = { emsg_silent = true },
-        })
-      end
+    callback = function()
+      vim.cmd.update({
+        mods = { emsg_silent = true },
+      })
     end,
   },
 })
