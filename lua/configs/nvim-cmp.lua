@@ -429,10 +429,33 @@ cmp.setup({
   sorting = {
     ---@type table[]|function[]
     comparators = {
-      cmp.config.compare.kind,
+      ---Prioritize snippet over other completions
+      ---@param e1 cmp.Entry
+      ---@param e2 cmp.Entry
+      ---@return boolean?
+      function(e1, e2)
+        local kind1 = e1:get_kind() --- @type lsp.CompletionItemKind|number
+        local kind2 = e2:get_kind() --- @type lsp.CompletionItemKind|number
+
+        local types = require('cmp.types')
+        kind1 = kind1 == types.lsp.CompletionItemKind.Text and 100 or kind1
+        kind2 = kind2 == types.lsp.CompletionItemKind.Text and 100 or kind2
+        if kind1 == kind2 then
+          return
+        end
+
+        if kind1 == types.lsp.CompletionItemKind.Snippet then
+          return true
+        end
+
+        if kind2 == types.lsp.CompletionItemKind.Snippet then
+          return false
+        end
+      end,
       cmp.config.compare.locality,
       cmp.config.compare.recently_used,
       cmp.config.compare.exact,
+      cmp.config.compare.kind,
       cmp.config.compare.score,
     },
   },
