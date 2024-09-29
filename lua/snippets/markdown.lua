@@ -12,16 +12,31 @@ local dl = require('luasnip.extras').dynamic_lambda
 
 M.math = require('snippets.tex.math')
 
-M.format = {
-  us.sn({
-    trig = '^# ',
-    regTrig = true,
-    hidden = true,
-    snippetType = 'autosnippet',
+M.snippets = {
+  us.msnr({
+    { trig = '^# ', snippetType = 'autosnippet' },
+    { trig = '^h1' },
   }, {
     t('# '),
-    dl(1, l.TM_FILENAME:gsub('^%d*_', ''):gsub('_', ' '):gsub('%..*', ''), {}),
+    dl(
+      1,
+      l.TM_FILENAME
+        :gsub('^%d*_', '')
+        :gsub('_', ' ')
+        :gsub('^%l', string.upper)
+        :gsub(' %l', function(s)
+          return ' ' .. string.upper(s)
+        end)
+        :gsub('%..*', ''),
+      {}
+    ),
   }),
+  us.snr({ trig = '^h2' }, { t('## '), i(0) }),
+  us.snr({ trig = '^h3' }, { t('### '), i(0) }),
+  us.snr({ trig = '^h4' }, { t('#### '), i(0) }),
+  us.snr({ trig = '^h5' }, { t('##### '), i(0) }),
+  us.snr({ trig = '^h6' }, { t('###### '), i(0) }),
+
   us.sn('pkgs', {
     t({ '---', '' }),
     t({ 'header-includes:', '' }),
@@ -35,9 +50,7 @@ M.format = {
     t({ '- \\usepackage{mathtools}', '' }),
     t({ '---', '' }),
   }),
-}
 
-M.markers = {
   us.msan({
     {
       trig = '**',
@@ -76,18 +89,7 @@ M.markers = {
     un.body(1, 0),
     t('`'),
   }),
-}
 
-M.titles = {
-  us.sn({ trig = 'h1' }, { t('# '), i(0) }),
-  us.sn({ trig = 'h2' }, { t('## '), i(0) }),
-  us.sn({ trig = 'h3' }, { t('### '), i(0) }),
-  us.sn({ trig = 'h4' }, { t('#### '), i(0) }),
-  us.sn({ trig = 'h5' }, { t('##### '), i(0) }),
-  us.sn({ trig = 'h6' }, { t('###### '), i(0) }),
-}
-
-M.theorems = {
   us.sn({ trig = 'theo' }, { t('***'), i(1, 'Theorem'), t('***') }),
   us.sn({ trig = 'def' }, { t('***'), i(1, 'Definition'), t('***') }),
   us.sn({ trig = 'pro' }, { t('***'), i(1, 'Proof'), t('***') }),
