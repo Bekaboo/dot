@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Tue Aug 27 08:38:16 PM EDT 2024
+-- Last Updated: Sun Sep 29 06:37:42 PM EDT 2024
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -530,16 +530,18 @@ local hlgroups = {
   fugitiveUntrackedModifier = { fg = c_macroAqua },
 
   -- telescope
-  TelescopeBorder = { bg = c_macroBg1, fg = c_sumiInk6 },
+  TelescopeBorder = { bg = c_macroBg2, fg = c_sumiInk6 },
   TelescopeMatching = { fg = c_macroRed, bold = true },
-  TelescopeNormal = { fg = c_macroFg2, bg = c_macroBg2 },
+  TelescopeNormal = { bg = c_macroBg2, fg = c_macroFg2 },
+  TelescopePromptBorder = { bg = c_macroBg3, fg = c_sumiInk6 },
+  TelescopePromptNormal = { bg = c_macroBg3, fg = c_macroFg2 },
   TelescopeResultsClass = { link = 'Structure' },
   TelescopeResultsField = { link = '@variable.member' },
   TelescopeResultsMethod = { link = 'Function' },
   TelescopeResultsStruct = { link = 'Structure' },
   TelescopeResultsVariable = { link = '@variable' },
   TelescopeSelection = { link = 'Visual' },
-  TelescopeTitle = { fg = c_macroGray2 },
+  TelescopeTitle = { bg = c_macroTeal,fg = c_macroBg0 },
 
   -- nvim-dap-ui
   DapUIBreakpointsCurrentLine = { bold = true, fg = c_macroFg0 },
