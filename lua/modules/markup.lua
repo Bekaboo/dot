@@ -62,7 +62,6 @@ return {
         callback = function(info)
           load('x', '<CR>', info.buf) -- for both python and notebook buffers
           if info.match == 'markdown' then
-            load('x', '<CR>', info.buf)
             load('n', '<CR>', info.buf)
             load('n', '<LocalLeader>k', info.buf)
             load('n', '<LocalLeader>j', info.buf)
