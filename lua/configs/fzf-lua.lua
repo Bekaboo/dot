@@ -496,9 +496,9 @@ fzf.setup({
     fzf_opts = {
       ['--info'] = 'inline-right',
     },
-    find_opts = [[-type f -type l -not -path '*/\.git/*' -printf '%P\n']],
-    fd_opts = [[--color=never --type f --type l --hidden --follow --exclude .git]],
-    rg_opts = [[--color=never --files --hidden --follow -g '!.git'"]],
+    find_opts = [[-type f -type l -not -path '*/\.git/*' -not -path '*/\.venv/*' -printf '%P\n']],
+    fd_opts = [[--color=never --type f --type l --hidden --follow --exclude .git --exclude .venv]],
+    rg_opts = [[--color=never --files --hidden --follow -g '!.git' -g '!.venv'"]],
   },
   oldfiles = {
     prompt = 'Oldfiles> ',
