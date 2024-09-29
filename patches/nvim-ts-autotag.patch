@@ -1,0 +1,42 @@
+diff --git a/lua/nvim-ts-autotag/internal.lua b/lua/nvim-ts-autotag/internal.lua
+index b816b93..2130dda 100644
+--- a/lua/nvim-ts-autotag/internal.lua
++++ b/lua/nvim-ts-autotag/internal.lua
+@@ -242,6 +242,7 @@ local function check_close_tag(close_slash_tag)
+     return false
+ end
+ 
++---@return boolean? success
+ M.close_tag = function()
+     local ok, buf_parser = pcall(vim.treesitter.get_parser)
+     if not ok then
+@@ -252,9 +253,11 @@ M.close_tag = function()
+     if result == true and tag_name ~= nil then
+         vim.api.nvim_put({ string.format("</%s>", tag_name) }, "", true, false)
+         vim.cmd([[normal! F>]])
++        return true
+     elseif utils.is_react_file() and utils.is_react_fragment() then
+         vim.api.nvim_put({ "</>" }, "", true, false)
+         vim.cmd([[normal! F>]])
++        return true
+     end
+ end
+ 
+@@ -466,8 +469,15 @@ M.attach = function(bufnr)
+             vim.keymap.set("i", ">", function()
+                 local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+                 vim.api.nvim_buf_set_text(bufnr, row - 1, col, row - 1, col, { ">" })
+-                M.close_tag()
+-                vim.api.nvim_win_set_cursor(0, { row, col + 1 })
++                if M.close_tag() then
++                    vim.api.nvim_win_set_cursor(0, { row, col + 1 })
++                else
++                    -- If not close tag, remove the '>' character and
++                    -- feed the key to trigger possible snippets end
++                    -- with '>'
++                    vim.api.nvim_buf_set_text(bufnr, row - 1, col, row - 1, col + 1, { "" })
++                    vim.api.nvim_feedkeys('>', 'n', true)
++                end
+             end, {
+                 noremap = true,
+                 silent = true,
