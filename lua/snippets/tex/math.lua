@@ -201,7 +201,13 @@ return {
   us.sambW({ trig = 'cm' }, t('^{C}')),
   us.sambW({ trig = 'inv' }, t('^{-1}')),
   us.sambW({ trig = '\\in v' }, t('^{-1}')),
-  us.sambW({ trig = 'tr' }, t('^{\\intercal}')),
+  us.msambW(
+    {
+      { trig = 'tr' },
+      { trig = '.T' },
+    },
+    t('^{\\intercal}')
+  ),
 
   us.samWr({ trig = '(\\?%w*_*%w*)vv' }, un.sdn(1, '\\vec{', '}')),
   us.samWr({ trig = '(\\?%w*_*%w*)hat' }, un.sdn(1, '\\hat{', '}')),
