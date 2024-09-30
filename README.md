@@ -297,7 +297,7 @@ paths:
 │   │   ├── lib.lua             # plugin specifications in module 'lib'
 │   │   ├── completion.lua      # plugin specifications in module 'completion'
 │   │   ├── debug.lua           # plugin specifications in modules 'debug'
-│   │   ├── lsp.lua             # plugin specifications in module 'lsp'
+│   │   ├── langs.lua           # plugin specifications in module 'langs'
 │   │   ├── markup.lua          # ...
 │   │   ├── misc.lua
 │   │   ├── tools.lua
