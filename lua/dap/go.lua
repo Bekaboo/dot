@@ -34,14 +34,6 @@ M.config = {
     request = 'launch',
     program = '${file}',
   },
-  -- Configuration for debugging test files
-  {
-    type = 'delve',
-    name = 'Debug test',
-    request = 'launch',
-    mode = 'test',
-    program = '${file}',
-  },
   -- Works with go.mod packages and sub packages
   {
     type = 'delve',
@@ -49,6 +41,32 @@ M.config = {
     request = 'launch',
     mode = 'test',
     program = './${relativeFileDirname}',
+  },
+  {
+    type = 'delve',
+    name = 'Debug test (single test func)',
+    request = 'launch',
+    mode = 'test',
+    program = './${relativeFileDirname}',
+    args = function()
+      local test_fn = vim.fn.expand('<cword>') ---@type string
+      if not vim.startswith(test_fn, 'Test') then
+        test_fn = vim.api.nvim_get_current_line():match('func%s+(Test%w*)')
+          or ''
+      end
+      if not vim.startswith(test_fn, 'Test') then
+        vim.ui.input({
+          prompt = 'Enter test function name: ',
+        }, function(input)
+          test_fn = input
+        end)
+      end
+      return {
+        '-test.v',
+        '-test.run',
+        test_fn,
+      }
+    end,
   },
 }
 
