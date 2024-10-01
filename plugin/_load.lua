@@ -6,6 +6,15 @@ if vim.g.vscode then
   return
 end
 
+-- expandtab
+vim.api.nvim_create_autocmd('InsertEnter', {
+  once = true,
+  group = vim.api.nvim_create_augroup('ExpandTabSetup', {}),
+  callback = function()
+    require('plugin.expandtab').setup()
+  end
+})
+
 -- fcitx5
 vim.api.nvim_create_autocmd('ModeChanged', {
   once = true,
