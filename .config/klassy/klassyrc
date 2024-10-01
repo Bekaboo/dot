@@ -1,28 +1,18 @@
-[ButtonColors]
-ButtonBackgroundOpacityActive=100
-ButtonBackgroundOpacityInactive=100
-
-[ButtonSizing]
-CloseFullHeightButtonWidthMarginRelative=70
-FullHeightButtonSpacingLeft=0
-FullHeightButtonSpacingRight=0
-FullHeightButtonWidthMarginRight=6
-
 [Global]
-LookAndFeelSet=org.kde.breezedark.desktop
+LookAndFeelSet=org.kde.klassylighttraditional.desktop
 
 [ShadowStyle]
-ShadowSize=ShadowNone
+ShadowSize=ShadowVeryLarge
 
 [Windeco]
 AnimationsEnabled=false
+AnimationsSpeedRelativeSystem=10
 ButtonIconStyle=StyleOxygen
-ButtonShape=ShapeFullHeightRectangle
 CornerRadius=0
-IconSize=IconMedium
 
 [WindowOutlineStyle]
-ThinWindowOutlineStyleInactive=WindowOutlineNone
-ThinWindowOutlineThickness=2.75
+ThinWindowOutlineStyleInactive=WindowOutlineShadowColor
+ThinWindowOutlineThickness=2.5
 WindowOutlineAccentColorOpacityActive=100
-WindowOutlineAccentWithContrastOpacityInactive=0
+WindowOutlineAccentWithContrastOpacityInactive=100
+WindowOutlineShadowColorOpacity=0
