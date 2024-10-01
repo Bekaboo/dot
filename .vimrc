@@ -1,4 +1,5 @@
 """ Options {{{1
+silent! set notimeout
 silent! set hidden
 silent! set foldlevelstart=99
 silent! set colorcolumn=+1
@@ -8,6 +9,7 @@ silent! set mouse=a
 silent! set number
 silent! set pumheight=16
 silent! set ruler
+silent! set showcmd
 silent! set scrolloff=4
 silent! set sidescrolloff=8
 silent! set sidescroll=1
@@ -29,6 +31,7 @@ silent! set wildmenu
 silent! set wildoptions+=fuzzy,pum
 silent! set hlsearch
 silent! set incsearch
+silent! set ttimeout
 silent! set ttimeoutlen=0
 silent! set autoindent
 silent! set autowriteall
