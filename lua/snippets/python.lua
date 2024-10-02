@@ -300,35 +300,18 @@ M.snippets = {
       { trig = 'def' },
       common = { desc = 'Function definition' },
     },
-    c(1, {
-      un.fmtad(
-        [[
-          def <name>(<args>):
-          <body>
-        ]],
-        {
-          name = r(1, 'fn_name'),
-          args = r(2, 'args'),
-          body = un.body(3, 1, false),
-        }
-      ),
-      un.fmtad(
-        [[
-          def <name>(<args>):
-          <q><q><q>
-          <docstring>
-          <q><q><q>
-          <body>
-        ]],
-        {
-          name = r(1, 'fn_name'),
-          args = r(2, 'args'),
-          q = un.qt(),
-          docstring = i(3),
-          body = un.body(4, 1, false),
-        }
-      ),
-    }),
+    un.fmtad(
+      [[
+        def <name>(<args>)<ret>:
+        <body>
+      ]],
+      {
+        name = r(1, 'fn_name'),
+        args = r(2, 'args'),
+        ret = i(3),
+        body = un.body(4, 1, false),
+      }
+    ),
     {
       common_opts = {
         stored = {
