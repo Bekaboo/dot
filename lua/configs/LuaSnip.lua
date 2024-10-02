@@ -4,7 +4,7 @@ local static = require('utils.static')
 
 ls.setup({
   keep_roots = true,
-  link_roots = false,
+  link_roots = true,
   exit_roots = false,
   link_children = true,
   region_check_events = 'CursorMoved,CursorMovedI',
