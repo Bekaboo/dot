@@ -522,3 +522,36 @@ cmp.setup.filetype({ 'dap-repl', 'dapui_watches', 'dapui_hover' }, {
     { name = 'dap' },
   },
 })
+
+---Set telescope default hlgroups for a borderless view
+---@return nil
+local function set_default_hlgroups()
+  local hl = require('utils.hl')
+  hl.set_default(0, 'CmpItemKindDefault', { link = 'Special' })
+  hl.set_default(0, 'CmpItemKindClass', { link = 'Type' })
+  hl.set_default(0, 'CmpItemKindConstant', { link = 'Constant' })
+  hl.set_default(0, 'CmpItemKindConstructor', { link = '@constructor' })
+  hl.set_default(0, 'CmpItemKindEnum', { link = 'Constant' })
+  hl.set_default(0, 'CmpItemKindEnumMember', { link = 'CmpItemKindEnum' })
+  hl.set_default(0, 'CmpItemKindFile', { link = 'Directory' })
+  hl.set_default(0, 'CmpItemKindFolder', { link = 'Directory' })
+  hl.set_default(0, 'CmpItemKindFunction', { link = 'Function' })
+  hl.set_default(0, 'CmpItemKindInterface', { link = 'Type' })
+  hl.set_default(0, 'CmpItemKindKeyword', { link = 'Keyword' })
+  hl.set_default(0, 'CmpItemKindMethod', { link = 'Function' })
+  hl.set_default(0, 'CmpItemKindModule', { link = '@module' })
+  hl.set_default(0, 'CmpItemKindOperator', { link = 'Operator' })
+  hl.set_default(0, 'CmpItemKindString', { link = 'String' })
+  hl.set_default(0, 'CmpItemKindString', { link = 'String' })
+  hl.set_default(0, 'CmpItemKindStruct', { link = 'Type' })
+  hl.set_default(0, 'CmpItemKindText', { link = 'String' })
+  hl.set_default(0, 'CmpItemKindValue', { link = 'Number' })
+end
+
+set_default_hlgroups()
+
+vim.api.nvim_create_autocmd('ColorScheme', {
+  group = vim.api.nvim_create_augroup('CmpSetDefaultHlgroups', {}),
+  desc = 'Set default hlgroups for nvim-cmp.',
+  callback = set_default_hlgroups,
+})
