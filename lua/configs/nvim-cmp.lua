@@ -220,6 +220,7 @@ cmp.setup({
     disallow_symbol_nonprefix_matching = false,
   },
   confirmation = {
+    default_behavior = cmp.ConfirmBehavior.Replace,
     get_commit_characters = function(commit_characters)
       vim.list_extend(commit_characters, { '.', ':', '(', '{' })
       return commit_characters
@@ -411,13 +412,7 @@ cmp.setup({
         fallback()
       end
     end, { 'i', 'c' }),
-    ['<C-y>'] = cmp.mapping(
-      cmp.mapping.confirm({
-        behavior = cmp.ConfirmBehavior.Replace,
-        select = false,
-      }),
-      { 'i', 'c' }
-    ),
+    ['<C-y>'] = cmp.mapping(cmp.mapping.confirm(), { 'i', 'c' }),
   },
   sources = {
     { name = 'luasnip', max_item_count = 3 },
