@@ -219,6 +219,12 @@ cmp.setup({
     disallow_prefix_unmatching = false,
     disallow_symbol_nonprefix_matching = false,
   },
+  confirmation = {
+    get_commit_characters = function(commit_characters)
+      vim.list_extend(commit_characters, { '.', ':', '(', '{' })
+      return commit_characters
+    end,
+  },
   formatting = {
     fields = { 'kind', 'abbr', 'menu' },
     format = function(entry, cmp_item)
