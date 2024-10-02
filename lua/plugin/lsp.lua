@@ -17,10 +17,12 @@ end
 ---Setup LSP keymaps
 ---@return nil
 local function setup_keymaps()
-  vim.keymap.set({ 'n' }, 'gq;', vim.lsp.buf.format)
-  vim.keymap.set({ 'n', 'x' }, 'g/', vim.lsp.buf.references)
-  vim.keymap.set({ 'n', 'x' }, 'g.', vim.lsp.buf.implementation)
+  -- stylua: ignore start
+  vim.keymap.set({ 'n' }, 'gq;', function() vim.lsp.buf.format() end)
+  vim.keymap.set({ 'n', 'x' }, 'g/', function() vim.lsp.buf.references() end)
+  vim.keymap.set({ 'n', 'x' }, 'g.', function() vim.lsp.buf.implementation() end)
   vim.keymap.set({ 'n', 'x' }, 'gd', function()
+  -- stylua: ignore end
     return supports_method('textDocument/definition', 0)
         and '<Cmd>lua vim.lsp.buf.definition()<CR>'
       or 'gd'
@@ -30,14 +32,16 @@ local function setup_keymaps()
         and '<Cmd>lua vim.lsp.buf.type_definition()<CR>'
       or 'gD'
   end, { expr = true })
-  vim.keymap.set({ 'n', 'x' }, '<Leader>r', vim.lsp.buf.rename)
-  vim.keymap.set({ 'n', 'x' }, '<Leader>a', vim.lsp.buf.code_action)
-  vim.keymap.set({ 'n', 'x' }, '<Leader><', vim.lsp.buf.incoming_calls)
-  vim.keymap.set({ 'n', 'x' }, '<Leader>>', vim.lsp.buf.outgoing_calls)
-  vim.keymap.set({ 'n', 'x' }, '<Leader>s', vim.lsp.buf.document_symbol)
-  vim.keymap.set({ 'n', 'x' }, '<Leader>S', vim.lsp.buf.workspace_symbol)
-  vim.keymap.set({ 'n', 'x' }, '<Leader>d', vim.diagnostic.setloclist)
-  vim.keymap.set({ 'n', 'x' }, '<Leader>D', vim.diagnostic.setqflist)
+  -- stylua: ignore start
+  vim.keymap.set({ 'n', 'x' }, '<Leader>r', function() vim.lsp.buf.rename() end)
+  vim.keymap.set({ 'n', 'x' }, '<Leader>a', function() vim.lsp.buf.code_action() end)
+  vim.keymap.set({ 'n', 'x' }, '<Leader><', function() vim.lsp.buf.incoming_calls() end)
+  vim.keymap.set({ 'n', 'x' }, '<Leader>>', function() vim.lsp.buf.outgoing_calls() end)
+  vim.keymap.set({ 'n', 'x' }, '<Leader>s', function() vim.lsp.buf.document_symbol() end)
+  vim.keymap.set({ 'n', 'x' }, '<Leader>S', function() vim.lsp.buf.workspace_symbol() end)
+  vim.keymap.set({ 'n', 'x' }, '<Leader>d', function() vim.diagnostic.setloclist() end)
+  vim.keymap.set({ 'n', 'x' }, '<Leader>D', function() vim.diagnostic.setqflist() end)
+  -- stylua: ignore end
   vim.keymap.set({ 'n', 'x' }, '<Leader>i', function()
     ---@param win integer
     ---@return boolean
@@ -109,8 +113,10 @@ local function setup_keymaps()
       })
     end
   end
-  vim.keymap.set({ 'n', 'x' }, '[d', c(vim.diagnostic.goto_prev))
-  vim.keymap.set({ 'n', 'x' }, ']d', c(vim.diagnostic.goto_next))
+  -- stylua: ignore start
+  vim.keymap.set({ 'n', 'x' }, '[d', c(function() vim.diagnostic.goto_prev() end))
+  vim.keymap.set({ 'n', 'x' }, ']d', c(function () vim.diagnostic.goto_next() end))
+  -- stylua: ignore end
   vim.keymap.set({ 'n', 'x' }, '[e', c(diag_goto('prev', 'ERROR')))
   vim.keymap.set({ 'n', 'x' }, ']e', c(diag_goto('next', 'ERROR')))
   vim.keymap.set({ 'n', 'x' }, '[w', c(diag_goto('prev', 'WARN')))
@@ -126,16 +132,19 @@ end
 local function setup_lsp_overrides()
   -- Show notification if no references, definition, declaration,
   -- implementation or type definition is found
-  local handlers = {
-    ['textDocument/references'] = vim.lsp.handlers['textDocument/references'],
-    ['textDocument/definition'] = vim.lsp.handlers['textDocument/definition'],
-    ['textDocument/declaration'] = vim.lsp.handlers['textDocument/declaration'],
-    ['textDocument/implementation'] = vim.lsp.handlers['textDocument/implementation'],
-    ['textDocument/typeDefinition'] = vim.lsp.handlers['textDocument/typeDefinition'],
+  local methods = {
+    'textDocument/references',
+    'textDocument/definition',
+    'textDocument/declaration',
+    'textDocument/implementation',
+    'textDocument/typeDefinition',
   }
-  for method, handler in pairs(handlers) do
+
+  for _, method in ipairs(methods) do
     local obj_name = method:match('/(%w*)$'):gsub('s$', '')
-    vim.lsp.handlers[method] = function(err, result, ctx, cfg)
+    local handler = vim.lsp.handlers[method]
+
+    vim.lsp.handlers[method] = function(err, result, ctx, ...)
       if not result or vim.tbl_isempty(result) then
         vim.notify('[LSP] no ' .. obj_name .. ' found')
         return
@@ -153,7 +162,8 @@ local function setup_lsp_overrides()
         vim.notify('[LSP] found 1 ' .. obj_name)
         return
       end
-      handler(err, result, ctx, cfg)
+
+      handler(err, result, ctx, ...)
     end
   end
 
