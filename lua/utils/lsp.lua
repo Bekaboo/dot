@@ -153,4 +153,55 @@ function M.restart(client_or_id, opts)
   })
 end
 
+---Check if range1 contains range2
+---Strict indexing -- if range1 == range2, return false
+---@param range1 lsp_range_t 0-based range
+---@param range2 lsp_range_t 0-based range
+---@return boolean
+function M.range_contains(range1, range2)
+  -- stylua: ignore start
+  return (
+    range2.start.line > range1.start.line
+    or (range2.start.line == range1.start.line
+        and range2.start.character > range1.start.character)
+    )
+    and (
+      range2.start.line < range1['end'].line
+      or (range2.start.line == range1['end'].line
+          and range2.start.character < range1['end'].character)
+    )
+    and (
+      range2['end'].line > range1.start.line
+      or (range2['end'].line == range1.start.line
+          and range2['end'].character > range1.start.character)
+    )
+    and (
+      range2['end'].line < range1['end'].line
+      or (range2['end'].line == range1['end'].line
+          and range2['end'].character < range1['end'].character)
+    )
+  -- stylua: ignore end
+end
+
+---Check if cursor is in range
+---@param range lsp_range_t 0-based range
+---@param cursor integer[]? cursor position (line, character); (1, 0)-based
+---@return boolean
+function M.range_contains_cursor(range, cursor)
+  cursor = cursor or vim.api.nvim_win_get_cursor(0)
+  local cursor0 = { cursor[1] - 1, cursor[2] }
+  -- stylua: ignore start
+  return (
+    cursor0[1] > range.start.line
+    or (cursor0[1] == range.start.line
+        and cursor0[2] >= range.start.character)
+  )
+    and (
+      cursor0[1] < range['end'].line
+      or (cursor0[1] == range['end'].line
+          and cursor0[2] <= range['end'].character)
+    )
+  -- stylua: ignore end
+end
+
 return M

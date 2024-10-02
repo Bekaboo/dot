@@ -1,3 +1,4 @@
+local utils = require('utils')
 local configs = require('plugin.winbar.configs')
 local bar = require('plugin.winbar.bar')
 local groupid = vim.api.nvim_create_augroup('WinBarLsp', {})
@@ -94,56 +95,6 @@ local function symbol_type(symbols)
   end
 end
 
----Check if cursor is in range
----@param cursor integer[] cursor position (line, character); (1, 0)-based
----@param range lsp_range_t 0-based range
----@return boolean
-local function cursor_in_range(cursor, range)
-  local cursor0 = { cursor[1] - 1, cursor[2] }
-  -- stylua: ignore start
-  return (
-    cursor0[1] > range.start.line
-    or (cursor0[1] == range.start.line
-        and cursor0[2] >= range.start.character)
-  )
-    and (
-      cursor0[1] < range['end'].line
-      or (cursor0[1] == range['end'].line
-          and cursor0[2] <= range['end'].character)
-    )
-  -- stylua: ignore end
-end
-
----Check if range1 contains range2
----Strict indexing -- if range1 == range2, return false
----@param range1 lsp_range_t 0-based range
----@param range2 lsp_range_t 0-based range
----@return boolean
-local function range_contains(range1, range2)
-  -- stylua: ignore start
-  return (
-    range2.start.line > range1.start.line
-    or (range2.start.line == range1.start.line
-        and range2.start.character > range1.start.character)
-    )
-    and (
-      range2.start.line < range1['end'].line
-      or (range2.start.line == range1['end'].line
-          and range2.start.character < range1['end'].character)
-    )
-    and (
-      range2['end'].line > range1.start.line
-      or (range2['end'].line == range1.start.line
-          and range2['end'].character > range1.start.character)
-    )
-    and (
-      range2['end'].line < range1['end'].line
-      or (range2['end'].line == range1['end'].line
-          and range2['end'].character < range1['end'].character)
-    )
-  -- stylua: ignore end
-end
-
 ---Convert LSP DocumentSymbol into winbar symbol
 ---@param document_symbol lsp_document_symbol_t LSP DocumentSymbol
 ---@param buf integer buffer number
@@ -208,7 +159,7 @@ local function convert_document_symbol_list(
   -- Parse in reverse order so that the symbol with the largest start position
   -- is preferred
   for idx, symbol in vim.iter(lsp_symbols):enumerate():rev() do
-    if cursor_in_range(cursor, symbol.range) then
+    if utils.lsp.range_contains_cursor(symbol.range, cursor) then
       table.insert(
         winbar_symbols,
         convert_document_symbol(symbol, buf, win, lsp_symbols, idx)
@@ -246,7 +197,7 @@ local function unify(symbols)
   for list_idx, sym in vim.iter(symbols):enumerate():skip(1) do
     local prev = symbols[list_idx - 1] --[[@as lsp_symbol_information_tree_t]]
     -- If the symbol is a child of the previous symbol
-    if range_contains(prev.location.range, sym.location.range) then
+    if utils.lsp.range_contains(prev.location.range, sym.location.range) then
       sym.parent = prev
     else -- Else the symbol is a sibling of the previous symbol
       sym.parent = prev.parent
