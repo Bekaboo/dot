@@ -352,9 +352,13 @@ cmp.setup({
             end
           else -- node has zero length
             local parent = node_find_parent(current)
-            local range = parent and { parent:get_buf_position() }
+            local parent_range = parent and { parent:get_buf_position() }
             local tabout_dest = tabout.get_jump_pos(1)
-            if tabout_dest and range and in_range(range, tabout_dest) then
+            if
+              tabout_dest
+              and parent_range
+              and in_range(parent_range, tabout_dest)
+            then
               tabout.jump(1)
             else
               luasnip.jump(1)
