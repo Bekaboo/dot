@@ -169,6 +169,14 @@ local function cursor_at_end_of_range(range, cursor)
   return range[2][1] + 1 == cursor[1] and range[2][2] == cursor[2]
 end
 
+---Check if the cursor is at the end of a node
+---@param range table 0-based range
+---@param cursor number[] 1,0-based cursor position
+---@return boolean
+local function cursor_at_start_of_range(range, cursor)
+  return range[1][1] + 1 == cursor[1] and range[1][2] == cursor[2]
+end
+
 ---Jump to the closer destination between a snippet and tabout
 ---@param snip_dest number[]
 ---@param tabout_dest number[]?
@@ -337,14 +345,13 @@ cmp.setup({
           luasnip.expand()
         elseif luasnip.locally_jumpable(1) then
           local buf = vim.api.nvim_get_current_buf()
-          local cursor = vim.api.nvim_win_get_cursor(0)
           local current = luasnip.session.current_nodes[buf]
           if node_has_length(current) then
+            local cursor = vim.api.nvim_win_get_cursor(0)
+            local current_range = { current:get_buf_position() }
             if
-              current.next_choice
-              or cursor_at_end_of_range({
-                current:get_buf_position(),
-              }, cursor)
+              cursor_at_end_of_range(current_range, cursor)
+              or cursor_at_start_of_range(current_range, cursor)
             then
               luasnip.jump(1)
             else
