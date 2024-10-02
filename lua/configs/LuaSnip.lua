@@ -31,6 +31,24 @@ ls.setup({
   },
 })
 
+-- Unlink current snippet on leaving insert/selection mode
+-- https://github.com/L3MON4D3/LuaSnip/issues/258#issuecomment-1011938524
+vim.api.nvim_create_autocmd('ModeChanged', {
+  desc = 'Unlink current snippet on leaving insert/selection mode.',
+  group = vim.api.nvim_create_augroup('LuaSnipModeChanged', {}),
+  callback = function(info)
+    local mode = vim.v.event.new_mode
+    local omode = vim.v.event.old_mode
+    if
+      (omode == 's' and mode == 'n' or omode == 'i')
+      and ls.session.current_nodes[info.buf]
+      and not ls.session.jump_active
+    then
+      ls.unlink_current()
+    end
+  end,
+})
+
 ---Load snippets for a given filetype
 ---@param ft string
 ---@return nil
