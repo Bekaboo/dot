@@ -526,7 +526,7 @@ vim.api.nvim_create_autocmd(
   { 'FileChangedShellPost', 'DiagnosticChanged', 'LspProgress' },
   {
     group = groupid,
-    command = 'redrawstatus',
+    command = 'silent! redrawstatus',
   }
 )
 
