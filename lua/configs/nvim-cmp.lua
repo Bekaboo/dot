@@ -464,10 +464,10 @@ cmp.setup({
           return false
         end
       end,
-      cmp.config.compare.locality,
-      cmp.config.compare.recently_used,
       cmp.config.compare.exact,
+      cmp.config.compare.locality,
       cmp.config.compare.kind,
+      cmp.config.compare.recently_used,
       cmp.config.compare.score,
     },
   },
