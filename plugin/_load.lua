@@ -12,7 +12,7 @@ vim.api.nvim_create_autocmd('InsertEnter', {
   group = vim.api.nvim_create_augroup('ExpandTabSetup', {}),
   callback = function()
     require('plugin.expandtab').setup()
-  end
+  end,
 })
 
 -- fcitx5

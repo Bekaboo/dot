@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Sun Sep 29 06:37:42 PM EDT 2024
+-- Last Updated: Thu Oct  3 11:58:48 PM EDT 2024
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -541,7 +541,7 @@ local hlgroups = {
   TelescopeResultsStruct = { link = 'Structure' },
   TelescopeResultsVariable = { link = '@variable' },
   TelescopeSelection = { link = 'Visual' },
-  TelescopeTitle = { bg = c_macroTeal,fg = c_macroBg0 },
+  TelescopeTitle = { bg = c_macroTeal, fg = c_macroBg0 },
 
   -- nvim-dap-ui
   DapUIBreakpointsCurrentLine = { bold = true, fg = c_macroFg0 },

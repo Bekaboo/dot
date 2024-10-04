@@ -559,7 +559,7 @@ fzf.setup({
       symbol_icons = vim.tbl_map(vim.trim, utils.static.icons.kinds),
       symbol_hl = function(sym_name)
         return 'FzfLuaSym' .. sym_name
-      end
+      end,
     },
   },
 })
