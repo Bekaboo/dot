@@ -96,7 +96,11 @@ M.syntax = {
     t({ '', 'end' }),
   }),
   us.msn({
+    { trig = 'ifei' },
+    { trig = 'ifeif' },
+    { trig = 'ifeli' },
     { trig = 'ifelif' },
+    { trig = 'ifelsei' },
     { trig = 'ifelseif' },
   }, {
     t('if '),
@@ -121,11 +125,16 @@ M.syntax = {
       return uf.get_indent_depth(parent.snippet.captures[1])
     end, false),
   }),
-  us.sn({ trig = 'elseif' }, {
+  us.msn({
+    { trig = 'eli' },
+    { trig = 'elif' },
+    { trig = 'elsei' },
+    { trig = 'elseif' },
+  }, {
     t('elseif '),
     i(1, 'condition'),
     t({ ' then', '' }),
-    un.body(2, 1),
+    un.body(2, 1, false),
   }),
   us.sn({ trig = 'for' }, {
     t('for '),

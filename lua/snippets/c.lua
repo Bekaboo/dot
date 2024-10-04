@@ -369,15 +369,15 @@ M.syntax = {
       [[
         if (<cond>) {
         <body>
-        } else if {
-        <idnt><else_body>
+        } else if (<cond_else>) {
+        <body_else>
         }
       ]],
       {
         cond = i(1),
         body = un.body(2, 1),
-        else_body = i(3),
-        idnt = un.idnt(1),
+        cond_else = i(3),
+        body_else = i(4),
       }
     )
   ),
