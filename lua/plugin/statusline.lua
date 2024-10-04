@@ -313,14 +313,8 @@ vim.api.nvim_create_autocmd('DiagnosticChanged', {
   group = groupid,
   desc = 'Update diagnostics cache for the status line.',
   callback = function(info)
-    local b = vim.b[info.buf]
-    local diag_cnt_cache = { 0, 0, 0, 0 }
-    for _, diagnostic in ipairs(info.data.diagnostics) do
-      diag_cnt_cache[diagnostic.severity] = diag_cnt_cache[diagnostic.severity]
-        + 1
-    end
-    b.diag_str_cache = nil
-    b.diag_cnt_cache = diag_cnt_cache
+    vim.b[info.buf].diag_cnt_cache = vim.diagnostic.count(info.buf)
+    vim.b[info.buf].diag_str_cache = nil
   end,
 })
 
@@ -333,7 +327,7 @@ function statusline.diag()
   local str = ''
   local buf_cnt = vim.b.diag_cnt_cache or {}
   for serverity_nr, severity in ipairs({ 'Error', 'Warn', 'Info', 'Hint' }) do
-    local cnt = buf_cnt[serverity_nr] or 0
+    local cnt = buf_cnt[serverity_nr] ~= vim.NIL and buf_cnt[serverity_nr] or 0
     if cnt > 0 then
       local icon_text = get_diag_sign_text(serverity_nr)
       local icon_hl = 'StatusLineDiagnostic' .. severity
