@@ -24,9 +24,7 @@ M.snippets = {
         :gsub('^%d*_', '')
         :gsub('_', ' ')
         :gsub('^%l', string.upper)
-        :gsub(' %l', function(s)
-          return ' ' .. string.upper(s)
-        end)
+        :gsub(' %l', string.upper)
         :gsub('%..*', ''),
       {}
     ),
