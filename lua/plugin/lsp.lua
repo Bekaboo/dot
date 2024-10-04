@@ -599,6 +599,9 @@ local subcommands = {
           enabled:scope_action(args, 'set', true)
         elseif vim.tbl_contains(args, 'disable') then
           enabled:scope_action(args, 'set', false)
+        else
+          enabled:scope_action(args, 'set', true)
+          vim.notify('[LSP] format on save enabled')
         end
         if args.format then
           fmtopts:scope_action(
