@@ -61,7 +61,9 @@ function M.body(jump_index, indent_depth, default_text)
   return d(jump_index, function(argnode_texts, parent, ...)
     -- The dynamicNode receives the parent of the dynamicNode, which is not
     -- necessarily the snippet, and only the snippet has `env`
-    local selected = parent.snippet.env.LS_SELECT_DEDENT
+    local selected = type(parent.snippet.env.LS_SELECT_DEDENT) == 'table'
+        and parent.snippet.env.LS_SELECT_DEDENT
+      or {}
     for idx = 2, #selected do
       if selected[idx]:match('%S') then
         selected[idx] = require('utils.snippets.funcs').get_indent_str(
