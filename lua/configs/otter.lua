@@ -1,6 +1,14 @@
 local ot = require('otter')
 local utils = require('utils')
 
+-- Wrap `ot.activate()` in `pcall()` to suppress error when opening git diff
+-- for markdown files: 'Vim(append):Error executing lua callback: Vim:E95:
+-- Buffer with this name already exists'
+local _ot_activate = ot.activate
+function ot.activate(...)
+  pcall(_ot_activate, ...)
+end
+
 ot.setup({
   verbose = { no_code_found = false },
   buffers = { set_filetype = true },
