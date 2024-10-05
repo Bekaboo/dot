@@ -480,7 +480,7 @@ and it should work out of the box.
 
 #### Third Party Plugins
 
-Total # of plugins: 48 (package manager included).
+Total # of plugins: 49 (package manager included).
 
 - **Lib**
     - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim)
@@ -537,6 +537,7 @@ Total # of plugins: 48 (package manager included).
 - **Colorschemes**
     - [everforest](https://github.com/sainnhe/everforest)
     - [gruvbox-material](https://github.com/sainnhe/gruvbox-material)
+    - [sonokai](https://github.com/sainnhe/sonokai)
 
 #### Builtin Plugins
 
