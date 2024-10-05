@@ -9,7 +9,6 @@ red = "#fc5d7c"
 white = "#e2e2e3"
 yellow = "#e7c664"
 
-
 [colors.cursor]
 cursor = "#e2e2e3"
 

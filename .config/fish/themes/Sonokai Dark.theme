@@ -25,7 +25,7 @@ fish_color_host_remote               e7c664
 fish_color_normal                    normal
 fish_color_operator                  f39660
 fish_color_param                     f39660
-fish_color_quote                     9ed072
+fish_color_quote                     e7c664
 fish_color_redirection               e7c664
 fish_color_search_match                     --reverse
 fish_color_selection                 e2e2e3 --background=3b3e48

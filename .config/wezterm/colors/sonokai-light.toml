@@ -1,1 +1,34 @@
-sonokai-dark.toml
+[colors]
+ansi = [
+    '#e3e7e7',
+    '#93244a',
+    '#587340',
+    '#a57c0f',
+    '#43737e',
+    '#7b6ca8',
+    '#43737e',
+    '#171718',
+]
+brights = [
+    '#7e8490',
+    '#93244a',
+    '#587340',
+    '#a57c0f',
+    '#43737e',
+    '#7b6ca8',
+    '#43737e',
+    '#171718',
+]
+foreground = '#181819'
+background = '#ecf0f0'
+cursor_bg = '#181819'
+cursor_border = '#181819'
+cursor_fg = '#ecf0f0'
+selection_bg = '#d1d4d4'
+selection_fg = '#181819'
+
+[colors.indexed]
+
+[metadata]
+name = 'Sonokai Light'
+author = 'Bekaboo'

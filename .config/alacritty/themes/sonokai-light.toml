@@ -1,1 +1,27 @@
-sonokai-dark.toml
+# Sonokai light theme
+[colors.bright]
+black = "#7e8490"
+blue = "#43737e"
+cyan = "#43737e"
+green = "#587340"
+magenta = "#7b6ca8"
+red = "#93244a"
+white = "#171718"
+yellow = "#a57c0f"
+
+[colors.cursor]
+cursor = "#181819"
+
+[colors.normal]
+black = "#e3e7e7"
+blue = "#43737e"
+cyan = "#43737e"
+green = "#587340"
+magenta = "#7b6ca8"
+red = "#93244a"
+white = "#171718"
+yellow = "#a57c0f"
+
+[colors.primary]
+background = "#ecf0f0"
+foreground = "#181819"
