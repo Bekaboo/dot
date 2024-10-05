@@ -2,7 +2,7 @@
 LookAndFeelSet=org.kde.klassylighttraditional.desktop
 
 [ShadowStyle]
-ShadowSize=ShadowVeryLarge
+ShadowSize=ShadowNone
 
 [Windeco]
 AnimationsEnabled=false
