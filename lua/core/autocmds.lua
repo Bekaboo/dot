@@ -62,7 +62,11 @@ augroup('Autosave', {
   {
     nested = true,
     desc = 'Autosave on focus change.',
-    callback = function()
+    callback = function(info)
+      -- Don't auto-save non-file buffers
+      if (vim.uv.fs_stat(info.file) or {}).type ~= 'file' then
+        return
+      end
       vim.cmd.update({
         mods = { emsg_silent = true },
       })
