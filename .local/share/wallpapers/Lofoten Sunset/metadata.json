@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "kankefengjing@gmail.com",
+                "Name": "Bekaboo"
+            }
+        ],
+        "Id": "LofotenSunset",
+        "License": "LGPLv3",
+        "Name": "Lofoten Sunset"
+    }
+}

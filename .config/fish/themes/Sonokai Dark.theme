@@ -1,0 +1,42 @@
+# name: 'Sonokai Dark'
+# preferred_background: 2c2e34
+
+fish_color_autosuggestion            7f8490 --italics
+fish_color_cancel                           --reverse
+fish_color_command                   89b482 --bold
+fish_color_comment                   7f8490
+fish_color_cwd                       e2e2e3 --background=3b3e48
+fish_color_cwd_root                  fc5d7c --background=3b3e48
+fish_color_end                       b39df3
+fish_color_error                     fc5d7c
+fish_color_escape                    e7c664
+fish_color_hg_added                  f39660
+fish_color_hg_clean                  f39660
+fish_color_hg_copied                 89b482
+fish_color_hg_deleted                fc5d7c
+fish_color_hg_dirty                  b39df3
+fish_color_hg_modified               f39660
+fish_color_hg_renamed                89b482
+fish_color_hg_unmerged               76cce0
+fish_color_hg_untracked              7f8490
+fish_color_history_current                  --bold
+fish_color_host                      normal
+fish_color_host_remote               e7c664
+fish_color_normal                    normal
+fish_color_operator                  f39660
+fish_color_param                     f39660
+fish_color_quote                     9ed072
+fish_color_redirection               e7c664
+fish_color_search_match                     --reverse
+fish_color_selection                 e2e2e3 --background=3b3e48
+fish_color_status                    e2e2e3 --background=fc5d7c
+fish_color_status_0                  181819 --background=b29df3
+fish_color_user                      b39df3
+fish_color_valid_path                76cce0
+fish_color_vcs                       7f8490
+fish_pager_color_completion          normal
+fish_pager_color_description         7f8490
+fish_pager_color_prefix              normal --bold              --underline
+fish_pager_color_progress            89b482 --bold
+fish_pager_color_selected_background        --reverse
+

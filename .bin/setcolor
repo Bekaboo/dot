@@ -189,6 +189,7 @@ declare -A plasma_color_wallpaper_map=(
     ['macro']="$DATA_HOME/wallpapers/Clouds"
     ['everforest']="$DATA_HOME/wallpapers/Foggy Forest"
     ['gruvbox-material']="$DATA_HOME/wallpapers/Foggy Forest"
+    ['sonokai']="$DATA_HOME/wallpapers/Lofoten Sunset"
 )
 
 declare -A plasma_color_splash_map=(
