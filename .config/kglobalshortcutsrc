@@ -98,6 +98,7 @@ Krohnkite: Three Column Layout=none,none,
 Krohnkite: Tile Layout=none,none,
 Krohnkite: Up/Prev=K,none,
 KrohnkiteBTreeLayout=Meta+Alt+Shift+B,none,Krohnkite: BTree Layout
+KrohnkiteColumnsLayout=Meta+Alt+Shift+C,none,Krohnkite: Columns Layout
 KrohnkiteDecrease=none,none,Krohnkite: Decrease
 KrohnkiteFloatAll=Meta+Shift+F,none,Krohnkite: Toggle Float All
 KrohnkiteFloatingLayout=Meta+Alt+Shift+F,none,Krohnkite: Floating Layout
