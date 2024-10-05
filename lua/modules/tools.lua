@@ -194,11 +194,18 @@ return {
   },
 
   {
-    'NvChad/nvim-colorizer.lua',
+    'brenoprata10/nvim-highlight-colors',
     enabled = not vim.g.no_nf,
-    event = { 'BufNew', 'BufRead' },
+    event = {
+      'BufNew',
+      'BufRead',
+      'BufWritePost',
+      'TextChanged',
+      'TextChangedI',
+      'StdinReadPre',
+    },
     config = function()
-      require('configs.nvim-colorizer')
+      require('configs.nvim-highlight-colors')
     end,
   },
 
