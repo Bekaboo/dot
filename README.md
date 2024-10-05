@@ -403,8 +403,8 @@ corresponding plugin keymaps.
 
 ### Colorschemes
 
-`cockatoo`, `nano`, and `macro` are three builtin custom colorschemes, with
-separate palettes for dark and light background.
+`cockatoo`, `nano`, `macro`, and `sonokai` are three builtin custom
+colorschemes, with separate palettes for dark and light background.
 
 Neovim is configured to restore the previous background and colorscheme
 settings on startup, so there is no need to set them up in the config file
@@ -480,7 +480,7 @@ and it should work out of the box.
 
 #### Third Party Plugins
 
-Total # of plugins: 49 (package manager included).
+Total # of plugins: 48 (package manager included).
 
 - **Lib**
     - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim)
@@ -537,7 +537,6 @@ Total # of plugins: 49 (package manager included).
 - **Colorschemes**
     - [everforest](https://github.com/sainnhe/everforest)
     - [gruvbox-material](https://github.com/sainnhe/gruvbox-material)
-    - [sonokai](https://github.com/sainnhe/sonokai)
 
 #### Builtin Plugins
 
