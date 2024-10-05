@@ -547,9 +547,9 @@ local function set_default_hlgroups()
   sethl('StatusLineDiagnosticInfo', { fg = 'DiagnosticSignInfo' })
   sethl('StatusLineDiagnosticWarn', { fg = 'DiagnosticSignWarn' })
   sethl('StatusLineDiagnosticError', { fg = 'DiagnosticSignError' })
-  sethl('StatusLineHeader', { fg = 'TabLine', bg = 'fg', reverse = true })
+  sethl('StatusLineHeader', { fg = 'Special', bg = 'fg', reverse = true })
   sethl('StatusLineHeaderModified', {
-    fg = 'Special',
+    fg = 'WarningMsg',
     bg = 'fg',
     reverse = true,
   })
