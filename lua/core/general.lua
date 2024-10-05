@@ -53,7 +53,7 @@ end
 ---@return true
 local function _rshada()
   vim.cmd.set('shada&')
-  vim.cmd.rshada()
+  pcall(vim.cmd.rshada)
   return true
 end
 
