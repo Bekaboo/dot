@@ -530,4 +530,4 @@ for name, attr in pairs(hlgroups) do
 end
 -- }}}1
 
--- vim:ts=2:sw=2:sts=2:fdm=marker:
+-- vim:ts=2:sw=2:sts=2:fdm=marker:fdl=0
