@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Sat Oct  5 08:03:55 PM EDT 2024
+-- Last Updated: Sun Oct  6 01:24:36 AM EDT 2024
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -155,7 +155,7 @@ local hlgroups = {
   PmenuSel = { bg = c_bg_blue, fg = c_bg0 },
   PmenuThumb = { bg = c_grey },
   Question = { fg = c_yellow },
-  QuickFixLine = { bg = c_blue },
+  QuickFixLine = { bg = c_blue, fg = c_bg0 },
   Search = { bg = c_green },
   SignColumn = { fg = c_purple },
   SpellBad = { underdashed = true },
@@ -230,6 +230,7 @@ local hlgroups = {
   ['@markup.heading.5.marker.markdown'] = { link = '@conceal' },
   ['@markup.heading.6.marker.markdown'] = { link = '@conceal' },
   ['@markup.italic'] = { italic = true },
+  ['@markup.link'] = { fg = c_purple, underline = true },
   ['@markup.link.label'] = { link = 'SpecialChar' },
   ['@markup.link.markdown_inline'] = { link = 'Constant' },
   ['@markup.link.url'] = { link = 'htmlLink' },
@@ -241,7 +242,8 @@ local hlgroups = {
   ['@markup.strikethrough'] = { strikethrough = true },
   ['@module.builtin'] = { link = 'Special' },
   ['@punctuation'] = { link = 'Delimiter' },
-  ['@string.special.url'] = { link = 'Underlined' },
+  ['@string.special'] = { link = 'Special' },
+  ['@string.special.url'] = { link = 'htmlLink' },
   ['@tag.builtin'] = { link = 'Special' },
   ['@text.diff.add'] = { link = 'DiffAdded' },
   ['@text.diff.delete'] = { link = 'DiffRemoved' },
