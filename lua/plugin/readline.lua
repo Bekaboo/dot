@@ -201,6 +201,7 @@ function M.setup()
   map('!', '<C-d>', '<Del>')
   map('c', '<C-b>', '<Left>')
   map('c', '<C-f>', '<Right>')
+  map('c', '<C-o>', '<C-f>')
 
   map('!', '<C-BS>', '<C-w>', { remap = true })
   map('!', '<M-BS>', '<C-w>', { remap = true })
