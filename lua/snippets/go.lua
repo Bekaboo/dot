@@ -513,20 +513,20 @@ M.snippets = {
     c(1, {
       un.fmtad(
         [[
-          go func() { <body> }()
-        ]],
-        {
-          body = un.body(1, 0),
-        }
-      ),
-      un.fmtad(
-        [[
           go func() {
           <body>
           }()
         ]],
         {
           body = un.body(1, 1),
+        }
+      ),
+      un.fmtad(
+        [[
+          go func() { <body> }()
+        ]],
+        {
+          body = un.body(1, 0),
         }
       ),
     })
