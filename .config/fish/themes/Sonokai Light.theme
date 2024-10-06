@@ -3,40 +3,40 @@
 
 fish_color_autosuggestion            7f8490 --italics
 fish_color_cancel                           --reverse
-fish_color_command                   597440 --bold
+fish_color_command                   72ac38 --bold
 fish_color_comment                   7f8490
 fish_color_cwd                       181819 --background=d1d4d4
-fish_color_cwd_root                  93254a --background=d1d4d4
-fish_color_end                       7c6da8
-fish_color_error                     93254a
-fish_color_escape                    a57d10
-fish_color_hg_added                  985026
-fish_color_hg_clean                  985026
-fish_color_hg_copied                 597440
-fish_color_hg_deleted                93254a
-fish_color_hg_dirty                  7c6da8
-fish_color_hg_modified               985026
-fish_color_hg_renamed                597440
-fish_color_hg_unmerged               43747f
+fish_color_cwd_root                  d44e69 --background=d1d4d4
+fish_color_end                       a793e3
+fish_color_error                     d44e69
+fish_color_escape                    be9b44
+fish_color_hg_added                  be683c
+fish_color_hg_clean                  be683c
+fish_color_hg_copied                 72ac38
+fish_color_hg_deleted                d44e69
+fish_color_hg_dirty                  a793e3
+fish_color_hg_modified               be683c
+fish_color_hg_renamed                72ac38
+fish_color_hg_unmerged               77bcd8
 fish_color_hg_untracked              7f8490
 fish_color_history_current                  --bold
 fish_color_host                      normal
-fish_color_host_remote               a57d10
+fish_color_host_remote               be9b44
 fish_color_normal                    normal
-fish_color_operator                  985026
-fish_color_param                     985026
-fish_color_quote                     a57d10
-fish_color_redirection               a57d10
+fish_color_operator                  be683c
+fish_color_param                     be683c
+fish_color_quote                     be9b44
+fish_color_redirection               be9b44
 fish_color_search_match                     --reverse
 fish_color_selection                 181819 --background=d1d4d4
-fish_color_status                    181819 --background=93254a
+fish_color_status                    181819 --background=d44e69
 fish_color_status_0                  181819 --background=b29df3
-fish_color_user                      7c6da8
-fish_color_valid_path                43747f
+fish_color_user                      a793e3
+fish_color_valid_path                77bcd8
 fish_color_vcs                       7f8490
 fish_pager_color_completion          normal
 fish_pager_color_description         7f8490
 fish_pager_color_prefix              normal --bold              --underline
-fish_pager_color_progress            597440 --bold
+fish_pager_color_progress            72ac38 --bold
 fish_pager_color_selected_background        --reverse
 

@@ -1,26 +1,26 @@
 # Sonokai light theme
 [colors.bright]
 black = "#7e8490"
-blue = "#43737e"
-cyan = "#43737e"
-green = "#587340"
-magenta = "#7b6ca8"
-red = "#93244a"
+blue = "#77bcd8"
+cyan = "#77bcd8"
+green = "#72ac38"
+magenta = "#a793e3"
+red = "#d44e69"
 white = "#171718"
-yellow = "#a57c0f"
+yellow = "#be9b44"
 
 [colors.cursor]
 cursor = "#181819"
 
 [colors.normal]
 black = "#e3e7e7"
-blue = "#43737e"
-cyan = "#43737e"
-green = "#587340"
-magenta = "#7b6ca8"
-red = "#93244a"
+blue = "#77bcd8"
+cyan = "#77bcd8"
+green = "#72ac38"
+magenta = "#a793e3"
+red = "#d44e69"
 white = "#171718"
-yellow = "#a57c0f"
+yellow = "#be9b44"
 
 [colors.primary]
 background = "#ecf0f0"

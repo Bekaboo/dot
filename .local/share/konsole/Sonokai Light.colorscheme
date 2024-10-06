@@ -17,58 +17,58 @@ Color=126,132,144
 Color=126,132,144
 
 [Color1]
-Color=147,36,74
+Color=211,78,104
 
 [Color1Faint]
-Color=147,36,74
+Color=211,78,104
 
 [Color1Intense]
-Color=147,36,74
+Color=211,78,104
 
 [Color2]
-Color=88,115,64
+Color=113,171,56
 
 [Color2Faint]
-Color=88,115,64
+Color=113,171,56
 
 [Color2Intense]
-Color=88,115,64
+Color=113,171,56
 
 [Color3]
-Color=165,124,15
+Color=189,155,68
 
 [Color3Faint]
-Color=165,124,15
+Color=189,155,68
 
 [Color3Intense]
-Color=165,124,15
+Color=189,155,68
 
 [Color4]
-Color=67,115,126
+Color=118,187,216
 
 [Color4Faint]
-Color=67,115,126
+Color=118,187,216
 
 [Color4Intense]
-Color=67,115,126
+Color=118,187,216
 
 [Color5]
-Color=123,108,168
+Color=167,147,227
 
 [Color5Faint]
-Color=123,108,168
+Color=167,147,227
 
 [Color5Intense]
-Color=123,108,168
+Color=167,147,227
 
 [Color6]
-Color=67,115,126
+Color=118,187,216
 
 [Color6Faint]
-Color=67,115,126
+Color=118,187,216
 
 [Color6Intense]
-Color=67,115,126
+Color=118,187,216
 
 [Color7]
 Color=23,23,24
@@ -94,7 +94,7 @@ Blur=true
 ColorRandomization=false
 Description=Sonokai Light
 FillStyle=Tile
-Opacity=0.68
+Opacity=0.78
 Wallpaper=
 WallpaperFlipType=NoFlip
 WallpaperOpacity=1
