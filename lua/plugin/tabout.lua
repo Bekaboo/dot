@@ -49,7 +49,7 @@ function fallback_tbl_t:new(args)
 end
 
 -- stylua: ignore start
-local patterns = fallback_tbl_t:new({
+local closing_patterns = fallback_tbl_t:new({
   default = {
     '\\%)',
     '\\%)',
@@ -144,56 +144,11 @@ local opening_pattern_lookup_tbl = {
 }
 -- stylua: ignore end
 
----Get the index where Shift-Tab should jump to
----1. If there is only whitespace characters or no character in between
----   the opening and closing pattern, jump to the end of the whitespace
----   characters (i.e. right before the closing pattern)
----
----       1.1. Special case: if there is exactly two whitespace characters,
----            jump to the middle of the two whitespace characters
----
----2. If there is contents (non-whitespace characters) in between the
----   opening and closing pattern, jump to the end of the contents
----@param leading any leading texts on current line
----@param closing_pattern any closing pattern
----@param cursor number[] cursor position
----@return number[] cursor position after jump
-local function jumpin_idx(leading, closing_pattern, cursor)
-  local opening_pattern = opening_pattern_lookup_tbl[closing_pattern]
-
-  -- Case 1
-  local _, _, content_str, closing_pattern_str =
-    leading:find(fmt('%s(%s)(%s)$', opening_pattern, '%s*', closing_pattern))
-  if content_str == nil or closing_pattern_str == nil then
-    _, _, content_str, closing_pattern_str =
-      leading:find(fmt('^(%s)(%s)$', '%s*', closing_pattern))
-  end
-
-  if content_str and closing_pattern_str then
-    -- Case 1.1
-    if #content_str == 2 then
-      return { cursor[1], cursor[2] - #closing_pattern_str - 1 }
-    else
-      return { cursor[1], cursor[2] - #closing_pattern_str }
-    end
-  end
-
-  -- Case 2
-  _, _, _, closing_pattern_str = leading:find(
-    fmt(
-      '%s%s(%s)$',
-      opening_pattern .. '%s*',
-      '.*%S',
-      '%s*' .. closing_pattern .. '%s*'
-    )
-  )
-
-  if content_str == nil or closing_pattern_str == nil then
-    _, _, closing_pattern_str =
-      leading:find(fmt('%s(%s)$', '%S', '%s*' .. closing_pattern .. '%s*'))
-  end
-
-  return { cursor[1], cursor[2] - #closing_pattern_str }
+---Get the length of a string, if the given string is nil, return 0
+---@param str string?
+---@return number length of the string
+local function slen(str)
+  return str and str:len() or 0
 end
 
 ---Check if the cursor is in cmdline
@@ -229,18 +184,96 @@ local function get_tabout_pos()
     return
   end
 
-  local min_jump_pos ---@type number?
-  for _, pattern in ipairs(patterns[vim.bo.ft or '']) do
-    local _, jump_pos = trailing:find('%s*' .. pattern)
-    if jump_pos then
-      min_jump_pos = min_jump_pos and math.min(min_jump_pos, jump_pos)
-        or jump_pos
+  local nearest_jump_offset ---@type number?
+  for _, pattern in ipairs(closing_patterns[vim.bo.ft]) do
+    local _, jump_offset = trailing:find('%s*' .. pattern)
+    if jump_offset then
+      nearest_jump_offset = nearest_jump_offset
+          and math.min(nearest_jump_offset, jump_offset)
+        or jump_offset
     end
   end
 
-  if min_jump_pos then
-    return { cursor[1], cursor[2] + min_jump_pos }
+  if nearest_jump_offset then
+    return {
+      cursor[1],
+      cursor[2] + nearest_jump_offset,
+    }
   end
+
+  -- Jump to the end of the line if not closing pattern is found
+  if trailing ~= '' then
+    return {
+      cursor[1],
+      slen(current_line),
+    }
+  end
+end
+
+---Get the offset of the position where Shift-Tab should jump to
+---1. If there is only whitespace characters or no character in between
+---   the opening and closing pattern, jump to the end of the whitespace
+---   characters (i.e. right before the closing pattern)
+---
+---		1.1. Special case: if there is exactly two whitespace characters,
+---        jump to the middle of the two whitespace characters
+---
+---2. If there is contents (non-whitespace characters) in between the
+---   opening and closing pattern, jump to the end of the contents
+---@param leading any leading texts on current line
+---@param closing_pattern any closing pattern
+---@return number offset column offset after jump
+---@return number closing_len length of matched closing pattern
+local function get_tabin_offset_with_closing_pattern(leading, closing_pattern)
+  local opening_pattern = opening_pattern_lookup_tbl[closing_pattern]
+
+  -- Case 1
+  local _, _, content, closing, trailing =
+    leading:find(fmt('%s(%%s*)(%s)(.*)$', opening_pattern, closing_pattern))
+  if content == nil or closing == nil then
+    _, _, content, closing, trailing =
+      leading:find(fmt('^(%%s*)(%s)(.*)$', closing_pattern))
+  end
+
+  if content and closing then
+    return slen(trailing) + slen(closing) + slen(content) / 2,
+      slen(closing) + slen(content) / 2
+  end
+
+  -- Case 2
+  _, _, _, closing, trailing = leading:find(
+    fmt('%s%%s*.*%%S(%%s*%s)(.*)$', opening_pattern, closing_pattern)
+  )
+
+  if content == nil or closing == nil then
+    _, _, closing, trailing =
+      leading:find(fmt('%%S(%%s*%s)(.*)$', closing_pattern))
+  end
+
+  return slen(trailing) + slen(closing), slen(closing)
+end
+
+---@param leading string leading texts before cursor
+---@param prev_offset number? previous column offset
+---@return number: offset column offset after jump
+local function get_tabin_offset(leading, prev_offset)
+  prev_offset = prev_offset or 0
+  if leading == '' then
+    return prev_offset
+  end
+
+  for _, pattern in ipairs(closing_patterns[vim.bo.ft]) do
+    local offset, closing_len =
+      get_tabin_offset_with_closing_pattern(leading, pattern)
+    if offset > 0 then
+      return get_tabin_offset(
+        leading:sub(slen(leading) - offset + closing_len + 1),
+        offset
+      )
+    end
+  end
+
+  return prev_offset
 end
 
 ---Getting the jump position for Shift-Tab
@@ -250,11 +283,20 @@ local function get_tabin_pos()
   local current_line = get_line()
   local leading = current_line:sub(1, cursor[2])
 
-  for _, pattern in ipairs(patterns[vim.bo.ft or '']) do
-    local _, closing_pattern_end = leading:find(pattern .. '%s*$')
-    if closing_pattern_end then
-      return jumpin_idx(leading:sub(1, closing_pattern_end), pattern, cursor)
-    end
+  local offset = get_tabin_offset(leading)
+  if offset > 0 then
+    return {
+      cursor[1],
+      cursor[2] - offset,
+    }
+  end
+
+  -- Jump to the beginning of the line if no closing pattern is found
+  if leading ~= '' then
+    return {
+      cursor[1],
+      0,
+    }
   end
 end
 
