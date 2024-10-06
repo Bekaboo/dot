@@ -161,22 +161,6 @@ local function node_find_parent(node)
   end
 end
 
----Check if the cursor is at the end of a node
----@param range table 0-based range
----@param cursor number[] 1,0-based cursor position
----@return boolean
-local function cursor_at_end_of_range(range, cursor)
-  return range[2][1] + 1 == cursor[1] and range[2][2] == cursor[2]
-end
-
----Check if the cursor is at the end of a node
----@param range table 0-based range
----@param cursor number[] 1,0-based cursor position
----@return boolean
-local function cursor_at_start_of_range(range, cursor)
-  return range[1][1] + 1 == cursor[1] and range[1][2] == cursor[2]
-end
-
 ---Jump to the closer destination between a snippet and tabout
 ---@param snip_dest number[]
 ---@param tabout_dest number[]?
@@ -346,30 +330,15 @@ cmp.setup({
         elseif luasnip.locally_jumpable(1) then
           local buf = vim.api.nvim_get_current_buf()
           local current = luasnip.session.current_nodes[buf]
-          if node_has_length(current) then
-            local cursor = vim.api.nvim_win_get_cursor(0)
-            local current_range = { current:get_buf_position() }
-            if
-              cursor_at_end_of_range(current_range, cursor)
-              or cursor_at_start_of_range(current_range, cursor)
-            then
-              luasnip.jump(1)
-            else
-              fallback()
-            end
-          else -- node has zero length
-            local parent = node_find_parent(current)
-            local parent_range = parent and { parent:get_buf_position() }
-            local tabout_dest = tabout.get_jump_pos(1)
-            if
-              tabout_dest
-              and parent_range
-              and in_range(parent_range, tabout_dest)
-            then
-              tabout.jump(1)
-            else
-              luasnip.jump(1)
-            end
+          local parent = node_find_parent(current)
+          local range = node_has_length(current)
+              and { current:get_buf_position() }
+            or parent and { parent:get_buf_position() }
+          local tabout_dest = tabout.get_jump_pos(1)
+          if range and tabout_dest and in_range(range, tabout_dest) then
+            tabout.jump(1)
+          else
+            luasnip.jump(1)
           end
         else
           fallback()

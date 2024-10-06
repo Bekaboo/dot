@@ -229,11 +229,17 @@ local function get_tabout_pos()
     return
   end
 
+  local min_jump_pos ---@type number?
   for _, pattern in ipairs(patterns[vim.bo.ft or '']) do
-    local _, jump_pos = trailing:find('^%s*' .. pattern)
+    local _, jump_pos = trailing:find('%s*' .. pattern)
     if jump_pos then
-      return { cursor[1], cursor[2] + jump_pos }
+      min_jump_pos = min_jump_pos and math.min(min_jump_pos, jump_pos)
+        or jump_pos
     end
+  end
+
+  if min_jump_pos then
+    return { cursor[1], cursor[2] + min_jump_pos }
   end
 end
 
