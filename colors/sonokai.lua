@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Sat Oct  5 05:25:51 PM EDT 2024
+-- Last Updated: Sat Oct  5 08:03:55 PM EDT 2024
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -63,18 +63,18 @@ else
   c_bg2         = { '#dfe3e3',   252    }
   c_bg3         = { '#d1d4d4',   253    }
   c_bg4         = { '#c8cbcb',   254    }
-  c_bg_red      = { '#af3346',   203    }
+  c_bg_red      = { '#c64b5d',   203    }
   c_diff_red    = { '#ffc1ce',   204    }
   c_diff_green  = { '#cde2b7',   40     }
-  c_bg_blue     = { '#43747f',   110    }
+  c_bg_blue     = { '#77bcd8',   110    }
   c_diff_blue   = { '#afd5e0',   17     }
   c_fg          = { '#181819',   232    }
-  c_red         = { '#93254a',   203    }
-  c_orange      = { '#985026',   215    }
-  c_yellow      = { '#a57d10',   179    }
-  c_green       = { '#597440',   22     }
-  c_blue        = { '#43747f',   110    }
-  c_purple      = { '#7c6da8',   176    }
+  c_red         = { '#d44e69',   203    }
+  c_orange      = { '#be683c',   215    }
+  c_yellow      = { '#be9b44',   179    }
+  c_green       = { '#72ac38',   22     }
+  c_blue        = { '#65b1c2',   110    }
+  c_purple      = { '#a793e3',   176    }
   c_grey        = { '#7f8490',   246    }
   c_grey_dim    = { '#595f6f',   240    }
   c_none        = { 'NONE',      'NONE' }
