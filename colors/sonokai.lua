@@ -156,7 +156,7 @@ local hlgroups = {
   PmenuThumb = { bg = c_grey },
   Question = { fg = c_yellow },
   QuickFixLine = { bg = c_blue, fg = c_bg0 },
-  Search = { bg = c_green },
+  Search = { bg = c_green, fg = c_bg0 },
   SignColumn = { fg = c_purple },
   SpellBad = { underdashed = true },
   SpellCap = { underdashed = true },
