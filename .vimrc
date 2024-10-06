@@ -1049,6 +1049,7 @@ map! <Esc>[3;3~ <C-w>
 noremap! <C-d>  <Del>
 cnoremap <C-b>  <Left>
 cnoremap <C-f>  <Right>
+cnoremap <C-o>  <C-f>
 
 inoremap <expr> <C-b>  <SID>i_ctrl_b()
 inoremap <expr> <C-f>  <SID>i_ctrl_f()
