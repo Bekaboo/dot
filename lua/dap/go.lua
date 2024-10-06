@@ -1,4 +1,8 @@
 local M = {}
+local dap_utils = require('utils.dap')
+
+---@type dapcache_t
+local cache = dap_utils.new_cache()
 
 M.adapter = function(callback, config)
   if config.mode == 'remote' and config.request == 'attach' then
@@ -33,6 +37,7 @@ M.config = {
     name = 'Debug',
     request = 'launch',
     program = '${file}',
+    args = dap_utils.get_args(cache),
   },
   -- Works with go.mod packages and sub packages
   {

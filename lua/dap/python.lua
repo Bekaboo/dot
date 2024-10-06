@@ -1,7 +1,8 @@
 local M = {}
+local dap_utils = require('utils.dap')
 
 ---@type dapcache_t
-local cache = { args = {} }
+local cache = dap_utils.new_cache()
 
 M.adapter = {
   type = 'executable',
@@ -15,28 +16,18 @@ M.config = {
     request = 'launch',
     name = 'Launch file',
     program = '${file}',
-    args = function()
-      local args = ''
-      local fname = vim.fn.expand('%:t')
-      vim.ui.input({
-        prompt = 'Enter arguments: ',
-        default = cache.args[fname],
-        completion = 'file',
-      }, function(input)
-        args = input
-        cache.args[fname] = args
-        vim.cmd.stopinsert()
-      end)
-      return vim.split(args, ' ')
-    end,
-
+    args = dap_utils.get_args(cache),
     pythonPath = function()
-      local venv = vim.fs.find({ 'venv', '.venv' }, {
+      ---@type string[]
+      local venvs = vim.fs.find({ 'venv', '.venv' }, {
         path = vim.fn.expand('%:p:h'),
         upward = true,
-      })[1]
-      if venv and vim.fn.executable(venv .. '/bin/python') == 1 then
-        return venv .. '/bin/python'
+      })
+      for _, venv in ipairs(venvs) do
+        local python_path = vim.fs.joinpath(venv, 'bin/python')
+        if vim.fn.executable(python_path) == 1 then
+          return python_path
+        end
       end
       return vim.fn.exepath('python')
     end,
