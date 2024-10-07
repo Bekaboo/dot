@@ -99,7 +99,7 @@ local function preview()
     local oil_win_width = vim.api.nvim_win_get_width(oil_win)
     vim.cmd.new({
       mods = {
-        vertical = oil_win_width > 6 * oil_win_height,
+        vertical = oil_win_width > 3 * oil_win_height,
       },
     })
     preview_win = vim.api.nvim_get_current_win()
