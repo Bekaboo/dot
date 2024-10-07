@@ -121,8 +121,10 @@ local function preview()
   end
   -- Set keymap for opening the file from preview buffer
   vim.keymap.set('n', '<CR>', function()
+    local cursor = vim.api.nvim_win_get_cursor(0)
     vim.cmd.edit(fpath)
     end_preview(oil_win)
+    pcall(vim.api.nvim_win_set_cursor, 0, cursor)
   end, { buffer = preview_buf })
   -- Preview buffer already contains contents of file to preview
   local preview_bufname = vim.fn.bufname(preview_buf)
