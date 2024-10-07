@@ -22,10 +22,25 @@ return {
       })
     end),
   }),
-  us.samWr({ trig = '([%w_\\{}]*)//' }, {
+  us.msamWr({
+    { trig = '//', priority = 999 },
+    { trig = '(%b())//' },
+    { trig = '(\\?%w+[_^]?%w?)//' },
+    { trig = '(\\?%w+[_^]?%b{})//' },
+    { trig = '(\\?%w+%b{}[_^]?%w?)//' },
+    { trig = '(\\?%w+%b{}[_^]?%b{})//' },
+    { trig = '(\\?%w+[_^]?%w?[_^]?%w?)//' },
+    { trig = '(\\?%w+[_^]?%b{}[_^]?%w?)//' },
+    { trig = '(\\?%w+[_^]?%w?[_^]?%b{})//' },
+    { trig = '(\\?%w+[_^]?%b{}[_^]?%b{})//' },
+    { trig = '(\\?%w+%b{}[_^]?%w?[_^]?%w?)//' },
+    { trig = '(\\?%w+%b{}[_^]?%b{}[_^]?%w?)//' },
+    { trig = '(\\?%w+%b{}[_^]?%w?[_^]?%b{})//' },
+    { trig = '(\\?%w+%b{}[_^]?%b{}[_^]?%b{})//' },
+  }, {
     d(1, function(_, snip)
       local numerator = snip.captures[1]
-      if numerator == nil or not numerator:match('%S') then
+      if not numerator then
         return sn(nil, {
           t('\\frac{'),
           i(1),
@@ -33,6 +48,11 @@ return {
           i(2),
           t('}'),
         })
+      end
+
+      -- Remove surrounding brackets
+      if #(numerator:match('%b()') or '') == #numerator then
+        numerator = numerator:sub(2, -2)
       end
       return sn(nil, {
         t('\\frac{'),
