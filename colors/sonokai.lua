@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Mon Oct  7 03:09:33 AM EDT 2024
+-- Last Updated: Mon Oct  7 01:36:59 PM EDT 2024
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -172,7 +172,7 @@ local hlgroups = {
   TermCursorNC = { bg = c_grey, fg = c_bg0 },
   Title = { bold = true, fg = c_bg_red },
   Underlined = { underline = true },
-  VertSplit = { fg = c_black },
+  VertSplit = { fg = c_bg4 },
   Visual = { bg = c_bg3 },
   VisualNOS = { link = 'Visual' },
   WarningMsg = { fg = c_yellow },
