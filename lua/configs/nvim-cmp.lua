@@ -201,7 +201,10 @@ cmp.setup({
     return vim.bo.ft ~= '' and not vim.b.bigfile
   end,
   performance = {
-    async_budget = 64,
+    debounce = 0,
+    throttle = 0,
+    async_budget = 16,
+    fetching_timeout = 64,
     max_view_entries = 64,
   },
   preselect = cmp.PreselectMode.None,
