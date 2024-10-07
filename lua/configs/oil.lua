@@ -239,13 +239,17 @@ vim.api.nvim_create_autocmd('WinClosed', {
 ---Toggle preview window
 ---@return nil
 local function toggle_preview()
+  local win = vim.api.nvim_get_current_win()
+  local cursor = vim.api.nvim_win_get_cursor(win)
   local oil_win = vim.api.nvim_get_current_win()
   local preview_win = preview_wins[oil_win]
   if not preview_win or not vim.api.nvim_win_is_valid(preview_win) then
     preview()
-    return
+  else
+    end_preview()
   end
-  end_preview()
+  pcall(vim.api.nvim_set_current_win, win)
+  pcall(vim.api.nvim_win_set_cursor, win, cursor)
 end
 
 local preview_mapping = {
