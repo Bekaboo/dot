@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Tue Oct  8 02:03:19 AM EDT 2024
+-- Last Updated: Tue Oct  8 02:07:37 AM EDT 2024
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -325,8 +325,9 @@ local hlgroups = {
   gitcommitDiscarded = { fg = c_grey },
   gitcommitFile = { fg = c_green },
   gitcommitOnBranch = { fg = c_grey },
+  gitcommitOverflow = { fg = c_red },
   gitcommitSelected = { fg = c_grey },
-  gitcommitSummary = { fg = c_red },
+  gitcommitSummary = { fg = c_fg },
   gitcommitUnmerged = { fg = c_grey },
   gitcommitUntracked = { fg = c_grey },
 
