@@ -556,6 +556,7 @@ fzf.setup({
       jump_to_single_result = true,
     },
     symbols = {
+      symbol_style = vim.g.nf and 1 or 3,
       symbol_icons = vim.tbl_map(vim.trim, utils.static.icons.kinds),
       symbol_hl = function(sym_name)
         return 'FzfLuaSym' .. sym_name

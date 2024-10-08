@@ -50,7 +50,7 @@ M.opts = {
     },
     ui = {
       bar = {
-        separator = vim.g.no_nf and ' > ' or icons.ui.AngleRight,
+        separator = vim.g.nf and icons.ui.AngleRight or ' > ',
         extends = vim.opt.listchars:get().extends
           or vim.trim(icons.ui.Ellipsis),
       },

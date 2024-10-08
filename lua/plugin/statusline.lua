@@ -352,18 +352,7 @@ local spinner_timer = vim.uv.new_timer()
 local spinner_icons ---@type string[]
 local spinner_icon_done ---@type string
 
-if vim.g.no_nf then
-  spinner_icon_done = '[done]'
-  spinner_icons = {
-    '[    ]',
-    '[=   ]',
-    '[==  ]',
-    '[=== ]',
-    '[ ===]',
-    '[  ==]',
-    '[   =]',
-  }
-else
+if vim.g.nf then
   spinner_icon_done = vim.trim(utils.static.icons.Ok)
   spinner_icons = {
     '⣷',
@@ -374,6 +363,17 @@ else
     '⣻',
     '⣽',
     '⣾',
+  }
+else
+  spinner_icon_done = '[done]'
+  spinner_icons = {
+    '[    ]',
+    '[=   ]',
+    '[==  ]',
+    '[=== ]',
+    '[ ===]',
+    '[  ==]',
+    '[   =]',
   }
 end
 

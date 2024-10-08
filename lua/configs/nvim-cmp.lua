@@ -180,7 +180,7 @@ local function jump_to_closer(snip_dest, tabout_dest, direction)
   return true
 end
 
-local icon_dot = icons.DotLarge
+local icon_cmd = icons.Cmd
 local icon_calc = icons.Calculator
 local icon_folder = icons.Folder
 local icon_file = icons.File
@@ -194,6 +194,35 @@ local compltype_path = {
 ---@return integer[] buffer numbers
 local function get_bufnrs()
   return vim.b.bigfile and {} or { vim.api.nvim_get_current_buf() }
+end
+
+---Clamp the length of a field in a cmp item
+---@param item table<string, any> cmp item
+---@param field string which field in the cmp item to clamp
+---@param min_width integer
+---@param max_width integer
+---@return nil
+local function clamp(item, field, min_width, max_width)
+  if not item[field] then
+    return
+  end
+  -- In case that min_width > max_width
+  if min_width > max_width then
+    min_width, max_width = max_width, min_width
+  end
+  local field_str = item[field]
+  local field_width = vim.fn.strdisplaywidth(field_str)
+  if field_width > max_width then
+    local former_width = math.floor(max_width * 0.6)
+    local latter_width = math.max(0, max_width - former_width - 1)
+    item[field] = string.format(
+      '%s…%s',
+      field_str:sub(1, former_width),
+      field_str:sub(-latter_width)
+    )
+  elseif field_width < min_width then
+    item[field] = string.format('%-' .. min_width .. 's', field_str)
+  end
 end
 
 cmp.setup({
@@ -222,72 +251,40 @@ cmp.setup({
     end,
   },
   formatting = {
-    fields = not vim.g.no_nf and { 'kind', 'abbr', 'menu' } or nil,
-    format = not vim.g.no_nf
-      and function(entry, cmp_item)
-        local compltype = vim.fn.getcmdcompltype()
-        local complpath = compltype_path[compltype]
-        -- Use special icons for file / directory completions
-        if
-          cmp_item.kind == 'File'
-          or cmp_item.kind == 'Folder'
-          or complpath
-        then
-          if (vim.uv.fs_stat(cmp_item.word) or {}).type == 'directory' then -- Directories
-            cmp_item.kind = icon_folder
-            cmp_item.kind_hl_group = 'CmpItemKindFolder'
-          else -- Files
-            local icon = icon_file
-            local icon_hl = 'CmpItemKindFile'
-            local devicons_ok, devicons = pcall(require, 'nvim-web-devicons')
-            if devicons_ok then
-              icon, icon_hl = devicons.get_icon(
-                vim.fs.basename(cmp_item.word),
-                vim.fn.fnamemodify(cmp_item.word, ':e'),
-                { default = true }
-              )
-              icon = icon and icon .. ' '
-            end
-            cmp_item.kind = icon or icon_file
-            cmp_item.kind_hl_group = icon_hl or 'CmpItemKindFile'
-          end
-        else -- Use special icons for some completions
-          cmp_item.kind = entry.source.name == 'cmdline' and icon_dot
-            or entry.source.name == 'calc' and icon_calc
-            or icons[cmp_item.kind]
-            or ''
-        end
-        ---@param field string
-        ---@param min_width integer
-        ---@param max_width integer
-        ---@return nil
-        local function clamp(field, min_width, max_width)
-          if not cmp_item[field] or not type(cmp_item) == 'string' then
-            return
-          end
-          -- In case that min_width > max_width
-          if min_width > max_width then
-            min_width, max_width = max_width, min_width
-          end
-          local field_str = cmp_item[field]
-          local field_width = vim.fn.strdisplaywidth(field_str)
-          if field_width > max_width then
-            local former_width = math.floor(max_width * 0.6)
-            local latter_width = math.max(0, max_width - former_width - 1)
-            cmp_item[field] = string.format(
-              '%s…%s',
-              field_str:sub(1, former_width),
-              field_str:sub(-latter_width)
+    fields = vim.g.nf and { 'kind', 'abbr', 'menu' } or nil,
+    format = function(entry, item)
+      local compltype = vim.fn.getcmdcompltype()
+      local complpath = compltype_path[compltype]
+      -- Use special icons for file / directory completions
+      if item.kind == 'File' or item.kind == 'Folder' or complpath then
+        if (vim.uv.fs_stat(item.word) or {}).type == 'directory' then -- Directories
+          item.kind = icon_folder
+          item.kind_hl_group = 'CmpItemKindFolder'
+        else -- Files
+          local icon = icon_file
+          local icon_hl = 'CmpItemKindFile'
+          local devicons_ok, devicons = pcall(require, 'nvim-web-devicons')
+          if devicons_ok then
+            icon, icon_hl = devicons.get_icon(
+              vim.fs.basename(item.word),
+              vim.fn.fnamemodify(item.word, ':e'),
+              { default = true }
             )
-          elseif field_width < min_width then
-            cmp_item[field] =
-              string.format('%-' .. min_width .. 's', field_str)
+            icon = icon and icon .. ' '
           end
+          item.kind = icon or icon_file
+          item.kind_hl_group = icon_hl or 'CmpItemKindFile'
         end
-        clamp('abbr', vim.go.pw, math.max(60, math.ceil(vim.o.columns * 0.4)))
-        clamp('menu', 0, math.max(16, math.ceil(vim.o.columns * 0.2)))
-        return cmp_item
-      end,
+      else -- Use special icons for some completions
+        item.kind = entry.source.name == 'cmdline' and icon_cmd
+          or entry.source.name == 'calc' and icon_calc
+          or icons[item.kind]
+          or ''
+      end
+      clamp(item, 'abbr', vim.o.pw, math.max(60, math.ceil(vim.o.co * 0.4)))
+      clamp(item, 'menu', 0, math.max(16, math.ceil(vim.o.co * 0.2)))
+      return item
+    end,
   },
   snippet = {
     expand = function(args)

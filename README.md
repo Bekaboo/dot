@@ -92,9 +92,9 @@ Currently only supports Linux (X11/Wayland/TTY).
 - [Pynvim](https://github.com/neovim/pynvim), [Jupyter Client](https://github.com/jupyter/jupyter_client), and [IPython Kernel](https://github.com/ipython/ipykernel) for Python support
 - [Jupytext](https://github.com/mwouts/jupytext) for editing Jupyter notebooks
 - A decent terminal emulator
-- A nerd font, e.g. [JetbrainsMono Nerd Font](https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/JetBrainsMono)
-  (one can set the environment variable `$NVIM_NONF` to disable nerd icons
-  if nerd font is not available, see [environment variables](#environment-variables))
+- A nerd font, e.g. [JetbrainsMono Nerd Font](https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/JetBrainsMono).
+  This is optional as nerd icons are disabled by default, to enable it, set the
+  environment variable `$NVIM_NF`, see [environment variables](#environment-variables)
 
 ### Tree-sitter
 
@@ -409,7 +409,7 @@ See [lua/core/general.lua](https://github.com/Bekaboo/nvim/blob/master/lua/core/
 ### Environment Variables
 
 - `$NVIM_NO3RD`: disable third-party plugins if set
-- `$NVIM_NONF`: disable nerd icons and use ascii symbols if set
+- `$NVIM_NF`: enable nerd font icons if set
 
 ### Keymaps
 

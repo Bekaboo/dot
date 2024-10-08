@@ -22,7 +22,7 @@ function meta:flatten()
 end
 
 return setmetatable(
-  vim.g.no_nf and require('utils.static.icons._icons_no_nf')
+  vim.g.nf and require('utils.static.icons._icons_nf')
     or require('utils.static.icons._icons'),
   meta
 )

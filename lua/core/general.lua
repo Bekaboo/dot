@@ -9,7 +9,7 @@ local env = vim.env
 g.has_ui = #vim.api.nvim_list_uis() > 0
 g.has_gui = vim.fn.has('gui_running') == 1
 g.modern_ui = g.has_ui and env.DISPLAY ~= nil
-g.no_nf = not g.modern_ui or env.NVIM_NONF or false
+g.nf = g.modern_ui and env.NVIM_NF and true or false
 
 opt.timeout = false
 opt.colorcolumn = '+1'
@@ -110,7 +110,7 @@ if g.modern_ui then
   opt.listchars:append({ nbsp = '␣' })
   opt.fillchars:append({ diff = '╱' })
 end
-if not g.no_nf then
+if g.nf then
   opt.fillchars:append({
     foldopen = '',
     foldclose = '',
