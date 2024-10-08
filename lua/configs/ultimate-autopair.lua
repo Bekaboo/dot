@@ -1,3 +1,16 @@
+local autopair_utils = require('ultimate-autopair.utils')
+local _getsmartft = autopair_utils.getsmartft
+
+---Always use `notree`
+---Setting `opts.extensions.filetype.tree` to `false` does not always work
+---There are multiple places where `getsmartft()` is called with `notree`
+---omitted when it should be `true`
+---TODO: report this bug to upstream
+---@diagnostic disable-next-line: duplicate-set-field, unused-local
+autopair_utils.getsmartft = function(o, notree, ...)
+  return _getsmartft(o, true, ...)
+end
+
 ---Record previous cmdline completion types,
 ---`cmdcompltype[1]` is the current completion type,
 ---`cmdcompltype[2]` is the previous completion type
