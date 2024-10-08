@@ -1,8 +1,30 @@
 local lsp = require('utils.lsp')
 
+if vim.fn.executable('luacheck') == 1 then
+  lsp.start({
+    cmd = { 'efm-langserver' },
+    name = 'efm-linter-luacheck',
+    root_patterns = { '.luacheckrc' },
+    settings = {
+      languages = {
+        lua = {
+          {
+            lintSource = 'luacheck',
+            lintCommand = 'luacheck --codes --no-color --quiet -',
+            lintFormats = { '%.%#:%l:%c: (%t%n) %m' },
+            lintStdin = true,
+            lintIgnoreExitCode = true,
+            rootMarkers = { '.luacheckrc' },
+          },
+        },
+      },
+    },
+  })
+end
+
 -- Use efm to attach stylua formatter as a language server
 local stylua_root_patterns = { 'stylua.toml', '.stylua.toml' }
-local efm = vim.fn.executable('stylua') == 1
+local formatter = vim.fn.executable('stylua') == 1
   and lsp.start({
     cmd = { 'efm-langserver' },
     name = 'efm-formatter-stylua',
@@ -33,7 +55,7 @@ lsp.start({
   settings = {
     Lua = {
       hint = { enable = true },
-      format = { enable = not efm },
+      format = { enable = not formatter },
     },
   },
 })
