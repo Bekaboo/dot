@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Tue Oct  8 12:14:05 PM EDT 2024
+-- Last Updated: Tue Oct  8 02:17:19 PM EDT 2024
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -185,7 +185,7 @@ local hlgroups = {
   Boolean = { fg = c_purple },
   Character = { link = 'String' },
   Comment = { fg = c_grey },
-  Conditional = { fg = c_grey_dim },
+  Conditional = { fg = c_red },
   Constant = { fg = c_orange },
   Delimiter = { fg = c_grey },
   Error = { fg = c_red },
