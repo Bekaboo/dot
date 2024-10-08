@@ -132,8 +132,19 @@ favorite package manager:
 - LaTeX: [TexLab](https://github.com/latex-lsp/texlab)
 - VimL: [VimLS](https://github.com/iamcco/vim-language-server)
 - Markdown: [Marksman](https://github.com/artempyanykh/marksman)
+- Go: [Gopls](https://github.com/golang/tools/tree/master/gopls)
+- Typescript: [Typescript Language Server](https://github.com/typescript-language-server/typescript-language-server) and [Biome](https://biomejs.dev/) 
 - General-purpose language server: [EFM Language Server](https://github.com/mattn/efm-langserver)
-    - Already configured for [Black](https://github.com/psf/black), [Shfmt](https://github.com/mvdan/sh), [Fish-indent](https://fishshell.com/docs/current/cmds/fish_indent.html), and [StyLua](https://github.com/JohnnyMorganz/StyLua)
+    - Already configured for
+        - [Black](https://github.com/psf/black) (formatter)
+        - [Shfmt](https://github.com/mvdan/sh) (formatter)
+        - [Fish-indent](https://fishshell.com/docs/current/cmds/fish_indent.html) (formatter)
+        - [StyLua](https://github.com/JohnnyMorganz/StyLua) (formatter)
+        - [Gofmt](https://pkg.go.dev/cmd/gofmt) (formatter)
+        - [Golangcli-lint](https://github.com/golangci/golangci-lint) (linter)
+        - [Prettier](https://prettier.io/) (formatter)
+        - [Eslint](https://eslint.org/) (linter)
+        - ...
 
 To add support for other languages, install corresponding language servers
 manually then add `lsp.lua` files under [after/ftplugin](https://github.com/Bekaboo/nvim/tree/master/after/ftplugin) to automatically launch
@@ -145,6 +156,8 @@ Some examples of `lsp.lua` files:
 - [after/ftplugin/python/lsp.lua](https://github.com/Bekaboo/nvim/blob/master/after/ftplugin/python/lsp.lua)
 - [after/ftplugin/rust/lsp.lua](https://github.com/Bekaboo/nvim/blob/master/after/ftplugin/rust/lsp.lua)
 - [after/ftplugin/sh/lsp.lua](https://github.com/Bekaboo/nvim/blob/master/after/ftplugin/sh/lsp.lua)
+- [after/ftplugin/go/lsp.lua](https://github.com/Bekaboo/nvim/blob/master/after/ftplugin/go/lsp.lua)
+- [after/ftplugin/typescript/lsp.lua](https://github.com/Bekaboo/nvim/blob/master/after/ftplugin/typescript/lsp.lua)
 
 ### DAP
 
@@ -181,6 +194,8 @@ Install the following debug adapters manually:
     ```sh
     pip install --local debugpy # Install to user's home directory
     ```
+
+- Go: install [Delve](https://github.com/go-delve/delve)
 
 For more information on DAP installation, see [Debug Adapter Installation](https://github.com/mfussenegger/nvim-dap/wiki/Debug-Adapter-installation).
 
