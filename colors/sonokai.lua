@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Mon Oct  7 09:07:50 PM EDT 2024
+-- Last Updated: Tue Oct  8 02:03:19 AM EDT 2024
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -421,7 +421,7 @@ local hlgroups = {
   CmpDocumentation = { link = 'NormalFloat' },
   CmpDocumentationBorder = { link = 'FloatBorder' },
   CmpItemAbbrDeprecated = { fg = c_grey, strikethrough = true },
-  CmpItemAbbrMatch = { fg = c_green },
+  CmpItemAbbrMatch = { fg = c_red },
   CmpItemAbbrMatchFuzzy = { link = 'CmpItemAbbrMatch' },
   CmpItemKindClass = { link = 'Type' },
   CmpItemKindConstant = { link = 'Constant' },
@@ -472,7 +472,7 @@ local hlgroups = {
 
   -- telescope
   TelescopeBorder = { bg = c_bg1, fg = c_fg },
-  TelescopeMatching = { fg = c_green, bold = true },
+  TelescopeMatching = { fg = c_red, bold = true },
   TelescopeNormal = { bg = c_bg1, fg = c_fg },
   TelescopePromptBorder = { bg = c_bg3, fg = c_fg },
   TelescopePromptNormal = { bg = c_bg3, fg = c_fg },
