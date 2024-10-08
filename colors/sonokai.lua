@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Mon Oct  7 08:14:08 PM EDT 2024
+-- Last Updated: Mon Oct  7 09:07:50 PM EDT 2024
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -12,7 +12,6 @@ vim.g.colors_name = 'sonokai'
 
 -- Palette {{{
 -- stylua: ignore start
-local c_black
 local c_bg0
 local c_bg1
 local c_bg2
@@ -35,7 +34,6 @@ local c_grey_dim
 local c_none
 
 if vim.go.bg == 'dark' then
-  c_black       = { '#181819',   232    }
   c_bg0         = { '#2c2e34',   235    }
   c_bg1         = { '#33353f',   236    }
   c_bg2         = { '#363944',   236    }
@@ -57,7 +55,6 @@ if vim.go.bg == 'dark' then
   c_grey_dim    = { '#595f6f',   240    }
   c_none        = { 'NONE',      'NONE' }
 else
-  c_black       = { '#181819',   232    }
   c_bg0         = { '#ecf0f0',   15     }
   c_bg1         = { '#e3e7e7',   251    }
   c_bg2         = { '#dfe3e3',   252    }
