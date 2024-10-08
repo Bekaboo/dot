@@ -1,6 +1,7 @@
 return {
   {
-    'hrsh7th/nvim-cmp',
+    'yioneko/nvim-cmp',
+    branch = 'perf',
     lazy = true,
     config = function()
       require('configs.nvim-cmp')
@@ -11,31 +12,31 @@ return {
   {
     'hrsh7th/cmp-calc',
     event = 'InsertEnter',
-    dependencies = 'hrsh7th/nvim-cmp',
+    dependencies = 'yioneko/nvim-cmp',
   },
 
   {
     'hrsh7th/cmp-cmdline',
     event = 'CmdlineEnter',
-    dependencies = 'hrsh7th/nvim-cmp',
+    dependencies = 'yioneko/nvim-cmp',
   },
 
   {
     'hrsh7th/cmp-nvim-lsp',
     event = 'InsertEnter',
-    dependencies = 'hrsh7th/nvim-cmp',
+    dependencies = 'yioneko/nvim-cmp',
   },
 
   {
     'hrsh7th/cmp-nvim-lsp-signature-help',
     event = 'InsertEnter',
-    dependencies = 'hrsh7th/nvim-cmp',
+    dependencies = 'yioneko/nvim-cmp',
   },
 
   {
     'hrsh7th/cmp-buffer',
     event = { 'CmdlineEnter', 'InsertEnter' },
-    dependencies = 'hrsh7th/nvim-cmp',
+    dependencies = 'yioneko/nvim-cmp',
   },
 
   {
@@ -43,7 +44,7 @@ return {
     lazy = true,
     dependencies = {
       'mfussenegger/nvim-dap',
-      'hrsh7th/nvim-cmp',
+      'yioneko/nvim-cmp',
     },
   },
 
@@ -51,7 +52,7 @@ return {
     'saadparwaiz1/cmp_luasnip',
     event = 'InsertEnter',
     dependencies = {
-      'hrsh7th/nvim-cmp',
+      'yioneko/nvim-cmp',
       'L3MON4D3/LuaSnip',
     },
   },
