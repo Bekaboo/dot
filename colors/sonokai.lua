@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Mon Oct  7 01:36:59 PM EDT 2024
+-- Last Updated: Mon Oct  7 08:14:08 PM EDT 2024
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -237,7 +237,7 @@ local hlgroups = {
   ['@markup.list'] = { fg = c_yellow },
   ['@markup.list.checked'] = { fg = c_green },
   ['@markup.list.unchecked'] = { link = 'Ignore' },
-  ['@markup.quote'] = { fg = c_grey },
+  ['@markup.quote'] = { fg = c_yellow },
   ['@markup.raw'] = { fg = c_yellow },
   ['@markup.strikethrough'] = { strikethrough = true },
   ['@module.builtin'] = { link = 'Special' },
