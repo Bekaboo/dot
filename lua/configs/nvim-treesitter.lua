@@ -5,7 +5,14 @@ local ts_configs = require('nvim-treesitter.configs')
 local function enable_ts_folding(buf)
   -- Treesitter folding is extremely slow in large files,
   -- making typing and undo lag as hell
-  if not vim.api.nvim_buf_is_valid(buf) or vim.b[buf].bigfile then
+  --
+  -- Also disable ts folding in markdown files because it
+  -- is so slooow compared to other filetypes
+  if
+    not vim.api.nvim_buf_is_valid(buf)
+    or vim.bo[buf].ft == 'markdown'
+    or vim.b[buf].bigfile
+  then
     return
   end
   vim.api.nvim_buf_call(buf, function()
