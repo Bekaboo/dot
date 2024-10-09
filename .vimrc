@@ -501,6 +501,10 @@ let g:mapleader = ' '
 let g:maplocalleader = ' '
 " }}}2
 
+" Past with correct indentation in insert mode {{{2
+inoremap <C-r> <C-r><C-p>
+" }}}
+
 " Moving up & down in visual line {{{2
 nnoremap <expr> j        v:count ? "j"      : "gj"
 xnoremap <expr> j        v:count ? "j"      : "gj"
@@ -1225,9 +1229,6 @@ if exists(':tmap') == 2
 
   " Use <C-\><C-r> to insert contents of a register in terminal mode
   tnoremap <expr> <C-\><C-r> (&twk ? &twk : '<C-w>') . '"' . nr2char(getchar())
-
-  " Past with correct indentation in insert mode
-  inoremap <C-r> <C-r><C-p>
 
   " Workaround to avoid <M-...> keymaps in terminal mode to be interpreted to
   " <Esc> + ... (seperate keystrokes) given `<Esc>` is mapped to itself
