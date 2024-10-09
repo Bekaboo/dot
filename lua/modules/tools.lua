@@ -249,7 +249,16 @@ return {
                 return
               end
               vim.api.nvim_buf_call(buf, function()
-                vim.cmd.edit({
+                -- Use `pcall()` to suppress error when opening cmdwin with the
+                -- cursor is inside a modified lua or python buffer with no
+                -- corresponding file. This does not happen with other filetypes,
+                -- e.g. c/cpp or tex files
+                -- It seems that the error is caused by lua/python's lsp servers
+                -- making an hidden buffer with bufname '/' (use `:ls!` to show
+                -- the hidden buffers) because disabling lsp server configs in
+                -- `after/ftplugin/lua/lsp.lua` and `after/ftplugin/python/lsp.lua`
+                -- prevents this error and the hidden '/' buffer is gone
+                pcall(vim.cmd.edit, {
                   bang = true,
                   mods = { keepjumps = true },
                 })
