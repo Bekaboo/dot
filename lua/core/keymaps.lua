@@ -105,6 +105,10 @@ vim.keymap.set(
 -- Past with correct indentation in insert mode
 vim.keymap.set('i', '<C-r>', '<C-r><C-p>')
 
+-- Delete selection in select mode
+vim.keymap.set('s', '<BS>', '<C-o>s')
+vim.keymap.set('s', '<C-h>', '<C-o>s')
+
 -- More consistent behavior when &wrap is set
 -- stylua: ignore start
 vim.keymap.set({ 'n', 'x' }, 'j', 'v:count ? "j" : "gj"', { expr = true })
