@@ -139,11 +139,32 @@ end
 ---@return nil
 function M.amend(modes, lhs, rhs, opts)
   modes = type(modes) ~= 'table' and { modes } or modes --[=[@as string[]]=]
+  opts = opts or {}
+
   for _, mode in ipairs(modes) do
-    local fallback = M.fallback_fn(M.get(mode, lhs))
-    vim.keymap.set(mode, lhs, function()
-      rhs(fallback)
-    end, opts)
+    local key_def = M.get(mode, lhs) -- original key definition
+    local rhs_fn = function()
+      rhs(M.fallback_fn(key_def))
+    end
+
+    if not key_def.buffer or opts.buffer then
+      vim.keymap.set(mode, lhs, rhs_fn, opts)
+    else
+      -- If the original key definition is a buffer mapping, we should also set
+      -- our buffer option to true to avoid "leaking" the buffer map to global
+      vim.keymap.set(
+        mode,
+        lhs,
+        rhs_fn,
+        vim.tbl_deep_extend('keep', { buffer = true }, opts)
+      )
+      -- The global keymap with an empty callback as fallback function, i.e.
+      -- we shouldn't invoke the original keymap callback when we are not in
+      -- that buffer
+      vim.keymap.set(mode, lhs, function()
+        rhs(function() end)
+      end, opts)
+    end
   end
 end
 
