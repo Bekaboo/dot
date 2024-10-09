@@ -15,6 +15,7 @@
 	cm                  = commit -m
 	co                  = checkout
 	d                   = diff
+	ds                  = diff --cached
 	f                   = fetch
 	is-ancestor         = merge-base --is-ancestor
 	l                   = log --oneline --graph
