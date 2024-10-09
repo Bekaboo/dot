@@ -82,11 +82,11 @@ vim.api.nvim_create_user_command('DapClear', dap.clear_breakpoints, {
 })
 
 -- stylua: ignore start
-vim.fn.sign_define('DapBreakpoint',          { text = vim.trim(icons.ui.DotLarge), texthl = 'DiagnosticSignHint' })
-vim.fn.sign_define('DapBreakpointCondition', { text = vim.trim(icons.ui.Diamond), texthl = 'DiagnosticSignInfo' })
-vim.fn.sign_define('DapBreakpointRejected',  { text = vim.trim(icons.ui.DotLarge), texthl = 'DiagnosticSignWarn' })
-vim.fn.sign_define('DapLogPoint',            { text = vim.trim(icons.ui.Log), texthl = 'DiagnosticSignOk' })
-vim.fn.sign_define('DapStopped',             { text = vim.trim(icons.ui.ArrowRight), texthl = 'DiagnosticSignError' })
+vim.fn.sign_define('DapBreakpoint',          { text = vim.trim(icons.debug.Breakpoint), texthl = 'DiagnosticSignHint' })
+vim.fn.sign_define('DapBreakpointCondition', { text = vim.trim(icons.debug.BreakpointCondition), texthl = 'DiagnosticSignInfo' })
+vim.fn.sign_define('DapBreakpointRejected',  { text = vim.trim(icons.debug.BreakpointRejected), texthl = 'DiagnosticSignWarn' })
+vim.fn.sign_define('DapLogPoint',            { text = vim.trim(icons.debug.BreakpointLog), texthl = 'DiagnosticSignOk' })
+vim.fn.sign_define('DapStopped',             { text = vim.trim(icons.debug.StackFrame), texthl = 'DiagnosticSignError' })
 -- stylua: ignore end
 
 dap.adapters = {}

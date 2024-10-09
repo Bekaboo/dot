@@ -1,6 +1,10 @@
 -- stylua: ignore start
 return {
   debug = {
+    Breakpoint          = 'B ',
+    BreakpointCondition = 'C ',
+    BreakpointLog       = 'L ',
+    BreakpointRejected  = 'X ',
     StackFrame          = '→ ',
     StackFrameCurrent   = '→*',
   },
