@@ -3,11 +3,11 @@ local keymap = require('utils.keymap')
 local icons = require('utils.static.icons')
 
 local function set_cond_breakpoint()
-  dap.set_breakpoint(nil, nil, vim.fn.input('Breakpoint condition: '))
+  dap.set_breakpoint(nil, vim.fn.input('Breakpoint condition: '))
 end
 
 local function set_logpoint()
-  dap.set_breakpoint(nil, nil, nil, vim.fn.input('Log point message: '))
+  dap.set_breakpoint(nil, nil, vim.fn.input('Log point message: '))
 end
 
 local last_dap_fn = function() end
