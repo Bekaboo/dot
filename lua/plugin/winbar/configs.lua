@@ -4,45 +4,6 @@ local M = {}
 
 ---@class winbar_configs_t
 M.opts = {
-  general = {
-    ---@type boolean|fun(buf: integer, win: integer): boolean
-    enable = function(buf, win)
-      return not vim.w[win].winbar_no_attach
-        and not vim.b[buf].winbar_no_attach
-        and vim.wo[win].winbar == ''
-        and vim.fn.win_gettype(win) == ''
-        and vim.bo[buf].ft ~= 'help'
-        and not vim.startswith(vim.bo[buf].ft, 'git')
-        and utils.treesitter.is_active(buf)
-    end,
-    attach_events = {
-      'BufEnter',
-      'BufWinEnter',
-      'BufWritePost',
-    },
-    -- Wait for a short time before updating the winbar, if another update
-    -- request is received within this time, the previous request will be
-    -- cancelled, this improves the performance when the user is holding
-    -- down a key (e.g. 'j') to scroll the window
-    update_interval = 32,
-    update_events = {
-      win = {
-        'CursorMoved',
-        'CursorMovedI',
-        'WinResized',
-      },
-      buf = {
-        'BufModifiedSet',
-        'FileChangedShellPost',
-        'TextChanged',
-        'TextChangedI',
-      },
-      global = {
-        'DirChanged',
-        'VimResized',
-      },
-    },
-  },
   icons = {
     kinds = {
       use_devicons = true,
@@ -95,6 +56,43 @@ M.opts = {
     },
   },
   bar = {
+    ---@type boolean|fun(buf: integer, win: integer): boolean
+    enable = function(buf, win)
+      return not vim.w[win].winbar_no_attach
+        and not vim.b[buf].winbar_no_attach
+        and vim.wo[win].winbar == ''
+        and vim.fn.win_gettype(win) == ''
+        and vim.bo[buf].ft ~= 'help'
+        and not vim.startswith(vim.bo[buf].ft, 'git')
+        and utils.treesitter.is_active(buf)
+    end,
+    attach_events = {
+      'BufEnter',
+      'BufWinEnter',
+      'BufWritePost',
+    },
+    -- Wait for a short time before updating the winbar, if another update
+    -- request is received within this time, the previous request will be
+    -- cancelled, this improves the performance when the user is holding
+    -- down a key (e.g. 'j') to scroll the window
+    update_debounce = 32,
+    update_events = {
+      win = {
+        'CursorMoved',
+        'CursorMovedI',
+        'WinResized',
+      },
+      buf = {
+        'BufModifiedSet',
+        'FileChangedShellPost',
+        'TextChanged',
+        'TextChangedI',
+      },
+      global = {
+        'DirChanged',
+        'VimResized',
+      },
+    },
     hover = true,
     ---@type winbar_source_t[]|fun(buf: integer, win: integer): winbar_source_t[]
     sources = function(buf)
