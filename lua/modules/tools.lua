@@ -195,7 +195,7 @@ return {
 
   {
     'brenoprata10/nvim-highlight-colors',
-    enabled = vim.g.nf,
+    enabled = vim.g.modern_ui,
     event = {
       'BufNew',
       'BufRead',
