@@ -4,8 +4,8 @@ local M = {}
 M.TUI_REGEX = vim.regex(
   [[\v^(sudo(\s+--?(\w|-)+((\s+|\=)\S+)?)*\s+)?]]
     .. [[(/usr/bin/)?]]
-    .. [[(n?vim?|vimdiff|emacs(client)?|lem|nano]]
-    .. [[|helix|kak|tmux|lazygit|h?top|gdb|fzf|nmtui|sudoedit|ssh|crontab)]]
+    .. [[(n?vim?|vimdiff|emacs(client)?|lem|nano|helix|kak|]]
+    .. [[tmux|lazygit|h?top|gdb|fzf|nmtui|sudoedit|ssh|crontab|asciinema)]]
 )
 
 ---Check if any of the processes in terminal buffer `buf` is a TUI app
