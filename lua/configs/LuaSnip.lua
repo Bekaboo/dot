@@ -14,7 +14,7 @@ ls.setup({
   ext_opts = {
     [ls_types.choiceNode] = {
       active = {
-        virt_text = { { static.icons.Enum, 'Number' } },
+        virt_text = { { static.icons.ArrowLeftRight, 'Number' } },
       },
     },
     [ls_types.insertNode] = {
