@@ -1221,8 +1221,8 @@ if exists(':tmap') == 2
     for cmd in s:fg_cmds()
       if cmd =~# '\v^(sudo(\s+--?(\w|-)+((\s+|\=)\S+)?)*\s+)?
           \(/usr/bin/)?
-          \(n?vim?|vimdiff|emacs(client)?|lem|nano
-          \|helix|kak|tmux|lazygit|h?top|gdb|fzf|nmtui|sudoedit|ssh|crontab)'
+          \(n?vim?|vimdiff|emacs(client)?|lem|nano|helix|kak|
+          \tmux|lazygit|h?top|gdb|fzf|nmtui|sudoedit|ssh|crontab|asciinema)'
         return 1
       endif
     endfor
