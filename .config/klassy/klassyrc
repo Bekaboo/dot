@@ -1,3 +1,10 @@
+[ButtonColors]
+CloseButtonIconColorActive=AsSelected
+CloseButtonIconColorInactive=AsSelected
+
+[ButtonSizing]
+IntegratedRoundedRectangleBottomPadding=0
+
 [Global]
 LookAndFeelSet=org.kde.klassylighttraditional.desktop
 
