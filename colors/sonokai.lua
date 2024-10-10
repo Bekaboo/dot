@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Tue Oct  8 02:17:19 PM EDT 2024
+-- Last Updated: Thu Oct 10 12:02:44 AM EDT 2024
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -60,7 +60,7 @@ else
   c_bg2         = { '#dfe3e3',   252    }
   c_bg3         = { '#d1d4d4',   253    }
   c_bg4         = { '#c8cbcb',   254    }
-  c_bg_red      = { '#c64b5d',   203    }
+  c_bg_red      = { '#f35c73',   203    }
   c_diff_red    = { '#ffc1ce',   204    }
   c_diff_green  = { '#cde2b7',   40     }
   c_bg_blue     = { '#77bcd8',   110    }
