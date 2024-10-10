@@ -607,6 +607,25 @@ M.snippets = {
   ),
   us.msn(
     {
+      { trig = 'mn' },
+      { trig = 'main' },
+      common = { desc = 'main function' },
+    },
+    un.fmtad(
+      [[
+        func main(<args>) <ret> {
+        <body>
+        }
+      ]],
+      {
+        args = r(1, 'args'),
+        ret = r(2, 'ret'),
+        body = un.body(3, 1),
+      }
+    )
+  ),
+  us.msn(
+    {
       { trig = 'me' },
       { trig = 'method' },
       common = { desc = 'Method definition' },
