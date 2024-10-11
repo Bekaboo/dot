@@ -64,7 +64,8 @@ function! GetMarkdownIndent() abort
       return l:default
   endif
 
-  if s:ts_active() && s:in_codeblock()
+  " Don't enable treesitter indent in insert mode as it is laggy
+  if mode() !~# '^i' && s:ts_active() && s:in_codeblock()
     return nvim_treesitter#indent()
   endif
 
