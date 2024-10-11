@@ -84,7 +84,7 @@ return {
 
   us.samW({ trig = '==' }, t('&= ')),
   us.samW({ trig = ':=' }, t('\\coloneqq ')),
-  us.msamW({ { trig = '!=' }, { trig = 'neq' } }, t('\\neq ')),
+  us.samW({ trig = '!=' }, t('\\neq ')),
   us.samW({ trig = '&= =' }, t('\\equiv ')),
   us.samW({ trig = '>=' }, t('\\ge ')),
   us.samW({ trig = '<=' }, t('\\le ')),
