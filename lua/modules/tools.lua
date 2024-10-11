@@ -194,7 +194,7 @@ return {
   },
 
   {
-    'brenoprata10/nvim-highlight-colors',
+    'NvChad/nvim-colorizer.lua',
     enabled = vim.g.modern_ui,
     event = {
       'BufNew',
@@ -205,7 +205,7 @@ return {
       'StdinReadPre',
     },
     config = function()
-      require('configs.nvim-highlight-colors')
+      require('configs.nvim-colorizer')
     end,
   },
 
