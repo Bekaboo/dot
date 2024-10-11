@@ -326,14 +326,19 @@ M.syntax = {
       { trig = 'pck' },
       { trig = 'pcheck' },
     },
-    un.fmtad('print(<q><v_esc>: <q> .. inspect(<v>)<e>)', {
+    un.fmtad('print(<q><v_esc>: <q> .. <inspect>(<v>)<e>)', {
       q = un.qt(),
       v = i(1),
-      v_esc = d(2, function(texts)
+      inspect = c(2, {
+        i(nil, 'inspect'),
+        i(nil, 'vim.inspect'),
+        i(nil, 'tostring'),
+      }),
+      v_esc = d(3, function(texts)
         local str = vim.fn.escape(texts[1][1], '\\' .. uf.get_quotation_type())
         return sn(nil, i(1, str))
       end, { 1 }),
-      e = i(3),
+      e = i(4),
     })
   ),
   us.msn(
@@ -342,10 +347,15 @@ M.syntax = {
       { trig = 'ck' },
       { trig = 'check' },
     },
-    un.fmtad('<q><v_esc>: <q> .. inspect(<v>)', {
+    un.fmtad('<q><v_esc>: <q> .. <inspect>(<v>)', {
       q = un.qt(),
       v = i(1),
-      v_esc = d(2, function(texts)
+      inspect = c(2, {
+        i(nil, 'inspect'),
+        i(nil, 'vim.inspect'),
+        i(nil, 'tostring'),
+      }),
+      v_esc = d(3, function(texts)
         local str = vim.fn.escape(texts[1][1], '\\' .. uf.get_quotation_type())
         return sn(nil, i(1, str))
       end, { 1 }),
@@ -356,14 +366,19 @@ M.syntax = {
       { trig = '(%S*)(%s*)%.%.%s*ck' },
       { trig = '(%S*)(%s*)%.%.%s*check' },
     },
-    un.fmtad('<spc>.. <q>, <v_esc>: <q> .. inspect(<v>)', {
+    un.fmtad('<spc>.. <q>, <v_esc>: <q> .. <inspect>(<v>)', {
       spc = f(function(_, snip, _)
         return snip.captures[1] == '' and snip.captures[2]
           or snip.captures[1] .. ' '
       end, {}, {}),
       q = un.qt(),
       v = i(1),
-      v_esc = d(2, function(texts)
+      inspect = c(2, {
+        i(nil, 'inspect'),
+        i(nil, 'vim.inspect'),
+        i(nil, 'tostring'),
+      }),
+      v_esc = d(3, function(texts)
         local str = vim.fn.escape(texts[1][1], '\\' .. uf.get_quotation_type())
         return sn(nil, i(1, str))
       end, { 1 }),
