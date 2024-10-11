@@ -294,12 +294,10 @@ cmp.setup({
   mapping = {
     ['<S-Tab>'] = {
       ['c'] = function()
-        if tabout.get_jump_pos(-1) then
-          tabout.jump(-1)
-          return
-        end
         if cmp.visible() then
           cmp.select_prev_item()
+        elseif tabout.get_jump_pos(-1) then
+          tabout.jump(-1)
         else
           cmp.complete()
         end
@@ -320,12 +318,10 @@ cmp.setup({
     },
     ['<Tab>'] = {
       ['c'] = function()
-        if tabout.get_jump_pos(1) then
-          tabout.jump(1)
-          return
-        end
         if cmp.visible() then
           cmp.select_next_item()
+        elseif tabout.get_jump_pos(1) then
+          tabout.jump(1)
         else
           cmp.complete()
         end
