@@ -11,6 +11,5 @@ vim.opt_local.signcolumn = 'no'
 vim.opt_local.spell = false
 vim.opt_local.statuscolumn = ''
 
-vim.keymap.set({ 'n', 'x' }, 'q', 'ZQ', { buffer = true, nowait = true })
 vim.keymap.set({ 'n', 'x' }, 'd', '<C-d>', { buffer = true, nowait = true })
 vim.keymap.set({ 'n', 'x' }, 'u', '<C-u>', { buffer = true, nowait = true })
