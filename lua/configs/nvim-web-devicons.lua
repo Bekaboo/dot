@@ -38,6 +38,12 @@ require('nvim-web-devicons').setup({
       icon = vim.trim(icons.Pdf),
       name = 'Pdf',
     },
+    odg = {
+      icon = '󰈬',
+      color = '#185abd',
+      cterm_color = '26',
+      name = 'Odg',
+    },
   },
   override_by_extension = {
     asm = {
