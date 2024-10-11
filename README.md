@@ -495,7 +495,7 @@ and it should work out of the box.
 
 #### Third Party Plugins
 
-Total # of plugins: 48 (package manager included).
+Total # of plugins: 49 (package manager included).
 
 - **Lib**
     - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim)
@@ -505,6 +505,7 @@ Total # of plugins: 48 (package manager included).
     - [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
     - [cmp-calc](https://github.com/hrsh7th/cmp-calc)
     - [cmp-cmdline](https://github.com/hrsh7th/cmp-cmdline)
+    - [cmp-path](https://github.com/hrsh7th/cmp-path)
     - [cmp-nvim-lsp](https://github.com/hrsh7th/cmp-nvim-lsp)
     - [cmp-buffer](https://github.com/hrsh7th/cmp-buffer)
     - [cmp_luasnip](https://github.com/saadparwaiz1/cmp_luasnip)

@@ -257,10 +257,10 @@ cmp.setup({
       local complpath = compltype_path[compltype]
       -- Use special icons for file / directory completions
       if item.kind == 'File' or item.kind == 'Folder' or complpath then
-        if
-          (vim.uv.fs_stat(vim.fs.normalize(item.word)) or {}).type
-          == 'directory'
-        then -- Directories
+        -- Type of path, 'directory'/'file'/'symlink'/...
+        local type = (entry.completion_item.data or {}).type
+          or (vim.uv.fs_stat(vim.fs.normalize(item.word)) or {}).type
+        if type == 'directory' then -- Directories
           item.kind = icon_folder
           item.kind_hl_group = 'CmpItemKindFolder'
         else -- Files
@@ -403,6 +403,7 @@ cmp.setup({
     { name = 'luasnip', max_item_count = 3 },
     { name = 'nvim_lsp_signature_help' },
     { name = 'nvim_lsp', max_item_count = 20 },
+    { name = 'path' },
     {
       name = 'buffer',
       max_item_count = 8,
@@ -482,6 +483,7 @@ cmp.setup.cmdline('?', {
 cmp.setup.cmdline(':', {
   enabled = true,
   sources = {
+    { name = 'path' },
     {
       name = 'cmdline',
       option = {

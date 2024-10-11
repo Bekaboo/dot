@@ -58,6 +58,12 @@ return {
   },
 
   {
+    'hrsh7th/cmp-path',
+    event = { 'InsertEnter', 'CmdlineEnter' },
+    dependencies = 'yioneko/nvim-cmp',
+  },
+
+  {
     'zbirenbaum/copilot.lua',
     cmd = 'Copilot',
     event = 'InsertEnter',
