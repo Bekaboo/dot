@@ -257,7 +257,10 @@ cmp.setup({
       local complpath = compltype_path[compltype]
       -- Use special icons for file / directory completions
       if item.kind == 'File' or item.kind == 'Folder' or complpath then
-        if (vim.uv.fs_stat(item.word) or {}).type == 'directory' then -- Directories
+        if
+          (vim.uv.fs_stat(vim.fs.normalize(item.word)) or {}).type
+          == 'directory'
+        then -- Directories
           item.kind = icon_folder
           item.kind_hl_group = 'CmpItemKindFolder'
         else -- Files
