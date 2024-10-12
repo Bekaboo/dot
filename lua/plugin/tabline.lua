@@ -18,9 +18,11 @@ function _G._tabline.get()
           '%%%dT %s %%X',
           tabid,
           vim.t[tabid]._tabname
-            or vim.fn.fnamemodify(
-              vim.fn.getcwd(vim.api.nvim_tabpage_get_win(tabid), tabnr),
-              ':.:~'
+            or vim.fn.pathshorten(
+              vim.fn.fnamemodify(
+                vim.fn.getcwd(vim.api.nvim_tabpage_get_win(tabid), tabnr),
+                ':.:~'
+              )
             )
         ),
         tabid == tabidcur and 'TabLineSel' or 'TabLine'
