@@ -83,11 +83,15 @@ function actions.switch_cwd()
   opts.cwd = opts.cwd or vim.uv.cwd()
   opts.query = fzf.config.__resume_data.last_query
 
+  local at_home = utils.fs.contains('~', opts.cwd)
   fzf.files({
     cwd_prompt = false,
-    prompt = 'New cwd: ~/',
-    cwd = '~',
-    query = vim.fn.fnamemodify(opts.cwd, ':~'):gsub('^~', ''):gsub('^/', ''),
+    prompt = 'New cwd: ' .. (at_home and '~/' or '/'),
+    cwd = at_home and '~' or '/',
+    query = vim.fn
+      .fnamemodify(opts.cwd, at_home and ':~' or ':p')
+      :gsub('^~', '')
+      :gsub('^/', ''),
     cmd = vim.fn.executable('fd') == 1 and [[fd --hidden --type d]]
       or vim.fn.executable('fdfind') == 1 and [[fdfind --hidden --type d]]
       or [[find * -type d -print0 | xargs -0 ls -Fd]],
@@ -95,7 +99,10 @@ function actions.switch_cwd()
     actions = {
       ['enter'] = function(selected)
         opts.cwd = vim.fs.normalize(
-          vim.fs.joinpath('~', path.entry_to_file(selected[1]).path)
+          vim.fs.joinpath(
+            at_home and '~' or '/',
+            path.entry_to_file(selected[1]).path
+          )
         )
 
         -- Adapted from fzf-lua `core.set_header()` function
