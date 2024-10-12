@@ -73,55 +73,62 @@ end
 ---Switch cwd while preserving the last query
 ---@return nil
 function actions.switch_cwd()
-  fzf.config.__resume_data.opts = fzf.config.__resume_data.opts or {}
-  local opts = fzf.config.__resume_data.opts
+  local resume_data = vim.deepcopy(fzf.config.__resume_data)
+  resume_data.opts = resume_data.opts or {}
 
   -- Remove old fn_selected, else selected item will be opened
   -- with previous cwd
+  local opts = resume_data.opts
   opts.fn_selected = nil
   opts.cwd = opts.cwd or vim.uv.cwd()
   opts.query = fzf.config.__resume_data.last_query
 
-  vim.ui.input({
-    prompt = 'New cwd: ',
-    default = opts.cwd,
-    completion = 'dir',
-  }, function(input)
-    if not input then
-      return
-    end
-    input = vim.fs.normalize(input)
-    local stat = vim.uv.fs_stat(input)
-    if not stat or stat.type ~= 'directory' then
-      print('\n')
-      vim.notify(
-        '[Fzf-lua] invalid path: ' .. input .. '\n',
-        vim.log.levels.ERROR
-      )
-      vim.cmd.redraw()
-      return
-    end
-    opts.cwd = input
-  end)
+  fzf.files({
+    cwd_prompt = false,
+    prompt = 'New cwd: ~/',
+    cwd = '~',
+    query = vim.fn.fnamemodify(opts.cwd, ':~'):gsub('^~', ''):gsub('^/', ''),
+    cmd = vim.fn.executable('fd') == 1 and [[fd --hidden --type d]]
+      or vim.fn.executable('fdfind') == 1 and [[fdfind --hidden --type d]]
+      or [[find * -type d -print0 | xargs -0 ls -Fd]],
+    fzf_opts = { ['--no-multi'] = true },
+    actions = {
+      ['enter'] = function(selected)
+        opts.cwd = vim.fs.normalize(
+          vim.fs.joinpath('~', path.entry_to_file(selected[1]).path)
+        )
 
-  -- Adapted from fzf-lua `core.set_header()` function
-  if opts.cwd_prompt then
-    opts.prompt = vim.fn.fnamemodify(opts.cwd, ':.:~')
-    local shorten_len = tonumber(opts.cwd_prompt_shorten_len)
-    if shorten_len and #opts.prompt >= shorten_len then
-      opts.prompt =
-        path.shorten(opts.prompt, tonumber(opts.cwd_prompt_shorten_val) or 1)
-    end
-    if not path.ends_with_separator(opts.prompt) then
-      opts.prompt = opts.prompt .. path.separator()
-    end
-  end
+        -- Adapted from fzf-lua `core.set_header()` function
+        if opts.cwd_prompt then
+          opts.prompt = vim.fn.fnamemodify(opts.cwd, ':.:~')
+          local shorten_len = tonumber(opts.cwd_prompt_shorten_len)
+          if shorten_len and #opts.prompt >= shorten_len then
+            opts.prompt = path.shorten(
+              opts.prompt,
+              tonumber(opts.cwd_prompt_shorten_val) or 1
+            )
+          end
+          if not path.ends_with_separator(opts.prompt) then
+            opts.prompt = opts.prompt .. path.separator()
+          end
+        end
 
-  if opts.headers then
-    opts = core.set_header(opts, opts.headers)
-  end
+        if opts.headers then
+          opts = core.set_header(opts, opts.headers)
+        end
 
-  actions.resume()
+        fzf.config.__resume_data = resume_data
+        actions.resume()
+      end,
+      ['esc'] = function()
+        fzf.config.__resume_data = resume_data
+        actions.resume()
+      end,
+      -- Should not change dir or exclude dirs when selecting cwd
+      ['alt-c'] = false,
+      ['ctrl-/'] = false,
+    },
+  })
 end
 
 ---Include directories, not only files when using the `files` picker
