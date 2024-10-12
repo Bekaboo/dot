@@ -264,10 +264,10 @@ M.opts = {
       end,
     },
     treesitter = {
-      -- Vim pattern used to extract a short name from the node text
+      -- Vim regex used to extract a short name from the node text
       -- word with optional prefix and suffix: [#~!@\*&.]*[[:keyword:]]\+!\?
       -- word separators: \(->\)\+\|-\+\|\.\+\|:\+\|\s\+
-      name_pattern = [=[[#~!@\*&.]*[[:keyword:]]\+!\?]=]
+      name_regex = [=[[#~!@\*&.]*[[:keyword:]]\+!\?]=]
         .. [=[\(\(\(->\)\+\|-\+\|\.\+\|:\+\|\s\+\)\?[#~!@\*&.]*[[:keyword:]]\+!\?\)*]=],
       -- The order matters! The first match is used as the type
       -- of the treesitter symbol and used to show the icon
