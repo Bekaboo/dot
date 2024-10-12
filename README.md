@@ -583,6 +583,8 @@ Total # of plugins: 49 (package manager included).
     - Custom statuscolumn, with git signs on the right of line numbers
 - [statusline](https://github.com/Bekaboo/nvim/tree/master/lua/plugin/statusline.lua)
     - Custom statusline inspired by [nano-emacs](https://github.com/rougier/nano-emacs)
+- [tabline](https://github.com/Bekaboo/nvim/tree/master/lua/plugin/tabline.lua)
+    - Simple tabline that shows the current working directory of each tab
 - [tabout](https://github.com/Bekaboo/nvim/tree/master/lua/plugin/tabout.lua)
     - Tab out and in with `<Tab>` and `<S-Tab>`
 - [term](https://github.com/Bekaboo/nvim/tree/master/lua/plugin/term.lua)

@@ -72,6 +72,9 @@ vim.api.nvim_create_autocmd({ 'BufWritePost', 'BufWinEnter' }, {
 -- statusline
 vim.go.statusline = [[%!v:lua.require'plugin.statusline'.get()]]
 
+-- tabline
+vim.go.tabline = [[%!v:lua.require'plugin.tabline'.get()]]
+
 -- term
 vim.api.nvim_create_autocmd('TermOpen', {
   group = vim.api.nvim_create_augroup('TermSetup', {}),
