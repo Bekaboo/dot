@@ -552,13 +552,6 @@ nnoremap <silent> gy :<C-u>call TabSwitch('tabprev')<CR>
 xnoremap <silent> gt :<C-u>call TabSwitch('tabnext')<CR>
 xnoremap <silent> gT :<C-u>call TabSwitch('tabprev')<CR>
 xnoremap <silent> gy :<C-u>call TabSwitch('tabprev')<CR>
-
-for i in range(1, 9)
-  for map in ['nnoremap', 'xnoremap']
-    exe printf("%s <silent> <Leader>%d
-          \ :<C-u>call TabSwitch('tabnext', %d)<CR>", map, i, i)
-  endfor
-endfor
 " }}}2
 
 " Spell {{{2
