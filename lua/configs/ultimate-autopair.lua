@@ -7,7 +7,7 @@ local _getsmartft = autopair_utils.getsmartft
 ---omitted when it should be `true`
 ---TODO: report this bug to upstream
 ---@diagnostic disable-next-line: duplicate-set-field, unused-local
-autopair_utils.getsmartft = function(o, notree, ...)
+autopair_utils.getsmartft = function(o, _notree, ...)
   return _getsmartft(o, true, ...)
 end
 

@@ -114,15 +114,15 @@ local function md_to_pdf(tbl)
           local fname_pdf = fname:gsub('%.md$', '.pdf')
           table.insert(fname_pdfs, fname_pdf)
         end
-        vim.system({ opts.viewer, unpack(fname_pdfs) }, {}, function(_obj)
-          if _obj.code ~= 0 then
+        vim.system({ opts.viewer, unpack(fname_pdfs) }, {}, function(o)
+          if o.code ~= 0 then
             vim.schedule(function()
               vim.notify(
                 string.format(
                   '[markdown-md2pdf] viewer %s failed with code %d: %s',
                   opts.viewer,
-                  _obj.code,
-                  _obj.stderr
+                  o.code,
+                  o.stderr
                 ),
                 vim.log.levels.ERROR
               )

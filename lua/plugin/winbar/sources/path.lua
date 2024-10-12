@@ -49,7 +49,7 @@ local function get_icon(path)
   file_icon = devicon and devicon .. ' ' or file_icon
   file_icon_hl = devicon_hl
 
-  return file_icon, file_icon_hl, file_name_hl
+  return file_icon, file_icon_hl
 end
 
 ---Convert a path into a winbar symbol
@@ -136,7 +136,8 @@ local function get_symbols(buf, win, _)
   local path_opts = configs.opts.sources.path
   local symbols = {} ---@type winbar_symbol_t[]
   local current_path = normalize((vim.api.nvim_buf_get_name(buf)))
-  local root = normalize(configs.eval(path_opts.relative_to, buf, win))
+  local root =
+    normalize(configs.eval(path_opts.relative_to, buf, win) --[[@as string]])
   while
     current_path
     and current_path ~= '.'

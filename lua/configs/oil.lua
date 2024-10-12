@@ -135,8 +135,7 @@ local function preview()
   local preview_win_height = vim.api.nvim_win_get_height(preview_win)
   local preview_win_width = vim.api.nvim_win_get_width(preview_win)
   local add_syntax = false
-  local lines = {}
-  lines = stat.type == 'directory'
+  local lines = stat.type == 'directory'
       and vim.fn.systemlist('ls -lhA ' .. vim.fn.shellescape(fpath))
     or stat.size == 0 and nopreview(
       'Empty file',
@@ -174,7 +173,7 @@ local function preview()
   -- else change cwd to the parent directory of the file in preview
   vim.api.nvim_win_call(preview_win, function()
     local target_dir = stat.type == 'directory' and fpath or dir
-    if not vim.fn.getcwd(0) ~= target_dir then
+    if vim.fn.getcwd(0) ~= target_dir then
       lcd(target_dir)
     end
     -- Move cursor to the first line of the preview buffer, so that we always

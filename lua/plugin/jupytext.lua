@@ -37,7 +37,7 @@ local function jupytext_convert(buf)
   local prev_sha, cur_sha
   if vim.fn.executable('sha256sum') == 1 then
     if vim.uv.fs_stat(fpath_sha) then
-      for line in io.lines(fpath_sha) do
+      for line in io.lines(fpath_sha) do -- luacheck: ignore 512
         prev_sha = line
         break
       end
@@ -116,7 +116,6 @@ local function jupytext_convert(buf)
     vim.cmd.delete({ range = { 1 }, mods = { emsg_silent = true } })
     if undolevels then
       vim.bo[buf].undolevels = undolevels
-      undolevels = nil
     end
   end
 
@@ -168,8 +167,8 @@ local function jupytext_convert(buf)
             return
           end
           if vim.fn.executable('sha256sum') == 1 then
-            vim.system({ 'sha256sum', fpath_ipynb }, {}, function(_obj)
-              _write_sha(_obj.stdout)
+            vim.system({ 'sha256sum', fpath_ipynb }, {}, function(o)
+              _write_sha(o.stdout)
             end)
           end
         end)

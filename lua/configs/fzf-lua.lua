@@ -92,7 +92,7 @@ function actions.switch_cwd()
     end
     input = vim.fs.normalize(input)
     local stat = vim.uv.fs_stat(input)
-    if not stat or not stat.type == 'directory' then
+    if not stat or stat.type ~= 'directory' then
       print('\n')
       vim.notify(
         '[Fzf-lua] invalid path: ' .. input .. '\n',
@@ -167,7 +167,7 @@ function actions.arg_search_add()
     headers = { 'actions', 'cwd' },
     prompt = 'Argadd> ',
     actions = {
-      ['enter'] = function(selected, _opts)
+      ['enter'] = function(selected, o)
         local cmd = 'argadd'
         vim.ui.input({
           prompt = 'Argadd cmd: ',
@@ -177,7 +177,7 @@ function actions.arg_search_add()
             cmd = input
           end
         end)
-        actions.vimcmd_file(cmd, selected, _opts)
+        actions.vimcmd_file(cmd, selected, o)
         fzf.args(opts)
       end,
       ['esc'] = function()
@@ -305,10 +305,10 @@ fzf.setup({
       local function _restore_global_opt(name)
         local backup_name = '_fzf_' .. name
         local backup = vim.g[backup_name]
-        if backup ~= nil then
+        if backup ~= nil and vim.go[name] ~= backup then
           vim.go[name] = backup
-          vim.g[backup_name] = nil
         end
+        vim.g[backup_name] = nil
       end
 
       _restore_global_opt('splitkeep')

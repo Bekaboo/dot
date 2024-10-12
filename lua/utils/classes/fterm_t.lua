@@ -281,14 +281,14 @@ end
 ---Get the terminal instance by jobid
 ---@param jobid integer
 ---@return fterm_t?
-function fterm_t:get_by_job(jobid)
+function fterm_t:get_by_job(jobid) -- luacheck: ignore 212
   return fterm_list_by_job[jobid]
 end
 
 ---Get the terminal instance by bufnr
 ---@param buf integer
 ---@return fterm_t?
-function fterm_t:get_by_buf(buf)
+function fterm_t:get_by_buf(buf) -- luacheck: ignore 212
   return fterm_list_by_buf[buf]
 end
 

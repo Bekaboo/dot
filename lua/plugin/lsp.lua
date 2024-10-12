@@ -286,7 +286,7 @@ local subcommand_arg_handler = {
   ---@param args lsp_command_parsed_arg_t
   ---@return any
   item = function(args)
-    for _, item in pairs(args) do
+    for _, item in pairs(args) do -- luacheck: ignore 512
       return type(item) == 'string' and vim.uv.fs_realpath(item) or item
     end
   end,

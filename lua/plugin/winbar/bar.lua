@@ -385,7 +385,7 @@ function winbar_t:new(opts)
       }),
       padding = configs.opts.bar.padding,
     }, opts or {}),
-    winbar_t
+    self
   )
   -- vim.tbl_deep_extend drops metatables
   setmetatable(winbar.separator, winbar_symbol_t)

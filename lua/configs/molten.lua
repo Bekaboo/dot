@@ -53,8 +53,8 @@ local deps = {
     vim.system(
       { 'pip', 'show', pkg },
       {},
-      vim.schedule_wrap(function(o)
-        if o.code == 0 then
+      vim.schedule_wrap(function(obj)
+        if obj.code == 0 then
           deps[pkg] = nil
           return
         end
@@ -69,12 +69,12 @@ local deps = {
         vim.system(
           { 'pip', 'install', pkg },
           {},
-          vim.schedule_wrap(function(_o)
-            if _o.code == 0 then
+          vim.schedule_wrap(function(o)
+            if o.code == 0 then
               molten_warn('installed ' .. pkg, vim.log.levels.INFO)
             else
               molten_warn(
-                string.format('failed to install %s: %s', pkg, _o.stderr or '')
+                string.format('failed to install %s: %s', pkg, o.stderr or '')
               )
             end
             deps[pkg] = nil

@@ -213,7 +213,7 @@ function winbar_menu_t:new(opts)
       entries = {},
       win_configs = configs.opts.menu.win_configs,
     }, opts or {}),
-    winbar_menu_t
+    self
   )
   for idx, entry in ipairs(winbar_menu.entries) do
     entry.menu = winbar_menu

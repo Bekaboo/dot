@@ -118,7 +118,7 @@ end
 
 ---@return string
 function statusline.wordcount()
-  local words, wordcount = 0, nil
+  local words, wordcount = 0, nil -- luacheck: ignore 311
   if vim.b.wc_words and vim.b.wc_changedtick == vim.b.changedtick then
     words = vim.b.wc_words
   else

@@ -50,7 +50,7 @@ function M.exec(method, opts)
   opts = opts or {}
   opts.params = opts.params or {}
   local winbars = M.get(opts)
-  if not winbars or vim.tbl_isempty(_winbar) then
+  if not winbars or vim.tbl_isempty(_G._winbar) then
     return
   end
   if opts.win then
