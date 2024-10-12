@@ -145,17 +145,6 @@ vim.keymap.set({ 'n', 'x' }, 'gt', tabswitch(vim.cmd.tabnext))
 vim.keymap.set({ 'n', 'x' }, 'gT', tabswitch(vim.cmd.tabprev))
 vim.keymap.set({ 'n', 'x' }, 'gy', tabswitch(vim.cmd.tabprev)) -- gT is too hard to press
 
-vim.keymap.set({ 'n', 'x' }, '<Leader>0', '<Cmd>0tabnew<CR>')
-vim.keymap.set({ 'n', 'x' }, '<Leader>1', tabswitch(vim.cmd.tabnext, 1))
-vim.keymap.set({ 'n', 'x' }, '<Leader>2', tabswitch(vim.cmd.tabnext, 2))
-vim.keymap.set({ 'n', 'x' }, '<Leader>3', tabswitch(vim.cmd.tabnext, 3))
-vim.keymap.set({ 'n', 'x' }, '<Leader>4', tabswitch(vim.cmd.tabnext, 4))
-vim.keymap.set({ 'n', 'x' }, '<Leader>5', tabswitch(vim.cmd.tabnext, 5))
-vim.keymap.set({ 'n', 'x' }, '<Leader>6', tabswitch(vim.cmd.tabnext, 6))
-vim.keymap.set({ 'n', 'x' }, '<Leader>7', tabswitch(vim.cmd.tabnext, 7))
-vim.keymap.set({ 'n', 'x' }, '<Leader>8', tabswitch(vim.cmd.tabnext, 8))
-vim.keymap.set({ 'n', 'x' }, '<Leader>9', tabswitch(vim.cmd.tabnext, 9))
-
 -- Correct misspelled word / mark as correct
 vim.keymap.set('i', '<C-g>+', '<Esc>[szg`]a')
 vim.keymap.set('i', '<C-g>=', '<C-g>u<Esc>[s1z=`]a<C-G>u')
