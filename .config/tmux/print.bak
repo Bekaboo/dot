@@ -1,0 +1,4 @@
+if '[ ! -d "$TMUX_PLUGIN_MANAGER_PATH/tpm" ]' \
+    'run "git clone https://github.com/tmux-plugins/tpm \
+            \"$TMUX_PLUGIN_MANAGER_PATH/tpm\""; \
+     display -p "Tmp installed, press `I` to install plugins"'
