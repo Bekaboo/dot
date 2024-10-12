@@ -143,7 +143,6 @@ local function tabswitch(tab_action, default_count)
 end
 vim.keymap.set({ 'n', 'x' }, 'gt', tabswitch(vim.cmd.tabnext))
 vim.keymap.set({ 'n', 'x' }, 'gT', tabswitch(vim.cmd.tabprev))
-vim.keymap.set({ 'n', 'x' }, 'gy', tabswitch(vim.cmd.tabprev)) -- gT is too hard to press
 
 -- Correct misspelled word / mark as correct
 vim.keymap.set('i', '<C-g>+', '<Esc>[szg`]a')
