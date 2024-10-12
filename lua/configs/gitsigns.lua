@@ -53,6 +53,7 @@ vim.keymap.set('n', '<leader>gu', gs.undo_stage_hunk)
 vim.keymap.set('n', '<leader>gR', gs.reset_buffer)
 vim.keymap.set('n', '<leader>gp', gs.preview_hunk)
 vim.keymap.set('n', '<leader>gb', gs.blame_line)
+vim.keymap.set('n', '<leader>g<esc>', '<nop>')
 
 vim.keymap.set('x', '<leader>gs', function()
   gs.stage_hunk({

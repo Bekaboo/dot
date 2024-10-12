@@ -67,6 +67,7 @@ vim.keymap.set('n', '<Leader>Gt', w_terminate)
 vim.keymap.set('n', '<Leader>Gr', w_restart)
 vim.keymap.set('n', '<Leader>GB', w_set_cond_breakpoint)
 vim.keymap.set('n', '<Leader>Gl', w_set_logpoint)
+vim.keymap.set('n', '<Leader>G<Esc>', '<Nop>')
 
 -- When there's active dap session, use `<CR>` to repeat the last dap function
 keymap.amend('n', '<CR>', function(fallback)

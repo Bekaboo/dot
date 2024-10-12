@@ -641,6 +641,7 @@ vim.keymap.set('n', '<Leader>f<', fzf.lsp_incoming_calls)
 vim.keymap.set('n', '<Leader>f>', fzf.lsp_outgoing_calls)
 vim.keymap.set('n', '<Leader>fr', fzf.lsp_references)
 vim.keymap.set('n', '<Leader>fR', fzf.lsp_finder)
+vim.keymap.set('n', '<Leader>f<Esc>', '<Nop>')
 
 local _lsp_workspace_symbol = vim.lsp.buf.workspace_symbol
 
