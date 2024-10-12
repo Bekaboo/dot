@@ -92,9 +92,10 @@ function actions.switch_cwd()
       .fnamemodify(opts.cwd, at_home and ':~' or ':p')
       :gsub('^~', '')
       :gsub('^/', ''),
-    cmd = vim.fn.executable('fd') == 1 and [[fd --hidden --type d]]
-      or vim.fn.executable('fdfind') == 1 and [[fdfind --hidden --type d]]
-      or [[find * -type d -print0 | xargs -0 ls -Fd]],
+    cmd = vim.fn.executable('fd') == 1
+        and [[fd --hidden --follow --type d --type l]]
+      or vim.fn.executable('fdfind') == 1 and [[fdfind --hidden --follow --type d --type l]]
+      or [[find -L * -type d -print0 | xargs -0 ls -Fd]],
     fzf_opts = { ['--no-multi'] = true },
     actions = {
       ['enter'] = function(selected)
