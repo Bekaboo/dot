@@ -211,13 +211,8 @@ local function get_tabout_pos()
 end
 
 ---Get the offset of the position where Shift-Tab should jump to
----1. If there is only whitespace characters or no character in between
----   the opening and closing pattern, jump to the end of the whitespace
----   characters (i.e. right before the closing pattern)
----
----		1.1. Special case: if there is exactly two whitespace characters,
----        jump to the middle of the two whitespace characters
----
+---1. If there are only whitespace characters or no characters in between
+---   the opening and closing pattern, jump to the middle of the whitespaces
 ---2. If there is contents (non-whitespace characters) in between the
 ---   opening and closing pattern, jump to the end of the contents
 ---@param leading any leading texts on current line
