@@ -548,10 +548,8 @@ endfunction
 
 nnoremap <silent> gt :<C-u>call TabSwitch('tabnext')<CR>
 nnoremap <silent> gT :<C-u>call TabSwitch('tabprev')<CR>
-nnoremap <silent> gy :<C-u>call TabSwitch('tabprev')<CR>
 xnoremap <silent> gt :<C-u>call TabSwitch('tabnext')<CR>
 xnoremap <silent> gT :<C-u>call TabSwitch('tabprev')<CR>
-xnoremap <silent> gy :<C-u>call TabSwitch('tabprev')<CR>
 " }}}2
 
 " Spell {{{2
