@@ -126,7 +126,7 @@ function actions.switch_cwd()
       end,
       -- Should not change dir or exclude dirs when selecting cwd
       ['alt-c'] = false,
-      ['ctrl-/'] = false,
+      ['alt-/'] = false,
     },
   })
 end
@@ -497,8 +497,10 @@ fzf.setup({
   files = {
     actions = {
       ['alt-c'] = actions.switch_cwd,
-      ['ctrl-/'] = actions.toggle_dir,
-      ['ctrl-g'] = actions.toggle_ignore,
+      ['alt-h'] = actions.toggle_hidden,
+      ['alt-g'] = actions.toggle_ignore,
+      ['alt-/'] = actions.toggle_dir,
+      ['ctrl-g'] = false,
     },
     fzf_opts = {
       ['--info'] = 'inline-right',
@@ -527,6 +529,8 @@ fzf.setup({
   grep = {
     actions = {
       ['alt-c'] = actions.switch_cwd,
+      ['alt-h'] = actions.toggle_hidden,
+      ['alt-g'] = actions.toggle_ignore,
     },
     rg_opts = table.concat({
       '--hidden',
