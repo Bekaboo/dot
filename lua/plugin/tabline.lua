@@ -16,7 +16,7 @@ function _G._tabline.get()
       utils.stl.hl(
         string.format(
           '%%%dT %s %%X',
-          tabid,
+          tabnr,
           vim.t[tabid]._tabname
             or vim.fn.pathshorten(
               vim.fn.fnamemodify(
