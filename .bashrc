@@ -78,9 +78,6 @@ export RIPGREP_CONFIG_PATH=${HOME}/.ripgreprc
 export FZF_DEFAULT_OPTS="--reverse \
     --preview='fzf-file-previewer {}' \
     --preview-window=right,55%,border-sharp,nocycle \
-    --pointer=→ \
-    --prompt=/\  \
-    --marker=+\  \
     --info=inline-right \
     --no-separator \
     --no-scrollbar \
@@ -101,6 +98,13 @@ export FZF_DEFAULT_OPTS="--reverse \
     --bind=alt-{:first,alt-}:last \
     --bind=shift-up:preview-up,shift-down:preview-down \
     --bind=alt-v:preview-half-page-up,ctrl-v:preview-half-page-down"
+
+if [[ -z "$DISPLAY" ]]; then
+    export FZF_DEFAULT_OPTS=$(echo "$FZF_DEFAULT_OPTS" \
+        '--no-unicode' \
+        '--marker=+\ ' \
+        '--pointer=→\ ')
+fi
 
 if __has fd; then
     export FZF_DEFAULT_COMMAND='fd -p -H -L -td -tf -tl --mount -c=always'
