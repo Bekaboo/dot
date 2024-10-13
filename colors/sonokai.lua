@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Thu Oct 10 12:02:44 AM EDT 2024
+-- Last Updated: Sun Oct 13 07:10:13 AM EDT 2024
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -17,10 +17,8 @@ local c_bg1
 local c_bg2
 local c_bg3
 local c_bg4
-local c_bg_red
 local c_diff_red
 local c_diff_green
-local c_bg_blue
 local c_diff_blue
 local c_fg
 local c_red
@@ -39,10 +37,8 @@ if vim.go.bg == 'dark' then
   c_bg2         = { '#363944',   236    }
   c_bg3         = { '#3b3e48',   237    }
   c_bg4         = { '#414550',   237    }
-  c_bg_red      = { '#c64b5d',   203    }
   c_diff_red    = { '#55393d',   52     }
   c_diff_green  = { '#40463e',   22     }
-  c_bg_blue     = { '#85d3f2',   110    }
   c_diff_blue   = { '#354157',   17     }
   c_fg          = { '#e2e2e3',   250    }
   c_red         = { '#fc5d7c',   203    }
@@ -60,10 +56,8 @@ else
   c_bg2         = { '#dfe3e3',   252    }
   c_bg3         = { '#d1d4d4',   253    }
   c_bg4         = { '#c8cbcb',   254    }
-  c_bg_red      = { '#f35c73',   203    }
   c_diff_red    = { '#ffc1ce',   204    }
   c_diff_green  = { '#cde2b7',   40     }
-  c_bg_blue     = { '#77bcd8',   110    }
   c_diff_blue   = { '#afd5e0',   17     }
   c_fg          = { '#181819',   232    }
   c_red         = { '#d44e69',   203    }
@@ -87,7 +81,7 @@ vim.g.terminal_color_2  = c_green[1]
 vim.g.terminal_color_3  = c_yellow[1]
 vim.g.terminal_color_4  = c_blue[1]
 vim.g.terminal_color_5  = c_purple[1]
-vim.g.terminal_color_6  = c_bg_blue[1]
+vim.g.terminal_color_6  = c_blue[1]
 vim.g.terminal_color_7  = c_fg[1]
 vim.g.terminal_color_8  = c_grey[1]
 vim.g.terminal_color_9  = c_red[1]
@@ -95,7 +89,7 @@ vim.g.terminal_color_10 = c_green[1]
 vim.g.terminal_color_11 = c_yellow[1]
 vim.g.terminal_color_12 = c_blue[1]
 vim.g.terminal_color_13 = c_purple[1]
-vim.g.terminal_color_14 = c_bg_blue[1]
+vim.g.terminal_color_14 = c_blue[1]
 vim.g.terminal_color_15 = c_fg[1]
 vim.g.terminal_color_16 = c_orange[1]
 vim.g.terminal_color_17 = c_orange[1]
@@ -123,7 +117,7 @@ local hlgroups = {
   DiffNewFile = { fg = c_orange },
   DiffOldFile = { fg = c_yellow },
   DiffRemoved = { fg = c_red },
-  DiffText = { bg = c_bg_blue, fg = c_bg0 },
+  DiffText = { bg = c_blue, fg = c_bg0 },
   Directory = { fg = c_green },
   EndOfBuffer = { fg = c_bg4 },
   ErrorMsg = { fg = c_red },
@@ -133,7 +127,7 @@ local hlgroups = {
   FoldColumn = { fg = c_grey_dim },
   Folded = { bg = c_bg1, fg = c_grey },
   Ignore = { fg = c_grey },
-  IncSearch = { bg = c_bg_red, fg = c_bg0 },
+  IncSearch = { bg = c_red, fg = c_bg0 },
   LineNr = { fg = c_grey_dim },
   MatchParen = { bg = c_bg4 },
   ModeMsg = { bold = true },
@@ -149,7 +143,7 @@ local hlgroups = {
   PmenuKind = { fg = c_green, bg = c_bg2 },
   PmenuKindSel = { link = 'PmenuSel' },
   PmenuSbar = { bg = c_bg2 },
-  PmenuSel = { bg = c_bg_blue, fg = c_bg0 },
+  PmenuSel = { bg = c_blue, fg = c_bg0 },
   PmenuThumb = { bg = c_grey },
   Question = { fg = c_yellow },
   QuickFixLine = { bg = c_blue, fg = c_bg0 },
@@ -164,10 +158,10 @@ local hlgroups = {
   Substitute = { bg = c_yellow, fg = c_bg0 },
   TabLine = { bg = c_bg4, fg = c_fg },
   TabLineFill = { bg = c_bg1, fg = c_grey },
-  TabLineSel = { bg = c_bg_red, fg = c_bg0 },
+  TabLineSel = { bg = c_red, fg = c_bg0 },
   TermCursor = { bg = c_orange, fg = c_bg0 },
   TermCursorNC = { bg = c_grey, fg = c_bg0 },
-  Title = { bold = true, fg = c_bg_red },
+  Title = { bold = true, fg = c_red },
   Underlined = { underline = true },
   VertSplit = { fg = c_bg4 },
   Visual = { bg = c_bg3 },
@@ -201,7 +195,7 @@ local hlgroups = {
   SpecialKey = { fg = c_purple },
   Statement = { fg = c_red },
   String = { fg = c_yellow },
-  Todo = { bg = c_bg_blue, fg = c_bg0, bold = true },
+  Todo = { bg = c_blue, fg = c_bg0, bold = true },
   Type = { fg = c_blue },
   Typedef = { fg = c_red },
   -- }}}2
@@ -459,7 +453,7 @@ local hlgroups = {
   GitSignsDelete = { fg = c_red },
   GitSignsDeleteNr = { fg = c_red },
   GitSignsDeletePreview = { bg = c_diff_red },
-  GitSignsDeleteInline = { bg = c_bg_red, fg = c_bg0 },
+  GitSignsDeleteInline = { bg = c_red, fg = c_bg0 },
 
   -- fugitive
   fugitiveHash = { link = 'gitHash' },
