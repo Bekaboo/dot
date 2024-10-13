@@ -319,6 +319,10 @@ oil.setup({
       add_padding = false,
     },
   },
+  buf_options = {
+    buflisted = false,
+    bufhidden = 'hide',
+  },
   win_options = {
     number = false,
     relativenumber = false,
@@ -421,6 +425,15 @@ oil.setup({
 })
 
 local groupid = vim.api.nvim_create_augroup('OilSyncCwd', {})
+vim.api.nvim_create_autocmd('BufEnter', {
+  desc = 'Ensure that oil buffers are not listed.',
+  group = groupid,
+  pattern = 'oil://*',
+  callback = function(info)
+    vim.bo[info.buf].buflisted = false
+  end,
+})
+
 vim.api.nvim_create_autocmd({ 'BufEnter', 'TextChanged' }, {
   desc = 'Set cwd to follow directory shown in oil buffers.',
   group = groupid,
