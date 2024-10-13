@@ -118,21 +118,44 @@ end
 
 ---@return string
 function statusline.wordcount()
-  local words, wordcount = 0, nil -- luacheck: ignore 311
-  if vim.b.wc_words and vim.b.wc_changedtick == vim.b.changedtick then
-    words = vim.b.wc_words
+  local stats = nil
+  local nwords, nchars = 0, 0 -- luacheck: ignore 311
+  if
+    vim.b.wc_words
+    and vim.b.wc_chars
+    and vim.b.wc_changedtick == vim.b.changedtick
+  then
+    nwords = vim.b.wc_words
+    nchars = vim.b.wc_chars
   else
-    wordcount = vim.fn.wordcount()
-    words = wordcount.words
-    vim.b.wc_words = words
+    stats = vim.fn.wordcount()
+    nwords = stats.words
+    nchars = stats.chars
+    vim.b.wc_words = nwords
+    vim.b.wc_chars = nchars
     vim.b.wc_changedtick = vim.b.changedtick
   end
-  local vwords = vim.fn.mode():find('^[vsVS\x16\x13]')
-    and (wordcount or vim.fn.wordcount()).visual_words
-  return words == 0 and ''
-    or (vwords and vwords > 0 and vwords .. '/' or '')
-      .. words
-      .. (words > 1 and ' words' or ' word')
+
+  local vwords, vchars = 0, 0
+  if vim.fn.mode():find('^[vsVS\x16\x13]') then
+    stats = stats or vim.fn.wordcount()
+    vwords = stats.visual_words
+    vchars = stats.visual_chars
+  end
+
+  if nwords == 0 and nchars == 0 then
+    return ''
+  end
+
+  return string.format(
+    '%s%d word%s, %s%d char%s',
+    vwords > 0 and vwords .. '/' or '',
+    nwords,
+    nwords > 1 and 's' or '',
+    vchars > 0 and vchars .. '/' or '',
+    nchars,
+    nchars > 1 and 's' or ''
+  )
 end
 
 ---Record file name of normal buffers, key:val = fname:buffers_with_fname
