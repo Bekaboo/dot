@@ -4,6 +4,7 @@ local core = require('fzf-lua.core')
 local path = require('fzf-lua.path')
 local config = require('fzf-lua.config')
 local utils = require('utils')
+local icons = require('utils.static.icons')
 
 local _arg_del = actions.arg_del
 local _vimcmd_buf = actions.vimcmd_buf
@@ -299,7 +300,7 @@ end
 fzf.setup({
   -- Use nbsp in tty to avoid showing box chars
   nbsp = not vim.g.modern_ui and '\xc2\xa0' or nil,
-  dir_icon = vim.trim(utils.static.icons.Folder),
+  dir_icon = vim.trim(icons.Folder),
   winopts = {
     backdrop = 100,
     split = [[
@@ -537,9 +538,9 @@ fzf.setup({
     ['--no-separator'] = '',
     ['--info'] = 'inline-right',
     ['--layout'] = 'reverse',
-    ['--marker'] = '+',
-    ['--pointer'] = '→',
-    ['--prompt'] = '/ ',
+    ['--no-unicode'] = not vim.g.nf,
+    ['--marker'] = not vim.g.nf and vim.trim(icons.GitSignAdd) or nil,
+    ['--pointer'] = not vim.g.nf and vim.trim(icons.ArrowRight) or nil,
     ['--border'] = 'none',
     ['--padding'] = '0,1',
     ['--margin'] = '0',
@@ -588,7 +589,7 @@ fzf.setup({
     },
     symbols = {
       symbol_style = vim.g.nf and 1 or 3,
-      symbol_icons = vim.tbl_map(vim.trim, utils.static.icons.kinds),
+      symbol_icons = vim.tbl_map(vim.trim, icons.kinds),
       symbol_hl = function(sym_name)
         return 'FzfLuaSym' .. sym_name
       end,
