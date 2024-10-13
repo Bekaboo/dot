@@ -57,7 +57,8 @@ function _G._tabline.setup()
   -- 2. When `[name]` is omitted, fallback to default name (cwd)
   vim.api.nvim_create_user_command('TabRename', function(opts)
     _G._tabline.rename(
-      vim.api.nvim_list_tabpages()[opts.count == -1 and vim.api.nvim_get_current_tabpage() or opts.count],
+      opts.count == -1 and vim.api.nvim_get_current_tabpage()
+        or vim.api.nvim_list_tabpages()[opts.count],
       opts.fargs[1]
     )
   end, {
