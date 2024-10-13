@@ -104,6 +104,11 @@ function actions.switch_cwd()
       or [[find -L * -type d -print0 | xargs -0 ls -Fd]],
     -- stylua: ignore end
     fzf_opts = { ['--no-multi'] = true },
+    winopts = {
+      preview = {
+        hidden = 'hidden',
+      },
+    },
     actions = {
       ['enter'] = function(selected)
         opts.cwd = vim.fs.normalize(
