@@ -65,11 +65,19 @@ vim.api.nvim_create_autocmd('BufReadPre', { once = true, callback = _rshada })
 opt.formatoptions:append('n')
 
 -- Spell check
-vim.opt.spell = true
-vim.opt.spellcapcheck = ''
-vim.opt.spelllang = 'en,cjk'
-vim.opt.spelloptions = 'camel'
-vim.opt.spellsuggest = 'best,9'
+vim.api.nvim_create_autocmd('UIEnter', {
+  once = true,
+  callback = function()
+    vim.schedule(function()
+      vim.opt.spell = true
+      vim.opt.spellcapcheck = ''
+      vim.opt.spelllang = 'en,cjk'
+      vim.opt.spelloptions = 'camel'
+      vim.opt.spellsuggest = 'best,9'
+    end)
+    return true
+  end,
+})
 
 -- Cursor shape
 opt.gcr = {
