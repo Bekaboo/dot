@@ -185,7 +185,14 @@ local function enable_modules(module_names)
     },
     checker = { enabled = false },
     change_detection = { notify = false },
-    install = { colorscheme = { 'macro', 'nano', 'cockatoo' } },
+    install = {
+      colorscheme = {
+        'nano',
+        'macro',
+        'sonokai',
+        'cockatoo',
+      },
+    },
   })
 end
 
