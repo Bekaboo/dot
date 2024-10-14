@@ -139,9 +139,22 @@ local function override()
 end
 
 ---Enable modules
----@param module_names string[]
+---@param module_names string[]? when omitted, enable all modules under `lua/modules`
 local function enable_modules(module_names)
-  local config = {
+  if not module_names then
+    module_names = {}
+    for item in vim.fs.dir(vim.fs.joinpath(conf_path, 'lua/modules')) do
+      table.insert(module_names, vim.fn.fnamemodify(item, ':r'))
+    end
+  end
+
+  local modules = {}
+  for _, module_name in ipairs(module_names) do
+    vim.list_extend(modules, require('modules.' .. module_name))
+  end
+
+  override()
+  require('lazy').setup(modules, {
     root = vim.g.package_path,
     lockfile = vim.g.package_lock,
     ui = {
@@ -173,13 +186,7 @@ local function enable_modules(module_names)
     checker = { enabled = false },
     change_detection = { notify = false },
     install = { colorscheme = { 'macro', 'nano', 'cockatoo' } },
-  }
-  local modules = {}
-  for _, module_name in ipairs(module_names) do
-    vim.list_extend(modules, require('modules.' .. module_name))
-  end
-  override()
-  require('lazy').setup(modules, config)
+  })
 end
 
 if not bootstrap() then
@@ -245,15 +252,5 @@ if vim.g.vscode then
     'treesitter',
   })
 else
-  enable_modules({
-    'lib',
-    'edit',
-    'debug',
-    'langs',
-    'tools',
-    'markup',
-    'completion',
-    'treesitter',
-    'colorschemes',
-  })
+  enable_modules()
 end
