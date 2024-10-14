@@ -51,15 +51,15 @@ end
 
 ---Restore 'shada' option and read from shada once
 ---@return true
-local function _rshada()
+local function rshada()
   vim.cmd.set('shada&')
   pcall(vim.cmd.rshada)
   return true
 end
 
 opt.shada = ''
-vim.defer_fn(_rshada, 100)
-vim.api.nvim_create_autocmd('BufReadPre', { once = true, callback = _rshada })
+vim.defer_fn(rshada, 100)
+vim.api.nvim_create_autocmd('BufReadPre', { once = true, callback = rshada })
 
 -- Recognize numbered lists when formatting text
 opt.formatoptions:append('n')
@@ -169,7 +169,7 @@ env.FZF_DEFAULT_OPTS = (env.FZF_DEFAULT_OPTS or '')
 ---@param runtime string
 ---@param flag string
 ---@param events string|string[]
-local function _load(runtime, flag, events)
+local function load(runtime, flag, events)
   if g[flag] and g[flag] ~= 0 then
     return
   end
@@ -204,13 +204,13 @@ local function _load(runtime, flag, events)
   end
 end
 
-_load('plugin/rplugin.vim', 'loaded_remote_plugins', {
+load('plugin/rplugin.vim', 'loaded_remote_plugins', {
   'FileType',
   'BufNew',
   'BufWritePost',
   'BufReadPre',
 })
-_load('provider/python3.vim', 'loaded_python3_provider', {
+load('provider/python3.vim', 'loaded_python3_provider', {
   'FileType python',
   'BufNew *.py,*.ipynb',
   'BufEnter *.py,*.ipynb',
