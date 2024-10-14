@@ -47,6 +47,15 @@ vim.api.nvim_create_autocmd('User', {
   end,
 })
 
+vim.api.nvim_create_autocmd('BufEnter', {
+  desc = 'Ensure that fugitive buffers are not listed and are wiped out after hidden.',
+  group = groupid,
+  pattern = 'fugitive://*',
+  callback = function(info)
+    vim.bo[info.buf].buflisted = false
+  end,
+})
+
 vim.api.nvim_create_autocmd('FileType', {
   desc = 'Set buffer-local options for fugitive buffers.',
   group = groupid,
