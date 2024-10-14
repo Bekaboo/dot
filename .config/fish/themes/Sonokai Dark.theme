@@ -29,7 +29,7 @@ fish_color_quote                     e7c664
 fish_color_redirection               e7c664
 fish_color_search_match                     --reverse
 fish_color_selection                 e2e2e3 --background=3b3e48
-fish_color_status                    e2e2e3 --background=fc5d7c
+fish_color_status                    181819 --background=fc5d7c
 fish_color_status_0                  181819 --background=b29df3
 fish_color_user                      b39df3
 fish_color_valid_path                76cce0

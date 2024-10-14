@@ -29,8 +29,8 @@ fish_color_quote                     be9b44
 fish_color_redirection               be9b44
 fish_color_search_match                     --reverse
 fish_color_selection                 181819 --background=d1d4d4
-fish_color_status                    181819 --background=d44e69
-fish_color_status_0                  181819 --background=b29df3
+fish_color_status                    e2e2e3 --background=d44e69
+fish_color_status_0                  e2e2e3 --background=b29df3
 fish_color_user                      a793e3
 fish_color_valid_path                77bcd8
 fish_color_vcs                       7f8490
