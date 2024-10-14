@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Sun Oct 13 07:10:13 AM EDT 2024
+-- Last Updated: Mon Oct 14 01:08:14 PM PDT 2024
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -133,7 +133,7 @@ local hlgroups = {
   ModeMsg = { bold = true },
   MoreMsg = { fg = c_blue, bold = true },
   MsgSeparator = { link = 'StatusLine' },
-  NonText = { fg = c_bg4 },
+  NonText = { fg = c_grey },
   Normal = { bg = c_bg0, fg = c_fg },
   NormalFloat = { bg = c_bg2, fg = c_fg },
   NormalNC = { link = 'Normal' },
