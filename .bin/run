@@ -3,12 +3,8 @@
 
 build() {
     case "$1" in
-    *.c)
-        gcc "$1" -o "$2"
-        ;;
-    *.cpp)
-        g++ "$1" -o "$2"
-        ;;
+    *.c) gcc "$1" -o "$2" ;;
+    *.cpp) g++ "$1" -o "$2" ;;
     esac
 }
 
@@ -17,19 +13,21 @@ exec() {
 }
 
 main() {
-    FILE=$(fullpath "$1")
-    RUN_FILE=$(echo "$FILE" | sed -E 's/\.(c|cpp)$/.run/')
-    if [[ "$FILE" == "$RUN_FILE" ]]; then
+    local src=$(fullpath "$1")
+    local executable=$(echo "$src" | sed -E 's/\.(c|cpp)$/.run/')
+    if [[ "$src" == "$executable" ]]; then
         echo >&2 "run: error: file name cannot be the same as the run file name"
         exit 1
     fi
-    build "$FILE" "$RUN_FILE"
-    if [[ ! -f "$RUN_FILE" ]]; then
+
+    build "$src" "$executable"
+    if [[ ! -f "$executable" ]]; then
         echo >&2 "run: error: cannot remove run file because it does not exist"
         exit 1
     fi
-    exec "$RUN_FILE"
-    rm "$RUN_FILE"
+
+    exec "$executable"
+    rm "$executable"
 }
 
 main "$1"
