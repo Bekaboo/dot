@@ -93,8 +93,13 @@ function actions.switch_cwd()
       .fnamemodify(opts.cwd, at_home and ':~' or ':p')
       :gsub('^~', '')
       :gsub('^/', ''),
+    -- Append current dir '././' to the result list to allow switching to home
+    -- or root directory
+    -- Use '././' instead of './' to ensure that './' is shown in the result
+    -- list
     -- stylua: ignore start
-    cmd = vim.fn.executable('fd') == 1
+    cmd = string.format([[%s | sed '1i ././']],
+      vim.fn.executable('fd') == 1
         and ([[fd --hidden --follow --type d --type l]]
           .. (vim.fn.executable('rg') == 1 and [[| rg /$]]
               or vim.fn.executable('grep') == 1 and [[| grep /$]]))
@@ -102,7 +107,8 @@ function actions.switch_cwd()
         and ([[fdfind --hidden --follow --type d --type l]]
           .. (vim.fn.executable('rg') == 1 and [[| rg /$]]
               or vim.fn.executable('grep') == 1 and [[| grep /$]]))
-      or [[find -L * -type d -print0 | xargs -0 ls -Fd]],
+      or [[find -L * -type d -print0 | xargs -0 ls -Fd]]
+    ),
     -- stylua: ignore end
     fzf_opts = { ['--no-multi'] = true },
     winopts = {
