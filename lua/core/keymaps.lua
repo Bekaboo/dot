@@ -123,6 +123,10 @@ vim.keymap.set({ 'i' }, '<Up>',   '<Cmd>norm! g<Up><CR>')
 vim.keymap.set('n', ']b', '<Cmd>exec v:count1 . "bn"<CR>')
 vim.keymap.set('n', '[b', '<Cmd>exec v:count1 . "bp"<CR>')
 
+-- Quickfix list navigation
+vim.keymap.set('n', '[q', '<Cmd>exec v:count1 . "cp"<CR>')
+vim.keymap.set('n', ']q', '<Cmd>exec v:count1 . "cn"<CR>')
+
 -- Tabpages
 ---@param tab_action function
 ---@param default_count number?
