@@ -1417,7 +1417,8 @@ local function setup_lsp_autoformat()
     timeout_ms = 500,
   }) ---@type bufopt_t
 
-  vim.api.nvim_create_autocmd('BufWritePre', {
+  -- Automatically format code on buf save and insert leave
+  vim.api.nvim_create_autocmd({ 'BufWritePre', 'InsertLeave' }, {
     desc = 'LSP auto format.',
     group = vim.api.nvim_create_augroup('LspAutoFmt', {}),
     callback = function(info)
