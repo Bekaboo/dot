@@ -549,7 +549,7 @@ local subcommands = {
         ['async'] = subcommand_opt_vals.bool,
       },
     },
-    format_on_save = {
+    auto_format = {
       ---@param args lsp_command_parsed_arg_t
       ---@param tbl table information passed to the command
       ---@return lsp_command_parsed_arg_t args
@@ -585,8 +585,8 @@ local subcommands = {
       ---@param args lsp_command_parsed_arg_t
       ---@param tbl table information passed to the command
       fn_override = function(args, tbl)
-        local enabled = utils.classes.bufopt_t:new('lsp_fmt_on_save_enabled') ---@type bufopt_t
-        local fmtopts = utils.classes.bufopt_t:new('lsp_fmt_on_save_opts') ---@type bufopt_t
+        local enabled = utils.classes.bufopt_t:new('lsp_autofmt_enabled') ---@type bufopt_t
+        local fmtopts = utils.classes.bufopt_t:new('lsp_autofmt_opts') ---@type bufopt_t
         if tbl.bang or vim.tbl_contains(args, 'toggle') then
           enabled:scope_action(args, 'toggle')
         elseif tbl.fargs[1] == '&' or vim.tbl_contains(args, 'reset') then
@@ -601,7 +601,7 @@ local subcommands = {
           enabled:scope_action(args, 'set', false)
         else
           enabled:scope_action(args, 'set', true)
-          vim.notify('[LSP] format on save enabled')
+          vim.notify('[LSP] auto format enabled')
         end
         if args.format then
           fmtopts:scope_action(
@@ -1410,16 +1410,16 @@ local function setup_commands(meta, subcommand_info_list, fn_scope)
 end
 
 ---@return nil
-local function setup_lsp_format_on_save()
-  local enabled = utils.classes.bufopt_t:new('lsp_fmt_on_save_enabled', false) ---@type bufopt_t
-  local fmtopts = utils.classes.bufopt_t:new('lsp_fmt_on_save_opts', {
+local function setup_lsp_autoformat()
+  local enabled = utils.classes.bufopt_t:new('lsp_autofmt_enabled', false) ---@type bufopt_t
+  local fmtopts = utils.classes.bufopt_t:new('lsp_autofmt_opts', {
     async = true,
     timeout_ms = 500,
   }) ---@type bufopt_t
 
   vim.api.nvim_create_autocmd('BufWritePre', {
-    desc = 'LSP format on save.',
-    group = vim.api.nvim_create_augroup('LspFmtOnSave', {}),
+    desc = 'LSP auto format.',
+    group = vim.api.nvim_create_augroup('LspAutoFmt', {}),
     callback = function(info)
       if enabled:get(info.buf) then
         vim.lsp.buf.format(fmtopts:get(info.buf))
@@ -1493,7 +1493,7 @@ local function setup()
   end
   vim.g.loaded_lsp_diags = true
   setup_lsp_overrides()
-  setup_lsp_format_on_save()
+  setup_lsp_autoformat()
   setup_lsp_stopdetached()
   setup_diagnostic()
   setup_keymaps()
