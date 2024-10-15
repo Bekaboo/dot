@@ -1,3 +1,7 @@
+if not status is-interactive
+    return
+end
+
 # Source:
 # https://stackoverflow.com/questions/65722822/fish-shell-add-newline-before-prompt-only-when-previous-output-exists
 function postexec_apppend_newline --on-event fish_postexec \

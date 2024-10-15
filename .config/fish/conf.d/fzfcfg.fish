@@ -1,6 +1,6 @@
 # fzf settings for fish
 
-if not type -q fzf_key_bindings
+if not status is-interactive; or not type -q fzf_key_bindings
     return
 end
 

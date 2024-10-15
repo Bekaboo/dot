@@ -1,3 +1,7 @@
+if not status is-interactive
+    return
+end
+
 function __auto_ls \
         --on-variable PWD \
         --description 'List directory contents after changing cwd'
