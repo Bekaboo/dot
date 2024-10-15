@@ -1,3 +1,7 @@
+if not status is-interactive
+    return
+end
+
 # Spell fix abbreviation
 set -g __spellfix_pairs \
     'ture true'   \
