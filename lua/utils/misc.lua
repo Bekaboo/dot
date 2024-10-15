@@ -112,11 +112,6 @@ function M.qftf(info)
     or '%s│%s:%s%s%s│ %s'
 
   local function _fill_item(idx, item)
-    if item.valid == 0 then
-      table.insert(lines, '')
-      return
-    end
-
     local fname = fname_str_cache[idx]
     local fname_cur_width = fname_width_cache[idx]
 
