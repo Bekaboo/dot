@@ -7,16 +7,30 @@ if not status is-interactive
     return
 end
 
+# Custom `$fisher_path` settings
+set -l data_home (test -n "$XDG_DATA_HOME";
+                  and echo "$XDG_DATA_HOME";
+                  or echo "$HOME/.local/share")
+set -Ux fisher_path "$data_home/fish/plugin"
+
+set -Ux fish_function_path $fish_function_path[1] "$fisher_path/functions" $fish_function_path[2..-1]
+set -Ux fish_complete_path $fish_complete_path[1] "$fisher_path/completions" $fish_complete_path[2..-1]
+for file in $fisher_path/conf.d/*.fish
+    source $file
+end
+
+# Early return if we already have fisher loaded
 if type -q fisher
     return
 end
 
+# Else try bootstrap fisher & plugins
 set -l state_home (test -n "$XDG_STATE_HOME";
                     and echo "$XDG_STATE_HOME";
                     or echo "$HOME/.local/state")
 set -l fish_state_dir "$state_home/fish"
 
-# Previously asked to not install fisher
+# Previously asked to not install fisher, abort
 if test -f "$fish_state_dir/no-bootstrap"
     return
 end
