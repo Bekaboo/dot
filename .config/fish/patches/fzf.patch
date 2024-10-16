@@ -1,0 +1,102 @@
+diff --git a/completions/fzf_configure_bindings.fish b/completions/fzf_configure_bindings.fish
+index b38ef92..41f7ac3 100644
+--- a/completions/fzf_configure_bindings.fish
++++ b/completions/fzf_configure_bindings.fish
+@@ -3,6 +3,7 @@ complete fzf_configure_bindings --long help --short h --description "Print help"
+ complete fzf_configure_bindings --long directory --description "Change the key binding for Search Directory" --condition "not __fish_seen_argument --directory"
+ complete fzf_configure_bindings --long git_log --description "Change the key binding for Search Git Log" --condition "not __fish_seen_argument --git_log"
+ complete fzf_configure_bindings --long git_status --description "Change the key binding for Search Git Status" --condition "not __fish_seen_argument --git_status"
++complete fzf_configure_bindings --long git_stash --description "Change the key binding for Search Git Stash" --condition "not __fish_seen_argument --git_stash"
+ complete fzf_configure_bindings --long history --description "Change the key binding for Search History" --condition "not __fish_seen_argument --history"
+ complete fzf_configure_bindings --long processes --description "Change the key binding for Search Processes" --condition "not __fish_seen_argument --processes"
+ complete fzf_configure_bindings --long variables --description "Change the key binding for Search Variables" --condition "not __fish_seen_argument --variables"
+diff --git a/functions/_fzf_configure_bindings_help.fish b/functions/_fzf_configure_bindings_help.fish
+index ecfe68e..7b72068 100644
+--- a/functions/_fzf_configure_bindings_help.fish
++++ b/functions/_fzf_configure_bindings_help.fish
+@@ -14,6 +14,7 @@ DESCRIPTION
+         Search Directory   |  Ctrl+Alt+F (F for file)      |  --directory
+         Search Git Log     |  Ctrl+Alt+L (L for log)       |  --git_log
+         Search Git Status  |  Ctrl+Alt+S (S for status)    |  --git_status
++        Search Git Stash   |  Ctrl+Alt+H (H for stash)     |  --git_status
+         Search History     |  Ctrl+R     (R for reverse)   |  --history
+         Search Processes   |  Ctrl+Alt+P (P for process)   |  --processes
+         Search Variables   |  Ctrl+V     (V for variable)  |  --variables
+diff --git a/functions/_fzf_search_git_stash.fish b/functions/_fzf_search_git_stash.fish
+new file mode 100644
+index 0000000..460ebd3
+--- /dev/null
++++ b/functions/_fzf_search_git_stash.fish
+@@ -0,0 +1,26 @@
++function _fzf_search_git_stash --description "Search the output of git stash show"
++    if not git rev-parse --git-dir >/dev/null 2>&1
++        echo '_fzf_search_git_stash: Not in a git repository.' >&2
++        return
++    end
++
++    if not set --query fzf_git_log_format
++        # %h gives you the abbreviated commit hash, which is useful for saving screen space, but we will have to expand it later below
++        set fzf_git_log_format '%C(bold blue)%h%C(reset) - %C(cyan)%ad%C(reset) %C(yellow)%d%C(reset) %C(normal)%s%C(reset)  %C(dim normal)[%an]%C(reset)'
++    end
++    set selected_stash_line (
++            git stash list --no-show-signature --color=always --format=format:$fzf_git_log_format --date=short | nl -v 0 -w 3 -s ' ' | \
++            _fzf_wrapper --ansi \
++                --tiebreak=index \
++                --prompt="Search Git Stash> " \
++                --preview='git stash show --color=always --stat --patch {2}' \
++                --query=(commandline --current-token) \
++                $fzf_git_log_opts
++        )
++    if test $status -eq 0
++        set stash_index (string trim $selected_stash_line | string split --field 1 ' ')
++        commandline --current-token --replace stash@\{$stash_index\}
++    end
++
++    commandline --function repaint
++end
+diff --git a/functions/fzf_configure_bindings.fish b/functions/fzf_configure_bindings.fish
+index 4b4e7a2..6438ebd 100644
+--- a/functions/fzf_configure_bindings.fish
++++ b/functions/fzf_configure_bindings.fish
+@@ -4,7 +4,7 @@ function fzf_configure_bindings --description "Installs the default key bindings
+     # no need to install bindings if not in interactive mode or running tests
+     status is-interactive || test "$CI" = true; or return
+ 
+-    set -f options_spec h/help 'directory=?' 'git_log=?' 'git_status=?' 'history=?' 'processes=?' 'variables=?'
++    set -f options_spec h/help 'directory=?' 'git_log=?' 'git_status=?' 'git_stash=?' 'history=?' 'processes=?' 'variables=?'
+     argparse --max-args=0 --ignore-unknown $options_spec -- $argv 2>/dev/null
+     if test $status -ne 0
+         echo "Invalid option or a positional argument was provided." >&2
+@@ -16,13 +16,14 @@ function fzf_configure_bindings --description "Installs the default key bindings
+     else
+         # Initialize with default key sequences and then override or disable them based on flags
+         # index 1 = directory, 2 = git_log, 3 = git_status, 4 = history, 5 = processes, 6 = variables
+-        set -f key_sequences \e\cf \e\cl \e\cs \cr \e\cp \cv # \c = control, \e = escape
++        set -f key_sequences \e\cf \e\cl \e\cs \e\ch \cr \e\cp \cv # \c = control, \e = escape
+         set --query _flag_directory && set key_sequences[1] "$_flag_directory"
+         set --query _flag_git_log && set key_sequences[2] "$_flag_git_log"
+         set --query _flag_git_status && set key_sequences[3] "$_flag_git_status"
+-        set --query _flag_history && set key_sequences[4] "$_flag_history"
+-        set --query _flag_processes && set key_sequences[5] "$_flag_processes"
+-        set --query _flag_variables && set key_sequences[6] "$_flag_variables"
++        set --query _flag_git_stash && set key_sequences[4] "$_flag_git_stash"
++        set --query _flag_history && set key_sequences[5] "$_flag_history"
++        set --query _flag_processes && set key_sequences[6] "$_flag_processes"
++        set --query _flag_variables && set key_sequences[7] "$_flag_variables"
+ 
+         # If fzf bindings already exists, uninstall it first for a clean slate
+         if functions --query _fzf_uninstall_bindings
+@@ -33,9 +34,10 @@ function fzf_configure_bindings --description "Installs the default key bindings
+             test -n $key_sequences[1] && bind --mode $mode $key_sequences[1] _fzf_search_directory
+             test -n $key_sequences[2] && bind --mode $mode $key_sequences[2] _fzf_search_git_log
+             test -n $key_sequences[3] && bind --mode $mode $key_sequences[3] _fzf_search_git_status
+-            test -n $key_sequences[4] && bind --mode $mode $key_sequences[4] _fzf_search_history
+-            test -n $key_sequences[5] && bind --mode $mode $key_sequences[5] _fzf_search_processes
+-            test -n $key_sequences[6] && bind --mode $mode $key_sequences[6] "$_fzf_search_vars_command"
++            test -n $key_sequences[4] && bind --mode $mode $key_sequences[4] _fzf_search_git_stash
++            test -n $key_sequences[5] && bind --mode $mode $key_sequences[5] _fzf_search_history
++            test -n $key_sequences[6] && bind --mode $mode $key_sequences[6] _fzf_search_processes
++            test -n $key_sequences[7] && bind --mode $mode $key_sequences[7] "$_fzf_search_vars_command"
+         end
+ 
+         function _fzf_uninstall_bindings --inherit-variable key_sequences

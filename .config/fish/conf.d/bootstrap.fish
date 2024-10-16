@@ -19,6 +19,19 @@ for file in $fisher_path/conf.d/*.fish
     source $file
 end
 
+# Patch plugins after installing or upgrading plugins
+# Patch fzf
+function patch_fzf --on-event fzf_install --on-event fzf_update
+    set -l patch_dir "$__fish_config_dir/patches"
+    set -l patch_file "$patch_dir/fzf.patch"
+    if not test -d "$patch_dir"; or not test -f "$patch_file"
+        return
+    end
+
+    patch -Rsfd "$fisher_path" -p1 -i "$patch_file" &>/dev/null
+    patch -fd "$fisher_path" -p1 -i "$patch_file"
+end
+
 # Early return if we already have fisher loaded
 if type -q fisher
     return
