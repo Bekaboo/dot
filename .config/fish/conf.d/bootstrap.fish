@@ -42,9 +42,11 @@ function patch_fzf --on-event fzf_install --on-event fzf_update
     patch -fd "$fisher_path" -p1 -i "$patch_file"
 end
 
-# Early return if we already have fisher loaded
-if type -q fisher
-    return
+# Early return if we already have fisher installed
+for path in $fish_function_path
+    if test -f "$path/fisher.fish"
+        return
+    end
 end
 
 # Else try bootstrap fisher & plugins
