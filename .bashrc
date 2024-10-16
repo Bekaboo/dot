@@ -428,12 +428,8 @@ alias lc="wc -l"
 alias df="df -h"     # human-readable sizes
 alias free="free -m" # show sizes in MB
 alias tree="tree -N" # Display Chinese characters
-alias clip="xclip -sel clip"
-alias lzgit="lazygit"
-alias pip-install="pip install --user"
 alias nv="nvim"
 alias vs="vim-startuptime"
-alias r="ranger"
 alias clean-tmp="find /tmp -ctime +7 -exec rm -rf {} +"
 # Save KDE plasma session
 alias plasma-save-session="qdbus org.kde.ksmserver /KSMServer saveCurrentSession"
