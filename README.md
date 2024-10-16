@@ -307,7 +307,7 @@ paths:
 │   │   ├── autocmds.lua
 │   │   ├── general.lua         # options and general settings
 │   │   ├── keymaps.lua
-│   │   └── packages.lua        # bootstraps package manager and specifies what packages to include
+│   │   └── modules.lua         # bootstraps plugin manager and specifies which modules to include
 │   ├── modules                 # all plugin specifications and configs go here
 │   │   ├── lib.lua             # plugin specifications in module 'lib'
 │   │   ├── completion.lua      # plugin specifications in module 'completion'
@@ -330,7 +330,7 @@ paths:
 ### Managing Plugins with Modules
 
 In order to enable or disable a module, one need to change the table in
-[lua/core/packages.lua](https://github.com/Bekaboo/nvim/blob/master/lua/core/packages.lua) passed to `enable_modules()`, for example
+[lua/core/modules.lua](https://github.com/Bekaboo/nvim/blob/master/lua/core/modules.lua) passed to `enable_modules()`, for example
 
 ```lua
 enable_modules({
@@ -392,7 +392,7 @@ return {
 }
 ```
 
-After creating the new module `bar`, enable it in [lua/core/packages.lua](https://github.com/Bekaboo/nvim/blob/master/lua/core/packages.lua):
+After creating the new module `bar`, enable it in [lua/core/modules.lua](https://github.com/Bekaboo/nvim/blob/master/lua/core/modules.lua):
 
 ```lua
 enable_modules({
@@ -451,7 +451,7 @@ are defined under [lua/snippets](https://github.com/Bekaboo/nvim/tree/master/lua
 
 VSCode integration takes advantages of the modular design, allowing to use
 a different set of modules when Neovim is launched by VSCode, relevant code is
-in [autoload/plugin/vscode.vim](https://github.com/Bekaboo/nvim/blob/master/autoload/plugin/vscode.vim) and [lua/core/packages.lua](https://github.com/Bekaboo/nvim/blob/master/lua/core/packages.lua).
+in [autoload/plugin/vscode.vim](https://github.com/Bekaboo/nvim/blob/master/autoload/plugin/vscode.vim) and [lua/core/modules.lua](https://github.com/Bekaboo/nvim/blob/master/lua/core/modules.lua).
 
 To make VSCode integration work, please install [VSCode-Neovim](https://github.com/vscode-neovim/vscode-neovim) in VSCode
 and configure it correctly.
