@@ -7,7 +7,7 @@ if vim.fn.executable('fish_indent') == 1 then
       languages = {
         fish = {
           {
-            formatCommand = 'fish_indent ${INPUT}',
+            formatCommand = 'fish_indent',
             formatStdin = true,
           },
         },
