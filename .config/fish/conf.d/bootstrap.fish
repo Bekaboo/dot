@@ -31,7 +31,7 @@ end
 
 # Patch plugins after installing or upgrading plugins
 # Patch fzf
-function patch_fzf --on-event fzf_install --on-event fzf_update
+function __patch_fzf --on-event fzf_install --on-event fzf_update
     set -l patch_dir "$__fish_config_dir/patches"
     set -l patch_file "$patch_dir/fzf.patch"
     if not test -d "$patch_dir"; or not test -f "$patch_file"
