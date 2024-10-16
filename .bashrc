@@ -28,9 +28,14 @@ elif __has vi; then
     export EDITOR=vi
 fi
 
-[[ $- != *i* ]] && return
+if __has xhost; then
+    xhost +local:root >/dev/null 2>&1
+fi
 
-xhost +local:root >/dev/null 2>&1
+# Set rg config path
+export RIPGREP_CONFIG_PATH=${HOME}/.ripgreprc
+
+[[ $- != *i* ]] && return
 
 # Enable colors for ls, etc. Prefer ~/.dir_colors
 if type -P dircolors >/dev/null; then
@@ -70,9 +75,6 @@ export LESS_TERMCAP_se=$'\e[0m'
 export LESS_TERMCAP_so=$'\e[01;33m'
 export LESS_TERMCAP_ue=$'\e[0m'
 export LESS_TERMCAP_us=$'\e[1;4;34m'
-
-# Set rg config path
-export RIPGREP_CONFIG_PATH=${HOME}/.ripgreprc
 
 # fzf config variables
 export FZF_DEFAULT_OPTS="--reverse \
