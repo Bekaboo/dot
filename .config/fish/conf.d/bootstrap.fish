@@ -11,10 +11,20 @@ end
 set -l data_home (test -n "$XDG_DATA_HOME";
                   and echo "$XDG_DATA_HOME";
                   or echo "$HOME/.local/share")
-set -Ux fisher_path "$data_home/fish/plugin"
+set -gx fisher_path "$data_home/fish/plugin"
 
-set -Ux fish_function_path $fish_function_path[1] "$fisher_path/functions" $fish_function_path[2..-1]
-set -Ux fish_complete_path $fish_complete_path[1] "$fisher_path/completions" $fish_complete_path[2..-1]
+# Don't use `set -gx` here as lists as environment variables
+# (variable set with `-x`) will collapse to strings when exported to subshell
+if not contains "$fisher_path/functions" $fish_function_path
+    set -g fish_function_path $fish_function_path[1] \
+        "$fisher_path/functions" $fish_function_path[2..-1]
+end
+
+if not contains "$fisher_path/completions" $fish_complete_path
+    set -g fish_complete_path $fish_complete_path[1] \
+        "$fisher_path/completions" $fish_complete_path[2..-1]
+end
+
 for file in $fisher_path/conf.d/*.fish
     source $file
 end
