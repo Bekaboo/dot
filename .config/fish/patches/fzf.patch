@@ -18,7 +18,7 @@ index ecfe68e..7b72068 100644
          Search Directory   |  Ctrl+Alt+F (F for file)      |  --directory
          Search Git Log     |  Ctrl+Alt+L (L for log)       |  --git_log
          Search Git Status  |  Ctrl+Alt+S (S for status)    |  --git_status
-+        Search Git Stash   |  Ctrl+Alt+H (H for stash)     |  --git_status
++        Search Git Stash   |  Ctrl+Alt+H (H for stash)     |  --git_stash
          Search History     |  Ctrl+R     (R for reverse)   |  --history
          Search Processes   |  Ctrl+Alt+P (P for process)   |  --processes
          Search Variables   |  Ctrl+V     (V for variable)  |  --variables
