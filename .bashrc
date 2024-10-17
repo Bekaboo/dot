@@ -199,12 +199,6 @@ export FZF_PREVIEW_DISABLE_UB='true' # Disable ueberzug preview
 __has setbg && setbg
 __has setcolors && setcolors
 
-# Launch fish shell for interactive sessions
-if [[ "$(ps --no-header --pid=$PPID --format=comm)" != fish &&
--z "${BASH_EXECUTION_STRING}" ]] && __has fish; then
-    shopt -q login_shell && exec fish --login || exec fish
-fi
-
 # Change the window title of X terminals
 case ${TERM} in
 xterm* | rxvt* | Eterm* | aterm | kterm | gnome* | interix | konsole*)
