@@ -57,7 +57,9 @@ end
 ---@param winid integer? window handler
 local function cc_conceal(winid)
   vim.api.nvim_win_call(winid or 0, function()
-    vim.opt_local.winhl:append({ ColorColumn = '' })
+    if vim.opt_local.winhl:get().ColorColumn ~= '' then
+      vim.opt_local.winhl:append({ ColorColumn = '' })
+    end
   end)
 end
 
@@ -65,7 +67,9 @@ end
 ---@param winid integer? window handler
 local function cc_show(winid)
   vim.api.nvim_win_call(winid or 0, function()
-    vim.opt_local.winhl:append({ ColorColumn = '_ColorColumn' })
+    if vim.opt_local.winhl:get().ColorColumn ~= '_ColorColumn' then
+      vim.opt_local.winhl:append({ ColorColumn = '_ColorColumn' })
+    end
   end)
 end
 
