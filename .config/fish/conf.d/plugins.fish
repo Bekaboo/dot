@@ -46,6 +46,11 @@ end
 # Include hidden files
 set fzf_fd_opts -p -H -L -td -tf -tl --mount -c=always
 
+# Fzf keybindings
+if type -q fzf_configure_bindings
+    fzf_configure_bindings --git_status=\e\cg --git_stash=\e\cs
+end
+
 # Early return if we already have fisher installed
 for path in $fish_function_path
     if test -f "$path/fisher.fish"
