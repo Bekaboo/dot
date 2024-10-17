@@ -43,6 +43,9 @@ if type -q fzf-file-previewer
     set -gx fzf_preview_file_cmd fzf-file-previewer
 end
 
+# Include hidden files
+set fzf_fd_opts -p -H -L -td -tf -tl --mount -c=always
+
 # Early return if we already have fisher installed
 for path in $fish_function_path
     if test -f "$path/fisher.fish"
