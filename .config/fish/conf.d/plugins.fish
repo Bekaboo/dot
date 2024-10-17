@@ -23,16 +23,21 @@ for file in $fisher_path/conf.d/*.fish
 end
 
 # Patch plugins after installing or upgrading plugins
-# Patch fzf
-function __patch_fzf --on-event fzf_install --on-event fzf_update
-    set -l patch_dir "$__fish_config_dir/patches"
-    set -l patch_file "$patch_dir/fzf.patch"
-    if not test -d "$patch_dir"; or not test -f "$patch_file"
-        return
-    end
+function __patch
+    set -l plugin_name $argv[1]
+    eval "function __patch_$plugin_name --on-event "$plugin_name"_install --on-event "$plugin_name"_update
+        set -l patch_dir \$__fish_config_dir/patches
+        set -l patch_file \$patch_dir/$plugin_name.patch
+        if not test -d \$patch_dir; or not test -f \$patch_file
+            return
+        end
+        patch -Rsfd \$fisher_path -p1 -i \$patch_file &>/dev/null
+        patch -fd \$fisher_path -p1 -i \$patch_file
+    end"
+end
 
-    patch -Rsfd "$fisher_path" -p1 -i "$patch_file" &>/dev/null
-    patch -fd "$fisher_path" -p1 -i "$patch_file"
+for patch in $__fish_config_dir/patches/*.patch
+    __patch (basename $patch .patch)
 end
 
 # Plugin settings
