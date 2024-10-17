@@ -112,7 +112,7 @@ else
         -o -fstype 'proc' \\) -prune \
     -o -type d -print 2> /dev/null | sed 's@^\./@@'"
 end
-set -gx FZF_CTRL_T_COMMAND "$FZF_DEFAULT_COMMAND"
+set -gx FZF_CTRL_T_COMMAND $FZF_DEFAULT_COMMAND
 set -gx FZF_CTRL_R_OPTS --no-preview
 set -gx FZF_PREVIEW_DISABLE_UB true # Disable ueberzug preview
 
