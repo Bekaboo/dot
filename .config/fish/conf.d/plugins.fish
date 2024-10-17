@@ -1,12 +1,5 @@
 # Automatically fetch fisher plugin manager if not installed
 
-# Only automatically install fisher in interactive shell to avoid infinite loop
-# when fisher is not installed (fisher install script uses non-interactive
-# fisher to install)
-if not status is-interactive
-    return
-end
-
 # Custom `$fisher_path` settings
 set -l data_home (test -n "$XDG_DATA_HOME";
                   and echo "$XDG_DATA_HOME";
@@ -60,18 +53,20 @@ if test -f "$fish_state_dir/no-bootstrap"
     return
 end
 
-# Ask if to install fisher
-set -l choice (read -P 'Install fisher plugin manager? [y]es/[n]o/[never] ' -l)
-switch $choice
-    case Y y YES Yes yes
-        curl -sL 'https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish' \
-            | source && fisher install jorgebucaran/fisher
-        fisher update
-    case NEVER Never never
-        if not test -d "$fish_state_dir"
-            mkdir -p "$fish_state_dir"
-        end
-        touch "$fish_state_dir/no-bootstrap"
-        echo "Fisher bootstrap disabled"
-        echo "Remove '$fish_state_dir/no-bootstrap' to re-enable bootstrap"
+# Ask if to install fisher if in interactive shell
+if status is-interactive
+    set -l choice (read -P 'Install fisher plugin manager? [y]es/[n]o/[never] ' -l)
+    switch $choice
+        case Y y YES Yes yes
+            curl -sL 'https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish' \
+                | source && fisher install jorgebucaran/fisher
+            fisher update
+        case NEVER Never never
+            if not test -d "$fish_state_dir"
+                mkdir -p "$fish_state_dir"
+            end
+            touch "$fish_state_dir/no-bootstrap"
+            echo "Fisher bootstrap disabled"
+            echo "Remove '$fish_state_dir/no-bootstrap' to re-enable bootstrap"
+    end
 end
