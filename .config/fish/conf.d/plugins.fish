@@ -35,6 +35,14 @@ function __patch_fzf --on-event fzf_install --on-event fzf_update
     patch -fd "$fisher_path" -p1 -i "$patch_file"
 end
 
+# Plugin settings
+# Fzf settings
+# Use custom previewer script if available
+if type -q fzf-file-previewer
+    set -gx fzf_preview_dir_cmd fzf-file-previewer
+    set -gx fzf_preview_file_cmd fzf-file-previewer
+end
+
 # Early return if we already have fisher installed
 for path in $fish_function_path
     if test -f "$path/fisher.fish"
