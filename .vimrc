@@ -530,9 +530,11 @@ nnoremap <silent> ]b :exec v:count1 . 'bn'<CR>
 nnoremap <silent> [b :exec v:count1 . 'bp'<CR>
 " }}}
 
-" Switching between quickfix items {{{2
+" Switching between quickfix/location list items {{{2
 nnoremap <silent> [q :exec v:count1 . 'cp'<CR>
 nnoremap <silent> ]q :exec v:count1 . 'cn'<CR>
+nnoremap <silent> [p :exec v:count1 . 'lp'<CR>
+nnoremap <silent> ]p :exec v:count1 . 'lne'<CR>
 " }}}
 
 " Tabpages {{{2
