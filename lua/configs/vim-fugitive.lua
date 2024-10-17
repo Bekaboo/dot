@@ -10,7 +10,7 @@ vim.cmd([[
 vim.keymap.set('n', '<Leader>gd', '<Cmd>Gdiff<CR>')
 vim.keymap.set('n', '<Leader>gD', '<Cmd>Git diff<CR>')
 vim.keymap.set('n', '<Leader>gB', '<Cmd>Git blame<CR>')
-vim.keymap.set('n', '<Leader>gl', '<Cmd>0Gllog<CR>')
+vim.keymap.set('n', '<Leader>gl', '<Cmd>G log --oneline --follow -- %<CR>')
 vim.keymap.set('n', '<Leader>gL', '<Cmd>G log --oneline --graph<CR>')
 
 local groupid = vim.api.nvim_create_augroup('FugitiveSettings', {})
