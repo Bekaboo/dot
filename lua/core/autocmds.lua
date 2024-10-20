@@ -105,6 +105,7 @@ augroup('AutoCwd', {
   'LspAttach',
   {
     desc = 'Record LSP root directories in `vim.g._lsp_root_dirs`.',
+    nested = true,
     callback = function(info)
       local client = vim.lsp.get_client_by_id(info.data.client_id)
       local root_dir = client and client.config and client.config.root_dir
@@ -141,6 +142,7 @@ augroup('AutoCwd', {
   { 'BufWinEnter', 'WinEnter', 'FileChangedShellPost' },
   {
     desc = 'Automatically change local current directory.',
+    nested = true,
     callback = function(info)
       if info.file == '' or vim.bo[info.buf].bt ~= '' then
         return
@@ -174,6 +176,28 @@ augroup('AutoCwd', {
             },
           })
         end)
+      end
+    end,
+  },
+})
+
+augroup('GitEnv', {
+  {
+    'DirChanged',
+    'BufWinEnter',
+    'BufEnter',
+    'WinEnter',
+    'FileChangedShellPost',
+  },
+  {
+    desc = 'Set `$GIT_DIR` and `$GIT_WORK_TREE` for git plugins to recognize the bare git repo for dotfiles.',
+    callback = function(info)
+      if not vim.fs.root(info.file, require('utils.fs').root_patterns) then
+        vim.env.GIT_DIR = vim.fs.normalize('~/.dot')
+        vim.env.GIT_WORK_TREE = vim.fs.normalize('~')
+      elseif vim.env.GIT_DIR or vim.env.GIT_WORK_TREE then
+        vim.env.GIT_DIR = nil
+        vim.env.GIT_WORK_TREE = nil
       end
     end,
   },
