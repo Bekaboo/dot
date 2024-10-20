@@ -11,11 +11,15 @@ LookAndFeelSet=org.kde.klassylighttraditional.desktop
 [ShadowStyle]
 ShadowSize=ShadowNone
 
+[TitleBarSpacing]
+TitleBarBottomMargin=1.6
+TitleBarTopMargin=1.6
+
 [Windeco]
 AnimationsEnabled=false
 AnimationsSpeedRelativeSystem=10
 ButtonIconStyle=StyleOxygen
-CornerRadius=0
+WindowCornerRadius=0
 
 [WindowOutlineStyle]
 ThinWindowOutlineStyleInactive=WindowOutlineShadowColor
