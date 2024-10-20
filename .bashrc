@@ -440,6 +440,9 @@ dot() {
 # Create remote branches (e.g. origin/master) on git fetch like normal repos
 # See https://stackoverflow.com/questions/36410044/fetch-from-origin-in-bare-repository-in-git-does-not-create-remote-branch
 dot config --local remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+# Set the path to the root of the working tree, make vim-fugitive's
+# `:Gdiffsplit` work
+dot config --local core.worktree "$HOME"
 dot config --local status.showUntrackedFiles no
 
 [[ -r '/usr/share/bash-completion/completions/git' ]] &&
