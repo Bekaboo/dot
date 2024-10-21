@@ -102,7 +102,7 @@ vim.api.nvim_create_autocmd({
   callback = function()
     local winbar = require('plugin.winbar')
     local api = require('plugin.winbar.api')
-    winbar.setup()
+    winbar.setup({ bar = { hover = false } })
 
     vim.keymap.set('n', '<Leader>;', api.pick)
     vim.keymap.set('n', '[C', api.goto_context_start)
