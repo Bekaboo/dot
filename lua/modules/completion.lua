@@ -64,15 +64,6 @@ return {
   },
 
   {
-    'zbirenbaum/copilot.lua',
-    cmd = 'Copilot',
-    event = 'InsertEnter',
-    config = function()
-      require('configs.copilot')
-    end,
-  },
-
-  {
     'L3MON4D3/LuaSnip',
     build = 'make install_jsregexp',
     event = 'ModeChanged *:[iRss\x13vV\x16]*',
