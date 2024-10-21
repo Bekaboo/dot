@@ -495,7 +495,7 @@ and it should work out of the box.
 
 #### Third Party Plugins
 
-Total # of plugins: 50 (package manager included).
+Total # of plugins: 49 (package manager included).
 
 - **Lib**
     - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim)
@@ -550,8 +550,6 @@ Total # of plugins: 50 (package manager included).
     - [nvim-dap-ui](https://github.com/rcarriga/nvim-dap-ui)
         - [nvim-nio](https://github.com/nvim-neotest/nvim-nio) (dependency)
     - [one-small-step-for-vimkind](https://github.com/jbyuki/one-small-step-for-vimkind)
-- **UI**
-    - [neoscroll.nvim](https://github.com/karb94/neoscroll.nvim)
 - **Colorschemes**
     - [everforest](https://github.com/sainnhe/everforest)
     - [gruvbox-material](https://github.com/sainnhe/gruvbox-material)
