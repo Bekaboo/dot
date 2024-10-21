@@ -144,7 +144,10 @@ local function jupytext_convert(buf)
       vim.bo[info.buf].mod = false
       vim.cmd.write({
         vim.fn.fnameescape(fpath_md),
-        mods = { silent = true },
+        mods = {
+          silent = true,
+          keepalt = true,
+        },
         bang = true,
       })
       vim.system(
