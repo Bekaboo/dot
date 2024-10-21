@@ -12,6 +12,10 @@ M.root_patterns = {
   'Makefile',
   'makefile',
   'MAKEFILE',
+  'venv/',
+  'env/',
+  '.venv/',
+  '.env/',
 }
 
 ---Read file contents
