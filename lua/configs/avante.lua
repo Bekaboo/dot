@@ -98,6 +98,7 @@ vim.api.nvim_create_autocmd('FileType', {
     -- Never show other buffers in avante windows
     for _, win in ipairs(vim.fn.win_findbuf(buf)) do
       vim.wo[win].winfixbuf = true
+      vim.wo[win].wrap = true
     end
   end,
 })
