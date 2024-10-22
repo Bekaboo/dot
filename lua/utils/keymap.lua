@@ -144,7 +144,7 @@ function M.amend(modes, lhs, rhs, opts)
   for _, mode in ipairs(modes) do
     local key_def = M.get(mode, lhs) -- original key definition
     local rhs_fn = function()
-      rhs(M.fallback_fn(key_def))
+      return rhs(M.fallback_fn(key_def))
     end
 
     if not key_def.buffer or opts.buffer then
