@@ -493,7 +493,7 @@ and it should work out of the box.
 
 #### Third Party Plugins
 
-Total # of plugins: 48 (package manager included).
+Total # of plugins: 50 (package manager included).
 
 - **Lib**
     - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim)
@@ -533,6 +533,8 @@ Total # of plugins: 48 (package manager included).
         - [vim-rhubarb](https://github.com/tpope/vim-rhubarb) (dependency)
         - [fugitive-gitlab.vim](https://github.com/shumphrey/fugitive-gitlab.vim) (dependency)
     - [oil.nvim](https://github.com/stevearc/oil.nvim)
+    - [avante.nvim](https://github.com/yetone/avante.nvim?tab=readme-ov-file)
+        - [nui.nvim](https://github.com/MunifTanjim/nui.nvim) (dependency)
 - **LSP**
     - [clangd_extensions.nvim](https://github.com/p00f/clangd_extensions.nvim)
 - **Treesitter**
