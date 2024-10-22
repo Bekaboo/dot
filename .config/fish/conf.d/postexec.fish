@@ -9,7 +9,7 @@ function postexec_apppend_newline --on-event fish_postexec \
     # Don't add extra newline if the commandline is 'clear',
     # The commandline is passed as the first parameter,
     # see https://fishshell.com/docs/current/language.html#event
-    if string match -aqr $argv[1] '^\\s*clear\\s*\$'
+    if string match -aqr $argv[1] '^\\s*clear\\s*$'
         return
     end
     echo
