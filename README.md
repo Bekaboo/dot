@@ -312,7 +312,7 @@ paths:
 │   │   ├── debug.lua           # plugin specifications in modules 'debug'
 │   │   ├── langs.lua           # plugin specifications in module 'langs'
 │   │   ├── markup.lua          # ...
-│   │   ├── misc.lua
+│   │   ├── llm.lua
 │   │   ├── tools.lua
 │   │   ├── treesitter.lua
 │   │   └── colorschemes.lua
