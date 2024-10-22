@@ -252,12 +252,9 @@ vim.api.nvim_create_autocmd('User', {
   end,
 })
 
-if vim.g.vscode then
-  enable_modules({
-    'lib',
-    'edit',
-    'treesitter',
-  })
-else
-  enable_modules()
-end
+-- If launched in vscode, only enable basic modules
+enable_modules(vim.g.vscode and {
+  'lib',
+  'edit',
+  'treesitter',
+})
