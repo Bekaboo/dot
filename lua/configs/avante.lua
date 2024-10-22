@@ -53,6 +53,9 @@ avante.setup({
       start_inset = true,
     },
   },
+  hints = {
+    enabled = false,
+  },
   highlights = {
     diff = {
       current = 'DiffDeleted',
