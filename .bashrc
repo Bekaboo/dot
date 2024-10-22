@@ -239,21 +239,18 @@ shopt -s globstar
 
 # Automatically activate or deactivate python virtualenvs
 __python_venv() {
-    local activation_file=""
     # $VIRTUAL_ENV not set -- python virtualenv not activated, try to
     # activate it if '.env/bin/activate' or '.venv/bin/activate' exists
     if [[ -z "$VIRTUAL_ENV" ]]; then
         local path="$PWD"
         while [[ "$path" != "$(dirname "$path")" ]]; do
-            if [[ -e "$path/.env/bin/activate" ]]; then
-                chmod +x "$path/.env/bin/activate"
-                source "$path/.env/bin/activate"
-                return
-            elif [[ -e "$path/.venv/bin/activate" ]]; then
-                chmod +x "$path/.venv/bin/activate"
-                source "$path/.venv/bin/activate"
-                return
-            fi
+            for venv_dir in 'venv' 'env' '.venv' '.env'; do
+                local activation_file="$path/$venv_dir/bin/activate"
+                if [[ -f "$activation_file" ]]; then
+                    source "$activation_file"
+                    return
+                fi
+            done
             path="$(dirname "$path")"
         done
         return
@@ -265,7 +262,7 @@ __python_venv() {
     local parent_dir="$(dirname "$VIRTUAL_ENV")"
     if ! __has deactivate; then
         if [[ "$PWD"/ == "$parent_dir"/* ]]; then
-            activation_file="$(command -v activate)"
+            local activation_file="$(command -v activate)"
             chmod +x "$activation_file"
             source "$activation_file"
             return

@@ -5,21 +5,18 @@ function __python_venv \
         return
     end
 
-    set -l activation_file ''
     # $VIRTUAL_ENV not set -- python virtualenv not activated, try to
     # activate it if '.env/bin/activate.fish' or '.venv/bin/activate.fish'
     # exists
     if test -z "$VIRTUAL_ENV"
         set -l path "$PWD"
         while test $path != (dirname $path)
-            if test -e "$path/.env/bin/activate.fish"
-                chmod +x "$path/.env/bin/activate.fish"
-                source "$path/.env/bin/activate.fish"
-                return
-            else if test -e "$path/.venv/bin/activate.fish"
-                chmod +x "$path/.venv/bin/activate.fish"
-                source "$path/.venv/bin/activate.fish"
-                return
+            for venv_dir in venv env .venv .env
+                set -l activation_file $path/$venv_dir/bin/activate.fish
+                if test -f $activation_file
+                    source $activation_file
+                    return
+                end
             end
             set path (dirname $path)
         end
@@ -32,7 +29,7 @@ function __python_venv \
     set -l parent_dir (dirname "$VIRTUAL_ENV")
     if not type -q deactivate
         if issubdir "$PWD" "$parent_dir"
-            set activation_file (type -sp activate.fish)
+            set -l activation_file (type -sp activate.fish)
             chmod +x "$activation_file"
             source "$activation_file"
             return
