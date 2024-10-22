@@ -508,7 +508,11 @@ Total # of plugins: 49 (package manager included).
     - [cmp-nvim-lsp-signature-help](https://github.com/hrsh7th/cmp-nvim-lsp-signature-help)
     - [cmp-dap](https://github.com/rcarriga/cmp-dap)
     - [LuaSnip](https://github.com/L3MON4D3/LuaSnip)
+- **LLM**
     - [codeium.vim](https://github.com/Exafunction/codeium.vim)
+    - [avante.nvim](https://github.com/yetone/avante.nvim?tab=readme-ov-file)
+        - [nui.nvim](https://github.com/MunifTanjim/nui.nvim) (dependency)
+        - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) (dependency)
 - **Markup**
     - [vimtex](https://github.com/lervag/vimtex)
     - [markdown-preview.nvim](https://github.com/iamcco/markdown-preview.nvim)
@@ -532,9 +536,6 @@ Total # of plugins: 49 (package manager included).
         - [vim-rhubarb](https://github.com/tpope/vim-rhubarb) (dependency)
         - [fugitive-gitlab.vim](https://github.com/shumphrey/fugitive-gitlab.vim) (dependency)
     - [oil.nvim](https://github.com/stevearc/oil.nvim)
-    - [avante.nvim](https://github.com/yetone/avante.nvim?tab=readme-ov-file)
-        - [nui.nvim](https://github.com/MunifTanjim/nui.nvim) (dependency)
-        - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) (dependency)
 - **LSP**
     - [clangd_extensions.nvim](https://github.com/p00f/clangd_extensions.nvim)
 - **Treesitter**
