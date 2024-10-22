@@ -34,8 +34,8 @@ avante.setup({
       insert = '<CR>',
     },
     sidebar = {
-      switch_windows = '<Tab>',
-      reverse_switch_windows = '<S-Tab>',
+      switch_windows = '<M-C-]>',
+      reverse_switch_windows = '<M-Esc>',
     },
   },
   windows = {
