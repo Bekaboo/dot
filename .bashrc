@@ -123,6 +123,7 @@ else
             -o -path '*.cargo/*'       \
             -o -path '*.conda/*'       \
             -o -path '*.dot/*'         \
+            -o -path '*.env/*'         \
             -o -path '*.fonts/*'       \
             -o -path '*.git/*'         \
             -o -path '*.ipython/*'     \
@@ -142,6 +143,7 @@ else
             -o -path '*__pycache__/*'  \
             -o -path '*cache*/*'       \
             -o -path '*dosdevices/*'   \
+            -o -path '*env/*'          \
             -o -path '*node_modules/*' \
             -o -path '*vendor/*'       \
             -o -path '*venv/*'         \
@@ -169,6 +171,7 @@ else
             -o -path '*.mozilla/*'     \
             -o -path '*.npm/*'         \
             -o -path '*.nvm/*'         \
+            -o -path '*.env/*'         \
             -o -path '*.steam*/*'      \
             -o -path '*.thunderbird/*' \
             -o -path '*.tmp/*'         \
@@ -179,6 +182,7 @@ else
             -o -path '*__pycache__/*'  \
             -o -path '*cache*/*'       \
             -o -path '*dosdevices/*'   \
+            -o -path '*env/*'          \
             -o -path '*node_modules/*' \
             -o -path '*vendor/*'       \
             -o -path '*venv/*'         \

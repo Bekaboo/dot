@@ -6,6 +6,7 @@
 --glob=!*%*
 --glob=!.git/
 --glob=!*.venv/
+--glob=!*.env/
 --glob=!*Cache*/
 --glob=!*~
 --glob=!*cache*/
@@ -31,3 +32,4 @@
 --glob=!node_modules/
 --glob=!vendor/
 --glob=!venv/
+--glob=!env/

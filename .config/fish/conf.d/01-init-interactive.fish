@@ -53,6 +53,7 @@ else
         -o -path '*.java/*'        \
         -o -path '*.jupyter/*'     \
         -o -path '*.luarocks/*'    \
+        -o -path '*.env/*'         \
         -o -path '*.mozilla/*'     \
         -o -path '*.npm/*'         \
         -o -path '*.nvm/*'         \
@@ -66,6 +67,7 @@ else
         -o -path '*__pycache__/*'  \
         -o -path '*cache*/*'       \
         -o -path '*dosdevices/*'   \
+        -o -path '*env/*'          \
         -o -path '*node_modules/*' \
         -o -path '*vendor/*'       \
         -o -path '*venv/*'         \
@@ -84,6 +86,7 @@ else
         -o -path '*.cargo/*'       \
         -o -path '*.conda/*'       \
         -o -path '*.dot/*'         \
+        -o -path '*.env/*'         \
         -o -path '*.fonts/*'       \
         -o -path '*.git/*'         \
         -o -path '*.ipython/*'     \
@@ -101,6 +104,7 @@ else
         -o -path '*\\\$*'          \
         -o -path '*\\~'            \
         -o -path '*__pycache__/*'  \
+        -o -path '*env/*'          \
         -o -path '*cache*/*'       \
         -o -path '*dosdevices/*'   \
         -o -path '*node_modules/*' \

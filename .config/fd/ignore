@@ -1,5 +1,6 @@
 *.git/
 *.venv/
+*.env/
 *Cache*/
 *cache*/
 .*Cache*/
@@ -24,3 +25,4 @@ dosdevices/
 node_modules/
 vendor/
 venv/
+env/
