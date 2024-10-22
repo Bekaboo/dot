@@ -496,7 +496,6 @@ and it should work out of the box.
 Total # of plugins: 50 (package manager included).
 
 - **Lib**
-    - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim)
     - [nvim-web-devicons](https://github.com/kyazdani42/nvim-web-devicons)
     - [telescope-fzf-native.nvim](https://github.com/nvim-telescope/telescope-fzf-native.nvim)
 - **Completion**
@@ -527,6 +526,7 @@ Total # of plugins: 50 (package manager included).
     - [fzf-lua](https://github.com/ibhagwan/fzf-lua)
     - [flatten.nvim](https://github.com/willothy/flatten.nvim)
     - [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim)
+        - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) (dependency)
     - [git-conflict](https://github.com/akinsho/git-conflict.nvim)
     - [nvim-colorizer.lua](https://github.com/NvChad/nvim-colorizer.lua)
     - [vim-fugitive](https://github.com/tpope/vim-fugitive)
@@ -535,6 +535,7 @@ Total # of plugins: 50 (package manager included).
     - [oil.nvim](https://github.com/stevearc/oil.nvim)
     - [avante.nvim](https://github.com/yetone/avante.nvim?tab=readme-ov-file)
         - [nui.nvim](https://github.com/MunifTanjim/nui.nvim) (dependency)
+        - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) (dependency)
 - **LSP**
     - [clangd_extensions.nvim](https://github.com/p00f/clangd_extensions.nvim)
 - **Treesitter**
