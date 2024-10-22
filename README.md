@@ -493,7 +493,7 @@ and it should work out of the box.
 
 #### Third Party Plugins
 
-Total # of plugins: 47 (package manager included).
+Total # of plugins: 48 (package manager included).
 
 - **Lib**
     - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim)
@@ -510,6 +510,7 @@ Total # of plugins: 47 (package manager included).
     - [cmp-nvim-lsp-signature-help](https://github.com/hrsh7th/cmp-nvim-lsp-signature-help)
     - [cmp-dap](https://github.com/rcarriga/cmp-dap)
     - [LuaSnip](https://github.com/L3MON4D3/LuaSnip)
+    - [codeium.vim](https://github.com/Exafunction/codeium.vim)
 - **Markup**
     - [vimtex](https://github.com/lervag/vimtex)
     - [markdown-preview.nvim](https://github.com/iamcco/markdown-preview.nvim)

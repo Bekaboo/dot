@@ -70,4 +70,20 @@ return {
       require('configs.LuaSnip')
     end,
   },
+
+  {
+    'Exafunction/codeium.vim',
+    event = 'InsertEnter',
+    commands = {
+      'Codeium',
+      'CodeiumAuto',
+      'CodeiumChat',
+      'CodeiumEnable',
+      'CodeiumManual',
+      'CodeiumToggle',
+    },
+    config = function()
+      require('configs.codeium')
+    end,
+  },
 }
