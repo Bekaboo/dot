@@ -22,6 +22,7 @@ return {
     keys = {
       '<Leader>.',
       '<Leader>,',
+      '<Leader>:',
       '<Leader>/',
       '<Leader>?',
       '<Leader>"',
