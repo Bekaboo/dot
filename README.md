@@ -493,11 +493,10 @@ and it should work out of the box.
 
 #### Third Party Plugins
 
-Total # of plugins: 50 (package manager included).
+Total # of plugins: 49 (package manager included).
 
 - **Lib**
     - [nvim-web-devicons](https://github.com/kyazdani42/nvim-web-devicons)
-    - [telescope-fzf-native.nvim](https://github.com/nvim-telescope/telescope-fzf-native.nvim)
 - **Completion**
     - [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
     - [cmp-calc](https://github.com/hrsh7th/cmp-calc)
