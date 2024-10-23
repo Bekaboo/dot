@@ -21,6 +21,7 @@ M.config = {
       ---@type string[]
       local venvs = vim.fs.find({ 'venv', 'env', '.venv', '.env' }, {
         path = vim.fn.expand('%:p:h'),
+        limit = math.huge,
         upward = true,
       })
       for _, venv in ipairs(venvs) do
