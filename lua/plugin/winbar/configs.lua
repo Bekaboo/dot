@@ -79,14 +79,13 @@ M.opts = {
     update_events = {
       win = {
         'CursorMoved',
-        'CursorMovedI',
         'WinResized',
       },
       buf = {
         'BufModifiedSet',
         'FileChangedShellPost',
         'TextChanged',
-        'TextChangedI',
+        'InsertLeave',
       },
       global = {
         'DirChanged',
