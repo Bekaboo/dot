@@ -87,7 +87,6 @@ Currently only supports Linux (X11/Wayland/TTY).
 - [GCC](https://gcc.gnu.org/) or [Clang](https://clang.llvm.org/) for building treesitter parsers and some libs
 - [Fd](https://github.com/sharkdp/fd), [Ripgrep](https://github.com/BurntSushi/ripgrep), and [Fzf](https://github.com/junegunn/fzf) for fuzzy search
 - [Pandoc](https://pandoc.org/), [custom scripts](https://github.com/Bekaboo/dot/tree/master/.scripts) and [TexLive](https://www.tug.org/texlive/) (for ArchLinux users, it is `texlive-core` and `texlive-extra`) for markdown → PDF conversion (`:MarkdownToPDF`)
-- [Draw.io desktop](https://www.drawio.com/blog/diagrams-offline) for creating and inserting simple PNG diagrams in markdown files (`:MarkdownInsertImage`)
 - [Node.js](https://nodejs.org/en) for installing dependencies for [markdown-preview.nvim](https://github.com/iamcco/markdown-preview.nvim)
 - [Pynvim](https://github.com/neovim/pynvim), [Jupyter Client](https://github.com/jupyter/jupyter_client), and [IPython Kernel](https://github.com/ipython/ipykernel) for Python support
 - [Jupytext](https://github.com/mwouts/jupytext) for editing Jupyter notebooks
@@ -493,7 +492,7 @@ and it should work out of the box.
 
 #### Third Party Plugins
 
-Total # of plugins: 49 (package manager included).
+Total # of plugins: 50 (package manager included).
 
 - **Lib**
     - [nvim-web-devicons](https://github.com/kyazdani42/nvim-web-devicons)
@@ -520,6 +519,7 @@ Total # of plugins: 49 (package manager included).
     - [otter.nvim](https://github.com/jmbuhr/otter.nvim)
     - [molten-nvim](https://github.com/benlubas/molten-nvim)
     - [headlines.nvim](https://github.com/lukas-reineke/headlines.nvim)
+    - [img-clip.nvim](https://github.com/HakonHarnes/img-clip.nvim)
 - **Edit**
     - [nvim-surround](https://github.com/kylechui/nvim-surround)
     - [vim-sleuth](https://github.com/tpope/vim-sleuth)

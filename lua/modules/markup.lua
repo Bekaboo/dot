@@ -97,4 +97,21 @@ return {
       require('configs.headlines')
     end,
   },
+
+  {
+    'HakonHarnes/img-clip.nvim',
+    ft = {
+      'markdown',
+      'vimwiki',
+      'html',
+      'org',
+      'rst',
+      'tex',
+      'typst',
+      'asciidoc',
+    },
+    config = function()
+      require('configs.img-clip')
+    end,
+  },
 }
