@@ -19,7 +19,7 @@ M.config = {
     args = dap_utils.get_args(cache),
     pythonPath = function()
       ---@type string[]
-      local venvs = vim.fs.find({ 'venv', '.venv' }, {
+      local venvs = vim.fs.find({ 'venv', 'env', '.venv', '.env' }, {
         path = vim.fn.expand('%:p:h'),
         upward = true,
       })
