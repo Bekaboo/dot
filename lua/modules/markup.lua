@@ -91,7 +91,7 @@ return {
 
   {
     'lukas-reineke/headlines.nvim',
-    ft = { 'markdown', 'norg', 'org', 'qml' },
+    ft = { 'markdown', 'rmd', 'norg', 'org' },
     dependencies = 'nvim-treesitter/nvim-treesitter',
     config = function()
       require('configs.headlines')
