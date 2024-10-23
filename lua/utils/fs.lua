@@ -44,6 +44,14 @@ function M.write_file(path, str)
   return true
 end
 
+---Check if a path is empty
+---@param path string
+---@return boolean
+function M.is_empty(path)
+  local stat = vim.uv.fs_stat(path)
+  return not stat or stat.size == 0
+end
+
 ---Given a list of paths, return a list of path heads that uniquely distinguish each path
 ---e.g. { 'a/b/c', 'a/b/d', 'a/e/f' } -> { 'c', 'd', 'f' }
 ---     { 'a/b/c', 'd/b/c', 'e/c' } -> { 'a/b', 'd/b', 'e' }
