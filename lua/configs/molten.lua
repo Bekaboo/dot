@@ -143,7 +143,7 @@ vim.api.nvim_create_autocmd('BufEnter', {
 
 vim.api.nvim_create_autocmd('BufEnter', {
   desc = 'Undo config changes when we go back to a markdown or quarto file.',
-  pattern = { '*.qmd', '*.md', '*.ipynb' },
+  pattern = { '*.md', '*.ipynb' },
   group = groupid,
   callback = function(info)
     if info.buf ~= vim.api.nvim_get_current_buf() then
