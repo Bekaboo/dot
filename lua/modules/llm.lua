@@ -16,37 +16,22 @@ return {
   },
 
   {
-    'yetone/avante.nvim',
-    build = 'make',
-    event = {
-      'BufNew',
-      'BufReadPre',
-      'BufWritePost',
-      'FileType',
-      'ModeChanged',
-      'StdinReadPre',
+    'olimorris/codecompanion.nvim',
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+      'nvim-treesitter/nvim-treesitter',
     },
     keys = {
-      '<Leader>@',
-      { '<Leader>.', mode = { 'x' } },
+      { '<Leader><Leader>@' },
+      { '<Leader>@', mode = { 'n', 'x' } },
     },
     commands = {
-      'AvanteAsk',
-      'AvanteFocus',
-      'AvanteSwitchProvider',
-      'AvanteEdit',
-      'AvanteChat',
-      'AvanteBuild',
-      'AvanteToggle',
-    },
-    dependencies = {
-      'nvim-treesitter/nvim-treesitter',
-      'nvim-tree/nvim-web-devicons',
-      'nvim-lua/plenary.nvim',
-      'MunifTanjim/nui.nvim',
+      'CodeCompanion',
+      'CodeCompanionActions',
+      'CodeCompanionChat',
     },
     config = function()
-      require('configs.avante')
+      require('configs.codecompanion')
     end,
   },
 }

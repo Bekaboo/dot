@@ -509,9 +509,7 @@ Total # of plugins: 50 (package manager included).
     - [LuaSnip](https://github.com/L3MON4D3/LuaSnip)
 - **LLM**
     - [codeium.vim](https://github.com/Exafunction/codeium.vim)
-    - [avante.nvim](https://github.com/yetone/avante.nvim?tab=readme-ov-file)
-        - [nui.nvim](https://github.com/MunifTanjim/nui.nvim) (dependency)
-        - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) (dependency)
+    - [codecompanion.nvim](https://github.com/olimorris/codecompanion.nvim)
 - **Markup**
     - [vimtex](https://github.com/lervag/vimtex)
     - [markdown-preview.nvim](https://github.com/iamcco/markdown-preview.nvim)
