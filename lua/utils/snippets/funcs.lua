@@ -33,6 +33,7 @@ end
 
 ---Returns the depth of the current indent given the indent of the current line
 ---@param indent number|string
+---@return number
 function M.get_indent_depth(indent)
   if type(indent) == 'string' then
     indent = #indent:match('^%s*'):gsub('\t', string.rep(' ', vim.bo.ts))
