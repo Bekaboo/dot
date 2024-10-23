@@ -2,7 +2,7 @@ return {
   {
     'Exafunction/codeium.vim',
     event = 'InsertEnter',
-    commands = {
+    cmd = {
       'Codeium',
       'CodeiumAuto',
       'CodeiumChat',
@@ -25,7 +25,7 @@ return {
       { '<Leader><Leader>@' },
       { '<Leader>@', mode = { 'n', 'x' } },
     },
-    commands = {
+    cmd = {
       'CodeCompanion',
       'CodeCompanionActions',
       'CodeCompanionChat',
