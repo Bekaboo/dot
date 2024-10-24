@@ -256,9 +256,8 @@ local function attach(buf)
     end, vim.lsp.get_clients({ bufnr = buf }))[1]
     update_symbols(buf, client)
   end
-  vim.b[buf].winbar_lsp_attached = vim.api.nvim_create_autocmd(
-    { 'TextChanged', 'TextChangedI' },
-    {
+  vim.b[buf].winbar_lsp_attached =
+    vim.api.nvim_create_autocmd(configs.opts.bar.update_events.buf, {
       group = groupid,
       buffer = buf,
       callback = _update,
