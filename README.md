@@ -410,7 +410,7 @@ See [lua/core/general.lua](https://github.com/Bekaboo/nvim/blob/master/lua/core/
 
 ### Keymaps
 
-See [lua/core/keymaps.lua](https://github.com/Bekaboo/nvim/blob/master/lua/core/keymaps.lua), or see module config files for
+See [lua/core/keymaps.lua](https://github.com/Bekaboo/nvim/blob/master/lua/core/keymaps.lua), or see [module config files](https://github.com/Bekaboo/nvim/tree/master/lua/configs) for
 corresponding plugin keymaps.
 
 ### Colorschemes
