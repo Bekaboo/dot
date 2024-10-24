@@ -22,6 +22,7 @@ return {
       'nvim-treesitter/nvim-treesitter',
     },
     keys = {
+      { '<Leader>+' },
       { '<Leader><Leader>@' },
       { '<Leader>@', mode = { 'n', 'x' } },
     },

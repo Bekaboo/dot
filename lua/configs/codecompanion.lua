@@ -194,3 +194,4 @@ vim.api.nvim_create_autocmd('FileType', {
 vim.keymap.set('n', '<Leader><Leader>@', '<Cmd>CodeCompanionActions<CR>')
 vim.keymap.set('n', '<Leader>@', '<Cmd>CodeCompanionChat Toggle<CR>')
 vim.keymap.set('x', '<Leader>@', '<Cmd>CodeCompanionChat Add<CR>')
+vim.keymap.set('n', '<Leader>+', '<Cmd>CodeCompanion<CR>')
