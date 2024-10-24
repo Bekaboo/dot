@@ -121,6 +121,7 @@ local function jupytext_convert(buf)
       mods = { silent = true, keepalt = true },
     })
     vim.cmd.delete({
+      reg = '_',
       range = { 1 },
       mods = { emsg_silent = true },
     })
