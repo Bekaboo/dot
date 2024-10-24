@@ -4,7 +4,7 @@ local fs = require('utils.fs')
 ---@param buf integer?
 ---@return nil
 local function jupytext_convert(buf)
-  buf = buf ~= 0 and buf or vim.api.nvim_get_current_buf()
+  buf = buf or vim.api.nvim_get_current_buf()
   if not vim.api.nvim_buf_is_valid(buf) then
     return
   end
@@ -100,7 +100,7 @@ local function jupytext_convert(buf)
     -- callback
     --
     -- In case 3, we want to load the underlying json and fix the corrupted
-    -- notebook without setting the filetype and resiter the
+    -- notebook without setting the filetype and register the
     -- FileWriteCmd/BufWriteCmd callback
     if not fs.is_empty(fpath_ipynb) then
       return
@@ -204,12 +204,12 @@ end
 
 ---@param buf integer?
 local function setup(buf)
-  buf = buf and buf ~= 0 and buf or vim.api.nvim_get_current_buf()
   if vim.g.loaded_jupytext ~= nil then
     return
   end
   vim.g.loaded_jupytext = true
 
+  buf = buf or vim.api.nvim_get_current_buf()
   if vim.api.nvim_buf_get_name(buf):match('%.ipynb$') then
     jupytext_convert(buf)
   end
