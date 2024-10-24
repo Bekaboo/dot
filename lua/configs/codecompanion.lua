@@ -1,19 +1,5 @@
-local cc = require('codecompanion')
-local cc_diff = require('codecompanion.helpers.diff.default')
-
--- Hijack `helpers.diff.default.new()` to fix diff buffer opening below in chat
--- window when diff layout is 'horizontal' and chat window layout is vertical
--- TODO: upstream this fix
-cc_diff.new = (function(diff_new)
-  return function(args)
-    return vim.api.nvim_win_call(args.winnr, function()
-      diff_new(args)
-    end)
-  end
-end)(cc_diff.new)
-
 ---@diagnostic disable-next-line: undefined-field
-cc.setup({
+require('codecompanion').setup({
   opts = {
     visible = true,
     system_prompt = [[
