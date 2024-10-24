@@ -15,6 +15,7 @@ end)(cc_diff.new)
 ---@diagnostic disable-next-line: undefined-field
 cc.setup({
   opts = {
+    visible = true,
     system_prompt = [[
 You are an AI programming/writing assistant named 'CodeCompanion'.
 You are currently plugged in to the Neovim text editor on a user's machine.
