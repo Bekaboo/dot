@@ -9,8 +9,7 @@ config.color_scheme = 'Dragon Dark' -- Default colorscheme
 config.check_for_updates = false
 config.enable_tab_bar = false
 config.font = wezterm.font_with_fallback({
-  { family = 'Iosevka NerdFont', weight = 'Light' },
-  { family = 'Times New Roman' },
+  { family = 'Iosevka NerdFont' },
   { family = 'Microsoft YaHei' },
 })
 config.font_size = 12

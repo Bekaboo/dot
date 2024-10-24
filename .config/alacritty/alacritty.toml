@@ -1,3 +1,4 @@
+[general]
 import = [
     "~/.config/alacritty/themes/macro-dark.toml",
     "~/.config/alacritty/themes/dark.toml",
@@ -17,20 +18,8 @@ TERM = "alacritty"
 [font]
 size = 12
 
-[font.bold]
-family = "Iosevka NF"
-style = "Regular"
-
-[font.bold_italic]
-family = "Iosevka NF"
-style = "Italic"
-
-[font.italic]
-family = "Iosevka NF Light"
-style = "Italic"
-
 [font.normal]
-family = "Iosevka NF Light"
+family = "Iosevka NF"
 
 [[keyboard.bindings]]
 action = "ReceiveChar"
