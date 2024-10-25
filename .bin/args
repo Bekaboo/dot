@@ -1,6 +1,154 @@
 #!/usr/bin/env bash
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
-printf "%d args:" "$#"
-printf " <%s>" "$@"
-printf "\n"
+set -euo pipefail
+
+# Colors
+declare -A colors=(
+    ["red"]='\033[0;31m'
+    ["green"]='\033[0;32m'
+    ["blue"]='\033[0;34m'
+    ["yellow"]='\033[1;33m'
+    ["nc"]='\033[0m'
+)
+
+# Configuration
+declare format="text"
+declare quiet=false
+
+# Print colored text
+print_color() {
+    local color="$1"
+    local text="$2"
+    echo -e "${colors[$color]}${text}${colors[nc]}"
+}
+
+# Print error and exit
+error() {
+    print_color "red" "Error: $1" >&2
+    exit 1
+}
+
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [-h] [-j] [-q] arg1 [arg2 ...]
+Displays the number and value of all provided arguments
+
+Options:
+  -h    Show this help message
+  -j    Output in JSON format
+  -q    Quiet mode (suppress non-essential output)
+EOF
+    exit 1
+}
+
+# Function to detect argument 'type'
+get_type() {
+    local arg="$1"
+
+    if [[ "$arg" =~ ^\[(.*)\]$ ]]; then
+        echo "array"
+    elif [ -z "$arg" ]; then
+        echo "null"
+    elif [[ "$arg" =~ ^(true|false)$ ]]; then
+        echo "boolean"
+    elif [[ "$arg" =~ ^-?[0-9]+$ ]]; then
+        echo "integer"
+    elif [[ "$arg" =~ ^-?[0-9]+\.[0-9]+$ ]]; then
+        echo "float"
+    elif [[ "$arg" =~ ^\{.*\}$ ]]; then
+        echo "object"
+    else
+        echo "string"
+    fi
+}
+
+# JSON escape function
+json_escape() {
+    local s="$1"
+    s="${s//\\/\\\\}"
+    s="${s//\"/\\\"}"
+    s="${s//	/\\t}"
+    s="${s//\r/\\r}"
+    s="${s//\\\n/}"
+    echo "$s"
+}
+
+main() {
+    # Parse options
+    while getopts "hjq" opt; do
+        case $opt in
+        h) usage ;;
+        j) format="json" ;;
+        q) quiet=true ;;
+        *) usage ;;
+        esac
+    done
+    shift $((OPTIND - 1))
+
+    # Show help if no arguments
+    [[ $# -eq 0 ]] && error "No arguments provided"
+
+    # Print output based on format
+    if [ "$format" = "json" ]; then
+        json_output="{\n"
+        json_output+="  \"total_arguments\": $#,\n"
+        json_output+="  \"arguments\": [\n"
+
+        for i in $(seq 1 $#); do
+            arg="${!i}"
+            type=$(get_type "$arg")
+            escaped_arg=$(json_escape "$arg")
+
+            json_output+="    {\n"
+            json_output+="      \"position\": $i,\n"
+            json_output+="      \"value\": \"$escaped_arg\",\n"
+            json_output+="      \"type\": \"$type\"\n"
+            json_output+="    }"
+
+            [[ $i -lt $# ]] && json_output+=","
+            json_output+="\n"
+        done
+
+        json_output+="  ]\n"
+        json_output+="}"
+
+        echo -e "$json_output"
+    else
+        # Print total arguments unless quiet mode
+        if ! $quiet; then
+            print_color "green" "Total # of arguments: $#"
+        fi
+
+        # First collect all arguments and find the longest
+        declare -a args=()
+        declare -a types=()
+        max_arg_len=0
+        max_type_len=0
+        num_args=${#}
+        max_pos_len=${#num_args}
+
+        for i in $(seq 1 $#); do
+            arg="${!i}"
+            type=$(get_type "$arg")
+            args+=("$arg")
+            types+=("$type")
+
+            # Update max lengths
+            [[ ${#arg} -gt $max_arg_len ]] && max_arg_len=${#arg}
+            [[ ${#type} -gt $max_type_len ]] && max_type_len=${#type}
+        done
+
+        # Calculate format string width for [position]
+        bracket_width=$((max_pos_len + 2)) # +2 for the brackets
+
+        # Print each argument with aligned output
+        for i in $(seq 0 $(($# - 1))); do
+            pos=$((i + 1))
+            printf "${colors[blue]}%-${bracket_width}s${colors[nc]} = %-${max_arg_len}s ${colors[yellow]}(%s)${colors[nc]}\n" \
+                "[${pos}]" "${args[$i]}" "${types[$i]}"
+        done
+    fi
+}
+
+main "$@"
