@@ -52,6 +52,11 @@ normalize-fzf-geometry() {
 get-fzf-long-opt-no-space() {
     # $1: long option name
     # $2: default value of the option if not set
+    if ! has grep; then
+        echo "$2"
+        return 1
+    fi
+
     local opt_val=$(echo "$FZF_DEFAULT_OPTS" |
         grep -oP "$(printf '(--%s(=(\s|\S*)|\s*\S*))' "$1")" |
         tail -n1 |
@@ -71,11 +76,11 @@ get-fzf-long-opt-no-space() {
 get-fzf-geometry-normalized() {
     # $1: 'margin' or 'padding'
     # $2: 'top', 'bottom', 'left', or 'right'
-    if ! has grep; then
-        echo 0
+    local geometry=$(get-fzf-long-opt-no-space "$1" 0)
+    if [[ "$?" -ne 0 ]]; then
+        echo "$geometry"
         return 1
     fi
-    local geometry=$(get-fzf-long-opt-no-space "$1" 0)
 
     [[ "$2" = 'top' || "$2" = 'bottom' ]] &&
         local total="$lines" ||
