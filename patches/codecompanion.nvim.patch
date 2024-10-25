@@ -186,7 +186,7 @@ index 8c8673d..5aea26d 100644
  
  return SlashCommand
 diff --git a/lua/codecompanion/init.lua b/lua/codecompanion/init.lua
-index af0ef4d..79656bd 100644
+index af0ef4d..91d192b 100644
 --- a/lua/codecompanion/init.lua
 +++ b/lua/codecompanion/init.lua
 @@ -1,6 +1,7 @@
@@ -206,6 +206,34 @@ index af0ef4d..79656bd 100644
        .. "\n```\n",
    })
  end
+@@ -292,13 +293,22 @@ M.setup = function(opts)
+ 
+   -- Capture the last terminal buffer
+   _G.codecompanion_last_terminal = nil
++
++  ---Check if given buffer is a terminal buffer
++  ---and set `_G.codecompanion_last_terminal` if it is
++  ---@param buf number? when nil, the current buffer is used
++  local function check_terminal(buf)
++    local buf = buf ~= 0 and buf or api.nvim_get_current_buf()
++    if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].buftype == "terminal" then
++      _G.codecompanion_last_terminal = buf
++    end
++  end
++
++  check_terminal()
+   api.nvim_create_autocmd("TermEnter", {
+     desc = "Capture the last terminal buffer",
+-    callback = function()
+-      local bufnr = api.nvim_get_current_buf()
+-      if vim.bo[bufnr].buftype == "terminal" then
+-        _G.codecompanion_last_terminal = bufnr
+-      end
++    callback = function(info)
++      check_terminal(info.buf)
+     end,
+   })
+ 
 diff --git a/lua/codecompanion/keymaps.lua b/lua/codecompanion/keymaps.lua
 index 5d26a17..1b2b0ff 100644
 --- a/lua/codecompanion/keymaps.lua
