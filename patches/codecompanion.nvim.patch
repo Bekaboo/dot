@@ -274,7 +274,7 @@ index 8c8673d..5aea26d 100644
  
  return SlashCommand
 diff --git a/lua/codecompanion/init.lua b/lua/codecompanion/init.lua
-index 8086b42..12e1b56 100644
+index 8086b42..24b06d9 100644
 --- a/lua/codecompanion/init.lua
 +++ b/lua/codecompanion/init.lua
 @@ -1,6 +1,7 @@
@@ -285,7 +285,12 @@ index 8086b42..12e1b56 100644
  
  local api = vim.api
  
-@@ -108,7 +109,7 @@ M.add = function(args)
+@@ -104,11 +105,11 @@ M.add = function(args)
+   chat:append_to_buf({
+     role = config.constants.USER_ROLE,
+     content = "Here is some code from "
+-      .. context.filename
++      .. string.format("`%s`", context.filename)
        .. ":\n\n```"
        .. context.filetype
        .. "\n"
