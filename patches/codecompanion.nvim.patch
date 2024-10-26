@@ -53,15 +53,42 @@ index 5f51e7b..3d37555 100644
  
  local Providers = {
 diff --git a/lua/codecompanion/helpers/slash_commands/fetch.lua b/lua/codecompanion/helpers/slash_commands/fetch.lua
-index aac6d98..9dc7cf3 100644
+index aac6d98..6d5a471 100644
 --- a/lua/codecompanion/helpers/slash_commands/fetch.lua
 +++ b/lua/codecompanion/helpers/slash_commands/fetch.lua
-@@ -88,7 +88,7 @@ function SlashCommand:execute()
-               content = content,
-             }, { visible = false })
+@@ -44,7 +44,7 @@ function SlashCommand:execute()
+     return log:error("Failed to load the provider")
+   end
  
+-  vim.ui.input({ prompt = "URL" }, function(input)
++  vim.ui.input({ prompt = "URL: " }, function(input)
+     if input == "" then
+       return log:error("URL cannot be empty")
+     end
+@@ -73,22 +73,10 @@ function SlashCommand:execute()
+           end
+ 
+           if chunk.code == 200 then
+-            local content = fmt(
+-              [[Here is the content from <url>%s</url> that I'm sharing with you:
+-
+-<content>
+-%s
+-</content>]],
+-              input,
+-              chunk.data.text
+-            )
+-
+-            self.Chat:add_message({
+-              role = config.constants.USER_ROLE,
+-              content = content,
+-            }, { visible = false })
+-
 -            return util.notify(fmt("Added the page contents for: %s", input))
-+            return vim.notify(fmt("Added the data from %s", input), vim.log.levels.INFO, { title = "CodeCompanion" })
++            local content = fmt('<content>\n%s\n</content>', chunk.data.text)
++            self.Chat:append_to_buf({ content = "[!" .. CONSTANTS.NAME .. ": `" .. input .. "`]\n" })
++            self.Chat:append_to_buf({ content = "```\n" .. util.escape_backticks(content) .. "\n```" })
++            self.Chat:fold_code()
            end
            if chunk.code >= 400 then
              return log:error("Error: %s", chunk.body.data)
@@ -186,7 +213,7 @@ index 8c8673d..5aea26d 100644
  
  return SlashCommand
 diff --git a/lua/codecompanion/init.lua b/lua/codecompanion/init.lua
-index af0ef4d..91d192b 100644
+index 8086b42..148d91b 100644
 --- a/lua/codecompanion/init.lua
 +++ b/lua/codecompanion/init.lua
 @@ -1,6 +1,7 @@
@@ -235,10 +262,10 @@ index af0ef4d..91d192b 100644
    })
  
 diff --git a/lua/codecompanion/keymaps.lua b/lua/codecompanion/keymaps.lua
-index 5d26a17..1b2b0ff 100644
+index 8eb55b8..5c4ece2 100644
 --- a/lua/codecompanion/keymaps.lua
 +++ b/lua/codecompanion/keymaps.lua
-@@ -381,6 +381,12 @@ M.fold_code = {
+@@ -397,6 +397,12 @@ M.fold_code = {
    end,
  }
  
@@ -252,10 +279,10 @@ index 5d26a17..1b2b0ff 100644
    desc = "Show debug information for the current chat",
    callback = function(chat)
 diff --git a/lua/codecompanion/strategies/chat.lua b/lua/codecompanion/strategies/chat.lua
-index f77c22c..e8d6c70 100644
+index 18ef0c3..d66e389 100644
 --- a/lua/codecompanion/strategies/chat.lua
 +++ b/lua/codecompanion/strategies/chat.lua
-@@ -1013,6 +1013,7 @@ function Chat:append_to_buf(data, opts)
+@@ -1031,6 +1031,7 @@ function Chat:append_to_buf(data, opts)
        last_column = 0
      end
  
@@ -263,7 +290,7 @@ index f77c22c..e8d6c70 100644
      local cursor_moved = api.nvim_win_get_cursor(0)[1] == line_count
      api.nvim_buf_set_text(bufnr, last_line, last_column, last_line, last_column, lines)
  
-@@ -1134,6 +1135,19 @@ end
+@@ -1152,6 +1153,19 @@ end
  ---Fold code under the user's heading in the chat buffer
  ---@return self
  function Chat:fold_code()
@@ -320,7 +347,7 @@ index 108034f..a3e8f67 100644
  end
  
 diff --git a/lua/codecompanion/utils/util.lua b/lua/codecompanion/utils/util.lua
-index b3622b7..fd0ecdc 100644
+index 1a9cabb..1b70b6b 100644
 --- a/lua/codecompanion/utils/util.lua
 +++ b/lua/codecompanion/utils/util.lua
 @@ -10,17 +10,6 @@ function M.fire(event, opts)
