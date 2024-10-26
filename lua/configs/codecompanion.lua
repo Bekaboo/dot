@@ -174,9 +174,11 @@ When given a non-programming task:
 vim.api.nvim_create_autocmd('FileType', {
   desc = 'Buffer-local settings for CodeCompanion buffers.',
   group = vim.api.nvim_create_augroup('CodeCompanionSetup', {}),
-  pattern = 'codecompanion',
+  pattern = 'markdown',
   callback = function(info)
-    vim.b[info.buf].winbar_no_attach = true
+    if vim.b[info.buf].codecompanion then
+      vim.b[info.buf].winbar_no_attach = true
+    end
   end,
 })
 
