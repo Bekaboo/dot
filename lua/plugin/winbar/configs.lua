@@ -6,7 +6,6 @@ local M = {}
 M.opts = {
   icons = {
     kinds = {
-      use_devicons = true,
       symbols = icons.kinds,
     },
     ui = {
@@ -63,6 +62,7 @@ M.opts = {
         and vim.wo[win].winbar == ''
         and vim.fn.win_gettype(win) == ''
         and vim.bo[buf].ft ~= 'help'
+        and vim.bo[buf].ft ~= 'diff'
         and not vim.startswith(vim.bo[buf].ft, 'git')
         and utils.treesitter.is_active(buf)
     end,
