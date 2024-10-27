@@ -5,8 +5,8 @@ return {
     BreakpointCondition = 'C ',
     BreakpointLog       = 'L ',
     BreakpointRejected  = 'X ',
-    StackFrame          = '→ ',
-    StackFrameCurrent   = '→*',
+    StackFrame          = '> ',
+    StackFrameCurrent   = '>*',
   },
   diagnostics = {
     DiagnosticSignError = 'E ',
