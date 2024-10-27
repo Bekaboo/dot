@@ -192,12 +192,12 @@ augroup('GitEnv', {
   {
     desc = 'Set `$GIT_DIR` and `$GIT_WORK_TREE` for git plugins to recognize the bare git repo for dotfiles.',
     callback = function(info)
-      if not vim.fs.root(info.file, require('utils.fs').root_patterns) then
-        vim.env.GIT_DIR = vim.fs.normalize('~/.dot')
-        vim.env.GIT_WORK_TREE = vim.fs.normalize('~')
-      elseif vim.env.GIT_DIR or vim.env.GIT_WORK_TREE then
+      if vim.fs.root(info.file, '.git') then
         vim.env.GIT_DIR = nil
         vim.env.GIT_WORK_TREE = nil
+      elseif not vim.env.GIT_DIR and not vim.env.GIT_WORK_TREE then
+        vim.env.GIT_DIR = vim.fs.normalize('~/.dot')
+        vim.env.GIT_WORK_TREE = vim.fs.normalize('~')
       end
     end,
   },
