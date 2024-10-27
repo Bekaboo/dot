@@ -1,27 +1,86 @@
 #!/usr/bin/env bash
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
-# # ex - archive extractor
-# # usage: ex <file>
+# ex - archive extractor
+# usage: ex <file>
 ex() {
-    if [ -f $1 ]; then
-        case $1 in
-        *.tar.bz2) tar xjf $1 ;;
-        *.tar.gz) tar xzf $1 ;;
-        *.bz2) bunzip2 $1 ;;
-        *.rar) unrar x $1 ;;
-        *.gz) gunzip $1 ;;
-        *.tar) tar xf $1 ;;
-        *.tbz2) tar xjf $1 ;;
-        *.tgz) tar xzf $1 ;;
-        *.zip) unzip $1 ;;
-        *.Z) uncompress $1 ;;
-        *.7z) 7z x $1 ;;
-        *) echo "'$1' cannot be extracted via ex()" ;;
-        esac
-    else
+    if [[ ! -f "$1" ]]; then
         echo "'$1' is not a valid file"
+        return 1
     fi
+
+    # Get filename without extension
+    local filename=$(basename "$1")
+    local dirname="${filename%.*}"
+    while [[ "$dirname" == *"."* ]]; do
+        dirname="${dirname%.*}"
+    done
+
+    # Function to check if directory exists
+    checkdir() {
+        if [[ -e "$1" ]]; then
+            echo "Error: '$1' already exists"
+            return 1
+        fi
+        return 0
+    }
+
+    # Extract directly if the archive contains only one file/directory,
+    # else we extract it into a separate directory
+    case "$1" in
+    *.bz2) bunzip2 "$1" ;;
+    *.gz) gunzip "$1" ;;
+    *.Z) uncompress "$1" ;;
+    *.tar.bz2 | *.tbz2)
+        if tar tjf "$1" | grep -q '^.*/$'; then
+            checkdir "$dirname" && mkdir "$dirname" &&
+                tar xjf "$1" -C "$dirname" || return 1
+        else
+            tar xjf "$1"
+        fi
+        ;;
+    *.tar.gz | *.tgz)
+        if tar tzf "$1" | grep -q '^.*/$'; then
+            checkdir "$dirname" && mkdir "$dirname" &&
+                tar xzf "$1" -C "$dirname" || return 1
+        else
+            tar xzf "$1"
+        fi
+        ;;
+    *.rar)
+        if unrar l "$1" | grep -q '^.*/$'; then
+            checkdir "$dirname" && mkdir "$dirname" &&
+                unrar x "$1" "$dirname" || return 1
+        else
+            unrar x "$1"
+        fi
+        ;;
+    *.tar)
+        if tar tf "$1" | grep -q '^.*/$'; then
+            checkdir "$dirname" && mkdir "$dirname" &&
+                tar xf "$1" -C "$dirname" || return 1
+        else
+            tar xf "$1"
+        fi
+        ;;
+    *.zip)
+        if zipinfo -1 "$1" | grep -q '^.*/$'; then
+            checkdir "$dirname" && mkdir "$dirname" &&
+                unzip "$1" -d "$dirname" || return 1
+        else
+            unzip "$1"
+        fi
+        ;;
+    *.7z)
+        if 7z l "$1" | grep -q '^.*/$'; then
+            checkdir "$dirname" && mkdir "$dirname" &&
+                7z x "$1" -o"$dirname" || return 1
+        else
+            7z x "$1"
+        fi
+        ;;
+    *) echo "'$1' cannot be extracted via ex()" ;;
+    esac
 }
 
-ex $1
+ex "$1"
