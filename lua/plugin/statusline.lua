@@ -297,6 +297,25 @@ vim.api.nvim_create_autocmd({
   end),
 })
 
+vim.api.nvim_create_autocmd('WinClosed', {
+  group = groupid,
+  callback = function(info)
+    local win = tonumber(info.match)
+    if not win or not vim.api.nvim_win_is_valid(win) then
+      return
+    end
+    local buf = vim.api.nvim_win_get_buf(win)
+    local bufname = vim.api.nvim_buf_get_name(buf)
+    vim.schedule(function()
+      remove_buf(buf, bufname)
+      vim.cmd.redrawstatus({
+        bang = true,
+        mods = { emsg_silent = true },
+      })
+    end)
+  end,
+})
+
 function statusline.fname()
   local bname = vim.api.nvim_buf_get_name(0)
 
