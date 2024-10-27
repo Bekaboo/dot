@@ -414,6 +414,14 @@ local function setup_buf_keymaps_and_commands(buf)
     return
   end
 
+  -- Skip non-notebook markdown files
+  if
+    ft == 'markdown'
+    and vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf), ':e') ~= 'ipynb'
+  then
+    return
+  end
+
   vim.keymap.set('n', '<C-c>', vim.cmd.MoltenInterrupt, { buffer = buf })
   vim.keymap.set('n', '<C-j>', function()
     vim.cmd.MoltenEnterOutput({ mods = { noautocmd = true } })

@@ -60,6 +60,14 @@ return {
         group = vim.api.nvim_create_augroup('MoltenLazyLoadKeys', {}),
         pattern = { 'python', 'markdown' },
         callback = function(info)
+          -- Skip for non-notebook markdown files
+          if
+            info.match == 'markdown'
+            and vim.fn.fnamemodify(info.file, ':e') ~= 'ipynb'
+          then
+            return
+          end
+
           load('x', '<CR>', info.buf) -- for both python and notebook buffers
           if info.match == 'markdown' then
             load('n', '<CR>', info.buf)
