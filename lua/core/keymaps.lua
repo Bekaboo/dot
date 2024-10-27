@@ -125,13 +125,13 @@ vim.keymap.set('n', '[b', '<Cmd>exec v:count1 . "bp"<CR>')
 
 -- Quickfix/location list navigation
 vim.keymap.set('n', '[q', '<Cmd>exec v:count1 . "cp"<CR>')
-vim.keymap.set('n', '[p', '<Cmd>exec v:count1 . "lp"<CR>')
+vim.keymap.set('n', '[l', '<Cmd>exec v:count1 . "lp"<CR>')
 vim.keymap.set('n', ']q', '<Cmd>exec v:count1 . "cne"<CR>')
-vim.keymap.set('n', ']p', '<Cmd>exec v:count1 . "lne"<CR>')
+vim.keymap.set('n', ']l', '<Cmd>exec v:count1 . "lne"<CR>')
 vim.keymap.set('n', '[Q', '<Cmd>exec v:count1 . "cfir"<CR>')
-vim.keymap.set('n', '[P', '<Cmd>exec v:count1 . "lfir"<CR>')
+vim.keymap.set('n', '[L', '<Cmd>exec v:count1 . "lfir"<CR>')
 vim.keymap.set('n', ']Q', '<Cmd>exec (v:count ? v:count : "") . "cla"<CR>')
-vim.keymap.set('n', ']P', '<Cmd>exec (v:count ? v:count : "") . "lla"<CR>')
+vim.keymap.set('n', ']L', '<Cmd>exec (v:count ? v:count : "") . "lla"<CR>')
 
 -- Tabpages
 ---@param tab_action function
