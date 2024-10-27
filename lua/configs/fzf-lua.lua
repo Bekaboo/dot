@@ -413,7 +413,7 @@ fzf.setup({
       ['alt-v'] = actions.file_vsplit,
       ['alt-t'] = actions.file_tabedit,
       ['alt-q'] = actions._file_sel_to_qf,
-      ['alt-o'] = actions._file_sel_to_ll,
+      ['alt-l'] = actions._file_sel_to_ll,
       ['enter'] = actions._file_edit_or_qf,
     },
     buffers = {
@@ -450,15 +450,13 @@ fzf.setup({
   blines = {
     actions = {
       ['alt-q'] = actions.buf_sel_to_qf,
-      ['alt-o'] = actions.buf_sel_to_ll,
-      ['alt-l'] = false,
+      ['alt-l'] = actions.buf_sel_to_ll,
     },
   },
   lines = {
     actions = {
       ['alt-q'] = actions.buf_sel_to_qf,
-      ['alt-o'] = actions.buf_sel_to_ll,
-      ['alt-l'] = false,
+      ['alt-l'] = actions.buf_sel_to_ll,
     },
   },
   buffers = {
