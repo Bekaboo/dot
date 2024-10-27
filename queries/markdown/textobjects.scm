@@ -1,5 +1,6 @@
-(atx_heading heading_content: (_) @function.inner) @function.outer
-(setext_heading heading_content: (_) @function.inner) @function.outer
-(thematic_break) @function.outer
+(document
+  (section
+    (_)* @section.inner) @section.outer)
 
-(fenced_code_block (code_fence_content) @block.inner) @block.outer
+(fenced_code_block
+  (code_fence_content) @block.inner) @block.outer

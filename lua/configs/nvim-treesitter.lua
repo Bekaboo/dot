@@ -110,10 +110,14 @@ ts_configs.setup({
         ['i?'] = '@conditional.inner',
         ['a='] = '@assignment.outer',
         ['i='] = '@assignment.inner',
+        ['as'] = '@section.outer',
+        ['is'] = '@section.inner',
       },
       selection_modes = {
         ['@block.outer'] = 'V',
         ['@block.inner'] = 'V',
+        ['@section.outer'] = 'V',
+        ['@section.inner'] = 'V',
       },
     },
     move = {
@@ -128,6 +132,7 @@ ts_configs.setup({
         [']g'] = '@block.outer',
         [']?'] = '@conditional.outer',
         [']='] = '@assignment.inner',
+        [']s'] = '@section.outer',
       },
       goto_next_end = {
         [']M'] = '@function.outer',
@@ -138,6 +143,7 @@ ts_configs.setup({
         [']/'] = '@comment.outer',
         [']*'] = '@comment.outer',
         [']G'] = '@block.outer',
+        [']S'] = '@section.outer',
       },
       goto_previous_start = {
         ['[m'] = '@function.outer',
@@ -150,6 +156,7 @@ ts_configs.setup({
         ['[G'] = '@block.outer',
         ['[?'] = '@conditional.outer',
         ['[='] = '@assignment.inner',
+        ['[s'] = '@section.outer',
       },
       goto_previous_end = {
         ['[M'] = '@function.outer',
@@ -158,6 +165,7 @@ ts_configs.setup({
         ['[K'] = '@class.outer',
         ['[<'] = '@parameter.outer',
         ['[G'] = '@block.outer',
+        ['[S'] = '@section.outer',
       },
     },
     swap = {
