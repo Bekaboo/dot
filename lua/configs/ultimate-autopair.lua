@@ -61,14 +61,6 @@ require('ultimate-autopair').setup({
         return not f.in_macro()
           -- Disable autopairs if followed by a keyword or an opening pair
           and not IGNORE_REGEX:match_str(get_next_two_chars())
-          -- Disable autopairs when inserting a regex,
-          -- e.g. `:s/{pattern}/{string}/[flags]` or
-          -- `:g/{pattern}/[cmd]`, etc.
-          and (
-            not f.in_cmdline()
-            or compltype[1] ~= ''
-            or compltype[2] ~= 'command'
-          )
       end,
     },
   },
