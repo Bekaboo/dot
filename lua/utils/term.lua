@@ -44,7 +44,7 @@ function M.fg_cmds(buf)
     local stat, cmd = unpack(vim.split(stat_cmd_str, '%s+', {
       trimempty = true,
     }))
-    if stat:find('^%w+%+') then
+    if stat and stat:find('^%w+%+') then
       table.insert(cmds, cmd)
     end
   end
