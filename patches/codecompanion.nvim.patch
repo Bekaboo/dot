@@ -471,6 +471,24 @@ index 91b596b..e63e96a 100644
  local log = require("codecompanion.utils.log")
  
  ---Resolve the callback to the correct module
+diff --git a/lua/codecompanion/strategies/chat/tools.lua b/lua/codecompanion/strategies/chat/tools.lua
+index fe1de22..07af238 100644
+--- a/lua/codecompanion/strategies/chat/tools.lua
++++ b/lua/codecompanion/strategies/chat/tools.lua
+@@ -358,10 +358,9 @@ end
+ ---@param error string
+ ---@return CodeCompanion.Tools
+ function Tools:add_error_to_chat(error)
+-  self.chat:add_message({
+-    role = config.constants.USER_ROLE,
+-    content = error,
+-  }, { visible = false })
++  self.chat:append_to_buf({
++    content = string.format("There is an error:\n```\n%s\n```\n", util.escape_backticks(error)),
++  })
+ 
+   --- Alert the user that the error message has been shared
+   self.chat:append_to_buf({
 diff --git a/lua/codecompanion/utils/buffers.lua b/lua/codecompanion/utils/buffers.lua
 index 108034f..b78b1c0 100644
 --- a/lua/codecompanion/utils/buffers.lua
