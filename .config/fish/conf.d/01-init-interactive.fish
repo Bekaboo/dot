@@ -29,7 +29,7 @@ set -gx FZF_DEFAULT_OPTS "--reverse \
     --bind=alt-v:preview-half-page-up,ctrl-v:preview-half-page-down"
 
 if test -z "$DISPLAY"
-    set -gxa FZF_DEFAULT_OPTS --no-unicode '--marker=+\ ' '--pointer=→\ '
+    set -gxa FZF_DEFAULT_OPTS --no-unicode '--marker=+\ ' '--pointer=>\ '
 end
 
 if type -q fd

@@ -105,7 +105,7 @@ if [[ -z "$DISPLAY" ]]; then
     export FZF_DEFAULT_OPTS=$(echo "$FZF_DEFAULT_OPTS" \
         '--no-unicode' \
         '--marker=+\ ' \
-        '--pointer=→\ ')
+        '--pointer=>\ ')
 fi
 
 if __has fd; then
