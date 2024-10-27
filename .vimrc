@@ -559,13 +559,13 @@ nnoremap <silent> [b :exec v:count1 . 'bp'<CR>
 
 " Switching between quickfix/location list items {{{2
 nnoremap <silent> [q :exec v:count1 . 'cp'<CR>
-nnoremap <silent> [p :exec v:count1 . 'lp'<CR>
+nnoremap <silent> [l :exec v:count1 . 'lp'<CR>
 nnoremap <silent> ]p :exec v:count1 . 'lne'<CR>
-nnoremap <silent> ]q :exec v:count1 . 'cne'<CR>
+nnoremap <silent> ]l :exec v:count1 . 'cne'<CR>
 nnoremap <silent> [Q :exec v:count1 . "cfir"<CR>
-nnoremap <silent> [P :exec v:count1 . "lfir"<CR>
+nnoremap <silent> [L :exec v:count1 . "lfir"<CR>
 nnoremap <silent> ]Q :exec (v:count ? v:count : "") . "cla"<CR>
-nnoremap <silent> ]P :exec (v:count ? v:count : "") . "lla"<CR>
+nnoremap <silent> ]L :exec (v:count ? v:count : "") . "lla"<CR>
 " }}}
 
 " Tabpages {{{2
