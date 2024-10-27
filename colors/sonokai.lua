@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Sat Oct 26 08:49:27 PM EDT 2024
+-- Last Updated: Sat Oct 26 10:17:21 PM EDT 2024
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -100,7 +100,7 @@ vim.g.terminal_color_17 = c_orange[1]
 local hlgroups = {
   -- UI {{{2
   ColorColumn = { bg = c_bg1 },
-  Conceal = { fg = c_grey_dim },
+  Conceal = { fg = c_fg },
   CurSearch = { link = 'IncSearch' },
   Cursor = { fg = c_bg0, bg = c_fg },
   CursorColumn = { link = 'CursorLine' },
