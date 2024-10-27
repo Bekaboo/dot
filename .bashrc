@@ -263,12 +263,13 @@ __python_venv() {
     # $VIRTUAL_ENV set but 'deactivate' not found -- python virtualenv
     # activated in parent shell, try to activate in current shell if currently
     # in project directory or a subdirectory of the project directory
-    local parent_dir="$(dirname "$VIRTUAL_ENV")"
+    local proj_dir="$(dirname "$VIRTUAL_ENV")"
     if ! __has deactivate; then
-        if [[ "$PWD"/ == "$parent_dir"/* ]]; then
-            local activation_file="$(command -v activate)"
-            chmod +x "$activation_file"
-            source "$activation_file"
+        if [[ "$PWD"/ == "$proj_dir"/* ]]; then
+            local activation_file="$(echo "$VIRTUAL_ENV/bin/activate")"
+            if [[ -f "$activation_file" ]]; then
+                source "$activation_file"
+            fi
             return
         fi
     fi
@@ -276,7 +277,7 @@ __python_venv() {
     # $VIRTUAL_ENV set and 'deactivate' found -- python virtualenv activated
     # in current shell, try to deactivate it if currently not inside the
     # project directory or a subdirectory of the project directory
-    if [[ "$PWD"/ != "$parent_dir"/* ]] && __has deactivate; then
+    if [[ "$PWD"/ != "$proj_dir"/* ]] && __has deactivate; then
         deactivate
     fi
 }

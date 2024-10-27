@@ -26,12 +26,13 @@ function __python_venv \
     # $VIRTUAL_ENV set but 'deactivate' not found -- python virtualenv
     # activated in parent shell, try to activate in current shell if currently
     # in project directory or a subdirectory of the project directory
-    set -l parent_dir (dirname "$VIRTUAL_ENV")
+    set -l proj_dir (dirname $VIRTUAL_ENV)
     if not type -q deactivate
-        if issubdir "$PWD" "$parent_dir"
-            set -l activation_file (type -sp activate.fish)
-            chmod +x "$activation_file"
-            source "$activation_file"
+        if issubdir "$PWD" "$proj_dir"
+            set -l activation_file (echo $VIRTUAL_ENV/bin/activate.fish)
+            if test -f "$activation_file"
+                source "$activation_file"
+            end
             return
         end
     end
@@ -39,7 +40,7 @@ function __python_venv \
     # $VIRTUAL_ENV set and 'deactivate' found -- python virtualenv activated
     # in current shell, try to deactivate it if currently not inside the
     # project directory or a subdirectory of the project directory
-    if not issubdir "$PWD" "$parent_dir"; and type -q deactivate
+    if not issubdir $PWD $proj_dir; and type -q deactivate
         deactivate
     end
 end
