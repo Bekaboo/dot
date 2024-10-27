@@ -274,7 +274,7 @@ index 8c8673d..5aea26d 100644
  
  return SlashCommand
 diff --git a/lua/codecompanion/init.lua b/lua/codecompanion/init.lua
-index 8086b42..5945d4e 100644
+index 8086b42..11ad131 100644
 --- a/lua/codecompanion/init.lua
 +++ b/lua/codecompanion/init.lua
 @@ -1,6 +1,7 @@
@@ -333,16 +333,23 @@ index 8086b42..5945d4e 100644
      end),
    })
  
-@@ -279,7 +285,7 @@ M.setup = function(opts)
+@@ -279,26 +285,35 @@ M.setup = function(opts)
      cmp.register_source("codecompanion_variables", require("cmp_codecompanion.variables").new())
      cmp.register_source("codecompanion_slash_commands", require("cmp_codecompanion.slash_commands").new())
      cmp.register_source("codecompanion_models", require("cmp_codecompanion.models").new(config))
 -    cmp.setup.filetype("codecompanion", {
 +    cmp.setup.filetype("markdown", {
        enabled = true,
-       sources = {
+-      sources = {
++      sources = vim.list_extend({
          { name = "codecompanion_tools" },
-@@ -292,13 +298,22 @@ M.setup = function(opts)
+         { name = "codecompanion_variables" },
+         { name = "codecompanion_slash_commands" },
+         { name = "codecompanion_models" },
+-      },
++      }, cmp.get_config().sources),
+     })
+   end
  
    -- Capture the last terminal buffer
    _G.codecompanion_last_terminal = nil
