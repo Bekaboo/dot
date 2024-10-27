@@ -168,22 +168,30 @@ local fnames = {}
 local function update_pdiffs(bufs)
   bufs = vim.tbl_filter(vim.api.nvim_buf_is_valid, bufs)
 
-  for i, path_diff in
-    ipairs(vim.tbl_filter(function(d)
-      return d ~= ''
-    end, utils.fs.diff(vim.tbl_map(vim.api.nvim_buf_get_name, bufs))))
-  do
-    local _buf = bufs[i]
-    vim.b[_buf]._stl_pdiff = path_diff
+  local path_diffs =
+    utils.fs.diff(vim.tbl_map(vim.api.nvim_buf_get_name, bufs))
+
+  for i, buf in ipairs(bufs) do
+    if path_diffs[i] ~= '' then
+      vim.b[buf]._stl_pdiff = path_diffs[i]
+    end
   end
 end
 
----Add a normal buffer to `fnames`, calc diff for buffer with non-unique
----file names
+---Check if buffer is visible
+---A buffer is considered visible if it is listed or has a corresponding window
+---@param buf integer buffer number
+---@return boolean
+local function buf_visible(buf)
+  return vim.api.nvim_buf_is_valid(buf)
+    and (vim.bo[buf].bl or vim.fn.bufwinid(buf) ~= -1)
+end
+
+---Add a buffer to `fnames`, calc diff for buffer with non-unique file names
 ---@param buf integer buffer number
 ---@return nil
 local function add_buf(buf)
-  if not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].bt ~= '' then
+  if not buf_visible(buf) then
     return
   end
 
@@ -197,8 +205,47 @@ local function add_buf(buf)
   end
 
   local bufs = fnames[fname] -- buffers with the same name as the removed buf
-  table.insert(bufs, buf)
+  if not vim.tbl_contains(bufs, buf) then
+    table.insert(bufs, buf)
+    update_pdiffs(bufs)
+  end
+end
 
+---Remove a buffer from `fnames` and update path diffs
+---@param buf integer buffer number
+---@param bufname string buffer name, `buf` may not be valid so we need this
+---@return nil
+local function remove_buf(buf, bufname)
+  if buf_visible(buf) then
+    return
+  end
+
+  bufname = vim.fs.basename(bufname)
+  local bufs = fnames[bufname] -- buffers with the same name as the removed buf
+  if not bufs then
+    return
+  end
+
+  for i, b in ipairs(bufs) do
+    if b == buf then
+      table.remove(bufs, i)
+      break
+    end
+  end
+
+  local num_bufs = #bufs
+  if num_bufs == 0 then
+    fnames[bufname] = nil
+    return
+  end
+
+  if num_bufs == 1 then
+    vim.b[bufs[1]]._stl_pdiff = nil
+    return
+  end
+
+  -- Still have multiple buffers with the same file name,
+  -- update path diffs for the remaining buffers
   update_pdiffs(bufs)
 end
 
@@ -206,54 +253,48 @@ for _, buf in ipairs(vim.api.nvim_list_bufs()) do
   add_buf(buf)
 end
 
-vim.api.nvim_create_autocmd({ 'BufAdd', 'BufFilePost' }, {
-  group = groupid,
+vim.api.nvim_create_autocmd({ 'BufAdd', 'BufWinEnter', 'BufFilePost' }, {
   desc = 'Track new buffer file name.',
+  group = groupid,
+  -- Delay adding buffer to fnames to ensure attributes, e.g.
+  -- `bt`, are set for special buffers, for example, terminal buffers
+  callback = vim.schedule_wrap(function(info)
+    add_buf(info.buf)
+    vim.cmd.redrawstatus({
+      bang = true,
+      mods = { emsg_silent = true },
+    })
+  end),
+})
+
+vim.api.nvim_create_autocmd('OptionSet', {
+  desc = 'Remove invisible buffer record.',
+  group = groupid,
+  pattern = 'buflisted',
   callback = function(info)
-    -- Delay adding buffer to fnames to ensure attributes, e.g.
-    -- `bt`, are set for special buffers, for example, terminal buffers
-    vim.schedule(function()
-      add_buf(info.buf)
-    end)
+    remove_buf(info.buf, info.file)
+    vim.cmd.redrawstatus({
+      bang = true,
+      mods = { emsg_silent = true },
+    })
   end,
 })
 
-vim.api.nvim_create_autocmd({ 'BufDelete', 'BufFilePre' }, {
+vim.api.nvim_create_autocmd({
+  'BufLeave',
+  'BufHidden',
+  'BufDelete',
+  'BufFilePre',
+}, {
+  desc = 'Remove invisible buffer from record.',
   group = groupid,
-  desc = 'Remove deleted buffer file name from record.',
-  callback = function(info)
-    if vim.bo[info.buf].bt ~= '' then
-      return
-    end
-
-    local fname = vim.fs.basename(vim.api.nvim_buf_get_name(info.buf))
-    local bufs = fnames[fname] -- buffers with the same name as the removed buf
-    if not bufs then
-      return
-    end
-
-    for i, buf in ipairs(bufs) do
-      if buf == info.buf then
-        table.remove(bufs, i)
-        break
-      end
-    end
-
-    local num_bufs = #bufs
-    if num_bufs == 0 then
-      fnames[fname] = nil
-      return
-    end
-
-    if num_bufs == 1 then
-      vim.b[bufs[1]]._stl_pdiff = nil
-      return
-    end
-
-    -- Still have multiple buffers with the same file name,
-    -- update path diffs for the remaining buffers
-    update_pdiffs(bufs)
-  end,
+  callback = vim.schedule_wrap(function(info)
+    remove_buf(info.buf, info.file)
+    vim.cmd.redrawstatus({
+      bang = true,
+      mods = { emsg_silent = true },
+    })
+  end),
 })
 
 function statusline.fname()
@@ -338,6 +379,9 @@ vim.api.nvim_create_autocmd('DiagnosticChanged', {
   callback = function(info)
     vim.b[info.buf].diag_cnt_cache = vim.diagnostic.count(info.buf)
     vim.b[info.buf].diag_str_cache = nil
+    vim.cmd.redrawstatus({
+      mods = { emsg_silent = true },
+    })
   end,
 })
 
@@ -438,6 +482,10 @@ vim.api.nvim_create_autocmd('LspProgress', {
         vim.cmd.redrawstatus()
       end
     end, spinner_end_keep)
+
+    vim.cmd.redrawstatus({
+      mods = { emsg_silent = true },
+    })
   end,
 })
 
@@ -538,14 +586,6 @@ function statusline.get()
   return vim.g.statusline_winid == vim.api.nvim_get_current_win() and stl
     or stl_nc
 end
-
-vim.api.nvim_create_autocmd(
-  { 'FileChangedShellPost', 'DiagnosticChanged', 'LspProgress' },
-  {
-    group = groupid,
-    command = 'silent! redrawstatus',
-  }
-)
 
 ---Set default highlight groups for statusline components
 ---@return  nil
