@@ -4,12 +4,19 @@ local function intro_disabled()
   return vim.go.shortmess:find('I', 1, true) ~= nil
 end
 
+---Disable builtin intro message
+---@return nil
+local function disable_intro()
+  vim.opt.shortmess:append('I')
+end
+
 ---@return boolean
 local function should_show_intro()
   return vim.g.has_ui and vim.fn.argc() == 0 and not intro_disabled()
 end
 
 if not should_show_intro() then
+  disable_intro()
   return
 end
 
@@ -86,6 +93,7 @@ end
 win_config.row = math.floor((vim.go.lines - vim.go.ch - win_config.height) / 2)
 win_config.col = math.floor((vim.go.columns - win_config.width) / 2)
 if win_config.row < 4 or win_config.col < 8 then
+  disable_intro()
   -- Restore &eventignore before exit
   vim.go.eventignore = eventignore
   return
@@ -140,12 +148,12 @@ vim.api.nvim_create_autocmd('UIEnter', {
   desc = 'Show the intro message on entering the UI.',
   callback = function()
     if not should_show_intro() then
+      disable_intro()
       clear_intro()
       return true
     end
 
-    -- Disable default intro message
-    vim.opt.shortmess:append('I')
+    disable_intro()
 
     -- Intro message buffer can be deleted by user actions before the UIEnter
     -- event, e.g. when nvim is launched using `nvim +split`
