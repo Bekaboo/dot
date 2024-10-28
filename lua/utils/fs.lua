@@ -1,21 +1,21 @@
 local M = {}
 
 M.root_patterns = {
-  '.git/',
-  '.svn/',
-  '.bzr/',
-  '.hg/',
-  '.project/',
+  '.git',
+  '.svn',
+  '.bzr',
+  '.hg',
+  '.project',
   '.pro',
   '.sln',
   '.vcxproj',
   'Makefile',
   'makefile',
   'MAKEFILE',
-  'venv/',
-  'env/',
-  '.venv/',
-  '.env/',
+  'venv',
+  'env',
+  '.venv',
+  '.env',
 }
 
 ---Read file contents
