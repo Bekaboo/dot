@@ -350,11 +350,11 @@ if s:supportevents([
       return ''
     endif
     let patterns = get(a:, 1, [
-        \ '.git/',
-        \ '.svn/',
-        \ '.bzr/',
-        \ '.hg/',
-        \ '.project/',
+        \ '.git',
+        \ '.svn',
+        \ '.bzr',
+        \ '.hg',
+        \ '.project',
         \ '.pro',
         \ '.sln',
         \ '.vcxproj',
