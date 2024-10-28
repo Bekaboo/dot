@@ -2,8 +2,7 @@ local M = {}
 
 ---Compiled vim regex that decides if a command is a TUI app
 M.TUI_REGEX = vim.regex(
-  [[\v^(sudo(\s+--?(\w|-)+((\s+|\=)\S+)?)*\s+)?]]
-    .. [[(/usr/bin/)?]]
+  [[\v^(sudo(\s+--?(\w|-)+((\s+|\=)\S+)?)*\s+)?\S*]]
     .. [[(n?vim?|vimdiff|emacs(client)?|lem|nano|helix|kak|]]
     .. [[tmux|vifm|yazi|ranger|lazygit|h?top|gdb|fzf|nmtui|]]
     .. [[sudoedit|ssh|crontab|asciinema)]]
@@ -45,7 +44,7 @@ function M.fg_cmds(buf)
     local stat, cmd = unpack(vim.split(stat_cmd_str, '%s+', {
       trimempty = true,
     }))
-    if stat and stat:find('^%w+%+') then
+    if stat and stat:find('^%S+%+') then
       table.insert(cmds, cmd)
     end
   end
