@@ -61,6 +61,22 @@ setcolor-kitty() {
     fi
 }
 
+
+setcolor-termux() {
+    # $1: name of the colorscheme
+    local colors_path="$HOME/.termux/colors"
+    local dark_color_path="$colors_path/dark.properties"
+    local light_color_path="$colors_path/light.properties"
+    # If $1 is empty, only need to ensure symlink to color theme files exists
+    if [[ -z "$1" ]]; then
+        ensure-slink "$colors_path/$DEFAULT_COLOR-dark.properties" "$dark_color_path"
+        ensure-slink "$colors_path/$DEFAULT_COLOR-light.properties" "$light_color_path"
+    else
+        force-slink "$colors_path/$1-dark.properties" "$dark_color_path"
+        force-slink "$colors_path/$1-light.properties" "$light_color_path"
+    fi
+}
+
 setcolor-wezterm() {
     # $1: name of the colorscheme
     local themes_path="$CONFIG_HOME/wezterm/colors"
@@ -97,12 +113,10 @@ setcolor-highlight() {
 
 setcolor-nvim() {
     # $1: name of the colorscheme
-    if [[ -z "$1" ]] || ! has nvim; then
+    if [[ -z "$1" ]] || ! has nvim || ! has nvim-socks; then
         return 1
     fi
-    local runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
-    local appname="${NVIM_APPNAME:-nvim}"
-    for sock in "$runtime_dir"/"$appname".*.0; do
+    for sock in $(nvim-socks); do
         nvim --clean --headless --server "$sock" \
             --remote-send "<Cmd>if get(g:, 'colors_name', '') !=# '$1' | \
                 let g:script_set_colors=1 | silent! colors $1 | \
@@ -280,6 +294,7 @@ main() {
     setcolor-kitty "$color" &
     setcolor-wezterm "$color" &
     setcolor-konsole-yakuake "$color" &
+    setcolor-termux "$color" &
     setcolor-highlight "$color" &
     setcolor-nvim "$color" &
     setcolor-fish "$color" &

@@ -75,12 +75,10 @@ setbg-highlight() {
 
 setbg-nvim() {
     # $1: 'light' or 'dark'
-    if [[ -z "$1" ]] || ! has nvim; then
+    if [[ -z "$1" ]] || ! has nvim || ! has nvim-socks; then
         return 1
     fi
-    local runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
-    local appname="${NVIM_APPNAME:-nvim}"
-    for sock in "$runtime_dir"/"$appname".*.0; do
+    for sock in $(nvim-socks); do
         nvim --clean --headless --server "$sock" \
             --remote-send "<Cmd>if &bg !=# '$1' | let g:script_set_bg=1 \
                 | set bg=$1 | unlet g:script_set_bg | endif<CR>" +'qa!' \
@@ -156,6 +154,18 @@ setbg-konsole-yakuake() {
     konsole-switch-profile-bg yakuake "$1"
     konsole-switch-profile-bg dolphin "$1"
     konsole-switch-profile-bg kate "$1"
+}
+
+setbg-termux() {
+    # $1: 'light' or 'dark'
+    local config_dir="$HOME/.termux"
+    local theme_path="$config_dir/colors.properties"
+    local themes_dir="$config_dir/colors"
+    if [[ -z $1 ]]; then
+        ensure-slink "$themes_dir/$DEFAULT_BG.properties" "$theme_path"
+    else
+        force-slink "$themes_dir/$1.properties" "$theme_path"
+    fi
 }
 
 setbg-okular() {
@@ -273,6 +283,7 @@ main() {
     setbg-kitty "$bg" &
     setbg-wezterm "$bg" &
     setbg-konsole-yakuake "$bg" &
+    setbg-termux "$bg" &
     setbg-highlight "$bg" &
     setbg-nvim "$bg" &
     setbg-fish "$bg" &
