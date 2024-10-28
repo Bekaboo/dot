@@ -28,9 +28,16 @@ ex() {
     # Extract directly if the archive contains only one file/directory,
     # else we extract it into a separate directory
     case "$1" in
-    *.bz2) bunzip2 "$1" ;;
-    *.gz) gunzip "$1" ;;
     *.Z) uncompress "$1" ;;
+    *.tar.Z)
+        if tar tZf "$1" | grep -q '^.*/$'; then
+            checkdir "$dirname" && mkdir "$dirname" &&
+                tar xZf "$1" -C "$dirname" || return 1
+        else
+            tar xZf "$1"
+        fi
+        ;;
+    *.bz2) bunzip2 "$1" ;;
     *.tar.bz2 | *.tbz2)
         if tar tjf "$1" | grep -q '^.*/$'; then
             checkdir "$dirname" && mkdir "$dirname" &&
@@ -39,12 +46,49 @@ ex() {
             tar xjf "$1"
         fi
         ;;
+    *.gz) gunzip "$1" ;;
     *.tar.gz | *.tgz)
         if tar tzf "$1" | grep -q '^.*/$'; then
             checkdir "$dirname" && mkdir "$dirname" &&
                 tar xzf "$1" -C "$dirname" || return 1
         else
             tar xzf "$1"
+        fi
+        ;;
+    *.xz) unxz "$1" ;;
+    *.tar.xz | *.txz)
+        if tar tJf "$1" | grep -q '^.*/$'; then
+            checkdir "$dirname" && mkdir "$dirname" &&
+                tar xJf "$1" -C "$dirname" || return 1
+        else
+            tar xJf "$1"
+        fi
+        ;;
+    *.lzma) unlzma "$1" ;;
+    *.tar.lzma)
+        if tar --lzma -tf "$1" | grep -q '^.*/$'; then
+            checkdir "$dirname" && mkdir "$dirname" &&
+                tar --lzma -xf "$1" -C "$dirname" || return 1
+        else
+            tar --lzma -xf "$1"
+        fi
+        ;;
+    *.zst) zstd -d "$1" ;;
+    *.tar.zst | *.tzst)
+        if tar --zstd -tf "$1" | grep -q '^.*/$'; then
+            checkdir "$dirname" && mkdir "$dirname" &&
+                tar --zstd -xf "$1" -C "$dirname" || return 1
+        else
+            tar --zstd -xf "$1"
+        fi
+        ;;
+    *.lz4) lz4 -d "$1" ;;
+    *.tar.lz4)
+        if tar --use-compress-program=lz4 -tf "$1" | grep -q '^.*/$'; then
+            checkdir "$dirname" && mkdir "$dirname" &&
+                tar --use-compress-program=lz4 -xf "$1" -C "$dirname" || return 1
+        else
+            tar --use-compress-program=lz4 -xf "$1"
         fi
         ;;
     *.rar)
