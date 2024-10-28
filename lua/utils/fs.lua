@@ -16,6 +16,8 @@ M.root_patterns = {
   'env',
   '.venv',
   '.env',
+  '.gitignore',
+  '.editorconfig',
 }
 
 ---Read file contents
