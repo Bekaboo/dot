@@ -92,7 +92,7 @@ end
 -- return if no enough space
 win_config.row = math.floor((vim.go.lines - vim.go.ch - win_config.height) / 2)
 win_config.col = math.floor((vim.go.columns - win_config.width) / 2)
-if win_config.row < 4 or win_config.col < 8 then
+if win_config.row < 2 or win_config.col < 2 then
   disable_intro()
   -- Restore &eventignore before exit
   vim.go.eventignore = eventignore
