@@ -662,6 +662,41 @@ vim.keymap.set('n', '<Leader>fr', fzf.lsp_references)
 vim.keymap.set('n', '<Leader>fR', fzf.lsp_finder)
 vim.keymap.set('n', '<Leader>f<Esc>', '<Nop>')
 
+---Search symbols, fallback to treesitter nodes if no language server
+---supporting symbol method is attached
+function fzf.symbols()
+  if
+    not vim.tbl_isempty(vim.lsp.get_clients({
+      method = 'textDocument/documentSymbol',
+    }))
+  then
+    return fzf.lsp_document_symbols()
+  end
+  return fzf.treesitter()
+end
+
+---@param buf integer
+---@return nil
+local function fzf_setup_buf_keymap(buf)
+  if not vim.api.nvim_buf_is_valid(buf) or vim.b[buf]._fzf_buf_keymap_set then
+    return
+  end
+  vim.b[buf]._fzf_buf_keymap_set = true
+  vim.keymap.set('n', '<Leader>s', fzf.symbols, { buffer = buf })
+end
+
+for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+  fzf_setup_buf_keymap(buf)
+end
+
+vim.api.nvim_create_autocmd('FileType', {
+  desc = 'Fzf search LSP symbols, fallback to treesitter nodes.',
+  group = vim.api.nvim_create_augroup('FzfLuaSetup', {}),
+  callback = function(info)
+    fzf_setup_buf_keymap(info.buf)
+  end,
+})
+
 local _lsp_workspace_symbol = vim.lsp.buf.workspace_symbol
 
 ---Overriding `vim.lsp.buf.workspace_symbol()`, not only the handler here

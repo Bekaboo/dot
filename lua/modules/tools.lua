@@ -30,6 +30,7 @@ return {
       "<Leader>'",
       '<Leader>-',
       '<Leader>=',
+      '<Leader>s',
       '<Leader>R',
       '<Leader>F',
       '<Leader>f',
