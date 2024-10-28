@@ -361,6 +361,10 @@ if s:supportevents([
         \ 'Makefile',
         \ 'makefile',
         \ 'MAKEFILE',
+        \ 'venv',
+        \ 'env',
+        \ '.venv',
+        \ '.env',
         \ '.gitignore',
         \ '.editorconfig'])
     let dirpath = fnamemodify(a:fpath, ':p:h') . ';'
