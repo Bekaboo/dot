@@ -41,8 +41,14 @@ function __bootstrap
         case Y y YES Yes yes
             curl -sL 'https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish' \
                 | source && fisher install jorgebucaran/fisher
-            fisher update
-            exec fish -l # reload shell after update for e.g. patches to take effect
+
+            set -l plugins_file "$__fish_config_dir/fish_plugins"
+            if test -f "$plugins_file"
+                cat "$plugins_file" | fisher install
+            end
+
+            # reload shell after update for e.g. patches to take effect
+            exec fish -l
         case NEVER Never never
             if not test -d "$fish_state_dir"
                 mkdir -p "$fish_state_dir"
