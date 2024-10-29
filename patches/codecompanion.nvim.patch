@@ -51,7 +51,7 @@ index c238c45..46db1b3 100644
  
  source.get_position_encoding_kind = function()
 diff --git a/lua/codecompanion/helpers/slash_commands/buffer.lua b/lua/codecompanion/helpers/slash_commands/buffer.lua
-index 5f51e7b..6f01b3e 100644
+index 456faba..00b84c8 100644
 --- a/lua/codecompanion/helpers/slash_commands/buffer.lua
 +++ b/lua/codecompanion/helpers/slash_commands/buffer.lua
 @@ -29,25 +29,36 @@ local function output(SlashCommand, selected)
@@ -154,7 +154,7 @@ index aac6d98..6d5a471 100644
            if chunk.code >= 400 then
              return log:error("Error: %s", chunk.body.data)
 diff --git a/lua/codecompanion/helpers/slash_commands/file.lua b/lua/codecompanion/helpers/slash_commands/file.lua
-index 450609b..0fec5af 100644
+index 3ff20a6..13267a2 100644
 --- a/lua/codecompanion/helpers/slash_commands/file.lua
 +++ b/lua/codecompanion/helpers/slash_commands/file.lua
 @@ -30,20 +30,9 @@ local function output(SlashCommand, selected)
@@ -182,7 +182,7 @@ index 450609b..0fec5af 100644
  
  ---@class CodeCompanion.SlashCommand.File: CodeCompanion.SlashCommand
 diff --git a/lua/codecompanion/helpers/slash_commands/help.lua b/lua/codecompanion/helpers/slash_commands/help.lua
-index b6d081d..4534c36 100644
+index 505e925..6dcd458 100644
 --- a/lua/codecompanion/helpers/slash_commands/help.lua
 +++ b/lua/codecompanion/helpers/slash_commands/help.lua
 @@ -86,20 +86,9 @@ local function output(SlashCommand, selected)
@@ -210,7 +210,7 @@ index b6d081d..4534c36 100644
  
  local Providers = {
 diff --git a/lua/codecompanion/helpers/slash_commands/symbols.lua b/lua/codecompanion/helpers/slash_commands/symbols.lua
-index 0933a26..e89d7f8 100644
+index 7adf335..96e15d5 100644
 --- a/lua/codecompanion/helpers/slash_commands/symbols.lua
 +++ b/lua/codecompanion/helpers/slash_commands/symbols.lua
 @@ -95,20 +95,16 @@ function SlashCommand:execute()
@@ -273,18 +273,6 @@ index 8c8673d..5aea26d 100644
  end
  
  return SlashCommand
-diff --git a/lua/codecompanion/helpers/tools/code_runner.lua b/lua/codecompanion/helpers/tools/code_runner.lua
-index 4fde457..80e91c8 100644
---- a/lua/codecompanion/helpers/tools/code_runner.lua
-+++ b/lua/codecompanion/helpers/tools/code_runner.lua
-@@ -52,6 +52,7 @@ Usage: To use this tool, you need to return an XML markdown code block (with bac
- ```
- 
- You must:
-+- Remember to use CDATA in your XML response.
- - Only use the tool when prompted by the user. For example "can you update the code for me?" or "can you add ..."
- - Be mindful that you may not be required to use the tool in all of your responses
- - Ensure the code you're executing will be able to parsed as valid XML
 diff --git a/lua/codecompanion/init.lua b/lua/codecompanion/init.lua
 index 8086b42..11ad131 100644
 --- a/lua/codecompanion/init.lua
