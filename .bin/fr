@@ -33,7 +33,7 @@ fr() {
         --delimiter ':' \
         --header "$fuzzy_search_hint" \
         --preview 'bat --theme base16 --paging never --style numbers,header-filename --color always {1} --highlight-line {2}' \
-        --preview-window '+{2}-6,~1' > "$output_file"
+        --preview-window '+{2}-6,~1' >"$output_file"
     # Entries in output file: {file}:{line}:{column}:{text}
     # Let vim read the output file as error file and jump to the first error
     if [[ -s "$output_file" ]]; then

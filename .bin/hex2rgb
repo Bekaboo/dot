@@ -4,7 +4,7 @@
 # Convert hex color code to rgb format, receives
 # multiple hex color codes from stdin, one per line
 hex2rgb() {
-    local hex="$(< /dev/stdin)"
+    local hex="$(</dev/stdin)"
     local r g b
     for hex in $hex; do
         r=$(printf '0x%0.2s' "$hex")

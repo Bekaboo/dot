@@ -61,7 +61,6 @@ setcolor-kitty() {
     fi
 }
 
-
 setcolor-termux() {
     # $1: name of the colorscheme
     local colors_path="$HOME/.termux/colors"
