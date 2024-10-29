@@ -19,60 +19,67 @@ get-theme-variant() {
 
 setbg-alacritty() {
     # $1: 'light' or 'dark'
-    local config_dir="$CONFIG_HOME/alacritty"
-    local config="$config_dir/alacritty.toml"
-    local theme_path="$config_dir/theme.toml"
-    local themes_dir="$config_dir/themes"
-    # If $1 is empty, only need to ensure symlink to color theme file exists
-    if [[ -z "$1" ]]; then
-        ln -s "$themes_dir/$DEFAULT_BG.toml" "$theme_path" 2>/dev/null
-    else
-        ln -sf "$themes_dir/$1.toml" "$theme_path"
-    fi
-    [[ -e "$config" ]] && touch "$config" # Reload config
+    (
+        cd "$CONFIG_HOME/alacritty"
+        local theme_path="theme.toml"
+        local themes_dir="themes"
+        # If $1 is empty, only need to ensure symlink to color theme file exists
+        if [[ -z "$1" ]]; then
+            ln -s "$themes_dir/$DEFAULT_BG.toml" "$theme_path" 2>/dev/null
+        else
+            ln -sf "$themes_dir/$1.toml" "$theme_path"
+        fi
+        [[ -e "$config" ]] && touch "$config" # Reload config
+    )
 }
 
 setbg-kitty() {
     # $1: 'light' or 'dark'
-    local config_dir="$CONFIG_HOME/kitty"
-    local theme_path="$config_dir/current-theme.conf"
-    local themes_dir="$config_dir/themes"
-    if [[ -z $1 ]]; then
-        ln -s "$themes_dir/$DEFAULT_BG.conf" "$theme_path" 2>/dev/null
-    else
-        ln -sf "$themes_dir/$1.conf" "$theme_path"
-    fi
-    if has kitty; then
-        for pid in $(pgrep kitty); do
-            kill -SIGUSR1 $pid
-        done
-    fi
+    (
+        cd "$CONFIG_HOME/kitty"
+        local theme_path="current-theme.conf"
+        local themes_dir="themes"
+        if [[ -z $1 ]]; then
+            ln -s "$themes_dir/$DEFAULT_BG.conf" "$theme_path" 2>/dev/null
+        else
+            ln -sf "$themes_dir/$1.conf" "$theme_path"
+        fi
+        if has kitty; then
+            for pid in $(pgrep kitty); do
+                kill -SIGUSR1 $pid
+            done
+        fi
+    )
 }
 
 setbg-wezterm() {
     # $1: 'light' or 'dark'
-    local config_dir="$CONFIG_HOME/wezterm"
-    local theme_path="$config_dir/theme.toml"
-    local themes_dir="$config_dir/colors"
-    # If $1 is empty, only need to ensure symlink to color theme file exists
-    if [[ -z "$1" ]]; then
-        ln -s "$themes_dir/$DEFAULT_BG.toml" "$theme_path" 2>/dev/null
-    else
-        ln -sf "$themes_dir/$1.toml" "$theme_path"
-    fi
+    (
+        cd "$CONFIG_HOME/wezterm"
+        local theme_path="theme.toml"
+        local themes_dir="colors"
+        # If $1 is empty, only need to ensure symlink to color theme file exists
+        if [[ -z "$1" ]]; then
+            ln -s "$themes_dir/$DEFAULT_BG.toml" "$theme_path" 2>/dev/null
+        else
+            ln -sf "$themes_dir/$1.toml" "$theme_path"
+        fi
+    )
 }
 
 setbg-highlight() {
     # $1: 'light' or 'dark'
-    local config_dir="$HOME/.highlight"
-    local themes_dir="$config_dir/themes"
-    local theme_path="$themes_dir/highlight.theme"
-    # If $1 is empty, only need to ensure symlink to color theme file exists
-    if [[ -z "$1" ]]; then
-        ln -s "$themes_dir/$DEFAULT_BG.theme" "$theme_path" 2>/dev/null
-    else
-        ln -sf "$themes_dir/$1.theme" "$theme_path"
-    fi
+    (
+        cd "$HOME/.highlight"
+        local themes_dir="themes"
+        local theme_path="highlight.theme"
+        # If $1 is empty, only need to ensure symlink to color theme file exists
+        if [[ -z "$1" ]]; then
+            ln -s "$themes_dir/$DEFAULT_BG.theme" "$theme_path" 2>/dev/null
+        else
+            ln -sf "$themes_dir/$1.theme" "$theme_path"
+        fi
+    )
 }
 
 setbg-nvim() {
@@ -160,17 +167,19 @@ setbg-konsole-yakuake() {
 
 setbg-termux() {
     # $1: 'light' or 'dark'
-    local config_dir="$HOME/.termux"
-    local theme_path="$config_dir/colors.properties"
-    local themes_dir="$config_dir/colors"
-    if [[ -z $1 ]]; then
-        ln -s "$themes_dir/$DEFAULT_BG.properties" "$theme_path" 2>/dev/null
-    else
-        ln -sf "$themes_dir/$1.properties" "$theme_path"
-    fi
-    if has termux-reload-settings; then
-        termux-reload-settings
-    fi
+    (
+        cd "$HOME/.termux"
+        local theme_path="colors.properties"
+        local themes_dir="colors"
+        if [[ -z $1 ]]; then
+            ln -s "$themes_dir/$DEFAULT_BG.properties" "$theme_path" 2>/dev/null
+        else
+            ln -sf "$themes_dir/$1.properties" "$theme_path"
+        fi
+        if has termux-reload-settings; then
+            termux-reload-settings
+        fi
+    )
 }
 
 setbg-okular() {
@@ -210,15 +219,17 @@ setbg-vscode() {
 
 setbg-fish() {
     # $1: 'light' or 'dark'
-    local themes_dir="$CONFIG_HOME/fish/themes"
-    local theme_path="$themes_dir/Current.theme"
-    if [[ -z "$1" ]]; then
-        ln -s "$themes_dir/${DEFAULT_BG^}.theme" "$theme_path" 2>/dev/null
-    else
-        ln -sf "$themes_dir/${1^}.theme" "$theme_path"
-    fi
-    has fish &&
-        fish -c 'set -U __fish_reload_theme "$(head -c 16 /dev/urandom | base32)"'
+    (
+        cd "$CONFIG_HOME/fish/themes"
+        local theme_path="Current.theme"
+        if [[ -z "$1" ]]; then
+            ln -s "${DEFAULT_BG^}.theme" "$theme_path" 2>/dev/null
+        else
+            ln -sf "${1^}.theme" "$theme_path"
+        fi
+        has fish &&
+            fish -c 'set -U __fish_reload_theme "$(head -c 16 /dev/urandom | base32)"'
+    )
 }
 
 setbg-glow() {

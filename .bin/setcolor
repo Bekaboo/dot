@@ -26,89 +26,99 @@ get-cap-theme-name() {
 
 setcolor-alacritty() {
     # $1: name of the colorscheme
-    local themes_path="$CONFIG_HOME/alacritty/themes"
-    local dark_theme_path="$themes_path/dark.toml"
-    local light_theme_path="$themes_path/light.toml"
-    # If $1 is empty, only need to ensure symlink to color theme files exists
-    if [[ -z "$1" ]]; then
-        ln -s "$themes_path/$DEFAULT_COLOR-dark.toml" "$dark_theme_path" 2>/dev/null
-        ln -s "$themes_path/$DEFAULT_COLOR-light.toml" "$light_theme_path" 2>/dev/null
-    else
-        ln -sf "$themes_path/$1-dark.toml" "$dark_theme_path"
-        ln -sf "$themes_path/$1-light.toml" "$light_theme_path"
-    fi
-    local config="$CONFIG_HOME/alacritty/alacritty.toml"
-    [[ -e "$config" ]] && touch "$config" # Reload config
+    (
+        cd "$CONFIG_HOME/alacritty/themes"
+        local dark_theme_path="dark.toml"
+        local light_theme_path="light.toml"
+        # If $1 is empty, only need to ensure symlink to color theme files exists
+        if [[ -z "$1" ]]; then
+            ln -s "$DEFAULT_COLOR-dark.toml" "$dark_theme_path" 2>/dev/null
+            ln -s "$DEFAULT_COLOR-light.toml" "$light_theme_path" 2>/dev/null
+        else
+            ln -sf "$1-dark.toml" "$dark_theme_path"
+            ln -sf "$1-light.toml" "$light_theme_path"
+        fi
+        local config="$CONFIG_HOME/alacritty/alacritty.toml"
+        [[ -e "$config" ]] && touch "$config" # Reload config
+    )
 }
 
 setcolor-kitty() {
     # $1: name of the colorscheme
-    local themes_path="$CONFIG_HOME/kitty/themes"
-    local dark_theme_path="$themes_path/dark.conf"
-    local light_theme_path="$themes_path/light.conf"
-    # If $1 is empty, only need to ensure symlink to color theme files exists
-    if [[ -z "$1" ]]; then
-        ln -s "$themes_path/$DEFAULT_COLOR-dark.conf" "$dark_theme_path" 2>/dev/null
-        ln -s "$themes_path/$DEFAULT_COLOR-light.conf" "$light_theme_path" 2>/dev/null
-    else
-        ln -sf "$themes_path/$1-dark.conf" "$dark_theme_path"
-        ln -sf "$themes_path/$1-light.conf" "$light_theme_path"
-    fi
-    if has kitty; then
-        for pid in $(pgrep kitty); do
-            kill -SIGUSR1 $pid
-        done
-    fi
+    (
+        cd "$CONFIG_HOME/kitty/themes"
+        local dark_theme_path="dark.conf"
+        local light_theme_path="light.conf"
+        # If $1 is empty, only need to ensure symlink to color theme files exists
+        if [[ -z "$1" ]]; then
+            ln -s "$DEFAULT_COLOR-dark.conf" "$dark_theme_path" 2>/dev/null
+            ln -s "$DEFAULT_COLOR-light.conf" "$light_theme_path" 2>/dev/null
+        else
+            ln -sf "$1-dark.conf" "$dark_theme_path"
+            ln -sf "$1-light.conf" "$light_theme_path"
+        fi
+        if has kitty; then
+            for pid in $(pgrep kitty); do
+                kill -SIGUSR1 $pid
+            done
+        fi
+    )
 }
 
 setcolor-termux() {
     # $1: name of the colorscheme
-    local colors_path="$HOME/.termux/colors"
-    local dark_color_path="$colors_path/dark.properties"
-    local light_color_path="$colors_path/light.properties"
-    # If $1 is empty, only need to ensure symlink to color theme files exists
-    if [[ -z "$1" ]]; then
-        ln -s "$colors_path/$DEFAULT_COLOR-dark.properties" "$dark_color_path" 2>/dev/null
-        ln -s "$colors_path/$DEFAULT_COLOR-light.properties" "$light_color_path" 2>/dev/null
-    else
-        ln -sf "$colors_path/$1-dark.properties" "$dark_color_path"
-        ln -sf "$colors_path/$1-light.properties" "$light_color_path"
-    fi
-    if has termux-reload-settings; then
-        termux-reload-settings
-    fi
+    (
+        cd "$HOME/.termux/colors"
+        local dark_color_path="dark.properties"
+        local light_color_path="light.properties"
+        # If $1 is empty, only need to ensure symlink to color theme files exists
+        if [[ -z "$1" ]]; then
+            ln -s "$DEFAULT_COLOR-dark.properties" "$dark_color_path" 2>/dev/null
+            ln -s "$DEFAULT_COLOR-light.properties" "$light_color_path" 2>/dev/null
+        else
+            ln -sf "$1-dark.properties" "$dark_color_path"
+            ln -sf "$1-light.properties" "$light_color_path"
+        fi
+        if has termux-reload-settings; then
+            termux-reload-settings
+        fi
+    )
 }
 
 setcolor-wezterm() {
     # $1: name of the colorscheme
-    local themes_path="$CONFIG_HOME/wezterm/colors"
-    local dark_theme_path="$themes_path/dark.toml"
-    local light_theme_path="$themes_path/light.toml"
-    # If $1 is empty, only need to ensure stomlink to color theme files exists
-    if [[ -z "$1" ]]; then
-        ln -s "$themes_path/$DEFAULT_COLOR-dark.toml" "$dark_theme_path" 2>/dev/null
-        ln -s "$themes_path/$DEFAULT_COLOR-light.toml" "$light_theme_path" 2>/dev/null
-    else
-        ln -sf "$themes_path/$1-dark.toml" "$dark_theme_path"
-        ln -sf "$themes_path/$1-light.toml" "$light_theme_path"
-    fi
-    local config="$CONFIG_HOME/wezterm/wezterm.lua"
-    [[ -e "$config" ]] && touch "$config" # Reload config
+    (
+        cd "$CONFIG_HOME/wezterm/colors"
+        local dark_theme_path="dark.toml"
+        local light_theme_path="light.toml"
+        # If $1 is empty, only need to ensure stomlink to color theme files exists
+        if [[ -z "$1" ]]; then
+            ln -s "$DEFAULT_COLOR-dark.toml" "$dark_theme_path" 2>/dev/null
+            ln -s "$DEFAULT_COLOR-light.toml" "$light_theme_path" 2>/dev/null
+        else
+            ln -sf "$1-dark.toml" "$dark_theme_path"
+            ln -sf "$1-light.toml" "$light_theme_path"
+        fi
+        local config="$CONFIG_HOME/wezterm/wezterm.lua"
+        [[ -e "$config" ]] && touch "$config" # Reload config
+    )
 }
 
 setcolor-highlight() {
     # $1: name of the colorscheme
-    local themes_path="$HOME/.highlight/themes"
-    local dark_theme_path="$themes_path/dark.theme"
-    local light_theme_path="$themes_path/light.theme"
-    # If $1 is empty, only need to ensure symlink to color theme files exists
-    if [[ -z "$1" ]]; then
-        ln -s "$themes_path/$DEFAULT_COLOR-dark.theme" "$dark_theme_path" 2>/dev/null
-        ln -s "$themes_path/$DEFAULT_COLOR-light.theme" "$light_theme_path" 2>/dev/null
-    else
-        ln -sf "$themes_path/$1-dark.theme" "$dark_theme_path"
-        ln -sf "$themes_path/$1-light.theme" "$light_theme_path"
-    fi
+    (
+        cd "$HOME/.highlight/themes"
+        local dark_theme_path="dark.theme"
+        local light_theme_path="light.theme"
+        # If $1 is empty, only need to ensure symlink to color theme files exists
+        if [[ -z "$1" ]]; then
+            ln -s "$DEFAULT_COLOR-dark.theme" "$dark_theme_path" 2>/dev/null
+            ln -s "$DEFAULT_COLOR-light.theme" "$light_theme_path" 2>/dev/null
+        else
+            ln -sf "$1-dark.theme" "$dark_theme_path"
+            ln -sf "$1-light.theme" "$light_theme_path"
+        fi
+    )
 }
 
 setcolor-nvim() {
@@ -180,20 +190,22 @@ setcolor-konsole-yakuake() {
 
 setcolor-fish() {
     # $1: name of the colorscheme
-    local themes_path="$CONFIG_HOME/fish/themes"
-    local dark_theme_path="$themes_path/Dark.theme"
-    local light_theme_path="$themes_path/Light.theme"
-    local default_theme_name=$(get-cap-theme-name "$DEFAULT_COLOR")
-    if [[ -z "$1" ]]; then
-        ln -s "$themes_path/${default_theme_name} Dark.theme" "$dark_theme_path" 2>/dev/null
-        ln -s "$themes_path/${default_theme_name} Light.theme" "$light_theme_path" 2>/dev/null
-    else
-        local theme_name=$(get-cap-theme-name "$1")
-        ln -sf "$themes_path/${theme_name} Dark.theme" "$dark_theme_path"
-        ln -sf "$themes_path/${theme_name} Light.theme" "$light_theme_path"
-    fi
-    has fish &&
-        fish -c 'set -U __fish_reload_theme "$(head -c 16 /dev/urandom | base32)"'
+    (
+        cd "$CONFIG_HOME/fish/themes"
+        local dark_theme_path="Dark.theme"
+        local light_theme_path="Light.theme"
+        local default_theme_name=$(get-cap-theme-name "$DEFAULT_COLOR")
+        if [[ -z "$1" ]]; then
+            ln -s "${default_theme_name} Dark.theme" "$dark_theme_path" 2>/dev/null
+            ln -s "${default_theme_name} Light.theme" "$light_theme_path" 2>/dev/null
+        else
+            local theme_name=$(get-cap-theme-name "$1")
+            ln -sf "${theme_name} Dark.theme" "$dark_theme_path"
+            ln -sf "${theme_name} Light.theme" "$light_theme_path"
+        fi
+        has fish &&
+            fish -c 'set -U __fish_reload_theme "$(head -c 16 /dev/urandom | base32)"'
+    )
 }
 
 declare -A plasma_color_wallpaper_map=(
