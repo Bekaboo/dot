@@ -248,6 +248,11 @@ local function setup()
   tmux_mapkey_fallback('<M-k>', navigate_wrap('k'), tmux_mapkey_navigate_condition('k'))
   tmux_mapkey_fallback('<M-l>', navigate_wrap('l'), tmux_mapkey_navigate_condition('l'))
 
+  tmux_mapkey_fallback('<M-Left>',  navigate_wrap('h'), tmux_mapkey_navigate_condition('h'))
+  tmux_mapkey_fallback('<M-Down>',  navigate_wrap('j'), tmux_mapkey_navigate_condition('j'))
+  tmux_mapkey_fallback('<M-Up>',    navigate_wrap('k'), tmux_mapkey_navigate_condition('k'))
+  tmux_mapkey_fallback('<M-Right>', navigate_wrap('l'), tmux_mapkey_navigate_condition('l'))
+
   tmux_mapkey_fallback('<M-p>', 'last-pane')
   tmux_mapkey_fallback('<M-R>', 'swap-pane -U')
   tmux_mapkey_fallback('<M-r>', 'swap-pane -D')
