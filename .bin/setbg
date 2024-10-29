@@ -166,6 +166,9 @@ setbg-termux() {
     else
         force-slink "$themes_dir/$1.properties" "$theme_path"
     fi
+    if has termux-reload-settings; then
+        termux-reload-settings
+    fi
 }
 
 setbg-okular() {

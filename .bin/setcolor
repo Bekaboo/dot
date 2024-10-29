@@ -75,6 +75,9 @@ setcolor-termux() {
         force-slink "$colors_path/$1-dark.properties" "$dark_color_path"
         force-slink "$colors_path/$1-light.properties" "$light_color_path"
     fi
+    if has termux-reload-settings; then
+        termux-reload-settings
+    fi
 }
 
 setcolor-wezterm() {
