@@ -1,6 +1,9 @@
 return {
   {
     'Exafunction/codeium.vim',
+    -- Not supported under termux:
+    -- http://github.com/Exafunction/codeium/issues/33
+    enabled = not vim.env.TERMUX_VERSION,
     event = 'InsertEnter',
     cmd = {
       'Codeium',
