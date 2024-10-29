@@ -130,6 +130,8 @@ return {
     ArrowRight          = '→ ',
     ArrowUp             = '↑ ',
     ArrowUpDown         = '↕ ',
+    Bullet1             = '- ',
+    Bullet2             = '- ',
     CircleFilled        = '• ',
     CircleOutline       = 'o ',
     Cross               = 'x ',
