@@ -9,7 +9,7 @@ if ! has nvim || ! has find; then
     return 1
 fi
 
-RUNTIME_DIR="${XDG_RUNTIME_DIR:-${TMP:-/run/user/$(id -u)}}"
+RUNTIME_DIR="${XDG_RUNTIME_DIR:-${TMPDIR:-${TMP:-/run/user/$(id -u)}}}"
 APPNAME="${NVIM_APPNAME:-nvim}"
 
 find "$RUNTIME_DIR" -type s -name "$APPNAME.*.0" 2>/dev/null
