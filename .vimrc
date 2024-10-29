@@ -794,6 +794,10 @@ for map in ['nnoremap', 'xnoremap']
   exe map . '<Esc>j       <C-w><C-j>'
   exe map . '<Esc>k       <C-w><C-k>'
   exe map . '<Esc>l       <C-w><C-l>'
+  exe map . '<Esc><Left>  <C-w><Left>'
+  exe map . '<Esc><Down>  <C-w><Down>'
+  exe map . '<Esc><Up>    <C-w><Up>'
+  exe map . '<Esc><Right> <C-w><Right>'
   exe map . '<Esc>g<Esc>] <C-w>g<C-]>'
   exe map . '<Esc>g<Tab>  <C-w>g<Tab>'
 
@@ -1300,6 +1304,10 @@ if exists(':tmap') == 2
   tnoremap <expr> <Esc>j  <SID>running_tui() ? '<Esc>j'  : '<C-\><C-n><C-w>j'
   tnoremap <expr> <Esc>k  <SID>running_tui() ? '<Esc>k'  : '<C-\><C-n><C-w>k'
   tnoremap <expr> <Esc>l  <SID>running_tui() ? '<Esc>l'  : '<C-\><C-n><C-w>l'
+  tnoremap <expr> <Esc><Left>  <SID>running_tui() ? '<Esc><Left>'  : '<C-\><C-n><C-w><Left>'
+  tnoremap <expr> <Esc><Down>  <SID>running_tui() ? '<Esc><Down>'  : '<C-\><C-n><C-w><Down>'
+  tnoremap <expr> <Esc><Up>    <SID>running_tui() ? '<Esc><Up>'    : '<C-\><C-n><C-w><Up>'
+  tnoremap <expr> <Esc><Right> <SID>running_tui() ? '<Esc><Right>' : '<C-\><C-n><C-w><Right>'
   tnoremap <expr> <Esc>=  <SID>running_tui() ? '<Esc>='  : '<C-\><C-n><C-w>=i'
   tnoremap <expr> <Esc>_  <SID>running_tui() ? '<Esc>_'  : '<C-\><C-n><C-w>_i'
   tnoremap <expr> <Esc>\| <SID>running_tui() ? '<Esc>\|' : '<C-\><C-n><C-w>\|i'
@@ -1493,6 +1501,16 @@ if $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.1140')
   xnoremap <silent> <Esc>k :<C-u>call <SID>navigate('k', v:count1)<CR>
   xnoremap <silent> <Esc>l :<C-u>call <SID>navigate('l', v:count1)<CR>
 
+  nnoremap <silent> <Esc><Left>  :<C-u>call <SID>navigate('h', v:count1)<CR>
+  nnoremap <silent> <Esc><Down>  :<C-u>call <SID>navigate('j', v:count1)<CR>
+  nnoremap <silent> <Esc><Up>    :<C-u>call <SID>navigate('k', v:count1)<CR>
+  nnoremap <silent> <Esc><Right> :<C-u>call <SID>navigate('l', v:count1)<CR>
+
+  xnoremap <silent> <Esc><Left>  :<C-u>call <SID>navigate('h', v:count1)<CR>
+  xnoremap <silent> <Esc><Down>  :<C-u>call <SID>navigate('j', v:count1)<CR>
+  xnoremap <silent> <Esc><Up>    :<C-u>call <SID>navigate('k', v:count1)<CR>
+  xnoremap <silent> <Esc><Right> :<C-u>call <SID>navigate('l', v:count1)<CR>
+
   " return: 0/1
   function! s:tmux_mapkey_default_condition() abort
     return ! s:tmux_is_zoomed() && s:vim_tabpage_has_only_win()
@@ -1582,6 +1600,11 @@ if $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.1140')
     tnoremap <expr><silent> <Esc>j <SID>tmux_mapkey_fallback({-> <SID>navigate('j')}, <SID>running_tui() ? '<Esc>j' : '<C-\><C-n><C-w>j', TmuxMapkeyNavigateDownCondition)
     tnoremap <expr><silent> <Esc>k <SID>tmux_mapkey_fallback({-> <SID>navigate('k')}, <SID>running_tui() ? '<Esc>k' : '<C-\><C-n><C-w>k', TmuxMapkeyNavigateUpCondition)
     tnoremap <expr><silent> <Esc>l <SID>tmux_mapkey_fallback({-> <SID>navigate('l')}, <SID>running_tui() ? '<Esc>l' : '<C-\><C-n><C-w>l', TmuxMapkeyNavigateRightCondition)
+
+    tnoremap <expr><silent> <Esc><Left>  <SID>tmux_mapkey_fallback({-> <SID>navigate('h')}, <SID>running_tui() ? '<Esc><Left>'  : '<C-\><C-n><C-w><Left>',  TmuxMapkeyNavigateLeftCondition)
+    tnoremap <expr><silent> <Esc><Down>  <SID>tmux_mapkey_fallback({-> <SID>navigate('j')}, <SID>running_tui() ? '<Esc><Down>'  : '<C-\><C-n><C-w><Down>',  TmuxMapkeyNavigateDownCondition)
+    tnoremap <expr><silent> <Esc><Up>    <SID>tmux_mapkey_fallback({-> <SID>navigate('k')}, <SID>running_tui() ? '<Esc><Up>'    : '<C-\><C-n><C-w><Up>',    TmuxMapkeyNavigateUpCondition)
+    tnoremap <expr><silent> <Esc><Right> <SID>tmux_mapkey_fallback({-> <SID>navigate('l')}, <SID>running_tui() ? '<Esc><Right>' : '<C-\><C-n><C-w><Right>', TmuxMapkeyNavigateRightCondition)
 
     tnoremap <expr><silent> <Esc>p <SID>tmux_mapkey_fallback('last-pane', <SID>running_tui() ? '<Esc>p'  : '<C-\><C-n><C-w>p')
     tnoremap <expr><silent> <Esc>r <SID>tmux_mapkey_fallback('swap-pane -D', <SID>running_tui() ? '<Esc>r'  : '<C-\><C-n><C-w>ri')
