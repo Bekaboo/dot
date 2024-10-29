@@ -37,6 +37,13 @@ export RIPGREP_CONFIG_PATH=${HOME}/.ripgreprc
 
 [[ $- != *i* ]] && return
 
+if __has proot-distro &&
+    [[ -n "$TERMUX_VERSION" ]] &&
+    [[ -n "$PROOT_DISTRO" ]] &&
+    [[ -n "$PROOT_USER" ]]; then
+    exec proot-distro login $PROOT_DISTRO --user $PROOT_USER --termux-home
+fi
+
 # Enable colors for ls, etc. Prefer ~/.dir_colors
 if type -P dircolors >/dev/null; then
     if [[ -f ~/.dir_colors ]]; then

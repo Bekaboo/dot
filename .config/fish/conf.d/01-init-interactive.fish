@@ -3,6 +3,13 @@ if not status is-interactive
     return
 end
 
+if type -q proot-distro
+    and test -n "$TERMUX_VERSION"
+    and test -n "$PROOT_DISTRO"
+    and test -n "$PROOT_USER"
+    exec proot-distro login $PROOT_DISTRO --user $PROOT_USER --termux-home
+end
+
 # Fzf configs
 set -gx FZF_DEFAULT_OPTS "--reverse \
     --preview='fzf-file-previewer {}' \
