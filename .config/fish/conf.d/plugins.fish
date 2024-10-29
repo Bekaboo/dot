@@ -39,12 +39,12 @@ function __bootstrap
     set -l choice (read -P 'Install fisher plugin manager? [y]es/[n]o/[never] ' -l)
     switch $choice
         case Y y YES Yes yes
-            curl -sL 'https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish' \
-                | source && fisher install jorgebucaran/fisher
-
+            curl -sL 'https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish' | source
             set -l plugins_file "$__fish_config_dir/fish_plugins"
             if test -f "$plugins_file"
                 cat "$plugins_file" | fisher install
+            else
+                fisher install jorgebucaran/fisher
             end
 
             # reload shell after update for e.g. patches to take effect
