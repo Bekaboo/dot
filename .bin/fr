@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
+has() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+PREVIEW_CMD=$(has bat && echo 'bat --theme base16 --paging never --style numbers,header-filename --color always {1} --highlight-line {2}' ||
+    has fzf-file-previewer && echo 'fzf-file-previewer {1} {2}' ||
+    has cat && echo 'cat {1}'
+)
+
 # Find a regex pattern using rg and fzf
 # $1: search root path
 fr() {
@@ -32,7 +41,7 @@ fr() {
         --prompt "$regex_prompt" \
         --delimiter ':' \
         --header "$fuzzy_search_hint" \
-        --preview 'bat --theme base16 --paging never --style numbers,header-filename --color always {1} --highlight-line {2}' \
+        --preview "$PREVIEW_CMD" \
         --preview-window '+{2}-6,~1' >"$output_file"
     # Entries in output file: {file}:{line}:{column}:{text}
     # Let vim read the output file as error file and jump to the first error
