@@ -258,7 +258,7 @@ setcolor-plasma() {
                     d.wallpaperPlugin = 'org.kde.image';
                     d.currentConfigGroup = Array('Wallpaper', 'org.kde.image', 'General');
                     d.writeConfig('Image', 'file://$wallpaper');
-                }"
+                }" &>/dev/null
         fi
         if has kwriteconfig5; then # Change lockscreen wallpaper
             kwriteconfig5 --file "$CONFIG_HOME/kscreenlockerrc" \
