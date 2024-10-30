@@ -2,10 +2,9 @@
 ---@param fpath string
 ---@return boolean
 local function should_block_file(fpath)
-  local fname = vim.fs.basename(fpath)
-  return fname == 'rebase-merge'
-    or fname == 'COMMIT_EDITMSG'
-    or vim.startswith(vim.fs.normalize(fpath), '/tmp/')
+  return fpath:match('COMMIT_EDITMSG$')
+    or fpath:match('/rebase-merge/')
+    or fpath:match('^/tmp/.*%.fish')
 end
 
 if tonumber(vim.fn.system({ 'id', '-u' })) == 0 then
