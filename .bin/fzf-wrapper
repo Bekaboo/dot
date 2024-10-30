@@ -7,13 +7,13 @@ has() {
 
 if ! has fzf; then
     echo 'fzf not found' >&2
-    return 1
+    exit 1
 fi
 
 if ! has tput || ! has stty; then
     # tput or stty not found, use fzf directly
     fzf "$@"
-    return
+    exit
 fi
 
 readonly lines=$(tput lines)
