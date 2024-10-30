@@ -49,17 +49,28 @@ if not g.modern_ui then
   opt.termguicolors = false
 end
 
+-- Defer shada rea
+local shada_read ---@boolean?
+
 ---Restore 'shada' option and read from shada once
 ---@return true
 local function rshada()
+  if shada_read then
+    return true
+  end
+  shada_read = true
+
   vim.cmd.set('shada&')
   pcall(vim.cmd.rshada)
   return true
 end
 
 opt.shada = ''
-vim.defer_fn(rshada, 100)
 vim.api.nvim_create_autocmd('BufReadPre', { once = true, callback = rshada })
+vim.api.nvim_create_autocmd('UIEnter', {
+  once = true,
+  callback = vim.schedule_wrap(rshada),
+})
 
 -- Recognize numbered lists when formatting text
 opt.formatoptions:append('n')
