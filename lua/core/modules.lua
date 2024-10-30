@@ -90,63 +90,6 @@ local function bootstrap()
   return true
 end
 
----Override package manager's internal configurations and functions
----@return nil
-local function override()
-  -- Use `=` instead of `<CR>` to view details in the floating window
-  require('lazy.view.config').keys.details = '='
-
-  -- Ignore patched plugins in `:Lazy check`
-  ---@async
-  ---@diagnostic disable: undefined-field, missing-fields
-  require('lazy.manage.task.git').status.run = function(self)
-    self:spawn('git', {
-      args = { 'ls-files', '-d', '-m' },
-      cwd = self.plugin.dir,
-      on_exit = function(ok, output)
-        if not ok then
-          return
-        end
-
-        ---@type string[]
-        local lines = vim.tbl_filter(function(line)
-          -- Fix doc/tags being marked as modified
-          if line:gsub('[\\/]', '/') == 'doc/tags' then
-            local process = require('lazy.manage.process')
-            process.exec(
-              { 'git', 'checkout', '--', 'doc/tags' },
-              { cwd = self.plugin.dir }
-            )
-            return false
-          end
-          return line ~= ''
-        end, vim.split(output, '\n'))
-
-        if #lines == 0 then
-          return
-        end
-
-        local patch_path =
-          vim.fs.joinpath(patches_path, self.plugin.name .. '.patch')
-        local patch_stat = vim.uv.fs_stat(patch_path)
-        -- Do not warn about local changes if there is a patch file
-        if not patch_stat or patch_stat.type ~= 'file' then
-          local msg =
-            { 'You have local changes in `' .. self.plugin.dir .. '`:' }
-          for _, line in ipairs(lines) do
-            msg[#msg + 1] = '  * ' .. line
-          end
-          msg[#msg + 1] = 'Please remove them to update.'
-          msg[#msg + 1] =
-            'You can also press `x` to remove the plugin and then `I` to install it again.'
-          self:error(msg)
-        end
-      end,
-    })
-    ---@diagnostic enable: undefined-field, missing-fields
-  end
-end
-
 ---Enable modules
 ---@param module_names string[]? when omitted, enable all modules under `lua/modules`
 local function enable_modules(module_names)
@@ -162,7 +105,11 @@ local function enable_modules(module_names)
     vim.list_extend(modules, require('modules.' .. module_name))
   end
 
-  override()
+  -- Preload modified lazy.nvim modules so that they won't be loaded
+  -- unpatched later on package sync
+  require('lazy.manage.task.git')
+  require('lazy.view.config').keys.details = '='
+
   require('lazy').setup(modules, {
     root = vim.g.package_path,
     lockfile = vim.g.package_lock,
