@@ -44,6 +44,10 @@ if __has proot-distro &&
     exec proot-distro login $PROOT_DISTRO --user $PROOT_USER --termux-home
 fi
 
+if [[ -z "$TMUX" ]] && __has tmux && __has tmux-attach; then
+    exec tmux-attach
+fi
+
 # Enable colors for ls, etc. Prefer ~/.dir_colors
 if type -P dircolors >/dev/null; then
     if [[ -f ~/.dir_colors ]]; then

@@ -10,6 +10,10 @@ if type -q proot-distro
     exec proot-distro login $PROOT_DISTRO --user $PROOT_USER --termux-home
 end
 
+if test -z "$TMUX"; and type -q tmux; and type -q tmux-attach
+    exec tmux-attach
+end
+
 # Fzf configs
 set -gx FZF_DEFAULT_OPTS "--reverse \
     --preview='fzf-file-previewer {}' \
