@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+
+main() {
+    local files=($(nvim -u NONE --headless +'lua io.write(table.concat(vim.v.oldfiles, "\n") .. "\n")' +qa |
+        sed -e 's/^\s*\S*:\/\///' |
+        while read -r file; do
+            [[ -e "$file" ]] && echo "$file"
+        done |
+        fzf))
+
+    [[ "${#files[@]}" -gt 0 ]] && ${EDITOR:-nvim} "${files[@]}"
+}
+
+main "$@"
