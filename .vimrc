@@ -1233,7 +1233,7 @@ if exists(':tmap') == 2
       if cmd =~# '\v^(sudo(\s+--?(\w|-)+((\s+|\=)\S+)?)*\s+)?\S*
           \(n?vim?|vimdiff|emacs(client)?|lem|nano|helix|kak|
           \tmux|vifm|yazi|ranger|lazygit|h?top|gdb|fzf|nmtui|
-          \sudoedit|ssh|crontab|asciinema)'
+          \sudoedit|ssh|crontab|asciinema|w3m)'
         return 1
       endif
     endfor
