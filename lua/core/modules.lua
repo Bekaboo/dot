@@ -9,6 +9,20 @@ local data_path = vim.fn.stdpath('data') --[[@as string]]
 local state_path = vim.fn.stdpath('state') --[[@as string]]
 local patches_path = vim.fs.joinpath(conf_path, 'patches')
 
+---Run a system command synchronously and print message on error
+---@param cmd string[]
+---@param opts vim.SystemOpts?
+---@param loglev number?
+---@return boolean: success
+local function system_sync(cmd, opts, loglev)
+  local obj = vim.system(cmd, opts):wait()
+  if obj.code ~= 0 then
+    vim.notify('[modules]: ' .. obj.stderr, loglev or vim.log.levels.WARN)
+    return false
+  end
+  return true
+end
+
 ---Install package manager if not already installed
 ---@return boolean success
 local function bootstrap()
@@ -27,11 +41,12 @@ local function bootstrap()
   end
 
   local response = ''
-  vim.ui.input({
-    prompt = '[packages] package manager not found, bootstrap? [y/N/never] ',
-  }, function(r)
-    response = r
-  end)
+  vim.ui.input(
+    { prompt = '[modules] package manager not found, bootstrap? [y/N/never] ' },
+    function(r)
+      response = r
+    end
+  )
 
   if vim.fn.match(response, '[Nn][Ee][Vv][Ee][Rr]') >= 0 then
     startup_data.bootstrap = false
@@ -47,36 +62,30 @@ local function bootstrap()
   local lock_data = utils.json.read(vim.g.package_lock)
   local commit = lock_data['lazy.nvim'] and lock_data['lazy.nvim'].commit
   local url = 'https://github.com/folke/lazy.nvim.git'
-  vim.notify('[packages] installing lazy.nvim...')
+  vim.notify('[modules] installing lazy.nvim...')
   vim.fn.mkdir(vim.g.package_path, 'p')
   if
-    not utils.git.execute({
-      'clone',
-      '--filter=blob:none',
-      url,
-      lazy_path,
-    }, vim.log.levels.INFO).success
+    not system_sync({ 'git', 'clone', '--filter=blob:none', url, lazy_path })
   then
     return false
   end
 
   if commit then
-    utils.git.dir_execute(
-      lazy_path,
-      { 'checkout', commit },
-      vim.log.levels.INFO
+    system_sync(
+      { 'git', 'checkout', commit },
+      { cwd = lazy_path },
+      vim.log.INFO
     )
   end
   local lazy_patch_path =
     vim.fs.joinpath(conf_path, 'patches', 'lazy.nvim.patch')
   if vim.uv.fs_stat(lazy_patch_path) and vim.uv.fs_stat(lazy_path) then
-    utils.git.dir_execute(lazy_path, {
-      'apply',
-      '--ignore-space-change',
-      lazy_patch_path,
-    }, vim.log.levels.WARN)
+    system_sync(
+      { 'git', 'apply', '--ignore-space-change', lazy_patch_path },
+      { cwd = lazy_path }
+    )
   end
-  vim.notify('[packages] lazy.nvim cloned to ' .. lazy_path)
+  vim.notify('[modules] lazy.nvim cloned to ' .. lazy_path)
   vim.opt.rtp:prepend(lazy_path)
   return true
 end
@@ -235,17 +244,13 @@ vim.api.nvim_create_autocmd('User', {
       local plugin_path =
         vim.fs.joinpath(vim.g.package_path, (patch:gsub('%.patch$', '')))
       if vim.uv.fs_stat(plugin_path) then
-        utils.git.dir_execute(plugin_path, {
-          'restore',
-          '.',
-        })
+        system_sync({ 'git', 'restore', '.' }, { cwd = plugin_path })
         if not vim.endswith(info.match, 'Pre') then
           vim.notify('[packages] applying patch ' .. patch)
-          utils.git.dir_execute(plugin_path, {
-            'apply',
-            '--ignore-space-change',
-            patch_path,
-          }, vim.log.levels.WARN)
+          system_sync(
+            { 'git', 'apply', '--ignore-space-change', patch_path },
+            { cwd = plugin_path }
+          )
         end
       end
     end
