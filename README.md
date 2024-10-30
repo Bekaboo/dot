@@ -8,7 +8,7 @@ Dotfiles for
 
 - [KDE Plasma wallpapers](.local/share/wallpapers/) & [splash screens](.local/share/plasma/look-and-feel)
 - [Vim](.vimrc)
-- [Neovim](https://github.com/Bekaboo/nvim/)
+- [Neovim](.config/nvim)
 - [Tmux](.config/tmux/)
 - [Fish](.config/fish/)
 - [Bash](.bashrc)
