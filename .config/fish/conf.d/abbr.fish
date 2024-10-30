@@ -40,6 +40,7 @@ function __command_abbr --description 'Add an command abbreviation'
 end
 
 __command_abbr cmd         'command'
+__command_abbr cl          'clear'
 __command_abbr cp          'cp -i'
 __command_abbr dc          'cd'
 __command_abbr df          'df -h'

@@ -417,6 +417,7 @@ v() {
 
 # Aliases
 alias sudoe="sudo -E "
+alias cl="clear"
 alias cp="cp -i" # confirm before overwriting something
 alias x="trash"
 alias g="git"
