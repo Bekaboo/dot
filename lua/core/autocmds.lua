@@ -181,28 +181,6 @@ augroup('AutoCwd', {
   },
 })
 
-augroup('GitEnv', {
-  {
-    'DirChanged',
-    'BufWinEnter',
-    'BufEnter',
-    'WinEnter',
-    'FileChangedShellPost',
-  },
-  {
-    desc = 'Set `$GIT_DIR` and `$GIT_WORK_TREE` for git plugins to recognize the bare git repo for dotfiles.',
-    callback = function(info)
-      if vim.fs.root(info.file, '.git') then
-        vim.env.GIT_DIR = nil
-        vim.env.GIT_WORK_TREE = nil
-      elseif not vim.env.GIT_DIR and not vim.env.GIT_WORK_TREE then
-        vim.env.GIT_DIR = vim.fs.normalize('~/.dot')
-        vim.env.GIT_WORK_TREE = vim.fs.normalize('~')
-      end
-    end,
-  },
-})
-
 augroup('PromptBufKeymaps', {
   'BufEnter',
   {
