@@ -24,7 +24,7 @@ end
 local eventignore = vim.go.eventignore
 vim.go.eventignore = 'all'
 
-local logo = vim.g.modern_ui and 'M Λ C R O' or 'M A C R O'
+local logo = vim.g.has_display and 'M Λ C R O' or 'M A C R O'
 
 ---@class intro_chunk_t
 ---@field text string

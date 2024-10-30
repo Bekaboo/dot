@@ -197,7 +197,7 @@ return {
 
   {
     'NvChad/nvim-colorizer.lua',
-    enabled = vim.g.modern_ui,
+    enabled = vim.g.has_display,
     event = {
       'BufNew',
       'BufRead',

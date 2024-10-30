@@ -438,7 +438,7 @@ local spinner_timer = vim.uv.new_timer()
 local spinner_icons ---@type string[]
 local spinner_icon_done ---@type string
 
-if vim.g.nf then
+if vim.g.has_nf then
   spinner_icon_done = vim.trim(utils.static.icons.Ok)
   spinner_icons = {
     '⣷',

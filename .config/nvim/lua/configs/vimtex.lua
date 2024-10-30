@@ -1,4 +1,4 @@
-if not vim.g.modern_ui then
+if not vim.g.has_display then
   vim.g.vimtex_syntax_conceal_disable = true
 end
 

@@ -8,8 +8,8 @@ local env = vim.env
 
 g.has_ui = #vim.api.nvim_list_uis() > 0
 g.has_gui = vim.fn.has('gui_running') == 1
-g.modern_ui = g.has_ui and env.DISPLAY ~= nil
-g.nf = g.modern_ui and env.NVIM_NF and true or false
+g.has_display = g.has_ui and env.DISPLAY ~= nil
+g.has_nf = g.has_display and env.NVIM_NF and true or false
 
 opt.timeout = false
 opt.colorcolumn = '+1'
@@ -45,7 +45,7 @@ opt.jumpoptions = 'stack,view'
 -- tmux in Linux tty, where $TERM is set to 'tmux-256color' but $DISPLAY is
 -- not set, termguicolors is automatically set. This is undesirable, so we
 -- need to explicitly disable it in this case
-if not g.modern_ui then
+if not g.has_display then
   opt.termguicolors = false
 end
 
@@ -144,12 +144,12 @@ opt.fillchars = {
   foldsep = ' ',
   eob = ' ',
 }
-if g.modern_ui then
+if g.has_display then
   opt.conceallevel = 2
   opt.listchars:append({ nbsp = '␣' })
   opt.fillchars:append({ diff = '╱' })
 end
-if g.nf then
+if g.has_nf then
   opt.fillchars:append({
     foldopen = '',
     foldclose = '',

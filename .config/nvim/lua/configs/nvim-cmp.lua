@@ -251,7 +251,7 @@ cmp.setup({
     end,
   },
   formatting = {
-    fields = vim.g.nf and { 'kind', 'abbr', 'menu' } or nil,
+    fields = vim.g.has_nf and { 'kind', 'abbr', 'menu' } or nil,
     format = function(entry, item)
       local compltype = vim.fn.getcmdcompltype()
       local complpath = compltype_path[compltype]

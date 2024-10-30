@@ -305,7 +305,7 @@ end
 
 fzf.setup({
   -- Use nbsp in tty to avoid showing box chars
-  nbsp = not vim.g.modern_ui and '\xc2\xa0' or nil,
+  nbsp = not vim.g.has_display and '\xc2\xa0' or nil,
   dir_icon = vim.trim(icons.Folder),
   winopts = {
     backdrop = 100,
@@ -542,9 +542,9 @@ fzf.setup({
     ['--no-separator'] = '',
     ['--info'] = 'inline-right',
     ['--layout'] = 'reverse',
-    ['--no-unicode'] = not vim.g.nf,
-    ['--marker'] = not vim.g.nf and icons.GitSignAdd or nil,
-    ['--pointer'] = not vim.g.nf and icons.AngleRight or nil,
+    ['--no-unicode'] = not vim.g.has_nf,
+    ['--marker'] = not vim.g.has_nf and icons.GitSignAdd or nil,
+    ['--pointer'] = not vim.g.has_nf and icons.AngleRight or nil,
     ['--border'] = 'none',
     ['--padding'] = '0,1',
     ['--margin'] = '0',
@@ -592,7 +592,7 @@ fzf.setup({
       jump_to_single_result = true,
     },
     symbols = {
-      symbol_style = vim.g.nf and 1 or 3,
+      symbol_style = vim.g.has_nf and 1 or 3,
       symbol_icons = vim.tbl_map(vim.trim, icons.kinds),
       symbol_hl = function(sym_name)
         return 'FzfLuaSym' .. sym_name
