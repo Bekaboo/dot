@@ -11,6 +11,14 @@ readonly cols=$(has tput && tput cols || echo "$COLUMNS")
 # Source:
 # https://stackoverflow.com/questions/2575037/how-to-get-the-cursor-position-in-bash
 cursorpos() {
+    # Check if stdout is opened
+    # If not (e.g. when running in vim's `jobstart()` or in a pipe),
+    # return '0;0' to avoid blocking
+    if [[ ! -t 1 ]]; then
+        echo '1;1'
+        return
+    fi
+
     # Based on a script from
     # http://invisible-island.net/xterm/xterm.faq.html
     exec </dev/tty
