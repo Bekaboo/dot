@@ -11,23 +11,42 @@ readonly cols=$(has tput && tput cols || echo "$COLUMNS")
 # Source:
 # https://stackoverflow.com/questions/2575037/how-to-get-the-cursor-position-in-bash
 cursorpos() {
-    # Check if stdout is opened
-    # If not (e.g. when running in vim's `jobstart()` or in a pipe),
-    # return '0;0' to avoid blocking
-    if [[ ! -t 1 ]]; then
+    # R/w to /dev/tty blocks in nvim's `jobstart()`
+    if [[ -n "$NVIM" ]]; then
         echo '1;1'
         return
     fi
 
-    # Based on a script from
-    # http://invisible-island.net/xterm/xterm.faq.html
+    # Try opening /dev/tty, return fake cursor position if it fails
+    if ! { exec 3<>/dev/tty; } 2>/dev/null; then
+        echo '1;1'
+        return
+    fi
+
+    # Test reading from tty with timeout (0.1 sec), return fake cursor
+    # position if timeout
+    read -t 0.1 -n 0 <>/dev/tty
+    if [ $? -ne 0 ]; then
+        exec 3>&-
+        echo '1;1'
+        return
+    fi
+    exec 3>&-
+
+    # Now we can safely access /dev/tty
     exec </dev/tty
     oldstty=$(stty -g)
     stty raw -echo min 0
     echo -en "\033[6n" >/dev/tty
-    IFS=';' read -r -d R -a pos
+    IFS=';' read -r -t 0.1 -d R -a pos
     stty $oldstty
-    row=$((${pos[0]:2} - 1)) # Strip off the esc-[
+
+    if [ ${#pos[@]} -ne 2 ]; then
+        echo '1;1'
+        return
+    fi
+
+    row=$((${pos[0]:2} - 1))
     col=$((${pos[1]} - 1))
     echo "$row;$col"
 }
