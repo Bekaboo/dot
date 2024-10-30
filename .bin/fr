@@ -21,10 +21,6 @@ fr() {
     local rg_prefix="rg --hidden --follow --smart-case --column \
         --line-number --no-heading --color=always "
     local initial_query="${*:-}"
-    local fzf='fzf'
-    if command -v fzf-wrapper >/dev/null 2>&1; then
-        fzf='fzf-wrapper'
-    fi
     local vim='vim'
     if command -v nvim >/dev/null 2>&1; then
         vim='nvim'
@@ -33,7 +29,7 @@ fr() {
     local fuzzy_search_hint=$(printf ":: <\u001b[33;1mctrl-t\u001b[0m> to \u001b[33;1mFuzzy Search\u001b[0m")
     local regex_prompt=' Rg> '
     local fuzzy_prompt=' Fzf> '
-    : | "$fzf" --ansi --disabled --query "$initial_query" \
+    : | fzf --ansi --disabled --query "$initial_query" \
         --bind "start:reload($rg_prefix {q} "$root_path")+unbind(ctrl-g)" \
         --bind "change:reload:sleep 0.1; $rg_prefix {q} "$root_path"|| true" \
         --bind "ctrl-t:unbind(change,ctrl-t)+change-prompt($fuzzy_prompt)+enable-search+rebind(ctrl-g)+transform-query(echo {q} > "$regex_query_file"; cat "$fuzzy_query_file")+change-header($regex_search_hint)" \

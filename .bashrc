@@ -334,15 +334,6 @@ clear() {
     fi
 }
 
-# Settings for fzf
-fzf() {
-    if __has fzf-wrapper; then
-        fzf-wrapper "$@"
-    else
-        command fzf "$@"
-    fi
-}
-
 __ff_open_files_or_dir() {
     # $@: files to open
     # Split targets into a list at newline
