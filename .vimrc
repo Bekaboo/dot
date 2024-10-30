@@ -410,33 +410,6 @@ if s:supportevents([
 endif
 " }}}2
 
-" Automatically set `$GIT_DIR` and `$GIT_WORK_TREE` for git plugins to
-" recognize the bare git repo for dotfiles {{{2
-if s:supportevents([
-      \ 'DirChanged',
-      \ 'BufWinEnter',
-      \ 'BufEnter',
-      \ 'WinEnter',
-      \ 'FileChangedShellPost'
-      \ ])
-  function! s:git_env() abort
-    if finddir('.git', ';') ==# ''
-      let $GIT_DIR = expand('~/.dot')
-      let $GIT_WORK_TREE = expand('~')
-    elseif $GIT_DIR !=# '' || $GIT_WORK_TREE !=# ''
-      unlet $GIT_DIR
-      unlet $GIT_WORK_TREE
-    endif
-  endfunction
-
-  augroup GitEnv
-    au!
-    au DirChanged,BufWinEnter,BufEnter,WinEnter,FileChangedShellPost *
-          \ call s:git_env()
-  augroup END
-endif
-" }}}2
-
 " Colorscheme persistence over restarts {{{2
 "
 " Restore and switch background from viminfo file,
