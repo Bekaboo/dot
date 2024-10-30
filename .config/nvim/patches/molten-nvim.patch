@@ -1,0 +1,38 @@
+diff --git a/rplugin/python3/molten/outputbuffer.py b/rplugin/python3/molten/outputbuffer.py
+index 2b36d30..b987ba2 100644
+--- a/rplugin/python3/molten/outputbuffer.py
++++ b/rplugin/python3/molten/outputbuffer.py
+@@ -112,7 +112,10 @@ class OutputBuffer:
+             elif self.options.enter_output_behavior == "open_and_enter":
+                 self.show_floating_win(anchor)
+                 entered = True
+-                self.nvim.funcs.nvim_set_current_win(self.display_win)
++                # FIXME: self.display_win is None when the source
++                # file is in the lower window of a horizontal split
++                if self.display_win:
++                    self.nvim.funcs.nvim_set_current_win(self.display_win)
+         elif self.options.enter_output_behavior != "no_open":
+             entered = True
+             self.nvim.funcs.nvim_set_current_win(self.display_win)
+@@ -125,7 +128,8 @@ class OutputBuffer:
+ 
+     def clear_float_win(self) -> None:
+         if self.display_win is not None:
+-            self.nvim.funcs.nvim_win_close(self.display_win, True)
++            if self.display_win.valid:
++                self.nvim.funcs.nvim_win_close(self.display_win, True)
+             self.display_win = None
+             redraw = False
+             for chunk in self.output.chunks:
+@@ -373,7 +377,10 @@ class OutputBuffer:
+                     win_opts,
+                 )
+                 hl = self.options.hl
+-                self.set_win_option("winhighlight", f"Normal:{hl.win},NormalNC:{hl.win_nc}")
++                self.set_win_option(
++                    "winhighlight",
++                    f"Normal:{hl.win},NormalNC:{hl.win_nc},FloatBorder:{hl.border_norm}",
++                )
+                 # TODO: Refactor once MoltenOutputWindowOpen autocommand is a thing.
+                 # note, the above setting will probably stay there, just so users can set highlights
+                 # with their other highlights

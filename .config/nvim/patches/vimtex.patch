@@ -1,0 +1,71 @@
+diff --git a/indent/tex.vim b/indent/tex.vim
+index d8de2f58..7cbd82d6 100644
+--- a/indent/tex.vim
++++ b/indent/tex.vim
+@@ -20,7 +20,7 @@ set cpoptions&vim
+ 
+ setlocal autoindent
+ setlocal indentexpr=VimtexIndentExpr()
+-setlocal indentkeys=!^F,o,O,0(,0),],},\&,0=\\item\ ,0=\\item[,0=\\else,0=\\fi
++setlocal indentkeys=!^F,o,O,0(,0),],},\&,0=\\item\ ,0=\\item[,0=\\else,0=\\fi,<Space>
+ 
+ " Add standard closing math delimiters to indentkeys
+ for s:delim in [
+@@ -51,6 +51,23 @@ function! VimtexIndent(lnum) abort " {{{1
+     return empty(l:line) ? indent(l:prev_lnum) : indent(a:lnum)
+   endif
+ 
++  if vimtex#syntax#in_mathzone()
++    " Align to the first previous line that has
++    " '='/'>'/'<'/'\le'/'\ge'/'\sim'/'\approx'/'\gg'/'\ll' or variants with
++    " '&' at the beginning if the current line starts with one of these
++    " patterns
++    let align_patterns =
++          \ '^\s*\(\(&\s*\)\?\(=\|>\|<\|\\\(le\|ge\|sim\|approx\|gg\|ll\)\>\)\|&\)'
++    if l:line =~# align_patterns
++      let [l:prev_eq_lnum, l:eq_pos, l:_] =
++            \ s:trimmed_prevnonblank_matches(a:lnum, align_patterns)
++      if l:prev_eq_lnum > 0 && vimtex#syntax#in_mathzone(l:prev_eq_lnum, 1)
++        return indent(l:prev_eq_lnum) + l:eq_pos
++      endif
++    endif
++    return indent(a:lnum)
++  endif
++
+   " Use previous indentation for comments
+   if l:line =~# '^\s*%'
+     return indent(a:lnum)
+@@ -93,6 +110,33 @@ function! s:get_prev_lnum(lnum) abort " {{{1
+         \]
+ endfunction
+ 
++"}}}
++" Find the first previous non-blank line that matches the given pattern if
++" trimmed, stops on the first line that has a larger indent than its next
++" non-blank line
++" Returns the line number, the index of the match, and the substring that
++" matches the pattern
++function s:trimmed_prevnonblank_matches(lnum, pattern) abort
++  let l:lnum = prevnonblank(a:lnum - 1)
++  let l:indent = indent(l:lnum)
++  while l:lnum >= 1
++    let l:line = trim(getline(l:lnum))
++    let l:match_idx = match(l:line, a:pattern)
++    let l:match = matchstr(l:line, a:pattern)
++    if l:match_idx >= 0
++      return [l:lnum, l:match_idx, l:match]
++    endif
++    let l:lnum = prevnonblank(l:lnum - 1)
++    let l:new_indent = indent(l:lnum)
++    if l:new_indent <= l:indent
++      let l:indent = l:new_indent
++    else
++      break
++    endif
++  endwhile
++  return [0, -1, '']
++endfunction
++
+ " }}}1
+ function! s:clean_line(line) abort " {{{1
+   return substitute(a:line, '\s*\\\@<!%.*', '', '')

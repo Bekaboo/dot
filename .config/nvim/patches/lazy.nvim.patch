@@ -1,0 +1,85 @@
+diff --git a/lua/lazy/core/config.lua b/lua/lazy/core/config.lua
+index 16cc012..6d42c65 100644
+--- a/lua/lazy/core/config.lua
++++ b/lua/lazy/core/config.lua
+@@ -96,6 +96,7 @@ M.defaults = {
+     icons = {
+       cmd = " ",
+       config = "",
++      debug = "●",
+       event = " ",
+       favorite = " ",
+       ft = " ",
+diff --git a/lua/lazy/manage/task/git.lua b/lua/lazy/manage/task/git.lua
+index c54c809..e379998 100644
+--- a/lua/lazy/manage/task/git.lua
++++ b/lua/lazy/manage/task/git.lua
+@@ -258,13 +258,18 @@ M.status = {
+             return line ~= ""
+           end, lines)
+           if #lines > 0 then
+-            local msg = { "You have local changes in `" .. self.plugin.dir .. "`:" }
+-            for _, line in ipairs(lines) do
+-              msg[#msg + 1] = "  * " .. line
++            local patch_path = vim.fs.joinpath(vim.fn.stdpath("config"), "patches", self.plugin.name .. ".patch")
++            local patch_stat = vim.uv.fs_stat(patch_path)
++            -- Do not warn about local changes if there is a patch file
++            if not patch_stat or patch_stat.type ~= "file" then
++              local msg = { "You have local changes in `" .. self.plugin.dir .. "`:" }
++              for _, line in ipairs(lines) do
++                msg[#msg + 1] = "  * " .. line
++              end
++              msg[#msg + 1] = "Please remove them to update."
++              msg[#msg + 1] = "You can also press `x` to remove the plugin and then `I` to install it again."
++              self:error(msg)
+             end
+-            msg[#msg + 1] = "Please remove them to update."
+-            msg[#msg + 1] = "You can also press `x` to remove the plugin and then `I` to install it again."
+-            self:error(msg)
+           end
+         end
+       end,
+diff --git a/lua/lazy/view/render.lua b/lua/lazy/view/render.lua
+index e1eec6c..738c369 100644
+--- a/lua/lazy/view/render.lua
++++ b/lua/lazy/view/render.lua
+@@ -189,24 +189,24 @@ function M:help()
+ 
+   self:append("Use "):append(ViewConfig.keys.abort, "LazySpecial"):append(" to abort all running tasks."):nl():nl()
+ 
+-  self:append("You can press "):append("<CR>", "LazySpecial"):append(" on a plugin to show its details."):nl():nl()
++  self:append("You can press "):append(ViewConfig.keys.details, "LazySpecial"):append(" on a plugin to show its details."):nl():nl()
+ 
+   self:append("Most properties can be hovered with ")
+-  self:append("<K>", "LazySpecial")
++  self:append(ViewConfig.keys.hover, "LazySpecial")
+   self:append(" to open links, help files, readmes and git commits."):nl()
+   self
+     :append("When hovering with ")
+-    :append("<K>", "LazySpecial")
++    :append(ViewConfig.keys.hover, "LazySpecial")
+     :append(" on a plugin anywhere else, a diff will be opened if there are updates")
+     :nl()
+   self:append("or the plugin was just updated. Otherwise the plugin webpage will open."):nl():nl()
+ 
+-  self:append("Use "):append("<d>", "LazySpecial"):append(" on a commit or plugin to open the diff view"):nl():nl()
++  self:append("Use "):append(ViewConfig.keys.diff, "LazySpecial"):append(" on a commit or plugin to open the diff view"):nl():nl()
+   self
+     :append("Use ")
+-    :append("<]]>", "LazySpecial")
++    :append(ViewConfig.keys.next, "LazySpecial")
+     :append(" and ")
+-    :append("<[[>", "LazySpecial")
++    :append(ViewConfig.keys.prev, "LazySpecial")
+     :append(" to navigate between plugins")
+     :nl()
+     :nl()
+@@ -761,7 +761,7 @@ function M:debug()
+         ---@type string[]
+         plugins = vim.tbl_values(plugins)
+         table.sort(plugins)
+-        self:append("● ", "LazySpecial", { indent = 2 })
++        self:append(Config.options.ui.icons.debug, "LazySpecial", { indent = 2 })
+         if handler_type == "keys" then
+           for k, v in pairs(Config.plugins[plugins[1]]._.handlers.keys) do
+             if k == value then
