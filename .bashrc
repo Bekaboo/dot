@@ -44,7 +44,10 @@ if __has proot-distro &&
     exec proot-distro login $PROOT_DISTRO --user $PROOT_USER --termux-home
 fi
 
-if [[ -z "$TMUX" ]] && __has tmux && __has tmux-attach; then
+if [[ -z "$TMUX" ]] &&
+    [[ "$TERM" != 'linux' ]] &&
+    __has tmux &&
+    __has tmux-attach; then
     exec tmux-attach
 fi
 
