@@ -59,6 +59,9 @@
 	sul                  = submodule status
 	suu                  = submodule update
 	sw                  = stash show
+	sw                  = switch
+	swd                 = switch --detach
+	swo                 = switch --orphan
 	sww                 = stash show -p
 	w                   = show
 	when-added          = log --diff-filter=A
