@@ -1,7 +1,9 @@
 function fish_greeting
     if not type -q tput
-        or test (tput lines) -lt 40
-        or test (tput cols) -lt 112
+        or test -z "$(tput lines)"
+        or test -z "$(tput cols)"
+        or test "$(tput lines)" -lt 40
+        or test "$(tput cols)" -lt 112
         return
     end
     echo '                   '(set_color brred)'___
