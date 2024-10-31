@@ -20,6 +20,7 @@
 	clr                 = clone --recursive
 	cm                  = commit -m
 	co                  = checkout
+	cp                  = cherry-pick
 	d                   = diff
 	ds                  = diff --cached
 	f                   = fetch
