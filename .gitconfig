@@ -11,6 +11,8 @@
 	au                  = add -u
 	aup                 = add -up
 	b                   = branch
+	bd                  = branch -d
+	bl                  = branch -v
 	c                   = commit
 	ca                  = commit --amend
 	cl                  = clone --filter=blob:none
