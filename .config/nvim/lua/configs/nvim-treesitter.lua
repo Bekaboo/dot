@@ -155,7 +155,7 @@ ts_configs.setup({
         ['[,'] = '@parameter.outer',
         ['[/'] = '@comment.outer',
         ['[*'] = '@comment.outer',
-        ['[G'] = '@block.outer',
+        ['[g'] = '@block.outer',
         ['[?'] = '@conditional.outer',
         ['[='] = '@assignment.inner',
         ['[#'] = '@header.outer',
