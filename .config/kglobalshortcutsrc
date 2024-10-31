@@ -99,7 +99,7 @@ Krohnkite: Tile Layout=none,none,
 Krohnkite: Up/Prev=K,none,
 KrohnkiteBTreeLayout=Meta+Alt+Shift+B,none,Krohnkite: BTree Layout
 KrohnkiteColumnsLayout=Meta+Alt+Shift+C,none,Krohnkite: Columns Layout
-KrohnkiteDecrease=none,none,Krohnkite: Decrease
+KrohnkiteDecrease=Meta+-,none,Krohnkite: Decrease
 KrohnkiteFloatAll=Meta+Shift+F,none,Krohnkite: Toggle Float All
 KrohnkiteFloatingLayout=Meta+Alt+Shift+F,none,Krohnkite: Floating Layout
 KrohnkiteFocusDown=none,none,Krohnkite: Focus Down
@@ -109,7 +109,7 @@ KrohnkiteFocusPrev=Meta+\\,,none,Krohnkite: Focus Previous
 KrohnkiteFocusRight=none,none,Krohnkite: Focus Right
 KrohnkiteFocusUp=none,none,Krohnkite: Focus Up
 KrohnkiteGrowHeight=Meta+Alt+J\tMeta+Alt+Down,none,Krohnkite: Grow Height
-KrohnkiteIncrease=Meta+I,none,Krohnkite: Increase
+KrohnkiteIncrease=Meta++,none,Krohnkite: Increase
 KrohnkiteMonocleLayout=Meta+Alt+Shift+M,none,Krohnkite: Monocle Layout
 KrohnkiteNextLayout=Meta+\\\\,none,Krohnkite: Next Layout
 KrohnkitePreviousLayout=Meta+|,none,Krohnkite: Previous Layout
@@ -340,7 +340,7 @@ Window to Screen 7=none,,Move Window to Screen 7
 _k_friendly_name=KWin
 view_actual_size=none,Meta+0,Zoom to Actual Size
 view_zoom_in=Meta+=,Meta+=,Zoom In
-view_zoom_out=Meta+-,Meta+-,Zoom Out
+view_zoom_out=,Meta+-,Zoom Out
 
 [mediacontrol]
 _k_friendly_name=Media Controller
