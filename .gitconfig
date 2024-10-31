@@ -36,6 +36,7 @@
 	r                   = remote
 	ra                  = remote add
 	rb                  = rebase
+	rbc                 = rebase --continue
 	rbh                 = rebase --onto HEAD
 	rbi                 = rebase -i
 	rbo                 = rebase --onto
