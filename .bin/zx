@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+# Clean up invalid z directory entries
+
+main() {
+    local z_data="${XDG_DATA_HOME:-$HOME/.local/share}/z/data"
+    if [[ ! -f "$z_data" ]]; then
+        echo "Z data file not found: $z_data" >&2
+        return 1
+    fi
+
+    local verbose=false
+    local dry_run=false
+    local OPTIND opt
+    while getopts "hvn" opt; do
+        case $opt in
+        h)
+            echo "Usage: zx [-v] [-n] [-h]"
+            echo "Clean up invalid directory entries in z data file"
+            echo
+            echo "Options:"
+            echo "  -h    Show this help message"
+            echo "  -v    Print removed invalid directories"
+            echo "  -n    Dry run (show what would be removed without making changes)"
+            return 0
+            ;;
+        v)
+            verbose=true
+            ;;
+        n)
+            dry_run=true
+            verbose=true # Always show removed dirs in dry-run mode
+            ;;
+        *)
+            echo "Invalid option. Use -h for help." >&2
+            return 1
+            ;;
+        esac
+    done
+
+    local tmpfile
+    if [[ "$dry_run" == false ]]; then
+        tmpfile=$(mktemp) || return 1
+    fi
+
+    while IFS='|' read -r dir _rest; do
+        if [[ -d "$dir" ]]; then
+            [[ "$dry_run" == false ]] && echo "$dir|$_rest" >>"$tmpfile"
+        elif [[ "$verbose" == true ]]; then
+            echo "Removing $dir" >&2
+        fi
+    done <"$z_data"
+
+    if [[ "$dry_run" == false ]]; then
+        mv "$tmpfile" "$z_data"
+    fi
+}
+
+main "$@"
