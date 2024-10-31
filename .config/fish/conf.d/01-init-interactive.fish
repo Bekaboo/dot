@@ -10,8 +10,9 @@ if type -q proot-distro
     exec proot-distro login $PROOT_DISTRO --user $PROOT_USER --termux-home
 end
 
-if test -z "$TMUX"
-    and test "$TERM" != "linux"
+if test "$TERM" != "linux"
+    and test -n "$SSH_TTY"
+    and test -z "$TMUX"
     and type -q tmux
     and type -q tmux-attach
     exec tmux-attach
