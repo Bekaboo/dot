@@ -59,9 +59,9 @@
 	ssm                 = stash --staged -m
 	st                  = status
 	su                  = submodule
-	sui                  = submodule init
-	sul                  = submodule status
-	suu                  = submodule update
+	sui                 = submodule init
+	sul                 = submodule status
+	suu                 = submodule update
 	sw                  = stash show
 	sw                  = switch
 	swd                 = switch --detach
