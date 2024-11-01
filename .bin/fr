@@ -10,6 +10,7 @@ has() {
 main() {
     local preview_cmd=$(
         has bat && echo 'bat --theme base16 --paging never --style numbers,header-filename --color always {1} --highlight-line {2}' ||
+            has batcat && echo 'batcat --theme base16 --paging never --style numbers,header-filename --color always {1} --highlight-line {2}' ||
             has fzf-file-previewer && echo 'fzf-file-previewer {1} {2}' ||
             has cat && echo 'cat {1}'
     )
