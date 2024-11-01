@@ -56,7 +56,8 @@ fi
 
 [[ $- != *i* ]] && return
 
-if shopt -q login_shell && __has neofetch; then
+if shopt -q login_shell && __has neofetch && [[ -z "$GREETED" ]]; then
+    export GREETED=1
     clear -x
     neofetch
 fi
