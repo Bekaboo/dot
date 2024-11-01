@@ -44,11 +44,15 @@ if __has proot-distro &&
     exec proot-distro login "$PROOT_DISTRO" --user "$PROOT_USER" --termux-home
 fi
 
-if [[ "$TERM" != 'linux' ]] &&
-    [[ -n "$SSH_TTY" ]] &&
+if __has tmux &&
+    __has tmux-attach &&
     [[ -z "$TMUX" ]] &&
-    __has tmux &&
-    __has tmux-attach; then
+    [[ -n "$SSH_TTY" ]] &&
+    [[ -z "$VIM" ]] &&
+    [[ -z "$NVIM" ]] &&
+    [[ -z "$INSIDE_EMACS" ]]; then
+    [[ "$TERM_PROGRAM" != 'vscode' ]] &&
+    [[ "$TERM" != 'linux' ]] &&
     exec tmux-attach
 fi
 
