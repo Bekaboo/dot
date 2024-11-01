@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
+# Hijack fzf command for extra functionality, including adaptive hight,
+# flexible preview window layout, and image preview with ueberzugpp
+
 has() {
     command -v "$1" >/dev/null 2>&1
 }
@@ -160,9 +163,28 @@ readonly -A fzf_padding=(
 
 main() {
     (
-        # Remove script dir from $PATH to avoid infinite recursive calling fzf
+        local script_dir=$(dirname "$0")
+        local tmp_dir=$(mktemp -d -t "$(basename "$0")".XXXXXXXX)
+        if [[ ! -d "$tmp_dir" ]]; then
+            echo 'Failed to create temp dir' >&2
+            return 1
+        fi
+        trap 'rm -rf "$tmp_dir"' SIGHUP SIGINT SIGQUIT SIGABRT EXIT
+
+        # Avoid infinite recursion calling `fzf` without affecting
+        # other executables under the same path:
+        # Link all files under $script_dir except this script to $tmp_dir
+        # and replace $script_dir with $tmp_dir in $PATH
+        for file in "$script_dir"/*; do
+            [[ "$file" = "$0" ]] && continue
+            ln -s "$file" "$tmp_dir"
+        done
+
         export PATH=$(echo -n "$PATH" |
-            awk -v RS=: -v ORS=: '$0 != "'$(dirname "$0")'"' |
+            awk -v RS=: -v ORS=: \
+                -v script_dir="$script_dir" \
+                -v tmp_dir="$tmp_dir" \
+                '{ if ($0 == script_dir) print tmp_dir; else print $0 }' |
             sed 's/:$//')
 
         if ! has fzf; then
