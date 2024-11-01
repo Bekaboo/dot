@@ -35,8 +35,6 @@ fi
 # Set rg config path
 export RIPGREP_CONFIG_PATH=${HOME}/.ripgreprc
 
-[[ $- != *i* ]] && return
-
 if __has proot-distro &&
     [[ -n "$TERMUX_VERSION" ]] &&
     [[ -n "$PROOT_DISTRO" ]] &&
@@ -54,6 +52,13 @@ if __has tmux &&
     [[ "$TERM_PROGRAM" != 'vscode' ]] &&
     [[ "$TERM" != 'linux' ]] &&
     exec tmux-attach
+fi
+
+[[ $- != *i* ]] && return
+
+if shopt -q login_shell && __has neofetch; then
+    clear -x
+    neofetch
 fi
 
 # Enable colors for ls, etc. Prefer ~/.dir_colors

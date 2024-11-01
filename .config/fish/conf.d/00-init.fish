@@ -24,3 +24,22 @@ end
 
 # Set rg config path
 set -gx RIPGREP_CONFIG_PATH $HOME/.ripgreprc
+
+if type -q proot-distro
+    and test -n "$TERMUX_VERSION"
+    and test -n "$PROOT_DISTRO"
+    and test -n "$PROOT_USER"
+    exec proot-distro login $PROOT_DISTRO --user $PROOT_USER --termux-home
+end
+
+if type -q tmux
+    and type -q tmux-attach
+    and test -z "$TMUX"
+    and test -n "$SSH_TTY"
+    and test -z "$VIM"
+    and test -z "$NVIM"
+    and test -z "$INSIDE_EMACS"
+    and test "$TERM_PROGRAM" != vscode
+    and test "$TERM" != linux
+    exec tmux-attach
+end
