@@ -226,6 +226,7 @@ main() {
 
         if ((fzf_inner_height > 16)) || ((fzf_inner_width > 48)); then
             ((fzf_inner_width > fzf_inner_height * 3)) &&
+                ((fzf_inner_width >= 80)) &&
                 preview_window_orientation='right' ||
                 preview_window_orientation='down'
             opts+="--preview-window=$preview_window_orientation "
