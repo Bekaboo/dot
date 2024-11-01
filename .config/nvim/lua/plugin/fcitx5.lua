@@ -8,9 +8,7 @@ local function setup()
 
   if
     vim.env.SSH_TTY
-    or vim.uv.os_uname().sysname:match('nix$')
-      and vim.env.DISPLAY == nil
-      and vim.env.WAYLAND_DISPLAY == nil
+    or vim.uv.os_uname().sysname:match('nix$') and not vim.g.display
   then
     return
   end
