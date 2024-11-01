@@ -41,7 +41,7 @@ if __has proot-distro &&
     [[ -n "$TERMUX_VERSION" ]] &&
     [[ -n "$PROOT_DISTRO" ]] &&
     [[ -n "$PROOT_USER" ]]; then
-    exec proot-distro login $PROOT_DISTRO --user $PROOT_USER --termux-home
+    exec proot-distro login "$PROOT_DISTRO" --user "$PROOT_USER" --termux-home
 fi
 
 if [[ "$TERM" != 'linux' ]] &&
