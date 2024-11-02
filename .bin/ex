@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
+# Function to check if directory exists
+checkdir() {
+    if [[ -e "$1" ]]; then
+        echo "Error: '$1' already exists"
+        return 1
+    fi
+    return 0
+}
+
 # ex - archive extractor
 # usage: ex <file>
 ex() {
@@ -11,114 +20,105 @@ ex() {
 
     # Get filename without extension
     local filename=$(basename "$1")
-    local dirname="${filename%.*}"
-    while [[ "$dirname" == *"."* ]]; do
-        dirname="${dirname%.*}"
+    local frootname="${filename%.*}"
+    while [[ "$frootname" == *"."* ]]; do
+        frootname="${frootname%.*}"
     done
-
-    # Function to check if directory exists
-    checkdir() {
-        if [[ -e "$1" ]]; then
-            echo "Error: '$1' already exists"
-            return 1
-        fi
-        return 0
-    }
 
     # Extract directly if the archive contains only one file/directory,
     # else we extract it into a separate directory
     case "$1" in
-    *.Z) uncompress "$1" ;;
     *.tar.Z)
-        if tar tZf "$1" | grep -q '^.*/$'; then
-            checkdir "$dirname" && mkdir "$dirname" &&
-                tar xZf "$1" -C "$dirname" || return 1
+        if (($(tar tZf "$1" | wc -l) > 1)); then
+            checkdir "$frootname" && mkdir "$frootname" &&
+                tar xZf "$1" -C "$frootname" || return 1
         else
             tar xZf "$1"
         fi
         ;;
-    *.bz2) bunzip2 "$1" ;;
+    *.Z) uncompress "$1" ;;
     *.tar.bz2 | *.tbz2)
-        if tar tjf "$1" | grep -q '^.*/$'; then
-            checkdir "$dirname" && mkdir "$dirname" &&
-                tar xjf "$1" -C "$dirname" || return 1
+        if (($(tar tjf "$1" | wc -l) > 1)); then
+            checkdir "$frootname" && mkdir "$frootname" &&
+                tar xjf "$1" -C "$frootname" || return 1
         else
             tar xjf "$1"
         fi
         ;;
-    *.gz) gunzip "$1" ;;
+    *.bz2) bunzip2 "$1" ;;
     *.tar.gz | *.tgz)
-        if tar tzf "$1" | grep -q '^.*/$'; then
-            checkdir "$dirname" && mkdir "$dirname" &&
-                tar xzf "$1" -C "$dirname" || return 1
+        if (($(tar tzf "$1" | wc -l) > 1)); then
+            checkdir "$frootname" && mkdir "$frootname" &&
+                tar xzf "$1" -C "$frootname" || return 1
         else
             tar xzf "$1"
         fi
         ;;
-    *.xz) unxz "$1" ;;
+    *.gz) gunzip -c "$1" >"$frootname" ;;
     *.tar.xz | *.txz)
-        if tar tJf "$1" | grep -q '^.*/$'; then
-            checkdir "$dirname" && mkdir "$dirname" &&
-                tar xJf "$1" -C "$dirname" || return 1
+        if (($(tar tJf "$1" | wc -l) > 1)); then
+            checkdir "$frootname" && mkdir "$frootname" &&
+                tar xJf "$1" -C "$frootname" || return 1
         else
             tar xJf "$1"
         fi
         ;;
-    *.lzma) unlzma "$1" ;;
+    *.xz) unxz "$1" ;;
     *.tar.lzma)
-        if tar --lzma -tf "$1" | grep -q '^.*/$'; then
-            checkdir "$dirname" && mkdir "$dirname" &&
-                tar --lzma -xf "$1" -C "$dirname" || return 1
+        if (($(tar --lzma -tf "$1" | wc -l) > 1)); then
+            checkdir "$frootname" && mkdir "$frootname" &&
+                tar --lzma -xf "$1" -C "$frootname" || return 1
         else
             tar --lzma -xf "$1"
         fi
         ;;
-    *.zst) zstd -d "$1" ;;
+    *.lzma) unlzma "$1" ;;
     *.tar.zst | *.tzst)
-        if tar --zstd -tf "$1" | grep -q '^.*/$'; then
-            checkdir "$dirname" && mkdir "$dirname" &&
-                tar --zstd -xf "$1" -C "$dirname" || return 1
+        if (($(tar --zstd -tf "$1" | wc -l) > 1)); then
+            checkdir "$frootname" && mkdir "$frootname" &&
+                tar --zstd -xf "$1" -C "$frootname" || return 1
         else
             tar --zstd -xf "$1"
         fi
         ;;
-    *.lz4) lz4 -d "$1" ;;
+    *.zst) zstd -d "$1" ;;
     *.tar.lz4)
-        if tar --use-compress-program=lz4 -tf "$1" | grep -q '^.*/$'; then
-            checkdir "$dirname" && mkdir "$dirname" &&
-                tar --use-compress-program=lz4 -xf "$1" -C "$dirname" || return 1
+        if (($(tar --use-compress-program=lz4 -tf "$1" | wc -l) > 1)); then
+            checkdir "$frootname" && mkdir "$frootname" &&
+                tar --use-compress-program=lz4 -xf "$1" -C "$frootname" || return 1
         else
             tar --use-compress-program=lz4 -xf "$1"
         fi
         ;;
+    *.lz4) lz4 -d "$1" ;;
     *.rar)
         if unrar l "$1" | grep -q '^.*/$'; then
-            checkdir "$dirname" && mkdir "$dirname" &&
-                unrar x "$1" "$dirname" || return 1
+            checkdir "$frootname" && mkdir "$frootname" &&
+                unrar x "$1" "$frootname" || return 1
         else
             unrar x "$1"
         fi
         ;;
     *.tar)
-        if tar tf "$1" | grep -q '^.*/$'; then
-            checkdir "$dirname" && mkdir "$dirname" &&
-                tar xf "$1" -C "$dirname" || return 1
+        if (($(tar tf "$1" | wc -l) > 1)); then
+            checkdir "$frootname" && mkdir "$frootname" &&
+                tar xf "$1" -C "$frootname" || return 1
         else
             tar xf "$1"
         fi
         ;;
     *.zip)
         if zipinfo -1 "$1" | grep -q '^.*/$'; then
-            checkdir "$dirname" && mkdir "$dirname" &&
-                unzip "$1" -d "$dirname" || return 1
+            checkdir "$frootname" && mkdir "$frootname" &&
+                unzip "$1" -d "$frootname" || return 1
         else
             unzip "$1"
         fi
         ;;
     *.7z)
         if 7z l "$1" | grep -q '^.*/$'; then
-            checkdir "$dirname" && mkdir "$dirname" &&
-                7z x "$1" -o"$dirname" || return 1
+            checkdir "$frootname" && mkdir "$frootname" &&
+                7z x "$1" -o"$frootname" || return 1
         else
             7z x "$1"
         fi
