@@ -49,7 +49,9 @@
 	rt                  = restore
 	rtp                 = restore -p
 	rts                 = restore --staged
+	rtsp                = restore --staged -p
 	ru                  = remote set-url
+	rv                  = revert
 	s                   = stash
 	sa                  = stash apply
 	sb                  = stash branch
