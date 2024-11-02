@@ -69,7 +69,8 @@
 	swd                 = switch --detach
 	swo                 = switch --orphan
 	sww                 = stash show -p
-	w                   = show
+	w                   = show --stat
+	ww                  = show
 	when-added          = log --diff-filter=A
 	when-copied         = log --diff-filter=C
 	when-deleted        = log --diff-filter=D
