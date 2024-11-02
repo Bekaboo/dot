@@ -26,7 +26,7 @@
 	d                   = diff
 	ds                  = diff --cached
 	f                   = fetch
-	is-ancestor         = merge-base --is-ancestor
+	ia                  = merge-base --is-ancestor
 	l                   = log --oneline --graph
 	lc                  = !git ls-files -z | xargs -0 wc -l
 	ls                  = ls-files
@@ -73,15 +73,15 @@
 	sww                 = stash show -p
 	w                   = show --stat
 	ww                  = show
-	when-added          = log --diff-filter=A
-	when-copied         = log --diff-filter=C
-	when-deleted        = log --diff-filter=D
-	when-modified       = log --diff-filter=M
-	when-pairing-broken = log --diff-filter=B
-	when-renamed        = log --diff-filter=R
-	when-type-changed   = log --diff-filter=T
-	when-unknown        = log --diff-filter=X
-	when-unmerged       = log --diff-filter=U
+	wa                  = log --diff-filter=A
+	wc                  = log --diff-filter=C
+	wd                  = log --diff-filter=D
+	wm                  = log --diff-filter=M
+	wp                  = log --diff-filter=B
+	wr                  = log --diff-filter=R
+	wt                  = log --diff-filter=T
+	wx                  = log --diff-filter=X
+	wu                  = log --diff-filter=U
 [merge]
 	tool = vimdiff
 	ff = false
