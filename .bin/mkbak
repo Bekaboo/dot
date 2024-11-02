@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+# Make a backup for a file or directory
+
+print_help() {
+    local script_name=$(basename "$0")
+    cat <<EOF
+${script_name} - make backup
+Usage: ${script_name} <file>
+
+Options:
+  -h, --help    Show this help message
+EOF
+}
+
+main() {
+    if [[ -z "$1" ]] || [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+        print_help
+        return 0
+    fi
+
+    if [[ ! -e "$1" ]]; then
+        echo "'$1' does not exist" 2>&1
+        return 1
+    fi
+
+    if [[ -e "$1.bak" ]]; then
+        echo "'$1.bak' already exists"
+        return 1
+    fi
+
+    cp -r "$1" "$1.bak"
+}
+
+main "$@"
