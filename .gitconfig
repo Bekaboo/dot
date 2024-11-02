@@ -12,6 +12,7 @@
 	aup                 = add -up
 	b                   = branch
 	bd                  = branch -d
+	bdr                 = push -d
 	bl                  = branch -v
 	c                   = commit
 	ca                  = commit --amend
