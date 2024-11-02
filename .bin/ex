@@ -11,7 +11,43 @@ checkne() {
     return 0
 }
 
+print_help() {
+    local scriptname=$(basename "$0")
+    cat <<EOF
+$scriptname - archive extractor
+Usage: $scriptname <file>
+
+Supported formats:
+  *.tar.Z    - compressed tar archive
+  *.Z        - compressed file
+  *.tar.bz2  - bzip2 tar archive
+  *.tbz2     - bzip2 tar archive
+  *.bz2      - bzip2 file
+  *.tar.gz   - gzip tar archive
+  *.tgz      - gzip tar archive
+  *.gz       - gzip file
+  *.tar.xz   - xz tar archive
+  *.txz      - xz tar archive
+  *.xz       - xz file
+  *.tar.lzma - lzma tar archive
+  *.lzma     - lzma file
+  *.tar.zst  - zstd tar archive
+  *.tzst     - zstd tar archive
+  *.zst      - zstd file
+  *.tar.lz4  - lz4 tar archive
+  *.lz4      - lz4 file
+  *.rar      - rar archive
+  *.tar      - tar archive
+  *.zip      - zip archive
+EOF
+}
+
 main() {
+    if [[ -z "$1" ]] || [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+        print_help
+        return 0
+    fi
+
     if [[ ! -f "$1" ]]; then
         echo "'$1' is not a valid file"
         return 1
