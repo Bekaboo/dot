@@ -45,9 +45,9 @@ opt.jumpoptions = 'stack,view'
 -- tmux in Linux tty, where $TERM is set to 'tmux-256color' but $DISPLAY is
 -- not set, termguicolors is automatically set. This is undesirable, so we
 -- need to explicitly disable it in this case
-if not g.has_display then
-  opt.termguicolors = false
-end
+-- When in SSH, termguicolors is turned off unnecessarily, so also
+-- set termguicolors on if we have display
+opt.termguicolors = g.has_display
 
 -- Defer shada rea
 local shada_read ---@boolean?
