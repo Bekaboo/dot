@@ -19,17 +19,20 @@ main() {
         return 0
     fi
 
-    if [[ ! -e "$1" ]]; then
-        echo "'$1' does not exist" 2>&1
+    local src="$1"
+    shopt -s extglob && local bak="${1%%+(/)}.bak"
+
+    if [[ ! -e "$src" ]]; then
+        echo "'$src' does not exist" 2>&1
         return 1
     fi
 
-    if [[ -e "$1.bak" ]]; then
-        echo "'$1.bak' already exists"
+    if [[ -e "$bak" ]]; then
+        echo "'$bak' already exists"
         return 1
     fi
 
-    cp -r "$1" "$1.bak"
+    cp -Lr "$src" "$bak"
 }
 
 main "$@"
