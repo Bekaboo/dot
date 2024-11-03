@@ -79,6 +79,13 @@ local function load_session()
         emsg_silent = true,
       },
     })
+    -- Sometimes we have empty buffers with wrong filenames
+    -- after loading the session
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      if vim.bo[buf].bt == '' and vim.api.nvim_buf_line_count(buf) == 0 then
+        vim.api.nvim_buf_delete(buf, {})
+      end
+    end
   end)
 
   -- We can end up in terminal mode if the session contains a terminal buffer
