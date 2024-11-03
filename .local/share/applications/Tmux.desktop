@@ -5,8 +5,7 @@ Comment[en_CA]=Terminal multiplexer
 Comment[en_GB]=Terminal multiplexer
 Comment[zh_CN]=终端复用器
 Comment[zh_TW]=終端複用器
-TryExec=tmux-attach
-Exec=tmux-attach
+Exec=sh -c 'if (tmux ls 2>/dev/null | grep -vq attached) && [ "$PWD" = "$HOME" ]; then tmux at; else tmux; fi'
 Terminal=true
 Type=Application
 Keywords=terminal;shell;prompt;command;commandline;
