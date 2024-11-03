@@ -38,8 +38,9 @@ end
 
 if type -q tmux
     and type -q tmux-attach
-    and test -z "$TMUX"
     and test -n "$SSH_TTY"
+    and test -z "$SCREEN"
+    and test -z "$TMUX"
     and test -z "$VIM"
     and test -z "$NVIM"
     and test -z "$INSIDE_EMACS"

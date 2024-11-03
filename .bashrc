@@ -45,8 +45,9 @@ fi
 
 if __has tmux &&
     __has tmux-attach &&
-    [[ -z "$TMUX" ]] &&
     [[ -n "$SSH_TTY" ]] &&
+    [[ -z "$SCREEN" ]] &&
+    [[ -z "$TMUX" ]] &&
     [[ -z "$VIM" ]] &&
     [[ -z "$NVIM" ]] &&
     [[ -z "$INSIDE_EMACS" ]]; then
