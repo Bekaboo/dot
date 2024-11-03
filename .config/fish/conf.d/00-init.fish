@@ -5,12 +5,12 @@ fish_add_path -p \
     $HOME/.cargo/bin \
     $HOME/go/bin
 
-if test -f $HOME/.exports
-    source $HOME/.exports
+if test -f $HOME/.envvars
+    source $HOME/.envvars
 end
 
-if test -f $__fish_config_dir/fish_exports
-    source $__fish_config_dir/fish_exports
+if test -f $__fish_config_dir/fish_envvars
+    source $__fish_config_dir/fish_envvars
 end
 
 if type -q nvim

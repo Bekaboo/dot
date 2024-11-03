@@ -17,8 +17,8 @@ pathadd "${HOME}/.cargo/bin"
 pathadd "${HOME}/go/bin"
 export PATH
 
-[[ -r "${HOME}/.exports" ]] && source "${HOME}/.exports"
-[[ -r "${HOME}/.bash_exports" ]] && source "${HOME}/.bash_exports"
+[[ -r "${HOME}/.envvars" ]] && source "${HOME}/.envvars"
+[[ -r "${HOME}/.bash_envvars" ]] && source "${HOME}/.bash_envvars"
 
 if __has nvim; then
     export EDITOR=nvim
