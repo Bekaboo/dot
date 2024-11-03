@@ -50,9 +50,9 @@ if __has tmux &&
     [[ -z "$TMUX" ]] &&
     [[ -z "$VIM" ]] &&
     [[ -z "$NVIM" ]] &&
-    [[ -z "$INSIDE_EMACS" ]]; then
+    [[ -z "$INSIDE_EMACS" ]] &&
     [[ "$TERM_PROGRAM" != 'vscode' ]] &&
-    [[ "$TERM" != 'linux' ]] &&
+    [[ "$TERM" != 'linux' ]]; then
     exec tmux-attach
 fi
 
