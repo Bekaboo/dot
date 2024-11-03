@@ -104,7 +104,7 @@ augroup('LastPosJmp', {
 augroup('AutoCwd', {
   'LspAttach',
   {
-    desc = 'Record LSP root directories in `vim.g._lsp_root_dirs`.',
+    desc = 'Record LSP root directories in `_G._lsp_root_dirs`.',
     nested = true,
     callback = function(info)
       local client = vim.lsp.get_client_by_id(info.data.client_id)
@@ -117,29 +117,25 @@ augroup('AutoCwd', {
         return
       end
 
-      -- Keep only shortest root dir in `vim.g._lsp_root_dirs`,
+      local fs_utils = require('utils.fs')
+
+      -- Keep only shortest root dir in `_G._lsp_root_dirs`,
       -- e.g. if we have `~/project` and `~/project/subdir`, keep only
       -- `~/project`
-      local lsp_root_dirs = vim.g._lsp_root_dirs or {}
-      for i, dir in ipairs(lsp_root_dirs) do
-        -- If the new root dir is a subdirectory of an existing root dir,
-        -- return early and don't add it
-        if require('utils.fs').contains(dir, root_dir) then
+      _G._lsp_root_dirs = _G._lsp_root_dirs or {}
+      for i, dir in ipairs(_G._lsp_root_dirs) do
+        if fs_utils.contains(dir, root_dir) then
           return
         end
-        if vim.startswith(dir, root_dir) then
-          table.remove(lsp_root_dirs, i)
+        if fs_utils.contains(root_dir, dir) then
+          table.remove(_G._lsp_root_dirs, i)
         end
       end
-      table.insert(lsp_root_dirs, root_dir)
-      vim.g._lsp_root_dirs = lsp_root_dirs
-
-      -- Execute BufWinEnter event on current buffer to trigger cwd change
-      vim.api.nvim_exec_autocmds('BufWinEnter', { buffer = info.buf })
+      table.insert(_G._lsp_root_dirs, root_dir)
     end,
   },
 }, {
-  { 'BufWinEnter', 'WinEnter', 'FileChangedShellPost' },
+  { 'BufWinEnter', 'WinEnter', 'FileChangedShellPost', 'LspAttach' },
   {
     desc = 'Automatically change local current directory.',
     nested = true,
@@ -148,27 +144,27 @@ augroup('AutoCwd', {
         return
       end
 
-      local lsp_root_dir
+      local fs_utils = require('utils.fs')
       local bufname = vim.api.nvim_buf_get_name(info.buf)
-      for _, dir in ipairs(vim.g._lsp_root_dirs or {}) do
-        if require('utils.fs').contains(dir, bufname) then
+
+      local lsp_root_dir
+      for _, dir in ipairs(_G._lsp_root_dirs or {}) do
+        if fs_utils.contains(dir, bufname) then
           lsp_root_dir = dir
           break
         end
       end
 
       local root_dir = lsp_root_dir
-        or vim.fs.root(info.file, require('utils.fs').root_patterns)
-
-      if not root_dir or root_dir == vim.fs.normalize('~') then
-        root_dir = vim.fs.dirname(info.file)
-      end
+        or vim.fs.root(info.file, fs_utils.root_patterns)
+        or vim.fs.dirname(info.file)
 
       -- Prevent unnecessary directory change, which triggers
       -- DirChanged autocmds that may update winbar unexpectedly
       if not root_dir or root_dir == vim.fn.getcwd(0) then
         return
       end
+
       for _, win in ipairs(vim.fn.win_findbuf(info.buf)) do
         vim.api.nvim_win_call(win, function()
           pcall(vim.cmd.lcd, {
