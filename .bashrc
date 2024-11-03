@@ -17,6 +17,7 @@ pathadd "${HOME}/.cargo/bin"
 pathadd "${HOME}/go/bin"
 export PATH
 
+[[ -r "${HOME}/.exports" ]] && source "${HOME}/.exports"
 [[ -r "${HOME}/.bash_exports" ]] && source "${HOME}/.bash_exports"
 
 if __has nvim; then

@@ -5,6 +5,10 @@ fish_add_path -p \
     $HOME/.cargo/bin \
     $HOME/go/bin
 
+if test -f $HOME/.exports
+    source $HOME/.exports
+end
+
 if test -f $__fish_config_dir/fish_exports
     source $__fish_config_dir/fish_exports
 end
