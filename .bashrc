@@ -52,8 +52,8 @@ if __has tmux &&
     [[ -z "$INSIDE_EMACS" ]] &&
     [[ "$TERM_PROGRAM" != 'vscode' ]] &&
     [[ "$TERM" != 'linux' ]]; then
-    if (tmux ls 2>/dev/null | grep -vq attached)
-        && [[ "$PWD" = "$HOME" ]]; then
+    if (tmux ls 2>/dev/null | grep -vq attached) && 
+        [[ "$PWD" = "$HOME" ]]; then
         exec tmux at
     else
         exec tmux
