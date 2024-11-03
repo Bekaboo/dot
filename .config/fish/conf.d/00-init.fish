@@ -37,7 +37,6 @@ if type -q proot-distro
 end
 
 if type -q tmux
-    and type -q tmux-attach
     and test -n "$SSH_TTY"
     and test -z "$SCREEN"
     and test -z "$TMUX"
@@ -46,5 +45,10 @@ if type -q tmux
     and test -z "$INSIDE_EMACS"
     and test "$TERM_PROGRAM" != vscode
     and test "$TERM" != linux
-    exec tmux-attach
+    if tmux ls 2>/dev/null | string match -rvq attached
+        and test "$PWD" = "$HOME"
+        exec tmux at
+    else
+        exec tmux
+    end
 end

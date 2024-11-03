@@ -44,7 +44,6 @@ if __has proot-distro &&
 fi
 
 if __has tmux &&
-    __has tmux-attach &&
     [[ -n "$SSH_TTY" ]] &&
     [[ -z "$SCREEN" ]] &&
     [[ -z "$TMUX" ]] &&
@@ -53,7 +52,12 @@ if __has tmux &&
     [[ -z "$INSIDE_EMACS" ]] &&
     [[ "$TERM_PROGRAM" != 'vscode' ]] &&
     [[ "$TERM" != 'linux' ]]; then
-    exec tmux-attach
+    if (tmux ls 2>/dev/null | grep -vq attached)
+        && [[ "$PWD" = "$HOME" ]]; then
+        exec tmux at
+    else
+        exec tmux
+    fi
 fi
 
 [[ $- != *i* ]] && return
