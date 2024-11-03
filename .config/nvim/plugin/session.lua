@@ -80,6 +80,9 @@ local function load_session()
       },
     })
   end)
+
+  -- We can end up in terminal mode if the session contains a terminal buffer
+  vim.schedule(vim.cmd.stopinsert)
 end
 
 ---Check if there is any named buffer
