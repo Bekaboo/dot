@@ -109,7 +109,6 @@ vim.api.nvim_create_autocmd({
   'WinNew',
   'WinClosed',
   'DirChanged',
-  'FileChangedShellPost',
   'VimLeave',
 }, {
   group = groupid,
