@@ -6,30 +6,42 @@ end
 local session_dir =
   vim.fs.joinpath(vim.fn.stdpath('data') --[[@as string]], 'session')
 
----Get session file path
+---Get session file path for window
+---@param win number? window handler, default to 0 (current window)
 ---@return string
-local function get_session()
+local function get_session(win)
   return vim.fs.joinpath(
     session_dir,
-    vim.fn.getcwd(0):gsub('%%', '%%%%'):gsub('/', '%%') .. '.vim'
+    vim.fn.getcwd(win or 0):gsub('%%', '%%%%'):gsub('/', '%%') .. '.vim'
   )
 end
 
----Save current session
+---Save all sessions
+---Notice: multiple sessions is written when windows have different
+---working directories
 ---@return nil
-local function save_session()
+local function save_sessions()
   if not vim.uv.fs_stat(session_dir) then
     vim.fn.mkdir(session_dir, 'p')
   end
 
-  vim.cmd.mksession({
-    vim.fn.fnameescape(get_session()),
-    bang = true,
-    mods = {
-      silent = true,
-      emsg_silent = true,
-    },
-  })
+  ---Session paths for all windows
+  ---@type table<string, true>
+  local sessions = {}
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    sessions[get_session(win)] = true
+  end
+
+  for session, _ in pairs(sessions) do
+    vim.cmd.mksession({
+      vim.fn.fnameescape(session),
+      bang = true,
+      mods = {
+        silent = true,
+        emsg_silent = true,
+      },
+    })
+  end
 end
 
 ---Remove the loaded session file
@@ -118,7 +130,7 @@ vim.api.nvim_create_autocmd({
   -- for named buffers
   callback = vim.schedule_wrap(function()
     if has_named_buffer() then
-      save_session()
+      save_sessions()
     else
       -- Remove current session if all 'file' buffers
       -- are deleted in the current nvim process
