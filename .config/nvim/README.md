@@ -561,6 +561,8 @@ Total # of plugins: 50 (package manager included).
     - Remembers and restores previous background and colorscheme settings
     - Syncs background and colorscheme settings among multiple Neovim instances
       if scripts [setbg](../../.bin/setbg) and [setcolor](../../.bin/setcolor) are in `$PATH`
+- [session](plugin/session.lua)
+    - Automatically saves and restores sessions on exit and startup
 - [expandtab](lua/plugin/expandtab.lua)
     - Always use spaces for alignment, even if `'expandtab'` is not set, see
       `:h 'tabstop'` point 5
