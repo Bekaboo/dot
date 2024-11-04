@@ -232,34 +232,6 @@ augroup('KeepWinRatio', {
   },
 })
 
--- Show cursor line and cursor column only in current window
-augroup('AutoHlCursorLine', {
-  'WinEnter',
-  {
-    desc = 'Show cursorline and cursorcolumn in current window.',
-    callback = function()
-      if vim.w._cul and not vim.wo.cul then
-        vim.wo.cul = true
-        vim.w._cul = nil
-      end
-      if vim.w._cuc and not vim.wo.cuc then
-        vim.wo.cuc = true
-        vim.w._cuc = nil
-      end
-
-      local prev_win = vim.fn.win_getid(vim.fn.winnr('#'))
-      if prev_win ~= 0 then
-        local w = vim.w[prev_win]
-        local wo = vim.wo[prev_win]
-        w._cul = wo.cul
-        w._cuc = wo.cuc
-        wo.cul = false
-        wo.cuc = false
-      end
-    end,
-  },
-})
-
 augroup('FixCmdLineIskeyword', {
   'CmdLineEnter',
   {
