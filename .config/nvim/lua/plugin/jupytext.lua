@@ -1,5 +1,103 @@
 local fs = require('utils.fs')
 
+---@return string: path to the cache dir
+local function get_cache_dir()
+  return vim.fs.joinpath(vim.fn.stdpath('cache') --[[@as string]], 'jupytext')
+end
+
+---@param ipynb string path to the ipynb file
+---@return string: path to the dir
+local function get_output_basename(ipynb)
+  return vim.fs.joinpath(
+    get_cache_dir(),
+    (vim.fn.fnamemodify(ipynb, ':r'):gsub('%%', '%%%%'):gsub('/', '%%'))
+  )
+end
+
+---@param ipynb string path to the ipynb file
+---@return string: path to the markdown file coorresponding to the ipynb
+local function get_md(ipynb)
+  return get_output_basename(ipynb) .. '.md'
+end
+
+---@param ipynb string path to the ipynb file
+---@return string: path to the sha256sum of the ipynb file
+local function get_sha(ipynb)
+  return get_output_basename(ipynb) .. '.sha'
+end
+
+---Write sha256sum for the ipynb file
+---@param ipynb string path to the ipynb file
+---@return nil
+local function write_sha(ipynb)
+  if vim.fn.executable('sha256sum') == 0 or fs.is_empty(ipynb) then
+    return
+  end
+  vim.system({ 'sha256sum', ipynb }, {}, function(obj)
+    fs.write_file(get_sha(ipynb), vim.trim(obj.stdout))
+  end)
+end
+
+---@param info table callback for BufWriteCmd and FileWriteCmd event on an ipynb buffer
+---@return nil
+local function write_cb(info)
+  local fname = info.match
+  if fname == vim.api.nvim_buf_get_name(info.buf) then
+    vim.bo[info.buf].mod = false
+  end
+
+  -- Write destination is a markdown file, no special handling needed
+  local ext = vim.fn.fnamemodify(fname, ':e')
+  if ext == 'md' or ext == 'markdown' or ext == 'rmd' or ext == 'qmd' then
+    vim.cmd.write({ vim.fn.fnameescape(fname), mods = { silent = true } })
+    return
+  end
+
+  local md = get_md(fname)
+  vim.cmd.write({
+    vim.fn.fnameescape(md),
+    mods = { silent = true, keepalt = true },
+    bang = true,
+  })
+  vim.system({
+    'jupytext',
+    '--update',
+    '--from=md',
+    '--to=ipynb',
+    '--output',
+    fname,
+    md,
+  }, {}, function(obj)
+    if obj.code == 0 then
+      write_sha(fname)
+      return
+    end
+    -- If error, the notebook is possibly non-existent or is empty or
+    -- corrupted, try without `--update` to fix it
+    vim.system(
+      {
+        'jupytext',
+        '--from=md',
+        '--to=ipynb',
+        '--output',
+        fname,
+        md,
+      },
+      {},
+      vim.schedule_wrap(function(obj2)
+        if obj2.code == 0 then
+          write_sha(fname)
+          return
+        end
+        vim.notify(
+          '[jupytext] error writing to notebook: ' .. obj2.stderr,
+          vim.log.levels.ERROR
+        )
+      end)
+    )
+  end)
+end
+
 ---Convert a `.ipynb` notebook buffer into a proper markdown buffer
 ---@param buf integer?
 ---@return nil
@@ -9,59 +107,40 @@ local function jupytext_convert(buf)
     return
   end
 
-  local fpath_ipynb = vim.fs.normalize(vim.api.nvim_buf_get_name(buf))
-  local fpath_cache = vim.fn.stdpath('cache') --[[@as string]]
-  local fpath_cache_jupytext = vim.fs.joinpath(fpath_cache, 'jupytext')
+  local ipynb = vim.fs.normalize(vim.api.nvim_buf_get_name(buf))
+  local cache_dir = get_cache_dir()
 
   -- If jupytext is not installed, load the original buffer
   if vim.fn.executable('jupytext') == 0 then
-    vim.cmd.edit(vim.fn.fnameescape(fpath_ipynb))
+    vim.cmd.edit(vim.fn.fnameescape(ipynb))
     vim.cmd.filetype('detect')
     return
   end
 
-  if
-    not vim.uv.fs_stat(fpath_cache_jupytext)
-    and not vim.uv.fs_mkdir(fpath_cache_jupytext, 511)
-  then
+  if not vim.uv.fs_stat(cache_dir) and not vim.uv.fs_mkdir(cache_dir, 511) then
     vim.notify(
-      '[jupytext] cannot create cache dir ' .. fpath_cache_jupytext,
+      '[jupytext] cannot create cache dir ' .. cache_dir,
       vim.log.levels.ERROR
     )
     return
   end
 
-  local fpath_out = vim.fs.joinpath(
-    fpath_cache_jupytext,
-    (vim.fn.fnamemodify(fpath_ipynb, ':r'):gsub('%%', '%%%%'):gsub('/', '%%'))
-  )
-  local fpath_md = fpath_out .. '.md'
-  local fpath_sha = fpath_out .. '.sha256'
+  local md = get_md(ipynb)
+  local sha = get_sha(md)
 
   -- Get current and previous sha256sum of the notebook file
-  local sha_prev = fs.read_file(fpath_sha)
+  local sha_prev = fs.read_file(sha)
   local sha_current = vim.fn.executable('sha256sum') == 1
-    and vim.trim(vim.system({ 'sha256sum', fpath_ipynb }):wait().stdout)
+    and vim.trim(vim.system({ 'sha256sum', ipynb }):wait().stdout)
 
   -- Remove stale cache
   if not sha_prev or not sha_current or sha_prev ~= sha_current then
-    vim.fn.delete(fpath_md)
-  end
-
-  ---Write sha256sum for the ipynb file
-  ---@return nil
-  local function _write_sha()
-    if vim.fn.executable('sha256sum') == 0 or fs.is_empty(fpath_ipynb) then
-      return
-    end
-    vim.system({ 'sha256sum', fpath_ipynb }, {}, function(obj)
-      fs.write_file(fpath_sha, vim.trim(obj.stdout))
-    end)
+    vim.fn.delete(md)
   end
 
   -- Convert ipynb file to markdown file using jupytext
   -- Don't convert if the notebook does not exist or is empty
-  if not fs.is_empty(fpath_ipynb) and not vim.uv.fs_stat(fpath_md) then
+  if not fs.is_empty(ipynb) and not vim.uv.fs_stat(md) then
     local obj = vim
       .system({
         'jupytext',
@@ -69,17 +148,17 @@ local function jupytext_convert(buf)
         '--format-options',
         'notebook_metadata_filter=-all',
         '--output',
-        fpath_md,
-        fpath_ipynb,
+        md,
+        ipynb,
       })
       :wait()
 
     if obj.code == 0 then
-      _write_sha()
+      write_sha(ipynb)
     else
       vim.schedule(function()
         vim.notify(
-          '[jupytext] error reading from notebook: ' .. obj.stderr,
+          '[jupytext] error converting notebook: ' .. obj.stderr,
           vim.log.levels.ERROR
         )
       end)
@@ -87,8 +166,8 @@ local function jupytext_convert(buf)
   end
 
   -- Markdown file not found, load original notebook
-  if not vim.uv.fs_stat(fpath_md) then
-    vim.cmd.edit(vim.fn.fnameescape(fpath_ipynb))
+  if not vim.uv.fs_stat(md) then
+    vim.cmd.edit(vim.fn.fnameescape(ipynb))
     vim.cmd.filetype('detect')
     -- Three possible cases if the markdown file is missing:
     -- 1. the notebook does not exist (empty)
@@ -102,7 +181,7 @@ local function jupytext_convert(buf)
     -- In case 3, we want to load the underlying json and fix the corrupted
     -- notebook without setting the filetype and register the
     -- FileWriteCmd/BufWriteCmd callback
-    if not fs.is_empty(fpath_ipynb) then
+    if not fs.is_empty(ipynb) then
       return
     end
   else
@@ -117,7 +196,7 @@ local function jupytext_convert(buf)
       vim.bo[buf].undolevels = -1
     end
     vim.cmd.read({
-      args = { vim.fn.fnameescape(fpath_md) },
+      args = { vim.fn.fnameescape(md) },
       mods = { silent = true, keepalt = true },
     })
     vim.cmd.delete({
@@ -151,54 +230,7 @@ local function jupytext_convert(buf)
   vim.api.nvim_create_autocmd({ 'BufWriteCmd', 'FileWriteCmd' }, {
     group = vim.api.nvim_create_augroup('JupyText' .. buf, {}),
     buffer = buf,
-    callback = function(info)
-      vim.bo[info.buf].mod = false
-      vim.cmd.write({
-        vim.fn.fnameescape(fpath_md),
-        mods = {
-          silent = true,
-          keepalt = true,
-        },
-        bang = true,
-      })
-      vim.system({
-        'jupytext',
-        '--update',
-        '--from=md',
-        '--to=ipynb',
-        '--output',
-        fpath_ipynb,
-        fpath_md,
-      }, {}, function(obj)
-        if obj.code == 0 then
-          _write_sha()
-          return
-        end
-        -- If error, the notebook is possibly non-existent or is empty or
-        -- corrupted, try without `--update` to fix it
-        vim.system(
-          {
-            'jupytext',
-            '--from=md',
-            '--to=ipynb',
-            '--output',
-            fpath_ipynb,
-            fpath_md,
-          },
-          {},
-          vim.schedule_wrap(function(obj2)
-            if obj2.code == 0 then
-              _write_sha()
-              return
-            end
-            vim.notify(
-              '[jupytext] error updating notebook: ' .. obj2.stderr,
-              vim.log.levels.ERROR
-            )
-          end)
-        )
-      end)
-    end,
+    callback = write_cb,
   })
 end
 
@@ -210,7 +242,7 @@ local function setup(buf)
   vim.g.loaded_jupytext = true
 
   buf = buf or vim.api.nvim_get_current_buf()
-  if vim.api.nvim_buf_get_name(buf):match('%.ipynb$') then
+  if vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf), ':e') == 'ipynb' then
     jupytext_convert(buf)
   end
 
