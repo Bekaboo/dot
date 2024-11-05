@@ -72,7 +72,7 @@ require('ultimate-autopair').setup({
   {
     '/*',
     '*/',
-    ft = { 'c', 'cpp', 'cuda' },
+    ft = { 'c', 'cpp', 'cuda', 'go' },
     newline = true,
     space = true,
   },
