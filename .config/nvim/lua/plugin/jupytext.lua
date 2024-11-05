@@ -50,7 +50,11 @@ local function write_cb(info)
   -- Write destination is a markdown file, no special handling needed
   local ext = vim.fn.fnamemodify(fname, ':e')
   if ext == 'md' or ext == 'markdown' or ext == 'rmd' or ext == 'qmd' then
-    vim.cmd.write({ vim.fn.fnameescape(fname), mods = { silent = true } })
+    vim.cmd.write({
+      vim.fn.fnameescape(fname),
+      mods = { silent = true },
+      bang = vim.v.cmdbang == 1,
+    })
     return
   end
 
@@ -58,7 +62,7 @@ local function write_cb(info)
   vim.cmd.write({
     vim.fn.fnameescape(md),
     mods = { silent = true, keepalt = true },
-    bang = true,
+    bang = vim.v.cmdbang == 1,
   })
   vim.system({
     'jupytext',
