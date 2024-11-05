@@ -17,6 +17,7 @@
 	c                   = commit
 	ca                  = commit --amend
 	cl                  = clone
+	cln                 = clone --filter=blob:none
 	cl1                 = clone --depth=1
 	clr                 = clone --recursive
 	cm                  = commit -m
