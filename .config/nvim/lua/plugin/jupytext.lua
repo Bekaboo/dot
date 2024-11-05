@@ -38,7 +38,8 @@ local function write_sha(ipynb)
   end)
 end
 
----@param info table callback for BufWriteCmd and FileWriteCmd event on an ipynb buffer
+---Callback for BufWriteCmd and FileWriteCmd event on an ipynb buffer
+---@param info table
 ---@return nil
 local function write_cb(info)
   local fname = info.match
