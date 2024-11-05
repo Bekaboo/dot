@@ -309,7 +309,13 @@ local subcommand_arg_handler = {
 ---@type table<string, subcommand_completion_t>
 local subcommand_completions = {
   bufs = function()
-    return vim.tbl_map(tostring, vim.api.nvim_list_bufs())
+    return vim.tbl_map(function(buf)
+      local bufname = vim.api.nvim_buf_get_name(buf)
+      if bufname == '' then
+        return tostring(buf)
+      end
+      return string.format('%d (%s)', buf, vim.fn.fnamemodify(bufname, ':~:.'))
+    end, vim.api.nvim_list_bufs())
   end,
   ---Get completion for LSP clients
   ---@return string[]
