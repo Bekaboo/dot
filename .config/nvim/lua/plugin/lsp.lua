@@ -205,6 +205,7 @@ local function setup_lsp_overrides()
 
   -- Use loclist instead of qflist by default when showing document symbols
   local _lsp_document_symbol = vim.lsp.buf.document_symbol
+  ---@diagnostic disable-next-line: duplicate-set-field
   vim.lsp.buf.document_symbol = function()
     ---@diagnostic disable-next-line: redundant-parameter
     _lsp_document_symbol({
