@@ -231,8 +231,12 @@ export FZF_PREVIEW_DISABLE_UB='true' # Disable ueberzug preview
 [[ -r /usr/share/fzf/completion.bash ]] && . /usr/share/fzf/completion.bash
 
 # Ensure color theme files are correctly linked
-__has setbg && setbg
-__has setcolors && setcolors
+if __has checkbg; then
+    checkbg &
+elif __has setbg; then
+    setbg &
+fi
+__has setcolors && setcolors &
 
 # Change the window title of X terminals
 case ${TERM} in

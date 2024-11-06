@@ -125,8 +125,12 @@ if type -q fzf_key_bindings
 end
 
 # Ensure color theme files are correctly linked
-type -q setbg; and setbg
-type -q setcolors; and setcolors
+if type -q checkbg
+    checkbg &
+else if type -q setbg
+    setbg &
+end
+type -q setcolors; and setcolors &
 
 # Disable venv prompt provided by `activate.fish` -- we handle it ourselves in
 # `functions/fish_right_prompt.fish`
