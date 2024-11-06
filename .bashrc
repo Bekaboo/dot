@@ -11,10 +11,10 @@ pathadd() {
     fi
 }
 
-pathadd "${HOME}/.bin"
-pathadd "${HOME}/.local/bin"
-pathadd "${HOME}/.cargo/bin"
 pathadd "${HOME}/go/bin"
+pathadd "${HOME}/.cargo/bin"
+pathadd "${HOME}/.local/bin"
+pathadd "${HOME}/.bin"
 export PATH
 
 [[ -r "${HOME}/.envvars" ]] && source "${HOME}/.envvars"
