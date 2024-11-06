@@ -157,7 +157,10 @@ augroup('AutoCwd', {
 
       local root_dir = lsp_root_dir
         or vim.fs.root(info.file, fs_utils.root_patterns)
-        or vim.fs.dirname(info.file)
+
+        if not root_dir or root_dir == vim.uv.os_homedir() then
+          root_dir = vim.fs.dirname(info.file)
+        end
 
       -- Prevent unnecessary directory change, which triggers
       -- DirChanged autocmds that may update winbar unexpectedly
