@@ -62,10 +62,15 @@ fi
 
 [[ $- != *i* ]] && return
 
-if shopt -q login_shell && __has neofetch && [[ -z "$GREETED" ]]; then
+if __has neofetch &&
+    __has script &&
+    shopt -q login_shell &&
+    [[ -z "$GREETED" ]]; then
     export GREETED=1
     clear -x
-    neofetch
+    # Run in pseudo-terminal to prevent terminal state issues
+    # (tmux error: 'not a terminal', etc)
+    script -q /dev/null -c neofetch
 fi
 
 # Enable colors for ls, etc. Prefer ~/.dir_colors
