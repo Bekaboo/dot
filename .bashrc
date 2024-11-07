@@ -52,7 +52,7 @@ if __has tmux &&
     [[ -z "$INSIDE_EMACS" ]] &&
     [[ "$TERM_PROGRAM" != 'vscode' ]] &&
     [[ "$TERM" != 'linux' ]]; then
-    if (tmux ls 2>/dev/null | grep -vq attached) && 
+    if (tmux ls 2>/dev/null | grep -vq attached) &&
         [[ "$PWD" = "$HOME" ]]; then
         exec tmux at
     else
@@ -236,11 +236,7 @@ export FZF_PREVIEW_DISABLE_UB='true' # Disable ueberzug preview
 [[ -r /usr/share/fzf/completion.bash ]] && . /usr/share/fzf/completion.bash
 
 # Ensure color theme files are correctly linked
-if __has checkbg; then
-    checkbg &
-elif __has setbg; then
-    setbg &
-fi
+__has setbg && setbg &
 __has setcolors && setcolors &
 
 # Change the window title of X terminals
