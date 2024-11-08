@@ -341,8 +341,8 @@ fzf.setup({
         local backup = vim.g[backup_name]
         if backup ~= nil and vim.go[name] ~= backup then
           vim.go[name] = backup
+          vim.g[backup_name] = nil
         end
-        vim.g[backup_name] = nil
       end
 
       _restore_global_opt('splitkeep')
