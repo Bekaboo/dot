@@ -57,7 +57,7 @@ function M.start(config, opts)
     -- For some special buffers like `fugitive:///xxx`, `vim.fs.root()`
     -- returns '.' as result, which is NOT a valid directory
     return dir ~= '.'
-        and (vim.uv.fs_stat(dir) or {}).type == 'directory'
+        and (dir and vim.uv.fs_stat(dir) or {}).type == 'directory'
         and dir
       or nil
   end
