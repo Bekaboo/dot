@@ -1,3 +1,8 @@
+vim.g.codeium_filetypes = {
+  text = false,
+  markdown = false,
+}
+
 ---Setup codeium keymaps to accept/iterate/dismiss completions
 ---@return nil
 local function setup_keymaps()
