@@ -10,7 +10,9 @@ function M.win_safe_set_height(win, height)
   end
   local winnr = vim.fn.winnr()
   if vim.fn.winnr('j') ~= winnr or vim.fn.winnr('k') ~= winnr then
+    local cmdheight = vim.go.cmdheight
     vim.api.nvim_win_set_height(win, height)
+    vim.go.cmdheight = cmdheight
   end
 end
 
