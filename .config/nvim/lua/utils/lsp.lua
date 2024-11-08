@@ -53,17 +53,16 @@ function M.start(config, opts)
   ---Check if a directory is valid, return it if so, else return nil
   ---@param dir string?
   ---@return string?
-  local function _validate(dir)
+  local function validate(dir)
     -- For some special buffers like `fugitive:///xxx`, `vim.fs.root()`
     -- returns '.' as result, which is NOT a valid directory
-    return dir
-        and dir ~= '.'
+    return dir ~= '.'
         and (vim.uv.fs_stat(dir) or {}).type == 'directory'
         and dir
       or nil
   end
 
-  local root_dir = _validate(
+  local root_dir = validate(
     vim.fs.root(
       bufname,
       vim.list_extend(
@@ -71,7 +70,7 @@ function M.start(config, opts)
         M.default_config.root_patterns or {}
       )
     )
-  ) or _validate(vim.fs.dirname(bufname))
+  ) or validate(vim.fs.dirname(bufname))
   if not root_dir then
     return
   end
