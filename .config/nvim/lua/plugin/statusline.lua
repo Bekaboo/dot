@@ -240,7 +240,9 @@ local function remove_buf(buf, bufname)
   end
 
   if num_bufs == 1 then
-    vim.b[bufs[1]]._stl_pdiff = nil
+    if vim.api.nvim_buf_is_valid(bufs[1]) then
+      vim.b[bufs[1]]._stl_pdiff = nil
+    end
     return
   end
 
