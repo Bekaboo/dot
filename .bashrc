@@ -454,7 +454,6 @@ alias lc="wc -l"
 alias df="df -h"     # human-readable sizes
 alias free="free -m" # show sizes in MB
 alias tree="tree -N" # Display Chinese characters
-alias nv="nvim"
 alias vs="vim-startuptime"
 alias clean-tmp="find /tmp -ctime +7 -exec rm -rf {} +"
 # Save KDE plasma session
