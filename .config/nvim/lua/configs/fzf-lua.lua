@@ -683,6 +683,7 @@ local function fzf_setup_buf_keymap(buf)
   end
   vim.b[buf]._fzf_buf_keymap_set = true
   vim.keymap.set('n', '<Leader>s', fzf.symbols, { buffer = buf })
+  vim.keymap.set('n', '<Leader>fs', fzf.symbols, { buffer = buf })
 end
 
 for _, buf in ipairs(vim.api.nvim_list_bufs()) do
