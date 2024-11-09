@@ -3,8 +3,8 @@ if not status is-interactive
 end
 
 function __auto_ls \
-        --on-variable PWD \
-        --description 'List directory contents after changing cwd'
+    --on-variable PWD \
+    --description 'List directory contents after changing cwd'
     if not type -q tput
         ls -C --color
         return

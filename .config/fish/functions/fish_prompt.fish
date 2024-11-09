@@ -9,8 +9,8 @@ function fish_prompt --description 'Write out the prompt'
 
     # Use normal color if the last command exit with 0
     test $last_status -eq 0
-        and set -l color_status $fish_color_status_0
-        or  set -l color_status $fish_color_status
+    and set -l color_status $fish_color_status_0
+    or set -l color_status $fish_color_status
 
     echo -n -s \
         (set_color $color_status) ' ' $last_status ' ' \

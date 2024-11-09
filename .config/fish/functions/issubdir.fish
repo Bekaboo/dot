@@ -1,5 +1,5 @@
 function issubdir \
-        --description 'Check if a directory is a subdirectory of another'
+    --description 'Check if a directory is a subdirectory of another'
     if test (count $argv) -ne 2
         echo "Usage: issubdir <sub_dir> <parent_dir>"
         return 1
