@@ -214,6 +214,13 @@ local function jupytext_convert(buf)
     end
   end
 
+  -- Original buffer can be deleted in the previous code after we read the
+  -- markdown file, e.g. when the jupyter notebook buffer is a temporary
+  -- preview buffer with 'bufhidden' set to 'delete' or 'wipe'
+  if not vim.api.nvim_buf_is_valid(buf) then
+    return
+  end
+
   -- Setting 'buftype' to 'acwrite' to indicate that the buffer will always be
   -- written with BufWriteCmd, this also disable auto-reloading when the
   -- jupyter notebook is changed outside of nvim
