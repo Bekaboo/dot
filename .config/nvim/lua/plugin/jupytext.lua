@@ -62,7 +62,7 @@ local function write_cb(info)
   vim.cmd.write({
     vim.fn.fnameescape(md),
     mods = { silent = true, keepalt = true },
-    bang = vim.v.cmdbang == 1,
+    bang = true,
   })
   vim.system({
     'jupytext',
