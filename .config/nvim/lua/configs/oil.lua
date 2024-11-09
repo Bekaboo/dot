@@ -119,13 +119,22 @@ local function preview()
     vim.opt_local.winbar = ''
     vim.api.nvim_set_current_win(oil_win)
   end
-  -- Set keymap for opening the file from preview buffer
-  vim.keymap.set('n', '<CR>', function()
+  ---Edit corresponding file in oil preview buffer
+  ---@return nil
+  local function _edit_preview()
     local cursor = vim.api.nvim_win_get_cursor(0)
     vim.cmd.edit(fpath)
     end_preview(oil_win)
     pcall(vim.api.nvim_win_set_cursor, 0, cursor)
-  end, { buffer = preview_buf })
+  end
+  -- Set keymap for opening the file from preview buffer
+  vim.keymap.set('n', '<CR>', _edit_preview, { buffer = preview_buf })
+  vim.api.nvim_create_autocmd('BufReadCmd', {
+    desc = 'Edit corresponding file in oil preview buffers.',
+    group = vim.api.nvim_create_augroup('OilPreviewEdit', {}),
+    buffer = preview_buf,
+    callback = vim.schedule_wrap(_edit_preview),
+  })
   -- Preview buffer already contains contents of file to preview
   local preview_bufname = vim.fn.bufname(preview_buf)
   local preview_bufnewname = 'oil_preview://' .. fpath
