@@ -21,64 +21,6 @@ size = 12
 [font.normal]
 family = "Iosevka NF"
 
-[[keyboard.bindings]]
-action = "ReceiveChar"
-key = "PageUp"
-mode = "~Alt"
-mods = "Shift"
-
-[[keyboard.bindings]]
-action = "ReceiveChar"
-key = "PageDown"
-mode = "~Alt"
-mods = "Shift"
-
-[[keyboard.bindings]]
-action = "ReceiveChar"
-key = "Home"
-mode = "~Alt"
-mods = "Shift"
-
-[[keyboard.bindings]]
-action = "ReceiveChar"
-key = "End"
-mode = "~Alt"
-mods = "Shift"
-
-[[keyboard.bindings]]
-action = "ReceiveChar"
-key = "K"
-mode = "~Vi|~Search"
-mods = "Command"
-
-[[keyboard.bindings]]
-action = "ReceiveChar"
-key = "F"
-mode = "~Search"
-mods = "Control|Shift"
-
-[[keyboard.bindings]]
-action = "ReceiveChar"
-key = "F"
-mode = "~Search"
-mods = "Command"
-
-[[keyboard.bindings]]
-action = "ReceiveChar"
-key = "B"
-mode = "~Search"
-mods = "Control|Shift"
-
-[[keyboard.bindings]]
-action = "ReceiveChar"
-key = "B"
-mode = "~Search"
-mods = "Command"
-
-[[mouse.bindings]]
-action = "ReceiveChar"
-mouse = "Right"
-
 [scrolling]
 history = 0
 
