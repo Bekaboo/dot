@@ -92,7 +92,7 @@ if type -q fzf-file-previewer
 end
 
 # Include hidden files
-set fzf_fd_opts -p -H -L -td -tf -tl --mount -c=always
+set fzf_fd_opts -p -H -L -td -tf -tl -c=always
 
 # Fzf keybindings
 if type -q fzf_configure_bindings
