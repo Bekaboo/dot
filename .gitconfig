@@ -6,83 +6,83 @@
 [init]
 	defaultBranch = master
 [alias]
-	a                   = add
-	ap                  = add -p
-	au                  = add -u
-	aup                 = add -up
-	b                   = branch
-	bd                  = branch -d
-	bdr                 = push -d
-	bl                  = branch -v
-	c                   = commit
-	ca                  = commit --amend
-	cl                  = clone
-	cln                 = clone --filter=blob:none
-	cl1                 = clone --depth=1
-	clr                 = clone --recursive
-	cm                  = commit -m
-	co                  = checkout
-	cos                 = "!__git_cos() { git checkout --detach && git reset --soft $1 && git checkout $1; }; __git_cos"
-	cp                  = cherry-pick
-	d                   = diff
-	ds                  = diff --cached
-	f                   = fetch
-	ia                  = merge-base --is-ancestor
-	l                   = log --oneline --graph
-	lc                  = !git ls-files -z | xargs -0 wc -l
-	ls                  = ls-files
-	m                   = merge
-	mt                  = mergetool
-	p                   = push
-	pf                  = push --force
-	pl                  = pull
-	r                   = remote
-	ra                  = remote add
-	rb                  = rebase
-	rbc                 = rebase --continue
-	rbh                 = rebase --onto HEAD
-	rbi                 = rebase -i
-	rbo                 = rebase --onto
-	rl                  = remote -v
-	rrm                 = remote rm
-	rs                  = reset
-	rsp                 = reset --mixed HEAD^
-	rt                  = restore
-	rtp                 = restore -p
-	rts                 = restore --staged
-	rtsp                = restore --staged -p
-	ru                  = remote set-url
-	rv                  = revert
-	s                   = stash
-	sa                  = stash apply
-	sb                  = stash branch
-	sd                  = stash drop
-	sl                  = stash list
-	sm                  = stash -m
-	sp                  = stash pop
-	ss                  = stash --staged
-	ssm                 = stash --staged -m
-	st                  = status
-	su                  = submodule
-	sui                 = submodule init
-	sul                 = submodule status
-	suu                 = submodule update
-	sw                  = stash show
-	sw                  = switch
-	swd                 = switch --detach
-	swo                 = switch --orphan
-	sww                 = stash show -p
-	w                   = show --stat
-	ww                  = show
-	wa                  = log --diff-filter=A
-	wc                  = log --diff-filter=C
-	wd                  = log --diff-filter=D
-	wm                  = log --diff-filter=M
-	wp                  = log --diff-filter=B
-	wr                  = log --diff-filter=R
-	wt                  = log --diff-filter=T
-	wx                  = log --diff-filter=X
-	wu                  = log --diff-filter=U
+	a    = add
+	ap   = add -p
+	au   = add -u
+	aup  = add -up
+	b    = branch
+	bd   = branch -d
+	bdr  = push -d
+	bl   = branch -v
+	c    = commit
+	ca   = commit --amend
+	cl   = clone
+	cln  = clone --filter=blob:none
+	cl1  = clone --depth=1
+	clr  = clone --recursive
+	cm   = commit -m
+	co   = checkout
+	cos  = "!__git_cos() { git checkout --detach && git reset --soft $1 && git checkout $1; }; __git_cos"
+	cp   = cherry-pick
+	d    = diff
+	ds   = diff --cached
+	f    = fetch
+	ia   = merge-base --is-ancestor
+	l    = log --oneline --graph
+	lc   = !git ls-files -z | xargs -0 wc -l
+	ls   = ls-files
+	m    = merge
+	mt   = mergetool
+	p    = push
+	pf   = push --force
+	pl   = pull
+	r    = remote
+	ra   = remote add
+	rb   = rebase
+	rbc  = rebase --continue
+	rbh  = rebase --onto HEAD
+	rbi  = rebase -i
+	rbo  = rebase --onto
+	rl   = remote -v
+	rrm  = remote rm
+	rs   = reset
+	rsp  = reset --mixed HEAD^
+	rt   = restore
+	rtp  = restore -p
+	rts  = restore --staged
+	rtsp = restore --staged -p
+	ru   = remote set-url
+	rv   = revert
+	s    = stash
+	sa   = stash apply
+	sb   = stash branch
+	sd   = stash drop
+	sl   = stash list
+	sm   = stash -m
+	sp   = stash pop
+	ss   = stash --staged
+	ssm  = stash --staged -m
+	st   = status
+	su   = submodule
+	sui  = submodule init
+	sul  = submodule status
+	suu  = submodule update
+	sw   = stash show
+	sw   = switch
+	swd  = switch --detach
+	swo  = switch --orphan
+	sww  = stash show -p
+	w    = show --stat
+	ww   = show
+	wa   = log --diff-filter=A
+	wc   = log --diff-filter=C
+	wd   = log --diff-filter=D
+	wm   = log --diff-filter=M
+	wp   = log --diff-filter=B
+	wr   = log --diff-filter=R
+	wt   = log --diff-filter=T
+	wx   = log --diff-filter=X
+	wu   = log --diff-filter=U
 [merge]
 	tool = vimdiff
 	ff = false
