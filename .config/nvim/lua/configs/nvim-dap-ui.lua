@@ -39,6 +39,19 @@ dapui.setup({
     collapsed = vim.trim(static.icons.ui.AngleRight),
     current_frame = vim.trim(static.icons.StackFrameCurrent),
   },
+  controls = {
+    icons = {
+      play = vim.trim(static.icons.debug.Start),
+      pause = vim.trim(static.icons.debug.Pause),
+      run_last = vim.trim(static.icons.debug.Restart),
+      step_back = vim.trim(static.icons.debug.StepBack),
+      step_into = vim.trim(static.icons.debug.StepInto),
+      step_out = vim.trim(static.icons.debug.StepOut),
+      step_over = vim.trim(static.icons.debug.StepOver),
+      terminate = vim.trim(static.icons.debug.Stop),
+      disconnect = vim.trim(static.icons.debug.Disconnect),
+    },
+  },
   mappings = {
     -- Use a table to apply multiple mappings
     expand = { '=', 'za' },
