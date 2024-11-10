@@ -1,6 +1,6 @@
 [Appearance]
 ColorScheme=Sonokai Light
-Font=Iosevka NF Light,12,-1,5,25,0,0,0,0,0,Regular
+Font=Iosevka Nerd Font Mono,12,-1,5,25,0,0,0,0,0,Regular
 
 [General]
 Environment=TERM=konsole,COLORTERM=truecolor

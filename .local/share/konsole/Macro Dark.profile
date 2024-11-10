@@ -1,6 +1,6 @@
 [Appearance]
 ColorScheme=Macro Dark
-Font=Iosevka NF Light,12,-1,5,25,0,0,0,0,0,Regular
+Font=Iosevka Nerd Font Mono,12,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
 
 [General]
 Environment=TERM=konsole,COLORTERM=truecolor

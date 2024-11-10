@@ -1,7 +1,7 @@
 [Appearance]
 ColorScheme=Cockatoo Dark
 DimmValue=36
-Font=Iosevka NF Light,12,-1,5,25,0,0,0,0,0,Regular
+Font=Iosevka Nerd Font Mono,12,-1,5,25,0,0,0,0,0,Regular
 
 [Cursor Options]
 CustomCursorColor=95,96,175
