@@ -272,8 +272,7 @@ function M.close_floats(key)
   for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
     if vim.api.nvim_win_is_valid(win) then
       local config = vim.api.nvim_win_get_config(win)
-      -- Close floating windows that can be focused
-      if config.relative ~= '' and config.focusable then
+      if config.relative ~= '' then
         vim.api.nvim_win_close(win, false) -- do not force
         count = count + 1
       end
