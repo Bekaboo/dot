@@ -49,10 +49,7 @@ return {
       vim.api.nvim_create_autocmd('UIEnter', {
         once = true,
         callback = vim.schedule_wrap(function()
-          vim.opt.rtp:append(
-            vim.fs.joinpath(vim.g.package_path, 'vim-matchup')
-          )
-          vim.cmd.runtime('plugin/matchup.vim')
+          require('match-up').setup({ sync = true })
           vim.fn['matchup#loader#init_buffer']()
           return true
         end),
