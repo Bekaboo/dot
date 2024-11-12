@@ -36,8 +36,6 @@ opt.breakindent = true
 opt.smoothscroll = true
 opt.ignorecase = true
 opt.smartcase = true
-opt.autoindent = true
-opt.autowriteall = true
 opt.completeopt = 'menuone'
 opt.jumpoptions = 'stack,view'
 

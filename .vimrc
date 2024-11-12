@@ -34,7 +34,6 @@ silent! set incsearch
 silent! set ttimeout
 silent! set ttimeoutlen=0
 silent! set autoindent
-silent! set autowriteall
 silent! set shortmess-=S
 silent! set sessionoptions+=globals
 silent! set viminfo=!,'100,<50,s10,h
