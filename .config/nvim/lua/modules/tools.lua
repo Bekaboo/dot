@@ -274,4 +274,13 @@ return {
       require('configs.oil')
     end,
   },
+
+  {
+    'hedyhli/outline.nvim',
+    dependencies = 'msr1k/outline-asciidoc-provider.nvim',
+    event = 'FileType',
+    config = function()
+      require('configs.outline')
+    end,
+  },
 }
