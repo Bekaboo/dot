@@ -1,0 +1,6 @@
+[Desktop Entry]
+Exec=__checkbg_periodic
+Icon=application-x-shellscript
+Name=__checkbg_periodic
+Type=Application
+X-KDE-AutostartScript=true
