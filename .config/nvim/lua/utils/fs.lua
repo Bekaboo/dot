@@ -18,6 +18,9 @@ M.root_patterns = {
   '.env',
   '.gitignore',
   '.editorconfig',
+  'README.md',
+  'README.txt',
+  'README.org',
 }
 
 ---Read file contents
