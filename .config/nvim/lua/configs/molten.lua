@@ -429,6 +429,10 @@ local function setup_buf_keymaps_and_commands(buf)
       return
     end
 
+    if vim.fn.exists('*matchup#loader#bufwinenter') == 1 then
+      vim.fn['matchup#loader#bufwinenter']()
+    end
+
     vim.keymap.set('n', '<C-k>', '<C-w>c', { buffer = true })
 
     local src_win = vim.fn.win_getid(vim.fn.winnr('#'))
