@@ -43,7 +43,7 @@ require('outline').setup({
     unfold = 'zo',
     fold_all = 'zM',
     unfold_all = 'zR',
-    fold_reset =  'zx',
+    fold_reset = 'zx',
     down_and_jump = '<C-j>',
     up_and_jump = '<C-k>',
   },
@@ -74,4 +74,20 @@ vim.api.nvim_create_autocmd('ColorScheme', {
   desc = 'Set default hlgroups for outline.nvim.',
   group = groupid,
   callback = set_default_hlgroups,
+})
+
+local ol_cfg = require('outline.config')
+
+---Update outline window width
+---@return nil
+local function ol_update_width()
+  ol_cfg.o.outline_window.width =
+    math.min(48, math.max(vim.o.winwidth, math.ceil(vim.o.columns / 4)))
+end
+ol_update_width()
+
+vim.api.nvim_create_autocmd('VimResized', {
+  desc = 'Update outline window width.',
+  group = groupid,
+  callback = ol_update_width,
 })
