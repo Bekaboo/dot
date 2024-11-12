@@ -8,6 +8,7 @@ vim.g.vimtex_mappings_prefix = '<LocalLeader>t'
 vim.g.vimtex_quickfix_ignore_filters = {
   [[Warning]],
   [[Overfull]],
+  [[Underfull]],
   [[Font shape `.*' undefined]],
 }
 
