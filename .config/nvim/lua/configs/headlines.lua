@@ -15,13 +15,7 @@ require('headlines').setup({
 ---Set default highlight groups for headlines.nvim
 ---@return nil
 local function set_default_hlgroups()
-  local hl = require('utils.hl')
-  hl.set(0, 'CodeBlock', { bg = 'CursorLine' })
-  hl.set(0, 'markdownCode', { bg = 'CursorLine', fg = 'markdownCode' })
-  hl.set(0, '@markup.raw.markdown_inline', {
-    bg = 'CursorLine',
-    fg = 'markdownCode',
-  })
+  require('utils.hl').set(0, 'CodeBlock', { bg = 'CursorLine' })
 end
 set_default_hlgroups()
 
