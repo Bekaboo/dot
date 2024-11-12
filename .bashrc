@@ -279,41 +279,19 @@ shopt -s globstar
 
 # Automatically activate or deactivate python virtualenvs
 __python_venv() {
-    # $VIRTUAL_ENV not set -- python virtualenv not activated, try to
-    # activate it if '.env/bin/activate' or '.venv/bin/activate' exists
-    if [[ -z "$VIRTUAL_ENV" ]]; then
-        local path="$PWD"
-        while [[ "$path" != "$(dirname "$path")" ]]; do
-            for venv_dir in 'venv' 'env' '.venv' '.env'; do
-                local activation_file="$path/$venv_dir/bin/activate"
-                if [[ -f "$activation_file" ]]; then
-                    source "$activation_file"
-                    return
-                fi
-            done
-            path="$(dirname "$path")"
-        done
-        return
-    fi
-
-    # $VIRTUAL_ENV set but 'deactivate' not found -- python virtualenv
-    # activated in parent shell, try to activate in current shell if currently
-    # in project directory or a subdirectory of the project directory
-    local proj_dir="$(dirname "$VIRTUAL_ENV")"
-    if ! __has deactivate; then
-        if [[ "$PWD"/ == "$proj_dir"/* ]]; then
-            local activation_file="$(echo "$VIRTUAL_ENV/bin/activate")"
+    local path="$PWD"
+    while [[ "$path" != "$(dirname "$path")" ]]; do
+        for venv_dir in 'venv' 'env' '.venv' '.env'; do
+            local activation_file="$path/$venv_dir/bin/activate"
             if [[ -f "$activation_file" ]]; then
                 source "$activation_file"
+                return
             fi
-            return
-        fi
-    fi
+        done
+        path="$(dirname "$path")"
+    done
 
-    # $VIRTUAL_ENV set and 'deactivate' found -- python virtualenv activated
-    # in current shell, try to deactivate it if currently not inside the
-    # project directory or a subdirectory of the project directory
-    if [[ "$PWD"/ != "$proj_dir"/* ]] && __has deactivate; then
+    if [[ -n "$VIRTUAL_ENV" ]] && __has deactivate; then
         deactivate
     fi
 }
