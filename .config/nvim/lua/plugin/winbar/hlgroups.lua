@@ -122,17 +122,22 @@ local function init()
     callback = set_hlgroups,
   })
 
-  clear_winbar_bg()
-  local gid_clear_bg = vim.api.nvim_create_augroup('WinBarHlClearBg', {})
-  vim.api.nvim_create_autocmd('ColorScheme', {
-    group = gid_clear_bg,
-    callback = clear_winbar_bg,
-  })
-  vim.api.nvim_create_autocmd('OptionSet', {
-    group = gid_clear_bg,
-    pattern = 'background',
-    callback = clear_winbar_bg,
-  })
+  -- See https://github.com/Bekaboo/dropbar.nvim/issues/118
+  --     https://github.com/neovim/neovim/issues/26037#issuecomment-1838548013
+  --     https://github.com/Bekaboo/dropbar.nvim/pull/195
+  if vim.fn.has('nvim-0.11.0') == 0 then
+    clear_winbar_bg()
+    local gid_clear_bg = vim.api.nvim_create_augroup('WinBarHlClearBg', {})
+    vim.api.nvim_create_autocmd('ColorScheme', {
+      group = gid_clear_bg,
+      callback = clear_winbar_bg,
+    })
+    vim.api.nvim_create_autocmd('OptionSet', {
+      group = gid_clear_bg,
+      pattern = 'background',
+      callback = clear_winbar_bg,
+    })
+  end
 end
 
 return {
