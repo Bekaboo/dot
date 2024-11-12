@@ -6,6 +6,17 @@ has() {
     command -v "$1" >/dev/null 2>&1
 }
 
+# Temporary files used by the script
+readonly REGEX_QUERY_FILE="/tmp/rg-fzf-r-$$"
+readonly FUZZY_QUERY_FILE="/tmp/rg-fzf-f-$$"
+readonly OUTPUT_FILE="/tmp/rg-fzf-o-$$"
+
+cleanup() {
+    rm -f "$REGEX_QUERY_FILE" "$FUZZY_QUERY_FILE" "$OUTPUT_FILE"
+}
+
+trap cleanup SIGHUP SIGINT SIGQUIT SIGABRT EXIT
+
 # $1: search root path
 main() {
     local preview_cmd=$(
@@ -20,10 +31,6 @@ main() {
     )
     local editor=$(has nvim && echo 'nvim' || has vim && echo 'vim')
     local root_path="$1"
-    local regex_query_file="/tmp/rg-fzf-r-$$"
-    local fuzzy_query_file="/tmp/rg-fzf-f-$$"
-    local output_file="/tmp/rg-fzf-o-$$"
-    rm -f "$regex_query_file" "$fuzzy_query_file" "$output_file"
     local initial_query="${*:-}"
     local regex_search_hint=$(printf ":: <\u001b[33;1mctrl-g\u001b[0m> to \u001b[33;1mRegex Search\u001b[0m")
     local fuzzy_search_hint=$(printf ":: <\u001b[33;1mctrl-t\u001b[0m> to \u001b[33;1mFuzzy Search\u001b[0m")
@@ -32,19 +39,18 @@ main() {
     : | fzf --ansi --disabled --query "$initial_query" \
         --bind "start:reload($grep_cmd {q} "$root_path")+unbind(ctrl-g)" \
         --bind "change:reload:sleep 0.1; $grep_cmd {q} "$root_path"|| true" \
-        --bind "ctrl-t:unbind(change,ctrl-t)+change-prompt($fuzzy_prompt)+enable-search+rebind(ctrl-g)+transform-query(echo {q} > "$regex_query_file"; cat "$fuzzy_query_file")+change-header($regex_search_hint)" \
-        --bind "ctrl-g:unbind(ctrl-g)+change-prompt($regex_prompt)+disable-search+reload($grep_cmd {q} "$root_path"|| true)+rebind(change,ctrl-t)+transform-query(echo {q} > "$fuzzy_query_file"; cat "$regex_query_file")+change-header($fuzzy_search_hint)" \
+        --bind "ctrl-t:unbind(change,ctrl-t)+change-prompt($fuzzy_prompt)+enable-search+rebind(ctrl-g)+transform-query(echo {q} > "$REGEX_QUERY_FILE"; cat "$FUZZY_QUERY_FILE")+change-header($regex_search_hint)" \
+        --bind "ctrl-g:unbind(ctrl-g)+change-prompt($regex_prompt)+disable-search+reload($grep_cmd {q} "$root_path"|| true)+rebind(change,ctrl-t)+transform-query(echo {q} > "$FUZZY_QUERY_FILE"; cat "$REGEX_QUERY_FILE")+change-header($fuzzy_search_hint)" \
         --prompt "$regex_prompt" \
         --delimiter ':' \
         --header "$fuzzy_search_hint" \
         --preview "$preview_cmd" \
-        --preview-window '+{2}-6,~1' >"$output_file"
+        --preview-window '+{2}-6,~1' >"$OUTPUT_FILE"
     # Entries in output file: {file}:{line}:{column}:{text}
     # Let vim read the output file as error file and jump to the first error
-    if [[ -s "$output_file" ]]; then
-        $editor +"cfile $output_file"
+    if [[ -s "$OUTPUT_FILE" ]]; then
+        $editor +"cfile $OUTPUT_FILE"
     fi
-    rm -f "$regex_query_file" "$fuzzy_query_file" "$output_file"
 }
 
 main "$@"
