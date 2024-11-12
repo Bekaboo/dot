@@ -2,7 +2,7 @@
 BoldIntense=true
 ColorScheme=Cockatoo Light
 DimmValue=36
-Font=Iosevka Nerd Font Mono,12,-1,5,25,0,0,0,0,0,Regular
+Font=Iosevka Nerd Font,12,-1,5,25,0,0,0,0,0,Regular
 LineSpacing=0
 
 [Cursor Options]
