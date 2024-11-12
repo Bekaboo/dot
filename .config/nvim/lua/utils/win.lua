@@ -38,7 +38,7 @@ function M.effective_lines()
     )
 end
 
----Returns a function to save some attributes a list of windows
+---Returns a function to save some attributes over a list of windows
 ---@param save_method fun(win: integer): any?
 ---@param store table<integer, any>
 ---@return fun(wins: integer[]?): nil
@@ -85,7 +85,7 @@ end
 ---@return fun(): nil
 function M.clear(store)
   return function()
-    for win, _ in ipairs(store) do
+    for win, _ in pairs(store) do
       store[win] = nil
     end
   end
