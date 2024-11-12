@@ -36,4 +36,30 @@ return {
       require('configs.vim-easy-align')
     end,
   },
+
+  {
+    'andymass/vim-matchup',
+    lazy = true,
+    init = function()
+      -- Disable matchit and matchparen
+      vim.g.loaded_matchparen = 0
+      vim.g.loaded_matchit = 0
+
+      -- Lazy-load after UIEnter
+      vim.api.nvim_create_autocmd('UIEnter', {
+        once = true,
+        callback = vim.schedule_wrap(function()
+          vim.opt.rtp:append(
+            vim.fs.joinpath(vim.g.package_path, 'vim-matchup')
+          )
+          vim.cmd.runtime('plugin/matchup.vim')
+          vim.fn['matchup#loader#init_buffer']()
+          return true
+        end),
+      })
+    end,
+    config = function()
+      require('configs.vim-matchup')
+    end,
+  },
 }

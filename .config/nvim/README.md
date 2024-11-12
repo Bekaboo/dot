@@ -492,7 +492,7 @@ and it should work out of the box.
 
 #### Third Party Plugins
 
-Total # of plugins: 50 (package manager included).
+Total # of plugins: 51 (package manager included).
 
 - **Lib**
     - [nvim-web-devicons](https://github.com/kyazdani42/nvim-web-devicons)
@@ -523,6 +523,7 @@ Total # of plugins: 50 (package manager included).
     - [vim-sleuth](https://github.com/tpope/vim-sleuth)
     - [ultimate-autopairs.nvim](https://github.com/altermo/ultimate-autopair.nvim)
     - [vim-easy-align](https://github.com/junegunn/vim-easy-align)
+    - [vim-matchup](https://github.com/andymass/vim-matchup)
 - **Tools**
     - [fzf-lua](https://github.com/ibhagwan/fzf-lua)
     - [flatten.nvim](https://github.com/willothy/flatten.nvim)
