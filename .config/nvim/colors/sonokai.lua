@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Sat Oct 26 10:17:21 PM EDT 2024
+-- Last Updated: Wed Nov 13 03:58:43 PM EST 2024
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -51,11 +51,11 @@ if vim.go.bg == 'dark' then
   c_grey_dim    = { '#595f6f',   240    }
   c_none        = { 'NONE',      'NONE' }
 else
-  c_bg0         = { '#ecf0f0',   15     }
-  c_bg1         = { '#e3e7e7',   251    }
-  c_bg2         = { '#dfe3e3',   252    }
-  c_bg3         = { '#d1d4d4',   253    }
-  c_bg4         = { '#c8cbcb',   254    }
+  c_bg0         = { '#f3f3f3',   15     }
+  c_bg1         = { '#e7e7e7',   251    }
+  c_bg2         = { '#e3e3e3',   252    }
+  c_bg3         = { '#d4d4d4',   253    }
+  c_bg4         = { '#cbcbcb',   254    }
   c_diff_red    = { '#ffc1ce',   204    }
   c_diff_green  = { '#cde2b7',   40     }
   c_diff_blue   = { '#afd5e0',   17     }
