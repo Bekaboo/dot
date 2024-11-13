@@ -27,8 +27,8 @@ local server_configs = {
           arguments = { 'tomorrow' },
         })
       end, { desc = "Open tomorrow's daily note" })
-    end
-  }
+    end,
+  },
 }
 
 for _, server_config in ipairs(server_configs) do
