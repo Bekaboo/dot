@@ -202,6 +202,13 @@ setbg-vscode() {
     if [[ -z "$1" ]] || [[ ! -e "$rc" ]] || ! has jq; then
         return 1
     fi
+
+    # Skip if auto detect is enabled
+    local auto_detect=$(jq -r '."window.autoDetectColorScheme"' "$rc")
+    if [[ "$auto_detect" == "true" ]]; then
+        return 0
+    fi
+
     local current_theme=$(jq -r '."workbench.colorTheme"' "$rc")
     local new_theme=$(get-theme-variant "$current_theme" "$1")
     [[ -z "$new_theme" ]] && new_theme=$([[ "$1" == dark ]] &&
