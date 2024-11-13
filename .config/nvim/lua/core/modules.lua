@@ -51,6 +51,12 @@ local function bootstrap()
   if vim.fn.match(response, '[Nn][Ee][Vv][Ee][Rr]') >= 0 then
     startup_data.bootstrap = false
     utils.json.write(startup_file, startup_data)
+    vim.notify(
+      string.format(
+        "\n[modules] bootstrap disabled, remove '%s' to re-enable",
+        startup_file
+      )
+    )
     return false
   end
 
