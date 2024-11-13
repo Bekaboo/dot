@@ -91,14 +91,20 @@ local function spellcheck()
   vim.opt.spellsuggest = 'best,9'
 end
 
-local ts_start = vim.treesitter.start
-function vim.treesitter.start(...) ---@diagnostic disable-line: duplicate-set-field
-  -- Ensure spell check settings are set before starting treesitter
-  -- to avoid highlighting `@nospell` nodes
-  spellcheck()
-  vim.treesitter.start = ts_start
-  return vim.treesitter.start(...)
-end
+vim.api.nvim_create_autocmd('FileType', {
+  once = true,
+  callback = function()
+    local ts_start = vim.treesitter.start
+    function vim.treesitter.start(...) ---@diagnostic disable-line: duplicate-set-field
+      -- Ensure spell check settings are set before starting treesitter
+      -- to avoid highlighting `@nospell` nodes
+      spellcheck()
+      vim.treesitter.start = ts_start
+      return vim.treesitter.start(...)
+    end
+    return true
+  end,
+})
 
 vim.api.nvim_create_autocmd('UIEnter', {
   once = true,
