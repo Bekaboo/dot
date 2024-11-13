@@ -497,6 +497,25 @@ if s:supportevents(['CmdlineEnter', 'CmdlineLeave'])
           \ endif
 endif
 " }}}2
+
+" Clear invalid buffers after loading session {{{2
+if s:supportevents('SessionLoadPost')
+  function! s:clear_invalid_buffers()
+    for buf in getbufinfo()
+      if line('$') <= 1 &&
+            \ getbufline(buf.bufnr, 1, 2) == [''] &&
+            \ !filereadable(bufname(l:buf.bufnr))
+        exe 'bd! ' . buf.bufnr
+      endif
+    endfor
+  endfunction
+
+  augroup SessionClearInvalidBufs
+    autocmd!
+    autocmd SessionLoadPost * call s:clear_invalid_buffers()
+  augroup END
+endif
+" }}}2
 " }}}1
 
 """ Keymaps {{{1
