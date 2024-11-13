@@ -91,7 +91,7 @@ local function bootstrap()
       { cwd = lazy_path }
     )
   end
-  vim.notify('[modules] lazy.nvim cloned to ' .. lazy_path)
+  vim.notify(string.format("[modules] lazy.nvim cloned to '%s'", lazy_path))
   vim.opt.rtp:prepend(lazy_path)
   return true
 end
