@@ -82,13 +82,8 @@
         "when": "editorTextFocus && hasNextTabstop && inSnippetMode"
     },
     {
-        "key": "ctrl+\\ ctrl+\\",
+        "key": "ctrl+\\",
         "command": "workbench.action.terminal.toggleTerminal",
-        "when": "terminal.active"
-    },
-    {
-        "key": "ctrl+`",
-        "command": "-workbench.action.terminal.toggleTerminal",
         "when": "terminal.active"
     },
     {
@@ -211,5 +206,5 @@
     {
         "key": "ctrl+n",
         "command": "-workbench.action.files.newUntitledFile"
-    },
+    }
 ]
