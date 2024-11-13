@@ -275,10 +275,14 @@ vim.api.nvim_create_autocmd('OptionSet', {
   pattern = 'buflisted',
   callback = function(info)
     remove_buf(info.buf, info.file)
-    vim.cmd.redrawstatus({
-      bang = true,
-      mods = { emsg_silent = true },
-    })
+    -- For some reason, invoking `:redrawstatus` directly makes oil.nvim open
+    -- a floating window shortly before opening a file
+    vim.schedule(function()
+      vim.cmd.redrawstatus({
+        bang = true,
+        mods = { emsg_silent = true },
+      })
+    end)
   end,
 })
 
