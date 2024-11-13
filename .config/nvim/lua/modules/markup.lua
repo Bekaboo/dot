@@ -19,7 +19,7 @@ return {
 
   {
     'dhruvasagar/vim-table-mode',
-    cmd = 'TableModToggle',
+    cmd = { 'TableModeToggle', 'TableModeEnable', 'TableModeRealign' },
     ft = 'markdown',
     config = function()
       require('configs.vim-table-mode')
