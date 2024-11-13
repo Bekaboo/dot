@@ -3,7 +3,7 @@
 " Author:       Bekaboo <kankefengjing@gmail.com>
 " Maintainer:   Bekaboo <kankefengjing@gmail.com>
 " Remark:       Uses tex syntax file
-" Last Updated: Sun Feb  4 01:04:05 AM CST 2024
+" Last Updated: Wed Nov 13 02:20:03 AM EST 2024
 
 if exists('b:current_syntax')
   finish
@@ -31,9 +31,6 @@ syn region mkdCodeBlock matchgroup=mkdCodeDelimiter start=/\(\([^\\]\|^\)\\\)\@<
 syn region mkdCodeBlock matchgroup=mkdCodeDelimiter start=/^\s*\z(\~\{3,}\)\s*[0-9A-Za-z_+-]*\s*$/      end=/^\s*\z1\~*\s*$/             concealends
 syn region mkdCodeBlock matchgroup=mkdCodeDelimiter start="<pre\(\|\_s[^>]*\)\\\@<!>"                   end="</pre>"                     concealends
 syn region mkdCodeBlock matchgroup=mkdCodeDelimiter start="<code\(\|\_s[^>]*\)\\\@<!>"                  end="</code>"                    concealends
-syn match  mkdCodeBlock /^\s*\n\(\(\s\{8,}[^ ]\|\t\t\+[^\t]\).*\n\)\+/
-syn match  mkdCodeBlock /\%^\(\(\s\{4,}[^ ]\|\t\+[^\t]\).*\n\)\+/
-syn match  mkdCodeBlock /^\s*\n\(\(\s\{4,}[^ ]\|\t\+[^\t]\).*\n\)\+/ contained
 
 hi link mkdCode          markdownCode
 hi link mkdCodeBlock     markdownCodeBlock
