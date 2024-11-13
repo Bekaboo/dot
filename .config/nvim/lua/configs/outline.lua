@@ -66,7 +66,10 @@ vim.api.nvim_create_autocmd('FileType', {
 })
 
 local function set_default_hlgroups()
-  vim.api.nvim_set_hl(0, 'OutlineCurrent', { link = 'MatchParen' })
+  require('utils.hl').set(0, 'OutlineCurrent', {
+    link = 'Visual',
+    bold = true,
+  })
 end
 set_default_hlgroups()
 
