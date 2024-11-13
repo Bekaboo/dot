@@ -95,3 +95,6 @@
 [diff]
 	algorithm = histogram
 	indentHeuristic = true
+[filter "vscode-theme"]
+	smudge = cat
+	clean = sed '/[cC]olorTheme/d'

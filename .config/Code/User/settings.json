@@ -1,0 +1,84 @@
+{
+  "editor.cursorBlinking": "solid",
+  "editor.fontFamily": "'Iosevka NF', 'monospace', monospace",
+  "editor.guides.indentation": false,
+  "editor.renderLineHighlight": "none",
+  "editor.wordWrap": "off",
+  "files.autoSave": "onFocusChange",
+  "security.workspace.trust.untrustedFiles": "open",
+  "terminal.integrated.allowChords": false,
+  "terminal.integrated.allowMnemonics": false,
+  "terminal.integrated.commandsToSkipShell": [
+    "-workbench.action.focusLastEditorGroup",
+    "-workbench.action.quickOpen",
+    "-workbench.action.terminal.focusFind"
+  ],
+  "terminal.integrated.enableMultiLinePasteWarning": false,
+  "terminal.integrated.fontFamily": "'Iosevka NF', 'monospace', monospace",
+  "window.autoDetectColorScheme": true,
+  "window.restoreWindows": "none",
+  "workbench.editor.restoreViewState": false,
+  "workbench.startupEditor": "none",
+  "vim.enableNeovim": true,
+  "vim.neovimUseConfigFile": true,
+  "vim.targets.smartQuotes.aIncludesSurroundingSpaces": false,
+  "vim.vimrc.enable": true,
+  "tabout.charactersToTabOutFrom": [
+    {
+      "open": "[",
+      "close": "]"
+    },
+    {
+      "open": "{",
+      "close": "}"
+    },
+    {
+      "open": "(",
+      "close": ")"
+    },
+    {
+      "open": "'",
+      "close": "'"
+    },
+    {
+      "open": "\"",
+      "close": "\""
+    },
+    {
+      "open": ",",
+      "close": ","
+    },
+    {
+      "open": ".",
+      "close": "."
+    },
+    {
+      "open": ":",
+      "close": ":"
+    },
+    {
+      "open": "=",
+      "close": "="
+    },
+    {
+      "open": ">",
+      "close": ">"
+    },
+    {
+      "open": "<",
+      "close": "<"
+    },
+    {
+      "open": ".",
+      "close": "."
+    },
+    {
+      "open": "`",
+      "close": "`"
+    },
+    {
+      "open": ";",
+      "close": ";"
+    }
+  ]
+}
