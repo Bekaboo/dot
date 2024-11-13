@@ -70,9 +70,13 @@ function! plugin#vscode#setup() abort
     nnoremap ]c <Cmd>call VSCodeNotify('workbench.action.editor.nextChange')<CR>
     nnoremap [c <Cmd>call VSCodeNotify('workbench.action.editor.previousChange')<CR>
 
-    " Navigation
+    " Find files
     nnoremap <Leader>ff <Cmd>call VSCodeNotify('workbench.action.quickOpen')<CR>
     nnoremap <Leader>.  <Cmd>call VSCodeNotify('workbench.action.quickOpen')<CR>
+
+    " Grep
+    nnoremap <Leader>f/ <Cmd>call VSCodeNotify('workbench.action.findInFiles')<CR>
+    nnoremap <Leader>/  <Cmd>call VSCodeNotify('workbench.action.findInFiles')<CR>
 
     command! -complete=file -nargs=? Split call <SID>split('h', <q-args>)
     command! -complete=file -nargs=? Vsplit call <SID>split('v', <q-args>)
