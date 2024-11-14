@@ -72,6 +72,10 @@
 	swd  = switch --detach
 	swo  = switch --orphan
 	sww  = stash show -p
+	t    = tag
+	ta   = tag -a
+	tl   = tag -l
+	tm   = tag -m
 	w    = show --stat
 	wa   = log --diff-filter=A
 	wc   = log --diff-filter=C
