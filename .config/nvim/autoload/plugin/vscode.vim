@@ -3,7 +3,7 @@ if !exists('g:vscode')
 endif
 
 " LSP keymap settings
-function! s:vscodeGoToDefinition(str)
+function! s:editorAction(str)
     if exists('b:vscode_controlled') && b:vscode_controlled
         call VSCodeNotify('editor.action.' . a:str)
     else
@@ -53,18 +53,22 @@ function! plugin#vscode#setup() abort
     syntax off
 
     nnoremap K     <Cmd>call VSCodeNotify('editor.action.showHover')<CR>
-    nnoremap gD    <Cmd>call <SID>vscodeGoToDefinition('revealDeclaration')<CR>
-    nnoremap gd    <Cmd>call <SID>vscodeGoToDefinition('revealDefinition')<CR>
-    nnoremap <C-]> <Cmd>call <SID>vscodeGoToDefinition('revealDefinition')<CR>
+    nnoremap gD    <Cmd>call <SID>editorAction('goToTypeDefinition')<CR>
+    nnoremap gd    <Cmd>call <SID>editorAction('revealDefinition')<CR>
+    nnoremap g/    <Cmd>call <SID>editorAction('goToReferences')<CR>
+    nnoremap g.    <Cmd>call <SID>editorAction('goToImplementation')<CR>
+    nnoremap gq;   <Cmd>call <SID>editorAction('formatDocument')<CR>
+    nnoremap <C-]> <Cmd>call <SID>editorAction('revealDefinition')<CR>
     nnoremap gO    <Cmd>call VSCodeNotify('workbench.action.gotoSymbol')<CR>
-    nnoremap g.    <Cmd>call VSCodeNotify('editor.action.referenceSearch.trigger')<CR>
 
     xnoremap K     <Cmd>call VSCodeNotify('editor.action.showHover')<CR>
-    xnoremap gD    <Cmd>call <SID>vscodeGoToDefinition('revealDeclaration')<CR>
-    xnoremap gd    <Cmd>call <SID>vscodeGoToDefinition('revealDefinition')<CR>
-    xnoremap <C-]> <Cmd>call <SID>vscodeGoToDefinition('revealDefinition')<CR>
+    xnoremap gD    <Cmd>call <SID>editorAction('goToTypeDefinition')<CR>
+    xnoremap gd    <Cmd>call <SID>editorAction('revealDefinition')<CR>
+    xnoremap g/    <Cmd>call <SID>editorAction('goToReferences')<CR>
+    xnoremap g.    <Cmd>call <SID>editorAction('goToImplementation')<CR>
+    xnoremap gq    <Cmd>call <SID>editorAction('formatSelection')<CR>
+    xnoremap <C-]> <Cmd>call <SID>editorAction('revealDefinition')<CR>
     xnoremap gO    <Cmd>call VSCodeNotify('workbench.action.gotoSymbol')<CR>
-    xnoremap g.    <Cmd>call VSCodeNotify('editor.action.referenceSearch.trigger')<CR>
 
     " Git keymap settings
     nnoremap ]c <Cmd>call VSCodeNotify('workbench.action.editor.nextChange')<CR>
