@@ -17,8 +17,8 @@
 	c    = commit
 	ca   = commit --amend
 	cl   = clone
-	cln  = clone --filter=blob:none
 	cl1  = clone --depth=1
+	cln  = clone --filter=blob:none
 	clr  = clone --recursive
 	cm   = commit -m
 	co   = checkout
@@ -73,7 +73,6 @@
 	swo  = switch --orphan
 	sww  = stash show -p
 	w    = show --stat
-	ww   = show
 	wa   = log --diff-filter=A
 	wc   = log --diff-filter=C
 	wd   = log --diff-filter=D
@@ -81,8 +80,9 @@
 	wp   = log --diff-filter=B
 	wr   = log --diff-filter=R
 	wt   = log --diff-filter=T
-	wx   = log --diff-filter=X
 	wu   = log --diff-filter=U
+	ww   = show
+	wx   = log --diff-filter=X
 [merge]
 	tool = vimdiff
 	ff = false
