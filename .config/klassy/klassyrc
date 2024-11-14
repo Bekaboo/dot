@@ -1,29 +1,18 @@
-[ButtonColors]
-CloseButtonIconColorActive=AsSelected
-CloseButtonIconColorInactive=AsSelected
-
 [ButtonSizing]
-IntegratedRoundedRectangleBottomPadding=0
+ButtonCustomCornerRadius=0
 
-[Global]
-LookAndFeelSet=org.kde.klassylighttraditional.desktop
-
-[ShadowStyle]
-ShadowSize=ShadowNone
-
-[TitleBarSpacing]
-TitleBarBottomMargin=1.6
-TitleBarTopMargin=1.6
+[Style]
+FrameCornerRadius=FCR_Custom
+FrameCustomCornerRadius=0
+SplitterProxyEnabled=true
+WindowDragMode=WD_FULL
 
 [Windeco]
 AnimationsEnabled=false
-AnimationsSpeedRelativeSystem=10
 ButtonIconStyle=StyleOxygen
 WindowCornerRadius=0
 
 [WindowOutlineStyle]
-ThinWindowOutlineStyleInactive=WindowOutlineShadowColor
+ThinWindowOutlineStyleInactive=WindowOutlineNone
 ThinWindowOutlineThickness=2.5
 WindowOutlineAccentColorOpacityActive=100
-WindowOutlineAccentWithContrastOpacityInactive=100
-WindowOutlineShadowColorOpacity=0
