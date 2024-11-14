@@ -324,12 +324,15 @@ augroup('SessionClearInvalidBufs', {
   'SessionLoadPost',
   {
     desc = 'Clear invalid buffers after loading session.',
+    nested = true,
     callback = function()
       for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        local line_count = vim.api.nvim_buf_line_count(buf)
         if
-          vim.api.nvim_buf_line_count(buf) <= 1
-          and vim.api.nvim_buf_get_lines(buf, 0, 1, false)[1] == ''
-          and not vim.uv.fs_stat(vim.api.nvim_buf_get_name(buf))
+          line_count == 0
+          or line_count == 1
+            and vim.api.nvim_buf_get_lines(buf, 0, 1, false)[1] == ''
+            and not vim.uv.fs_stat(vim.api.nvim_buf_get_name(buf))
         then
           vim.api.nvim_buf_delete(buf, { force = true })
         end
