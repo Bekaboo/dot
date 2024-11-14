@@ -3,6 +3,7 @@
   "editor.fontFamily": "'Iosevka NF', 'monospace', monospace",
   "editor.guides.indentation": false,
   "editor.renderLineHighlight": "none",
+  "editor.suggest.selectionMode": "never",
   "editor.wordWrap": "off",
   "files.autoSave": "onFocusChange",
   "security.workspace.trust.untrustedFiles": "open",
