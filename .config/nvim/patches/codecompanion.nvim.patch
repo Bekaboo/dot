@@ -12,7 +12,7 @@ index b662d18..ce21c07 100644
  
  source.get_position_encoding_kind = function()
 diff --git a/lua/cmp_codecompanion/slash_commands.lua b/lua/cmp_codecompanion/slash_commands.lua
-index 21d36c2..c312a12 100644
+index 69a169b..5065b1f 100644
 --- a/lua/cmp_codecompanion/slash_commands.lua
 +++ b/lua/cmp_codecompanion/slash_commands.lua
 @@ -8,7 +8,7 @@ function source.new(config)
@@ -187,10 +187,10 @@ index d5ea240..58d263f 100644
    desc = "Show debug information for the current chat",
    callback = function(chat)
 diff --git a/lua/codecompanion/strategies/chat.lua b/lua/codecompanion/strategies/chat.lua
-index 042f1dc..d8c2277 100644
+index a37c9a2..06610af 100644
 --- a/lua/codecompanion/strategies/chat.lua
 +++ b/lua/codecompanion/strategies/chat.lua
-@@ -273,7 +273,8 @@ function Chat.new(args)
+@@ -245,7 +245,8 @@ function Chat.new(args)
      create_buf = function()
        local bufnr = api.nvim_create_buf(false, true)
        api.nvim_buf_set_name(bufnr, string.format("[CodeCompanion] %d", id))
@@ -200,7 +200,7 @@ index 042f1dc..d8c2277 100644
  
        return bufnr
      end,
-@@ -1036,6 +1037,7 @@ function Chat:add_buf_message(data, opts)
+@@ -1018,6 +1019,7 @@ function Chat:add_buf_message(data, opts)
        last_column = 0
      end
  
@@ -208,7 +208,7 @@ index 042f1dc..d8c2277 100644
      local cursor_moved = api.nvim_win_get_cursor(0)[1] == line_count
      api.nvim_buf_set_text(bufnr, last_line, last_column, last_line, last_column, lines)
  
-@@ -1154,7 +1156,7 @@ function Chat:fold_heading(heading)
+@@ -1136,7 +1138,7 @@ function Chat:fold_heading(heading)
    return self
  end
  
@@ -217,7 +217,7 @@ index 042f1dc..d8c2277 100644
  ---@return self
  function Chat:fold_code()
    local query = vim.treesitter.query.parse(
-@@ -1176,10 +1178,11 @@ function Chat:fold_code()
+@@ -1158,10 +1160,11 @@ function Chat:fold_code()
  
    local parser = vim.treesitter.get_parser(self.bufnr, "markdown")
    local tree = parser:parse()[1]
@@ -230,7 +230,7 @@ index 042f1dc..d8c2277 100644
      local match = {}
      for id, node in pairs(matches) do
        match = vim.tbl_extend("keep", match, {
-@@ -1193,9 +1196,10 @@ function Chat:fold_code()
+@@ -1175,9 +1178,10 @@ function Chat:fold_code()
        role = vim.trim(vim.treesitter.get_node_text(match.role.node, self.bufnr))
        if role:match(user_role) and match.code then
          local start_row, _, end_row, _ = match.code.node:range()
@@ -242,229 +242,6 @@ index 042f1dc..d8c2277 100644
            end)
          end
        end
-diff --git a/lua/codecompanion/strategies/chat/slash_commands/buffer.lua b/lua/codecompanion/strategies/chat/slash_commands/buffer.lua
-index 456faba..8f4f6eb 100644
---- a/lua/codecompanion/strategies/chat/slash_commands/buffer.lua
-+++ b/lua/codecompanion/strategies/chat/slash_commands/buffer.lua
-@@ -29,25 +29,36 @@ local function output(SlashCommand, selected)
-     if content == "" then
-       return log:warn("Could not read the file: %s", selected.path)
-     end
--    content = "```" .. file_utils.get_filetype(selected.path) .. "\n" .. content .. "\n```"
-+    content = string.format("```%s\n%s\n```", file_utils.get_filetype(selected.path), util.escape_backticks(content))
-   else
-+    -- Already escaped backticks in `buf.format()`
-     content = buf.format(selected.bufnr)
-   end
- 
-   local Chat = SlashCommand.Chat
--  Chat:add_message({
--    role = config.constants.USER_ROLE,
--    content = string.format(
--      [[Here is the content from %s (which has a buffer number of _%d_ and a filepath of `%s`):
--
-+  if config.opts.visible then
-+    Chat:add_buf_message({
-+      content = "[!"
-+        .. CONSTANTS.NAME
-+        .. ": `"
-+        .. selected[CONSTANTS.DISPLAY]
-+        .. "` / Buf No.: "
-+        .. selected.bufnr
-+        .. "]\n",
-+    })
-+    Chat:add_buf_message({ content = content })
-+    Chat:fold_code()
-+  else
-+    Chat:add_message({
-+      role = "user",
-+      content = string.format(
-+        [[Here is the data from buffer number %d:
- %s]],
--      selected.name,
--      selected.bufnr,
--      selected.path,
--      content
--    ),
--  }, { visible = false })
--  util.notify(string.format("Buffer `%s` content added to the chat", selected.name))
-+        selected.bufnr,
-+        content
-+      ),
-+    }, { visible = false })
-+  end
- end
- 
- local Providers = {
-@@ -184,7 +195,7 @@ function SlashCommand:execute()
-       if vim.fn.buflisted(bufnr) ~= 1 then
-         return false
-       end
--      if api.nvim_buf_get_option(bufnr, "filetype") == "codecompanion" then
-+      if vim.b[bufnr].codecompanion then
-         return false
-       end
-       table.insert(buffers, buf.get_info(bufnr))
-diff --git a/lua/codecompanion/strategies/chat/slash_commands/fetch.lua b/lua/codecompanion/strategies/chat/slash_commands/fetch.lua
-index d0f0ba4..e20db98 100644
---- a/lua/codecompanion/strategies/chat/slash_commands/fetch.lua
-+++ b/lua/codecompanion/strategies/chat/slash_commands/fetch.lua
-@@ -44,7 +44,7 @@ function SlashCommand:execute()
-     return log:error("Failed to load the provider")
-   end
- 
--  vim.ui.input({ prompt = "URL" }, function(input)
-+  vim.ui.input({ prompt = "URL: " }, function(input)
-     if input == "" then
-       return log:error("URL cannot be empty")
-     end
-@@ -67,22 +67,10 @@ function SlashCommand:execute()
-         end
- 
-         if data.code == 200 then
--          local content = fmt(
--            [[Here is the content from <url>%s</url> that I'm sharing with you:
--
--<content>
--%s
--</content>]],
--            input,
--            data.data.text
--          )
--
--          self.Chat:add_message({
--            role = config.constants.USER_ROLE,
--            content = content,
--          }, { visible = false })
--
--          return util.notify(fmt("Added the page contents for: %s", input))
-+            local content = fmt('<content>\n%s\n</content>', chunk.data.text)
-+            self.Chat:add_buf_message({ content = "[!" .. CONSTANTS.NAME .. ": `" .. input .. "`]\n" })
-+            self.Chat:add_buf_message({ content = "```\n" .. util.escape_backticks(content) .. "\n```" })
-+            self.Chat:fold_code()
-         end
-         if data.code >= 400 then
-           return log:error("Error: %s", data.body.data)
-diff --git a/lua/codecompanion/strategies/chat/slash_commands/file.lua b/lua/codecompanion/strategies/chat/slash_commands/file.lua
-index b0f5161..d94c9f2 100644
---- a/lua/codecompanion/strategies/chat/slash_commands/file.lua
-+++ b/lua/codecompanion/strategies/chat/slash_commands/file.lua
-@@ -30,20 +30,9 @@ local function output(SlashCommand, selected)
- 
-   local Chat = SlashCommand.Chat
-   local relative_path = selected.relative_path or selected[1] or selected.path
--  Chat:add_message({
--    role = config.constants.USER_ROLE,
--    content = fmt(
--      [[Here is the content from the file `%s`:
--
--```%s
--%s
--```]],
--      relative_path,
--      ft,
--      content
--    ),
--  }, { visible = false })
--  util.notify(fmt("Added %s's content to the chat", vim.fn.fnamemodify(relative_path, ":t")))
-+  Chat:add_buf_message({ content = "[!" .. CONSTANTS.NAME .. ": `" .. relative_path .. "`]\n" })
-+  Chat:add_buf_message({ content = "```" .. ft .. "\n" .. util.escape_backticks(content) .. "```" })
-+  Chat:fold_code()
- end
- 
- ---@class CodeCompanion.SlashCommand.File: CodeCompanion.SlashCommand
-diff --git a/lua/codecompanion/strategies/chat/slash_commands/help.lua b/lua/codecompanion/strategies/chat/slash_commands/help.lua
-index 505e925..6aa8ff6 100644
---- a/lua/codecompanion/strategies/chat/slash_commands/help.lua
-+++ b/lua/codecompanion/strategies/chat/slash_commands/help.lua
-@@ -86,20 +86,9 @@ local function output(SlashCommand, selected)
-   end
- 
-   local Chat = SlashCommand.Chat
--  Chat:add_message({
--    role = config.constants.USER_ROLE,
--    content = string.format(
--      [[Here is some additional context related to the tag `%s`:
--
--```%s
--%s
--```]],
--      selected.tag,
--      ft,
--      content
--    ),
--  }, { visible = false })
--  util.notify(string.format("%s help file added to chat", selected.tag))
-+  Chat:add_buf_message({ content = "[!" .. CONSTANTS.NAME .. ": `" .. selected.tag .. "`]\n" })
-+  Chat:add_buf_message({ content = "```" .. ft .. "\n" .. util.escape_backticks(content) .. "\n```" })
-+  Chat:fold_code()
- end
- 
- local Providers = {
-diff --git a/lua/codecompanion/strategies/chat/slash_commands/symbols.lua b/lua/codecompanion/strategies/chat/slash_commands/symbols.lua
-index 0f2ada5..1036ac2 100644
---- a/lua/codecompanion/strategies/chat/slash_commands/symbols.lua
-+++ b/lua/codecompanion/strategies/chat/slash_commands/symbols.lua
-@@ -95,20 +95,16 @@ function SlashCommand:execute()
-     end
- 
-     content = table.concat(symbols, "\n")
--    Chat:add_message({
--      role = config.constants.USER_ROLE,
-+    Chat:add_buf_message({ content = "[!Symbols]\n" })
-+    Chat:add_buf_message({
-       content = fmt(
--        [[Here is a symbolic outline of the file `%s` with filetype `%s`:
--
--<symbols>
--%s
--</symbols>]],
-+      "```txt\nFilename: %s\nFiletype: %s\n<symbols>\n%s\n</symbols>\n```\n",
-         selected.relative_path,
-         ft,
--        content
-+        util.escape_backticks(content)
-       ),
--    }, { visible = false })
--    util.notify(fmt("Added %s's symbolic outline to the chat", vim.fn.fnamemodify(selected.relative_path, ":t")))
-+  })
-+  Chat:fold_code()
-   end
- 
-   if self.config.opts and self.config.opts.provider then
-diff --git a/lua/codecompanion/strategies/chat/slash_commands/terminal.lua b/lua/codecompanion/strategies/chat/slash_commands/terminal.lua
-index 8c8673d..115d907 100644
---- a/lua/codecompanion/strategies/chat/slash_commands/terminal.lua
-+++ b/lua/codecompanion/strategies/chat/slash_commands/terminal.lua
-@@ -31,19 +31,19 @@ function SlashCommand:execute()
-   local content = vim.api.nvim_buf_get_lines(terminal_buf, 0, -1, false)
- 
-   local Chat = self.Chat
--  Chat:add_message({
--    role = config.constants.USER_ROLE,
-+  Chat:add_buf_message({ content = "[!" .. CONSTANTS.NAME .. "]\n" })
-+  Chat:add_buf_message({
-     content = string.format(
--      [[Here is the terminal output for buffer number `%s`:
--
--<terminal>
-+      [[```
-+Buffer Number: %s
-+Output:
- %s
--</terminal>]],
-+```]],
-       terminal_buf,
--      table.concat(content, "\n")
-+      util.escape_backticks(table.concat(content, "\n"))
-     ),
--  }, { visible = false })
--  util.notify("Terminal output added to chat")
-+  })
-+  Chat:fold_code()
- end
- 
- return SlashCommand
 diff --git a/lua/codecompanion/utils/buffers.lua b/lua/codecompanion/utils/buffers.lua
 index 108034f..b78b1c0 100644
 --- a/lua/codecompanion/utils/buffers.lua
