@@ -42,7 +42,10 @@ local function setup_keymaps()
   vim.keymap.set({ 'n', 'x' }, '<Leader>d', function() vim.diagnostic.setloclist() end)
   vim.keymap.set({ 'n', 'x' }, '<Leader>D', function() vim.diagnostic.setqflist() end)
   -- stylua: ignore end
-  vim.keymap.set({ 'n', 'x' }, '<Leader>i', function()
+
+  ---Open diagnostic floating window, jump to existing window if possible
+  ---@return nil
+  local function diagnostic_open_float()
     ---@param win integer
     ---@return boolean
     local function is_diag_win(win)
@@ -65,7 +68,14 @@ local function setup_keymaps()
 
     -- Else open diagnostic float
     vim.diagnostic.open_float()
-  end)
+  end
+
+  vim.keymap.set({ 'n', 'x' }, '<Leader>i', diagnostic_open_float)
+  -- nvim's default mapping
+  vim.keymap.set({ 'n', 'x' }, '<M-d>', diagnostic_open_float)
+  vim.keymap.set({ 'n', 'x' }, '<C-w>d', diagnostic_open_float)
+  vim.keymap.set({ 'n', 'x' }, '<C-w><C-d>', diagnostic_open_float)
+
   vim.keymap.set({ 'n', 'x' }, 'gy', function()
     local diags = vim.diagnostic.get(0, { lnum = vim.fn.line('.') - 1 })
     local n_diags = #diags
