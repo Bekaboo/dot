@@ -100,7 +100,7 @@ local function setup_keymaps()
       { prompt = 'Select diagnostic message to yank: ' },
       _yank
     )
-  end, { desc = '[LSP] Yank diagnostic message on current line' })
+  end, { desc = 'Yank diagnostic message on current line' })
 
   local c = utils.keymap.count_wrap
   ---@param direction 'prev'|'next'
