@@ -84,4 +84,34 @@ $INDENTcaption: [$LABEL$CURSOR],
   },
 })
 
-vim.keymap.set({ 'n', 'x' }, '<Leader>p', img_clip.paste_image)
+---@type table<string, true>
+local filetypes = {}
+for ft, _ in pairs(require('img-clip.config').opts.filetypes) do
+  filetypes[ft] = true
+end
+
+---Setup keymaps for img-clip
+---@param buf integer?
+---@return nil
+local function setup_keymaps(buf)
+  buf = buf or 0
+  if filetypes[vim.bo[buf].ft] then
+    vim.keymap.set({ 'n', 'x' }, '<Leader>p', img_clip.paste_image, {
+      buffer = buf,
+      desc = 'Paste image',
+    })
+  end
+end
+
+for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+  setup_keymaps(buf)
+end
+
+vim.api.nvim_create_autocmd('FileType', {
+  desc = 'Buffer-local settings for img-clip.',
+  group = vim.api.nvim_create_augroup('ImgClipSetup', {}),
+  pattern = vim.tbl_keys(filetypes),
+  callback = function(info)
+    setup_keymaps(info.buf)
+  end,
+})

@@ -213,8 +213,9 @@ end
 ---@param key string
 ---@param action string|function
 ---@param condition? fun(): boolean
+---@param opts? vim.keymap.set.Opts
 ---@return nil
-local function tmux_mapkey_fallback(key, action, condition)
+local function tmux_mapkey_fallback(key, action, condition, opts)
   condition = condition or tmux_mapkey_default_condition
   require('utils.keymap').amend({ 'n', 'x', 't' }, key, function(fallback)
     if
@@ -231,7 +232,7 @@ local function tmux_mapkey_fallback(key, action, condition)
       return
     end
     action()
-  end)
+  end, opts)
 end
 
 ---Setup keymaps and tmux variable `@is_vim`
@@ -243,29 +244,29 @@ local function setup()
   vim.g.loaded_tmux = true
 
   -- stylua: ignore start
-  tmux_mapkey_fallback('<M-h>', navigate_wrap('h'), tmux_mapkey_navigate_condition('h'))
-  tmux_mapkey_fallback('<M-j>', navigate_wrap('j'), tmux_mapkey_navigate_condition('j'))
-  tmux_mapkey_fallback('<M-k>', navigate_wrap('k'), tmux_mapkey_navigate_condition('k'))
-  tmux_mapkey_fallback('<M-l>', navigate_wrap('l'), tmux_mapkey_navigate_condition('l'))
+  tmux_mapkey_fallback('<M-h>', navigate_wrap('h'), tmux_mapkey_navigate_condition('h'), { desc = 'Go to the left window or tmux pane' })
+  tmux_mapkey_fallback('<M-j>', navigate_wrap('j'), tmux_mapkey_navigate_condition('j'), { desc = 'Go to the window below or tmux pane' })
+  tmux_mapkey_fallback('<M-k>', navigate_wrap('k'), tmux_mapkey_navigate_condition('k'), { desc = 'Go to the window above or tmux pane' })
+  tmux_mapkey_fallback('<M-l>', navigate_wrap('l'), tmux_mapkey_navigate_condition('l'), { desc = 'Go to the right window or tmux pane' })
 
-  tmux_mapkey_fallback('<M-Left>',  navigate_wrap('h'), tmux_mapkey_navigate_condition('h'))
-  tmux_mapkey_fallback('<M-Down>',  navigate_wrap('j'), tmux_mapkey_navigate_condition('j'))
-  tmux_mapkey_fallback('<M-Up>',    navigate_wrap('k'), tmux_mapkey_navigate_condition('k'))
-  tmux_mapkey_fallback('<M-Right>', navigate_wrap('l'), tmux_mapkey_navigate_condition('l'))
+  tmux_mapkey_fallback('<M-Left>',  navigate_wrap('h'), tmux_mapkey_navigate_condition('h'), { desc = 'Go to the left window or tmux pane' })
+  tmux_mapkey_fallback('<M-Down>',  navigate_wrap('j'), tmux_mapkey_navigate_condition('j'), { desc = 'Go to the window below or tmux pane' })
+  tmux_mapkey_fallback('<M-Up>',    navigate_wrap('k'), tmux_mapkey_navigate_condition('k'), { desc = 'Go to the window above or tmux pane' })
+  tmux_mapkey_fallback('<M-Right>', navigate_wrap('l'), tmux_mapkey_navigate_condition('l'), { desc = 'Go to the right window or tmux pane' })
 
-  tmux_mapkey_fallback('<M-p>', 'last-pane')
-  tmux_mapkey_fallback('<M-R>', 'swap-pane -U')
-  tmux_mapkey_fallback('<M-r>', 'swap-pane -D')
-  tmux_mapkey_fallback('<M-o>', "confirm 'kill-pane -a'")
-  tmux_mapkey_fallback('<M-=>', "confirm 'select-layout tiled'")
-  tmux_mapkey_fallback('<M-c>', 'confirm kill-pane', tmux_mapkey_close_win_condition)
-  tmux_mapkey_fallback('<M-q>', 'confirm kill-pane', tmux_mapkey_close_win_condition)
-  tmux_mapkey_fallback('<M-<>', 'resize-pane -L 4', tmux_mapkey_resize_pane_horiz_condition)
-  tmux_mapkey_fallback('<M->>', 'resize-pane -R 4', tmux_mapkey_resize_pane_horiz_condition)
-  tmux_mapkey_fallback('<M-,>', 'resize-pane -L 4', tmux_mapkey_resize_pane_horiz_condition)
-  tmux_mapkey_fallback('<M-.>', 'resize-pane -R 4', tmux_mapkey_resize_pane_horiz_condition)
-  tmux_mapkey_fallback('<M-->', [[run "tmux resize-pane -y $(($(tmux display -p '#{pane_height}') - 2))"]], tmux_mapkey_resize_pane_vert_condition)
-  tmux_mapkey_fallback('<M-+>', [[run "tmux resize-pane -y $(($(tmux display -p '#{pane_height}') + 2))"]], tmux_mapkey_resize_pane_vert_condition)
+  tmux_mapkey_fallback('<M-p>', 'last-pane', nil, { desc = 'Go to the previous window or tmux pane' })
+  tmux_mapkey_fallback('<M-R>', 'swap-pane -U', nil, { desc = 'Rorate windows or tmux panes upwards' })
+  tmux_mapkey_fallback('<M-r>', 'swap-pane -D', nil, { desc = 'Rorate windows or tmux panes downwords' })
+  tmux_mapkey_fallback('<M-o>', "confirm 'kill-pane -a'", nil, { desc = 'Make current window or tmux panes the only one' })
+  tmux_mapkey_fallback('<M-=>', "confirm 'select-layout tiled'", nil, { desc = 'Make all windows or tmux panes equal size' })
+  tmux_mapkey_fallback('<M-c>', 'confirm kill-pane', tmux_mapkey_close_win_condition, { desc = 'Close current window or tmux pane' })
+  tmux_mapkey_fallback('<M-q>', 'confirm kill-pane', tmux_mapkey_close_win_condition, { desc = 'Close current window or tmux pane' })
+  tmux_mapkey_fallback('<M-<>', 'resize-pane -L 4', tmux_mapkey_resize_pane_horiz_condition, { desc = 'Resize current window or tmux pane right' })
+  tmux_mapkey_fallback('<M-.>', 'resize-pane -R 4', tmux_mapkey_resize_pane_horiz_condition, { desc = 'Resize current window or tmux pane right' })
+  tmux_mapkey_fallback('<M->>', 'resize-pane -R 4', tmux_mapkey_resize_pane_horiz_condition, { desc = 'Resize current window or tmux pane left' })
+  tmux_mapkey_fallback('<M-,>', 'resize-pane -L 4', tmux_mapkey_resize_pane_horiz_condition, { desc = 'Resize current window or tmux pane left' })
+  tmux_mapkey_fallback('<M-->', [[run "tmux resize-pane -y $(($(tmux display -p '#{pane_height}') - 2))"]], tmux_mapkey_resize_pane_vert_condition, { desc = 'Decrease window height' })
+  tmux_mapkey_fallback('<M-+>', [[run "tmux resize-pane -y $(($(tmux display -p '#{pane_height}') + 2))"]], tmux_mapkey_resize_pane_vert_condition, { desc = 'Increase window height' })
   -- stylua: ignore end
 
   -- Set @is_vim and register relevant autocmds callbacks if not already

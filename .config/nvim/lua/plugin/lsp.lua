@@ -18,29 +18,29 @@ end
 ---@return nil
 local function setup_keymaps()
   -- stylua: ignore start
-  vim.keymap.set({ 'n' }, 'gq;', function() vim.lsp.buf.format() end)
-  vim.keymap.set({ 'n', 'x' }, 'g/', function() vim.lsp.buf.references() end)
-  vim.keymap.set({ 'n', 'x' }, 'g.', function() vim.lsp.buf.implementation() end)
+  vim.keymap.set({ 'n' }, 'gq;', function() vim.lsp.buf.format() end, { desc = 'Format buffer' })
+  vim.keymap.set({ 'n', 'x' }, 'g/', function() vim.lsp.buf.references() end, { desc = 'Go to references' })
+  vim.keymap.set({ 'n', 'x' }, 'g.', function() vim.lsp.buf.implementation() end, { desc = 'Go to implementation' })
   vim.keymap.set({ 'n', 'x' }, 'gd', function()
   -- stylua: ignore end
     return supports_method('textDocument/definition', 0)
         and '<Cmd>lua vim.lsp.buf.definition()<CR>'
       or 'gd'
-  end, { expr = true })
+  end, { expr = true, desc = 'Go to definition' })
   vim.keymap.set({ 'n', 'x' }, 'gD', function()
     return supports_method('textDocument/typeDefinition', 0)
         and '<Cmd>lua vim.lsp.buf.type_definition()<CR>'
       or 'gD'
-  end, { expr = true })
+  end, { expr = true, desc = 'Go to type definition' })
   -- stylua: ignore start
-  vim.keymap.set({ 'n', 'x' }, '<Leader>r', function() vim.lsp.buf.rename() end)
-  vim.keymap.set({ 'n', 'x' }, '<Leader>a', function() vim.lsp.buf.code_action() end)
-  vim.keymap.set({ 'n', 'x' }, '<Leader><', function() vim.lsp.buf.incoming_calls() end)
-  vim.keymap.set({ 'n', 'x' }, '<Leader>>', function() vim.lsp.buf.outgoing_calls() end)
-  vim.keymap.set({ 'n', 'x' }, '<Leader>s', function() vim.lsp.buf.document_symbol() end)
-  vim.keymap.set({ 'n', 'x' }, '<Leader>S', function() vim.lsp.buf.workspace_symbol() end)
-  vim.keymap.set({ 'n', 'x' }, '<Leader>d', function() vim.diagnostic.setloclist() end)
-  vim.keymap.set({ 'n', 'x' }, '<Leader>D', function() vim.diagnostic.setqflist() end)
+  vim.keymap.set({ 'n', 'x' }, '<Leader>r', function() vim.lsp.buf.rename() end, { desc = 'Rename symbol' })
+  vim.keymap.set({ 'n', 'x' }, '<Leader>a', function() vim.lsp.buf.code_action() end, { desc = 'Show code actions' })
+  vim.keymap.set({ 'n', 'x' }, '<Leader><', function() vim.lsp.buf.incoming_calls() end, { desc = 'Show incoming calls' })
+  vim.keymap.set({ 'n', 'x' }, '<Leader>>', function() vim.lsp.buf.outgoing_calls() end, { desc = 'Show outgoing calls' })
+  vim.keymap.set({ 'n', 'x' }, '<Leader>s', function() vim.lsp.buf.document_symbol() end, { desc = 'Show document symbols' })
+  vim.keymap.set({ 'n', 'x' }, '<Leader>S', function() vim.lsp.buf.workspace_symbol() end, { desc = 'Show workspace symbols' })
+  vim.keymap.set({ 'n', 'x' }, '<Leader>d', function() vim.diagnostic.setloclist() end, { desc = 'Show diagnostics' })
+  vim.keymap.set({ 'n', 'x' }, '<Leader>D', function() vim.diagnostic.setqflist() end, { desc = 'Show diagnostics' })
   -- stylua: ignore end
 
   ---Open diagnostic floating window, jump to existing window if possible
@@ -70,11 +70,13 @@ local function setup_keymaps()
     vim.diagnostic.open_float()
   end
 
-  vim.keymap.set({ 'n', 'x' }, '<Leader>i', diagnostic_open_float)
+  -- stylua: ignore start
   -- nvim's default mapping
-  vim.keymap.set({ 'n', 'x' }, '<M-d>', diagnostic_open_float)
-  vim.keymap.set({ 'n', 'x' }, '<C-w>d', diagnostic_open_float)
-  vim.keymap.set({ 'n', 'x' }, '<C-w><C-d>', diagnostic_open_float)
+  vim.keymap.set({ 'n', 'x' }, '<M-d>', diagnostic_open_float, { desc = 'Open diagnostic floating window' })
+  vim.keymap.set({ 'n', 'x' }, '<C-w>d', diagnostic_open_float, { desc = 'Open diagnostic floating window' })
+  vim.keymap.set({ 'n', 'x' }, '<C-w><C-d>', diagnostic_open_float, { desc = 'Open diagnostic floating window' })
+  vim.keymap.set({ 'n', 'x' }, '<Leader>i', diagnostic_open_float, { desc = 'Open diagnostic floating window' })
+  -- stylua: ignore end
 
   vim.keymap.set({ 'n', 'x' }, 'gy', function()
     local diags = vim.diagnostic.get(0, { lnum = vim.fn.line('.') - 1 })
@@ -124,17 +126,17 @@ local function setup_keymaps()
     end
   end
   -- stylua: ignore start
-  vim.keymap.set({ 'n', 'x' }, '[d', c(function() vim.diagnostic.goto_prev() end))
-  vim.keymap.set({ 'n', 'x' }, ']d', c(function () vim.diagnostic.goto_next() end))
+  vim.keymap.set({ 'n', 'x' }, '[d', c(function() vim.diagnostic.goto_prev() end), { desc = 'Go to previous diagnostic' })
+  vim.keymap.set({ 'n', 'x' }, ']d', c(function () vim.diagnostic.goto_next() end), { desc = 'Go to next diagnostic' })
+  vim.keymap.set({ 'n', 'x' }, '[e', c(diag_goto('prev', 'ERROR')), { desc = 'Go to previous diagnostic error' })
+  vim.keymap.set({ 'n', 'x' }, ']e', c(diag_goto('next', 'ERROR')), { desc = 'Go to next diagnostic error' })
+  vim.keymap.set({ 'n', 'x' }, '[w', c(diag_goto('prev', 'WARN')), { desc = 'Go to previous diagnostic warning' })
+  vim.keymap.set({ 'n', 'x' }, ']w', c(diag_goto('next', 'WARN')), { desc = 'Go to next diagnostic warning' })
+  vim.keymap.set({ 'n', 'x' }, '[i', c(diag_goto('prev', 'INFO')), { desc = 'Go to previous diagnostic info' })
+  vim.keymap.set({ 'n', 'x' }, ']i', c(diag_goto('next', 'INFO')), { desc = 'Go to next diagnostic info' })
+  vim.keymap.set({ 'n', 'x' }, '[h', c(diag_goto('prev', 'HINT')), { desc = 'Go to previous diagnostic hint' })
+  vim.keymap.set({ 'n', 'x' }, ']h', c(diag_goto('next', 'HINT')), { desc = 'Go to next diagnostic hint' })
   -- stylua: ignore end
-  vim.keymap.set({ 'n', 'x' }, '[e', c(diag_goto('prev', 'ERROR')))
-  vim.keymap.set({ 'n', 'x' }, ']e', c(diag_goto('next', 'ERROR')))
-  vim.keymap.set({ 'n', 'x' }, '[w', c(diag_goto('prev', 'WARN')))
-  vim.keymap.set({ 'n', 'x' }, ']w', c(diag_goto('next', 'WARN')))
-  vim.keymap.set({ 'n', 'x' }, '[i', c(diag_goto('prev', 'INFO')))
-  vim.keymap.set({ 'n', 'x' }, ']i', c(diag_goto('next', 'INFO')))
-  vim.keymap.set({ 'n', 'x' }, '[h', c(diag_goto('prev', 'HINT')))
-  vim.keymap.set({ 'n', 'x' }, ']h', c(diag_goto('next', 'HINT')))
 end
 
 ---Setup LSP handlers overrides

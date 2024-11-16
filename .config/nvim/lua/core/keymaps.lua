@@ -4,102 +4,103 @@ vim.g.maplocalleader = ' '
 
 -- Multi-window operations
 -- stylua: ignore start
-vim.keymap.set({ 'x', 'n' }, '<M-W>',      '<C-w>W')
-vim.keymap.set({ 'x', 'n' }, '<M-H>',      '<C-w>H')
-vim.keymap.set({ 'x', 'n' }, '<M-J>',      '<C-w>J')
-vim.keymap.set({ 'x', 'n' }, '<M-K>',      '<C-w>K')
-vim.keymap.set({ 'x', 'n' }, '<M-L>',      '<C-w>L')
-vim.keymap.set({ 'x', 'n' }, '<M-p>',      '<C-w>p')
-vim.keymap.set({ 'x', 'n' }, '<M-r>',      '<C-w>r')
-vim.keymap.set({ 'x', 'n' }, '<M-v>',      '<C-w>v')
-vim.keymap.set({ 'x', 'n' }, '<M-s>',      '<C-w>s')
-vim.keymap.set({ 'x', 'n' }, '<M-x>',      '<C-w>x')
-vim.keymap.set({ 'x', 'n' }, '<M-z>',      '<C-w>z')
-vim.keymap.set({ 'x', 'n' }, '<M-c>',      '<C-w>c')
-vim.keymap.set({ 'x', 'n' }, '<M-q>',      '<C-w>q')
-vim.keymap.set({ 'x', 'n' }, '<M-n>',      '<C-w>n')
-vim.keymap.set({ 'x', 'n' }, '<M-o>',      '<C-w>o')
-vim.keymap.set({ 'x', 'n' }, '<M-t>',      '<C-w>t')
-vim.keymap.set({ 'x', 'n' }, '<M-T>',      '<C-w>T')
-vim.keymap.set({ 'x', 'n' }, '<M-]>',      '<C-w>]')
-vim.keymap.set({ 'x', 'n' }, '<M-^>',      '<C-w>^')
-vim.keymap.set({ 'x', 'n' }, '<M-b>',      '<C-w>b')
-vim.keymap.set({ 'x', 'n' }, '<M-d>',      '<C-w>d')
-vim.keymap.set({ 'x', 'n' }, '<M-f>',      '<C-w>f')
-vim.keymap.set({ 'x', 'n' }, '<M-}>',      '<C-w>}')
-vim.keymap.set({ 'x', 'n' }, '<M-g>]',     '<C-w>g]')
-vim.keymap.set({ 'x', 'n' }, '<M-g>}',     '<C-w>g}')
-vim.keymap.set({ 'x', 'n' }, '<M-g>f',     '<C-w>gf')
-vim.keymap.set({ 'x', 'n' }, '<M-g>F',     '<C-w>gF')
-vim.keymap.set({ 'x', 'n' }, '<M-g>t',     '<C-w>gt')
-vim.keymap.set({ 'x', 'n' }, '<M-g>T',     '<C-w>gT')
-vim.keymap.set({ 'x', 'n' }, '<M-w>',      '<C-w><C-w>')
-vim.keymap.set({ 'x', 'n' }, '<M-h>',      '<C-w><C-h>')
-vim.keymap.set({ 'x', 'n' }, '<M-j>',      '<C-w><C-j>')
-vim.keymap.set({ 'x', 'n' }, '<M-k>',      '<C-w><C-k>')
-vim.keymap.set({ 'x', 'n' }, '<M-l>',      '<C-w><C-l>')
-vim.keymap.set({ 'x', 'n' }, '<M-Left>',   '<C-w><Left>')
-vim.keymap.set({ 'x', 'n' }, '<M-Down>',   '<C-w><Down>')
-vim.keymap.set({ 'x', 'n' }, '<M-Up>',     '<C-w><Up>')
-vim.keymap.set({ 'x', 'n' }, '<M-Right>',  '<C-w><Right>')
-vim.keymap.set({ 'x', 'n' }, '<M-g><M-]>', '<C-w>g<C-]>')
-vim.keymap.set({ 'x', 'n' }, '<M-g><Tab>', '<C-w>g<Tab>')
+vim.keymap.set({ 'x', 'n' }, '<M-W>', '<C-w>W', { desc = 'Go to the previous window' })
+vim.keymap.set({ 'x', 'n' }, '<M-H>', '<C-w>H', { desc = 'Move window to far left' })
+vim.keymap.set({ 'x', 'n' }, '<M-J>', '<C-w>J', { desc = 'Move winow to very bottom' })
+vim.keymap.set({ 'x', 'n' }, '<M-K>', '<C-w>K', { desc = 'Move window to very top' })
+vim.keymap.set({ 'x', 'n' }, '<M-L>', '<C-w>L', { desc = 'Move window to far right' })
+vim.keymap.set({ 'x', 'n' }, '<M-p>', '<C-w>p', { desc = 'Go to the previous window' })
+vim.keymap.set({ 'x', 'n' }, '<M-r>', '<C-w>r', { desc = 'Rotate windows downwords/rightwards' })
+vim.keymap.set({ 'x', 'n' }, '<M-R>', '<C-w>r', { desc = 'Rotate windows upwards/leftwords' })
+vim.keymap.set({ 'x', 'n' }, '<M-v>', '<C-w>v', { desc = 'Split window vertically' })
+vim.keymap.set({ 'x', 'n' }, '<M-s>', '<C-w>s', { desc = 'Split window horizontally' })
+vim.keymap.set({ 'x', 'n' }, '<M-x>', '<C-w>x', { desc = 'Exchange current window with next one' })
+vim.keymap.set({ 'x', 'n' }, '<M-z>', '<C-w>z', { desc = 'Close preview window' })
+vim.keymap.set({ 'x', 'n' }, '<M-c>', '<C-w>c', { desc = 'Close current window' })
+vim.keymap.set({ 'x', 'n' }, '<M-q>', '<C-w>q', { desc = 'Quit current window' })
+vim.keymap.set({ 'x', 'n' }, '<M-n>', '<C-w>n', { desc = 'Create new window' })
+vim.keymap.set({ 'x', 'n' }, '<M-o>', '<C-w>o', { desc = 'Make current window the only one' })
+vim.keymap.set({ 'x', 'n' }, '<M-t>', '<C-w>t', { desc = 'Go to the top-left window' })
+vim.keymap.set({ 'x', 'n' }, '<M-T>', '<C-w>T', { desc = 'Move window to new tab' })
+vim.keymap.set({ 'x', 'n' }, '<M-]>', '<C-w>]', { desc = 'Split and jump to tag under cursor' })
+vim.keymap.set({ 'x', 'n' }, '<M-^>', '<C-w>^', { desc = 'Split and edit alternate file' })
+vim.keymap.set({ 'x', 'n' }, '<M-b>', '<C-w>b', { desc = 'Go to the bottom-right window' })
+vim.keymap.set({ 'x', 'n' }, '<M-d>', '<C-w>d', { desc = 'Split and jump to definition' })
+vim.keymap.set({ 'x', 'n' }, '<M-f>', '<C-w>f', { desc = 'Split and edit file under cursor' })
+vim.keymap.set({ 'x', 'n' }, '<M-}>', '<C-w>}', { desc = 'Show tag under cursor in preview window' })
+vim.keymap.set({ 'x', 'n' }, '<M-g>]', '<C-w>g]', { desc = 'Split and select tag under cursor' })
+vim.keymap.set({ 'x', 'n' }, '<M-g>}', '<C-w>g}', { desc = 'Show tag under cursor in preview window' })
+vim.keymap.set({ 'x', 'n' }, '<M-g>f', '<C-w>gf', { desc = 'Edit file under cursor in new tab' })
+vim.keymap.set({ 'x', 'n' }, '<M-g>F', '<C-w>gF', { desc = 'Edit file under cursor in new tab and jump to line' })
+vim.keymap.set({ 'x', 'n' }, '<M-g>t', '<C-w>gt', { desc = 'Go to next tab' })
+vim.keymap.set({ 'x', 'n' }, '<M-g>T', '<C-w>gT', { desc = 'Go to previous tab' })
+vim.keymap.set({ 'x', 'n' }, '<M-w>', '<C-w><C-w>', { desc = 'Go to the next window' })
+vim.keymap.set({ 'x', 'n' }, '<M-h>', '<C-w><C-h>', { desc = 'Go to the left window' })
+vim.keymap.set({ 'x', 'n' }, '<M-j>', '<C-w><C-j>', { desc = 'Go to the window below' })
+vim.keymap.set({ 'x', 'n' }, '<M-k>', '<C-w><C-k>', { desc = 'Go to the window above' })
+vim.keymap.set({ 'x', 'n' }, '<M-l>', '<C-w><C-l>', { desc = 'Go to the right window' })
+vim.keymap.set({ 'x', 'n' }, '<M-Left>', '<C-w><Left>', { desc = 'Go to the left window' })
+vim.keymap.set({ 'x', 'n' }, '<M-Down>', '<C-w><Down>', { desc = 'Go to the window below' })
+vim.keymap.set({ 'x', 'n' }, '<M-Up>', '<C-w><Up>', { desc = 'Go to the window above' })
+vim.keymap.set({ 'x', 'n' }, '<M-Right>', '<C-w><Right>', { desc = 'Go to the right window' })
+vim.keymap.set({ 'x', 'n' }, '<M-g><M-]>', '<C-w>g<C-]>', { desc = 'Split and jump to tag under cursor' })
+vim.keymap.set({ 'x', 'n' }, '<M-g><Tab>', '<C-w>g<Tab>', { desc = 'Go to last accessed tab' })
 
-vim.keymap.set({ 'x', 'n' }, '<M-=>', '<C-w>=')
-vim.keymap.set({ 'x', 'n' }, '<M-_>', '<C-w>_')
-vim.keymap.set({ 'x', 'n' }, '<M-|>', '<C-w>|')
-vim.keymap.set({ 'x', 'n' }, '<M-+>', 'v:count ? "<C-w>+" : "2<C-w>+"', { expr = true })
-vim.keymap.set({ 'x', 'n' }, '<M-->', 'v:count ? "<C-w>-" : "2<C-w>-"', { expr = true })
-vim.keymap.set({ 'x', 'n' }, '<M->>', '(v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")', { expr = true })
-vim.keymap.set({ 'x', 'n' }, '<M-<>', '(v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")', { expr = true })
-vim.keymap.set({ 'x', 'n' }, '<M-.>', '(v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")', { expr = true })
-vim.keymap.set({ 'x', 'n' }, '<M-,>', '(v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")', { expr = true })
+vim.keymap.set({ 'x', 'n' }, '<M-=>', '<C-w>=', { desc = 'Make all windows equal size' })
+vim.keymap.set({ 'x', 'n' }, '<M-_>', '<C-w>_', { desc = 'Set current window height to maximum' })
+vim.keymap.set({ 'x', 'n' }, '<M-|>', '<C-w>|', { desc = 'Set current window width to maximum' })
+vim.keymap.set({ 'x', 'n' }, '<M-+>', 'v:count ? "<C-w>+" : "2<C-w>+"', { expr = true, desc = 'Increase window height' })
+vim.keymap.set({ 'x', 'n' }, '<M-->', 'v:count ? "<C-w>-" : "2<C-w>-"', { expr = true, desc = 'Decrease window height' })
+vim.keymap.set({ 'x', 'n' }, '<M->>', '(v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")', { expr = true, desc = 'Resize window right' })
+vim.keymap.set({ 'x', 'n' }, '<M-.>', '(v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")', { expr = true, desc = 'Resize window right' })
+vim.keymap.set({ 'x', 'n' }, '<M-<>', '(v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")', { expr = true, desc = 'Resize window left' })
+vim.keymap.set({ 'x', 'n' }, '<M-,>', '(v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")', { expr = true, desc = 'Resize window left' })
 
-vim.keymap.set({ 'x', 'n' }, '<C-w>>', '(v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")', { expr = true })
-vim.keymap.set({ 'x', 'n' }, '<C-w><', '(v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")', { expr = true })
-vim.keymap.set({ 'x', 'n' }, '<C-w>,', '(v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")', { expr = true })
-vim.keymap.set({ 'x', 'n' }, '<C-w>.', '(v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")', { expr = true })
-vim.keymap.set({ 'x', 'n' }, '<C-w>+', 'v:count ? "<C-w>+" : "2<C-w>+"', { expr = true })
-vim.keymap.set({ 'x', 'n' }, '<C-w>-', 'v:count ? "<C-w>-" : "2<C-w>-"', { expr = true })
+vim.keymap.set({ 'x', 'n' }, '<C-w>>', '(v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")', { expr = true, desc = 'Resize window right' })
+vim.keymap.set({ 'x', 'n' }, '<C-w>.', '(v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")', { expr = true, desc = 'Resize window right' })
+vim.keymap.set({ 'x', 'n' }, '<C-w><', '(v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")', { expr = true, desc = 'Resize window left' })
+vim.keymap.set({ 'x', 'n' }, '<C-w>,', '(v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")', { expr = true, desc = 'Resize window left' })
+vim.keymap.set({ 'x', 'n' }, '<C-w>+', 'v:count ? "<C-w>+" : "2<C-w>+"', { expr = true, desc = 'Increase window height' })
+vim.keymap.set({ 'x', 'n' }, '<C-w>-', 'v:count ? "<C-w>-" : "2<C-w>-"', { expr = true, desc = 'Decrease window height' })
 -- stylua: ignore end
 
 -- Terminal mode keymaps
 -- stylua: ignore start
-vim.keymap.set('t', '<C-6>', [[v:lua.require'utils.term'.running_tui() ? "<C-6>" : "<Cmd>b#<CR>"]],        { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<C-^>', [[v:lua.require'utils.term'.running_tui() ? "<C-^>" : "<Cmd>b#<CR>"]],        { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<Esc>', [[v:lua.require'utils.term'.running_tui() ? "<Esc>" : "<Cmd>stopi<CR>"]],     { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-v>', [[v:lua.require'utils.term'.running_tui() ? "<M-v>" : "<Cmd>wincmd v<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-s>', [[v:lua.require'utils.term'.running_tui() ? "<M-s>" : "<Cmd>wincmd s<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-W>', [[v:lua.require'utils.term'.running_tui() ? "<M-W>" : "<Cmd>wincmd W<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-H>', [[v:lua.require'utils.term'.running_tui() ? "<M-H>" : "<Cmd>wincmd H<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-J>', [[v:lua.require'utils.term'.running_tui() ? "<M-J>" : "<Cmd>wincmd J<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-K>', [[v:lua.require'utils.term'.running_tui() ? "<M-K>" : "<Cmd>wincmd K<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-L>', [[v:lua.require'utils.term'.running_tui() ? "<M-L>" : "<Cmd>wincmd L<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-r>', [[v:lua.require'utils.term'.running_tui() ? "<M-r>" : "<Cmd>wincmd r<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-R>', [[v:lua.require'utils.term'.running_tui() ? "<M-R>" : "<Cmd>wincmd R<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-x>', [[v:lua.require'utils.term'.running_tui() ? "<M-x>" : "<Cmd>wincmd x<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-p>', [[v:lua.require'utils.term'.running_tui() ? "<M-p>" : "<Cmd>wincmd p<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-c>', [[v:lua.require'utils.term'.running_tui() ? "<M-c>" : "<Cmd>wincmd c<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-q>', [[v:lua.require'utils.term'.running_tui() ? "<M-q>" : "<Cmd>wincmd q<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-o>', [[v:lua.require'utils.term'.running_tui() ? "<M-o>" : "<Cmd>wincmd o<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-w>', [[v:lua.require'utils.term'.running_tui() ? "<M-w>" : "<Cmd>wincmd w<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-h>', [[v:lua.require'utils.term'.running_tui() ? "<M-h>" : "<Cmd>wincmd h<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-j>', [[v:lua.require'utils.term'.running_tui() ? "<M-j>" : "<Cmd>wincmd j<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-k>', [[v:lua.require'utils.term'.running_tui() ? "<M-k>" : "<Cmd>wincmd k<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-l>', [[v:lua.require'utils.term'.running_tui() ? "<M-l>" : "<Cmd>wincmd l<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-Left>',  [[v:lua.require'utils.term'.running_tui() ? "<M-Left>"  : "<Cmd>wincmd h<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-Down>',  [[v:lua.require'utils.term'.running_tui() ? "<M-Down>"  : "<Cmd>wincmd j<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-Up>',    [[v:lua.require'utils.term'.running_tui() ? "<M-Up>"    : "<Cmd>wincmd k<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-Right>', [[v:lua.require'utils.term'.running_tui() ? "<M-Right>" : "<Cmd>wincmd l<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-=>', [[v:lua.require'utils.term'.running_tui() ? "<M-=>" : "<Cmd>wincmd =<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-_>', [[v:lua.require'utils.term'.running_tui() ? "<M-_>" : "<Cmd>wincmd _<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-|>', [[v:lua.require'utils.term'.running_tui() ? "<M-|>" : "<Cmd>wincmd |<CR>"]],  { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-+>', [[v:lua.require'utils.term'.running_tui() ? "<M-+>" : "<Cmd>wincmd 2+<CR>"]], { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M-->', [[v:lua.require'utils.term'.running_tui() ? "<M-->" : "<Cmd>wincmd 2-<CR>"]], { expr = true, replace_keycodes = false })
-vim.keymap.set('t', '<M->>', [[v:lua.require'utils.term'.running_tui() ? "<M->>" : "<Cmd>wincmd 4" . (winnr() == winnr("l") ? "<" : ">") . "<CR>"]], { expr = true })
-vim.keymap.set('t', '<M-<>', [[v:lua.require'utils.term'.running_tui() ? "<M-<>" : "<Cmd>wincmd 4" . (winnr() == winnr("l") ? ">" : "<") . "<CR>"]], { expr = true })
-vim.keymap.set('t', '<M-.>', [[v:lua.require'utils.term'.running_tui() ? "<M-.>" : "<Cmd>wincmd 4" . (winnr() == winnr("l") ? "<" : ">") . "<CR>"]], { expr = true })
-vim.keymap.set('t', '<M-,>', [[v:lua.require'utils.term'.running_tui() ? "<M-,>" : "<Cmd>wincmd 4" . (winnr() == winnr("l") ? ">" : "<") . "<CR>"]], { expr = true })
+vim.keymap.set('t', '<C-6>', [[v:lua.require'utils.term'.running_tui() ? "<C-6>" : "<Cmd>b#<CR>"]], { expr = true, replace_keycodes = false, desc = 'Go to alternate buffer' })
+vim.keymap.set('t', '<C-^>', [[v:lua.require'utils.term'.running_tui() ? "<C-^>" : "<Cmd>b#<CR>"]], { expr = true, replace_keycodes = false, desc = 'Go to alternate buffer' })
+vim.keymap.set('t', '<Esc>', [[v:lua.require'utils.term'.running_tui() ? "<Esc>" : "<Cmd>stopi<CR>"]], { expr = true, replace_keycodes = false, desc = 'Stop terminal mode' })
+vim.keymap.set('t', '<M-v>', [[v:lua.require'utils.term'.running_tui() ? "<M-v>" : "<Cmd>wincmd v<CR>"]], { expr = true, replace_keycodes = false, desc = 'Split window vertically' })
+vim.keymap.set('t', '<M-s>', [[v:lua.require'utils.term'.running_tui() ? "<M-s>" : "<Cmd>wincmd s<CR>"]], { expr = true, replace_keycodes = false, desc = 'Split window horizontally' })
+vim.keymap.set('t', '<M-W>', [[v:lua.require'utils.term'.running_tui() ? "<M-W>" : "<Cmd>wincmd W<CR>"]], { expr = true, replace_keycodes = false, desc = 'Go to the previous window' })
+vim.keymap.set('t', '<M-H>', [[v:lua.require'utils.term'.running_tui() ? "<M-H>" : "<Cmd>wincmd H<CR>"]], { expr = true, replace_keycodes = false, desc = 'Move window to far left' })
+vim.keymap.set('t', '<M-J>', [[v:lua.require'utils.term'.running_tui() ? "<M-J>" : "<Cmd>wincmd J<CR>"]], { expr = true, replace_keycodes = false, desc = 'Move window to very bottom' })
+vim.keymap.set('t', '<M-K>', [[v:lua.require'utils.term'.running_tui() ? "<M-K>" : "<Cmd>wincmd K<CR>"]], { expr = true, replace_keycodes = false, desc = 'Move window to very top' })
+vim.keymap.set('t', '<M-L>', [[v:lua.require'utils.term'.running_tui() ? "<M-L>" : "<Cmd>wincmd L<CR>"]], { expr = true, replace_keycodes = false, desc = 'Move window to far right' })
+vim.keymap.set('t', '<M-r>', [[v:lua.require'utils.term'.running_tui() ? "<M-r>" : "<Cmd>wincmd r<CR>"]], { expr = true, replace_keycodes = false, desc = 'Rotate windows downwards' })
+vim.keymap.set('t', '<M-R>', [[v:lua.require'utils.term'.running_tui() ? "<M-R>" : "<Cmd>wincmd R<CR>"]], { expr = true, replace_keycodes = false, desc = 'Rotate windows upwards' })
+vim.keymap.set('t', '<M-x>', [[v:lua.require'utils.term'.running_tui() ? "<M-x>" : "<Cmd>wincmd x<CR>"]], { expr = true, replace_keycodes = false, desc = 'Exchange window with next one' })
+vim.keymap.set('t', '<M-p>', [[v:lua.require'utils.term'.running_tui() ? "<M-p>" : "<Cmd>wincmd p<CR>"]], { expr = true, replace_keycodes = false, desc = 'Go to previous window' })
+vim.keymap.set('t', '<M-c>', [[v:lua.require'utils.term'.running_tui() ? "<M-c>" : "<Cmd>wincmd c<CR>"]], { expr = true, replace_keycodes = false, desc = 'Close window' })
+vim.keymap.set('t', '<M-q>', [[v:lua.require'utils.term'.running_tui() ? "<M-q>" : "<Cmd>wincmd q<CR>"]], { expr = true, replace_keycodes = false, desc = 'Quit window' })
+vim.keymap.set('t', '<M-o>', [[v:lua.require'utils.term'.running_tui() ? "<M-o>" : "<Cmd>wincmd o<CR>"]], { expr = true, replace_keycodes = false, desc = 'Make window only one' })
+vim.keymap.set('t', '<M-w>', [[v:lua.require'utils.term'.running_tui() ? "<M-w>" : "<Cmd>wincmd w<CR>"]], { expr = true, replace_keycodes = false, desc = 'Go to next window' })
+vim.keymap.set('t', '<M-h>', [[v:lua.require'utils.term'.running_tui() ? "<M-h>" : "<Cmd>wincmd h<CR>"]], { expr = true, replace_keycodes = false, desc = 'Go to left window' })
+vim.keymap.set('t', '<M-j>', [[v:lua.require'utils.term'.running_tui() ? "<M-j>" : "<Cmd>wincmd j<CR>"]], { expr = true, replace_keycodes = false, desc = 'Go to window below' })
+vim.keymap.set('t', '<M-k>', [[v:lua.require'utils.term'.running_tui() ? "<M-k>" : "<Cmd>wincmd k<CR>"]], { expr = true, replace_keycodes = false, desc = 'Go to window above' })
+vim.keymap.set('t', '<M-l>', [[v:lua.require'utils.term'.running_tui() ? "<M-l>" : "<Cmd>wincmd l<CR>"]], { expr = true, replace_keycodes = false, desc = 'Go to right window' })
+vim.keymap.set('t', '<M-=>', [[v:lua.require'utils.term'.running_tui() ? "<M-=>" : "<Cmd>wincmd =<CR>"]], { expr = true, replace_keycodes = false, desc = 'Make windows equal size' })
+vim.keymap.set('t', '<M-_>', [[v:lua.require'utils.term'.running_tui() ? "<M-_>" : "<Cmd>wincmd _<CR>"]], { expr = true, replace_keycodes = false, desc = 'Set window height to highest possible' })
+vim.keymap.set('t', '<M-|>', [[v:lua.require'utils.term'.running_tui() ? "<M-|>" : "<Cmd>wincmd |<CR>"]], { expr = true, replace_keycodes = false, desc = 'Set window width to widest possible' })
+vim.keymap.set('t', '<M-+>', [[v:lua.require'utils.term'.running_tui() ? "<M-+>" : "<Cmd>wincmd 2+<CR>"]], { expr = true, replace_keycodes = false, desc = 'Increase window height' })
+vim.keymap.set('t', '<M-->', [[v:lua.require'utils.term'.running_tui() ? "<M-->" : "<Cmd>wincmd 2-<CR>"]], { expr = true, replace_keycodes = false, desc = 'Decrease window height' })
+vim.keymap.set('t', '<M->>', [[v:lua.require'utils.term'.running_tui() ? "<M->>" : "<Cmd>wincmd 4" . (winnr() == winnr("l") ? "<" : ">") . "<CR>"]], { expr = true, desc = 'Resize window right' })
+vim.keymap.set('t', '<M-<>', [[v:lua.require'utils.term'.running_tui() ? "<M-<>" : "<Cmd>wincmd 4" . (winnr() == winnr("l") ? ">" : "<") . "<CR>"]], { expr = true, desc = 'Resize window left' })
+vim.keymap.set('t', '<M-.>', [[v:lua.require'utils.term'.running_tui() ? "<M-.>" : "<Cmd>wincmd 4" . (winnr() == winnr("l") ? "<" : ">") . "<CR>"]], { expr = true, desc = 'Resize window right' })
+vim.keymap.set('t', '<M-,>', [[v:lua.require'utils.term'.running_tui() ? "<M-,>" : "<Cmd>wincmd 4" . (winnr() == winnr("l") ? ">" : "<") . "<CR>"]], { expr = true, desc = 'Resize window left' })
+vim.keymap.set('t', '<M-Left>', [[v:lua.require'utils.term'.running_tui() ? "<M-Left>" : "<Cmd>wincmd h<CR>"]], { expr = true, replace_keycodes = false, desc = 'Go to left window' })
+vim.keymap.set('t', '<M-Down>', [[v:lua.require'utils.term'.running_tui() ? "<M-Down>" : "<Cmd>wincmd j<CR>"]], { expr = true, replace_keycodes = false, desc = 'Go to window below' })
+vim.keymap.set('t', '<M-Up>', [[v:lua.require'utils.term'.running_tui() ? "<M-Up>" : "<Cmd>wincmd k<CR>"]], { expr = true, replace_keycodes = false, desc = 'Go to window above' })
+vim.keymap.set('t', '<M-Right>', [[v:lua.require'utils.term'.running_tui() ? "<M-Right>" : "<Cmd>wincmd l<CR>"]], { expr = true, replace_keycodes = false, desc = 'Go to right window' })
 -- stylua: ignore end
 
 -- Use <C-\><C-r> to insert contents of a register in terminal mode
@@ -107,39 +108,41 @@ vim.keymap.set(
   't',
   [[<C-\><C-r>]],
   [['<C-\><C-n>"' . nr2char(getchar()) . 'pi']],
-  { expr = true }
+  { expr = true, desc = 'Insert contents in a register' }
 )
 
 -- Past with correct indentation in insert mode
-vim.keymap.set('i', '<C-r>', '<C-r><C-p>')
+vim.keymap.set('i', '<C-r>', '<C-r><C-p>', {
+  desc = 'Paste content in register with correct indentation',
+})
 
 -- Delete selection in select mode
-vim.keymap.set('s', '<BS>', '<C-o>s')
-vim.keymap.set('s', '<C-h>', '<C-o>s')
+vim.keymap.set('s', '<BS>', '<C-o>s', { desc = 'Delete selection' })
+vim.keymap.set('s', '<C-h>', '<C-o>s', { desc = 'Delete selection' })
 
 -- More consistent behavior when &wrap is set
 -- stylua: ignore start
-vim.keymap.set({ 'n', 'x' }, 'j', 'v:count ? "j" : "gj"', { expr = true })
-vim.keymap.set({ 'n', 'x' }, 'k', 'v:count ? "k" : "gk"', { expr = true })
-vim.keymap.set({ 'n', 'x' }, '<Down>', 'v:count ? "<Down>" : "g<Down>"', { expr = true, replace_keycodes = false })
-vim.keymap.set({ 'n', 'x' }, '<Up>',   'v:count ? "<Up>"   : "g<Up>"',   { expr = true, replace_keycodes = false })
-vim.keymap.set({ 'i' }, '<Down>', '<Cmd>norm! g<Down><CR>')
-vim.keymap.set({ 'i' }, '<Up>',   '<Cmd>norm! g<Up><CR>')
--- stylua: ignore end
+vim.keymap.set({ 'n', 'x' }, 'j', 'v:count ? "j" : "gj"', { expr = true, desc = 'Move down' })
+vim.keymap.set({ 'n', 'x' }, 'k', 'v:count ? "k" : "gk"', { expr = true, desc = 'Move up' })
+vim.keymap.set({ 'n', 'x' }, '<Down>', 'v:count ? "<Down>" : "g<Down>"', { expr = true, replace_keycodes = false, desc = 'Move down' })
+vim.keymap.set({ 'n', 'x' }, '<Up>',   'v:count ? "<Up>"   : "g<Up>"',   { expr = true, replace_keycodes = false, desc = 'Move up' })
+vim.keymap.set({ 'i' }, '<Down>', '<Cmd>norm! g<Down><CR>', { desc = 'Move down' })
+vim.keymap.set({ 'i' }, '<Up>',   '<Cmd>norm! g<Up><CR>',   { desc = 'Move up' })
 
 -- Buffer navigation
-vim.keymap.set('n', ']b', '<Cmd>exec v:count1 . "bn"<CR>')
-vim.keymap.set('n', '[b', '<Cmd>exec v:count1 . "bp"<CR>')
+vim.keymap.set('n', ']b', '<Cmd>exec v:count1 . "bn"<CR>', { desc = 'Go to next buffer' })
+vim.keymap.set('n', '[b', '<Cmd>exec v:count1 . "bp"<CR>', { desc = 'Go to previous buffer' })
 
 -- Quickfix/location list navigation
-vim.keymap.set('n', '[q', '<Cmd>exec v:count1 . "cp"<CR>')
-vim.keymap.set('n', '[l', '<Cmd>exec v:count1 . "lp"<CR>')
-vim.keymap.set('n', ']q', '<Cmd>exec v:count1 . "cne"<CR>')
-vim.keymap.set('n', ']l', '<Cmd>exec v:count1 . "lne"<CR>')
-vim.keymap.set('n', '[Q', '<Cmd>exec v:count1 . "cfir"<CR>')
-vim.keymap.set('n', '[L', '<Cmd>exec v:count1 . "lfir"<CR>')
-vim.keymap.set('n', ']Q', '<Cmd>exec (v:count ? v:count : "") . "cla"<CR>')
-vim.keymap.set('n', ']L', '<Cmd>exec (v:count ? v:count : "") . "lla"<CR>')
+vim.keymap.set('n', '[q', '<Cmd>exec v:count1 . "cp"<CR>', { desc = 'Go to previous quickfix item' })
+vim.keymap.set('n', '[l', '<Cmd>exec v:count1 . "lp"<CR>', { desc = 'Go to previous location list item' })
+vim.keymap.set('n', ']q', '<Cmd>exec v:count1 . "cne"<CR>', { desc = 'Go to next quickfix item' })
+vim.keymap.set('n', ']l', '<Cmd>exec v:count1 . "lne"<CR>', { desc = 'Go to next location list item' })
+vim.keymap.set('n', '[Q', '<Cmd>exec v:count1 . "cfir"<CR>', { desc = 'Go to first quickfix item' })
+vim.keymap.set('n', '[L', '<Cmd>exec v:count1 . "lfir"<CR>', { desc = 'Go to first location list item' })
+vim.keymap.set('n', ']Q', '<Cmd>exec (v:count ? v:count : "") . "cla"<CR>', { desc = 'Go to last quickfix item' })
+vim.keymap.set('n', ']L', '<Cmd>exec (v:count ? v:count : "") . "lla"<CR>', { desc = 'Go to last location list item' })
+-- stylua: ignore end
 
 -- Tabpages
 ---@param tab_action function
@@ -159,12 +162,14 @@ local function tabswitch(tab_action, default_count)
     end
   end
 end
-vim.keymap.set({ 'n', 'x' }, 'gt', tabswitch(vim.cmd.tabnext))
-vim.keymap.set({ 'n', 'x' }, 'gT', tabswitch(vim.cmd.tabprev))
+-- stylua: ignore start
+vim.keymap.set({ 'n', 'x' }, 'gt', tabswitch(vim.cmd.tabnext), { desc = 'Go to next tab' })
+vim.keymap.set({ 'n', 'x' }, 'gT', tabswitch(vim.cmd.tabprev), { desc = 'Go to previous tab' })
 
 -- Correct misspelled word / mark as correct
-vim.keymap.set('i', '<C-g>+', '<Esc>[szg`]a')
-vim.keymap.set('i', '<C-g>=', '<C-g>u<Esc>[s1z=`]a<C-G>u')
+vim.keymap.set('i', '<C-g>+', '<Esc>[szg`]a', { desc = 'Correct misspelled word before cursor' })
+vim.keymap.set('i', '<C-g>=', '<C-g>u<Esc>[s1z=`]a<C-G>u', { desc = 'Add misspelled word before cursor' })
+-- stylua: ignore end
 
 -- Only clear highlights and message area and don't redraw if search
 -- highlighting is on to avoid flickering
@@ -175,57 +180,49 @@ vim.keymap.set(
   { 'n', 'x' },
   '<C-l>',
   [['<Cmd>ec|noh|sil! dif<CR>' . (v:hlsearch ? '' : '<C-l>')]],
-  { expr = true, replace_keycodes = false }
+  { expr = true, replace_keycodes = false, desc = 'Clear and redraw screen' }
 )
 
 -- Don't include extra spaces around quotes
-vim.keymap.set({ 'o', 'x' }, 'a"', '2i"', { noremap = false })
-vim.keymap.set({ 'o', 'x' }, "a'", "2i'", { noremap = false })
-vim.keymap.set({ 'o', 'x' }, 'a`', '2i`', { noremap = false })
+-- stylua: ignore start
+vim.keymap.set({ 'o', 'x' }, 'a"', '2i"', { noremap = false, desc = 'Selet around double quotes' })
+vim.keymap.set({ 'o', 'x' }, "a'", "2i'", { noremap = false, desc = 'Selet around single quotes' })
+vim.keymap.set({ 'o', 'x' }, 'a`', '2i`', { noremap = false, desc = 'Selet around backticks' })
 
 -- Close all floating windows
-vim.keymap.set({ 'n', 'x' }, 'q', function()
-  require('utils.misc').close_floats('q')
-end)
-vim.keymap.set('n', '<Esc>', function()
-  require('utils.misc').close_floats('<Esc>')
-end)
+vim.keymap.set({ 'n', 'x' }, 'q', function() require('utils.misc').close_floats('q') end, { desc = 'Close all floating windows or start recording macro' })
+vim.keymap.set('n', '<Esc>', function() require('utils.misc').close_floats('<Esc>') end, { desc = 'Close all floating windows' })
 
 -- Edit current file's directory
-vim.keymap.set({ 'n', 'x' }, '-', '<Cmd>e%:p:h<CR>')
+vim.keymap.set({ 'n', 'x' }, '-', '<Cmd>e%:p:h<CR>', { desc = 'Edit current file\'s directory' })
 
 -- Enter insert mode, add a space after the cursor
-vim.keymap.set({ 'n', 'x' }, '<M-i>', 'i<Space><Left>')
-vim.keymap.set({ 'n', 'x' }, '<M-I>', 'I<Space><Left>')
-vim.keymap.set({ 'n', 'x' }, '<M-a>', 'a<Space><Left>')
-vim.keymap.set({ 'n', 'x' }, '<M-A>', 'A<Space><Left>')
+vim.keymap.set({ 'n', 'x' }, '<M-i>', 'i<Space><Left>', { desc = 'Insert text before cusor with a space after the cursor' })
+vim.keymap.set({ 'n', 'x' }, '<M-I>', 'I<Space><Left>', { desc = 'Insert text before cusor with a space after the cursor' })
+vim.keymap.set({ 'n', 'x' }, '<M-a>', 'a<Space><Left>', { desc = 'Append text after cursor with a space after the cursor' })
+vim.keymap.set({ 'n', 'x' }, '<M-A>', 'A<Space><Left>', { desc = 'Append text after cursor with a space after the cursor' })
 
 -- Text object: current buffer
--- stylua: ignore start
-vim.keymap.set('x', 'af', ':<C-u>silent! keepjumps normal! ggVG<CR>', { silent = true, noremap = false })
-vim.keymap.set('x', 'if', ':<C-u>silent! keepjumps normal! ggVG<CR>', { silent = true, noremap = false })
-vim.keymap.set('o', 'af', '<Cmd>silent! normal m`Vaf<CR><Cmd>silent! normal! ``<CR>', { silent = true, noremap = false })
-vim.keymap.set('o', 'if', '<Cmd>silent! normal m`Vif<CR><Cmd>silent! normal! ``<CR>', { silent = true, noremap = false })
--- stylua: ignore end
+vim.keymap.set('x', 'af', ':<C-u>silent! keepjumps normal! ggVG<CR>', { silent = true, noremap = false, desc = 'Select current buffer' })
+vim.keymap.set('x', 'if', ':<C-u>silent! keepjumps normal! ggVG<CR>', { silent = true, noremap = false, desc = 'Select current buffer' })
+vim.keymap.set('o', 'af', '<Cmd>silent! normal m`Vaf<CR><Cmd>silent! normal! ``<CR>', { silent = true, noremap = false, desc = 'Select current buffer' })
+vim.keymap.set('o', 'if', '<Cmd>silent! normal m`Vif<CR><Cmd>silent! normal! ``<CR>', { silent = true, noremap = false, desc = 'Select current buffer' })
 
--- stylua: ignore start
-vim.keymap.set('x', 'iz', [[':<C-u>silent! keepjumps normal! ' . v:lua.require'utils.misc'.textobj_fold('i') . '<CR>']], { silent = true, expr = true, noremap = false })
-vim.keymap.set('x', 'az', [[':<C-u>silent! keepjumps normal! ' . v:lua.require'utils.misc'.textobj_fold('a') . '<CR>']], { silent = true, expr = true, noremap = false })
-vim.keymap.set('o', 'iz', '<Cmd>silent! normal Viz<CR>', { silent = true, noremap = false })
-vim.keymap.set('o', 'az', '<Cmd>silent! normal Vaz<CR>', { silent = true, noremap = false })
--- stylua: ignore end
+vim.keymap.set('x', 'iz', [[':<C-u>silent! keepjumps normal! ' . v:lua.require'utils.misc'.textobj_fold('i') . '<CR>']], { silent = true, expr = true, noremap = false, desc = 'Select inside current fold' })
+vim.keymap.set('x', 'az', [[':<C-u>silent! keepjumps normal! ' . v:lua.require'utils.misc'.textobj_fold('a') . '<CR>']], { silent = true, expr = true, noremap = false, desc = 'Select around current fold' })
+vim.keymap.set('o', 'iz', '<Cmd>silent! normal Viz<CR>', { silent = true, noremap = false, desc = 'Select inside current fold' })
+vim.keymap.set('o', 'az', '<Cmd>silent! normal Vaz<CR>', { silent = true, noremap = false, desc = 'Select around current fold' })
 
 -- Use 'g{' and 'g}' to move to the first/last line of a paragraph
--- stylua: ignore start
-vim.keymap.set({ 'o' }, 'g{', '<Cmd>silent! normal Vg{<CR>', { noremap = false })
-vim.keymap.set({ 'o' }, 'g}', '<Cmd>silent! normal Vg}<CR>', { noremap = false })
-vim.keymap.set({ 'n', 'x' }, 'g{', function() require('utils.misc').goto_paragraph_firstline() end, { noremap = false })
-vim.keymap.set({ 'n', 'x' }, 'g}', function() require('utils.misc').goto_paragraph_lastline() end, { noremap = false })
+vim.keymap.set({ 'o' }, 'g{', '<Cmd>silent! normal Vg{<CR>', { noremap = false, desc = 'Move to the first line of paragraph' })
+vim.keymap.set({ 'o' }, 'g}', '<Cmd>silent! normal Vg}<CR>', { noremap = false, desc = 'Move to the last line of paragraph' })
+vim.keymap.set({ 'n', 'x' }, 'g{', function() require('utils.misc').goto_paragraph_firstline() end, { noremap = false, desc = 'Move to the first line of paragraph' })
+vim.keymap.set({ 'n', 'x' }, 'g}', function() require('utils.misc').goto_paragraph_lastline() end, { noremap = false, desc = 'Move to the last line of paragraph' })
 -- stylua: ignore end
 
 -- Fzf keymaps
-vim.keymap.set('n', '<Leader>.', '<Cmd>FZF<CR>')
-vim.keymap.set('n', '<Leader>ff', '<Cmd>FZF<CR>')
+vim.keymap.set('n', '<Leader>.', '<Cmd>FZF<CR>', { desc = 'Find files' })
+vim.keymap.set('n', '<Leader>ff', '<Cmd>FZF<CR>', { desc = 'Find files' })
 
 -- Abbreviations
 vim.keymap.set('!a', 'ture', 'true')

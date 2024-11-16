@@ -10,6 +10,6 @@ vim.g.easy_align_delimiters = {
 }
 
 -- stylua: ignore start
-vim.keymap.set({ 'n', 'x' }, 'gl', '<Plug>(EasyAlign)', { noremap = false })
-vim.keymap.set({ 'n', 'x' }, 'gL', '<Plug>(LiveEasyAlign)', { noremap = false })
+vim.keymap.set({ 'n', 'x' }, 'gl', '<Plug>(EasyAlign)', { noremap = false, desc = 'Align text' })
+vim.keymap.set({ 'n', 'x' }, 'gL', '<Plug>(LiveEasyAlign)', { noremap = false, desc = 'Live align text' })
 -- stylua: ignore end

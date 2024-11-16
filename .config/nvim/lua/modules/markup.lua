@@ -44,7 +44,8 @@ return {
       ---@param mode string in which mode to set the triggering keymap
       ---@param key string the key to trigger molten plugin
       ---@param buf number the buffer to set the keymap
-      local function load(mode, key, buf)
+      ---@param opts vim.keymap.set.Opts? the keymap options
+      local function load(mode, key, buf, opts)
         vim.keymap.set(mode, key, function()
           require('molten.status')
           vim.api.nvim_feedkeys(
@@ -52,7 +53,7 @@ return {
             'im',
             false
           )
-        end, { buffer = buf })
+        end, vim.tbl_deep_extend('force', { buffer = buf }, opts or {}))
       end
 
       vim.api.nvim_create_autocmd('FileType', {
@@ -68,12 +69,12 @@ return {
             return
           end
 
-          load('x', '<CR>', info.buf) -- for both python and notebook buffers
+          load('x', '<CR>', info.buf, { desc = 'Run current cell' }) -- for both python and notebook buffers
           if info.match == 'markdown' then
-            load('n', '<CR>', info.buf)
-            load('n', '<LocalLeader>k', info.buf)
-            load('n', '<LocalLeader>j', info.buf)
-            load('n', '<LocalLeader><CR>', info.buf)
+            load('n', '<CR>', info.buf, { desc = 'Run current cell' })
+            load('n', '<LocalLeader>k', info.buf, { desc = 'Run current cell and all above' })
+            load('n', '<LocalLeader>j', info.buf, { desc = 'Run current cell and all below' })
+            load('n', '<LocalLeader><CR>', info.buf, { desc = 'Run code selected by operator' })
           end
           return true
         end,

@@ -182,7 +182,9 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
-vim.keymap.set('n', '<Leader><Leader>@', '<Cmd>CodeCompanionActions<CR>')
-vim.keymap.set('n', '<Leader>@', '<Cmd>CodeCompanionChat Toggle<CR>')
-vim.keymap.set('x', '<Leader>@', '<Cmd>CodeCompanionChat Add<CR>')
-vim.keymap.set('n', '<Leader>+', '<Cmd>CodeCompanion<CR>')
+-- stylua: ignore start
+vim.keymap.set('n', '<Leader><Leader>@', '<Cmd>CodeCompanionActions<CR>', { desc = 'Pick AI actions' })
+vim.keymap.set('n', '<Leader>@', '<Cmd>CodeCompanionChat Toggle<CR>', { desc = 'Chat with AI' })
+vim.keymap.set('x', '<Leader>@', '<Cmd>CodeCompanionChat Add<CR>', { desc = 'Add selection to conversation with AI' })
+vim.keymap.set('n', '<Leader>+', '<Cmd>CodeCompanion<CR>', { desc = 'Inline AI help' })
+-- stylua: ignore end

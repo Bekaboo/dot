@@ -42,7 +42,11 @@ return {
   {
     'Wansmer/treesj',
     cmd = { 'TSJToggle', 'TSJSplit', 'TSJJoin' },
-    keys = { '<M-C-K>', '<M-NL>', 'g<M-NL>' },
+    keys = {
+      { '<M-C-K>', desc = 'Join current treesitter node' },
+      { '<M-NL>', desc = 'Split current treesitter node' },
+      { 'g<M-NL>', desc = 'Split current treesitter node recursively' },
+    },
     dependencies = 'nvim-treesitter/nvim-treesitter',
     config = function()
       require('configs.treesj')

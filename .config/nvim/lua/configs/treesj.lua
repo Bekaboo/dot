@@ -28,9 +28,13 @@ function _G.tsj_toggle_recursive(_, preset)
   )
 end
 
-vim.keymap.set('n', '<M-C-K>', tsj.join)
-vim.keymap.set('n', '<M-NL>', tsj.split)
+vim.keymap.set('n', '<M-C-K>', tsj.join, {
+  desc = 'Join current treesitter node',
+})
+vim.keymap.set('n', '<M-NL>', tsj.split, {
+  desc = 'Split current treesitter node',
+})
 vim.keymap.set('n', 'g<M-NL>', function()
   vim.opt.operatorfunc = 'v:lua.tsj_split_recursive'
   vim.api.nvim_feedkeys('g@l', 'nx', true)
-end)
+end, { desc = 'Split current treesitter node recursively' })

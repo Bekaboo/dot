@@ -8,18 +8,27 @@ vim.g.codeium_filetypes = {
 local function setup_keymaps()
   ---@param key string
   ---@param codeium_method string
+  ---@param opts vim.keymap.set.Opts?
   ---@return nil
-  local function amend(key, codeium_method)
-    require('utils.keymap').amend('i', key, function(fallback)
-      local result = vim.fn['codeium#' .. codeium_method]()
-      return result ~= '' and result ~= '\t' and result or fallback()
-    end, { expr = true, silent = true })
+  local function amend(key, codeium_method, opts)
+    require('utils.keymap').amend(
+      'i',
+      key,
+      function(fallback)
+        local result = vim.fn['codeium#' .. codeium_method]()
+        return result ~= '' and result ~= '\t' and result or fallback()
+      end,
+      vim.tbl_deep_extend('force', {
+        expr = true,
+        silent = true,
+      }, opts or {})
+    )
   end
 
   vim.defer_fn(function()
     -- Same as fish shell keymaps
-    amend('<C-f>', 'Accept')
-    amend('<M-f>', 'AcceptNextWord')
+    amend('<C-f>', 'Accept', { desc = 'Accept suggestion' })
+    amend('<M-f>', 'AcceptNextWord', { desc = 'Accept next word' })
   end, 100)
 end
 

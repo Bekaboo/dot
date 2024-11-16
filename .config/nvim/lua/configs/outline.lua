@@ -49,7 +49,7 @@ require('outline').setup({
   },
 })
 
-vim.keymap.set('n', 'gO', '<Cmd>Outline<CR>', { desc = 'Toggle Outline' })
+vim.keymap.set('n', 'gO', '<Cmd>Outline<CR>', { desc = 'Toggle outline' })
 
 local groupid = vim.api.nvim_create_augroup('OutlineSetup', {})
 vim.api.nvim_create_autocmd('FileType', {

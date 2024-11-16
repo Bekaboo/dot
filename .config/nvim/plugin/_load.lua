@@ -99,17 +99,17 @@ vim.api.nvim_create_autocmd('FileType', {
     local api = require('plugin.winbar.api')
     winbar.setup({ bar = { hover = false } })
 
-    vim.keymap.set('n', '<Leader>;', api.pick)
-    vim.keymap.set('n', '[C', api.goto_context_start)
-    vim.keymap.set('n', ']C', api.select_next_context)
+    -- stylua: ignore start
+    vim.keymap.set('n', '<Leader>;', api.pick, { desc = 'Pick symbols in winbar' })
+    vim.keymap.set('n', '[;', api.goto_context_start, { desc = 'Go to start of current context' })
+    vim.keymap.set('n', '];', api.select_next_context, { desc = 'Select next context' })
+    -- stylua: ignore end
     return true
   end,
 })
 
 -- tabout
-vim.keymap.set({ 'i', 'c' }, '<Tab>', function()
-  require('plugin.tabout').jump(1)
-end)
-vim.keymap.set({ 'i', 'c' }, '<S-Tab>', function()
-  require('plugin.tabout').jump(-1)
-end)
+-- stylua: ignore start
+vim.keymap.set({ 'i', 'c' }, '<Tab>', function() require('plugin.tabout').jump(1) end, { desc = 'Tab out' })
+vim.keymap.set({ 'i', 'c' }, '<S-Tab>', function() require('plugin.tabout').jump(-1) end, { desc = 'Tab in' })
+-- stylua: ignore end

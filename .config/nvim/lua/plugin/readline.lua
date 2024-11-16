@@ -198,27 +198,33 @@ function M.setup()
   end
   vim.g.loaded_readline = true
 
-  map('!', '<C-d>', '<Del>')
-  map('c', '<C-b>', '<Left>')
-  map('c', '<C-f>', '<Right>')
-  map('c', '<C-o>', '<C-f>')
+  -- Default 'cedit' is `<C-f>` which is taken by readline keymap
+  if vim.go.cedit == vim.keycode('<C-f>') then
+    vim.go.cedit = '<C-o>'
+  end
 
-  map('!', '<C-BS>', '<C-w>', { remap = true })
-  map('!', '<M-BS>', '<C-w>', { remap = true })
-  map('!', '<M-Del>', '<C-w>', { remap = true })
+  -- stylua: ignore start
+  map('!', '<C-d>', '<Del>', { desc = 'Delete character under cursor' })
+  map('c', '<C-b>', '<Left>', { desc = 'Move cursor backward' })
+  map('c', '<C-f>', '<Right>', { desc = 'Move cursor forward' })
+
+  map('!', '<C-BS>', '<C-w>', { remap = true, desc = 'Delete word before cursor' })
+  map('!', '<M-BS>', '<C-w>', { remap = true, desc = 'Delete word before cursor' })
+  map('!', '<M-Del>', '<C-w>', { remap = true, desc = 'Delete word before cursor' })
+  -- stylua: ignore end
   map('!', '<C-w>', function()
     return small_del(
       start_of_line() and not first_line() and '\n' or get_word_before(),
       false
     )
-  end, { expr = true })
+  end, { expr = true, desc = 'Delete word before cursor' })
 
   map('!', '<M-d>', function()
     return small_del(
       end_of_line() and not last_line() and '\n' or get_word_after(),
       true
     )
-  end, { expr = true })
+  end, { expr = true, desc = 'Delete word after cursor' })
 
   map('!', '<C-k>', function()
     return small_del(
@@ -226,7 +232,7 @@ function M.setup()
         or get_current_line():sub(get_current_col()),
       true
     )
-  end, { expr = true })
+  end, { expr = true, desc = 'Delete text until the end of the line' })
 
   map('!', '<C-u>', function()
     local line_before = get_current_line():sub(1, get_current_col() - 1)
@@ -236,9 +242,12 @@ function M.setup()
         or line_before,
       false
     )
-  end, { expr = true })
+  end, { expr = true, desc = 'Delete text until the beginning of the line' })
 
-  map('c', '<C-y>', [[pumvisible() ? '<C-y>' : '<C-r>-']], { expr = true })
+  map('c', '<C-y>', [[pumvisible() ? '<C-y>' : '<C-r>-']], {
+    expr = true,
+    desc = 'Confirm completion or paste from small deletion register',
+  })
   map('i', '<C-y>', function()
     if fn.pumvisible() == 1 then
       api.nvim_feedkeys(vim.keycode('<C-y>'), 'n', false)
@@ -256,7 +265,7 @@ function M.setup()
     api.nvim_feedkeys(vim.keycode('<C-g>u'), 'n', false)
     api.nvim_buf_set_lines(0, linenr - 1, linenr, false, lines)
     api.nvim_win_set_cursor(0, target_cursor)
-  end)
+  end, { desc = 'Confirm completion or paste from small deletion register' })
 
   map('!', '<C-a>', function()
     local current_line = get_current_line()
@@ -266,25 +275,34 @@ function M.setup()
           and string.rep('<Right>', #current_line:match('^%s*'))
         or ''
       )
-  end, { expr = true })
+  end, { expr = true, desc = 'Go to the beginning of the line' })
 
   map('!', '<C-e>', function()
     return fn.pumvisible() == 1 and '<C-e>' or '<End>'
-  end, { expr = true })
+  end, {
+    expr = true,
+    desc = 'Cancel completion or go to the end of the line',
+  })
 
   map('i', '<C-b>', function()
     if first_line() and start_of_line() then
       return '<Ignore>'
     end
     return start_of_line() and '<Up><End>' or '<Left>'
-  end, { expr = true })
+  end, {
+    expr = true,
+    desc = 'Move cursor backward',
+  })
 
   map('i', '<C-f>', function()
     if last_line() and end_of_line() then
       return '<Ignore>'
     end
     return end_of_line() and '<Down><Home>' or '<Right>'
-  end, { expr = true })
+  end, {
+    expr = true,
+    desc = 'Move cursor forward',
+  })
 
   map('!', '<M-b>', function()
     local word_before = get_word_before()
@@ -299,7 +317,10 @@ function M.setup()
     return (current_linenr == target_linenr and '' or '<End>')
       .. string.rep('<Up>', current_linenr - target_linenr)
       .. string.rep('<Left>', #get_word_before(line_str, #line_str))
-  end, { expr = true })
+  end, {
+    expr = true,
+    desc = 'Move cursor backward by word',
+  })
 
   map('!', '<M-f>', function()
     local word_after = get_word_after()
@@ -314,7 +335,10 @@ function M.setup()
     return (current_linenr == target_linenr and '' or '<Home>')
       .. string.rep('<Down>', target_linenr - current_linenr)
       .. string.rep('<Right>', #get_word_after(line_str, 1))
-  end, { expr = true })
+  end, {
+    expr = true,
+    desc = 'Move cursor forward by word',
+  })
 end
 
 return M
