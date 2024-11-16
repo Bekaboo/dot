@@ -74,6 +74,7 @@
 	sww  = stash show -p
 	t    = tag
 	ta   = tag -a
+	td   = tag -d
 	tl   = tag -l
 	tm   = tag -m
 	w    = show --stat
