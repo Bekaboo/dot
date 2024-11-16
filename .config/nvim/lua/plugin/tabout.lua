@@ -231,8 +231,8 @@ local function get_tabin_offset_with_closing_pattern(leading, closing_pattern)
   end
 
   if content and closing then
-    return slen(trailing) + slen(closing) + slen(content) / 2,
-      slen(closing) + slen(content) / 2
+    return slen(trailing) + slen(closing) + math.floor(slen(content) / 2),
+      slen(closing) + math.floor(slen(content) / 2)
   end
 
   -- Case 2
