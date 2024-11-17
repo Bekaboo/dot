@@ -12,6 +12,9 @@ require('which-key').setup({
     'alphanum',
     'mod',
   },
+  defer = function(ctx)
+    return ctx.mode == 'V' or ctx.mode == '<C-V>' or ctx.mode == 'v'
+  end,
   icons = {
     mappings = false,
     breadcrumb = '',
