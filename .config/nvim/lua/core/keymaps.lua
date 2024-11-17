@@ -3,7 +3,8 @@ vim.g.maplocalleader = ' '
 
 -- Multi-window operations
 -- stylua: ignore start
-vim.keymap.set({ 'x', 'n' }, '<M-W>', '<C-w>W', { desc = 'Go to the previous window' })
+vim.keymap.set({ 'x', 'n' }, '<M-w>', '<C-w>w', { desc = 'Cycle through windows' })
+vim.keymap.set({ 'x', 'n' }, '<M-W>', '<C-w>W', { desc = 'Cycle through windows reversely' })
 vim.keymap.set({ 'x', 'n' }, '<M-H>', '<C-w>H', { desc = 'Move window to far left' })
 vim.keymap.set({ 'x', 'n' }, '<M-J>', '<C-w>J', { desc = 'Move winow to very bottom' })
 vim.keymap.set({ 'x', 'n' }, '<M-K>', '<C-w>K', { desc = 'Move window to very top' })
@@ -33,7 +34,6 @@ vim.keymap.set({ 'x', 'n' }, '<M-g>f', '<C-w>gf', { desc = 'Edit file under curs
 vim.keymap.set({ 'x', 'n' }, '<M-g>F', '<C-w>gF', { desc = 'Edit file under cursor in new tab and jump to line' })
 vim.keymap.set({ 'x', 'n' }, '<M-g>t', '<C-w>gt', { desc = 'Go to next tab' })
 vim.keymap.set({ 'x', 'n' }, '<M-g>T', '<C-w>gT', { desc = 'Go to previous tab' })
-vim.keymap.set({ 'x', 'n' }, '<M-w>', '<C-w><C-w>', { desc = 'Go to the next window' })
 vim.keymap.set({ 'x', 'n' }, '<M-h>', '<C-w><C-h>', { desc = 'Go to the left window' })
 vim.keymap.set({ 'x', 'n' }, '<M-j>', '<C-w><C-j>', { desc = 'Go to the window below' })
 vim.keymap.set({ 'x', 'n' }, '<M-k>', '<C-w><C-k>', { desc = 'Go to the window above' })
