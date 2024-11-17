@@ -4,6 +4,14 @@ require('which-key').setup({
   preset = 'helix',
   delay = 640,
   win = { border = 'solid' },
+  sort = {
+    'local',
+    'order',
+    'group',
+    'desc',
+    'alphanum',
+    'mod',
+  },
   icons = {
     mappings = false,
     breadcrumb = '',
