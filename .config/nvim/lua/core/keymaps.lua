@@ -207,11 +207,11 @@ vim.keymap.set('x', 'az', [[':<C-u>silent! keepjumps normal! ' . v:lua.require'u
 vim.keymap.set('o', 'iz', '<Cmd>silent! normal Viz<CR>', { silent = true, noremap = false, desc = 'Select inside current fold' })
 vim.keymap.set('o', 'az', '<Cmd>silent! normal Vaz<CR>', { silent = true, noremap = false, desc = 'Select around current fold' })
 
--- Use 'g{' and 'g}' to move to the first/last line of a paragraph
-vim.keymap.set({ 'o' }, 'g{', '<Cmd>silent! normal Vg{<CR>', { noremap = false, desc = 'Move to the first line of paragraph' })
-vim.keymap.set({ 'o' }, 'g}', '<Cmd>silent! normal Vg}<CR>', { noremap = false, desc = 'Move to the last line of paragraph' })
-vim.keymap.set({ 'n', 'x' }, 'g{', function() require('utils.misc').goto_paragraph_firstline() end, { noremap = false, desc = 'Move to the first line of paragraph' })
-vim.keymap.set({ 'n', 'x' }, 'g}', function() require('utils.misc').goto_paragraph_lastline() end, { noremap = false, desc = 'Move to the last line of paragraph' })
+-- Use 'g{' and 'g}' to go to the first/last line of a paragraph
+vim.keymap.set({ 'o' }, 'g{', '<Cmd>silent! normal Vg{<CR>', { noremap = false, desc = 'Go to the first line of paragraph' })
+vim.keymap.set({ 'o' }, 'g}', '<Cmd>silent! normal Vg}<CR>', { noremap = false, desc = 'Go to the last line of paragraph' })
+vim.keymap.set({ 'n', 'x' }, 'g{', function() require('utils.misc').goto_paragraph_firstline() end, { noremap = false, desc = 'Go to the first line of paragraph' })
+vim.keymap.set({ 'n', 'x' }, 'g}', function() require('utils.misc').goto_paragraph_lastline() end, { noremap = false, desc = 'Go to the last line of paragraph' })
 -- stylua: ignore end
 
 -- Fzf keymaps

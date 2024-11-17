@@ -35,7 +35,7 @@ return {
     'junegunn/vim-easy-align',
     keys = {
       { 'gl', mode = { 'n', 'x' }, desc = 'Align text' },
-      { 'gL', mode = { 'n', 'x' }, desc = 'Interactive align text' },
+      { 'gL', mode = { 'n', 'x' }, desc = 'Align text interactively' },
     },
     config = function()
       require('configs.vim-easy-align')
