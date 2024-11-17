@@ -44,7 +44,9 @@ wk.setup({
     'mod',
   },
   filter = function(mapping)
-    return not mapping.lhs:find('<Esc>')
+    return not mapping.lhs:find('<Esc>', 0, true)
+      and not mapping.lhs:find('<.*Mouse.*>')
+      and not mapping.lhs:find('<.*ScrollWheel.*>')
   end,
   defer = function(ctx)
     return ctx.mode == 'V' or ctx.mode == '<C-V>' or ctx.mode == 'v'
