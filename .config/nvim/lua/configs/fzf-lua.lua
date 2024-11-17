@@ -617,7 +617,7 @@ vim.keymap.set('n', '<Leader>F', fzf.builtin, { desc = 'Find pickers' })
 vim.keymap.set('n', '<Leader>o', fzf.oldfiles, { desc = 'Find old files' })
 vim.keymap.set('n', '<Leader>-', fzf.blines, { desc = 'Find lines in buffer' })
 vim.keymap.set('n', '<Leader>=', fzf.lines, { desc = 'Find lines across buffers' })
-vim.keymap.set('n', '<Leader>R', fzf.lsp_finder, { desc = 'LSP finder' })
+vim.keymap.set('n', '<Leader>R', fzf.lsp_finder, { desc = 'Find LSP locations' })
 vim.keymap.set('n', '<Leader>f"', fzf.registers, { desc = 'Find registers' })
 vim.keymap.set('n', '<Leader>f*', fzf.grep_cword, { desc = 'Grep word under cursor' })
 vim.keymap.set('x', '<Leader>f*', fzf.grep_visual, { desc = 'Grep visual selection' })
@@ -659,7 +659,7 @@ vim.keymap.set('n', '<Leader>fi', fzf.lsp_implementations, { desc = 'Find LSP im
 vim.keymap.set('n', '<Leader>f<', fzf.lsp_incoming_calls, { desc = 'Find LSP incoming calls' })
 vim.keymap.set('n', '<Leader>f>', fzf.lsp_outgoing_calls, { desc = 'Find LSP outgoing calls' })
 vim.keymap.set('n', '<Leader>fr', fzf.lsp_references, { desc = 'Find LSP references' })
-vim.keymap.set('n', '<Leader>fR', fzf.lsp_finder, { desc = 'LSP finder' })
+vim.keymap.set('n', '<Leader>fR', fzf.lsp_finder, { desc = 'Find LSP locations' })
 vim.keymap.set('n', '<Leader>f<Esc>', '<Nop>', { desc = 'Cancel' })
 -- stylua: ignore end
 
