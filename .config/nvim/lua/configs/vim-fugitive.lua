@@ -7,11 +7,13 @@ vim.cmd([[
   command! -bang -nargs=? -range=-1 -complete=customlist,fugitive#LogComplete GlLog let g:fugitive_prevbuf=bufnr() | exe fugitive#LogCommand(<line1>,<count>,+"<range>",<bang>0,"<mods>",<q-args>, "l")
 ]])
 
+-- stylua: ignore start
 vim.keymap.set('n', '<Leader>gd', '<Cmd>Gdiff<CR>', { desc = 'Git diff current file' })
 vim.keymap.set('n', '<Leader>gD', '<Cmd>Git diff<CR>', { desc = 'Git diff entire repo' })
 vim.keymap.set('n', '<Leader>gB', '<Cmd>Git blame<CR>', { desc = 'Git blame current file' })
 vim.keymap.set('n', '<Leader>gl', '<Cmd>Git log --oneline --follow -- %<CR>', { desc = 'Git log current file' })
 vim.keymap.set('n', '<Leader>gL', '<Cmd>Git log --oneline --graph<CR>', { desc = 'Git log entire repo' })
+-- stylua: ignore end
 
 local groupid = vim.api.nvim_create_augroup('FugitiveSettings', {})
 vim.api.nvim_create_autocmd('User', {

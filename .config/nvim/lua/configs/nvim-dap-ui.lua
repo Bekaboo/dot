@@ -7,8 +7,10 @@ dap.listeners.before.event_terminated['dapui_config'] = dapui.close
 dap.listeners.before.event_exited['dapui_config']     = dapui.close
 -- stylua: ignore end
 
+-- stylua: ignore start
 vim.keymap.set({ 'n', 'x' }, '<F24>', dapui.eval, { desc = 'Inspect element value' }) -- <S-F12>
 vim.keymap.set({ 'n', 'x' }, '<Leader>GK', dapui.eval, { desc = 'Inspect element value' })
+-- stylua: ignore end
 
 dapui.setup({
   layouts = {

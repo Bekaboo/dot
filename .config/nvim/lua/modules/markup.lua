@@ -71,10 +71,12 @@ return {
 
           load('x', '<CR>', info.buf, { desc = 'Run current cell' }) -- for both python and notebook buffers
           if info.match == 'markdown' then
+            -- stylua: ignore start
             load('n', '<CR>', info.buf, { desc = 'Run current cell' })
             load('n', '<LocalLeader>k', info.buf, { desc = 'Run current cell and all above' })
             load('n', '<LocalLeader>j', info.buf, { desc = 'Run current cell and all below' })
             load('n', '<LocalLeader><CR>', info.buf, { desc = 'Run code selected by operator' })
+            -- stylua: ignore end
           end
           return true
         end,
