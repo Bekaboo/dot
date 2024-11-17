@@ -12,6 +12,9 @@ require('which-key').setup({
     'alphanum',
     'mod',
   },
+  filter = function(mapping)
+    return not mapping.lhs:find('<Esc>')
+  end,
   defer = function(ctx)
     return ctx.mode == 'V' or ctx.mode == '<C-V>' or ctx.mode == 'v'
   end,
