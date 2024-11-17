@@ -191,10 +191,10 @@ vim.keymap.set('n', '<Esc>', function() require('utils.misc').close_floats('<Esc
 vim.keymap.set({ 'n', 'x' }, '-', '<Cmd>e%:p:h<CR>', { desc = 'Edit current file\'s directory' })
 
 -- Enter insert mode, add a space after the cursor
-vim.keymap.set({ 'n', 'x' }, '<M-i>', 'i<Space><Left>', { desc = 'Insert text before cusor with a space after the cursor' })
-vim.keymap.set({ 'n', 'x' }, '<M-I>', 'I<Space><Left>', { desc = 'Insert text before cusor with a space after the cursor' })
-vim.keymap.set({ 'n', 'x' }, '<M-a>', 'a<Space><Left>', { desc = 'Append text after cursor with a space after the cursor' })
-vim.keymap.set({ 'n', 'x' }, '<M-A>', 'A<Space><Left>', { desc = 'Append text after cursor with a space after the cursor' })
+vim.keymap.set({ 'n', 'x' }, '<M-i>', 'i<Space><Left>', { desc = 'Insert with a space after the cursor' })
+vim.keymap.set({ 'n', 'x' }, '<M-I>', 'I<Space><Left>', { desc = 'Insert at start of line or selection with a space after the cursor' })
+vim.keymap.set({ 'n', 'x' }, '<M-a>', 'a<Space><Left>', { desc = 'Append with a space after the cursor' })
+vim.keymap.set({ 'n', 'x' }, '<M-A>', 'A<Space><Left>', { desc = 'Append at end of line or selection with a space after the cursor' })
 
 -- Text object: current buffer
 vim.keymap.set('x', 'af', ':<C-u>silent! keepjumps normal! ggVG<CR>', { silent = true, noremap = false, desc = 'Select current buffer' })
