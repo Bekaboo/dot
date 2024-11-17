@@ -110,11 +110,6 @@ vim.keymap.set(
   { expr = true, desc = 'Insert contents in a register' }
 )
 
--- Past with correct indentation in insert mode
-vim.keymap.set('i', '<C-r>', '<C-r><C-p>', {
-  desc = 'Paste content in register with correct indentation',
-})
-
 -- Delete selection in select mode
 vim.keymap.set('s', '<BS>', '<C-o>s', { desc = 'Delete selection' })
 vim.keymap.set('s', '<C-h>', '<C-o>s', { desc = 'Delete selection' })
