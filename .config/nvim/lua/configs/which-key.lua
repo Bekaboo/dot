@@ -33,7 +33,9 @@ wk_plugin_marks.expand = hide_desc(wk_plugin_marks.expand)
 local wk = require('which-key')
 wk.setup({
   preset = 'helix',
-  delay = 640,
+  delay = function(ctx)
+    return ctx.plugin and 0 or 640
+  end,
   win = { border = 'solid' },
   sort = {
     'local',
