@@ -1,5 +1,7 @@
 local icons = require('utils.static.icons')
 local wk_win = require('which-key.win')
+local wk_plugin_regs = require('which-key.plugins.registers')
+local wk_plugin_marks = require('which-key.plugins.marks')
 
 -- Hijack `which-key.win.show()` to fix gap to the right of which-key window
 -- when using helix preset
@@ -11,6 +13,22 @@ wk_win.show = (function(show_fn)
     return show_fn(self, opts, ...)
   end
 end)(wk_win.show)
+
+---Hijack `fn` to hide descriptions in its returned items
+---@param fn fun(...): wk.Plugin.item[]
+---@return fun(...): wk.Plugin.item[]
+local function hide_desc(fn)
+  return function(...)
+    local items = fn(...)
+    for i, _ in ipairs(items) do
+      items[i].desc = ''
+    end
+    return items
+  end
+end
+
+wk_plugin_regs.expand = hide_desc(wk_plugin_regs.expand)
+wk_plugin_marks.expand = hide_desc(wk_plugin_marks.expand)
 
 local wk = require('which-key')
 wk.setup({
