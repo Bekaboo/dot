@@ -1,6 +1,9 @@
 [ButtonSizing]
 ButtonCustomCornerRadius=0
 
+[Global]
+LookAndFeelSet=org.kde.breezedark.desktop
+
 [Style]
 FrameCornerRadius=FCR_Custom
 FrameCustomCornerRadius=0
