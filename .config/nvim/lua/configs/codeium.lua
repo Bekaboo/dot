@@ -28,7 +28,9 @@ local function setup_keymaps()
   vim.defer_fn(function()
     -- Same as fish shell keymaps
     amend('<C-f>', 'Accept', { desc = 'Accept suggestion' })
+    amend('<Right>', 'Accept', { desc = 'Accept suggestion' })
     amend('<M-f>', 'AcceptNextWord', { desc = 'Accept next word' })
+    amend('<M-Right>', 'AcceptNextWord', { desc = 'Accept next word' })
   end, 100)
 end
 
