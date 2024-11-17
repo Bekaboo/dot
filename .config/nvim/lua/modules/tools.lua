@@ -34,7 +34,6 @@ return {
       { '<Leader>-', desc = 'Find lines in buffer' },
       { '<Leader>=', desc = 'Find lines across buffers' },
       { '<Leader>R', desc = 'Find LSP references' },
-      { '<Leader>f', desc = 'Find pickers' },
       { '<Leader>f"', desc = 'Find registers' },
       { '<Leader>f*', mode = { 'n', 'x' }, desc = 'Grep word under cursor' },
       { '<Leader>f#', mode = { 'n', 'x' }, desc = 'Grep word under cursor' },
@@ -319,6 +318,14 @@ return {
     event = 'FileType',
     config = function()
       require('configs.outline')
+    end,
+  },
+
+  {
+    'folke/which-key.nvim',
+    event = 'VeryLazy',
+    config = function()
+      require('configs.which-key')
     end,
   },
 }

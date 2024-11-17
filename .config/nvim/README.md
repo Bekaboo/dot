@@ -492,7 +492,7 @@ and it should work out of the box.
 
 #### Third Party Plugins
 
-Total # of plugins: 52 (package manager included).
+Total # of plugins: 53 (package manager included).
 
 - **Lib**
     - [nvim-web-devicons](https://github.com/kyazdani42/nvim-web-devicons)
@@ -537,6 +537,7 @@ Total # of plugins: 52 (package manager included).
     - [oil.nvim](https://github.com/stevearc/oil.nvim)
     - [outline.nvim](https://github.com/hedyhli/outline.nvim)
         - [outline-asciidoc-provider.nvim](https://github.com/msr1k/outline-asciidoc-provider.nvim) (dependency)
+    - [which-key.nvim](https://github.com/folke/which-key.nvim)
 - **LSP**
     - [clangd_extensions.nvim](https://github.com/p00f/clangd_extensions.nvim)
 - **Treesitter**
