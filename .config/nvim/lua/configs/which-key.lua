@@ -1,6 +1,18 @@
 local icons = require('utils.static.icons')
-local wk = require('which-key')
+local wk_win = require('which-key.win')
 
+-- Hijack `which-key.win.show()` to fix gap to the right of which-key window
+-- when using helix preset
+wk_win.show = (function(show_fn)
+  return function(self, opts, ...)
+    if opts and opts.col then
+      opts.col = opts.col + 1
+    end
+    return show_fn(self, opts, ...)
+  end
+end)(wk_win.show)
+
+local wk = require('which-key')
 wk.setup({
   preset = 'helix',
   delay = 640,
