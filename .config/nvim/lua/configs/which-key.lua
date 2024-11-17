@@ -1,6 +1,7 @@
 local icons = require('utils.static.icons')
+local wk = require('which-key')
 
-require('which-key').setup({
+wk.setup({
   preset = 'helix',
   delay = 640,
   win = { border = 'solid' },
@@ -57,7 +58,6 @@ require('which-key').setup({
   },
 })
 
-local wk = require('which-key')
 wk.add({
   { '<Leader>g', group = 'Git' },
   { '<Leader>f', group = 'Find' },
