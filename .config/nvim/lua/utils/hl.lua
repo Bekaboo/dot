@@ -6,7 +6,7 @@ local M = {}
 ---being affected by winhl
 ---@param ns_id integer
 ---@param opts table{ name: string?, id: integer?, link: boolean? }
----@return vim.api.keyset.get_hl_info: highlight attributes
+---@return vim.api.keyset.hl_info: highlight attributes
 function M.get(ns_id, opts)
   local no_winhl_link = opts.winhl_link == false
   opts.winhl_link = nil
