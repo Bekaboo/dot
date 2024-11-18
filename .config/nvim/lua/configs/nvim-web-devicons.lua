@@ -286,6 +286,12 @@ require('nvim-web-devicons').setup({
       cterm_color = '160',
       name = 'Pptx',
     },
+    potx = {
+      icon = '󰈧',
+      color = '#cb4a32',
+      cterm_color = '160',
+      name = 'Potx',
+    },
     xcu = {
       icon = '󰗀',
       color = '#975122',
