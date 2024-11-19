@@ -51,7 +51,7 @@ index c238c45..46db1b3 100644
  
  source.get_position_encoding_kind = function()
 diff --git a/lua/codecompanion/init.lua b/lua/codecompanion/init.lua
-index 1b97579..01d3bd3 100644
+index e09a7b2..788273f 100644
 --- a/lua/codecompanion/init.lua
 +++ b/lua/codecompanion/init.lua
 @@ -1,6 +1,7 @@
@@ -76,7 +76,7 @@ index 1b97579..01d3bd3 100644
        .. "\n```\n",
    })
  end
-@@ -229,26 +230,31 @@ M.setup = function(opts)
+@@ -265,26 +266,31 @@ M.setup = function(opts)
    local group = "codecompanion.syntax"
    api.nvim_create_augroup(group, { clear = true })
    api.nvim_create_autocmd("FileType", {
@@ -125,7 +125,7 @@ index 1b97579..01d3bd3 100644
      end),
    })
  
-@@ -288,26 +294,35 @@ M.setup = function(opts)
+@@ -324,26 +330,35 @@ M.setup = function(opts)
      cmp.register_source("codecompanion_variables", require("cmp_codecompanion.variables").new())
      cmp.register_source("codecompanion_slash_commands", require("cmp_codecompanion.slash_commands").new(config))
      cmp.register_source("codecompanion_models", require("cmp_codecompanion.models").new(config))
@@ -170,10 +170,10 @@ index 1b97579..01d3bd3 100644
    })
  
 diff --git a/lua/codecompanion/keymaps.lua b/lua/codecompanion/keymaps.lua
-index d5ea240..58d263f 100644
+index 4b4ea5c..ca6c2bd 100644
 --- a/lua/codecompanion/keymaps.lua
 +++ b/lua/codecompanion/keymaps.lua
-@@ -397,6 +397,12 @@ M.fold_code = {
+@@ -409,6 +409,12 @@ M.fold_code = {
    end,
  }
  
@@ -187,10 +187,10 @@ index d5ea240..58d263f 100644
    desc = "Show debug information for the current chat",
    callback = function(chat)
 diff --git a/lua/codecompanion/strategies/chat.lua b/lua/codecompanion/strategies/chat.lua
-index a37c9a2..06610af 100644
+index 252b9a1..5b2e5d8 100644
 --- a/lua/codecompanion/strategies/chat.lua
 +++ b/lua/codecompanion/strategies/chat.lua
-@@ -245,7 +245,8 @@ function Chat.new(args)
+@@ -227,7 +227,8 @@ function Chat.new(args)
      create_buf = function()
        local bufnr = api.nvim_create_buf(false, true)
        api.nvim_buf_set_name(bufnr, string.format("[CodeCompanion] %d", id))
@@ -200,7 +200,7 @@ index a37c9a2..06610af 100644
  
        return bufnr
      end,
-@@ -1018,6 +1019,7 @@ function Chat:add_buf_message(data, opts)
+@@ -783,6 +784,7 @@ function Chat:add_buf_message(data, opts)
        last_column = 0
      end
  
@@ -208,16 +208,11 @@ index a37c9a2..06610af 100644
      local cursor_moved = api.nvim_win_get_cursor(0)[1] == line_count
      api.nvim_buf_set_text(bufnr, last_line, last_column, last_line, last_column, lines)
  
-@@ -1136,7 +1138,7 @@ function Chat:fold_heading(heading)
-   return self
- end
- 
-----Fold code under the user's heading in the chat buffer
-+---Fold current code under the user's heading in the chat buffer
- ---@return self
- function Chat:fold_code()
-   local query = vim.treesitter.query.parse(
-@@ -1158,10 +1160,11 @@ function Chat:fold_code()
+diff --git a/lua/codecompanion/strategies/chat/ui.lua b/lua/codecompanion/strategies/chat/ui.lua
+index ed5ada7..8d2d56b 100644
+--- a/lua/codecompanion/strategies/chat/ui.lua
++++ b/lua/codecompanion/strategies/chat/ui.lua
+@@ -386,10 +386,11 @@ function UI:fold_code()
  
    local parser = vim.treesitter.get_parser(self.bufnr, "markdown")
    local tree = parser:parse()[1]
@@ -230,9 +225,9 @@ index a37c9a2..06610af 100644
      local match = {}
      for id, node in pairs(matches) do
        match = vim.tbl_extend("keep", match, {
-@@ -1175,9 +1178,10 @@ function Chat:fold_code()
+@@ -403,9 +404,10 @@ function UI:fold_code()
        role = vim.trim(vim.treesitter.get_node_text(match.role.node, self.bufnr))
-       if role:match(user_role) and match.code then
+       if role:match(self.roles.user) and match.code then
          local start_row, _, end_row, _ = match.code.node:range()
 -        if start_row < end_row then
 +        if start_row < end_row and start_row <= cursor_row and end_row >= cursor_row then
@@ -279,7 +274,7 @@ index 108034f..b78b1c0 100644
  end
  
 diff --git a/lua/codecompanion/utils/util.lua b/lua/codecompanion/utils/util.lua
-index 4b2d5bd..ff75e17 100644
+index 4dc45ee..a372ef0 100644
 --- a/lua/codecompanion/utils/util.lua
 +++ b/lua/codecompanion/utils/util.lua
 @@ -44,6 +44,13 @@ M.capitalize = function(str)
