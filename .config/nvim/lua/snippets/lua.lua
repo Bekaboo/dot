@@ -326,6 +326,11 @@ M.syntax = {
       end, { 1 }),
     })
   ),
+  us.sn({ trig = 'nf', desc = 'Disable stylua format' }, {
+    t({ '-- stylua: ignore start', '' }),
+    un.body(1, 0),
+    t({ '', '-- stylua: ignore off' }),
+  }),
 }
 
 return M
