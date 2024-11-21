@@ -17,6 +17,7 @@
   ],
   "terminal.integrated.enableMultiLinePasteWarning": false,
   "terminal.integrated.fontFamily": "'Iosevka NF', 'monospace', monospace",
+  "update.showReleaseNotes": false,
   "window.autoDetectColorScheme": true,
   "window.restoreWindows": "none",
   "workbench.editor.restoreViewState": false,
