@@ -88,15 +88,21 @@ augroup('LastPosJmp', {
   {
     desc = 'Last position jump.',
     callback = function(info)
-      local ft = vim.bo[info.buf].ft
-      -- don't apply to git messages
-      if ft ~= 'gitcommit' and ft ~= 'gitrebase' then
-        vim.cmd.normal({
-          'g`"zvzz',
-          bang = true,
-          mods = { emsg_silent = true },
-        })
-      end
+      autocmd('FileType', {
+        once = true,
+        buffer = info.buf,
+        callback = function(i)
+          local ft = vim.bo[i.buf].ft
+          if ft ~= 'gitcommit' and ft ~= 'gitrebase' then
+            vim.cmd.normal({
+              'g`"zvzz',
+              bang = true,
+              mods = { emsg_silent = true },
+            })
+          end
+          return true
+        end,
+      })
     end,
   },
 })
