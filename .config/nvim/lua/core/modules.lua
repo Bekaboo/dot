@@ -149,8 +149,8 @@ local function enable_modules(module_names)
     change_detection = { notify = false },
     install = {
       colorscheme = {
-        'nano',
         'macro',
+        'nano',
         'sonokai',
         'cockatoo',
       },
