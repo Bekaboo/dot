@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Tue Aug 27 08:38:24 PM EDT 2024
+-- Last Updated: Sat Nov 23 05:30:05 PM EST 2024
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -168,7 +168,7 @@ local hlgroups = {
   Substitute = { link = 'Search' },
   TabLine = { link = 'StatusLine' },
   TabLineFill = { fg = c_foreground, bg = c_subtle },
-  TabLineSel = { fg = c_strong, bg = c_background, bold = true },
+  TabLineSel = { fg = c_strong, bg = c_shaded, bold = true },
   TermCursor = { fg = c_subtle, bg = c_popout },
   TermCursorNC = { fg = c_critical, bg = c_subtle },
   Title = { fg = c_foreground, bold = true },
