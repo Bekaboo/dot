@@ -1,144 +1,23 @@
-diff --git a/lua/cmp_codecompanion/models.lua b/lua/cmp_codecompanion/models.lua
-index b662d18..ce21c07 100644
---- a/lua/cmp_codecompanion/models.lua
-+++ b/lua/cmp_codecompanion/models.lua
-@@ -8,7 +8,7 @@ function source.new(config)
- end
- 
- function source:is_available()
--  return vim.bo.filetype == "codecompanion" and self.config.display.chat.show_settings
-+  return vim.b.codecompanion and self.config.display.chat.show_settings
- end
- 
- source.get_position_encoding_kind = function()
-diff --git a/lua/cmp_codecompanion/slash_commands.lua b/lua/cmp_codecompanion/slash_commands.lua
-index 69a169b..5065b1f 100644
---- a/lua/cmp_codecompanion/slash_commands.lua
-+++ b/lua/cmp_codecompanion/slash_commands.lua
-@@ -8,7 +8,7 @@ function source.new(config)
- end
- 
- function source:is_available()
--  return vim.bo.filetype == "codecompanion"
-+  return vim.b.codecompanion
- end
- 
- function source:get_trigger_characters()
-diff --git a/lua/cmp_codecompanion/tools.lua b/lua/cmp_codecompanion/tools.lua
-index 05e7526..eb3284a 100644
---- a/lua/cmp_codecompanion/tools.lua
-+++ b/lua/cmp_codecompanion/tools.lua
-@@ -5,7 +5,7 @@ function source.new(config)
- end
- 
- function source:is_available()
--  return vim.bo.filetype == "codecompanion"
-+  return vim.b.codecompanion
- end
- 
- source.get_position_encoding_kind = function()
-diff --git a/lua/cmp_codecompanion/variables.lua b/lua/cmp_codecompanion/variables.lua
-index c238c45..46db1b3 100644
---- a/lua/cmp_codecompanion/variables.lua
-+++ b/lua/cmp_codecompanion/variables.lua
-@@ -7,7 +7,7 @@ function source.new()
- end
- 
- function source:is_available()
--  return vim.bo.filetype == "codecompanion"
-+  return vim.b.codecompanion
- end
- 
- source.get_position_encoding_kind = function()
 diff --git a/lua/codecompanion/init.lua b/lua/codecompanion/init.lua
-index e09a7b2..788273f 100644
+index 87f1252..38ed471 100644
 --- a/lua/codecompanion/init.lua
 +++ b/lua/codecompanion/init.lua
-@@ -1,6 +1,7 @@
- local config = require("codecompanion.config")
- local context_utils = require("codecompanion.utils.context")
- local log = require("codecompanion.utils.log")
-+local util = require("codecompanion.utils.util")
- 
- local api = vim.api
- 
-@@ -104,11 +105,11 @@ M.add = function(args)
-   chat:add_buf_message({
-     role = config.constants.USER_ROLE,
-     content = "Here is some code from "
--      .. context.filename
-+      .. string.format("`%s`", context.filename)
-       .. ":\n\n```"
-       .. context.filetype
-       .. "\n"
--      .. content
-+      .. util.escape_backticks(content)
-       .. "\n```\n",
-   })
- end
-@@ -265,26 +266,31 @@ M.setup = function(opts)
-   local group = "codecompanion.syntax"
-   api.nvim_create_augroup(group, { clear = true })
-   api.nvim_create_autocmd("FileType", {
--    pattern = "codecompanion",
-+    pattern = "markdown",
-     group = group,
--    callback = vim.schedule_wrap(function()
--      vim.iter(config.strategies.chat.variables):each(function(name, var)
--        vim.cmd.syntax('match CodeCompanionChatVariable "#' .. name .. '"')
--        if var.opts and var.opts.has_params then
--          vim.cmd.syntax('match CodeCompanionChatVariable "#' .. name .. ':\\d\\+-\\?\\d\\+"')
--        end
--      end)
--      vim.iter(config.strategies.agent.tools):each(function(name, _)
--        vim.cmd.syntax('match CodeCompanionChatTool "@' .. name .. '"')
--      end)
--      vim
--        .iter(config.strategies.agent)
--        :filter(function(name)
--          return name ~= "tools"
-+    callback = vim.schedule_wrap(function(info)
-+      if not vim.api.nvim_buf_is_valid(info.buf) or not vim.b[info.buf].codecompanion then
-+        return
-+      end
-+      vim.api.nvim_buf_call(info.buf, function()
-+        vim.iter(config.strategies.chat.variables):each(function(name, var)
-+          vim.cmd.syntax('match CodeCompanionChatVariable "#' .. name .. '"')
-+          if var.opts and var.opts.has_params then
-+            vim.cmd.syntax('match CodeCompanionChatVariable "#' .. name .. ':\\d\\+-\\?\\d\\+"')
-+          end
-         end)
--        :each(function(name, _)
--          vim.cmd.syntax('match CodeCompanionChatAgent "@' .. name .. '"')
-+        vim.iter(config.strategies.agent.tools):each(function(name, _)
-+          vim.cmd.syntax('match CodeCompanionChatTool "@' .. name .. '"')
-         end)
-+        vim
-+          .iter(config.strategies.agent)
-+          :filter(function(name)
-+            return name ~= "tools"
-+          end)
-+          :each(function(name, _)
-+            vim.cmd.syntax('match CodeCompanionChatAgent "@' .. name .. '"')
-+          end)
-+      end)
-     end),
-   })
- 
-@@ -324,26 +330,35 @@ M.setup = function(opts)
-     cmp.register_source("codecompanion_variables", require("cmp_codecompanion.variables").new())
+@@ -328,26 +328,35 @@ M.setup = function(opts)
      cmp.register_source("codecompanion_slash_commands", require("cmp_codecompanion.slash_commands").new(config))
-     cmp.register_source("codecompanion_models", require("cmp_codecompanion.models").new(config))
+     cmp.register_source("codecompanion_tools", require("cmp_codecompanion.tools").new(config))
+     cmp.register_source("codecompanion_variables", require("cmp_codecompanion.variables").new())
 -    cmp.setup.filetype("codecompanion", {
 +    cmp.setup.filetype("markdown", {
        enabled = true,
 -      sources = {
+-        { name = "codecompanion_models" },
+-        { name = "codecompanion_slash_commands" },
 +      sources = vim.list_extend({
          { name = "codecompanion_tools" },
          { name = "codecompanion_variables" },
-         { name = "codecompanion_slash_commands" },
-         { name = "codecompanion_models" },
 -      },
++        { name = "codecompanion_slash_commands" },
++        { name = "codecompanion_models" },
 +      }, cmp.get_config().sources),
      })
    end
@@ -169,50 +48,33 @@ index e09a7b2..788273f 100644
      end,
    })
  
-diff --git a/lua/codecompanion/keymaps.lua b/lua/codecompanion/keymaps.lua
-index 4b4ea5c..ca6c2bd 100644
---- a/lua/codecompanion/keymaps.lua
-+++ b/lua/codecompanion/keymaps.lua
-@@ -409,6 +409,12 @@ M.fold_code = {
-   end,
- }
- 
-+M.fold_code = {
-+  callback = function(chat)
-+    chat:fold_code()
-+  end,
-+}
-+
- M.debug = {
-   desc = "Show debug information for the current chat",
-   callback = function(chat)
 diff --git a/lua/codecompanion/strategies/chat.lua b/lua/codecompanion/strategies/chat.lua
-index 252b9a1..5b2e5d8 100644
+index 72e0f30..cfd1990 100644
 --- a/lua/codecompanion/strategies/chat.lua
 +++ b/lua/codecompanion/strategies/chat.lua
-@@ -227,7 +227,8 @@ function Chat.new(args)
-     create_buf = function()
-       local bufnr = api.nvim_create_buf(false, true)
-       api.nvim_buf_set_name(bufnr, string.format("[CodeCompanion] %d", id))
--      vim.bo[bufnr].filetype = "codecompanion"
-+      vim.b[bufnr].codecompanion = true
-+      vim.bo[bufnr].filetype = "markdown"
+@@ -860,7 +860,7 @@ function Chat:unsubscribe(id)
+   end
+ end
  
-       return bufnr
-     end,
-@@ -783,6 +784,7 @@ function Chat:add_buf_message(data, opts)
-       last_column = 0
-     end
- 
-+    vim.cmd.stopinsert()
-     local cursor_moved = api.nvim_win_get_cursor(0)[1] == line_count
-     api.nvim_buf_set_text(bufnr, last_line, last_column, last_line, last_column, lines)
- 
+----Fold code under the user's heading in the chat buffer
++---Fold current code under the user's heading in the chat buffer
+ ---@return CodeCompanion.Chat.UI
+ function Chat:fold_code()
+   return self.ui:fold_code()
 diff --git a/lua/codecompanion/strategies/chat/ui.lua b/lua/codecompanion/strategies/chat/ui.lua
-index ed5ada7..8d2d56b 100644
+index be99b69..eb946cd 100644
 --- a/lua/codecompanion/strategies/chat/ui.lua
 +++ b/lua/codecompanion/strategies/chat/ui.lua
-@@ -386,10 +386,11 @@ function UI:fold_code()
+@@ -351,7 +351,7 @@ function UI:display_tokens()
+   end
+ end
+ 
+----Fold code under the user's heading in the chat buffer
++---Fold current code under the user's heading in the chat buffer
+ ---@return self
+ function UI:fold_code()
+   local query = vim.treesitter.query.parse(
+@@ -373,10 +373,11 @@ function UI:fold_code()
  
    local parser = vim.treesitter.get_parser(self.bufnr, "markdown")
    local tree = parser:parse()[1]
@@ -225,7 +87,7 @@ index ed5ada7..8d2d56b 100644
      local match = {}
      for id, node in pairs(matches) do
        match = vim.tbl_extend("keep", match, {
-@@ -403,9 +404,10 @@ function UI:fold_code()
+@@ -390,9 +391,10 @@ function UI:fold_code()
        role = vim.trim(vim.treesitter.get_node_text(match.role.node, self.bufnr))
        if role:match(self.roles.user) and match.code then
          local start_row, _, end_row, _ = match.code.node:range()
@@ -237,74 +99,3 @@ index ed5ada7..8d2d56b 100644
            end)
          end
        end
-diff --git a/lua/codecompanion/utils/buffers.lua b/lua/codecompanion/utils/buffers.lua
-index 108034f..b78b1c0 100644
---- a/lua/codecompanion/utils/buffers.lua
-+++ b/lua/codecompanion/utils/buffers.lua
-@@ -1,3 +1,4 @@
-+local util = require("codecompanion.utils.util")
- local api = vim.api
- 
- local M = {}
-@@ -11,7 +12,7 @@ function M.get_visible_lines()
-   for _, win in ipairs(wins) do
-     local bufnr = vim.api.nvim_win_get_buf(win)
- 
--    if vim.api.nvim_get_option_value("filetype", { buf = bufnr }) ~= "codecompanion" then
-+    if not vim.b[bufnr].codecompanion then
-       local start_line = vim.api.nvim_win_call(win, function()
-         return vim.fn.line("w0")
-       end)
-@@ -109,7 +110,7 @@ Content:
-     buffer.path,
-     buffer.filetype,
-     buffer.filetype,
--    table.concat(formatted, "\n")
-+    util.escape_backticks(table.concat(formatted, "\n"))
-   )
- end
- 
-@@ -133,7 +134,7 @@ function M.format(bufnr, range)
- %s
- ```]],
-     buffer.filetype,
--    M.get_content(bufnr, range)
-+    util.escape_backticks(M.get_content(bufnr, range))
-   )
- end
- 
-diff --git a/lua/codecompanion/utils/util.lua b/lua/codecompanion/utils/util.lua
-index 4dc45ee..a372ef0 100644
---- a/lua/codecompanion/utils/util.lua
-+++ b/lua/codecompanion/utils/util.lua
-@@ -44,6 +44,13 @@ M.capitalize = function(str)
-   return (str:gsub("^%l", string.upper))
- end
- 
-+---Escape backticks in a string
-+---@param str string
-+---@return string
-+M.escape_backticks = function(str)
-+  return (str:gsub("`", "\\`"))
-+end
-+
- ---Check if a table is an array
- ---@param t table
- ---@return boolean
-diff --git a/lua/legendary/extensions/codecompanion.lua b/lua/legendary/extensions/codecompanion.lua
-index b96ff09..151c290 100644
---- a/lua/legendary/extensions/codecompanion.lua
-+++ b/lua/legendary/extensions/codecompanion.lua
-@@ -4,7 +4,11 @@ local function to_legendary_keymap(key, keymap)
-     -- prefix makes it easier to search in legendary.nvim window
-     desc = string.format("CodeCompanion: %s", require("legendary.util").get_desc(keymap)),
-     -- keymaps are all for the chat buffer
--    filters = { filetype = "codecompanion" },
-+    filters = {
-+      function(item, context)
-+        return context.buf and vim.api.nvim_buf_is_valid(context.buf) and vim.b[context.buf].codecompanion
-+      end,
-+    },
-   }
- end
- 
