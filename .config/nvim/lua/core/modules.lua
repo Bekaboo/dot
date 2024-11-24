@@ -199,7 +199,7 @@ vim.api.nvim_create_autocmd('User', {
       if vim.uv.fs_stat(plugin_path) then
         system_sync({ 'git', 'restore', '.' }, { cwd = plugin_path })
         if not vim.endswith(info.match, 'Pre') then
-          vim.notify(string.format("[packages] applying patch '%s'", patch))
+          vim.notify(string.format("[modules] applying patch '%s'", patch))
           system_sync(
             { 'git', 'apply', '--ignore-space-change', patch_path },
             { cwd = plugin_path }
