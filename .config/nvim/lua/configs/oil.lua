@@ -291,7 +291,7 @@ local type_hlgroups = setmetatable({
   end,
 })
 
-local border = vim.g.has_display and 'solid' or 'single'
+local border = vim.go.termguicolors and 'solid' or 'single'
 
 oil.setup({
   columns = {

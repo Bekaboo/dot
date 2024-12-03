@@ -137,7 +137,7 @@ export FZF_DEFAULT_OPTS="--reverse \
     --bind=shift-up:preview-up,shift-down:preview-down \
     --bind=alt-v:preview-half-page-up,ctrl-v:preview-half-page-down"
 
-if [[ -z "$DISPLAY" ]]; then
+if [[ "$(tput colors)" -lt 256 ]]; then
     export FZF_DEFAULT_OPTS=$(echo "$FZF_DEFAULT_OPTS" \
         '--no-unicode' \
         '--marker=+\ ' \

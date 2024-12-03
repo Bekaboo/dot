@@ -108,7 +108,7 @@ function M.qftf(info)
   -- stylua: ignore end
 
   local lines = {} ---@type string[]
-  local format_str = vim.g.has_display and '%s %s:%s%s%s %s'
+  local format_str = vim.go.termguicolors and '%s %s:%s%s%s %s'
     or '%s│%s:%s%s%s│ %s'
 
   local function _fill_item(idx, item)

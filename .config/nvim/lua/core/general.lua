@@ -9,7 +9,7 @@ local env = vim.env
 g.has_ui = #vim.api.nvim_list_uis() > 0
 g.has_gui = vim.fn.has('gui_running') == 1
 g.has_display = g.has_ui and env.DISPLAY ~= nil
-g.has_nf = g.has_display and env.NVIM_NF and true or false
+g.has_nf = env.TERM ~= 'linux' and env.NVIM_NF and true or false
 
 opt.confirm = true
 opt.timeout = false
@@ -39,14 +39,6 @@ opt.ignorecase = true
 opt.smartcase = true
 opt.completeopt = 'menuone'
 opt.jumpoptions = 'stack,view'
-
--- nvim 0.10.0 automatically enables termguicolors. When using nvim inside
--- tmux in Linux tty, where $TERM is set to 'tmux-256color' but $DISPLAY is
--- not set, termguicolors is automatically set. This is undesirable, so we
--- need to explicitly disable it in this case
--- When in SSH, termguicolors is turned off unnecessarily, so also
--- set termguicolors on if we have display
-opt.termguicolors = g.has_display
 
 -- Defer shada rea
 local shada_read ---@boolean?
@@ -149,17 +141,25 @@ opt.fillchars = {
   foldsep = ' ',
   eob = ' ',
 }
-if g.has_display then
-  opt.conceallevel = 2
-  opt.listchars:append({ nbsp = '␣' })
-  opt.fillchars:append({ diff = '╱' })
-end
+
 if g.has_nf then
   opt.fillchars:append({
     foldopen = '',
     foldclose = '',
   })
 end
+
+vim.api.nvim_create_autocmd('UIEnter', {
+  once = true,
+  callback = function()
+    if opt.termguicolors:get() then
+      opt.conceallevel = 2
+      opt.listchars:append({ nbsp = '␣' })
+      opt.fillchars:append({ diff = '╱' })
+    end
+    return true
+  end,
+})
 
 -- Netrw settings
 g.netrw_banner = 0

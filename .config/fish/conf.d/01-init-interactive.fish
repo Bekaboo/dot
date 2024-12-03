@@ -28,7 +28,8 @@ set -gx FZF_DEFAULT_OPTS "--reverse \
     --bind=shift-up:preview-up,shift-down:preview-down \
     --bind=alt-v:preview-half-page-up,ctrl-v:preview-half-page-down"
 
-if test -z "$DISPLAY"
+# If supports 256 colors
+if test (tput colors 2>/dev/null) -lt 256
     set -gxa FZF_DEFAULT_OPTS --no-unicode '--marker=+\ ' '--pointer=>\ '
 end
 

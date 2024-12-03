@@ -305,7 +305,7 @@ end
 
 fzf.setup({
   -- Use nbsp in tty to avoid showing box chars
-  nbsp = not vim.g.has_display and '\xc2\xa0' or nil,
+  nbsp = not vim.go.termguicolors and '\xc2\xa0' or nil,
   dir_icon = vim.trim(icons.Folder),
   winopts = {
     backdrop = 100,

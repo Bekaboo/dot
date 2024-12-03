@@ -9,7 +9,6 @@ return {
 
   {
     'iamcco/markdown-preview.nvim',
-    enabled = vim.g.has_display,
     ft = 'markdown',
     build = 'cd app && npm install && cd - && git restore .',
     config = function()

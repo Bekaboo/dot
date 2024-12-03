@@ -234,7 +234,7 @@ return {
 
   {
     'NvChad/nvim-colorizer.lua',
-    enabled = vim.g.has_display,
+    enabled = vim.go.termguicolors,
     event = {
       'BufNew',
       'BufRead',

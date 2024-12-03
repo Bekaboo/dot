@@ -1,4 +1,4 @@
-if not vim.g.has_display then
+if not vim.go.termguicolors then
   vim.g.vimtex_syntax_conceal_disable = true
 end
 
