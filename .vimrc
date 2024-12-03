@@ -1,4 +1,5 @@
 """ Options {{{1
+silent! set confirm
 silent! set notimeout
 silent! set hidden
 silent! set foldlevelstart=99

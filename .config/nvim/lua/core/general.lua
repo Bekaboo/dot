@@ -11,6 +11,7 @@ g.has_gui = vim.fn.has('gui_running') == 1
 g.has_display = g.has_ui and env.DISPLAY ~= nil
 g.has_nf = g.has_display and env.NVIM_NF and true or false
 
+opt.confirm = true
 opt.timeout = false
 opt.colorcolumn = '+1'
 opt.cursorlineopt = 'number'
