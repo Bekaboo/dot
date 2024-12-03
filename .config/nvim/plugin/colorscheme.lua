@@ -12,10 +12,8 @@ vim.api.nvim_create_autocmd('UIEnter', {
     end
 
     local utils = require('utils')
-    local colors_file = vim.fs.joinpath(
-      vim.fn.stdpath('state'), --[[@as string]]
-      'colors.json'
-    )
+    local colors_file =
+      vim.fs.joinpath(vim.fn.stdpath('state'), --[[@as string]] 'colors.json')
 
     -- 1. Restore dark/light background and colorscheme from json so that nvim
     --    "remembers" the background and colorscheme when it is restarted.
