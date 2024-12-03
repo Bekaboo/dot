@@ -44,7 +44,7 @@ local function bootstrap()
   vim.ui.input(
     { prompt = '[modules] package manager not found, bootstrap? [y/N/never] ' },
     function(r)
-      response = r
+      response = vim.trim(r)
     end
   )
 

@@ -36,7 +36,7 @@ function __bootstrap
         return 1
     end
 
-    set -l choice (read -P 'Install fisher plugin manager? [y]es/[n]o/[never] ' -l)
+    set -l choice (string trim (read -P 'Install fisher plugin manager? [y]es/[n]o/[never] ' -l))
     switch $choice
         case Y y YES Yes yes
             curl -sL 'https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish' | source
