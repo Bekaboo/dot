@@ -81,6 +81,16 @@ function statusline.mode()
   return utils.stl.hl(string.format(' %s ', mode_str), hl) .. ' '
 end
 
+vim.api.nvim_create_autocmd('ModeChanged', {
+  desc = 'Redraw statusline shortly after mode change to ensure correct mode display after enting visual mode when which-key.nvim is enabled.',
+  group = groupid,
+  callback = vim.schedule_wrap(function()
+    vim.cmd.redrawstatus({
+      mods = { emsg_silent = true },
+    })
+  end),
+})
+
 ---Get diff stats for current buffer
 ---@return string
 function statusline.gitdiff()
