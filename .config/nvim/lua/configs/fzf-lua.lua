@@ -645,7 +645,6 @@ vim.keymap.set('n', '<Leader>fgc', fzf.git_commits, { desc = 'Find git commits' 
 vim.keymap.set('n', '<Leader>fgl', fzf.git_bcommits, { desc = 'Find git buffer commits' })
 vim.keymap.set('n', '<Leader>fgb', fzf.git_branches, { desc = 'Find git branches' })
 vim.keymap.set('n', '<Leader>fh', fzf.help_tags, { desc = 'Find help tags' })
-vim.keymap.set('n', '<Leader>f?', fzf.help_tags, { desc = 'Find help tags' })
 vim.keymap.set('n', '<Leader>fk', fzf.keymaps, { desc = 'Find keymaps' })
 vim.keymap.set('n', '<Leader>f-', fzf.blines, { desc = 'Find lines in buffer' })
 vim.keymap.set('n', '<Leader>f=', fzf.lines, { desc = 'Find lines across buffers' })

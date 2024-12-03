@@ -59,7 +59,6 @@ return {
       { '<Leader>fgl', desc = 'Find git buffer commits' },
       { '<Leader>fgb', desc = 'Find git branches' },
       { '<Leader>fh', desc = 'Find help files' },
-      { '<Leader>f?', desc = 'Find help files' },
       { '<Leader>fk', desc = 'Find keymaps' },
       { '<Leader>f-', desc = 'Find lines in buffer' },
       { '<Leader>f=', desc = 'Find lines across buffers' },
