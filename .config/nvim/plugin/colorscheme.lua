@@ -1,5 +1,6 @@
 vim.api.nvim_create_autocmd('UIEnter', {
   once = true,
+  nested = true, -- invoke Colorscheme event for winbar plugin to clear bg for nvim < 0.11
   callback = function()
     -- Colorschemes other than the default colorscheme looks bad when the terminal
     -- does not support truecolor
