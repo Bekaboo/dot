@@ -291,8 +291,6 @@ local type_hlgroups = setmetatable({
   end,
 })
 
-local border = vim.go.termguicolors and 'solid' or 'single'
-
 oil.setup({
   columns = {
     {
@@ -411,22 +409,22 @@ oil.setup({
     },
   },
   keymaps_help = {
-    border = border,
+    border = 'solid',
   },
   float = {
-    border = border,
+    border = 'solid',
     win_options = {
       winblend = 0,
     },
   },
   preview = {
-    border = border,
+    border = 'solid',
     win_options = {
       winblend = 0,
     },
   },
   progress = {
-    border = border,
+    border = 'solid',
     win_options = {
       winblend = 0,
     },

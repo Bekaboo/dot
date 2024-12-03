@@ -125,7 +125,7 @@ local fterm_opts_default = {
   },
   winopts = {
     relative = 'editor',
-    border = vim.go.termguicolors and 'none' or 'single',
+    border = 'solid',
     style = 'minimal',
     width = 0.75,
     height = 0.75,
