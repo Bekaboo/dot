@@ -116,9 +116,11 @@ end
 
 ---Initialize highlight groups for winbar
 local function init()
+  local groupid = vim.api.nvim_create_augroup('WinBarHlGroups', {})
+
   set_hlgroups()
   vim.api.nvim_create_autocmd('ColorScheme', {
-    group = vim.api.nvim_create_augroup('WinBarHlGroups', {}),
+    group = groupid,
     callback = set_hlgroups,
   })
 
@@ -127,13 +129,12 @@ local function init()
   --     https://github.com/Bekaboo/dropbar.nvim/pull/195
   if vim.fn.has('nvim-0.11.0') == 0 then
     clear_winbar_bg()
-    local gid_clear_bg = vim.api.nvim_create_augroup('WinBarHlClearBg', {})
     vim.api.nvim_create_autocmd('ColorScheme', {
-      group = gid_clear_bg,
+      group = groupid,
       callback = clear_winbar_bg,
     })
     vim.api.nvim_create_autocmd('OptionSet', {
-      group = gid_clear_bg,
+      group = groupid,
       pattern = 'background',
       callback = clear_winbar_bg,
     })
