@@ -28,14 +28,14 @@ local function setup_keymaps()
       or 'gd'
   end, { expr = true, desc = 'Go to definition' })
   vim.keymap.set({ 'n', 'x' }, 'gD', function()
-    return supports_method('textDocument/typeDefinition', 0)
-        and '<Cmd>lua vim.lsp.buf.type_definition()<CR>'
+    return supports_method('textDocument/declaration', 0)
+        and '<Cmd>lua vim.lsp.buf.declaration()<CR>'
       or 'gD'
-  end, { expr = true, desc = 'Go to type definition' })
+  end, { expr = true, desc = 'Go to declaration' })
   vim.keymap.set(
     { 'n', 'x' },
     'g<C-d>',
-    '<Cmd>lua vim.lsp.buf.declaration()<CR>',
+    '<Cmd>lua vim.lsp.buf.type_definition()<CR>',
     { desc = 'Go to declaration' }
   )
   -- stylua: ignore start
