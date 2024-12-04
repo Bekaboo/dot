@@ -21,8 +21,8 @@ local function setup_keymaps()
   vim.keymap.set({ 'n' }, 'gq;', function() vim.lsp.buf.format() end, { desc = 'Format buffer' })
   vim.keymap.set({ 'n', 'x' }, 'g/', function() vim.lsp.buf.references() end, { desc = 'Go to references' })
   vim.keymap.set({ 'n', 'x' }, 'g.', function() vim.lsp.buf.implementation() end, { desc = 'Go to implementation' })
-  vim.keymap.set({ 'n', 'x' }, 'gd', function()
   -- stylua: ignore end
+  vim.keymap.set({ 'n', 'x' }, 'gd', function()
     return supports_method('textDocument/definition', 0)
         and '<Cmd>lua vim.lsp.buf.definition()<CR>'
       or 'gd'
