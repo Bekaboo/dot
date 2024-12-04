@@ -1,57 +1,5 @@
-diff --git a/lua/cmp_codecompanion/models.lua b/lua/cmp_codecompanion/models.lua
-index b662d18..a82d104 100644
---- a/lua/cmp_codecompanion/models.lua
-+++ b/lua/cmp_codecompanion/models.lua
-@@ -8,7 +8,7 @@ function source.new(config)
- end
- 
- function source:is_available()
--  return vim.bo.filetype == "codecompanion" and self.config.display.chat.show_settings
-+  return vim.bo.filetype == "markdown" and vim.b.codecompanion and self.config.display.chat.show_settings
- end
- 
- source.get_position_encoding_kind = function()
-diff --git a/lua/cmp_codecompanion/slash_commands.lua b/lua/cmp_codecompanion/slash_commands.lua
-index f3608a3..efc1e57 100644
---- a/lua/cmp_codecompanion/slash_commands.lua
-+++ b/lua/cmp_codecompanion/slash_commands.lua
-@@ -9,7 +9,7 @@ function source.new(config)
- end
- 
- function source:is_available()
--  return vim.bo.filetype == "codecompanion"
-+  return vim.bo.filetype == "markdown" and vim.b.codecompanion
- end
- 
- function source:get_trigger_characters()
-diff --git a/lua/cmp_codecompanion/tools.lua b/lua/cmp_codecompanion/tools.lua
-index d793224..6c20bb6 100644
---- a/lua/cmp_codecompanion/tools.lua
-+++ b/lua/cmp_codecompanion/tools.lua
-@@ -5,7 +5,7 @@ function source.new(config)
- end
- 
- function source:is_available()
--  return vim.bo.filetype == "codecompanion"
-+  return vim.bo.filetype == "markdown" and vim.b.codecompanion
- end
- 
- source.get_position_encoding_kind = function()
-diff --git a/lua/cmp_codecompanion/variables.lua b/lua/cmp_codecompanion/variables.lua
-index fdc2cb7..1634ceb 100644
---- a/lua/cmp_codecompanion/variables.lua
-+++ b/lua/cmp_codecompanion/variables.lua
-@@ -5,7 +5,7 @@ function source.new()
- end
- 
- function source:is_available()
--  return vim.bo.filetype == "codecompanion"
-+  return vim.bo.filetype == "markdown" and vim.b.codecompanion
- end
- 
- source.get_position_encoding_kind = function()
 diff --git a/lua/codecompanion/init.lua b/lua/codecompanion/init.lua
-index 87f1252..b84674b 100644
+index 5dc571f..f148589 100644
 --- a/lua/codecompanion/init.lua
 +++ b/lua/codecompanion/init.lua
 @@ -265,26 +265,31 @@ M.setup = function(opts)
@@ -103,22 +51,20 @@ index 87f1252..b84674b 100644
      end),
    })
  
-@@ -328,26 +333,35 @@ M.setup = function(opts)
-     cmp.register_source("codecompanion_slash_commands", require("cmp_codecompanion.slash_commands").new(config))
-     cmp.register_source("codecompanion_tools", require("cmp_codecompanion.tools").new(config))
-     cmp.register_source("codecompanion_variables", require("cmp_codecompanion.variables").new())
+@@ -329,26 +334,35 @@ M.setup = function(opts)
+     cmp.register_source("codecompanion_slash_commands", require(completion .. ".slash_commands").new(config))
+     cmp.register_source("codecompanion_tools", require(completion .. ".tools").new(config))
+     cmp.register_source("codecompanion_variables", require(completion .. ".variables").new())
 -    cmp.setup.filetype("codecompanion", {
 +    cmp.setup.filetype("markdown", {
        enabled = true,
 -      sources = {
--        { name = "codecompanion_models" },
--        { name = "codecompanion_slash_commands" },
 +      sources = vim.list_extend({
+         { name = "codecompanion_models" },
+         { name = "codecompanion_slash_commands" },
          { name = "codecompanion_tools" },
          { name = "codecompanion_variables" },
 -      },
-+        { name = "codecompanion_slash_commands" },
-+        { name = "codecompanion_models" },
 +      }, cmp.get_config().sources),
      })
    end
@@ -163,8 +109,60 @@ index 7ad7f46..d8ffeb6 100644
    local winnr = api.nvim_open_win(bufnr, true, {
      relative = opts.relative or "cursor",
      border = "single",
+diff --git a/lua/codecompanion/providers/completion/cmp/models.lua b/lua/codecompanion/providers/completion/cmp/models.lua
+index b662d18..a82d104 100644
+--- a/lua/codecompanion/providers/completion/cmp/models.lua
++++ b/lua/codecompanion/providers/completion/cmp/models.lua
+@@ -8,7 +8,7 @@ function source.new(config)
+ end
+ 
+ function source:is_available()
+-  return vim.bo.filetype == "codecompanion" and self.config.display.chat.show_settings
++  return vim.bo.filetype == "markdown" and vim.b.codecompanion and self.config.display.chat.show_settings
+ end
+ 
+ source.get_position_encoding_kind = function()
+diff --git a/lua/codecompanion/providers/completion/cmp/slash_commands.lua b/lua/codecompanion/providers/completion/cmp/slash_commands.lua
+index f3608a3..efc1e57 100644
+--- a/lua/codecompanion/providers/completion/cmp/slash_commands.lua
++++ b/lua/codecompanion/providers/completion/cmp/slash_commands.lua
+@@ -9,7 +9,7 @@ function source.new(config)
+ end
+ 
+ function source:is_available()
+-  return vim.bo.filetype == "codecompanion"
++  return vim.bo.filetype == "markdown" and vim.b.codecompanion
+ end
+ 
+ function source:get_trigger_characters()
+diff --git a/lua/codecompanion/providers/completion/cmp/tools.lua b/lua/codecompanion/providers/completion/cmp/tools.lua
+index d793224..6c20bb6 100644
+--- a/lua/codecompanion/providers/completion/cmp/tools.lua
++++ b/lua/codecompanion/providers/completion/cmp/tools.lua
+@@ -5,7 +5,7 @@ function source.new(config)
+ end
+ 
+ function source:is_available()
+-  return vim.bo.filetype == "codecompanion"
++  return vim.bo.filetype == "markdown" and vim.b.codecompanion
+ end
+ 
+ source.get_position_encoding_kind = function()
+diff --git a/lua/codecompanion/providers/completion/cmp/variables.lua b/lua/codecompanion/providers/completion/cmp/variables.lua
+index fdc2cb7..1634ceb 100644
+--- a/lua/codecompanion/providers/completion/cmp/variables.lua
++++ b/lua/codecompanion/providers/completion/cmp/variables.lua
+@@ -5,7 +5,7 @@ function source.new()
+ end
+ 
+ function source:is_available()
+-  return vim.bo.filetype == "codecompanion"
++  return vim.bo.filetype == "markdown" and vim.b.codecompanion
+ end
+ 
+ source.get_position_encoding_kind = function()
 diff --git a/lua/codecompanion/strategies/chat/init.lua b/lua/codecompanion/strategies/chat/init.lua
-index 5f2e461..5f04d2d 100644
+index 8fc2978..5376448 100644
 --- a/lua/codecompanion/strategies/chat/init.lua
 +++ b/lua/codecompanion/strategies/chat/init.lua
 @@ -228,7 +228,8 @@ function Chat.new(args)
