@@ -32,6 +32,12 @@ local function setup_keymaps()
         and '<Cmd>lua vim.lsp.buf.type_definition()<CR>'
       or 'gD'
   end, { expr = true, desc = 'Go to type definition' })
+  vim.keymap.set(
+    { 'n', 'x' },
+    'g<C-d>',
+    '<Cmd>lua vim.lsp.buf.declaration()<CR>',
+    { desc = 'Go to declaration' }
+  )
   -- stylua: ignore start
   vim.keymap.set({ 'n', 'x' }, '<Leader>r', function() vim.lsp.buf.rename() end, { desc = 'Rename symbol' })
   vim.keymap.set({ 'n', 'x' }, '<Leader>a', function() vim.lsp.buf.code_action() end, { desc = 'Show code actions' })
