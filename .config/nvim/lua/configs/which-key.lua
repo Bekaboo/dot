@@ -98,6 +98,7 @@ wk.setup({
 wk.add({
   { '<Leader>g', group = 'Git' },
   { '<Leader>f', group = 'Find' },
+  { '<Leader>fg', group = 'Git' },
   { '<Leader>G', group = 'Debug' },
   { '<Leader><Leader>', group = 'Extra' },
 })
