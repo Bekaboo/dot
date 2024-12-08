@@ -2,43 +2,39 @@
 -- https://github.com/neovim/neovim/commit/2257ade3dc2daab5ee12d27807c0b3bcf103cd29
 vim.loader.enable()
 
-local g = vim.g
-local opt = vim.opt
-local env = vim.env
+vim.g.has_ui = #vim.api.nvim_list_uis() > 0
+vim.g.has_gui = vim.fn.has('gui_running') == 1
+vim.g.has_display = vim.g.has_ui and vim.env.DISPLAY ~= nil
+vim.g.has_nf = vim.env.TERM ~= 'linux' and vim.env.NVIM_NF and true or false
 
-g.has_ui = #vim.api.nvim_list_uis() > 0
-g.has_gui = vim.fn.has('gui_running') == 1
-g.has_display = g.has_ui and env.DISPLAY ~= nil
-g.has_nf = env.TERM ~= 'linux' and env.NVIM_NF and true or false
-
-opt.confirm = true
-opt.timeout = false
-opt.colorcolumn = '+1'
-opt.cursorlineopt = 'number'
-opt.cursorline = true
-opt.foldlevelstart = 99
-opt.foldtext = ''
-opt.helpheight = 10
-opt.showmode = false
-opt.mousemoveevent = true
-opt.number = true
-opt.ruler = true
-opt.pumheight = 16
-opt.scrolloff = 4
-opt.sidescrolloff = 8
-opt.signcolumn = 'yes:1'
-opt.splitright = true
-opt.splitbelow = true
-opt.swapfile = false
-opt.undofile = true
-opt.wrap = false
-opt.linebreak = true
-opt.breakindent = true
-opt.smoothscroll = true
-opt.ignorecase = true
-opt.smartcase = true
-opt.completeopt = 'menuone'
-opt.jumpoptions = 'stack,view'
+vim.opt.confirm = true
+vim.opt.timeout = false
+vim.opt.colorcolumn = '+1'
+vim.opt.cursorlineopt = 'number'
+vim.opt.cursorline = true
+vim.opt.foldlevelstart = 99
+vim.opt.foldtext = ''
+vim.opt.helpheight = 10
+vim.opt.showmode = false
+vim.opt.mousemoveevent = true
+vim.opt.number = true
+vim.opt.ruler = true
+vim.opt.pumheight = 16
+vim.opt.scrolloff = 4
+vim.opt.sidescrolloff = 8
+vim.opt.signcolumn = 'yes:1'
+vim.opt.splitright = true
+vim.opt.splitbelow = true
+vim.opt.swapfile = false
+vim.opt.undofile = true
+vim.opt.wrap = false
+vim.opt.linebreak = true
+vim.opt.breakindent = true
+vim.opt.smoothscroll = true
+vim.opt.ignorecase = true
+vim.opt.smartcase = true
+vim.opt.completeopt = 'menuone'
+vim.opt.jumpoptions = 'stack,view'
 
 -- Defer shada rea
 local shada_read ---@boolean?
@@ -56,7 +52,7 @@ local function rshada()
   return true
 end
 
-opt.shada = ''
+vim.opt.shada = ''
 vim.api.nvim_create_autocmd('BufReadPre', { once = true, callback = rshada })
 vim.api.nvim_create_autocmd('UIEnter', {
   once = true,
@@ -64,7 +60,7 @@ vim.api.nvim_create_autocmd('UIEnter', {
 })
 
 -- Recognize numbered lists when formatting text
-opt.formatoptions:append('n')
+vim.opt.formatoptions:append('n')
 
 -- Spell check
 local spellcheck_set
@@ -108,7 +104,7 @@ vim.api.nvim_create_autocmd('UIEnter', {
 })
 
 -- Cursor shape
-opt.gcr = {
+vim.opt.gcr = {
   'i-c-ci-ve:blinkoff500-blinkon500-block-TermCursor',
   'n-v:block-Curosr/lCursor',
   'o:hor50-Curosr/lCursor',
@@ -117,33 +113,33 @@ opt.gcr = {
 
 -- Use histogram algorithm for diffing, generates more readable diffs in
 -- situations where two lines are swapped
-opt.diffopt:append({
+vim.opt.diffopt:append({
   'algorithm:histogram',
   'indent-heuristic',
 })
 
 -- Use system clipboard
-opt.clipboard:append('unnamedplus')
+vim.opt.clipboard:append('unnamedplus')
 
 -- Align columns in quickfix window
-opt.quickfixtextfunc = [[v:lua.require'utils.misc'.qftf]]
+vim.opt.quickfixtextfunc = [[v:lua.require'utils.misc'.qftf]]
 
-opt.backup = true
-opt.backupdir:remove('.')
+vim.opt.backup = true
+vim.opt.backupdir:remove('.')
 
-opt.list = true
-opt.listchars = {
+vim.opt.list = true
+vim.opt.listchars = {
   tab = '  ',
   trail = '·',
 }
-opt.fillchars = {
+vim.opt.fillchars = {
   fold = '·',
   foldsep = ' ',
   eob = ' ',
 }
 
-if g.has_nf then
-  opt.fillchars:append({
+if vim.g.has_nf then
+  vim.opt.fillchars:append({
     foldopen = '',
     foldclose = '',
   })
@@ -152,33 +148,33 @@ end
 vim.api.nvim_create_autocmd('UIEnter', {
   once = true,
   callback = function()
-    if opt.termguicolors:get() then
-      opt.conceallevel = 2
-      opt.listchars:append({ nbsp = '␣' })
-      opt.fillchars:append({ diff = '╱' })
+    if vim.opt.termguicolors:get() then
+      vim.opt.conceallevel = 2
+      vim.opt.listchars:append({ nbsp = '␣' })
+      vim.opt.fillchars:append({ diff = '╱' })
     end
     return true
   end,
 })
 
 -- Netrw settings
-g.netrw_banner = 0
-g.netrw_cursor = 5
-g.netrw_keepdir = 0
-g.netrw_keepj = ''
-g.netrw_list_hide = [[\(^\|\s\s\)\zs\.\S\+]]
-g.netrw_liststyle = 1
-g.netrw_localcopydircmd = 'cp -r'
+vim.g.netrw_banner = 0
+vim.g.netrw_cursor = 5
+vim.g.netrw_keepdir = 0
+vim.g.netrw_keepj = ''
+vim.g.netrw_list_hide = [[\(^\|\s\s\)\zs\.\S\+]]
+vim.g.netrw_liststyle = 1
+vim.g.netrw_localcopydircmd = 'cp -r'
 
 -- Fzf settings
-g.fzf_layout = {
+vim.g.fzf_layout = {
   window = {
     width = 0.7,
     height = 0.7,
     pos = 'center',
   },
 }
-env.FZF_DEFAULT_OPTS = (env.FZF_DEFAULT_OPTS or '')
+vim.env.FZF_DEFAULT_OPTS = (vim.env.FZF_DEFAULT_OPTS or '')
   .. ' --border=sharp --margin=0 --padding=0'
 
 ---Lazy-load runtime files
@@ -186,11 +182,11 @@ env.FZF_DEFAULT_OPTS = (env.FZF_DEFAULT_OPTS or '')
 ---@param flag string
 ---@param events string|string[]
 local function load(runtime, flag, events)
-  if g[flag] and g[flag] ~= 0 then
+  if vim.g[flag] and vim.g[flag] ~= 0 then
     return
   end
 
-  g[flag] = 0
+  vim.g[flag] = 0
   if type(events) == 'string' then
     events = { events }
   end
@@ -209,8 +205,8 @@ local function load(runtime, flag, events)
       pattern = e[2],
       group = gid,
       callback = function()
-        if g[flag] == 0 then
-          g[flag] = nil
+        if vim.g[flag] == 0 then
+          vim.g[flag] = nil
           vim.cmd.runtime(runtime)
         end
         vim.api.nvim_del_augroup_by_id(gid)
