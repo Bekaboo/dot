@@ -302,7 +302,7 @@ paths:
 ├── lua
 │   ├── core                    # files under this folder is required by 'init.lua'
 │   │   ├── autocmds.lua
-│   │   ├── general.lua         # options and general settings
+│   │   ├── opts.lua            # options and general settings
 │   │   ├── keymaps.lua
 │   │   └── modules.lua         # bootstraps plugin manager and specifies which modules to include
 │   ├── modules                 # all plugin specifications and configs go here
@@ -401,7 +401,7 @@ enable_modules({
 
 ### General Settings and Options
 
-See [lua/core/general.lua](lua/core/general.lua).
+See [lua/core/opts.lua](lua/core/opts.lua).
 
 ### Environment Variables
 
