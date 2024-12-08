@@ -56,7 +56,10 @@ vim.opt.shada = ''
 vim.api.nvim_create_autocmd('BufReadPre', { once = true, callback = rshada })
 vim.api.nvim_create_autocmd('UIEnter', {
   once = true,
-  callback = vim.schedule_wrap(rshada),
+  callback = function()
+    vim.schedule(rshada)
+    return true
+  end,
 })
 
 -- Recognize numbered lists when formatting text
