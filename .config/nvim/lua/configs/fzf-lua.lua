@@ -666,13 +666,14 @@ vim.keymap.set('n', '<Leader>f<Esc>', '<Nop>', { desc = 'Cancel' })
 ---supporting symbol method is attached
 function fzf.symbols()
   if
-    not vim.tbl_isempty(vim.lsp.get_clients({
+    vim.tbl_isempty(vim.lsp.get_clients({
+      bufnr = 0,
       method = 'textDocument/documentSymbol',
     }))
   then
-    return fzf.lsp_document_symbols()
+    return fzf.treesitter()
   end
-  return fzf.treesitter()
+  return fzf.lsp_document_symbols()
 end
 
 ---@param buf integer
