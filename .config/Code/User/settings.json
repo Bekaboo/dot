@@ -6,6 +6,9 @@
   "editor.renderLineHighlight": "none",
   "editor.suggest.selectionMode": "never",
   "editor.wordWrap": "off",
+  "extensions.experimental.affinity": {
+    "asvetliakov.vscode-neovim": 1
+  },
   "files.autoSave": "onFocusChange",
   "security.workspace.trust.untrustedFiles": "open",
   "terminal.integrated.allowChords": false,
