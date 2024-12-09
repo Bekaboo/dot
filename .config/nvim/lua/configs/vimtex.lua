@@ -25,5 +25,10 @@ vim.api.nvim_create_autocmd('FileType', {
     vim.keymap.set('n', 'css', function()
       vim.fn['vimtex#delim#add_modifiers']()
     end, { buffer = info.buf })
+    -- Remove default `]]` mapping in insert mode as it causes lagging
+    -- when typing `]`
+    pcall(vim.keymap.del, 'i', ']]', {
+      buffer = info.buf,
+    })
   end,
 })
