@@ -12,10 +12,6 @@ vim.opt.timeout = false
 vim.opt.colorcolumn = '+1'
 vim.opt.cursorlineopt = 'number'
 vim.opt.cursorline = true
-vim.opt.foldlevelstart = 99
-vim.opt.foldtext = ''
-vim.opt.foldmethod = 'expr'
-vim.opt.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
 vim.opt.helpheight = 10
 vim.opt.showmode = false
 vim.opt.mousemoveevent = true
@@ -61,6 +57,27 @@ vim.api.nvim_create_autocmd('UIEnter', {
   callback = function()
     vim.schedule(rshada)
     return true
+  end,
+})
+
+-- Folding
+vim.opt.foldlevelstart = 99
+vim.opt.foldtext = ''
+vim.api.nvim_create_autocmd('FileType', {
+  group = vim.api.nvim_create_augroup('TSFolding', {}),
+  desc = 'Set treesitter folding.',
+  callback = function(info)
+    local buf = info.buf
+    if not require('utils.treesitter').is_active(buf) then
+      return
+    end
+    vim.api.nvim_buf_call(buf, function()
+      local o = vim.opt_local
+      local fdm = o.fdm:get() ---@diagnostic disable-line: undefined-field
+      local fde = o.fde:get() ---@diagnostic disable-line: undefined-field
+      o.fdm = fdm == 'manual' and 'expr' or fdm
+      o.fde = fde == '0' and 'v:lua.vim.treesitter.foldexpr()' or fde
+    end)
   end,
 })
 
