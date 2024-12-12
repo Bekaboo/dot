@@ -10,17 +10,20 @@ md2html() {
         --css ~/.pandoc/css/paper.css \
         -t html \
         "$1" \
-        -o $(echo "$1" | sed "s/.md$/.html/")
+        -o "${1%.md}.html"
 }
 
 main() {
     for file in "$@"; do
         # Pictures in markdown cannot be fetched if
         # we are not in the same directory.
-        cd $(dirname $(fullpath "$file"))
-        md2html $(basename "$file")
-        cd -
+        cd "$(dirname "$(readlink -f "$file")")" >/dev/null 2>&1 || exit 1
+        md2html "$(basename "$file")" || {
+            echo >&2 "md2html: error: pandoc failed to convert '$file'"
+            exit 1
+        }
+        cd - >/dev/null 2>&1
     done
 }
 
-main $@
+main "$@"

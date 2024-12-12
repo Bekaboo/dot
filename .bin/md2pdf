@@ -3,8 +3,8 @@
 
 md2pdf() {
     pandoc \
-        --lua-filter ${HOME}/.pandoc/md2pdf_filter.lua \
-        --pdf-engine=${PDF_ENGINE} \
+        --lua-filter="${HOME}/.pandoc/md2pdf_filter.lua" \
+        --pdf-engine="${PDF_ENGINE}" \
         -V block-headings \
         -V colorlinks=true \
         -V CJKmainfont="Source Han Serif CN" \
@@ -12,7 +12,7 @@ md2pdf() {
         -f markdown-implicit_figures \
         -t pdf \
         "$1" \
-        -o $(echo "$1" | sed "s/.md$/.pdf/")
+        -o "${1%.md}.pdf"
 }
 
 main() {
@@ -35,7 +35,7 @@ main() {
             PDF_ENGINE="pdflatex"
             ;;
         -h | --help | -\?)
-            echo "Usage: $(basename $0) [-l|-x|-m|-h|-p] files" >&2
+            echo "Usage: $(basename "$0") [-l|-x|-m|-h|-p] files" >&2
             exit 1
             ;;
         --pdf-engine=*)
@@ -59,13 +59,13 @@ main() {
     for file in "$@"; do
         # Pictures in markdown cannot be fetched if
         # we are not in the same directory.
-        cd $(dirname $(fullpath "$file")) >/dev/null 2>&1
-        md2pdf $(basename "$file") || {
-            echo >&2 "md2pdf: error: pandoc failed to convert $file with edit code $?"
+        cd "$(dirname "$(readlink -f "$file")")" >/dev/null 2>&1 || exit 1
+        md2pdf "$(basename "$file")" || {
+            echo >&2 "md2pdf: error: pandoc failed to convert '$file' with edit code $?"
             exit 1
         }
         cd - >/dev/null 2>&1
     done
 }
 
-main $@
+main "$@"

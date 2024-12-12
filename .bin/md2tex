@@ -7,17 +7,20 @@ md2tex() {
         -f markdown-implicit_figures \
         -t latex \
         "$1" \
-        -o $(echo "$1" | sed "s/.md$/.tex/")
+        -o "${1%.md}.tex"
 }
 
 main() {
     for file in "$@"; do
         # Pictures in markdown cannot be fetched if
         # we are not in the same directory.
-        cd $(dirname $(fullpath "$file"))
-        md2tex $(basename "$file")
-        cd -
+        cd "$(dirname "$(readlink -f "$file")")" >/dev/null 2>&1 || exit 1
+        md2tex "$(basename "$file")" || {
+            echo >&2 "md2tex: error: pandoc failed to convert '$file'"
+            exit 1
+        }
+        cd - >/dev/null 2>&1
     done
 }
 
-main $@
+main "$@"
