@@ -1264,58 +1264,6 @@ if exists(':tmap') == 2
 
   " Use <C-\><C-r> to insert contents of a register in terminal mode
   tnoremap <expr> <C-\><C-r> (&twk ? &twk : '<C-w>') . '"' . nr2char(getchar())
-
-  " Workaround to avoid <M-...> keymaps in terminal mode to be interpreted to
-  " <Esc> + ... (seperate keystrokes) given `<Esc>` is mapped to itself
-  " with argument `<nowait>` in terminal mode
-  for char in split("ABCDEFGHIJKLMNOPQRSTUVWXYZ
-        \abcdefghijklmnopqrstuvwxyz
-        \0123456789`~!@#$%^&*()-_=+[]{}\\|;:'\",.<>/?", '.\zs')
-    let char_esc = escape(char, '\|')
-    exe printf('tnoremap <Esc>%s <Esc>%s', char_esc, char_esc)
-  endfor
-
-  tnoremap <expr> <C-6>   <SID>running_tui() ? '<C-6>'   : '<C-\><C-n>:b#<CR>'
-  tnoremap <expr> <C-^>   <SID>running_tui() ? '<C-^>'   : '<C-\><C-n>:b#<CR>'
-  tnoremap <expr> <Esc>v  <SID>running_tui() ? '<Esc>v'  : '<C-\><C-n><C-w>vi'
-  tnoremap <expr> <Esc>s  <SID>running_tui() ? '<Esc>s'  : '<C-\><C-n><C-w>si'
-  tnoremap <expr> <Esc>W  <SID>running_tui() ? '<Esc>W'  : '<C-\><C-n><C-w>Wi'
-  tnoremap <expr> <Esc>H  <SID>running_tui() ? '<Esc>H'  : '<C-\><C-n><C-w>Hi'
-  tnoremap <expr> <Esc>J  <SID>running_tui() ? '<Esc>J'  : '<C-\><C-n><C-w>Ji'
-  tnoremap <expr> <Esc>K  <SID>running_tui() ? '<Esc>K'  : '<C-\><C-n><C-w>Ki'
-  tnoremap <expr> <Esc>L  <SID>running_tui() ? '<Esc>L'  : '<C-\><C-n><C-w>Li'
-  tnoremap <expr> <Esc>r  <SID>running_tui() ? '<Esc>r'  : '<C-\><C-n><C-w>ri'
-  tnoremap <expr> <Esc>R  <SID>running_tui() ? '<Esc>R'  : '<C-\><C-n><C-w>Ri'
-  tnoremap <expr> <Esc>o  <SID>running_tui() ? '<Esc>o'  : '<C-\><C-n><C-w>oi'
-  tnoremap <expr> <Esc>x  <SID>running_tui() ? '<Esc>x'  : '<C-\><C-n><C-w>x'
-  tnoremap <expr> <Esc>p  <SID>running_tui() ? '<Esc>p'  : '<C-\><C-n><C-w>p'
-  tnoremap <expr> <Esc>c  <SID>running_tui() ? '<Esc>c'  : '<C-\><C-n><C-w>c'
-  tnoremap <expr> <Esc>q  <SID>running_tui() ? '<Esc>q'  : '<C-\><C-n><C-w>q'
-  tnoremap <expr> <Esc>w  <SID>running_tui() ? '<Esc>w'  : '<C-\><C-n><C-w>w'
-  tnoremap <expr> <Esc>h  <SID>running_tui() ? '<Esc>h'  : '<C-\><C-n><C-w>h'
-  tnoremap <expr> <Esc>j  <SID>running_tui() ? '<Esc>j'  : '<C-\><C-n><C-w>j'
-  tnoremap <expr> <Esc>k  <SID>running_tui() ? '<Esc>k'  : '<C-\><C-n><C-w>k'
-  tnoremap <expr> <Esc>l  <SID>running_tui() ? '<Esc>l'  : '<C-\><C-n><C-w>l'
-  tnoremap <expr> <Esc><Left>  <SID>running_tui() ? '<Esc><Left>'  : '<C-\><C-n><C-w><Left>'
-  tnoremap <expr> <Esc><Down>  <SID>running_tui() ? '<Esc><Down>'  : '<C-\><C-n><C-w><Down>'
-  tnoremap <expr> <Esc><Up>    <SID>running_tui() ? '<Esc><Up>'    : '<C-\><C-n><C-w><Up>'
-  tnoremap <expr> <Esc><Right> <SID>running_tui() ? '<Esc><Right>' : '<C-\><C-n><C-w><Right>'
-  tnoremap <expr> <Esc>=  <SID>running_tui() ? '<Esc>='  : '<C-\><C-n><C-w>=i'
-  tnoremap <expr> <Esc>_  <SID>running_tui() ? '<Esc>_'  : '<C-\><C-n><C-w>_i'
-  tnoremap <expr> <Esc>\| <SID>running_tui() ? '<Esc>\|' : '<C-\><C-n><C-w>\|i'
-  tnoremap <expr> <Esc>+  <SID>running_tui() ? '<Esc>+'  : '<C-\><C-n><C-w>2+i'
-  tnoremap <expr> <Esc>-  <SID>running_tui() ? '<Esc>-'  : '<C-\><C-n><C-w>2-i'
-  if has('patch-8.1.1140')
-    tnoremap <expr> <Esc>> <SID>running_tui() ? '<Esc>>' : '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '<' : '>') . 'i'
-    tnoremap <expr> <Esc>< <SID>running_tui() ? '<Esc><' : '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '>' : '<') . 'i'
-    tnoremap <expr> <Esc>. <SID>running_tui() ? '<Esc>.' : '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '<' : '>') . 'i'
-    tnoremap <expr> <Esc>, <SID>running_tui() ? '<Esc>,' : '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '>' : '<') . 'i'
-  else
-    tnoremap <expr> <Esc>> <SID>running_tui() ? '<Esc>>' : '<C-\><C-n><C-w>4>i'
-    tnoremap <expr> <Esc>< <SID>running_tui() ? '<Esc><' : '<C-\><C-n><C-w>4<i'
-    tnoremap <expr> <Esc>. <SID>running_tui() ? '<Esc>.' : '<C-\><C-n><C-w>4>i'
-    tnoremap <expr> <Esc>, <SID>running_tui() ? '<Esc>,' : '<C-\><C-n><C-w>4<i'
-  endif
 endif
 
 if s:supportevents('TerminalWinOpen')
