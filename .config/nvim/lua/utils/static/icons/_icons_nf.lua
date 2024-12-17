@@ -114,7 +114,7 @@ return {
     Desktop             = '󰟀 ',
     Elisp               = ' ',
     Git                 = '󰊢 ',
-    Ipynb               = '󰠮 ',
+    Ipynb               = ' ',
     Java                = ' ',
     Lock                = '󰌾 ',
     Lua                 = ' ',
