@@ -63,3 +63,14 @@ vim.schedule(function()
     end,
   })
 end)
+
+vim.api.nvim_create_autocmd('InsertEnter', {
+  desc = 'Disable codeium in big files.',
+  group = vim.api.nvim_create_augroup('CodeiumSetup', {}),
+  callback = function()
+    if vim.b.bigfile then
+      vim.b.codeium_enabled = false
+      vim.b.codeium_excluded = true
+    end
+  end,
+})
