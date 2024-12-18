@@ -99,16 +99,21 @@ end
 ---Enable modules
 ---@param module_names string[]? when omitted, enable all modules under `lua/modules`
 local function enable_modules(module_names)
+  local modules_path = vim.fs.joinpath(conf_path, 'lua/modules')
+
   if not module_names then
     module_names = {}
-    for item in vim.fs.dir(vim.fs.joinpath(conf_path, 'lua/modules')) do
+    for item in vim.fs.dir(modules_path) do
       table.insert(module_names, vim.fn.fnamemodify(item, ':r'))
     end
   end
 
   local modules = {}
   for _, module_name in ipairs(module_names) do
-    vim.list_extend(modules, require('modules.' .. module_name))
+    vim.list_extend(
+      modules,
+      dofile(vim.fs.joinpath(modules_path, module_name .. '.lua'))
+    )
   end
 
   -- Preload modified lazy.nvim modules so that they won't be loaded
