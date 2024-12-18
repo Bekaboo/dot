@@ -1,33 +1,30 @@
 diff --git a/lua/fzf-lua/providers/buffers.lua b/lua/fzf-lua/providers/buffers.lua
-index 00556c1..4d2c51d 100644
+index 7150479..2139380 100644
 --- a/lua/fzf-lua/providers/buffers.lua
 +++ b/lua/fzf-lua/providers/buffers.lua
-@@ -62,8 +62,10 @@ end
- local populate_buffer_entries = function(opts, bufnrs, winid)
-   local buffers = {}
-   for _, bufnr in ipairs(bufnrs) do
--    local flag = (bufnr == core.CTX().bufnr and "%")
--        or (bufnr == core.CTX().alt_bufnr and "#") or " "
-+    local flag = (opts.buf_flags and opts.buf_flags[bufnr])
-+        or (bufnr == core.CTX().bufnr and "%")
-+        or (bufnr == core.CTX().alt_bufnr and "#")
-+        or " "
- 
-     local element = {
-       bufnr = bufnr,
-@@ -94,9 +96,9 @@ local populate_buffer_entries = function(opts, bufnrs, winid)
-     -- DON'T FORCE ME TO UPDATE THIS HACK NEOVIM LOL
-     local future = os.time({ year = 2100, month = 1, day = 1, hour = 0, minute = 00 })
-     local get_unixtime = function(buf)
--      if buf.flag == "%" then
-+      if buf.flag:match("%%") then
-         return future
--      elseif buf.flag == "#" then
-+      elseif buf.flag:match("#") then
-         return future - 1
-       else
-         return buf.info.lastused
-@@ -111,11 +113,10 @@ end
+@@ -64,7 +64,8 @@ local getbuf = function(buf)
+   return {
+     bufnr = buf,
+     flag = (buf == core.CTX().bufnr and "%")
+-        or (buf == core.CTX().alt_bufnr and "#") or " ",
++        or (buf == core.CTX().alt_bufnr and "#")
++        or " ",
+     info = utils.getbufinfo(buf),
+     readonly = vim.bo[buf].readonly
+   }
+@@ -82,9 +83,9 @@ local get_unixtime = function(buf)
+     -- When called from `buffer_lines`
+     buf = getbuf(buf)
+   end
+-  if buf.flag == "%" then
++  if buf.flag:match("%%") then
+     return _FUTURE
+-  elseif buf.flag == "#" then
++  elseif buf.flag:match("#") then
+     return _FUTURE - 1
+   else
+     return buf.info.lastused
+@@ -120,11 +121,10 @@ end
  
  
  local function gen_buffer_entry(opts, buf, max_bufnr, cwd, prefix)
@@ -43,7 +40,7 @@ index 00556c1..4d2c51d 100644
    local leftbr = "["
    local rightbr = "]"
    local bufname = (function()
-@@ -131,12 +132,12 @@ local function gen_buffer_entry(opts, buf, max_bufnr, cwd, prefix)
+@@ -140,12 +140,12 @@ local function gen_buffer_entry(opts, buf, max_bufnr, cwd, prefix)
          { cwd = cwd or opts.cwd or uv.cwd(), file_icons = false, git_icons = false }))
      end
    end)()
@@ -59,7 +56,7 @@ index 00556c1..4d2c51d 100644
    end
    local bufnrstr = string.format("%s%s%s", leftbr,
      utils.ansi_codes[opts.hls.buf_nr](tostring(buf.bufnr)), rightbr)
-@@ -169,7 +170,26 @@ M.buffers = function(opts)
+@@ -178,7 +178,26 @@ M.buffers = function(opts)
  
    opts.__fn_reload = opts.__fn_reload or function(_)
      return function(cb)
@@ -88,7 +85,7 @@ index 00556c1..4d2c51d 100644
        if next(filtered) then
          local buffers = populate_buffer_entries(opts, filtered)
 diff --git a/lua/fzf-lua/providers/nvim.lua b/lua/fzf-lua/providers/nvim.lua
-index 97c892e..1225235 100644
+index 0c35f78..aa63c63 100644
 --- a/lua/fzf-lua/providers/nvim.lua
 +++ b/lua/fzf-lua/providers/nvim.lua
 @@ -124,8 +124,8 @@ end
@@ -103,10 +100,10 @@ index 97c892e..1225235 100644
    history(opts, "search")
  end
 diff --git a/lua/fzf-lua/win.lua b/lua/fzf-lua/win.lua
-index f9db4b7..023c1a2 100644
+index 908bdc0..3189b1f 100644
 --- a/lua/fzf-lua/win.lua
 +++ b/lua/fzf-lua/win.lua
-@@ -1505,10 +1505,10 @@ function FzfWin.toggle_help()
+@@ -1619,10 +1619,10 @@ function FzfWin.toggle_help()
      style = "minimal",
      width = vim.o.columns,
      height = height,
