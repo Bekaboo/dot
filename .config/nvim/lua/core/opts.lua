@@ -34,7 +34,7 @@ vim.opt.smartcase = true
 vim.opt.completeopt = 'menuone'
 vim.opt.jumpoptions = 'stack,view'
 
--- Defer shada rea
+-- Defer shada reading
 local shada_read ---@boolean?
 
 ---Restore 'shada' option and read from shada once
