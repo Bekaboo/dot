@@ -2,8 +2,8 @@ if vim.env.NVIM_NO3RD then
   return
 end
 
-local utils = require('utils')
-local icons = utils.static.icons
+local json = require('utils.json')
+local icons = require('utils.static.icons')
 local conf_path = vim.fn.stdpath('config') --[[@as string]]
 local data_path = vim.fn.stdpath('data') --[[@as string]]
 local state_path = vim.fn.stdpath('state') --[[@as string]]
@@ -35,7 +35,7 @@ local function bootstrap()
   end
 
   local startup_file = vim.fs.joinpath(state_path, 'startup.json')
-  local startup_data = utils.json.read(startup_file)
+  local startup_data = json.read(startup_file)
   if startup_data.bootstrap == false then
     return false
   end
@@ -50,7 +50,7 @@ local function bootstrap()
 
   if vim.fn.match(response, '[Nn][Ee][Vv][Ee][Rr]') >= 0 then
     startup_data.bootstrap = false
-    utils.json.write(startup_file, startup_data)
+    json.write(startup_file, startup_data)
     vim.notify(
       string.format(
         "\n[modules] bootstrap disabled, remove '%s' to re-enable",
@@ -65,7 +65,7 @@ local function bootstrap()
   end
 
   print('\n')
-  local lock_data = utils.json.read(vim.g.package_lock)
+  local lock_data = json.read(vim.g.package_lock)
   local commit = lock_data['lazy.nvim'] and lock_data['lazy.nvim'].commit
   local url = 'https://github.com/folke/lazy.nvim.git'
   vim.notify('[modules] installing lazy.nvim...')
