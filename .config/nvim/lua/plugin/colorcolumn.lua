@@ -119,43 +119,56 @@ local function cc_update(winid)
   cc_show(winid)
 end
 
----Conceal colorcolumn in each window
-for _, win in ipairs(vim.api.nvim_list_wins()) do
-  cc_conceal(win)
+---Setup colorcolumn
+---@return nil
+local function setup()
+  if vim.g.loaded_colorcolumn ~= nil then
+    return
+  end
+  vim.g.loaded_colorcolumn = true
+
+  ---Conceal colorcolumn in each window
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    cc_conceal(win)
+  end
+
+  ---Create autocmds for concealing / showing colorcolumn
+  local id = vim.api.nvim_create_augroup('AutoColorColumn', {})
+  vim.api.nvim_create_autocmd({ 'InsertLeave', 'WinLeave' }, {
+    desc = 'Conceal colorcolumn when leaving insert mode or window.',
+    group = id,
+    callback = function()
+      cc_conceal(0)
+    end,
+  })
+
+  vim.api.nvim_create_autocmd('ColorScheme', {
+    desc = 'Update base colors.',
+    group = id,
+    callback = update_hl_hex,
+  })
+
+  vim.api.nvim_create_autocmd({ 'BufWinEnter', 'ColorScheme' }, {
+    desc = 'Update colorcolumn color.',
+    group = id,
+    callback = function()
+      if vim.fn.mode():find('^[icRss\x13]') then
+        cc_update(0)
+      else
+        cc_conceal(0)
+      end
+    end,
+  })
+
+  vim.api.nvim_create_autocmd({ 'CursorMovedI', 'InsertEnter' }, {
+    desc = 'Update colorcolumn color in insert mode.',
+    group = id,
+    callback = function()
+      cc_update(0)
+    end,
+  })
 end
 
----Create autocmds for concealing / showing colorcolumn
-local id = vim.api.nvim_create_augroup('AutoColorColumn', {})
-vim.api.nvim_create_autocmd({ 'InsertLeave', 'WinLeave' }, {
-  desc = 'Conceal colorcolumn when leaving insert mode or window.',
-  group = id,
-  callback = function()
-    cc_conceal(0)
-  end,
-})
-
-vim.api.nvim_create_autocmd('ColorScheme', {
-  desc = 'Update base colors.',
-  group = id,
-  callback = update_hl_hex,
-})
-
-vim.api.nvim_create_autocmd({ 'BufWinEnter', 'ColorScheme' }, {
-  desc = 'Update colorcolumn color.',
-  group = id,
-  callback = function()
-    if vim.fn.mode():find('^[icRss\x13]') then
-      cc_update(0)
-    else
-      cc_conceal(0)
-    end
-  end,
-})
-
-vim.api.nvim_create_autocmd({ 'CursorMovedI', 'InsertEnter' }, {
-  desc = 'Update colorcolumn color in insert mode.',
-  group = id,
-  callback = function()
-    cc_update(0)
-  end,
-})
+return {
+  setup = setup,
+}

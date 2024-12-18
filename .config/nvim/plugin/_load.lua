@@ -69,6 +69,35 @@ vim.api.nvim_create_autocmd({ 'BufWritePost', 'BufWinEnter' }, {
   end,
 })
 
+-- colorcolumn
+vim.api.nvim_create_autocmd('UIEnter', {
+  group = vim.api.nvim_create_augroup('ColorColumnSetup', {}),
+  desc = 'Init colorcolumn plugin.',
+  once = true,
+  callback = vim.schedule_wrap(function()
+    require('plugin.colorcolumn').setup()
+    return true
+  end),
+})
+
+-- winbar
+vim.api.nvim_create_autocmd('FileType', {
+  once = true,
+  group = vim.api.nvim_create_augroup('WinBarSetup', {}),
+  callback = function()
+    local winbar = require('plugin.winbar')
+    local api = require('plugin.winbar.api')
+    winbar.setup({ bar = { hover = false } })
+
+    -- stylua: ignore start
+    vim.keymap.set('n', '<Leader>;', api.pick, { desc = 'Pick symbols in winbar' })
+    vim.keymap.set('n', '[;', api.goto_context_start, { desc = 'Go to start of current context' })
+    vim.keymap.set('n', '];', api.select_next_context, { desc = 'Select next context' })
+    -- stylua: ignore end
+    return true
+  end,
+})
+
 -- statusline
 vim.go.statusline = [[%!v:lua.require'plugin.statusline'.get()]]
 
@@ -95,24 +124,6 @@ if vim.g.has_ui then
     end),
   })
 end
-
--- winbar
-vim.api.nvim_create_autocmd('FileType', {
-  once = true,
-  group = vim.api.nvim_create_augroup('WinBarSetup', {}),
-  callback = function()
-    local winbar = require('plugin.winbar')
-    local api = require('plugin.winbar.api')
-    winbar.setup({ bar = { hover = false } })
-
-    -- stylua: ignore start
-    vim.keymap.set('n', '<Leader>;', api.pick, { desc = 'Pick symbols in winbar' })
-    vim.keymap.set('n', '[;', api.goto_context_start, { desc = 'Go to start of current context' })
-    vim.keymap.set('n', '];', api.select_next_context, { desc = 'Select next context' })
-    -- stylua: ignore end
-    return true
-  end,
-})
 
 -- tabout
 vim.api.nvim_create_autocmd({ 'InsertEnter', 'CmdlineEnter' }, {
