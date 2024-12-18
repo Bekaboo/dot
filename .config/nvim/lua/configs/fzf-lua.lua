@@ -368,6 +368,7 @@ fzf.setup({
     end,
     preview = {
       hidden = 'hidden',
+      layout = 'horizontal',
     },
   },
   hls = {
