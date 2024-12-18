@@ -337,7 +337,17 @@ local function jump(direction)
   vim.api.nvim_feedkeys(direction == 1 and TAB or S_TAB, 'nt', false)
 end
 
+---Init tabout plugin
+---@return nil
+local function setup()
+  -- stylua: ignore start
+  vim.keymap.set({ 'i', 'c' }, '<Tab>', function() require('plugin.tabout').jump(1) end, { desc = 'Tab out' })
+  vim.keymap.set({ 'i', 'c' }, '<S-Tab>', function() require('plugin.tabout').jump(-1) end, { desc = 'Tab in' })
+  -- stylua: ignore off
+end
+
 return {
+  setup = setup,
   jump = jump,
   get_jump_pos = get_jump_pos,
 }

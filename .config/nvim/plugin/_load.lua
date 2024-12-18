@@ -109,7 +109,12 @@ vim.api.nvim_create_autocmd('FileType', {
 })
 
 -- tabout
--- stylua: ignore start
-vim.keymap.set({ 'i', 'c' }, '<Tab>', function() require('plugin.tabout').jump(1) end, { desc = 'Tab out' })
-vim.keymap.set({ 'i', 'c' }, '<S-Tab>', function() require('plugin.tabout').jump(-1) end, { desc = 'Tab in' })
--- stylua: ignore end
+vim.api.nvim_create_autocmd({ 'InsertEnter', 'CmdlineEnter' }, {
+  group = vim.api.nvim_create_augroup('TabOutSetup', {}),
+  desc = 'Init tabout plugin.',
+  once = true,
+  callback = function()
+    require('plugin.tabout').setup()
+    return true
+  end,
+})
