@@ -85,9 +85,15 @@ vim.api.nvim_create_autocmd('TermOpen', {
 
 -- tmux
 if vim.g.has_ui then
-  vim.schedule(function()
-    require('plugin.tmux').setup()
-  end)
+  vim.api.nvim_create_autocmd('UIEnter', {
+    group = vim.api.nvim_create_augroup('TmuxSetup', {}),
+    desc = 'Init tmux plugin.',
+    once = true,
+    callback = vim.schedule_wrap(function()
+      require('plugin.tmux').setup()
+      return true
+    end),
+  })
 end
 
 -- winbar
