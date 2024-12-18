@@ -422,9 +422,10 @@ Neovim is configured to restore the previous background and colorscheme
 settings on startup, so there is no need to set them up in the config file
 explicitly.
 
-To disable the auto-restore feature, remove the plugin [plugin/colorscheme.lua](plugin/colorscheme.lua).
+To disable the auto-restore feature, remove the `ColorSchemeRestore` augroup
+in [lua/core/autocmds.lua](lua/core/autocmds.lua).
 
-To tweak this colorscheme, edit corresponding colorscheme files under [colors](colors).
+To tweak a colorscheme, edit corresponding colorscheme files under [colors](colors).
 
 ### Auto Commands
 
@@ -560,10 +561,6 @@ Total # of plugins: 52 (package manager included).
 - [colorcolumn](plugin/colorcolumn.lua)
     - Shows color column dynamically based on current line width
     - Released as [deadcolumn.nvim](https://github.com/Bekaboo/deadcolumn.nvim)
-- [colorscheme](plugin/colorscheme.lua)
-    - Remembers and restores previous background and colorscheme settings
-    - Syncs background and colorscheme settings among multiple Neovim instances
-      if scripts [setbg](../../.bin/setbg) and [setcolor](../../.bin/setcolor) are in `$PATH`
 - [expandtab](lua/plugin/expandtab.lua)
     - Always use spaces for alignment, even if `'expandtab'` is not set, see
       `:h 'tabstop'` point 5
