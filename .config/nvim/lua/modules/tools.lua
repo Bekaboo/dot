@@ -213,9 +213,9 @@ return {
     'stevearc/oil.nvim',
     cmd = 'Oil',
     init = function() -- Load oil on startup only when editing a directory
-      vim.g.loaded_fzf_file_explorer = 1
-      vim.g.loaded_netrw = 1
-      vim.g.loaded_netrwPlugin = 1
+      vim.g.loaded_fzf_file_explorer = 0
+      vim.g.loaded_netrw = 0
+      vim.g.loaded_netrwPlugin = 0
       vim.api.nvim_create_autocmd('BufWinEnter', {
         nested = true,
         callback = function(info)
