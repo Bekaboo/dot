@@ -362,7 +362,7 @@ augroup('ColorSchemeRestore', {
         return
       end
 
-      local utils = require('utils')
+      local json = require('utils.json')
       local colors_file = vim.fs.joinpath(
         vim.fn.stdpath('state') --[[@as string]],
         'colors.json'
@@ -373,7 +373,7 @@ augroup('ColorSchemeRestore', {
       -- 2. Spawn setbg/setcolors on colorscheme change to make other nvim instances
       --    and system color consistent with the current nvim instance.
 
-      local saved = utils.json.read(colors_file)
+      local saved = json.read(colors_file)
       saved.colors_name = saved.colors_name or 'macro'
 
       if saved.bg then
@@ -398,13 +398,13 @@ augroup('ColorSchemeRestore', {
             end
 
             vim.schedule(function()
-              local data = utils.json.read(colors_file)
+              local data = json.read(colors_file)
               if
                 data.colors_name ~= vim.g.colors_name or data.bg ~= vim.go.bg
               then
                 data.colors_name = vim.g.colors_name
                 data.bg = vim.go.bg
-                if not utils.json.write(colors_file, data) then
+                if not json.write(colors_file, data) then
                   return
                 end
               end
