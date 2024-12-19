@@ -108,10 +108,10 @@ local function enable_modules(module_names)
     end
   end
 
-  local modules = {}
+  local specs = {}
   for _, module_name in ipairs(module_names) do
     vim.list_extend(
-      modules,
+      specs,
       dofile(vim.fs.joinpath(modules_path, module_name .. '.lua'))
     )
   end
@@ -121,7 +121,7 @@ local function enable_modules(module_names)
   require('lazy.manage.task.git')
   require('lazy.view.config').keys.details = '='
 
-  require('lazy').setup(modules, {
+  require('lazy').setup(specs, {
     root = vim.g.package_path,
     lockfile = vim.g.package_lock,
     ui = {
