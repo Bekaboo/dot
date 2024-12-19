@@ -100,10 +100,10 @@ index 0c35f78..aa63c63 100644
    history(opts, "search")
  end
 diff --git a/lua/fzf-lua/win.lua b/lua/fzf-lua/win.lua
-index 908bdc0..3189b1f 100644
+index e75be70..19e7eb8 100644
 --- a/lua/fzf-lua/win.lua
 +++ b/lua/fzf-lua/win.lua
-@@ -1619,10 +1619,10 @@ function FzfWin.toggle_help()
+@@ -1620,10 +1620,10 @@ function FzfWin.toggle_help()
      style = "minimal",
      width = vim.o.columns,
      height = height,
