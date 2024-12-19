@@ -353,11 +353,29 @@ augroup('ColorSchemeRestore', {
     once = true,
     nested = true, -- invoke Colorscheme event for winbar plugin to clear bg for nvim < 0.11
     callback = function()
+      ---@param colors_name string
+      ---@return nil
+      local function load_colorscheme(colors_name)
+        local colors_path = vim.fs.joinpath(
+          vim.fn.stdpath('config') --[[@as string]],
+          'colors',
+          colors_name .. '.lua'
+        )
+        if vim.uv.fs_stat(colors_path) then
+          dofile(colors_path)
+        else
+          vim.cmd.colorscheme({
+            args = { colors_name },
+            mods = { emsg_silent = true },
+          })
+        end
+      end
+
       -- Colorschemes other than the default colorscheme looks bad when the terminal
       -- does not support truecolor
       if not vim.go.termguicolors then
         if vim.g.has_ui then
-          vim.cmd.colorscheme('default')
+          load_colorscheme('default')
         end
         return
       end
@@ -381,10 +399,7 @@ augroup('ColorSchemeRestore', {
       end
 
       if saved.colors_name and saved.colors_name ~= vim.g.colors_name then
-        vim.cmd.colorscheme({
-          args = { saved.colors_name },
-          mods = { emsg_silent = true },
-        })
+        load_colorscheme(saved.colors_name)
       end
 
       augroup('ColorSchemeSync', {
