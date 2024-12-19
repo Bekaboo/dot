@@ -1,5 +1,5 @@
 diff --git a/lua/codecompanion/init.lua b/lua/codecompanion/init.lua
-index 5dc571f..f148589 100644
+index b918622..b48aa42 100644
 --- a/lua/codecompanion/init.lua
 +++ b/lua/codecompanion/init.lua
 @@ -265,26 +265,31 @@ M.setup = function(opts)
@@ -51,7 +51,7 @@ index 5dc571f..f148589 100644
      end),
    })
  
-@@ -329,26 +334,35 @@ M.setup = function(opts)
+@@ -334,26 +339,35 @@ M.setup = function(opts)
      cmp.register_source("codecompanion_slash_commands", require(completion .. ".slash_commands").new(config))
      cmp.register_source("codecompanion_tools", require(completion .. ".tools").new(config))
      cmp.register_source("codecompanion_variables", require(completion .. ".variables").new())
@@ -162,10 +162,10 @@ index fdc2cb7..1634ceb 100644
  
  source.get_position_encoding_kind = function()
 diff --git a/lua/codecompanion/strategies/chat/init.lua b/lua/codecompanion/strategies/chat/init.lua
-index 8fc2978..5376448 100644
+index 8759387..66177de 100644
 --- a/lua/codecompanion/strategies/chat/init.lua
 +++ b/lua/codecompanion/strategies/chat/init.lua
-@@ -228,7 +228,8 @@ function Chat.new(args)
+@@ -230,7 +230,8 @@ function Chat.new(args)
      create_buf = function()
        local bufnr = api.nvim_create_buf(false, true)
        api.nvim_buf_set_name(bufnr, string.format("[CodeCompanion] %d", id))
@@ -176,7 +176,7 @@ index 8fc2978..5376448 100644
        return bufnr
      end,
 diff --git a/lua/codecompanion/strategies/chat/references.lua b/lua/codecompanion/strategies/chat/references.lua
-index 5c2144f..fa232b7 100644
+index f86ac97..abfa8ee 100644
 --- a/lua/codecompanion/strategies/chat/references.lua
 +++ b/lua/codecompanion/strategies/chat/references.lua
 @@ -69,7 +69,7 @@ end
@@ -188,15 +188,18 @@ index 5c2144f..fa232b7 100644
  
    if vim.tbl_count(chat.refs) == 1 then
      table.insert(lines, 1, "> Sharing:")
-@@ -194,7 +194,7 @@ function References:render()
-     table.insert(lines, "> Sharing:")
- 
-     for _, ref in ipairs(self.chat.refs) do
--      table.insert(lines, string.format("> - %s", ref.id))
-+      table.insert(lines, string.format("> %s", ref.id))
+@@ -203,9 +203,9 @@ function References:render()
+         goto continue
+       end
+       if ref.opts and ref.opts.pinned then
+-        table.insert(lines, string.format("> - %s%s", config.display.chat.icons.pinned_buffer, ref.id))
++        table.insert(lines, string.format("> %s%s", config.display.chat.icons.pinned_buffer, ref.id))
+       else
+-        table.insert(lines, string.format("> - %s", ref.id))
++        table.insert(lines, string.format("> %s", ref.id))
+       end
+       ::continue::
      end
-     table.insert(lines, "")
- 
 diff --git a/lua/codecompanion/strategies/chat/ui.lua b/lua/codecompanion/strategies/chat/ui.lua
 index be99b69..eb946cd 100644
 --- a/lua/codecompanion/strategies/chat/ui.lua
@@ -236,7 +239,7 @@ index be99b69..eb946cd 100644
          end
        end
 diff --git a/lua/codecompanion/utils/buffers.lua b/lua/codecompanion/utils/buffers.lua
-index 108034f..063fc56 100644
+index 2925e13..0f070c0 100644
 --- a/lua/codecompanion/utils/buffers.lua
 +++ b/lua/codecompanion/utils/buffers.lua
 @@ -11,7 +11,7 @@ function M.get_visible_lines()
