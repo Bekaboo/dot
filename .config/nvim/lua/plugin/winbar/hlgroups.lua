@@ -129,6 +129,11 @@ local function init()
   --     https://github.com/Bekaboo/dropbar.nvim/pull/195
   if vim.fn.has('nvim-0.11.0') == 0 then
     clear_winbar_bg()
+    vim.api.nvim_create_autocmd('UIEnter', {
+      once = true,
+      group = groupid,
+      callback = clear_winbar_bg,
+    })
     vim.api.nvim_create_autocmd('ColorScheme', {
       group = groupid,
       callback = clear_winbar_bg,
