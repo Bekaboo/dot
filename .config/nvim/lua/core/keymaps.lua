@@ -20,7 +20,7 @@ vim.api.nvim_create_autocmd('UIEnter', {
           return
         end
 
-        if type(modes) == 'string' then
+        if type(modes) ~= 'table' then
           modes = { modes }
         end
 

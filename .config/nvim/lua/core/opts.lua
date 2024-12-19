@@ -217,7 +217,7 @@ local function load(runtime, flag, events)
   end
 
   vim.g[flag] = 0
-  if type(events) == 'string' then
+  if type(events) ~= 'table' then
     events = { events }
   end
 
