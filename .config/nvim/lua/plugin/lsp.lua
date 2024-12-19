@@ -45,8 +45,8 @@ local function setup_keymaps()
   vim.keymap.set({ 'n', 'x' }, '<Leader>>', function() vim.lsp.buf.outgoing_calls() end, { desc = 'Show outgoing calls' })
   vim.keymap.set({ 'n', 'x' }, '<Leader>s', function() vim.lsp.buf.document_symbol() end, { desc = 'Show document symbols' })
   vim.keymap.set({ 'n', 'x' }, '<Leader>S', function() vim.lsp.buf.workspace_symbol() end, { desc = 'Show workspace symbols' })
-  vim.keymap.set({ 'n', 'x' }, '<Leader>d', function() vim.diagnostic.setloclist() end, { desc = 'Show diagnostics' })
-  vim.keymap.set({ 'n', 'x' }, '<Leader>D', function() vim.diagnostic.setqflist() end, { desc = 'Show diagnostics' })
+  vim.keymap.set({ 'n', 'x' }, '<Leader>d', function() vim.diagnostic.setloclist() end, { desc = 'Show document diagnostics' })
+  vim.keymap.set({ 'n', 'x' }, '<Leader>D', function() vim.diagnostic.setqflist() end, { desc = 'Show workspace diagnostics' })
   -- stylua: ignore end
 
   ---Open diagnostic floating window, jump to existing window if possible
