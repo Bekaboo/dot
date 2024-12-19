@@ -74,10 +74,12 @@ vim.api.nvim_create_autocmd('UIEnter', {
   group = vim.api.nvim_create_augroup('ColorColumnSetup', {}),
   desc = 'Init colorcolumn plugin.',
   once = true,
-  callback = vim.schedule_wrap(function()
-    require('plugin.colorcolumn').setup()
+  callback = function()
+    vim.schedule(function()
+      require('plugin.colorcolumn').setup()
+    end)
     return true
-  end),
+  end,
 })
 
 -- winbar
@@ -118,10 +120,12 @@ if vim.g.has_ui then
     group = vim.api.nvim_create_augroup('TmuxSetup', {}),
     desc = 'Init tmux plugin.',
     once = true,
-    callback = vim.schedule_wrap(function()
-      require('plugin.tmux').setup()
+    callback = function()
+      vim.schedule(function()
+        require('plugin.tmux').setup()
+      end)
       return true
-    end),
+    end,
   })
 end
 
