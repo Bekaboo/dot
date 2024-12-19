@@ -141,7 +141,15 @@ vim.opt.diffopt:append({
 })
 
 -- Use system clipboard
-vim.opt.clipboard:append('unnamedplus')
+vim.api.nvim_create_autocmd('UIEnter', {
+  once = true,
+  callback = function()
+    vim.schedule(function()
+      vim.opt.clipboard:append('unnamedplus')
+    end)
+    return true
+  end,
+})
 
 -- Align columns in quickfix window
 vim.opt.quickfixtextfunc = [[v:lua.require'utils.misc'.qftf]]
