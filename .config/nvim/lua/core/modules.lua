@@ -116,9 +116,6 @@ local function enable_modules(module_names)
     )
   end
 
-  -- Preload modified lazy.nvim modules so that they won't be loaded
-  -- unpatched later on package sync
-  require('lazy.manage.task.git')
   require('lazy.view.config').keys.details = '='
 
   require('lazy').setup(specs, {
@@ -187,6 +184,21 @@ end
 if not bootstrap() then
   return
 end
+
+vim.api.nvim_create_autocmd('User', {
+  once = true,
+  desc = 'Preload modified lazy.nvim modules so that they will not be loaded unpatched later on package sync.',
+  pattern = {
+    'LazyInstallPre',
+    'LazyUpdatePre',
+    'LazySyncPre',
+    'LazyRestorePre',
+  },
+  callback = function()
+    require('lazy.manage.task.git')
+    return true
+  end,
+})
 
 -- Reverse/Apply local patches on updating/installing plugins,
 -- must be created before setting lazy to apply the patches properly
