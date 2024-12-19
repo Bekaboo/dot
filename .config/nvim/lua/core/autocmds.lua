@@ -312,7 +312,7 @@ augroup('SpecialBufHl', {
     end,
   },
 }, {
-  { 'UIEnter', 'ColorScheme', 'OptionSet' },
+  { 'ColorScheme', 'OptionSet' },
   {
     desc = 'Set special buffer normal hl.',
     callback = function(info)
