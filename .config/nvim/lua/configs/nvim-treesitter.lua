@@ -20,12 +20,9 @@ ts_configs.setup({
     -- Additional parsers
     'go',
     'cpp',
-    'cuda',
     'rust',
     'fish',
     'make',
-    'javascript',
-    'typescript',
   },
   auto_install = false,
   sync_install = false,
