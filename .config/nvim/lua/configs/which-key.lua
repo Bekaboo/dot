@@ -102,3 +102,20 @@ wk.add({
   { '<Leader>G', group = 'Debug' },
   { '<Leader><Leader>', group = 'Extra' },
 })
+
+---Set default highlight groups for which-key.nvim
+---@return nil
+local function set_default_hlgroups()
+  -- Ensure visibility in tty
+  if not vim.go.termguicolors then
+    vim.api.nvim_set_hl(0, 'WhichKey', { link = 'Normal', default = true })
+    vim.api.nvim_set_hl(0, 'WhichKeyDesc', { link = 'Normal', default = true })
+  end
+end
+
+set_default_hlgroups()
+vim.api.nvim_create_autocmd('ColorScheme', {
+  group = vim.api.nvim_create_augroup('WhichKeySetDefaultHlgroups', {}),
+  desc = 'Set default highlight groups for which-key.nvim.',
+  callback = set_default_hlgroups,
+})
