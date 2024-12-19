@@ -110,6 +110,7 @@ local function set_default_hlgroups()
   if not vim.go.termguicolors then
     vim.api.nvim_set_hl(0, 'WhichKey', { link = 'Normal', default = true })
     vim.api.nvim_set_hl(0, 'WhichKeyDesc', { link = 'Normal', default = true })
+    vim.api.nvim_set_hl(0, 'WhichKeySeparator', { link = 'WhichKeyGroup', default = true })
   end
 end
 
