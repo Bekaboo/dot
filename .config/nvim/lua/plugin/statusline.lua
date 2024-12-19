@@ -306,10 +306,6 @@ vim.api.nvim_create_autocmd({
   group = groupid,
   callback = vim.schedule_wrap(function(info)
     remove_buf(info.buf, info.file)
-    vim.cmd.redrawstatus({
-      bang = true,
-      mods = { emsg_silent = true },
-    })
   end),
 })
 
@@ -324,10 +320,6 @@ vim.api.nvim_create_autocmd('WinClosed', {
     local bufname = vim.api.nvim_buf_get_name(buf)
     vim.schedule(function()
       remove_buf(buf, bufname)
-      vim.cmd.redrawstatus({
-        bang = true,
-        mods = { emsg_silent = true },
-      })
     end)
   end,
 })

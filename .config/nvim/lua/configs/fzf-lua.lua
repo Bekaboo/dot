@@ -499,15 +499,6 @@ fzf.setup({
       ['enter'] = actions.colorscheme,
     },
   },
-  highlights = {
-    actions = {
-      ['enter'] = function(selected)
-        vim.defer_fn(function()
-          vim.cmd.hi(selected[1])
-        end, 0)
-      end,
-    },
-  },
   command_history = {
     actions = {
       ['alt-e'] = actions.ex_run,
