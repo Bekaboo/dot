@@ -160,6 +160,27 @@ local function enable_modules(module_names)
         'cockatoo',
       },
     },
+    performance = {
+      rtp = {
+        disabled_plugins = {
+          '2html_plugin',
+          'compiler',
+          'ftplugin',
+          'gzip',
+          'matchit',
+          'rplugin',
+          'spellfile_plugin',
+          'synmenu',
+          'syntax',
+          'tar',
+          'tarPlugin',
+          'tohtml',
+          'tutor',
+          'zip',
+          'zipPlugin',
+        },
+      },
+    },
   })
 end
 

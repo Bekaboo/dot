@@ -207,6 +207,17 @@ vim.g.fzf_layout = {
 vim.env.FZF_DEFAULT_OPTS = (vim.env.FZF_DEFAULT_OPTS or '')
   .. ' --border=sharp --margin=0 --padding=0'
 
+-- Disable plugins shipped with nvim
+vim.g.loaded_2html_plugin = 0
+vim.g.loaded_gzip = 0
+vim.g.loaded_matchit = 0
+vim.g.loaded_spellfile_plugin = 0
+vim.g.loaded_tar = 0
+vim.g.loaded_tarPlugin = 0
+vim.g.loaded_tutor_mode_plugin = 0
+vim.g.loaded_zip = 0
+vim.g.loaded_zipPlugin = 0
+
 ---Lazy-load runtime files
 ---@param runtime string
 ---@param flag string
