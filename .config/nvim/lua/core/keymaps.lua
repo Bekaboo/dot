@@ -5,8 +5,8 @@ vim.api.nvim_create_autocmd('UIEnter', {
   once = true,
   callback = function()
     vim.schedule(function()
-      local keymaps = {} ---@type table<string, vim.api.keyset.keymap[]>
-      local buf_keymaps = {} ---@type table<integer, table<string, vim.api.keyset.keymap[]>>
+      local keymaps = {} ---@type table<string, table<string, true>>
+      local buf_keymaps = {} ---@type table<integer, table<string, table<string, true>>>
 
       ---Set keymaps, don't override existing keymaps unless `opts.unique` is false
       ---@param modes string|string[] mode short-name
@@ -24,23 +24,32 @@ vim.api.nvim_create_autocmd('UIEnter', {
           modes = { modes }
         end
 
-        if not opts or not opts.buffer then
+        if not opts or not opts.buffer then -- global keymaps
           for _, mode in ipairs(modes) do
             if not keymaps[mode] then
-              keymaps[mode] = vim.api.nvim_get_keymap(mode)
+              keymaps[mode] = {}
+              for _, keymap in ipairs(vim.api.nvim_get_keymap(mode)) do
+                keymaps[mode][vim.keycode(keymap.lhs)] = true
+              end
             end
-            if not keymaps[mode][lhs] then
+            if not keymaps[mode][vim.keycode(lhs)] then
               vim.keymap.set(mode, lhs, rhs, opts)
             end
           end
         else -- buffer-local keymaps
           local buf = type(opts.buffer) == 'number' and opts.buffer or 0 --[[@as integer]]
+          if not buf_keymaps[buf] then
+            buf_keymaps[buf] = {}
+          end
           local maps = buf_keymaps[buf]
           for _, mode in ipairs(modes) do
             if not maps[mode] then
-              maps[mode] = vim.api.nvim_buf_get_keymap(buf, mode)
+              maps[mode] = {}
+              for _, keymap in ipairs(vim.api.nvim_buf_get_keymap(0, mode)) do
+                maps[mode][vim.keycode(keymap.lhs)] = true
+              end
             end
-            if not maps[mode][lhs] then
+            if not maps[mode][vim.keycode(lhs)] then
               vim.keymap.set(mode, lhs, rhs, opts)
             end
           end
