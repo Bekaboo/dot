@@ -7,7 +7,10 @@ end
 ---Disable builtin intro message
 ---@return nil
 local function disable_intro()
+  local eventignore = vim.go.eventignore
+  vim.opt.eventignore:append('OptionSet')
   vim.opt.shortmess:append('I')
+  vim.go.eventignore = eventignore
 end
 
 ---@return boolean
