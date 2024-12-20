@@ -312,6 +312,16 @@ require('nvim-web-devicons').setup({
       icon = vim.trim(icons.Config),
       name = 'Configure',
     },
+    ['readme'] = {
+      icon = vim.trim(icons.Txt),
+      name = 'Readme',
+    },
+    ['readme.md'] = {
+      color = '#6fb5ca',
+      cterm_color = '74',
+      icon = vim.trim(icons.Markdown),
+      name = 'Readme',
+    },
     ['package.json'] = {
       color = '#bbbbbb',
       cterm_color = '250',

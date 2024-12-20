@@ -123,6 +123,7 @@ return {
     Pdf                 = 'P ',
     Raw                 = 'R ',
     Sh                  = 'S ',
+    Txt                 = 'T ',
     Theme               = 'T ',
     Video               = 'V ',
     Vim                 = 'V ',
