@@ -374,9 +374,7 @@ augroup('ColorSchemeRestore', {
       -- Colorschemes other than the default colorscheme looks bad when the terminal
       -- does not support truecolor
       if not vim.go.termguicolors then
-        if vim.g.has_ui then
-          load_colorscheme('default')
-        end
+        load_colorscheme('default')
         return
       end
 
