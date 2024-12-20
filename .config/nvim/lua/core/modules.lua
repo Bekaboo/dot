@@ -142,6 +142,7 @@ local function enable_modules(module_names)
     vim.api.nvim_create_autocmd('UIEnter', {
       once = true,
       callback = function()
+        require('lazy.stats').on_ui_enter()
         vim.schedule(cb)
         return true
       end,
