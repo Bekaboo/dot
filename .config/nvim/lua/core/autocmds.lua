@@ -363,6 +363,9 @@ augroup('ColorSchemeRestore', {
         )
         if vim.uv.fs_stat(colors_path) then
           dofile(colors_path)
+          vim.schedule(function()
+            vim.api.nvim_exec_autocmds('ColorScheme', {})
+          end)
         else
           vim.cmd.colorscheme({
             args = { colors_name },
