@@ -116,64 +116,95 @@ local function enable_modules(module_names)
     )
   end
 
-  require('lazy.view.config').keys.details = '='
+  for _, spec in ipairs(specs) do
+    if
+      spec.lazy == false
+      or (
+        spec.lazy ~= true
+        and not spec.ft
+        and not spec.cmd
+        and not spec.keys
+        and not spec.event
+      )
+    then
+      vim.opt.rtp:append(
+        vim.fs.joinpath(vim.g.package_path, vim.fs.basename(spec[1]))
+      )
+    end
 
-  require('lazy').setup(specs, {
-    root = vim.g.package_path,
-    lockfile = vim.g.package_lock,
-    ui = {
-      backdrop = 100,
-      border = 'solid',
-      size = { width = 0.7, height = 0.74 },
-      icons = {
-        cmd = icons.Cmd,
-        config = icons.Config,
-        event = icons.Event,
-        debug = '',
-        favorite = icons.star,
-        ft = icons.File,
-        init = icons.Config,
-        import = icons.ArrowLeft,
-        keys = icons.Keyboard,
-        lazy = icons.Lazy,
-        loaded = icons.Bullet1,
-        not_loaded = icons.Bullet2,
-        plugin = icons.Module,
-        runtime = icons.File,
-        require = icons.Lua,
-        source = icons.Method,
-        start = icons.Play,
-        task = icons.Ok,
-        list = { '' },
-      },
-    },
-    checker = { enabled = false },
-    change_detection = { notify = false },
-    install = {
-      colorscheme = { 'wildcharm' },
-    },
-    performance = {
-      rtp = {
-        disabled_plugins = {
-          '2html_plugin',
-          'compiler',
-          'ftplugin',
-          'gzip',
-          'matchit',
-          'rplugin',
-          'spellfile_plugin',
-          'synmenu',
-          'syntax',
-          'tar',
-          'tarPlugin',
-          'tohtml',
-          'tutor',
-          'zip',
-          'zipPlugin',
+    if spec.init then
+      spec.init()
+      spec.init = nil
+    end
+  end
+
+  (vim.fn.argc() == 0 and function(cb)
+    vim.api.nvim_create_autocmd('UIEnter', {
+      once = true,
+      callback = function()
+        vim.schedule(cb)
+        return true
+      end,
+    })
+  end or function(cb)
+    cb()
+  end)(function()
+    require('lazy.view.config').keys.details = '='
+    require('lazy').setup(specs, {
+      root = vim.g.package_path,
+      lockfile = vim.g.package_lock,
+      ui = {
+        backdrop = 100,
+        border = 'solid',
+        size = { width = 0.7, height = 0.74 },
+        icons = {
+          cmd = icons.Cmd,
+          config = icons.Config,
+          event = icons.Event,
+          debug = '',
+          favorite = icons.star,
+          ft = icons.File,
+          init = icons.Config,
+          import = icons.ArrowLeft,
+          keys = icons.Keyboard,
+          lazy = icons.Lazy,
+          loaded = icons.Bullet1,
+          not_loaded = icons.Bullet2,
+          plugin = icons.Module,
+          runtime = icons.File,
+          require = icons.Lua,
+          source = icons.Method,
+          start = icons.Play,
+          task = icons.Ok,
+          list = { '' },
         },
       },
-    },
-  })
+      checker = { enabled = false },
+      change_detection = { notify = false },
+      install = { colorscheme = { 'wildcharm' } },
+      performance = {
+        rtp = {
+          disabled_plugins = {
+            '2html_plugin',
+            'compiler',
+            'ftplugin',
+            'gzip',
+            'matchit',
+            'rplugin',
+            'spellfile_plugin',
+            'synmenu',
+            'syntax',
+            'tar',
+            'tarPlugin',
+            'tohtml',
+            'tutor',
+            'zip',
+            'zipPlugin',
+          },
+        },
+      },
+    })
+  end)
 end
 
 if not bootstrap() then
