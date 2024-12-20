@@ -274,15 +274,6 @@ return {
   },
 
   {
-    'hedyhli/outline.nvim',
-    dependencies = 'msr1k/outline-asciidoc-provider.nvim',
-    event = 'FileType',
-    config = function()
-      require('configs.outline')
-    end,
-  },
-
-  {
     'folke/which-key.nvim',
     event = 'VeryLazy',
     config = function()
