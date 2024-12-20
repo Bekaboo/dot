@@ -1,4 +1,4 @@
-if not vim.go.termguicolors then
+if vim.env.TERM == 'linux' then
   vim.g.vimtex_syntax_conceal_disable = true
 end
 
