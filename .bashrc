@@ -43,23 +43,6 @@ if __has proot-distro &&
     exec proot-distro login "$PROOT_DISTRO" --user "$PROOT_USER" --termux-home
 fi
 
-if __has tmux &&
-    [[ -n "$SSH_TTY" ]] &&
-    [[ -z "$SCREEN" ]] &&
-    [[ -z "$TMUX" ]] &&
-    [[ -z "$VIM" ]] &&
-    [[ -z "$NVIM" ]] &&
-    [[ -z "$INSIDE_EMACS" ]] &&
-    [[ "$TERM_PROGRAM" != 'vscode' ]] &&
-    [[ "$TERM" != 'linux' ]]; then
-    if (tmux ls 2>/dev/null | grep -vq attached) &&
-        [[ "$PWD" = "$HOME" ]]; then
-        exec tmux at
-    else
-        exec tmux
-    fi
-fi
-
 [[ $- != *i* ]] && return
 
 if __has neofetch &&
