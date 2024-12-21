@@ -58,17 +58,6 @@ vim.api.nvim_create_autocmd({ 'CmdlineEnter', 'InsertEnter' }, {
   end,
 })
 
--- statuscolumn
-vim.api.nvim_create_autocmd({ 'BufWritePost', 'BufWinEnter' }, {
-  group = vim.api.nvim_create_augroup('StatusColumn', {}),
-  desc = 'Init statuscolumn plugin.',
-  once = true,
-  callback = function()
-    require('plugin.statuscolumn').setup()
-    return true
-  end,
-})
-
 -- colorcolumn
 vim.api.nvim_create_autocmd('UIEnter', {
   group = vim.api.nvim_create_augroup('ColorColumnSetup', {}),

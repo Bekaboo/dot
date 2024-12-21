@@ -65,7 +65,7 @@ Currently only supports Linux (X11/Wayland/TTY).
 - Clean and uncluttered UI, including customized versions of:
     - [winbar](lua/plugin/winbar)
     - [statusline](lua/plugin/statusline.lua)
-    - [statuscolumn](lua/plugin/statuscolumn.lua)
+    - [statuscolumn](plugin/statuscolumn.lua)
     - [colorschemes](colors)
     - [intro message](plugin/intro.lua)
 - [VSCode-Neovim](https://github.com/vscode-neovim/vscode-neovim) integration, makes you feel at home in VSCode when you
@@ -573,7 +573,7 @@ and it should work out of the box.
       `DiagnosticChanged`
 - [readline](lua/plugin/readline.lua)
     - Readline-like keybindings in insert and command mode
-- [statuscolumn](lua/plugin/statuscolumn.lua)
+- [statuscolumn](plugin/statuscolumn.lua)
     - Custom statuscolumn, with git signs on the right of line numbers
 - [statusline](lua/plugin/statusline.lua)
     - Custom statusline inspired by [nano-emacs](https://github.com/rougier/nano-emacs)
