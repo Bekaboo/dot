@@ -62,7 +62,10 @@ return {
     },
     event = 'LspAttach',
     build = 'fzf --version',
-    init = vim.schedule_wrap(function()
+    init = function()
+      -- Disable fzf's default vim plugin
+      vim.g.loaded_fzf = 1
+
       ---@diagnostic disable-next-line: duplicate-set-field
       vim.ui.select = function(...)
         local fzf_ui = require('fzf-lua.providers.ui_select')
@@ -128,7 +131,7 @@ return {
         end
         vim.ui.select(...)
       end
-    end),
+    end,
     config = function()
       require('configs.fzf-lua')
     end,
