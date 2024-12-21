@@ -178,7 +178,6 @@ if !isdirectory(s:backupdir)
 endif
 
 silent! set fillchars=fold:·,diff:╱
-silent! set conceallevel=2
 
 syntax on
 filetype plugin indent on

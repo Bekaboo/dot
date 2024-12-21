@@ -175,7 +175,6 @@ vim.api.nvim_create_autocmd('UIEnter', {
   once = true,
   callback = function()
     if vim.opt.termguicolors:get() then
-      vim.opt.conceallevel = 2
       vim.opt.listchars:append({ nbsp = '␣' })
       vim.opt.fillchars:append({ diff = '╱' })
     end
