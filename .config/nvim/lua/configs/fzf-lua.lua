@@ -724,14 +724,6 @@ vim.lsp.handlers['workspace/symbol'] = fzf.lsp_live_workspace_symbols
 vim.diagnostic.setqflist = fzf.diagnostics_workspace
 vim.diagnostic.setloclist = fzf.diagnostics_document
 
-vim.api.nvim_create_user_command('FZF', function(info)
-  fzf.files({ cwd = info.fargs[1] })
-end, {
-  nargs = '?',
-  complete = 'dir',
-  desc = 'Fuzzy find files.',
-})
-
 ---Set telescope default hlgroups for a borderless view
 ---@return nil
 local function set_default_hlgroups()

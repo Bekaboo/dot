@@ -1,7 +1,7 @@
 return {
   {
     'ibhagwan/fzf-lua',
-    cmd = { 'FzfLua', 'FZF' },
+    cmd = 'FzfLua',
     keys = {
       { '<Leader>.', desc = 'Find files' },
       { "<Leader>'", desc = 'Resume last picker' },
