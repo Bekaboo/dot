@@ -19,7 +19,7 @@ return {
   {
     'dhruvasagar/vim-table-mode',
     cmd = { 'TableModeToggle', 'TableModeEnable', 'TableModeRealign' },
-    ft = 'markdown',
+    event = 'BufWritePre',
     config = function()
       require('configs.vim-table-mode')
     end,
@@ -27,7 +27,7 @@ return {
 
   {
     'jmbuhr/otter.nvim',
-    ft = { 'markdown' },
+    ft = 'markdown',
     dependencies = {
       'nvim-treesitter/nvim-treesitter',
     },
