@@ -94,11 +94,21 @@ local function spellcheck()
   end
   spellcheck_set = true
 
-  vim.opt.spell = true
-  vim.opt.spellcapcheck = ''
-  vim.opt.spelllang = 'en,cjk'
-  vim.opt.spelloptions = 'camel'
-  vim.opt.spellsuggest = 'best,9'
+  local function set_spellcheck()
+    -- Don't set spell if it was already set elsewhere
+    if require('utils.opt').spell:last_set_loc() then
+      return
+    end
+    vim.opt.spell = true
+    vim.opt.spellcapcheck = ''
+    vim.opt.spelllang = 'en,cjk'
+    vim.opt.spelloptions = 'camel'
+    vim.opt.spellsuggest = 'best,9'
+  end
+
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    vim.api.nvim_win_call(win, set_spellcheck)
+  end
 end
 
 vim.api.nvim_create_autocmd('FileType', {
