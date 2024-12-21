@@ -1535,32 +1535,6 @@ if $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.1140')
   xnoremap <expr><silent> <Esc>- <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') - 2))\"", v:count ? '<C-w>-' : '2<C-w>-', TmuxMapkeyResizePaneVertConditionRef)
   xnoremap <expr><silent> <Esc>+ <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') + 2))\"", v:count ? '<C-w>+' : '2<C-w>+', TmuxMapkeyResizePaneVertConditionRef)
 
-  if exists(':tmap') == 2
-    tnoremap <expr><silent> <Esc>h <SID>tmux_mapkey_fallback({-> <SID>navigate('h')}, <SID>running_tui() ? '<Esc>h' : '<C-\><C-n><C-w>h', TmuxMapkeyNavigateLeftCondition)
-    tnoremap <expr><silent> <Esc>j <SID>tmux_mapkey_fallback({-> <SID>navigate('j')}, <SID>running_tui() ? '<Esc>j' : '<C-\><C-n><C-w>j', TmuxMapkeyNavigateDownCondition)
-    tnoremap <expr><silent> <Esc>k <SID>tmux_mapkey_fallback({-> <SID>navigate('k')}, <SID>running_tui() ? '<Esc>k' : '<C-\><C-n><C-w>k', TmuxMapkeyNavigateUpCondition)
-    tnoremap <expr><silent> <Esc>l <SID>tmux_mapkey_fallback({-> <SID>navigate('l')}, <SID>running_tui() ? '<Esc>l' : '<C-\><C-n><C-w>l', TmuxMapkeyNavigateRightCondition)
-
-    tnoremap <expr><silent> <Esc><Left>  <SID>tmux_mapkey_fallback({-> <SID>navigate('h')}, <SID>running_tui() ? '<Esc><Left>'  : '<C-\><C-n><C-w><Left>',  TmuxMapkeyNavigateLeftCondition)
-    tnoremap <expr><silent> <Esc><Down>  <SID>tmux_mapkey_fallback({-> <SID>navigate('j')}, <SID>running_tui() ? '<Esc><Down>'  : '<C-\><C-n><C-w><Down>',  TmuxMapkeyNavigateDownCondition)
-    tnoremap <expr><silent> <Esc><Up>    <SID>tmux_mapkey_fallback({-> <SID>navigate('k')}, <SID>running_tui() ? '<Esc><Up>'    : '<C-\><C-n><C-w><Up>',    TmuxMapkeyNavigateUpCondition)
-    tnoremap <expr><silent> <Esc><Right> <SID>tmux_mapkey_fallback({-> <SID>navigate('l')}, <SID>running_tui() ? '<Esc><Right>' : '<C-\><C-n><C-w><Right>', TmuxMapkeyNavigateRightCondition)
-
-    tnoremap <expr><silent> <Esc>p <SID>tmux_mapkey_fallback('last-pane', <SID>running_tui() ? '<Esc>p'  : '<C-\><C-n><C-w>p')
-    tnoremap <expr><silent> <Esc>r <SID>tmux_mapkey_fallback('swap-pane -D', <SID>running_tui() ? '<Esc>r'  : '<C-\><C-n><C-w>ri')
-    tnoremap <expr><silent> <Esc>R <SID>tmux_mapkey_fallback('swap-pane -U', <SID>running_tui() ? '<Esc>R'  : '<C-\><C-n><C-w>Ri')
-    tnoremap <expr><silent> <Esc>o <SID>tmux_mapkey_fallback("confirm 'kill-pane -a'", <SID>running_tui() ? '<Esc>o'  : '<C-\><C-n><C-w>oi')
-    tnoremap <expr><silent> <Esc>= <SID>tmux_mapkey_fallback("confirm 'select-layout tiled'", <SID>running_tui() ? '<Esc>='  : '<C-\><C-n><C-w>=i')
-    tnoremap <expr><silent> <Esc>c <SID>tmux_mapkey_fallback('confirm kill-pane', <SID>running_tui() ? '<Esc>c'  : '<C-\><C-n><C-w>c', TmuxMapkeyCloseWinConditionRef)
-    tnoremap <expr><silent> <Esc>q <SID>tmux_mapkey_fallback('confirm kill-pane', <SID>running_tui() ? '<Esc>q'  : '<C-\><C-n><C-w>q', TmuxMapkeyCloseWinConditionRef)
-    tnoremap <expr><silent> <Esc>< <SID>tmux_mapkey_fallback('resize-pane -L 4', <SID>running_tui() ? '<Esc><' : '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '>' : '<') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
-    tnoremap <expr><silent> <Esc>> <SID>tmux_mapkey_fallback('resize-pane -R 4', <SID>running_tui() ? '<Esc>>' : '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '<' : '>') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
-    tnoremap <expr><silent> <Esc>, <SID>tmux_mapkey_fallback('resize-pane -L 4', <SID>running_tui() ? '<Esc>,' : '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '>' : '<') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
-    tnoremap <expr><silent> <Esc>. <SID>tmux_mapkey_fallback('resize-pane -R 4', <SID>running_tui() ? '<Esc>.' : '<C-\><C-n><C-w>4' . (winnr() == winnr('l') ? '<' : '>') . 'i', TmuxMapkeyResizePaneHorizConditionRef)
-    tnoremap <expr><silent> <Esc>- <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') - 2))\"", <SID>running_tui() ? '<Esc>-'  : '<C-\><C-n><C-w>2-i', TmuxMapkeyResizePaneVertConditionRef)
-    tnoremap <expr><silent> <Esc>+ <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') + 2))\"", <SID>running_tui() ? '<Esc>+'  : '<C-\><C-n><C-w>2+i', TmuxMapkeyResizePaneVertConditionRef)
-  endif
-
   " Set @is_vim and register relevant autocmds callbacks if not already
   " in a vim/nvim session
   if s:tmux_get_pane_opt('@is_vim') ==# ''
