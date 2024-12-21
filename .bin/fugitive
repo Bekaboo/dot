@@ -5,5 +5,5 @@ VIM_COMMAND=$(command -v nvim || command -v vim)
 ARGS="$*"
 
 [[ -z "$ARGS" ]] &&
-    $VIM_COMMAND +'silent! Git' +'silent! only' ||
-    $VIM_COMMAND +"silent! exe escape('Git -p $ARGS', \"\\'\")" +'silent! only'
+    $VIM_COMMAND +'Git' +'silent! only' ||
+    $VIM_COMMAND +"exe escape('Git -p $ARGS', \"\\'\")" +'silent! only'
