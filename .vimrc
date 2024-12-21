@@ -768,7 +768,6 @@ for map in ['nnoremap', 'xnoremap']
   exe map . '<Esc>o       <C-w>o'
   exe map . '<Esc>t       <C-w>t'
   exe map . '<Esc>T       <C-w>T'
-  exe map . '<Esc>]       <C-w>]'
   exe map . '<Esc>^       <C-w>^'
   exe map . '<Esc>b       <C-w>b'
   exe map . '<Esc>d       <C-w>d'
@@ -816,6 +815,18 @@ for map in ['nnoremap', 'xnoremap']
     exe map . '<expr> <C-w>, (v:count ? "" : 4) . "<C-w><"'
   endif
 endfor
+
+" Workaround for strange characters '0000/0000/0000^G' or '1818/1818/1919^G' in
+" cmdline on entering vim in some terminals (e.g. vim's builtin terminal,
+" termux, etc.)
+" See https://github.com/vim/vim/issues/15458
+"     https://stackoverflow.com/questions/21618614/vim-shows-garbage-characters
+"     https://stackoverflow.com/questions/51129631/vim-8-1-garbage-printing-on-screen
+"     https://gentoo-user.gentoo.narkive.com/IpR4CjNN/vim-puts-command-in-when-starting-up
+"     https://github.com/neovim/neovim/issues/11393
+autocmd TextChangedI,BufReadPost,StdinReadPost * ++once
+      \ nnoremap <Esc>] <C-w>] |
+      \ xnoremap <Esc>] <C-w>] |
 " }}}2
 
 " Readline keymaps {{{2
