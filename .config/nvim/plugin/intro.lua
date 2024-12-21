@@ -168,6 +168,7 @@ vim.api.nvim_create_autocmd('UIEnter', {
 
     win = vim.api.nvim_open_win(buf, false, win_config)
     vim.wo[win].winhl = 'NormalFloat:Normal,Search:,Incsearch:'
+    vim.wo[win].spell = false
     return true
   end,
 })
