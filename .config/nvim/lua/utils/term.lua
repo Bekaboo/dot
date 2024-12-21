@@ -41,9 +41,7 @@ function M.fg_cmds(buf)
       trimempty = true,
     }))
   do
-    local stat, cmd = unpack(vim.split(stat_cmd_str, '%s+', {
-      trimempty = true,
-    }))
+    local stat, cmd = stat_cmd_str:match('(%S+)%s+(.*)')
     if stat and stat:find('^%S+%+') then
       table.insert(cmds, cmd)
     end
