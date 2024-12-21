@@ -138,33 +138,44 @@ local function enable_modules(module_names)
     end
   end
 
-  ---@param cb function
+  ---Wrapper function to defer plugin manager setup,
+  ---default to setup immediately
+  ---@param setup function
   ---@return nil
-  local function defer(cb)
-    cb()
+  local function defer(setup)
+    setup()
   end
 
+  -- If no files are specified, defer plugin manager setup
   if vim.fn.argc(-1) == 0 then
-    local missed_cmds = {}
-    local cmd_groupid = vim.api.nvim_create_autocmd('CmdUndefined', {
-      callback = function(info)
-        table.insert(missed_cmds, info.match)
-      end,
-    })
-
-    ---@param cb function
+    ---@param setup function?
     ---@return nil
-    defer = function(cb)
+    defer = function(setup)
+      -- If we have undefined commands (possibly from a plugin),
+      -- setup the plugin manager immediately to get the commands
+      local cmd_groupid = vim.api.nvim_create_autocmd('CmdUndefined', {
+        callback = function()
+          if not setup then
+            return
+          end
+          setup()
+          setup = nil -- avoid running the setup function twice
+          return true
+        end,
+      })
+
+      -- Defer setup until UIEnter
       vim.api.nvim_create_autocmd('UIEnter', {
         once = true,
         callback = function()
           require('lazy.stats').on_ui_enter()
           vim.schedule(function()
-            cb()
-            vim.api.nvim_del_autocmd(cmd_groupid)
-            for _, cmd in ipairs(missed_cmds) do
-              vim.cmd(cmd)
+            if not setup then
+              return
             end
+            setup()
+            setup = nil
+            vim.api.nvim_del_autocmd(cmd_groupid)
           end)
           return true
         end,
