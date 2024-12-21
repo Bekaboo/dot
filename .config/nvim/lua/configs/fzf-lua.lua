@@ -650,8 +650,8 @@ vim.keymap.set('n', '<Leader>fSa', fzf.lsp_code_actions, { desc = 'Find code act
 vim.keymap.set('n', '<Leader>fSd', fzf.lsp_definitions, { desc = 'Find symbol definitions' })
 vim.keymap.set('n', '<Leader>fSD', fzf.lsp_declarations, { desc = 'Find symbol declarations' })
 vim.keymap.set('n', '<Leader>fS<C-d>', fzf.lsp_typedefs, { desc = 'Find symbol type definitions' })
-vim.keymap.set('n', '<Leader>fSs', fzf.lsp_document_symbols, { desc = 'Find symbol document symbols' })
-vim.keymap.set('n', '<Leader>fSS', fzf.lsp_live_workspace_symbols, { desc = 'Find symbol workspace symbols' })
+vim.keymap.set('n', '<Leader>fSs', fzf.lsp_document_symbols, { desc = 'Find document symbols' })
+vim.keymap.set('n', '<Leader>fSS', fzf.lsp_live_workspace_symbols, { desc = 'Find workspace symbols' })
 vim.keymap.set('n', '<Leader>fSi', fzf.lsp_implementations, { desc = 'Find symbol implementations' })
 vim.keymap.set('n', '<Leader>fS<', fzf.lsp_incoming_calls, { desc = 'Find symbol incoming calls' })
 vim.keymap.set('n', '<Leader>fS>', fzf.lsp_outgoing_calls, { desc = 'Find symbol outgoing calls' })
@@ -684,11 +684,11 @@ local function fzf_setup_buf_keymap(buf)
   vim.b[buf]._fzf_buf_keymap_set = true
   vim.keymap.set('n', '<Leader>s', fzf.symbols, {
     buffer = buf,
-    desc = 'Find symbols',
+    desc = 'Find document symbols',
   })
   vim.keymap.set('n', '<Leader>fs', fzf.symbols, {
     buffer = buf,
-    desc = 'Find symbols',
+    desc = 'Find document symbols',
   })
 end
 
