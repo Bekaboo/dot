@@ -178,6 +178,7 @@ vim.api.nvim_create_autocmd({
   'CursorMoved',
   'StdinReadPre',
   'InsertEnter',
+  'TermEnter',
   'TermOpen',
   'TextChanged',
   'VimResized',
