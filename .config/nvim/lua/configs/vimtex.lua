@@ -22,9 +22,10 @@ vim.api.nvim_create_autocmd('FileType', {
       vim.bo[info.buf].formatexpr = ''
     end
     -- Make surrounding delimiters large
-    vim.keymap.set('n', 'css', function()
-      vim.fn['vimtex#delim#add_modifiers']()
-    end, { buffer = info.buf })
+    vim.keymap.set('n', 'css', vim.fn['vimtex#delim#add_modifiers'], {
+      buffer = info.buf,
+      desc = 'Surround with large delimiters',
+    })
     -- Remove default `]]` mapping in insert mode as it causes lagging
     -- when typing `]`
     pcall(vim.keymap.del, 'i', ']]', {
