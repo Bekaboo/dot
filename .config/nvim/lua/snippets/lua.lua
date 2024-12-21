@@ -1,4 +1,5 @@
 local M = {}
+local u = require('utils')
 local un = require('utils.snippets.nodes')
 local uf = require('utils.snippets.funcs')
 local us = require('utils.snippets.snips')
@@ -271,11 +272,30 @@ M.syntax = {
     un.fmtad('print(<q><v_esc>: <q> .. <inspect>(<v>)<e>)', {
       q = un.qt(),
       v = i(1),
-      inspect = c(2, {
-        i(nil, 'inspect'),
-        i(nil, 'vim.inspect'),
-        i(nil, 'tostring'),
-      }),
+      inspect = d(2, function()
+        for _, path in
+          ipairs(vim.opt.rtp:get() --[=[@as string[]]=])
+        do
+          if u.fs.contains(path, vim.api.nvim_buf_get_name(0)) then
+            return sn(
+              nil,
+              c(1, {
+                i(nil, 'vim.inspect'),
+                i(nil, 'inspect'),
+                i(nil, 'tostring'),
+              })
+            )
+          end
+        end
+        return sn(
+          nil,
+          c(1, {
+            i(nil, 'inspect'),
+            i(nil, 'vim.inspect'),
+            i(nil, 'tostring'),
+          })
+        )
+      end),
       v_esc = d(3, function(texts)
         local str = vim.fn.escape(texts[1][1], '\\' .. uf.get_quotation_type())
         return sn(nil, i(1, str))
@@ -292,11 +312,30 @@ M.syntax = {
     un.fmtad('<q><v_esc>: <q> .. <inspect>(<v>)', {
       q = un.qt(),
       v = i(1),
-      inspect = c(2, {
-        i(nil, 'inspect'),
-        i(nil, 'vim.inspect'),
-        i(nil, 'tostring'),
-      }),
+      inspect = d(2, function()
+        for _, path in
+          ipairs(vim.opt.rtp:get() --[=[@as string[]]=])
+        do
+          if u.fs.contains(path, vim.api.nvim_buf_get_name(0)) then
+            return sn(
+              nil,
+              c(1, {
+                i(nil, 'vim.inspect'),
+                i(nil, 'inspect'),
+                i(nil, 'tostring'),
+              })
+            )
+          end
+        end
+        return sn(
+          nil,
+          c(1, {
+            i(nil, 'inspect'),
+            i(nil, 'vim.inspect'),
+            i(nil, 'tostring'),
+          })
+        )
+      end),
       v_esc = d(3, function(texts)
         local str = vim.fn.escape(texts[1][1], '\\' .. uf.get_quotation_type())
         return sn(nil, i(1, str))
@@ -315,11 +354,30 @@ M.syntax = {
       end, {}, {}),
       q = un.qt(),
       v = i(1),
-      inspect = c(2, {
-        i(nil, 'inspect'),
-        i(nil, 'vim.inspect'),
-        i(nil, 'tostring'),
-      }),
+      inspect = d(2, function()
+        for _, path in
+          ipairs(vim.opt.rtp:get() --[=[@as string[]]=])
+        do
+          if u.fs.contains(path, vim.api.nvim_buf_get_name(0)) then
+            return sn(
+              nil,
+              c(1, {
+                i(nil, 'vim.inspect'),
+                i(nil, 'inspect'),
+                i(nil, 'tostring'),
+              })
+            )
+          end
+        end
+        return sn(
+          nil,
+          c(1, {
+            i(nil, 'inspect'),
+            i(nil, 'vim.inspect'),
+            i(nil, 'tostring'),
+          })
+        )
+      end),
       v_esc = d(3, function(texts)
         local str = vim.fn.escape(texts[1][1], '\\' .. uf.get_quotation_type())
         return sn(nil, i(1, str))
