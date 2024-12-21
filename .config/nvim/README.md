@@ -525,7 +525,6 @@ and it should work out of the box.
     - [vim-easy-align](https://github.com/junegunn/vim-easy-align)
 - **Tools**
     - [fzf-lua](https://github.com/ibhagwan/fzf-lua)
-    - [flatten.nvim](https://github.com/willothy/flatten.nvim)
     - [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim)
         - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) (dependency)
     - [git-conflict](https://github.com/akinsho/git-conflict.nvim)

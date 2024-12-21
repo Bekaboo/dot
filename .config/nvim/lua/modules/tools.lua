@@ -135,14 +135,6 @@ return {
   },
 
   {
-    'willothy/flatten.nvim',
-    event = 'BufReadPre',
-    config = function()
-      require('configs.flatten')
-    end,
-  },
-
-  {
     'lewis6991/gitsigns.nvim',
     event = 'BufReadPre',
     dependencies = 'nvim-lua/plenary.nvim',
