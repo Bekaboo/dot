@@ -17,7 +17,7 @@ return {
       'TSEditQuery',
       'TSEditQueryUserAfter',
     },
-    event = 'FileType',
+    event = 'BufReadPre',
     config = function()
       vim.schedule(function()
         require('configs.nvim-treesitter')
@@ -32,7 +32,7 @@ return {
 
   {
     'windwp/nvim-ts-autotag',
-    event = 'FileType',
+    event = 'InsertEnter',
     dependencies = 'nvim-treesitter/nvim-treesitter',
     config = function()
       require('configs.nvim-ts-autotag')
@@ -55,7 +55,6 @@ return {
 
   {
     'Eandrju/cellular-automaton.nvim',
-    event = 'FileType',
     cmd = 'CellularAutomaton',
     dependencies = 'nvim-treesitter/nvim-treesitter',
   },
