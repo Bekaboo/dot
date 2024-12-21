@@ -138,7 +138,7 @@ local function enable_modules(module_names)
     end
   end
 
-  (vim.fn.argc() == 0 and function(cb)
+  (vim.fn.argc(-1) == 0 and function(cb)
     vim.api.nvim_create_autocmd('UIEnter', {
       once = true,
       callback = function()

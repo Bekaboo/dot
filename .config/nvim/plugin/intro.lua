@@ -15,7 +15,7 @@ end
 
 ---@return boolean
 local function should_show_intro()
-  return vim.g.has_ui and vim.fn.argc() == 0 and not intro_disabled()
+  return vim.g.has_ui and vim.fn.argc(-1) == 0 and not intro_disabled()
 end
 
 if not should_show_intro() then
