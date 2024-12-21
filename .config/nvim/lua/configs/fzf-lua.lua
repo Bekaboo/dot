@@ -544,6 +544,7 @@ fzf.setup({
     ['--preview-window'] = 'hidden',
   },
   grep = {
+    rg_glob = true,
     actions = {
       ['alt-c'] = actions.switch_cwd,
       ['alt-h'] = actions.toggle_hidden,
