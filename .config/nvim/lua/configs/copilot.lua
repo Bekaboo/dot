@@ -6,7 +6,6 @@ vim.g.loaded_coplilot = true
 require('copilot').setup({
   suggestion = {
     auto_trigger = true,
-    debounce = 500,
     keymap = {
       accept = false,
     },
