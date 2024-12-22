@@ -175,31 +175,6 @@ index 8759387..66177de 100644
  
        return bufnr
      end,
-diff --git a/lua/codecompanion/strategies/chat/references.lua b/lua/codecompanion/strategies/chat/references.lua
-index f86ac97..abfa8ee 100644
---- a/lua/codecompanion/strategies/chat/references.lua
-+++ b/lua/codecompanion/strategies/chat/references.lua
-@@ -69,7 +69,7 @@ end
- local function add(chat, ref, row)
-   local lines = {}
- 
--  table.insert(lines, string.format("> - %s", ref.id))
-+  table.insert(lines, string.format("> %s", ref.id))
- 
-   if vim.tbl_count(chat.refs) == 1 then
-     table.insert(lines, 1, "> Sharing:")
-@@ -203,9 +203,9 @@ function References:render()
-         goto continue
-       end
-       if ref.opts and ref.opts.pinned then
--        table.insert(lines, string.format("> - %s%s", config.display.chat.icons.pinned_buffer, ref.id))
-+        table.insert(lines, string.format("> %s%s", config.display.chat.icons.pinned_buffer, ref.id))
-       else
--        table.insert(lines, string.format("> - %s", ref.id))
-+        table.insert(lines, string.format("> %s", ref.id))
-       end
-       ::continue::
-     end
 diff --git a/lua/codecompanion/strategies/chat/ui.lua b/lua/codecompanion/strategies/chat/ui.lua
 index be99b69..eb946cd 100644
 --- a/lua/codecompanion/strategies/chat/ui.lua
