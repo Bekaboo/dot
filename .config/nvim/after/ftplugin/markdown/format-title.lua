@@ -1,5 +1,8 @@
-local api = vim.api
 local utils = require('utils')
+
+if vim.g.md_fmt_title == nil then
+  vim.g.md_fmt_title = true
+end
 
 local lowercase_words = {
   ['a'] = true,
@@ -9,9 +12,11 @@ local lowercase_words = {
   ['at'] = true,
   ['but'] = true,
   ['by'] = true,
+  ['can'] = true,
   ['for'] = true,
   ['if'] = true,
   ['in'] = true,
+  ['is'] = true,
   ['nor'] = true,
   ['of'] = true,
   ['off'] = true,
@@ -19,28 +24,32 @@ local lowercase_words = {
   ['or'] = true,
   ['per'] = true,
   ['so'] = true,
-  ['the'] = true,
   ['than'] = true,
+  ['the'] = true,
   ['to'] = true,
   ['up'] = true,
   ['via'] = true,
   ['vs'] = true,
+  ['was'] = true,
+  ['were'] = true,
+  ['with'] = true,
   ['yet'] = true,
 }
-
----@type bufopt_t
-local opt_captitle = utils.classes.bufopt_t:new('captitle', true)
 
 ---Capitalize the first letter of words on title line
 ---@param info table information given to event handler
 ---@return nil
 local function format_title(info)
-  if vim.bo[info.buf].filetype ~= 'markdown' or not opt_captitle:get() then
+  if
+    vim.bo[info.buf].filetype ~= 'markdown'
+    or vim.b.md_fmt_title == false
+    or (vim.g.md_fmt_title == false and vim.b.md_fmt_title == nil)
+  then
     return
   end
 
-  local cursor = api.nvim_win_get_cursor(0)
-  local line = api.nvim_get_current_line()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local line = vim.api.nvim_get_current_line()
   local lnum = vim.fn.line('.')
   if
     not line:match('^#+%s')
@@ -60,7 +69,7 @@ local function format_title(info)
     line = line:sub(1, cursor[2] - #word)
       .. word_lower
       .. line:sub(cursor[2] + 1)
-    api.nvim_set_current_line(line)
+    vim.api.nvim_set_current_line(line)
     return
   end
 
@@ -69,34 +78,45 @@ local function format_title(info)
     line = line:sub(1, cursor[2] - #word)
       .. word_cap
       .. line:sub(cursor[2] + 1)
-    api.nvim_set_current_line(line)
+    vim.api.nvim_set_current_line(line)
     return
   end
 end
 
 local buf = vim.api.nvim_get_current_buf()
-api.nvim_create_autocmd('TextChangedI', {
-  group = api.nvim_create_augroup('MarkdownAutoFormatTitle' .. buf, {}),
+vim.api.nvim_create_autocmd('TextChangedI', {
+  group = vim.api.nvim_create_augroup('MarkdownAutoFormatTitle' .. buf, {}),
   buffer = buf,
   callback = format_title,
 })
 
-api.nvim_buf_create_user_command(buf, 'MarkdownSetCapTitle', function(info)
-  local parsed_args = utils.command.parse_cmdline_args(info.fargs)
-  if info.bang then
-    return opt_captitle:scope_action(parsed_args, 'toggle')
+vim.api.nvim_buf_create_user_command(buf, 'MarkdownFormatTitle', function(args)
+  local parsed_args = utils.command.parse_cmdline_args(args.fargs)
+  local scope = vim[parsed_args.global and 'g' or 'b']
+
+  if scope.md_fmt_title == nil then
+    scope.md_fmt_title = vim.g.md_fmt_title
   end
-  if info.fargs[1] == '&' then
-    return opt_captitle:scope_action(parsed_args, 'reset')
+
+  if args.bang or vim.tbl_contains(parsed_args, 'toggle') then
+    scope.md_fmt_title = not scope.md_fmt_title
+    return
   end
-  if info.fargs[1] == '?' then
-    return opt_captitle:scope_action(parsed_args, 'print')
+  if args.fargs[1] == '&' or vim.tbl_contains(parsed_args, 'reset') then
+    scope.md_fmt_title = true
+    return
+  end
+  if args.fargs[1] == '?' or vim.tbl_contains(parsed_args, 'status') then
+    vim.notify(tostring(scope.md_fmt_title))
+    return
   end
   if vim.tbl_contains(parsed_args, 'enable') then
-    return opt_captitle:scope_action(parsed_args, 'set', true)
+    scope.md_fmt_title = true
+    return
   end
   if vim.tbl_contains(parsed_args, 'disable') then
-    return opt_captitle:scope_action(parsed_args, 'set', false)
+    scope.md_fmt_title = false
+    return
   end
 end, {
   nargs = '*',
@@ -104,6 +124,8 @@ end, {
   complete = utils.command.complete({
     'enable',
     'disable',
+    'toggle',
+    'status',
   }, {
     ['global'] = { 'v:true', 'v:false' },
     ['local'] = { 'v:true', 'v:false' },

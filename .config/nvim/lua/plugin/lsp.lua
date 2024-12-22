@@ -610,33 +610,48 @@ local subcommands = {
       ---@param args lsp_command_parsed_arg_t
       ---@param tbl table information passed to the command
       fn_override = function(args, tbl)
-        local enabled = utils.classes.bufopt_t:new('lsp_autofmt_enabled') ---@type bufopt_t
-        local fmtopts = utils.classes.bufopt_t:new('lsp_autofmt_opts') ---@type bufopt_t
+        local scope = vim[args.global and 'g' or 'b']
+
+        if scope.lsp_autofmt_enabled == nil then
+          scope.lsp_autofmt_enabled = vim.g.lsp_autofmt_enabled
+        end
+
         if tbl.bang or vim.tbl_contains(args, 'toggle') then
-          enabled:scope_action(args, 'toggle')
+          scope.lsp_autofmt_enabled = not scope.lsp_autofmt_enabled
         elseif tbl.fargs[1] == '&' or vim.tbl_contains(args, 'reset') then
-          enabled:scope_action(args, 'reset')
-          fmtopts:scope_action(args, 'reset')
+          scope.lsp_autofmt_enabled = false
+          scope.lsp_autofmt_opts = { async = true, timeout = 500 }
         elseif tbl.fargs[1] == '?' or vim.tbl_contains(args, 'status') then
-          enabled:scope_action(args, 'print')
-          fmtopts:scope_action(args, 'print')
+          vim.notify(
+            string.format(
+              'enabled: %s',
+              scope.lsp_autofmt_enabled ~= nil and scope.lsp_autofmt_enabled
+                or vim.g.lsp_autofmt_enabled
+            )
+          )
+          vim.notify(
+            string.format(
+              'opts: %s',
+              vim.inspect(
+                scope.lsp_autofmt_opts ~= nil and scope.lsp_autofmt_opts
+                  or vim.g.lsp_autofmt_opts
+              )
+            )
+          )
         elseif vim.tbl_contains(args, 'enable') then
-          enabled:scope_action(args, 'set', true)
+          scope.lsp_autofmt_enabled = true
         elseif vim.tbl_contains(args, 'disable') then
-          enabled:scope_action(args, 'set', false)
+          scope.lsp_autofmt_enabled = false
         else
-          enabled:scope_action(args, 'set', true)
+          scope.lsp_autofmt_enabled = true
           vim.notify('[LSP] auto format enabled')
         end
+
         if args.format then
-          fmtopts:scope_action(
-            args,
-            'set',
-            vim.tbl_deep_extend(
-              'force',
-              fmtopts:scope_action(args, 'get'),
-              args.format
-            )
+          scope.lsp_autofmt_opts = vim.tbl_deep_extend(
+            'force',
+            scope.lsp_autofmt_opts or {},
+            args.format
           )
         end
       end,
@@ -1436,19 +1451,20 @@ end
 
 ---@return nil
 local function setup_lsp_autoformat()
-  local enabled = utils.classes.bufopt_t:new('lsp_autofmt_enabled', false) ---@type bufopt_t
-  local fmtopts = utils.classes.bufopt_t:new('lsp_autofmt_opts', {
-    async = true,
-    timeout_ms = 500,
-  }) ---@type bufopt_t
+  vim.g.lsp_autofmt_opts = { async = true, timeout_ms = 500 }
 
   -- Automatically format code on buf save and insert leave
   vim.api.nvim_create_autocmd({ 'BufWritePre', 'InsertLeave' }, {
     desc = 'LSP auto format.',
     group = vim.api.nvim_create_augroup('LspAutoFmt', {}),
     callback = function(info)
-      if enabled:get(info.buf) then
-        vim.lsp.buf.format(fmtopts:get(info.buf))
+      local b = vim.b[info.buf]
+      local g = vim.g
+      if
+        b.lsp_autofmt_enabled
+        or (b.lsp_autofmt_enabled == nil and g.lsp_autofmt_enabled)
+      then
+        vim.lsp.buf.format(b.lsp_autofmt_opts or g.lsp_autofmt_opts)
       end
     end,
   })

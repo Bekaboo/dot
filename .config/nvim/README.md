@@ -594,9 +594,9 @@ and it should work out of the box.
 - [winbar](lua/plugin/winbar.lua)
     - A winbar with drop-down menus and multiple backends
     - Released as [dropbar.nvim](https://github.com/Bekaboo/dropbar.nvim)
-- [markdown-capitalized-title](after/ftplugin/markdown/capitalized-title.lua)
+- [markdown-format-title](after/ftplugin/markdown/format-title.lua)
     - Automatically capitalize the first letter of each word in markdown titles
-    - Use `:MarkdownSetCapTitle enable/disable` to enable or disable this
+    - Use `:MarkdownFormatTitle enable/disable` to enable or disable this
       feature
 
 ### Startuptime
