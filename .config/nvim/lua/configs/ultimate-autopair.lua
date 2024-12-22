@@ -11,25 +11,6 @@ autopair_utils.getsmartft = function(o, _notree, ...)
   return _getsmartft(o, true, ...)
 end
 
----Record previous cmdline completion types,
----`cmdcompltype[1]` is the current completion type,
----`cmdcompltype[2]` is the previous completion type
----@type string[]
-local compltype = {}
-
-vim.api.nvim_create_autocmd('CmdlineChanged', {
-  desc = 'Record cmd compltype to determine whether to autopair.',
-  group = vim.api.nvim_create_augroup('AutopairRecordCmdCompltype', {}),
-  callback = function()
-    local type = vim.fn.getcmdcompltype()
-    if compltype[1] == type then
-      return
-    end
-    compltype[2] = compltype[1]
-    compltype[1] = type
-  end,
-})
-
 ---Get next two characters after cursor, whether in cmdline or normal buffer
 ---@return string: next two characters
 local function get_next_two_chars()
