@@ -89,11 +89,10 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
--- statusline
-vim.go.statusline = [[%!v:lua.require'plugin.statusline'.get()]]
-
--- tabline
-vim.go.tabline = [[%!v:lua.require'plugin.tabline'.get()]]
+-- tabline, statusline, statuscolumn
+vim.go.tabline = [[%!v:lua.require'plugin.tabline'()]]
+vim.go.statusline = [[%!v:lua.require'plugin.statusline'()]]
+vim.opt.statuscolumn = [[%!v:lua.require'plugin.statuscolumn'()]]
 
 -- term
 vim.api.nvim_create_autocmd('TermOpen', {
