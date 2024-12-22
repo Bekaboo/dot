@@ -1,20 +1,10 @@
 return {
   {
-    'Exafunction/codeium.vim',
-    -- Not supported under termux:
-    -- http://github.com/Exafunction/codeium/issues/33
-    enabled = not vim.env.TERMUX_VERSION,
+    'zbirenbaum/copilot.lua',
+    cmd = 'Copilot',
     event = 'InsertEnter',
-    cmd = {
-      'Codeium',
-      'CodeiumAuto',
-      'CodeiumChat',
-      'CodeiumEnable',
-      'CodeiumManual',
-      'CodeiumToggle',
-    },
     config = function()
-      require('configs.codeium')
+      require('configs.copilot')
     end,
   },
 
