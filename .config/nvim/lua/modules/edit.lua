@@ -13,9 +13,7 @@ return {
       { '<C-g>s', mode = 'i', desc = 'Surround' },
       { '<C-g>S', mode = 'i', desc = 'Surround' },
     },
-    config = function()
-      require('configs.nvim-surround')
-    end,
+    config = true,
   },
 
   {
