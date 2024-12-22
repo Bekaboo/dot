@@ -56,6 +56,18 @@ wk.setup({
   defer = function(ctx)
     return ctx.mode == 'V' or ctx.mode == '<C-V>' or ctx.mode == 'v'
   end,
+  plugins = {
+    spelling = {
+      suggestions = (function()
+        for _, val in ipairs(vim.opt.spellsuggest:get()) do
+          local num_suggestions = tonumber(val)
+          if num_suggestions then
+            return num_suggestions
+          end
+        end
+      end)(),
+    },
+  },
   icons = {
     mappings = false,
     breadcrumb = '',
@@ -112,7 +124,11 @@ local function set_default_hlgroups()
   if not vim.go.termguicolors then
     vim.api.nvim_set_hl(0, 'WhichKey', { link = 'Normal', default = true })
     vim.api.nvim_set_hl(0, 'WhichKeyDesc', { link = 'Normal', default = true })
-    vim.api.nvim_set_hl(0, 'WhichKeySeparator', { link = 'WhichKeyGroup', default = true })
+    vim.api.nvim_set_hl(
+      0,
+      'WhichKeySeparator',
+      { link = 'WhichKeyGroup', default = true }
+    )
   end
 end
 
