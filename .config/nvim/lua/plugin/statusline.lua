@@ -1,9 +1,9 @@
-local statusline = {}
 local utils = require('utils')
 local groupid = vim.api.nvim_create_augroup('StatusLine', {})
 
-local diag_signs_default_text = { 'E', 'W', 'I', 'H' }
+_G._statusline = {}
 
+local diag_signs_default_text = { 'E', 'W', 'I', 'H' }
 local diag_severity_map = {
   [1] = 'ERROR',
   [2] = 'WARN',
@@ -73,7 +73,7 @@ local modes = {
 
 ---Get string representation of the current mode
 ---@return string
-function statusline.mode()
+function _G._statusline.mode()
   local hl = vim.bo.mod and 'StatusLineHeaderModified' or 'StatusLineHeader'
   local mode = vim.fn.mode()
   local mode_str = (mode == 'n' and (vim.bo.ro or not vim.bo.ma)) and 'RO'
@@ -83,7 +83,7 @@ end
 
 ---Get diff stats for current buffer
 ---@return string
-function statusline.gitdiff()
+function _G._statusline.gitdiff()
   -- Integration with gitsigns.nvim
   ---@diagnostic disable-next-line: undefined-field
   local diff = vim.b.gitsigns_status_dict or utils.git.diffstat()
@@ -103,7 +103,7 @@ end
 
 ---Get string representation of current git branch
 ---@return string
-function statusline.branch()
+function _G._statusline.branch()
   ---@diagnostic disable-next-line: undefined-field
   local branch = vim.b.gitsigns_status_dict and vim.b.gitsigns_status_dict.head
     or utils.git.branch()
@@ -112,12 +112,12 @@ end
 
 ---Get current filetype
 ---@return string
-function statusline.ft()
+function _G._statusline.ft()
   return vim.bo.ft == '' and '' or vim.bo.ft:gsub('^%l', string.upper)
 end
 
 ---@return string
-function statusline.wordcount()
+function _G._statusline.wordcount()
   local stats = nil
   local nwords, nchars = 0, 0 -- luacheck: ignore 311
   if
@@ -314,7 +314,7 @@ vim.api.nvim_create_autocmd('WinClosed', {
   end,
 })
 
-function statusline.fname()
+function _G._statusline.fname()
   local bname = vim.api.nvim_buf_get_name(0)
 
   -- Normal buffer
@@ -369,7 +369,7 @@ local ft_text = {
 
 ---Additional info for the current buffer enclosed in parentheses
 ---@return string
-function statusline.info()
+function _G._statusline.info()
   if vim.bo.bt ~= '' then
     return ''
   end
@@ -380,12 +380,12 @@ function statusline.info()
       table.insert(info, section)
     end
   end
-  add_section(statusline.ft())
+  add_section(_G._statusline.ft())
   if ft_text[vim.bo.ft] and not vim.b.bigfile then
-    add_section(statusline.wordcount())
+    add_section(_G._statusline.wordcount())
   end
-  add_section(statusline.branch())
-  add_section(statusline.gitdiff())
+  add_section(_G._statusline.branch())
+  add_section(_G._statusline.gitdiff())
   return vim.tbl_isempty(info) and ''
     or string.format('(%s) ', table.concat(info, ', '))
 end
@@ -404,7 +404,7 @@ vim.api.nvim_create_autocmd('DiagnosticChanged', {
 
 ---Get string representation of diagnostics for current buffer
 ---@return string
-function statusline.diag()
+function _G._statusline.diag()
   if vim.b.diag_str_cache then
     return vim.b.diag_str_cache
   end
@@ -507,7 +507,7 @@ vim.api.nvim_create_autocmd('LspProgress', {
 })
 
 ---@return string
-function statusline.lsp_progress()
+function _G._statusline.lsp_progress()
   if vim.tbl_isempty(server_info) then
     return ''
   end
@@ -565,11 +565,11 @@ end
 local components = {
   align        = [[%=]],
   flag         = [[%{%&bt==#''?'':(&bt==#'help'?'%h ':(&pvw?'%w ':''))%}]],
-  diag         = [[%{%v:lua.require'plugin.statusline'.diag()%}]],
-  fname        = [[%{%v:lua.require'plugin.statusline'.fname()%} ]],
-  info         = [[%{%v:lua.require'plugin.statusline'.info()%}]],
-  lsp_progress = [[%{%v:lua.require'plugin.statusline'.lsp_progress()%}]],
-  mode         = [[%{%v:lua.require'plugin.statusline'.mode()%}]],
+  diag         = [[%{%v:lua._statusline.diag()%}]],
+  fname        = [[%{%v:lua._statusline.fname()%} ]],
+  info         = [[%{%v:lua._statusline.info()%}]],
+  lsp_progress = [[%{%v:lua._statusline.lsp_progress()%}]],
+  mode         = [[%{%v:lua._statusline.mode()%}]],
   padding      = [[ ]],
   pos          = [[%{%&ru?"%l:%c ":""%}]],
   truncate     = [[%<]],
@@ -599,7 +599,7 @@ local stl_nc = table.concat({
 
 ---Get statusline string
 ---@return string
-function statusline.get()
+function _G._statusline.get()
   return vim.g.statusline_winid == vim.api.nvim_get_current_win() and stl
     or stl_nc
 end
@@ -634,11 +634,11 @@ local function set_default_hlgroups()
     reverse = true,
   })
 end
-set_default_hlgroups()
 
+set_default_hlgroups()
 vim.api.nvim_create_autocmd('ColorScheme', {
   group = groupid,
   callback = set_default_hlgroups,
 })
 
-return statusline
+return _G._statusline
