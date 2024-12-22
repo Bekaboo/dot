@@ -27,14 +27,14 @@ vim.defer_fn(function()
     else
       fallback()
     end
-  end)
+  end, { desc = '[copilot] accept suggestion' })
   keymap.amend('i', '<M-f>', function(fallback)
     if suggestion.is_visible() then
       suggestion.accept_word()
     else
       fallback()
     end
-  end)
+  end, { desc = '[copilot] accept suggestion (word)' })
 end, 10)
 
 local copilot_util = require('copilot.util')
