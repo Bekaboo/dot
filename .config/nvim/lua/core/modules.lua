@@ -116,28 +116,6 @@ local function enable_modules(module_names)
     )
   end
 
-  for _, spec in ipairs(specs) do
-    if
-      spec.lazy == false
-      or (
-        spec.lazy ~= true
-        and not spec.ft
-        and not spec.cmd
-        and not spec.keys
-        and not spec.event
-      )
-    then
-      vim.opt.rtp:append(
-        vim.fs.joinpath(vim.g.package_path, vim.fs.basename(spec[1]))
-      )
-    end
-
-    if spec.init then
-      spec.init()
-      spec.init = nil
-    end
-  end
-
   ---Wrapper function to defer plugin manager setup,
   ---default to setup immediately
   ---@param setup function
@@ -151,6 +129,28 @@ local function enable_modules(module_names)
     ---@param setup function?
     ---@return nil
     defer = function(setup)
+      for _, spec in ipairs(specs) do
+        if
+          spec.lazy == false
+          or (
+            spec.lazy ~= true
+            and not spec.ft
+            and not spec.cmd
+            and not spec.keys
+            and not spec.event
+          )
+        then
+          vim.opt.rtp:append(
+            vim.fs.joinpath(vim.g.package_path, vim.fs.basename(spec[1]))
+          )
+        end
+
+        if spec.init then
+          spec.init()
+          spec.init = nil
+        end
+      end
+
       -- If we have undefined commands (possibly from a plugin),
       -- setup the plugin manager immediately to get the commands
       local cmd_groupid = vim.api.nvim_create_autocmd('CmdUndefined', {
