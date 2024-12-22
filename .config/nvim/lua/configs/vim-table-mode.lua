@@ -1,6 +1,3 @@
-vim.g.table_mode_syntax = 0
-vim.g.table_mode_disable_mappings = 1
-
 vim.api.nvim_create_augroup('TableModeSetTableCorner', { clear = true })
 vim.api.nvim_create_autocmd('Filetype', {
   pattern = 'markdown',
