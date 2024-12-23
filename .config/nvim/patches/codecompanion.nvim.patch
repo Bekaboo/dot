@@ -109,6 +109,19 @@ index 7ad7f46..d8ffeb6 100644
    local winnr = api.nvim_open_win(bufnr, true, {
      relative = opts.relative or "cursor",
      border = "single",
+diff --git a/lua/codecompanion/providers/completion/blink/init.lua b/lua/codecompanion/providers/completion/blink/init.lua
+index dd0a67e..d3cc84a 100644
+--- a/lua/codecompanion/providers/completion/blink/init.lua
++++ b/lua/codecompanion/providers/completion/blink/init.lua
+@@ -15,7 +15,7 @@ function M:get_trigger_characters()
+ end
+ 
+ function M:enabled()
+-  return vim.bo.filetype == "codecompanion"
++  return vim.bo.filetype == "markdown" and vim.b.codecompanion
+ end
+ 
+ function M:get_completions(ctx, callback)
 diff --git a/lua/codecompanion/providers/completion/cmp/models.lua b/lua/codecompanion/providers/completion/cmp/models.lua
 index b662d18..a82d104 100644
 --- a/lua/codecompanion/providers/completion/cmp/models.lua
@@ -162,10 +175,10 @@ index fdc2cb7..1634ceb 100644
  
  source.get_position_encoding_kind = function()
 diff --git a/lua/codecompanion/strategies/chat/init.lua b/lua/codecompanion/strategies/chat/init.lua
-index 8759387..66177de 100644
+index 210146a..a0697cf 100644
 --- a/lua/codecompanion/strategies/chat/init.lua
 +++ b/lua/codecompanion/strategies/chat/init.lua
-@@ -230,7 +230,8 @@ function Chat.new(args)
+@@ -227,7 +227,8 @@ function Chat.new(args)
      create_buf = function()
        local bufnr = api.nvim_create_buf(false, true)
        api.nvim_buf_set_name(bufnr, string.format("[CodeCompanion] %d", id))
@@ -222,7 +235,7 @@ index 2925e13..0f070c0 100644
      local bufnr = vim.api.nvim_win_get_buf(win)
  
 -    if vim.api.nvim_get_option_value("filetype", { buf = bufnr }) ~= "codecompanion" then
-+    if vim.api.nvim_get_option_value("filetype", { buf = bufnr }) ~= "markdown" or not vim.bo[bufnr].codecompanion then
++    if vim.api.nvim_get_option_value("filetype", { buf = bufnr }) ~= "markdown" or not vim.b[bufnr].codecompanion then
        local start_line = vim.api.nvim_win_call(win, function()
          return vim.fn.line("w0")
        end)
