@@ -10,13 +10,16 @@ local d = ls.dynamic_node
 
 M.snippets = {
   us.msn({
+    { trig = 'p' },
     { trig = 'e' },
     { trig = 'ech' },
     { trig = 'echom' },
   }, t('echom ')),
   us.msn(
     {
+      { trig = 'pck' },
       { trig = 'eck' },
+      { trig = 'pcheck' },
       { trig = 'echeck' },
     },
     un.fmtad('echom <q><v_esc>: <q> <v>', {
