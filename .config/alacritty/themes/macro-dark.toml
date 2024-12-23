@@ -1,27 +1,27 @@
 # Macro dark theme
 [colors.bright]
 black = "0x393836"
-blue = "0x7fb4ca"
-cyan = "0x7aa89f"
-green = "0x87a987"
-magenta = "0x938aa9"
-red = "0xe46876"
-white = "0xb4b8b4"
-yellow = "0xdca561"
+blue = "0x9fd4ea"
+cyan = "0x9ac8bf"
+green = "0xa7c9a7"
+magenta = "0xa39ac9"
+red = "0xff8896"
+white = "0xe5e9e5"
+yellow = "0xffc56d"
 
 [colors.cursor]
-cursor = "0xb4b8b4"
+cursor = "0xd4d3c7"
 
 [colors.normal]
 black = "0x0d0c0c"
-blue = "0x8ba4b0"
-cyan = "0x8ea4a2"
-green = "0x8a9a7b"
-magenta = "0xa292a3"
-red = "0xc4746e"
-white = "0xb4b3a7"
-yellow = "0xd2b788"
+blue = "0xabc4d0"
+cyan = "0xb5cecc"
+green = "0xaaba9b"
+magenta = "0xc2b2c3"
+red = "0xe4948e"
+white = "0xd4d3c7"
+yellow = "0xffde91"
 
 [colors.primary]
 background = "0x181616"
-foreground = "0xb4b8b4"
+foreground = "0xd4d3c7"
