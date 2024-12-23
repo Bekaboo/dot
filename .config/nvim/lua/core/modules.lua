@@ -108,7 +108,7 @@ local function enable_modules(module_names)
     end
   end
 
-  local specs = {}
+  local specs = {} ---@type LazyPluginSpec[]
   for _, module_name in ipairs(module_names) do
     vim.list_extend(
       specs,
