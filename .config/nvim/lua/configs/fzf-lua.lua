@@ -515,7 +515,7 @@ fzf.setup({
     actions = {
       ['alt-c'] = actions.switch_cwd,
       ['alt-h'] = actions.toggle_hidden,
-      ['alt-g'] = actions.toggle_ignore,
+      ['alt-i'] = actions.toggle_ignore,
       ['alt-/'] = actions.toggle_dir,
       ['ctrl-g'] = false,
     },
@@ -548,7 +548,7 @@ fzf.setup({
     actions = {
       ['alt-c'] = actions.switch_cwd,
       ['alt-h'] = actions.toggle_hidden,
-      ['alt-g'] = actions.toggle_ignore,
+      ['alt-i'] = actions.toggle_ignore,
     },
     rg_opts = table.concat({
       '--hidden',
