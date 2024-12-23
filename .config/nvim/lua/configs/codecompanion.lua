@@ -151,6 +151,7 @@ When given a non-programming task:
         width = 0,
         height = 0,
         opts = {
+          winbar = '', -- disable winbar in codecompanion chat buffers
           statuscolumn = '',
           foldcolumn = '0',
           linebreak = true,
@@ -169,17 +170,6 @@ When given a non-programming task:
       layout = 'horizontal',
     },
   },
-})
-
-vim.api.nvim_create_autocmd('FileType', {
-  desc = 'Buffer-local settings for CodeCompanion buffers.',
-  group = vim.api.nvim_create_augroup('CodeCompanionSetup', {}),
-  pattern = 'markdown',
-  callback = function(info)
-    if vim.b[info.buf].codecompanion then
-      vim.b[info.buf].winbar_no_attach = true
-    end
-  end,
 })
 
 -- stylua: ignore start
