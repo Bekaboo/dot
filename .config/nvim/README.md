@@ -308,7 +308,7 @@ paths:
 │   │   ├── keymaps.lua
 │   │   └── modules.lua         # bootstraps plugin manager and specifies which modules to include
 │   ├── modules                 # all plugin specifications and configs go here
-│   │   ├── lib.lua             # plugin specifications in module 'lib'
+│   │   ├── ui.lua              # plugin specifications in module 'ui'
 │   │   ├── completion.lua      # plugin specifications in module 'completion'
 │   │   ├── debug.lua           # plugin specifications in modules 'debug'
 │   │   ├── langs.lua           # plugin specifications in module 'langs'
@@ -333,7 +333,6 @@ In order to enable or disable a module, one need to change the table in
 
 ```lua
 enable_modules({
-  'lib',
   'treesitter',
   'edit',
   -- ...
@@ -496,7 +495,7 @@ and it should work out of the box.
 #### Third Party Plugins
 
 
-- **Lib**
+- **UI**
     - [nvim-web-devicons](https://github.com/kyazdani42/nvim-web-devicons)
 - **Completion**
     - [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
