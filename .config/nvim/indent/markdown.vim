@@ -54,7 +54,7 @@ function! GetMarkdownIndent() abort
       return l:default
   endif
 
-  " Treesitter indent in insert mode is laggy, but we need it to get current
+  " Treesitter indent in insert mode is laggy, but we need it to get correct
   " indent in code blocks
   if s:ts_active() && s:in_codeblock()
     return nvim_treesitter#indent()
