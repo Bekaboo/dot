@@ -326,22 +326,33 @@ augroup('SpecialBufHl', {
   },
 })
 
-augroup('SessionClearInvalidBufs', {
+augroup('SessionCloseEmptyWins', {
   'SessionLoadPost',
   {
-    desc = 'Clear invalid buffers after loading session.',
+    desc = 'Close empty windows after loading session.',
     nested = true,
     callback = function()
-      for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-        local line_count = vim.api.nvim_buf_line_count(buf)
-        if
-          line_count == 0
-          or line_count == 1
-            and vim.api.nvim_buf_get_lines(buf, 0, 1, false)[1] == ''
-            and not vim.uv.fs_stat(vim.api.nvim_buf_get_name(buf))
-        then
-          vim.api.nvim_buf_delete(buf, { force = true })
+      for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+        local wins = vim.tbl_filter(function(win)
+          return vim.fn.win_gettype(win) == ''
+        end, vim.api.nvim_tabpage_list_wins(tab))
+        if #wins <= 1 then
+          goto continue
         end
+
+        for _, win in ipairs(wins) do
+          local buf = vim.api.nvim_win_get_buf(win)
+          local line_count = vim.api.nvim_buf_line_count(buf)
+          if
+            line_count == 0
+            or line_count == 1
+              and vim.api.nvim_buf_get_lines(buf, 0, 1, false)[1] == ''
+              and not vim.uv.fs_stat(vim.api.nvim_buf_get_name(buf))
+          then
+            vim.api.nvim_win_close(win, false)
+          end
+        end
+        ::continue::
       end
     end,
   },

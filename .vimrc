@@ -498,19 +498,27 @@ if s:supportevents(['CmdlineEnter', 'CmdlineLeave'])
 endif
 " }}}2
 
-" Clear invalid buffers after loading session {{{2
+" Close empty windows after loading session {{{2
 if s:supportevents('SessionLoadPost')
   function! s:clear_invalid_buffers()
-    for buf in getbufinfo()
-      if line('$') <= 1 &&
-            \ getbufline(buf.bufnr, 1, 2) == [''] &&
-            \ !filereadable(bufname(l:buf.bufnr))
-        exe 'bd! ' . buf.bufnr
+    for tab in gettabinfo()
+      let wins = filter(tabpagewinnr(tab.tabnr, '$')->range(), 'win_gettype(win_getid(v:val, tab.tabnr)) == ""')
+      if len(wins) <= 1
+        continue
       endif
+
+      for win in wins
+        let winid = win_getid(win, tab.tabnr)
+        let buf = winbufnr(winid)
+        let line_count = line('$', winid)
+        if line_count == 0 || (line_count == 1 && getbufline(buf, 1)[0] == '' && !filereadable(bufname(buf)))
+          call win_execute(winid, 'close')
+        endif
+      endfor
     endfor
   endfunction
 
-  augroup SessionClearInvalidBufs
+  augroup SessionCloseEmptyWins
     autocmd!
     autocmd SessionLoadPost * call s:clear_invalid_buffers()
   augroup END
