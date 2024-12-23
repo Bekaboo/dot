@@ -174,6 +174,7 @@ vim.api.nvim_create_autocmd('UIEnter', {
 })
 
 vim.api.nvim_create_autocmd({
+  'BufAdd',
   'BufModifiedSet',
   'BufReadPre',
   'CursorMoved',
