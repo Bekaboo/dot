@@ -36,7 +36,7 @@ return {
     Color               = '󰏘 ',
     Constant            = '󰏿 ',
     Constructor         = '  ',
-    ContinueStatement   = '→ ',
+    ContinueStatement   = '󰁔 ',
     Copilot             = ' ',
     Declaration         = '󰙠 ',
     Delete              = '󰩺 ',
