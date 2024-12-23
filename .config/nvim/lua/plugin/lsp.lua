@@ -1530,10 +1530,11 @@ end
 ---Set up LSP and diagnostic
 ---@return nil
 local function setup()
-  if vim.g.loaded_lsp_diags ~= nil then
+  if vim.g.loaded_lsp_plugin ~= nil then
     return
   end
-  vim.g.loaded_lsp_diags = true
+  vim.g.loaded_lsp_plugin = true
+
   setup_lsp_overrides()
   setup_lsp_autoformat()
   setup_lsp_stopdetached()
