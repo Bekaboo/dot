@@ -218,6 +218,48 @@ return {
         nested = true,
         callback = function(info)
           local dirbuf_found
+
+          ---@param buf integer
+          local function load_dirbuf(buf)
+            if not vim.api.nvim_buf_is_valid(buf) then
+              return
+            end
+
+            local bufname = vim.api.nvim_buf_get_name(buf)
+            if
+              not vim.startswith(bufname, 'oil://')
+              and (vim.uv.fs_stat(bufname) or {}).type ~= 'directory'
+            then
+              return
+            end
+
+            if not dirbuf_found then
+              dirbuf_found = true
+              pcall(require, 'oil')
+              pcall(vim.api.nvim_del_autocmd, info.id)
+            end
+
+            if not vim.api.nvim_buf_is_valid(buf) then
+              return
+            end
+
+            vim.api.nvim_buf_call(buf, function()
+              -- Use `pcall()` to suppress error when opening cmdwin with the
+              -- cursor is inside a modified lua or python buffer with no
+              -- corresponding file. This does not happen with other filetypes,
+              -- e.g. c/cpp or tex files
+              -- It seems that the error is caused by lua/python's lsp servers
+              -- making an hidden buffer with bufname '/' (use `:ls!` to show
+              -- the hidden buffers) because disabling lsp server configs in
+              -- `after/ftplugin/lua/lsp.lua` and `after/ftplugin/python/lsp.lua`
+              -- prevents this error and the hidden '/' buffer is gone
+              pcall(vim.cmd.edit, {
+                bang = true,
+                mods = { keepjumps = true },
+              })
+            end)
+          end
+
           -- Check each buffer to see if it is a directory buffer,
           -- if so, open oil in that buffer
           for _, buf in ipairs(vim.api.nvim_list_bufs()) do
@@ -225,42 +267,7 @@ return {
             -- buffer attributes, e.g. buffer name, to be updated before
             -- checking if the buffer is a directory buffer
             vim.schedule(function()
-              if not vim.api.nvim_buf_is_valid(buf) then
-                return
-              end
-
-              local bufname = vim.api.nvim_buf_get_name(buf)
-              if
-                not vim.startswith(bufname, 'oil://')
-                and (vim.uv.fs_stat(bufname) or {}).type ~= 'directory'
-              then
-                return
-              end
-
-              if not dirbuf_found then
-                dirbuf_found = true
-                pcall(require, 'oil')
-                pcall(vim.api.nvim_del_autocmd, info.id)
-              end
-
-              if not vim.api.nvim_buf_is_valid(buf) then
-                return
-              end
-              vim.api.nvim_buf_call(buf, function()
-                -- Use `pcall()` to suppress error when opening cmdwin with the
-                -- cursor is inside a modified lua or python buffer with no
-                -- corresponding file. This does not happen with other filetypes,
-                -- e.g. c/cpp or tex files
-                -- It seems that the error is caused by lua/python's lsp servers
-                -- making an hidden buffer with bufname '/' (use `:ls!` to show
-                -- the hidden buffers) because disabling lsp server configs in
-                -- `after/ftplugin/lua/lsp.lua` and `after/ftplugin/python/lsp.lua`
-                -- prevents this error and the hidden '/' buffer is gone
-                pcall(vim.cmd.edit, {
-                  bang = true,
-                  mods = { keepjumps = true },
-                })
-              end)
+              load_dirbuf(buf)
             end)
           end
         end,
