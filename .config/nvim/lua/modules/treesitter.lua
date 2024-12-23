@@ -31,11 +31,11 @@ return {
   },
 
   {
-    'windwp/nvim-ts-autotag',
+    'tronikelis/ts-autotag.nvim',
     event = 'InsertEnter',
     dependencies = 'nvim-treesitter/nvim-treesitter',
     config = function()
-      require('configs.nvim-ts-autotag')
+      require('configs.ts-autotag')
     end,
   },
 
