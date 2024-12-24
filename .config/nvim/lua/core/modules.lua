@@ -126,7 +126,7 @@ local function enable_modules(module_names)
 
   -- If no files are specified, defer plugin manager setup
   if vim.fn.argc(-1) == 0 then
-    ---@param setup function?
+    ---@param setup function
     ---@return nil
     defer = function(setup)
       for _, spec in ipairs(specs) do
@@ -154,44 +154,30 @@ local function enable_modules(module_names)
         end
       end
 
+      local groupid = vim.api.nvim_create_augroup('PluginDeferSetup', {})
+
       -- If we have undefined commands (possibly from a plugin),
       -- setup the plugin manager immediately to get the commands
-      local cmd_groupid = vim.api.nvim_create_autocmd('CmdUndefined', {
+      -- We might also need to load plugins (e.g. oil.nvim or vim-fugitive)
+      -- on session load to load special buffers (oil:// or fugitive://)
+      vim.api.nvim_create_autocmd({ 'CmdUndefined', 'SessionLoadPost' }, {
+        once = true,
+        group = groupid,
         callback = function()
-          if not setup then
-            return
-          end
+          vim.api.nvim_del_augroup_by_id(groupid)
           setup()
-          setup = nil -- avoid running the setup function twice
           return true
         end,
       })
 
-      -- Defer setup until UIEnter or SessionLoadPost
+      -- Defer setup until UIEnter
       vim.api.nvim_create_autocmd('UIEnter', {
         once = true,
+        group = groupid,
         callback = function()
+          vim.api.nvim_del_autocmd(groupid)
           require('lazy.stats').on_ui_enter()
-          vim.schedule(function()
-            if not setup then
-              return
-            end
-            setup()
-            setup = nil
-            vim.api.nvim_del_autocmd(cmd_groupid)
-          end)
-          return true
-        end,
-      })
-      vim.api.nvim_create_autocmd('SessionLoadPost', {
-        once = true,
-        callback = function()
-          if not setup then
-            return
-          end
-          setup()
-          setup = nil
-          vim.api.nvim_del_autocmd(cmd_groupid)
+          vim.schedule(setup)
           return true
         end,
       })
