@@ -265,17 +265,17 @@ cmp.setup({
       local cmdcomplpath = compltype_path[cmdcompltype]
       -- Use special icons for file / directory completions
       if item.kind == 'File' or item.kind == 'Folder' or cmdcomplpath then
+        local stat = vim.uv.fs_stat(vim.fs.normalize(item.word))
+
         -- Escape special characters (e.g. '%', '$', '\') in file paths
         -- if in cmdline
-        if cmdcomplpath then
+        if cmdcomplpath and stat then
           item.word = vim.fn.fnameescape(item.word)
           item.abbr = item.word
         end
 
         -- Type of path, 'directory'/'file'/'symlink'/...
-        local type = (entry.completion_item.data or {}).type
-          or (vim.uv.fs_stat(vim.fs.normalize(item.word)) or {}).type
-        if type == 'directory' then -- Directories
+        if stat and stat.type == 'directory' then -- Directories
           item.kind = icon_folder
           item.kind_hl_group = 'CmpItemKindFolder'
         else -- Files
