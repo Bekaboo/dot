@@ -231,11 +231,11 @@ return {
               return
             end
 
+            -- Only load oil.nvim if the buffer is a non-existing file
+            -- (e.g. scp:// or oil:// paths) or is an existing directory
             local bufname = vim.api.nvim_buf_get_name(buf)
-            if
-              not vim.startswith(bufname, 'oil://')
-              and (vim.uv.fs_stat(bufname) or {}).type ~= 'directory'
-            then
+            local stat = vim.uv.fs_stat(bufname)
+            if stat and stat.type ~= 'directory' then
               return
             end
 
