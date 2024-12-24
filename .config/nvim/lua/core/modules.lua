@@ -141,8 +141,15 @@ local function enable_modules(module_names)
           )
         then
           vim.opt.rtp:append(
-            spec[1] and vim.fs.joinpath(vim.g.package_path, spec[1])
-              or spec.name and vim.fs.join(vim.g.package_path, spec.name)
+            spec[1]
+                and vim.fs.joinpath(
+                  vim.g.package_path,
+                  vim.fs.basename(spec[1])
+                )
+              or spec.name and vim.fs.join(
+                vim.g.package_path,
+                vim.fs.basename(spec.name)
+              )
               or spec.dir and vim.fs.normalize(spec.dir)
               or ''
           )
