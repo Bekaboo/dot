@@ -225,6 +225,14 @@ local function clamp(item, field, min_width, max_width)
   end
 end
 
+-- Wrap `vim.fn.getcompletion` to prevent errors when getting completions
+-- from unmatched regex, see https://github.com/hrsh7th/cmp-cmdline/issues/101
+vim.fn.getcompletion = (function(cb)
+  return function(...)
+    return vim.F.npcall(cb, ...) or {}
+  end
+end)(vim.fn.getcompletion)
+
 cmp.setup({
   enabled = function()
     return vim.bo.ft ~= '' and not vim.b.bigfile
@@ -253,10 +261,17 @@ cmp.setup({
   formatting = {
     fields = vim.g.has_nf and { 'kind', 'abbr', 'menu' } or nil,
     format = function(entry, item)
-      local compltype = vim.fn.getcmdcompltype()
-      local complpath = compltype_path[compltype]
+      local cmdcompltype = vim.fn.getcmdcompltype()
+      local cmdcomplpath = compltype_path[cmdcompltype]
       -- Use special icons for file / directory completions
-      if item.kind == 'File' or item.kind == 'Folder' or complpath then
+      if item.kind == 'File' or item.kind == 'Folder' or cmdcomplpath then
+        -- Escape special characters (e.g. '%', '$', '\') in file paths
+        -- if in cmdline
+        if cmdcomplpath then
+          item.word = vim.fn.fnameescape(item.word)
+          item.abbr = item.word
+        end
+
         -- Type of path, 'directory'/'file'/'symlink'/...
         local type = (entry.completion_item.data or {}).type
           or (vim.uv.fs_stat(vim.fs.normalize(item.word)) or {}).type
