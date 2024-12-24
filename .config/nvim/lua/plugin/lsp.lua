@@ -177,7 +177,6 @@ local function setup_lsp_overrides()
       if #result == 1 then
         local enc = vim.lsp.get_client_by_id(ctx.client_id).offset_encoding
         vim.lsp.util.jump_to_location(result[1], enc)
-        vim.notify('[LSP] found 1 ' .. obj_name)
         return
       end
 
