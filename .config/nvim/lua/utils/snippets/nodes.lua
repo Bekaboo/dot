@@ -79,7 +79,6 @@ function M.body(jump_index, indent_depth, default_text)
     return sn(nil, {
       M.idnt(indent_depth),
       insert_text ~= false and i(1, insert_text) or nil,
-      default_text ~= false and insert_text and i(2) or nil,
     })
   end)
 end
