@@ -1260,6 +1260,10 @@ nnoremap <silent> <Leader>.  :FZF<CR>
 " " }}}1
 
 """ Misc {{{1
+" Syntax highlighting in markdown code blocks
+let g:markdown_fenced_languages =
+      \ ['c', 'cpp', 'python', 'sh', 'bash', 'vim', 'lua', 'rust', 'go']
+
 " Terminal Settings {{{2
 
 if exists(':tmap') == 2
