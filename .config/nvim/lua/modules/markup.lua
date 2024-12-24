@@ -105,15 +105,6 @@ return {
   },
 
   {
-    'lukas-reineke/headlines.nvim',
-    ft = { 'markdown', 'rmd', 'norg', 'org' },
-    dependencies = 'nvim-treesitter/nvim-treesitter',
-    config = function()
-      require('configs.headlines')
-    end,
-  },
-
-  {
     'HakonHarnes/img-clip.nvim',
     ft = {
       'markdown',

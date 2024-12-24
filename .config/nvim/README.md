@@ -517,7 +517,6 @@ and it should work out of the box.
     - [vim-table-mode](https://github.com/dhruvasagar/vim-table-mode)
     - [otter.nvim](https://github.com/jmbuhr/otter.nvim)
     - [molten-nvim](https://github.com/benlubas/molten-nvim)
-    - [headlines.nvim](https://github.com/lukas-reineke/headlines.nvim)
     - [img-clip.nvim](https://github.com/HakonHarnes/img-clip.nvim)
 - **Edit**
     - [nvim-surround](https://github.com/kylechui/nvim-surround)
