@@ -30,14 +30,14 @@ function cmp_core.on_change(self, trigger_event)
   -- Don't know why but inserting spaces/tabs causes higher latency than other
   -- keys, e.g. when holding down 's' the interval between keystrokes is less
   -- than 32ms (80 repeats/s keyboard), but when holding spaces/tabs the
-  -- interval increases to 100ms, guess is is due ot some other plugins that
+  -- interval increases to 100ms, guess is is due to some other plugins that
   -- triggers on spaces/tabs
   -- Spaces/tabs are not useful in triggering completions in insert mode but can
   -- be useful in command-line autocompletion, so ignore them only when not in
   -- command-line mode
   if
-    (last_key == ' ' or last_key == '\t')
-    and string.sub(vim.fn.mode(), 1, 1) ~= 'c'
+    not vim.startswith(vim.fn.mode(), 'c')
+    and (last_key == ' ' or last_key == '\t')
   then
     return
   end
