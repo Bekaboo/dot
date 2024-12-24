@@ -227,6 +227,7 @@ return {
             if
               not vim.api.nvim_buf_is_valid(buf)
               or vim.fn.bufwinid(buf) == -1
+              or vim.bo[buf].bt ~= ''
             then
               return
             end
