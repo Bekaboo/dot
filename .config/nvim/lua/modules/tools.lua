@@ -217,11 +217,17 @@ return {
       vim.api.nvim_create_autocmd('BufWinEnter', {
         nested = true,
         callback = function(info)
-          local dirbuf_found
+          local buf = info.buf
+          local id = info.id
 
-          ---@param buf integer
-          local function load_dirbuf(buf)
-            if not vim.api.nvim_buf_is_valid(buf) then
+          -- Use `vim.schedule()` here to wait session to be loaded and
+          -- buffer attributes, e.g. buffer name, to be updated before
+          -- checking if the buffer is a directory buffer
+          vim.schedule(function()
+            if
+              not vim.api.nvim_buf_is_valid(buf)
+              or vim.fn.bufwinid(buf) == -1
+            then
               return
             end
 
@@ -233,11 +239,8 @@ return {
               return
             end
 
-            if not dirbuf_found then
-              dirbuf_found = true
-              pcall(require, 'oil')
-              pcall(vim.api.nvim_del_autocmd, info.id)
-            end
+            pcall(require, 'oil')
+            pcall(vim.api.nvim_del_autocmd, id)
 
             if not vim.api.nvim_buf_is_valid(buf) then
               return
@@ -258,18 +261,7 @@ return {
                 mods = { keepjumps = true },
               })
             end)
-          end
-
-          -- Check each buffer to see if it is a directory buffer,
-          -- if so, open oil in that buffer
-          for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-            -- Use `vim.schedule()` here to wait session to be loaded and
-            -- buffer attributes, e.g. buffer name, to be updated before
-            -- checking if the buffer is a directory buffer
-            vim.schedule(function()
-              load_dirbuf(buf)
-            end)
-          end
+          end)
         end,
       })
     end,
