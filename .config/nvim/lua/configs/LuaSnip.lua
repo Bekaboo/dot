@@ -1,8 +1,37 @@
 local ls = require('luasnip')
 local ls_types = require('luasnip.util.types')
+local ls_ft = require('luasnip.extras.filetype_functions')
 local static = require('utils.static')
 
+---Filetypes for which snippets have been loaded
+---@type table<string, boolean>
+local loaded_fts = {}
+
+---Load snippets for a given filetype
+---@param ft string
+---@return nil
+local function load_snippets(ft)
+  if loaded_fts[ft] then
+    return
+  end
+  loaded_fts[ft] = true
+
+  local ok, snip_groups = pcall(require, 'snippets.' .. ft)
+  if ok then
+    for _, snip_group in pairs(snip_groups) do
+      ls.add_snippets(ft, snip_group.snip or snip_group, snip_group.opts or {})
+    end
+  end
+end
+
 ls.setup({
+  ft_func = function()
+    local fts = ls_ft.from_pos_or_filetype()
+    for _, ft in ipairs(fts) do
+      load_snippets(ft)
+    end
+    return fts
+  end,
   keep_roots = true,
   link_roots = true,
   exit_roots = false,
@@ -47,30 +76,6 @@ vim.api.nvim_create_autocmd('ModeChanged', {
     then
       ls.unlink_current()
     end
-  end,
-})
-
----Load snippets for a given filetype
----@param ft string
----@return nil
-local function load_snippets(ft)
-  local ok, snip_groups = pcall(require, 'snippets.' .. ft)
-  if ok and type(snip_groups) == 'table' then
-    for _, snip_group in pairs(snip_groups) do
-      ls.add_snippets(ft, snip_group.snip or snip_group, snip_group.opts or {})
-    end
-  end
-end
-
--- Lazy-load snippets based on filetype
-for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-  load_snippets(vim.bo[buf].ft)
-end
-vim.api.nvim_create_autocmd('FileType', {
-  group = vim.api.nvim_create_augroup('LuaSnipLazyLoadSnippets', {}),
-  desc = 'Lazy load snippets for different filetypes.',
-  callback = function(info)
-    load_snippets(vim.bo[info.buf].ft)
   end,
 })
 
