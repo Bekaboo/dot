@@ -80,6 +80,7 @@ M.snippets = {
   ),
   us.msn({
     { trig = 'im' },
+    { trig = 'ip' },
     { trig = 'imp' },
     common = {
       desc = 'import statement',
@@ -91,6 +92,8 @@ M.snippets = {
   us.msn({
     { trig = 'fim' },
     { trig = 'imf' },
+    { trig = 'fip' },
+    { trig = 'ipf' },
     { trig = 'fimp' },
     { trig = 'impf' },
     common = {
