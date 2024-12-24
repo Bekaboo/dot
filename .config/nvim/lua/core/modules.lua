@@ -175,7 +175,7 @@ local function enable_modules(module_names)
         once = true,
         group = groupid,
         callback = function()
-          vim.api.nvim_del_autocmd(groupid)
+          vim.api.nvim_del_augroup_by_id(groupid)
           require('lazy.stats').on_ui_enter()
           vim.schedule(setup)
           return true
