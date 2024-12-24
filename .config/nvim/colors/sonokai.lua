@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Sun Dec  8 03:00:34 AM EST 2024
+-- Last Updated: Tue Dec 24 05:31:40 PM EST 2024
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -427,7 +427,7 @@ local hlgroups = {
   CmpItemKindEnum = { link = 'Type' },
   CmpItemKindEnumMember = { link = 'Constant' },
   CmpItemKindField = { link = '@property' },
-  CmpItemKindFile = { link = 'Directory' },
+  CmpItemKindFile = { link = 'Special' },
   CmpItemKindFolder = { link = 'Directory' },
   CmpItemKindFunction = { link = 'Function' },
   CmpItemKindInterface = { link = 'Type' },
