@@ -167,7 +167,7 @@ local function enable_modules(module_names)
         end,
       })
 
-      -- Defer setup until UIEnter
+      -- Defer setup until UIEnter or SessionLoadPost
       vim.api.nvim_create_autocmd('UIEnter', {
         once = true,
         callback = function()
@@ -180,6 +180,18 @@ local function enable_modules(module_names)
             setup = nil
             vim.api.nvim_del_autocmd(cmd_groupid)
           end)
+          return true
+        end,
+      })
+      vim.api.nvim_create_autocmd('SessionLoadPost', {
+        once = true,
+        callback = function()
+          if not setup then
+            return
+          end
+          setup()
+          setup = nil
+          vim.api.nvim_del_autocmd(cmd_groupid)
           return true
         end,
       })
