@@ -483,7 +483,6 @@ cmp.setup.cmdline('?', {
 cmp.setup.cmdline(':', {
   enabled = true,
   sources = {
-    { name = 'path' },
     {
       name = 'cmdline',
       option = {
