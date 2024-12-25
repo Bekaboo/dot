@@ -97,7 +97,7 @@ M.snippets = {
     { trig = 'fimp' },
     { trig = 'impf' },
     common = {
-      desc = 'from ... import statement',
+      desc = 'from ... import ... statement',
     },
   }, {
     t('from '),
