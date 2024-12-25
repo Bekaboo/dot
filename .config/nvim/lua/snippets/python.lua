@@ -105,6 +105,19 @@ M.snippets = {
     t(' import '),
     i(0, 'name'),
   }),
+  us.msn({
+    { trig = 'ima' },
+    { trig = 'ipa' },
+    { trig = 'impa' },
+    common = {
+      desc = 'import ... as ... statement',
+    },
+  }, {
+    t('import '),
+    i(1, 'module'),
+    t(' as '),
+    i(0, 'alias'),
+  }),
   us.sn(
     {
       trig = 'if',
