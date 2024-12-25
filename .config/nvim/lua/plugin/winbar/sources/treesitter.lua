@@ -144,17 +144,15 @@ local function get_symbols(buf, win, cursor)
   end
 
   local symbols = {} ---@type winbar_symbol_t[]
-  local current_node =
-    vim.treesitter.get_node({
-      bufnr = buf,
-      pos = {
-        cursor[1] - 1,
-        cursor[2] - (cursor[2] >= 1 and vim.api
-          .nvim_get_mode().mode
-          :match('^i') and 1 or 0),
-      },
-    })
-  while current_node do
+  local current_node = vim.treesitter.get_node({
+    bufnr = buf,
+    pos = {
+      cursor[1] - 1,
+      cursor[2]
+        - (cursor[2] >= 1 and vim.startswith(vim.fn.mode(), 'i') and 1 or 0),
+    },
+  })
+  while current_node and #symbols < configs.opts.sources.treesitter.max_depth do
     if valid_node(current_node, buf) then
       table.insert(symbols, 1, convert(current_node, buf, win))
     end
