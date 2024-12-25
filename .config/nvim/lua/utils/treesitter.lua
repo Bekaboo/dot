@@ -7,7 +7,17 @@ function M.is_active(buf)
   if not buf or buf == 0 then
     buf = vim.api.nvim_get_current_buf()
   end
-  return vim.treesitter.highlighter.active[buf] ~= nil
+  if vim.treesitter.highlighter.active[buf] then
+    return true
+  end
+
+  -- `vim.treesitter.get_parser()` can be slow for big files
+  if not vim.b.bigfile and (pcall(vim.treesitter.get_parser, buf)) then
+    return true
+  end
+
+  -- File is big or cannot get parser for buf
+  return false
 end
 
 ---Returns whether cursor is in a specific type of treesitter node
