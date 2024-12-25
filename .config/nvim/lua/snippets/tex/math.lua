@@ -712,19 +712,19 @@ return {
   us.sam({ trig = 'Omg' }, t('\\Omega')),
 
   -- special functions and other notations
-  us.sam({ trig = 'Cov' }, {
+  us.sam({ trig = 'cov' }, {
     t('\\mathrm{Cov}\\left('),
     i(1, 'X'),
     t(','),
     i(2, 'Y'),
     t('\\right)'),
   }),
-  us.sam({ trig = 'Var' }, {
+  us.sam({ trig = 'var' }, {
     t('\\mathrm{Var}\\left('),
     i(1, 'X'),
     t('\\right)'),
   }),
-  us.sam({ trig = 'MSE' }, { t('\\mathrm{MSE}') }),
+  us.sam({ trig = 'mse' }, { t('\\mathrm{MSE}') }),
   us.sam(
     {
       trig = 'bys',
