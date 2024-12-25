@@ -688,6 +688,7 @@ return {
   us.sam({ trig = 'vphi' }, t('\\varphi')),
   us.sam({ trig = 'psi' }, t('\\psi')),
   us.sam({ trig = 'omg' }, t('\\omega')),
+  us.sam({ trig = 'omega' }, t('\\omega')),
 
   us.sam({ trig = 'Alpha' }, t('\\Alpha')),
   us.sam({ trig = 'Beta' }, t('\\Beta')),
@@ -710,6 +711,7 @@ return {
   us.sam({ trig = 'Phi' }, t('\\Phi')),
   us.sam({ trig = 'Psi' }, t('\\Psi')),
   us.sam({ trig = 'Omg' }, t('\\Omega')),
+  us.sam({ trig = 'Omega' }, t('\\Omega')),
 
   -- special functions and other notations
   us.sam({ trig = 'cov' }, {
