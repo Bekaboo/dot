@@ -24,13 +24,29 @@ local function load_snippets(ft)
   end
 end
 
+-- Trigger markdown snippets when filetype is 'markdown_inline' or 'html' or
+-- 'html_inline' (lang returned from treesitter when using
+-- `from_pos_or_filetype()` as the filetype function)
+local lang_ft_map = {
+  markdown_inline = { 'markdown' },
+  html_inline = { 'html' },
+  html = { 'markdown' },
+}
+
+for lang, fts in pairs(lang_ft_map) do
+  ls.filetype_extend(lang, fts)
+end
+
 ls.setup({
   ft_func = function()
-    local fts = ls_ft.from_pos_or_filetype()
-    for _, ft in ipairs(fts) do
-      load_snippets(ft)
+    local langs = ls_ft.from_pos_or_filetype()
+    for _, lang in ipairs(langs) do
+      load_snippets(lang)
+      for _, ft in ipairs(lang_ft_map[lang] or {}) do
+        load_snippets(ft)
+      end
     end
-    return fts
+    return langs
   end,
   keep_roots = true,
   link_roots = true,
