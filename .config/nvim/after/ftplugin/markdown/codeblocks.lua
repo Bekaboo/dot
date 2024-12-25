@@ -38,7 +38,7 @@ end
 local function refresh()
   vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
 
-  if not query or vim.fn.win_gettype() ~= '' then
+  if not query or vim.b.bigfile or vim.fn.win_gettype() ~= '' then
     return
   end
 
