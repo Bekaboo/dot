@@ -2,12 +2,12 @@ local utils = require('utils')
 local osv = require('osv')
 
 vim.api.nvim_create_user_command('DapOSVLaunchServer', function(info)
-  local opts = utils.command.parse_cmdline_args(info.fargs)
+  local opts = utils.cmd.parse_cmdline_args(info.fargs)
   opts.port = opts.port or 8086
   osv.launch(opts)
 end, {
   nargs = '*',
-  complete = utils.command.complete({}, {
+  complete = utils.cmd.complete({}, {
     'host',
     'port',
     config_file = function(arglead)

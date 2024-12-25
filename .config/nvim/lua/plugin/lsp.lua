@@ -281,7 +281,7 @@ end
 ---@return lsp_command_parsed_arg_t parsed the parsed arguments
 local function parse_cmdline_args(fargs, fn_name_alt)
   local fn_name = fn_name_alt or fargs[1] and table.remove(fargs, 1) or nil
-  local parsed = utils.command.parse_cmdline_args(fargs)
+  local parsed = utils.cmd.parse_cmdline_args(fargs)
   return fn_name, parsed
 end
 
@@ -1405,7 +1405,7 @@ local function command_complete(meta, subcommand_info_list)
     -- Complete with subcommand's options or params
     local subcommand_info = subcommand_info_list[subcommand]
     if subcommand_info then
-      return utils.command.complete(
+      return utils.cmd.complete(
         subcommand_info.params,
         subcommand_info.opts
       )(arglead, cmdline, cursorpos)

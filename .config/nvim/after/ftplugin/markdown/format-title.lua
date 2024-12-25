@@ -91,7 +91,7 @@ vim.api.nvim_create_autocmd('TextChangedI', {
 })
 
 vim.api.nvim_buf_create_user_command(buf, 'MarkdownFormatTitle', function(args)
-  local parsed_args = utils.command.parse_cmdline_args(args.fargs)
+  local parsed_args = utils.cmd.parse_cmdline_args(args.fargs)
   local scope = vim[parsed_args.global and 'g' or 'b']
 
   if scope.md_fmt_title == nil then
@@ -121,7 +121,7 @@ vim.api.nvim_buf_create_user_command(buf, 'MarkdownFormatTitle', function(args)
 end, {
   nargs = '*',
   bang = true,
-  complete = utils.command.complete({
+  complete = utils.cmd.complete({
     'enable',
     'disable',
     'toggle',
