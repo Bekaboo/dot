@@ -160,14 +160,22 @@ M.opts = {
   bar = {
     ---@type boolean|fun(buf: integer, win: integer): boolean
     enable = function(buf, win)
-      return not vim.w[win].winbar_no_attach
+      return not vim.b.bigfile
+        and not vim.w[win].winbar_no_attach
         and not vim.b[buf].winbar_no_attach
         and vim.fn.win_gettype(win) == ''
         and vim.bo[buf].ft ~= 'help'
         and vim.bo[buf].ft ~= 'diff'
         and not vim.startswith(vim.bo[buf].ft, 'git')
         and not utils.opt.winbar:last_set_loc()
-        and utils.treesitter.is_active(buf)
+        and (
+          vim.bo[buf].ft == 'markdown'
+          or utils.treesitter.is_active(buf)
+          or not vim.tbl_isempty(vim.lsp.get_clients({
+            bufnr = buf,
+            method = 'textDocument/documentSymbol',
+          }))
+        )
     end,
     attach_events = {
       'BufEnter',

@@ -280,7 +280,7 @@ end
 ---@param cursor integer[] cursor position
 ---@return winbar_symbol_t[] symbols winbar symbols
 local function get_symbols(buf, win, cursor)
-  if vim.b.bigfile or vim.bo[buf].filetype ~= 'markdown' then
+  if vim.bo[buf].filetype ~= 'markdown' then
     return {}
   end
   if not initialized then
