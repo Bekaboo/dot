@@ -216,7 +216,7 @@ return {
   us.samW({ trig = 'lr}' }, { t('\\left{'), i(1), t('\\right}') }),
   us.samW({ trig = 'lr>' }, { t('\\left<'), i(1), t('\\right>') }),
   us.samW(
-    { trig = 'nor' },
+    { trig = 'norm' },
     { t('\\left\\lVert '), i(1), t(' \\right\\rVert') }
   ),
 
