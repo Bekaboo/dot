@@ -29,10 +29,10 @@ ts_configs.setup({
   ignore_install = {},
   highlight = {
     enable = not vim.g.vscode,
-    disable = function(ft, buf)
-      return ft == 'latex'
-        or ft == 'tmux'
-        or vim.b[buf].bigfile == true
+    disable = function(lang, buf)
+      return lang == 'latex'
+        or lang == 'tmux'
+        or vim.b[buf].bigfile
         or vim.fn.win_gettype() == 'command'
     end,
     -- Enable additional vim regex highlighting
