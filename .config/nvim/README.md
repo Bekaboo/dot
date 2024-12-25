@@ -283,6 +283,18 @@ If you encounter any issue, please try the following steps:
 
 5. If still not working, please open an issue and I will be happy to help
 
+## Performance
+
+Use the following steps to generate a flamegraph to troubleshoot performance
+issues, e.g. laggy when typing or scrolling (requires
+[FlameGraphs](https://www.brendangregg.com/flamegraphs.html) to be installed):
+
+1. Inside neovim, run `:lua require('jit.p').start('10,i1,s,m0,G', '/tmp/nvim-profile.log')`
+2. Reproduce the performance issue
+3. `:lua require('jit.p').stop()`
+4. `:qa!`
+5. `flamegraph.pl /tmp/nvim-profile.log > /tmp/nvim-profile-flamegraph.svg && firefox /tmp/nvim-profile-flamegraph.svg`
+
 ## Uninstallation
 
 You can uninstall this config completely by simply removing the following
