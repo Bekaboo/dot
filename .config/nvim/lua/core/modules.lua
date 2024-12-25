@@ -167,15 +167,22 @@ local function enable_modules(module_names)
       -- setup the plugin manager immediately to get the commands
       -- We might also need to load plugins (e.g. oil.nvim or vim-fugitive)
       -- on session load to load special buffers (oil:// or fugitive://)
-      vim.api.nvim_create_autocmd({ 'CmdUndefined', 'SessionLoadPost' }, {
-        once = true,
-        group = groupid,
-        callback = function()
-          vim.api.nvim_del_augroup_by_id(groupid)
-          setup()
-          return true
-        end,
-      })
+      -- or on filetype for ftplugins
+      vim.api.nvim_create_autocmd(
+        { 'CmdUndefined', 'SessionLoadPost', 'FileType' },
+        {
+          once = true,
+          group = groupid,
+          callback = function(info)
+            vim.api.nvim_del_augroup_by_id(groupid)
+            setup()
+            vim.schedule(function()
+              vim.api.nvim_exec_autocmds(info.event, {})
+            end)
+            return true
+          end,
+        }
+      )
 
       -- Defer setup until UIEnter
       vim.api.nvim_create_autocmd('UIEnter', {
