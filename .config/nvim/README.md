@@ -269,18 +269,13 @@ If you encounter any issue, please try the following steps:
 
 1. Run `:Lazy restore` once to ensure that all packages are properly
    installed and **patched**
-
 2. Run `:checkhealth` to check potential dependency issues
-
 3. Check `:version` to make sure you are on the same (of above) version of
    neovim as specified in [nvim-version.txt](nvim-version.txt)
-
 4. Try removing the following paths then restart neovim:
-
     - `:echo stdpath('cache')`
     - `:echo stdpath('state')`
     - `:echo stdpath('data')`
-
 5. If still not working, please open an issue and I will be happy to help
 
 ## Performance
@@ -475,31 +470,23 @@ and it should work out of the box.
 ### Showcases
 
 - File manager using [oil.nvim](https://github.com/stevearc/oil.nvim)
-
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/26bb146f-7637-4f68-acd7-baecc08f1eaf" width=75%>
 
 - DAP support powered by [nvim-dap](https://github.com/mfussenegger/nvim-dap) and [nvim-dap-ui](https://github.com/rcarriga/nvim-dap-ui)
-
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/f6c7e6ce-283b-43d7-8bc3-e8b24513a03b" width=75%>
 
 - Jupyter Notebook integration using [jupytext](lua/plugin/jupytext.lua) and [molten-nvim](https://github.com/benlubas/molten-nvim)
-
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/ce212348-8b89-4a03-a222-ab74f0338a7d" width=75%>
 
 - Winbar with IDE-like drop-down menus using [dropbar.nvim](https://github.com/Bekaboo/dropbar.nvim)
-
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/247401a9-6127-4d73-bb21-ceb847d8f7b9" width=75%>
 
 - LSP hover & completion thanks to neovim builtin LSP client and [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
-
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/13589137-b5c7-4104-810c-f8cdc56f9d1b" width=75%>
-
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/60c5b599-4191-494d-ad83-1ca7a84eab17" width=75%>
 
 - Git integration: [fugitive](https://github.com/tpope/vim-fugitive) and [gitsigns.nvim](https://github.com/tpope/vim-fugitive)
-
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/a5e0a41d-4e85-4bfc-a39d-cc7b76abedcf" width=75%>
-
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/73da4ee1-8f6c-440a-9eb9-0bcf3bc8e3ea" width=75%>
 
 ### Default Modules and Plugins of Choice
