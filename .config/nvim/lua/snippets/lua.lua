@@ -3,6 +3,7 @@ local u = require('utils')
 local un = require('utils.snippets.nodes')
 local uf = require('utils.snippets.funcs')
 local us = require('utils.snippets.snips')
+local uc = require('utils.snippets.conds')
 local ls = require('luasnip')
 local sn = ls.snippet_node
 local t = ls.text_node
@@ -44,20 +45,21 @@ M.snippets = {
     { trig = 'func' },
     { trig = 'function' },
   }, {
-    c(1, {
-      sn(nil, {
-        t('function('),
-        r(1, 'params'),
-        t({ ')', '' }),
-      }),
-      sn(nil, {
-        t('function '),
-        i(1, 'fn_name'),
-        t('('),
-        r(2, 'params'),
-        t({ ')', '' }),
-      }),
-    }),
+    d(1, function()
+      return uc.in_tsnode('assignment')()
+          and sn(nil, {
+            t('function('),
+            r(1, 'params'),
+            t({ ')', '' }),
+          })
+        or sn(nil, {
+          t('function '),
+          i(1, 'func'),
+          t('('),
+          r(2, 'params'),
+          t({ ')', '' }),
+        })
+    end),
     un.body(2, 1),
     t({ '', 'end' }),
   }),
