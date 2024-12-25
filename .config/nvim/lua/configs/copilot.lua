@@ -14,6 +14,7 @@ require('copilot').setup({
     markdown = false,
     text = false,
     tex = false,
+    [''] = false,
   },
 })
 
