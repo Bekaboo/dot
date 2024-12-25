@@ -91,8 +91,13 @@ return {
   us.samW({ trig = '<->', priority = 999 }, t('\\leftrightarrow ')),
   us.samW({ trig = '\\le >', priority = 999 }, t('\\Leftrightarrow ')),
   us.samW({ trig = '<--', priority = 999 }, t('\\leftarrow ')),
+  -- We are not using '\gets -' here as trigger to avoid confuse with negative
+  -- values following the '\gets' command
+  us.samW({ trig = '\\gets --', priority = 999 }, t('\\leftarrow ')),
+  us.samW({ trig = '<==', priority = 999 }, t('\\Leftarrow ')),
   us.samW({ trig = '\\le =', priority = 999 }, t('\\Leftarrow ')),
   us.samW({ trig = '-->', priority = 999 }, t('\\rightarrow ')),
+  us.samW({ trig = '==>', priority = 999 }, t('\\Rightarrow ')),
   us.samW({ trig = '&= >', priority = 999 }, t('\\Rightarrow ')),
   us.samW({ trig = '->', priority = 998 }, t('\\to ')),
   us.samW({ trig = '<-', priority = 998 }, t('\\gets ')),
