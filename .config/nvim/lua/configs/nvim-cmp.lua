@@ -2,7 +2,7 @@ local cmp = require('cmp')
 local cmp_core = require('cmp.core')
 local luasnip = require('luasnip')
 local tabout = require('plugin.tabout')
-local icons = require('utils.static').icons
+local icons = require('utils.static.icons')
 
 ---Hack: `nvim_lsp` and `nvim_lsp_signature_help` source still use
 ---deprecated `vim.lsp.buf_get_clients()`, which is slower due to
