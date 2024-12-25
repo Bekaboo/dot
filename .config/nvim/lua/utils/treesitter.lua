@@ -4,8 +4,10 @@ local M = {}
 ---@param buf integer? default: current buffer
 ---@return boolean
 function M.is_active(buf)
-  return vim.treesitter.highlighter.active[buf or vim.api.nvim_get_current_buf()]
-    ~= nil
+  if not buf or buf == 0 then
+    buf = vim.api.nvim_get_current_buf()
+  end
+  return vim.treesitter.highlighter.active[buf] ~= nil
 end
 
 ---Returns whether cursor is in a specific type of treesitter node
