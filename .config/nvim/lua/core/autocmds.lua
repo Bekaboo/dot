@@ -17,28 +17,23 @@ augroup('BigFileSettings', {
   {
     desc = 'Set settings for large files.',
     callback = function(info)
-      vim.b.bigfile = false
       local stat = vim.uv.fs_stat(info.match)
-      if stat and stat.size > 1048576 then
+      if not stat or stat.size <= 1048576 then
+        return
+      end
+
+      vim.api.nvim_buf_call(info.buf, function()
         vim.b.bigfile = true
+        vim.opt_local.colorcolumn = ''
+        vim.opt_local.foldcolumn = '0'
+        vim.opt_local.signcolumn = 'no'
+        vim.opt_local.statuscolumn = ''
+        vim.opt_local.winbar = ''
         vim.opt_local.spell = false
         vim.opt_local.swapfile = false
         vim.opt_local.undofile = false
         vim.opt_local.breakindent = false
-        vim.opt_local.colorcolumn = ''
-        vim.opt_local.statuscolumn = ''
-        vim.opt_local.signcolumn = 'no'
-        vim.opt_local.foldcolumn = '0'
-        vim.opt_local.winbar = ''
-        autocmd('FileType', {
-          once = true,
-          buffer = info.buf,
-          callback = function()
-            vim.opt_local.syntax = ''
-            return true
-          end,
-        })
-      end
+      end)
     end,
   },
 })
