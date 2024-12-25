@@ -12,6 +12,9 @@ local function augroup(group, ...)
   end
 end
 
+-- This can only handle cases where the big file exists on disk before opening
+-- it but not big buffers without corresponding files
+-- TODO: Handle big buffers without corresponding files
 augroup('BigFileSettings', {
   'BufReadPre',
   {
