@@ -15,10 +15,10 @@ end
 -- This can only handle cases where the big file exists on disk before opening
 -- it but not big buffers without corresponding files
 -- TODO: Handle big buffers without corresponding files
-augroup('BigFileSettings', {
+augroup('BigFile', {
   'BufReadPre',
   {
-    desc = 'Set settings for large files.',
+    desc = 'Disable options in big files.',
     callback = function(info)
       local stat = vim.uv.fs_stat(info.match)
       if not stat or stat.size <= 1048576 then
@@ -37,6 +37,45 @@ augroup('BigFileSettings', {
         vim.opt_local.undofile = false
         vim.opt_local.breakindent = false
       end)
+    end,
+  },
+}, {
+  'BufReadPre',
+  {
+    once = true,
+    desc = 'Disable treesitter and LSP in big files.',
+    callback = function()
+      local ts_get_parser = vim.treesitter.get_parser
+      local lsp_start = vim.lsp.start
+
+      ---@diagnostic disable-next-line: duplicate-set-field
+      function vim.treesitter.get_parser(buf, ...)
+        if buf == nil or buf == 0 then
+          buf = vim.api.nvim_get_current_buf()
+        end
+        if not vim.api.nvim_buf_is_valid(buf) then
+          error(string.format('Getting parser for invalid buffer %d', buf))
+        end
+        if vim.b[buf].bigfile then
+          error(
+            string.format(
+              'Getting parser for big file %s',
+              vim.api.nvim_buf_get_name(buf)
+            )
+          )
+        end
+        return ts_get_parser(buf, ...)
+      end
+
+      ---@diagnostic disable-next-line: duplicate-set-field
+      function vim.lsp.start(...)
+        if vim.b.bigfile then
+          return
+        end
+        return lsp_start(...)
+      end
+
+      return true
     end,
   },
 })
@@ -365,7 +404,7 @@ augroup('ColorSchemeRestore', {
       ---@return nil
       local function load_colorscheme(colors_name)
         local colors_path = vim.fs.joinpath(
-          vim.fn.stdpath('config') --[[@as string]],
+          vim.fn.stdpath('config'), --[[@as string]]
           'colors',
           colors_name .. '.lua'
         )
@@ -391,7 +430,7 @@ augroup('ColorSchemeRestore', {
 
       local json = require('utils.json')
       local colors_file = vim.fs.joinpath(
-        vim.fn.stdpath('state') --[[@as string]],
+        vim.fn.stdpath('state'), --[[@as string]]
         'colors.json'
       )
 
