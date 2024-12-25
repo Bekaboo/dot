@@ -169,8 +169,8 @@ return {
       end
     end),
   }),
-  us.msamW({ { trig = '>>' }, { trig = 'gg' } }, t('\\gg ')),
-  us.msamW({ { trig = '<<' }, { trig = 'll' } }, t('\\ll ')),
+  us.samW({ trig = '>>' }, t('\\gg ')),
+  us.samW({ trig = '<<' }, t('\\ll ')),
   us.msamW({ { trig = '...' }, { trig = 'ldots' } }, t('\\ldots')),
   us.msamW({ { trig = '\\ldots.' }, { trig = 'cdots' } }, t('\\cdots')),
   us.msamW({ { trig = '\\..' }, { trig = 'ddots' } }, t('\\ddots')),
