@@ -350,7 +350,7 @@ function _G._statusline.fname()
   if prefix and suffix then
     return string.format(
       '[%s] %s',
-      utils.stl.escape(utils.string.snake_to_camel(prefix)),
+      utils.stl.escape(utils.str.snake_to_camel(prefix)),
       utils.stl.escape(suffix)
     )
   end

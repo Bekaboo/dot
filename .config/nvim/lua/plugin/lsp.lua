@@ -1388,7 +1388,7 @@ local function command_complete(meta, subcommand_info_list)
       )
     end
     -- If subcommand is specified, complete with its options or params
-    local subcommand = utils.string.camel_to_snake(
+    local subcommand = utils.str.camel_to_snake(
       cmdline:match('^%s*' .. meta .. '(%w+)')
     ) or cmdline:match('^%s*' .. meta .. '%s+(%S+)')
     if not subcommand_info_list[subcommand] then
@@ -1436,7 +1436,7 @@ local function setup_commands(meta, subcommand_info_list, fn_scope)
   -- Format: MetaCommandSubcommand opts ...
   for subcommand, _ in pairs(subcommand_info_list) do
     vim.api.nvim_create_user_command(
-      meta .. utils.string.snake_to_camel(subcommand),
+      meta .. utils.str.snake_to_camel(subcommand),
       command_meta(subcommand_info_list, fn_scope, subcommand),
       {
         bang = true,
