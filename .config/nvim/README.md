@@ -539,7 +539,6 @@ and it should work out of the box.
 - **Treesitter**
     - [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter)
     - [nvim-treesitter-textobjects](https://github.com/nvim-treesitter/nvim-treesitter-textobjects)
-    - [nvim-ts-context-commentstring](https://github.com/JoosepAlviste/nvim-ts-context-commentstring)
     - [nvim-treesitter-endwise](https://github.com/RRethy/nvim-treesitter-endwise)
     - [ts-autotag.nvim](https://github.com/tronikelis/ts-autotag.nvim)
     - [treesj](https://github.com/Wansmer/treesj)
