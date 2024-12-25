@@ -65,7 +65,7 @@ vim.api.nvim_create_autocmd('FileType', {
   callback = function(info)
     local buf = info.buf
     local utils = require('utils')
-    if not utils.treesitter.is_active(buf) then
+    if not utils.ts.active(buf) then
       return
     end
 

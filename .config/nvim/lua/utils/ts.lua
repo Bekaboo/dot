@@ -3,7 +3,7 @@ local M = {}
 ---Returns whether treesitter is active in `buf`
 ---@param buf integer? default: current buffer
 ---@return boolean
-function M.is_active(buf)
+function M.active(buf)
   if not buf or buf == 0 then
     buf = vim.api.nvim_get_current_buf()
   end
@@ -26,11 +26,11 @@ end
 ---@param buf integer? default: current buffer
 ---@param mode string? default: current mode
 ---@return boolean
-function M.in_tsnode(ntype, pos, buf, mode)
+function M.in_node(ntype, pos, buf, mode)
   pos = pos or vim.api.nvim_win_get_cursor(0)
   buf = buf or vim.api.nvim_get_current_buf()
   mode = mode or vim.api.nvim_get_mode().mode
-  if not M.is_active(buf) then
+  if not M.active(buf) then
     return false
   end
   local node = vim.treesitter.get_node({

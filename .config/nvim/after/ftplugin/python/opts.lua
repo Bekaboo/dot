@@ -4,17 +4,17 @@ if cursorline and (cursorlineopt == 'both' or cursorlineopt == 'line') then
   vim.opt_local.cursorcolumn = true
 end
 
-local tsu = require('utils.treesitter')
+local tsu = require('utils.ts')
 
-if tsu.is_active() then
+if tsu.active() then
   ---@param trig string
   ---@param expansion string
   ---@return nil
   local function iabbr_normalzone(trig, expansion)
     vim.keymap.set('ia', trig, function()
-      return tsu.is_active()
-          and not tsu.in_tsnode('comment')
-          and not tsu.in_tsnode('string')
+      return tsu.active()
+          and not tsu.in_node('comment')
+          and not tsu.in_node('string')
           and expansion
         or trig
     end, {

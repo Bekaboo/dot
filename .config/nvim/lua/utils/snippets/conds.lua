@@ -41,7 +41,7 @@ end
 ---Returns whether the current buffer has treesitter enabled
 ---@return boolean
 function M.ts_active()
-  return utils.treesitter.is_active()
+  return utils.ts.active()
 end
 
 ---Returns whether current cursor is in a comment
@@ -49,7 +49,7 @@ end
 ---@return snip_cond_t
 function M.in_tsnode(type)
   return lsconds.make_condition(function()
-    return utils.treesitter.in_tsnode(type)
+    return utils.ts.in_node(type)
   end)
 end
 

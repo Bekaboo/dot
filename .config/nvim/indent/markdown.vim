@@ -15,7 +15,7 @@ function! s:in_codeblock(...) abort
 endfunction
 
 function! s:ts_active() abort
-  return luaeval('require("utils.treesitter").is_active()')
+  return luaeval('require("utils.ts").active()')
 endfunction
 
 " Find the first previous non-blank line that matches the given pattern if
