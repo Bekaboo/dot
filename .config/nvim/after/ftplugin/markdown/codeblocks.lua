@@ -1,3 +1,6 @@
+-- Highlight code blocks and extend dashes in markdown files
+-- Ported from https://github.com/lukas-reineke/headlines.nvim
+
 local ft = vim.bo.ft
 local loaded_flag = 'loaded_codeblocks' .. ft
 
