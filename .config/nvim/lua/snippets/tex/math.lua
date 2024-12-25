@@ -290,7 +290,7 @@ return {
     )
   ),
   us.sam(
-    { trig = 'mt', dscr = 'matrix' },
+    { trig = 'mat', dscr = 'matrix' },
     un.fmtad(
       [[
         \begin{bmatrix}
