@@ -1,6 +1,6 @@
 ## Neovim :: M Λ C R O
 
-[**Neovim :: M Λ C R O**](./) is a collection of Neovim configuration files inspired
+[**Neovim :: M Λ C R O**](./) is a collection of neovim configuration files inspired
 by [Emacs / N Λ N O](https://github.com/rougier/nano-emacs).
 
 The goal of macro-neovim is to provide a clean and elegant user interface
@@ -8,7 +8,7 @@ while remaining practical for daily tasks, striking a balance between a
 streamlined design and effective functionality. See [showcases](#showcases) to
 get a glimpse of the basic usage and what this configuration looks like.
 
-This is a highly personalized and opinionated Neovim configuration, not a
+This is a highly personalized and opinionated neovim configuration, not a
 distribution. While it's not meant for direct use, you're welcome to fork,
 experiment, and adapt it to your liking. Feel free to use it as a starting
 point for your configuration or borrow elements you find useful. Issues and PRs
@@ -275,7 +275,7 @@ If you encounter any issue, please try the following steps:
 3. Check `:version` to make sure you are on the same (of above) version of
    neovim as specified in [nvim-version.txt](nvim-version.txt)
 
-4. Try removing the following paths then restart Neovim:
+4. Try removing the following paths then restart neovim:
 
     - `:echo stdpath('cache')`
     - `:echo stdpath('state')`
@@ -461,7 +461,7 @@ are defined under [lua/snippets](lua/snippets).
 ### Enabling VSCode Integration
 
 VSCode integration takes advantages of the modular design, allowing to use
-a different set of modules when Neovim is launched by VSCode, relevant code is
+a different set of modules when neovim is launched by VSCode, relevant code is
 in [autoload/plugin/vscode.vim](autoload/plugin/vscode.vim) and [lua/core/modules.lua](lua/core/modules.lua).
 
 To make VSCode integration work, please install [VSCode-Neovim](https://github.com/vscode-neovim/vscode-neovim) in VSCode
@@ -490,7 +490,7 @@ and it should work out of the box.
 
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/247401a9-6127-4d73-bb21-ceb847d8f7b9" width=75%>
 
-- LSP hover & completion thanks to Neovim builtin LSP client and [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
+- LSP hover & completion thanks to neovim builtin LSP client and [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
 
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/13589137-b5c7-4104-810c-f8cdc56f9d1b" width=75%>
 
