@@ -34,20 +34,11 @@ function M.in_node(ntype, opts)
     return false
   end
 
-  while node do
-    if type(ntype) == 'string' then
-      if node:type():match(ntype) ~= nil then
-        return true
-      end
-    else
-      if ntype(node:type()) then
-        return true
-      end
-    end
-    node = node:parent()
+  if type(ntype) == 'string' then
+    return node:type():match(ntype) ~= nil
   end
 
-  return false
+  return ntype(node:type())
 end
 
 return M

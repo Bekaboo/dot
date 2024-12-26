@@ -50,6 +50,10 @@ M.snippets = {
         uc.in_tsnode('assignment', { ignore_injections = false })()
         or uc.in_tsnode('field', { ignore_injections = false })()
         or uc.in_tsnode('arguments', { ignore_injections = false })()
+        or uc.in_tsnode('parenthesized_expression', {
+          ignore_injections = false,
+        })()
+        or uc.in_tsnode('table_constructor', { ignore_injections = false })() -- unnamed function in list
       )
           and sn(nil, {
             t('function('),
