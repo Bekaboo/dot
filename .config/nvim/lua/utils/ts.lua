@@ -22,24 +22,13 @@ end
 
 ---Returns whether cursor is in a specific type of treesitter node
 ---@param ntype string|function(type: string): boolean type of node, or function to check node type
----@param pos integer[]? 1,0-indexed position, default: current cursor position
----@param buf integer? default: current buffer
----@param mode string? default: current mode
+---@param opts vim.treesitter.get_node.Opts?
 ---@return boolean
-function M.in_node(ntype, pos, buf, mode)
-  pos = pos or vim.api.nvim_win_get_cursor(0)
-  buf = buf or vim.api.nvim_get_current_buf()
-  mode = mode or vim.api.nvim_get_mode().mode
-  if not M.active(buf) then
+function M.in_node(ntype, opts)
+  if not M.active(opts and opts.bufnr) then
     return false
   end
-  local node = vim.treesitter.get_node({
-    bufnr = buf,
-    pos = {
-      pos[1] - 1,
-      pos[2] - (pos[2] >= 1 and mode:match('^i') and 1 or 0),
-    },
-  })
+  local node = vim.treesitter.get_node(opts)
   if not node then
     return false
   end

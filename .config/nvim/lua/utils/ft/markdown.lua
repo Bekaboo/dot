@@ -18,7 +18,7 @@ function M.in_codeblock_regex(lnum, buf)
 end
 
 ---Check if the current line is a markdown code block
----@param lnum integer? default to current line number
+---@param lnum integer? 1-based line index, default to current line number
 ---@param buf integer? default to current buffer
 ---@return boolean
 function M.in_codeblock(lnum, buf)
@@ -27,7 +27,10 @@ function M.in_codeblock(lnum, buf)
   if utils.ts.active(buf) then
     return utils.ts.in_node(function(ntype)
       return ntype:match('fence') and ntype:match('code') and true or false
-    end, { lnum, 0 }, buf)
+    end, {
+      pos = { lnum - 1, 0 },
+      bufnr = buf,
+    })
   end
   return M.in_codeblock_regex(lnum, buf)
 end

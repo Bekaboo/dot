@@ -46,7 +46,10 @@ M.snippets = {
     { trig = 'function' },
   }, {
     d(1, function()
-      return (uc.in_tsnode('assignment')() or uc.in_tsnode('field')())
+      return (
+        uc.in_tsnode('assignment', { ignore_injections = false })()
+        or uc.in_tsnode('field', { ignore_injections = false })()
+      )
           and sn(nil, {
             t('function('),
             r(1, 'params'),
