@@ -3,9 +3,9 @@ local ts_configs = require('nvim-treesitter.configs')
 ---@diagnostic disable-next-line: missing-fields
 ts_configs.setup({
   -- Make sure that we install all parsers shipped with neovim so that we don't
-  -- end with using nvim-treesitter's queries and neovim's shipped parsers, which
-  -- are incompatible with each other,
-  -- see https://github.com/nvim-treesitter/nvim-treesitter/issues/3092
+  -- end up with using nvim-treesitter's queries and neovim's shipped parsers,
+  -- which are incompatible with nvim-treesitter's
+  -- See https://github.com/nvim-treesitter/nvim-treesitter/issues/3092
   ensure_installed = {
     -- Parsers shipped with neovim
     'c',
