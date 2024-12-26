@@ -28,14 +28,26 @@ function M.in_node(ntype, opts)
   if not M.active(opts and opts.bufnr) then
     return false
   end
+
   local node = vim.treesitter.get_node(opts)
   if not node then
     return false
   end
-  if type(ntype) == 'string' then
-    return node:type():match(ntype) ~= nil
+
+  while node do
+    if type(ntype) == 'string' then
+      if node:type():match(ntype) ~= nil then
+        return true
+      end
+    else
+      if ntype(node:type()) then
+        return true
+      end
+    end
+    node = node:parent()
   end
-  return ntype(node:type())
+
+  return false
 end
 
 return M
