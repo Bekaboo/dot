@@ -49,6 +49,7 @@ M.snippets = {
       return (
         uc.in_tsnode('assignment', { ignore_injections = false })()
         or uc.in_tsnode('field', { ignore_injections = false })()
+        or uc.in_tsnode('arguments', { ignore_injections = false })()
       )
           and sn(nil, {
             t('function('),
