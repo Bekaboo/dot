@@ -46,7 +46,7 @@ M.snippets = {
     { trig = 'function' },
   }, {
     d(1, function()
-      return uc.in_tsnode('assignment')()
+      return (uc.in_tsnode('assignment')() or uc.in_tsnode('field')())
           and sn(nil, {
             t('function('),
             r(1, 'params'),
