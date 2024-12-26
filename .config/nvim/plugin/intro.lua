@@ -190,6 +190,7 @@ vim.api.nvim_create_autocmd({
   group = groupid,
   desc = 'Clear the intro on user action.',
   callback = function()
+    disable_intro()
     clear_intro()
     return true
   end,
