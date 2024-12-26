@@ -1,7 +1,13 @@
 return {
   {
     'nvim-treesitter/nvim-treesitter',
-    build = ':TSUpdate',
+    build = function()
+      local ts_install_ok, ts_install =
+        pcall(require, 'nvim-treesitter.install')
+      if ts_install_ok then
+        ts_install.update()
+      end
+    end,
     cmd = {
       'TSInstall',
       'TSInstallSync',
