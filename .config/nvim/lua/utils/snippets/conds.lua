@@ -66,7 +66,8 @@ function M.in_normalzone()
     -- For other filetypes, always return true
     return true
   end
-  return not M.in_tsnode('comment')() and not M.in_tsnode('string')()
+  return not M.in_tsnode('comment', { ignore_injections = false })()
+    and not M.in_tsnode('string', { ignore_injections = false })()
 end
 
 ---Returns whether the cursor is before a pattern
