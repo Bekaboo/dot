@@ -1,21 +1,8 @@
-local autopair_utils = require('ultimate-autopair.utils')
-local _getsmartft = autopair_utils.getsmartft
-
----Always use `notree`
----Setting `opts.extensions.filetype.tree` to `false` does not always work
----There are multiple places where `getsmartft()` is called with `notree`
----omitted when it should be `true`
----TODO: report this bug to upstream
----@diagnostic disable-next-line: duplicate-set-field, unused-local
-autopair_utils.getsmartft = function(o, _notree, ...)
-  return _getsmartft(o, true, ...)
-end
-
----Get next two characters after cursor, whether in cmdline or normal buffer
+---Get next two characters after cursor
 ---@return string: next two characters
 local function get_next_two_chars()
   local col, line
-  if vim.fn.mode():match('^c') then
+  if vim.startswith(vim.fn.mode(), 'c') then
     col = vim.fn.getcmdpos()
     line = vim.fn.getcmdline()
   else
@@ -36,7 +23,6 @@ require('ultimate-autopair').setup({
     -- Improve performance when typing fast, see
     -- https://github.com/altermo/ultimate-autopair.nvim/issues/74
     utf8 = false,
-    filetype = { tree = false },
     cond = {
       cond = function(f)
         return not f.in_macro()
