@@ -39,6 +39,7 @@ wk.setup({
   win = {
     border = 'solid',
     width = { max = 0.4 },
+    height = { max = 0.8 },
   },
   sort = {
     'local',
