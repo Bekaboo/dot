@@ -23,7 +23,7 @@ return {
       'TSEditQuery',
       'TSEditQueryUserAfter',
     },
-    event = 'BufReadPre',
+    event = 'FileType',
     config = function()
       vim.schedule(function()
         require('configs.nvim-treesitter')
