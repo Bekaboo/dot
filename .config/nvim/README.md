@@ -194,6 +194,12 @@ Install the following debug adapters manually:
     pip install --local debugpy # Install to user's home directory
     ```
 
+    or in a virtual env:
+
+    ```sh
+    pip install debugpy
+    ```
+
 - Go: install [Delve](https://github.com/go-delve/delve)
 
 For more information on DAP installation, see [Debug Adapter Installation](https://github.com/mfussenegger/nvim-dap/wiki/Debug-Adapter-installation).
