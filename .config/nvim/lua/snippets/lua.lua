@@ -47,13 +47,14 @@ M.snippets = {
   }, {
     d(1, function()
       return (
-        uc.in_tsnode('assignment', { ignore_injections = false })()
-        or uc.in_tsnode('field', { ignore_injections = false })()
+        uc.in_tsnode('field', { ignore_injections = false })()
         or uc.in_tsnode('arguments', { ignore_injections = false })()
-        or uc.in_tsnode('parenthesized_expression', {
-          ignore_injections = false,
-        })()
+        or uc.in_tsnode('assignment', { ignore_injections = false })()
         or uc.in_tsnode('table_constructor', { ignore_injections = false })() -- unnamed function in list
+        or uc.in_tsnode(
+          'parenthesized_expression',
+          { ignore_injections = false }
+        )()
       )
           and sn(nil, {
             t('function('),
