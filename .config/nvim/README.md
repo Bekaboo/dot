@@ -601,6 +601,10 @@ and it should work out of the box.
     - Automatically capitalize the first letter of each word in markdown titles
     - Use `:MarkdownFormatTitle enable/disable` to enable or disable this
       feature
+- [z](lua/plugin/z.lua)
+    - Jump between frequently visited directories with `:Z` command using
+      [z.lua](https://github.com/skywind3000/z.lua) or
+      [z.fish](https://github.com/jethrokuan/z)
 
 ### Startuptime
 

@@ -127,3 +127,14 @@ vim.api.nvim_create_autocmd({ 'InsertEnter', 'CmdlineEnter' }, {
     return true
   end,
 })
+
+-- z
+vim.api.nvim_create_autocmd({ 'CmdlineEnter', 'CmdUndefined' }, {
+  group = vim.api.nvim_create_augroup('ZSetup', {}),
+  desc = 'Init z plugin.',
+  once = true,
+  callback = function()
+    require('plugin.z').setup()
+    return true
+  end,
+})
