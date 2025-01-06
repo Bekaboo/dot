@@ -371,6 +371,13 @@ fzf.setup({
       layout = 'horizontal',
     },
   },
+  -- Open help window at top of screen with single border
+  help_open_win = function(buf, enter, opts)
+    opts.border = 'single'
+    opts.row = 0
+    opts.col = 0
+    return vim.api.nvim_open_win(buf, enter, opts)
+  end,
   hls = {
     title = 'TelescopeTitle',
     preview_title = 'TelescopeTitle',

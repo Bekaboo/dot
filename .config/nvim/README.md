@@ -73,7 +73,6 @@ Currently only supports Linux (X11/Wayland/TTY).
 - Massive [TeX math snippets](lua/snippets/shared/math.lua)
 - Jupyter Notebook integration: edit notebooks like markdown files, run code in
   cells with simple commands and shortcuts
-- [Fine-tuned plugins](lua/configs) with [custom patches](patches)
 - Optimization for large files, open any file larger than 100 MB and edit like
   butter
 - Fast startup around [~25 ms](#startuptime)
@@ -274,7 +273,7 @@ For more information on DAP installation, see [Debug Adapter Installation](https
 If you encounter any issue, please try the following steps:
 
 1. Run `:Lazy restore` once to ensure that all packages are properly
-   installed and **patched**
+   installed
 2. Run `:checkhealth` to check potential dependency issues
 3. Check `:version` to make sure you are on the same (of above) version of
    neovim as specified in [nvim-version.txt](nvim-version.txt)
@@ -515,7 +514,6 @@ and it should work out of the box.
     - [LuaSnip](https://github.com/L3MON4D3/LuaSnip)
 - **LLM**
     - [copilot.lua](https://github.com/zbirenbaum/copilot.lua)
-    - [codecompanion.nvim](https://github.com/olimorris/codecompanion.nvim)
 - **Markup**
     - [vimtex](https://github.com/lervag/vimtex)
     - [markdown-preview.nvim](https://github.com/iamcco/markdown-preview.nvim)
