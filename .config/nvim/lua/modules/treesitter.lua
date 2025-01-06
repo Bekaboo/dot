@@ -29,10 +29,24 @@ return {
         require('configs.nvim-treesitter')
       end)
     end,
-    dependencies = {
-      'nvim-treesitter/nvim-treesitter-textobjects',
-      'RRethy/nvim-treesitter-endwise',
-    },
+  },
+
+  {
+    'nvim-treesitter/nvim-treesitter-textobjects',
+    dependencies = 'nvim-treesitter/nvim-treesitter',
+    event = 'FileType',
+    config = function()
+      require('configs.nvim-treesitter-textobjects')
+    end,
+  },
+
+  {
+    'RRethy/nvim-treesitter-endwise',
+    dependencies = 'nvim-treesitter/nvim-treesitter',
+    event = 'InsertEnter',
+    config = function()
+      require('configs.nvim-treesitter-endwise')
+    end,
   },
 
   {
