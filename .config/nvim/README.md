@@ -86,7 +86,7 @@ Currently only supports Linux (X11/Wayland/TTY).
 - [GCC](https://gcc.gnu.org/) or [Clang](https://clang.llvm.org/) for building treesitter parsers and some libs
 - [Fd](https://github.com/sharkdp/fd), [Ripgrep](https://github.com/BurntSushi/ripgrep), and [Fzf](https://github.com/junegunn/fzf) for fuzzy search
 - [Pandoc](https://pandoc.org/), [custom scripts](../../.bin) and [TexLive](https://www.tug.org/texlive/) (for ArchLinux users, it is `texlive-core` and `texlive-extra`) for markdown → PDF conversion (`:MarkdownToPDF`)
-- [Node.js](https://nodejs.org/en) for installing dependencies for [markdown-preview.nvim](https://github.com/iamcco/markdown-preview.nvim) and launching [copilot.lua](https://github.com/zbirenbaum/copilot.lua)
+- [Node.js](https://nodejs.org/en) for installing dependencies for [markdown-preview.nvim](https://github.com/iamcco/markdown-preview.nvim)
 - [Pynvim](https://github.com/neovim/pynvim), [Jupyter Client](https://github.com/jupyter/jupyter_client), and [IPython Kernel](https://github.com/ipython/ipykernel) for Python support
 - [Jupytext](https://github.com/mwouts/jupytext) for editing Jupyter notebooks
 - A decent terminal emulator
@@ -248,8 +248,7 @@ For more information on DAP installation, see [Debug Adapter Installation](https
     2. Building failure especially for plugins like [telescope-fzf-native.nvim](https://github.com/nvim-telescope/telescope-fzf-native.nvim)
        and [markdown-preview.nvim](https://github.com/iamcco/markdown-preview.nvim) due to missing building dependencies or slow
        installation process
-    3. Some plugins like [copilot.lua](https://github.com/zbirenbaum/copilot.lua) needs authentication to work
-    4. Treesitter plugins can easily cause issues if you are on a different
+    3. Treesitter plugins can easily cause issues if you are on a different
        nvim version, check [nvim-version.txt](nvim-version.txt) for the version of nvim targeted by
        this config
 
@@ -260,8 +259,7 @@ For more information on DAP installation, see [Debug Adapter Installation](https
        under `g:package_path` and manually run the build command from there.
        The build commands are declared in module specification files under
        [lua/modules](lua/modules)
-    3. Disable [copilot.lua](https://github.com/zbirenbaum/copilot.lua) if you do not have access to it
-    4. Ensure you are on the same version of nvim as specified in
+    3. Ensure you are on the same version of nvim as specified in
        [nvim-version.txt](nvim-version.txt) if you encounter any issue related to treesitter
 
 5. After entering neovim, Run `:checkhealth` to check potential dependency
@@ -325,7 +323,6 @@ paths:
 │   │   ├── debug.lua           # plugin specifications in modules 'debug'
 │   │   ├── langs.lua           # plugin specifications in module 'langs'
 │   │   ├── markup.lua          # ...
-│   │   ├── llm.lua
 │   │   ├── tools.lua
 │   │   ├── treesitter.lua
 │   │   └── colorschemes.lua
@@ -512,8 +509,6 @@ and it should work out of the box.
     - [cmp-nvim-lsp-signature-help](https://github.com/hrsh7th/cmp-nvim-lsp-signature-help)
     - [cmp-dap](https://github.com/rcarriga/cmp-dap)
     - [LuaSnip](https://github.com/L3MON4D3/LuaSnip)
-- **LLM**
-    - [copilot.lua](https://github.com/zbirenbaum/copilot.lua)
 - **Markup**
     - [vimtex](https://github.com/lervag/vimtex)
     - [markdown-preview.nvim](https://github.com/iamcco/markdown-preview.nvim)
