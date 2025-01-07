@@ -168,7 +168,7 @@ vim.opt.backupdir:remove('.')
 
 vim.opt.list = true
 vim.opt.listchars = {
-  tab = '  ',
+  tab = '──·',
   trail = '·',
 }
 vim.opt.fillchars = {
