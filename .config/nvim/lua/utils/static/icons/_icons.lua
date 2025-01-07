@@ -166,10 +166,10 @@ return {
     TriangleUp          = '▲ ',
   },
   keys = {
-    BackSpace           = '← ',
+    BackSpace           = 'Bksp ',
     Command             = 'Cmd ',
     Control             = 'Ctrl ',
-    Down                = '↓ ',
+    Down                = 'Down ',
     Enter               = 'CR ',
     Escape              = 'Esc ',
     F1                  = 'F1 ',
@@ -184,15 +184,15 @@ return {
     F7                  = 'F7 ',
     F8                  = 'F8 ',
     F9                  = 'F9 ',
-    Left                = '← ',
+    Left                = 'Left ',
     Meta                = 'Meta ',
-    MouseDown           = 'Mouse↓ ',
-    MouseUp             = 'Mouse↑ ',
-    Right               = '→ ',
+    MouseDown           = 'MouseDown ',
+    MouseUp             = 'MouseUp ',
+    Right               = 'Right ',
     Shift               = 'Shift ',
     Space               = 'Spc ',
     Tab                 = 'Tab ',
-    Up                  = '↑ ',
+    Up                  = 'Up ',
   }
 }
 -- stylua: ignore end
