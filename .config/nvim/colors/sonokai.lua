@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Tue Dec 24 05:31:40 PM EST 2024
+-- Last Updated: Sun Jan 12 06:13:36 PM EST 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -342,7 +342,7 @@ local hlgroups = {
   shQuote = { link = 'String' },
   shTestOpr = { link = 'Operator' },
   shVarAssign = { fg = c_red },
-  shVariable = { fg = c_blue, italic = true },
+  shVariable = { link = 'Constant' },
 
   -- HTML
   htmlArg = { fg = c_blue },
