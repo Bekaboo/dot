@@ -64,16 +64,19 @@ vim.api.nvim_create_autocmd('FileType', {
   desc = 'Set treesitter folding.',
   callback = function(info)
     local buf = info.buf
-    local utils = require('utils')
-    if not utils.ts.active(buf) then
+    if vim.b[buf].bigfile then
       return
     end
 
+    local ts = require('utils.ts')
+    if not ts.active(buf) then
+      return
+    end
+
+    local opt = require('utils.opt')
     vim.api.nvim_buf_call(buf, function()
-      if not utils.opt.fdm:last_set_loc() then
+      if not opt.fdm:last_set_loc() and not opt.fde:last_set_loc() then
         vim.opt_local.fdm = 'expr'
-      end
-      if not utils.opt.fde:last_set_loc() then
         vim.opt_local.fde = 'v:lua.vim.treesitter.foldexpr()'
       end
     end)
