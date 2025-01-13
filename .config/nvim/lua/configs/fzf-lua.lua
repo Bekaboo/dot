@@ -304,6 +304,9 @@ function fzf.diagnostics_workspace(opts)
 end
 
 fzf.setup({
+  -- Default profile 'default-title' disables prompt in favor of title
+  -- on nvim >= 0.9, but a fzf windows with split layout cannot have titles
+  'default',
   -- Use nbsp in tty to avoid showing box chars
   nbsp = not vim.go.termguicolors and '\xc2\xa0' or nil,
   dir_icon = vim.trim(icons.Folder),
