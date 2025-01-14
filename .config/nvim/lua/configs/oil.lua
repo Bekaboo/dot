@@ -93,24 +93,18 @@ local function preview_set_lines(win, all)
   end
 
   local stat = vim.uv.fs_stat(path)
-  if not stat then
-    return
-  end
-
   local win_height = vim.api.nvim_win_get_height(win)
   local win_width = vim.api.nvim_win_get_width(win)
   local lines = {}
 
-  if stat.type == 'directory' then
+  if not stat then
+    lines = preview_show_msg('Invalid path', win_height, win_width)
+  elseif stat.type == 'directory' then
     lines = vim.fn.systemlist('ls -lhA ' .. vim.fn.shellescape(path))
   elseif stat.size == 0 then
     lines = preview_show_msg('Empty file', win_height, win_width)
   elseif not vim.fn.system({ 'file', path }):match('text') then
-    lines = preview_show_msg(
-      'Binary file, no preview available',
-      win_height,
-      win_width
-    )
+    lines = preview_show_msg('Binary file', win_height, win_width)
   else
     vim.b[buf]._oil_preview_syntax = bufname
     lines = vim
@@ -139,10 +133,6 @@ local function preview()
   end
 
   local fpath = vim.fs.joinpath(dir, fname)
-  local stat = vim.uv.fs_stat(fpath)
-  if not stat or (stat.type ~= 'file' and stat.type ~= 'directory') then
-    return
-  end
 
   local oil_win = vim.api.nvim_get_current_win()
   local preview_win = preview_wins[oil_win]
@@ -204,11 +194,15 @@ local function preview()
   end
 
   vim.api.nvim_buf_set_name(preview_buf, preview_bufnewname)
+  preview_set_lines(preview_win)
+
   -- If previewing a directory, change cwd to that directory
   -- so that we can `gf` to files in the preview buffer;
   -- else change cwd to the parent directory of the file in preview
   vim.api.nvim_win_call(preview_win, function()
-    local target_dir = stat.type == 'directory' and fpath or dir
+    local target_dir = (vim.uv.fs_stat(fpath) or {}).type == 'directory'
+        and fpath
+      or dir
     if vim.fn.getcwd(0) ~= target_dir then
       lcd(target_dir)
     end
@@ -221,8 +215,6 @@ local function preview()
     vim.treesitter.stop(preview_buf)
     vim.bo.syntax = ''
   end)
-
-  preview_set_lines(preview_win)
 
   if vim.b[preview_buf]._oil_preview_syntax == preview_bufnewname then
     local ft = vim.filetype.match({
