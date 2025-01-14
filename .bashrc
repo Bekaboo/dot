@@ -251,6 +251,14 @@ else
 fi
 unset safe_term match_lhs
 
+# OSC133 support
+# Source: https://codeberg.org/dnkl/foot/wiki#bash-2
+__cmd_done() {
+    printf '\e]133;D\e\\'
+}
+PS0+='\e]133;C\e\\'
+PROMPT_COMMAND=${PROMPT_COMMAND:+$PROMPT_COMMAND; }__cmd_done
+
 # Bash won't get SIGWINCH if another process is in the foreground.
 # Enable checkwinsize so that bash will check the terminal size when
 # it regains control.  #65623
