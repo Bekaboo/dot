@@ -1197,8 +1197,8 @@ endif
 " FZF {{{2
 let g:fzf_layout = {
       \ 'window': {
-        \ 'width': 0.7,
-        \ 'height': 0.7,
+        \ 'width': 0.8,
+        \ 'height': 0.8,
         \ 'pos': 'center',
         \ }
       \ }

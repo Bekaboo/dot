@@ -210,8 +210,8 @@ vim.g.netrw_localcopydircmd = 'cp -r'
 -- Fzf settings
 vim.g.fzf_layout = {
   window = {
-    width = 0.7,
-    height = 0.7,
+    width = 0.8,
+    height = 0.8,
     pos = 'center',
   },
 }
