@@ -44,6 +44,7 @@
 	rbi  = rebase -i
 	rbo  = rebase --onto
 	rl   = remote -v
+	rd   = remote rm
 	rrm  = remote rm
 	rs   = reset
 	rsp  = reset --mixed HEAD^
