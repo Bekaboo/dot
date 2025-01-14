@@ -234,6 +234,25 @@ vim.api.nvim_create_autocmd('InsertLeave', {
   end,
 })
 
+vim.api.nvim_create_autocmd('FileType', {
+  desc = 'Clear welcome messages on text change in codecompanion chat buffers.',
+  group = vim.api.nvim_create_augroup('CodeCompanionClearWelcomeMsg', {}),
+  pattern = 'codecompanion',
+  callback = vim.schedule_wrap(function(info)
+    vim.api.nvim_create_autocmd('TextChanged', {
+      once = true,
+      buffer = info.buf,
+      callback = function(i)
+        local ns = vim.api.nvim_get_namespaces()['CodeCompanion-intro_message']
+        if ns then
+          vim.api.nvim_buf_clear_namespace(i.buf, ns, 0, -1)
+        end
+        return true
+      end,
+    })
+  end),
+})
+
 -- stylua: ignore start
 vim.keymap.set('n', '<Leader><Leader>@', '<Cmd>CodeCompanionActions<CR>', { desc = 'Pick AI actions' })
 vim.keymap.set('n', '<Leader>@', '<Cmd>CodeCompanionChat Toggle<CR>', { desc = 'Chat with AI assistant' })
