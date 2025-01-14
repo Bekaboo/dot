@@ -13,6 +13,7 @@ local lowercase_words = {
   ['but'] = true,
   ['by'] = true,
   ['can'] = true,
+  ['etc'] = true,
   ['for'] = true,
   ['if'] = true,
   ['in'] = true,
@@ -65,7 +66,10 @@ local function format_title(info)
   end
 
   local word_lower = word:lower()
-  if word_lower ~= word and lowercase_words[word_lower] then
+  if
+    #word < 3 and line:match('^#+%s+([%w_]+)$') ~= word
+    or word_lower ~= word and lowercase_words[word_lower]
+  then
     line = line:sub(1, cursor[2] - #word)
       .. word_lower
       .. line:sub(cursor[2] + 1)
