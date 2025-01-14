@@ -33,6 +33,22 @@ setbg-alacritty() {
     )
 }
 
+setbg-foot() {
+    # $1: 'light' or 'dark'
+    (
+        cd "$CONFIG_HOME/foot"
+        local theme_path="theme.ini"
+        local themes_dir="themes"
+        # If $1 is empty, only need to ensure symlink to color theme file exists
+        if [[ -z "$1" ]]; then
+            ln -s "$themes_dir/$DEFAULT_BG.ini" "$theme_path" 2>/dev/null
+        else
+            ln -sf "$themes_dir/$1.ini" "$theme_path"
+        fi
+        [[ -e "$config" ]] && touch "$config" # Reload config
+    )
+}
+
 setbg-kitty() {
     # $1: 'light' or 'dark'
     (
@@ -303,6 +319,7 @@ main() {
         esac
     done
     setbg-alacritty "$bg" &
+    setbg-foot "$bg" &
     setbg-kitty "$bg" &
     setbg-wezterm "$bg" &
     setbg-konsole-yakuake "$bg" &

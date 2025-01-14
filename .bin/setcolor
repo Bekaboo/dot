@@ -43,6 +43,25 @@ setcolor-alacritty() {
     )
 }
 
+setcolor-foot() {
+    # $1: name of the colorscheme
+    (
+        cd "$CONFIG_HOME/foot/themes"
+        local dark_theme_path="dark.ini"
+        local light_theme_path="light.ini"
+        # If $1 is empty, only need to ensure symlink to color theme files exists
+        if [[ -z "$1" ]]; then
+            ln -s "$DEFAULT_COLOR-dark.ini" "$dark_theme_path" 2>/dev/null
+            ln -s "$DEFAULT_COLOR-light.ini" "$light_theme_path" 2>/dev/null
+        else
+            ln -sf "$1-dark.ini" "$dark_theme_path"
+            ln -sf "$1-light.ini" "$light_theme_path"
+        fi
+        local config="$CONFIG_HOME/foot/foot.ini"
+        [[ -e "$config" ]] && touch "$config" # Reload config
+    )
+}
+
 setcolor-kitty() {
     # $1: name of the colorscheme
     (
@@ -301,6 +320,7 @@ main() {
         esac
     done
     setcolor-alacritty "$color" &
+    setcolor-foot "$color" &
     setcolor-kitty "$color" &
     setcolor-wezterm "$color" &
     setcolor-konsole-yakuake "$color" &

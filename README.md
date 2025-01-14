@@ -15,4 +15,5 @@ Dotfiles for
 - [Alacritty](.config/alacritty/)
 - [Kitty](.config/kitty/)
 - [Wezterm](.config/wezterm/)
+- [Foot](.config/foot/)
 - ...
