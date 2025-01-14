@@ -128,6 +128,30 @@ When given a non-programming task:
           callback = 'keymaps.fold_code',
           description = 'Fold code',
         },
+        debug = {
+          modes = { n = 'g<C-g>' },
+          index = 15,
+          callback = 'keymaps.debug',
+          description = 'View debug info',
+        },
+        pin = {
+          modes = { n = 'g>' },
+          index = 9,
+          callback = 'keymaps.pin_reference',
+          description = 'Pin Reference',
+        },
+        change_adapter = {
+          modes = { n = 'gA' },
+          index = 14,
+          callback = 'keymaps.change_adapter',
+          description = 'Change adapter',
+        },
+        system_prompt = {
+          modes = { n = 'gS' },
+          index = 16,
+          callback = 'keymaps.toggle_system_prompt',
+          description = 'Toggle the system prompt',
+        },
       },
     },
     inline = {
