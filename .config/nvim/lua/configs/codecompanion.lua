@@ -174,6 +174,9 @@ When given a non-programming task:
   },
   display = {
     chat = {
+      icons = {
+        pinned_buffer = require('utils.static.icons').Pin,
+      },
       intro_message = 'Welcome to CodeCompanion! Press `g?` for options',
       window = {
         layout = 'vertical',
