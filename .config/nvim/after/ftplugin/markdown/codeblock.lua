@@ -15,25 +15,15 @@ local groupid = vim.api.nvim_create_augroup(ns_name, {})
 
 local has_quantified_captures = vim.fn.has('nvim-0.11.0') == 1
 
----@param query string
----@return vim.treesitter.Query?
-local function parse_query_save(query)
-  local ok, parsed_query = pcall(vim.treesitter.query.parse, ft, query)
-  if not ok then
-    return nil
-  end
-  return parsed_query
-end
-
 local dash_string = '-'
-local query = parse_query_save([[
+local query = vim.F.npcall(
+  vim.treesitter.query.parse,
+  ft,
+  [[
   (thematic_break) @dash
   (fenced_code_block) @codeblock
-]])
-
-local function set_extmark(...)
-  pcall(vim.api.nvim_buf_set_extmark, ...)
-end
+]]
+)
 
 local function refresh()
   vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
@@ -66,7 +56,7 @@ local function refresh()
       )
 
       if capture == 'dash' and dash_string then
-        set_extmark(bufnr, ns, start_row, 0, {
+        pcall(vim.api.nvim_buf_set_extmark, bufnr, ns, start_row, 0, {
           virt_text = {
             { dash_string:rep(width), 'Dash' },
           },
@@ -76,7 +66,7 @@ local function refresh()
       end
 
       if capture == 'codeblock' then
-        set_extmark(bufnr, ns, start_row, 0, {
+        pcall(vim.api.nvim_buf_set_extmark, bufnr, ns, start_row, 0, {
           end_col = 0,
           end_row = end_row,
           hl_group = 'CodeBlock',
@@ -90,7 +80,7 @@ local function refresh()
 
         if codeblock_padding > 0 then
           for i = start_row, end_row - 1 do
-            set_extmark(bufnr, ns, i, 0, {
+            pcall(vim.api.nvim_buf_set_extmark, bufnr, ns, i, 0, {
               virt_text = {
                 { string.rep(' ', codeblock_padding - 2), 'Normal' },
               },
@@ -103,18 +93,6 @@ local function refresh()
     end
   end
 end
-
-local function set_default_hlgroups()
-  vim.api.nvim_set_hl(0, 'CodeBlock', { link = 'CursorLine', default = true })
-  vim.api.nvim_set_hl(0, 'Dash', { link = 'LineNr', default = true })
-end
-
-set_default_hlgroups()
-vim.api.nvim_create_autocmd('ColorScheme', {
-  group = groupid,
-  desc = 'Set default highlight groups for headlines.nvim.',
-  callback = set_default_hlgroups,
-})
 
 vim.api.nvim_create_autocmd({
   'FileChangedShellPost',
@@ -132,3 +110,16 @@ vim.api.nvim_create_autocmd('Syntax', {
   desc = 'Refresh headlines.',
   callback = refresh,
 })
+
+local function set_default_hlgroups()
+  vim.api.nvim_set_hl(0, 'CodeBlock', { link = 'CursorLine', default = true })
+  vim.api.nvim_set_hl(0, 'Dash', { link = 'LineNr', default = true })
+end
+
+set_default_hlgroups()
+vim.api.nvim_create_autocmd('ColorScheme', {
+  group = groupid,
+  desc = 'Set default highlight groups for headlines.nvim.',
+  callback = set_default_hlgroups,
+})
+
