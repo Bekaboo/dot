@@ -318,14 +318,15 @@ paths:
 │   │   ├── keymaps.lua
 │   │   └── modules.lua         # bootstraps plugin manager and specifies which modules to include
 │   ├── modules                 # all plugin specifications and configs go here
-│   │   ├── ui.lua              # plugin specifications in module 'ui'
-│   │   ├── completion.lua      # plugin specifications in module 'completion'
-│   │   ├── debug.lua           # plugin specifications in modules 'debug'
-│   │   ├── langs.lua           # plugin specifications in module 'langs'
-│   │   ├── markup.lua          # ...
-│   │   ├── tools.lua
-│   │   ├── treesitter.lua
-│   │   └── colorschemes.lua
+│   │   ├── ui.lua              # ui elements, e.g. icons
+│   │   ├── completion.lua      # auto-completion
+│   │   ├── debug.lua           # debug adapter (DAP) support
+│   │   ├── edit.lua            # general editing enhancements, e.g. auto-pair, surround, align, etc.
+│   │   ├── langs.lua           # language-specific plugins
+│   │   ├── markup.lua          # enhancement for markdown and tex editing
+│   │   ├── tools.lua           # tools like fuzzy finder, git integration, etc.
+│   │   ├── treesitter.lua      # treesitter related plugins
+│   │   └── colorschemes.lua    # third-party themes
 │   ├── configs                 # configs for each plugin
 │   ├── snippets                # snippets
 │   ├── plugin                  # the actual implementation of custom plugins
