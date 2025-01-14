@@ -354,7 +354,7 @@ M.opts = {
   },
   sources = {
     treesitter = {
-      max_depth = 8,
+      max_depth = 12,
       -- Vim regex used to extract a short name from the node text
       -- word with optional prefix and suffix: [#~!@\*&.]*[[:keyword:]]\+!\?
       -- word separators: \(->\)\+\|-\+\|\.\+\|:\+\|\s\+
@@ -425,7 +425,7 @@ M.opts = {
       },
     },
     lsp = {
-      max_depth = 8,
+      max_depth = 12,
       valid_symbols = {
         'File',
         'Module',
