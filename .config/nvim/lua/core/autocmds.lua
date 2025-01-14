@@ -404,7 +404,7 @@ augroup('ColorSchemeRestore', {
       ---@return nil
       local function load_colorscheme(colors_name)
         local colors_path = vim.fs.joinpath(
-          vim.fn.stdpath('config'), --[[@as string]]
+          vim.fn.stdpath('config') --[[@as string]],
           'colors',
           colors_name .. '.lua'
         )
@@ -430,7 +430,7 @@ augroup('ColorSchemeRestore', {
 
       local json = require('utils.json')
       local colors_file = vim.fs.joinpath(
-        vim.fn.stdpath('state'), --[[@as string]]
+        vim.fn.stdpath('state') --[[@as string]],
         'colors.json'
       )
 
