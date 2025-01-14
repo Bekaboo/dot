@@ -323,6 +323,7 @@ paths:
 │   │   ├── debug.lua           # debug adapter (DAP) support
 │   │   ├── edit.lua            # general editing enhancements, e.g. auto-pair, surround, align, etc.
 │   │   ├── langs.lua           # language-specific plugins
+│   │   ├── llm.lua             # completion and code generators using LLMs
 │   │   ├── markup.lua          # enhancement for markdown and tex editing
 │   │   ├── tools.lua           # tools like fuzzy finder, git integration, etc.
 │   │   ├── treesitter.lua      # treesitter related plugins
@@ -510,6 +511,8 @@ and it should work out of the box.
     - [cmp-nvim-lsp-signature-help](https://github.com/hrsh7th/cmp-nvim-lsp-signature-help)
     - [cmp-dap](https://github.com/rcarriga/cmp-dap)
     - [LuaSnip](https://github.com/L3MON4D3/LuaSnip)
+ - **LLM**
+    - [codecompanion.nvim](https://github.com/olimorris/codecompanion.nvim)
 - **Markup**
     - [vimtex](https://github.com/lervag/vimtex)
     - [markdown-preview.nvim](https://github.com/iamcco/markdown-preview.nvim)
