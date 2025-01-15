@@ -38,11 +38,10 @@ local lowercase_words = {
 }
 
 ---Capitalize the first letter of words on title line
----@param info table information given to event handler
 ---@return nil
-local function format_title(info)
+local function format_title()
   if
-    vim.bo[info.buf].filetype ~= 'markdown'
+    vim.bo.filetype ~= 'markdown'
     or vim.b.md_fmt_title == false
     or (vim.g.md_fmt_title == false and vim.b.md_fmt_title == nil)
   then
@@ -70,19 +69,27 @@ local function format_title(info)
     #word < 3 and line:match('^#+%s+([%w_]+)$') ~= word
     or word_lower ~= word and lowercase_words[word_lower]
   then
-    line = line:sub(1, cursor[2] - #word)
-      .. word_lower
-      .. line:sub(cursor[2] + 1)
-    vim.api.nvim_set_current_line(line)
+    vim.api.nvim_buf_set_text(
+      0,
+      cursor[1] - 1,
+      cursor[2] - #word,
+      cursor[1] - 1,
+      cursor[2],
+      { word_lower }
+    )
     return
   end
 
-  local word_cap = word:sub(1, 1):upper() .. word:sub(2)
-  if word_cap ~= word and not lowercase_words[word_lower] then
-    line = line:sub(1, cursor[2] - #word)
-      .. word_cap
-      .. line:sub(cursor[2] + 1)
-    vim.api.nvim_set_current_line(line)
+  local word_upper = word:sub(1, 1):upper() .. word:sub(2)
+  if word_upper ~= word and not lowercase_words[word_lower] then
+    vim.api.nvim_buf_set_text(
+      0,
+      cursor[1] - 1,
+      cursor[2] - #word,
+      cursor[1] - 1,
+      cursor[2],
+      { word_upper }
+    )
     return
   end
 end
