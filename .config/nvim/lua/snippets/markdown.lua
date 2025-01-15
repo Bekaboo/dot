@@ -13,9 +13,9 @@ local dl = require('luasnip.extras').dynamic_lambda
 M.math = require('snippets.tex.math')
 
 M.snippets = {
-  us.msnr({
-    { trig = '^# ', snippetType = 'autosnippet' },
-    { trig = '^h1' },
+  us.mssn({
+    { trig = '# ', snippetType = 'autosnippet' },
+    { trig = 'h1' },
   }, {
     t('# '),
     dl(
@@ -29,11 +29,11 @@ M.snippets = {
       {}
     ),
   }),
-  us.snr({ trig = '^h2' }, { t('## '), i(0) }),
-  us.snr({ trig = '^h3' }, { t('### '), i(0) }),
-  us.snr({ trig = '^h4' }, { t('#### '), i(0) }),
-  us.snr({ trig = '^h5' }, { t('##### '), i(0) }),
-  us.snr({ trig = '^h6' }, { t('###### '), i(0) }),
+  us.ssn({ trig = 'h2' }, { t('## '), i(0) }),
+  us.ssn({ trig = 'h3' }, { t('### '), i(0) }),
+  us.ssn({ trig = 'h4' }, { t('#### '), i(0) }),
+  us.ssn({ trig = 'h5' }, { t('##### '), i(0) }),
+  us.ssn({ trig = 'h6' }, { t('###### '), i(0) }),
 
   us.sn('pkgs', {
     t({ '---', '' }),
