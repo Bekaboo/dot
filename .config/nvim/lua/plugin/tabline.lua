@@ -7,6 +7,18 @@ setmetatable(_G._tabline, {
   __call = function()
     local tabnames = {}
     local tabidcur = vim.api.nvim_get_current_tabpage()
+    -- If tab-local tab name variable is not set but a global tab name variable
+    -- exists for that tab, restore the tab-local tab name using the global tab
+    -- name variable, this should only happen during or after session load once
+    if not vim.g._tabline_name_restored then
+      for tabnr, tabid in ipairs(vim.api.nvim_list_tabpages()) do
+        local tabname_id = vim.t[tabid]._tabname
+        local tabname_nr = vim.g['Tabname' .. tabnr]
+        if not tabname_id and tabname_nr then
+          vim.t[tabid]._tabname = tabname_nr
+        end
+      end
+    end
     for tabnr, tabid in ipairs(vim.api.nvim_list_tabpages()) do
       -- Save the tab-local name variable to the corresponding global variable
       -- Tab names are saved in global variables by number instead of id
@@ -67,31 +79,15 @@ end, {
 vim.opt.sessionoptions:append('globals')
 
 local groupid = vim.api.nvim_create_augroup('TablineName', {})
-vim.api.nvim_create_autocmd('SessionLoadPost', {
-  desc = 'Restore tab names.',
-  group = groupid,
-  callback = function()
-    -- If tab-local tab name variable is not set but a global tab name variable
-    -- exists for that tab, restore the tab-local tab name using the global tab
-    -- name variable, this should only happen after session load
-    for tabnr, tabid in ipairs(vim.api.nvim_list_tabpages()) do
-      local tabname_id = vim.t[tabid]._tabname
-      local tabname_nr = vim.g['Tabname' .. tabnr]
-      if not tabname_id and tabname_nr then
-        vim.t[tabid]._tabname = tabname_nr
-      end
-    end
-  end,
-})
-
 vim.api.nvim_create_autocmd({ 'UIEnter', 'SessionLoadPost' }, {
   desc = 'Set flag to enable tab name psersistence across sessions.',
   group = groupid,
+  once = true,
   callback = function()
     vim.g._tabline_name_restored = true
+    return true
   end,
 })
-
 vim.api.nvim_create_autocmd('TabClosed', {
   desc = 'Clear global tab name variable for closed tabs.',
   group = groupid,
