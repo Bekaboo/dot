@@ -149,6 +149,7 @@ return {
     Dot                 = '• ',
     DotLarge            = ' ',
     Ellipsis            = '… ',
+    Eye                 = '󰈈 ',
     GitSignAdd          = '▍ ',
     GitSignChange       = '▍ ',
     GitSignChangedelete = '▍ ',

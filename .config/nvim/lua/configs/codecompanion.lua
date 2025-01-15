@@ -1,3 +1,5 @@
+local icons = require('utils.static.icons')
+
 local adapter = (function()
   for _, backend in ipairs({
     'anthropic',
@@ -89,9 +91,16 @@ When given a non-programming task:
         clear = { modes = { n = 'gC' } },
         fold_code = { modes = { n = 'gF' } },
         debug = { modes = { n = 'g<C-g>' } },
-        pin = { modes = { n = 'g>' } },
         change_adapter = { modes = { n = 'gA' } },
         system_prompt = { modes = { n = 'gS' } },
+        pin = {
+          modes = { n = 'g>' },
+          description = 'Pin Reference (resend whole contents on change)',
+        },
+        watch = {
+          modes = { n = 'g=' },
+          description = 'Watch Buffer (send diffs on change)',
+        },
       },
     },
     inline = {
@@ -111,7 +120,8 @@ When given a non-programming task:
   display = {
     chat = {
       icons = {
-        pinned_buffer = require('utils.static.icons').Pin,
+        pinned_buffer = icons.Pin,
+        watched_buffer = icons.Eye,
       },
       intro_message = 'Welcome to CodeCompanion! Press `g?` for options',
       window = {
