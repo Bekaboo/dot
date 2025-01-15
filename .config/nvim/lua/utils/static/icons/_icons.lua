@@ -158,7 +158,7 @@ return {
     GitSignUntracked    = '+ ',
     Log                 = '= ',
     Ok                  = 'v ',
-    Pin                 = '* ',
+    Pin                 = '& ',
     Play                = '> ',
     Star                = '* ',
     TriangleDown        = '▼ ',
