@@ -4,7 +4,9 @@ if vim.g.md_fmt_title == nil then
   vim.g.md_fmt_title = true
 end
 
-local lowercase_words = {
+-- Export the word list to global so that other parts of the config
+-- (e.g. markdown snippets) can access it
+_G._title_lowercase_words = {
   ['a'] = true,
   ['an'] = true,
   ['and'] = true,
@@ -68,7 +70,7 @@ local function format_title()
   local is_first = line:match('^#+%s+([%w_]+)$') == word
   if
     #word < 3 and not is_first
-    or word_lower ~= word and lowercase_words[word_lower]
+    or word_lower ~= word and _G._title_lowercase_words[word_lower]
   then
     vim.api.nvim_buf_set_text(
       0,
@@ -82,7 +84,10 @@ local function format_title()
   end
 
   local word_upper = word:sub(1, 1):upper() .. word:sub(2)
-  if word_upper ~= word and (is_first or not lowercase_words[word_lower]) then
+  if
+    word_upper ~= word
+    and (is_first or not _G._title_lowercase_words[word_lower])
+  then
     vim.api.nvim_buf_set_text(
       0,
       cursor[1] - 1,
