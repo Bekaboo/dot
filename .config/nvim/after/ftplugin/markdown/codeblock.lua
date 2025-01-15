@@ -20,9 +20,9 @@ local query = vim.F.npcall(
   vim.treesitter.query.parse,
   ft,
   [[
-  (thematic_break) @dash
-  (fenced_code_block) @codeblock
-]]
+    (thematic_break) @dash
+    (fenced_code_block) @codeblock
+  ]]
 )
 
 local function refresh()
@@ -122,4 +122,3 @@ vim.api.nvim_create_autocmd('ColorScheme', {
   desc = 'Set default highlight groups for headlines.nvim.',
   callback = set_default_hlgroups,
 })
-

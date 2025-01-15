@@ -1405,10 +1405,11 @@ local function command_complete(meta, subcommand_info_list)
     -- Complete with subcommand's options or params
     local subcommand_info = subcommand_info_list[subcommand]
     if subcommand_info then
-      return utils.cmd.complete(
-        subcommand_info.params,
-        subcommand_info.opts
-      )(arglead, cmdline, cursorpos)
+      return utils.cmd.complete(subcommand_info.params, subcommand_info.opts)(
+        arglead,
+        cmdline,
+        cursorpos
+      )
     end
     return {}
   end

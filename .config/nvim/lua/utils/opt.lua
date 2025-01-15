@@ -29,7 +29,6 @@ function opt_util_t:last_set_loc()
     :match('Last set from (%S*)')
 end
 
-
 return setmetatable({}, {
   __index = function(self, name)
     self[name] = opt_util_t:new(name)
