@@ -56,7 +56,13 @@ function! GetMarkdownIndent() abort
 
   " Treesitter indent in insert mode is laggy, but we need it to get correct
   " indent in code blocks
-  if s:ts_active() && s:in_codeblock()
+  " If the code block does not have a language, in which case we should not
+  " nvim-treesitter's indent expr because it always return 0 (no indentation)
+  let codeblock_lang = s:in_codeblock()
+  if s:ts_active() &&
+        \ codeblock_lang !=# v:false &&
+        \ codeblock_lang !=# '' &&
+        \ codeblock_lang !~# 'markdown'
     return nvim_treesitter#indent()
   endif
 
