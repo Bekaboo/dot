@@ -86,6 +86,8 @@ When given a non-programming task:
         close = { modes = { n = 'gX', i = '<M-C-X>' } },
         stop = { modes = { n = '<C-c>' } },
         codeblock = { modes = { n = 'cdb' } },
+        next_header = { modes = { n = ']#' } },
+        previous_header = { modes = { n = '[#' } },
         next_chat = { modes = { n = ']}' } },
         previous_chat = { modes = { n = '[{' } },
         clear = { modes = { n = 'gC' } },
