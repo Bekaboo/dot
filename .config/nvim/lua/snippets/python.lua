@@ -317,7 +317,7 @@ M.snippets = {
     {
       common_opts = {
         stored = {
-          fn_name = i(nil, 'function_name'),
+          fn_name = i(nil, 'func'),
         },
       },
     }
