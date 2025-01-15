@@ -48,6 +48,7 @@ __command_abbr free 'free -mh'
 __command_abbr g git
 __command_abbr d dot
 __command_abbr lc 'wc -l'
+__command_abbr ll 'ls -lh'
 __command_abbr mkdir 'mkdir -p'
 __command_abbr mv 'mv -i'
 __command_abbr sudoe 'sudo -E'
