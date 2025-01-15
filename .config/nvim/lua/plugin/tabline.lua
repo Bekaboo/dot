@@ -8,6 +8,19 @@ setmetatable(_G._tabline, {
     local tabnames = {}
     local tabidcur = vim.api.nvim_get_current_tabpage()
     for tabnr, tabid in ipairs(vim.api.nvim_list_tabpages()) do
+      -- Tab names are saved in global variables by number instead of id
+      -- because tab ids are not preserved across sessions
+      -- If tab-local tab name variable is not set but a global tab name
+      -- variable exists for that tab, restore the tab-local tab name using
+      -- the global tab name variable; else save the tab-local name variable
+      -- to the corresponding global variable
+      local tabname_id = vim.t[tabid]._tabname
+      local tabname_nr = vim.g['Tabname' .. tabnr]
+      if tabname_id and tabname_id ~= tabname_nr then
+        vim.g['Tabname' .. tabnr] = tabname_id
+      elseif not tabname_id and tabname_nr then
+        vim.t[tabid]._tabname = tabname_nr
+      end
       table.insert(
         tabnames,
         utils.stl.hl(
@@ -38,6 +51,12 @@ function _G._tabline.rename(tabid, name)
     return
   end
   vim.t[tabid]._tabname = name
+  for nr, id in ipairs(vim.api.nvim_list_tabpages()) do
+    if tabid == id then
+      vim.g['Tabname' .. nr] = name
+      break
+    end
+  end
   vim.cmd.redrawtabline()
 end
 
@@ -55,6 +74,17 @@ end, {
   count = -1,
   addr = 'tabs',
   desc = 'Rename the current tab.',
+})
+
+-- Preserve tab names across sessions
+vim.opt.sessionoptions:append('globals')
+
+vim.api.nvim_create_autocmd('TabClosed', {
+  desc = 'Clear global tab name variable for closed tabs.',
+  group = vim.api.nvim_create_augroup('Tabline', {}),
+  callback = function(info)
+    vim.g['Tabname' .. info.file] = nil
+  end,
 })
 
 return _G._tabline
