@@ -44,7 +44,7 @@ __command_abbr cp 'cp -i'
 __command_abbr df 'df -h'
 __command_abbr fd 'fd -H -L'
 __command_abbr fdfind 'fdfind -H -L'
-__command_abbr free 'free -m'
+__command_abbr free 'free -mh'
 __command_abbr g git
 __command_abbr d dot
 __command_abbr lc 'wc -l'
