@@ -52,6 +52,8 @@ ls.setup({
   link_roots = true,
   exit_roots = false,
   link_children = true,
+  region_check_events = 'CursorMoved,CursorMovedI',
+  delete_check_events = 'TextChanged,TextChangedI',
   enable_autosnippets = true,
   store_selection_keys = '<Tab>',
   ext_opts = {
