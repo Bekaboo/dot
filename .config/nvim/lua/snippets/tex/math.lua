@@ -756,6 +756,7 @@ return {
     t('\\right)'),
   }),
   us.sam({ trig = 'mse' }, { t('\\mathrm{MSE}') }),
+  us.sam({ trig = 'err' }, { t('\\mathrm{error}') }),
   us.sam(
     {
       trig = 'bys',
