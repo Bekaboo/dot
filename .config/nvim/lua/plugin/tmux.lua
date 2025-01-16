@@ -217,13 +217,8 @@ end
 ---@return nil
 local function tmux_mapkey_fallback(key, action, condition, opts)
   condition = condition or tmux_mapkey_default_condition
-  require('utils.keymap').amend({ 'n', 'x', 't' }, key, function(fallback)
-    if
-      not condition()
-      or vim.env.NVIM
-      or vim.fn.mode():sub(1, 1) == 't'
-        and require('utils.term').running_tui()
-    then
+  require('utils.keymap').amend({ 'n', 'x' }, key, function(fallback)
+    if not condition() or vim.env.NVIM then
       fallback()
       return
     end
