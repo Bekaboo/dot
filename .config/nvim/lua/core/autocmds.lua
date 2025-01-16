@@ -18,34 +18,41 @@ end
 augroup('BigFile', {
   'BufReadPre',
   {
-    desc = 'Disable options in big files.',
+    desc = 'Detect big files.',
     callback = function(info)
-      local stat = vim.uv.fs_stat(info.match)
-      if not stat or stat.size <= 1048576 then
-        return
-      end
+      _G.bigfile_max_size = _G.bigfile_max_size or 1048576
 
-      vim.api.nvim_buf_call(info.buf, function()
-        vim.b.bigfile = true
-        vim.opt_local.colorcolumn = ''
-        vim.opt_local.foldcolumn = '0'
-        vim.opt_local.signcolumn = 'no'
-        vim.opt_local.statuscolumn = ''
-        vim.opt_local.winbar = ''
-        vim.opt_local.spell = false
-        vim.opt_local.swapfile = false
-        vim.opt_local.undofile = false
-        vim.opt_local.breakindent = false
-      end)
+      local stat = vim.uv.fs_stat(info.match)
+      if stat and stat.size > _G.bigfile_max_size then
+        vim.b[info.buf].bigfile = true
+      end
     end,
   },
 }, {
-  'BufReadPre',
+  { 'BufEnter', 'TextChanged' },
+  {
+    desc = 'Detect big files.',
+    callback = function(info)
+      _G.bigfile_max_lines = _G.bigfile_max_lines or 8192
+
+      local buf = info.buf
+      if vim.b[buf].bigfile then
+        return
+      end
+
+      if vim.api.nvim_buf_line_count(buf) > _G.bigfile_max_lines then
+        vim.b[buf].bigfile = true
+      end
+    end,
+  },
+}, {
+  { 'BufEnter', 'BufReadPre' },
   {
     once = true,
-    desc = 'Disable treesitter and LSP in big files.',
+    desc = 'Prevent treesitter and LSP from attaching to big files.',
     callback = function()
       local ts_get_parser = vim.treesitter.get_parser
+      local ts_foldexpr = vim.treesitter.foldexpr
       local lsp_start = vim.lsp.start
 
       ---@diagnostic disable-next-line: duplicate-set-field
@@ -68,6 +75,14 @@ augroup('BigFile', {
       end
 
       ---@diagnostic disable-next-line: duplicate-set-field
+      function vim.treesitter.foldexpr(...)
+        if vim.b.bigfile then
+          return
+        end
+        return ts_foldexpr(...)
+      end
+
+      ---@diagnostic disable-next-line: duplicate-set-field
       function vim.lsp.start(...)
         if vim.b.bigfile then
           return
@@ -76,6 +91,41 @@ augroup('BigFile', {
       end
 
       return true
+    end,
+  },
+}, {
+  'BufReadPre',
+  {
+    desc = 'Disable options in big files.',
+    callback = function(info)
+      local buf = info.buf
+      if not vim.b[buf].bigfile then
+        return
+      end
+      vim.api.nvim_buf_call(buf, function()
+        vim.opt_local.colorcolumn = ''
+        vim.opt_local.foldcolumn = '0'
+        vim.opt_local.signcolumn = 'no'
+        vim.opt_local.statuscolumn = ''
+        vim.opt_local.winbar = ''
+        vim.opt_local.spell = false
+        vim.opt_local.swapfile = false
+        vim.opt_local.undofile = false
+        vim.opt_local.breakindent = false
+        vim.opt_local.foldmethod = 'manual'
+      end)
+    end,
+  },
+}, {
+  { 'BufEnter', 'TextChanged', 'FileType' },
+  {
+    desc = 'Stop treesitter in big files.',
+    callback = function(info)
+      local buf = info.buf
+      if vim.b[buf].bigfile and require('utils.ts').hl_active(buf) then
+        vim.treesitter.stop(buf)
+        vim.bo[buf].syntax = vim.filetype.match({ buf = buf }) or ''
+      end
     end,
   },
 })
