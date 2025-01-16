@@ -305,15 +305,13 @@ local function preview()
         hi def link OilDirPreviewSocketHidden OilSocketHidden
       ]])
     end)
-  else
-    if vim.b[preview_buf]._oil_preview_syntax == preview_bufnewname then
-      local ft = vim.filetype.match({
-        buf = preview_buf,
-        filename = fpath,
-      })
-      if ft and not pcall(vim.treesitter.start, preview_buf, ft) then
-        vim.bo[preview_buf].syntax = ft
-      end
+  elseif vim.b[preview_buf]._oil_preview_syntax == preview_bufnewname then
+    local ft = vim.filetype.match({
+      buf = preview_buf,
+      filename = fpath,
+    })
+    if ft and not pcall(vim.treesitter.start, preview_buf, ft) then
+      vim.bo[preview_buf].syntax = ft
     end
   end
 end
