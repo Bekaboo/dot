@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Tue Dec 24 05:32:28 PM EST 2024
+-- Last Updated: Thu Jan 16 03:21:04 AM EST 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -31,7 +31,6 @@ local c_magenta
 local c_pigeon
 local c_cumulonimbus
 local c_thunder
-local c_white
 local c_smoke
 local c_beige
 local c_steel
@@ -48,7 +47,7 @@ local c_purple_blend
 local c_lavender_blend
 local c_scarlet_blend
 local c_wine_blend
-local c_earth_blend
+local c_yellow_blend
 local c_smoke_blend
 
 if vim.go.bg == 'dark' then
@@ -58,7 +57,7 @@ if vim.go.bg == 'dark' then
   c_pink           = '#f49ba7'
   c_ochre          = '#e87c69'
   c_scarlet        = '#d85959'
-  c_wine           = '#a52929'
+  c_wine           = '#a54a4a'
   c_tea            = '#a4bd84'
   c_aqua           = '#79ada7'
   c_turquoise      = '#7fa0af'
@@ -69,16 +68,15 @@ if vim.go.bg == 'dark' then
   c_purple         = '#a48fd1'
   c_magenta        = '#dc8ed3'
   c_pigeon         = '#8f9fbc'
-  c_cumulonimbus   = '#557396'
-  c_thunder        = '#425974'
-  c_white          = '#e5e5eb'
-  c_smoke          = '#bebec3'
+  c_cumulonimbus   = '#708296'
+  c_thunder        = '#454e5a'
+  c_smoke          = '#e2e2e8'
   c_beige          = '#b1aca7'
   c_steel          = '#606d86'
   c_iron           = '#313742'
-  c_deepsea        = '#334154'
-  c_ocean          = '#303846'
-  c_jeans          = '#262f3e'
+  c_deepsea        = '#404954'
+  c_ocean          = '#363c46'
+  c_jeans          = '#2f353e'
   c_space          = '#13161f'
   c_black          = '#09080b'
   c_shadow         = '#09080b'
@@ -87,8 +85,8 @@ if vim.go.bg == 'dark' then
   c_purple_blend   = '#33374b'
   c_lavender_blend = '#4b4b6e'
   c_scarlet_blend  = '#4b323c'
-  c_wine_blend     = '#35262d'
-  c_earth_blend    = '#303032'
+  c_wine_blend     = '#3e3136'
+  c_yellow_blend   = '#4d4d50'
   c_smoke_blend    = '#272d3a'
 else
   c_yellow         = '#c88500'
@@ -110,7 +108,6 @@ else
   c_pigeon         = '#6666a8'
   c_cumulonimbus   = '#486a91'
   c_thunder        = '#dfd6ce'
-  c_white          = '#385372'
   c_smoke          = '#404553'
   c_beige          = '#385372'
   c_steel          = '#9a978a'
@@ -127,7 +124,7 @@ else
   c_lavender_blend = '#bcb0cd'
   c_scarlet_blend  = '#e6b8b3'
   c_wine_blend     = '#e6c9c3'
-  c_earth_blend    = '#ebe0ce'
+  c_yellow_blend   = '#ebe0ce'
   c_smoke_blend    = '#e4e4e2'
 end
 -- stylua: ignore end
@@ -143,8 +140,8 @@ if vim.go.bg == 'dark' then
   vim.g.terminal_color_4  = c_cumulonimbus
   vim.g.terminal_color_5  = c_lavender
   vim.g.terminal_color_6  = c_aqua
-  vim.g.terminal_color_7  = c_white
-  vim.g.terminal_color_8  = c_white
+  vim.g.terminal_color_7  = c_smoke
+  vim.g.terminal_color_8  = c_smoke
   vim.g.terminal_color_9  = c_ochre
   vim.g.terminal_color_10 = c_tea
   vim.g.terminal_color_11 = c_yellow
@@ -160,8 +157,8 @@ else
   vim.g.terminal_color_4  = c_flashlight
   vim.g.terminal_color_5  = c_pigeon
   vim.g.terminal_color_6  = c_aqua
-  vim.g.terminal_color_7  = c_white
-  vim.g.terminal_color_8  = c_white
+  vim.g.terminal_color_7  = c_smoke
+  vim.g.terminal_color_8  = c_smoke
   vim.g.terminal_color_9  = c_ochre
   vim.g.terminal_color_10 = c_tea
   vim.g.terminal_color_11 = c_yellow
@@ -180,7 +177,7 @@ local hlgroups = {
   NormalNC = { link = 'Normal' },
   ColorColumn = { bg = c_deepsea },
   Conceal = { fg = c_smoke },
-  Cursor = { fg = c_space, bg = c_white },
+  Cursor = { fg = c_space, bg = c_smoke },
   CursorColumn = { bg = c_ocean },
   CursorIM = { fg = c_space, bg = c_flashlight },
   CursorLine = { bg = c_ocean },
@@ -216,7 +213,7 @@ local hlgroups = {
   NonText = { fg = c_steel },
   Pmenu = { fg = c_smoke, bg = c_ocean },
   PmenuSbar = { bg = c_deepsea },
-  PmenuSel = { fg = c_white, bg = c_thunder },
+  PmenuSel = { fg = c_smoke, bg = c_thunder },
   PmenuThumb = { bg = c_orange },
   Question = { fg = c_smoke },
   QuickFixLine = { link = 'Visual' },
@@ -262,8 +259,8 @@ local hlgroups = {
   Statement = { fg = c_lavender },
   Specifier = { fg = c_lavender },
   Object = { fg = c_lavender },
-  Conditional = { fg = c_magenta },
-  Repeat = { fg = c_magenta },
+  Conditional = { link = 'Keyword' },
+  Repeat = { link = 'Keyword' },
   Label = { fg = c_magenta },
   Operator = { fg = c_orange },
   Keyword = { fg = c_cerulean },
@@ -313,7 +310,7 @@ local hlgroups = {
   ['@number.float'] = { link = 'Float' },
   ['@function'] = { link = 'Function' },
   ['@function.call'] = { link = 'Function' },
-  ['@function.builtin'] = { link = 'Special' },
+  ['@function.builtin'] = { link = 'Builtin' },
   ['@function.macro'] = { link = 'Macro' },
   ['@function.method'] = { link = 'Function' },
   ['@function.method.call'] = { link = 'Function' },
@@ -414,17 +411,17 @@ local hlgroups = {
   -- Diagnostic {{{2
   DiagnosticOk = { fg = c_tea },
   DiagnosticError = { fg = c_wine },
-  DiagnosticWarn = { fg = c_earth },
+  DiagnosticWarn = { fg = c_yellow },
   DiagnosticInfo = { fg = c_smoke },
   DiagnosticHint = { fg = c_pigeon },
   DiagnosticVirtualTextOk = { fg = c_tea, bg = c_tea_blend },
   DiagnosticVirtualTextError = { fg = c_wine, bg = c_wine_blend },
-  DiagnosticVirtualTextWarn = { fg = c_earth, bg = c_earth_blend },
+  DiagnosticVirtualTextWarn = { fg = c_yellow, bg = c_yellow_blend },
   DiagnosticVirtualTextInfo = { fg = c_smoke, bg = c_smoke_blend },
   DiagnosticVirtualTextHint = { fg = c_pigeon, bg = c_deepsea },
   DiagnosticUnderlineOk = { underline = true, sp = c_tea },
   DiagnosticUnderlineError = { undercurl = true, sp = c_wine },
-  DiagnosticUnderlineWarn = { undercurl = true, sp = c_earth },
+  DiagnosticUnderlineWarn = { undercurl = true, sp = c_yellow },
   DiagnosticUnderlineInfo = { undercurl = true, sp = c_flashlight },
   DiagnosticUnderlineHint = { undercurl = true, sp = c_pigeon },
   DiagnosticFloatingOk = { link = 'DiagnosticOk' },
@@ -511,7 +508,7 @@ local hlgroups = {
   -- nvim-cmp
   CmpItemAbbr = { fg = c_smoke },
   CmpItemAbbrDeprecated = { strikethrough = true },
-  CmpItemAbbrMatch = { fg = c_white, bold = true },
+  CmpItemAbbrMatch = { fg = c_smoke, bold = true },
   CmpItemAbbrMatchFuzzy = { link = 'CmpItemAbbrMatch' },
   CmpItemKindText = { link = 'String' },
   CmpItemKindMethod = { link = 'Function' },
@@ -734,7 +731,7 @@ local hlgroups = {
   StatusLineDiagnosticError = { fg = c_wine, bg = c_deepsea },
   StatusLineDiagnosticHint = { fg = c_pigeon, bg = c_deepsea },
   StatusLineDiagnosticInfo = { fg = c_smoke, bg = c_deepsea },
-  StatusLineDiagnosticWarn = { fg = c_earth, bg = c_deepsea },
+  StatusLineDiagnosticWarn = { fg = c_yellow, bg = c_deepsea },
   StatusLineGitAdded = { fg = c_tea, bg = c_deepsea },
   StatusLineGitChanged = { fg = c_lavender, bg = c_deepsea },
   StatusLineGitRemoved = { fg = c_scarlet, bg = c_deepsea },
@@ -761,7 +758,7 @@ local hlgroups = {
   Magenta = { fg = c_magenta },
   Purple = { fg = c_purple },
   Thunder = { fg = c_thunder },
-  White = { fg = c_white },
+  White = { fg = c_smoke },
   Beige = { fg = c_beige },
   Pigeon = { fg = c_pigeon },
   Steel = { fg = c_steel },
