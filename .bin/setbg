@@ -29,8 +29,11 @@ setbg-alacritty() {
         else
             ln -sf "$themes_dir/$1.toml" "$theme_path"
         fi
-        [[ -e "$config" ]] && touch "$config" # Reload config
     )
+
+    # Reload config
+    local config_path="$CONFIG_HOME/alacritty/alacritty.toml"
+    [[ -e "$config_path" ]] && touch "$config_path"
 }
 
 setbg-foot() {
