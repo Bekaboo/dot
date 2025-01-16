@@ -370,8 +370,8 @@ oil.setup({
         return hls
       end,
     },
-    { 'size', highlight = 'Special' },
-    { 'mtime', highlight = 'Number' },
+    { 'size', highlight = 'Number' },
+    { 'mtime', highlight = 'String' },
     {
       'icon',
       default_file = icon_file,
@@ -572,7 +572,7 @@ local function oil_sethl()
   sethl(0, 'OilDir', { fg = 'Directory' })
   sethl(0, 'OilDirIcon', { fg = 'Directory' })
   sethl(0, 'OilLink', { fg = 'Constant' })
-  sethl(0, 'OilLinkTarget', { fg = 'Comment' })
+  sethl(0, 'OilLinkTarget', { fg = 'Special' })
   sethl(0, 'OilCopy', { fg = 'DiagnosticSignHint', bold = true })
   sethl(0, 'OilMove', { fg = 'DiagnosticSignWarn', bold = true })
   sethl(0, 'OilChange', { fg = 'DiagnosticSignWarn', bold = true })
