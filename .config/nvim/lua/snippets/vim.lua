@@ -5,6 +5,7 @@ local us = require('utils.snippets.snips')
 local ls = require('luasnip')
 local sn = ls.snippet_node
 local i = ls.insert_node
+local c = ls.choice_node
 local t = ls.text_node
 local d = ls.dynamic_node
 
@@ -15,6 +16,30 @@ M.snippets = {
     { trig = 'ech' },
     { trig = 'echom' },
   }, t('echom ')),
+  us.msn(
+    {
+      { trig = 'pl' },
+      { trig = 'el' },
+      common = { desc = 'Print a line' },
+    },
+    un.fmtad('echom <q><line><q>', {
+      q = un.qt(),
+      line = c(1, {
+        -- stylua: ignore start
+        i(nil, '----------------------------------------'),
+        i(nil, '========================================'),
+        i(nil, '........................................'),
+        i(nil, '++++++++++++++++++++++++++++++++++++++++'),
+        i(nil, '****************************************'),
+        i(nil, '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'),
+        i(nil, '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'),
+        i(nil, '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^'),
+        i(nil, '########################################'),
+        i(nil, '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'),
+        -- stylua: ignore end
+      }),
+    })
+  ),
   us.msn(
     {
       { trig = 'pck' },
