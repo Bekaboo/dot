@@ -15,7 +15,7 @@ while inotifywait -qe create,modify,attrib "$MAIN_CONFIG" &>/dev/null; do
             if [[ "$color_type" = 'bright' ]]; then
                 idx="$((idx + 8))"
             fi
-            echo -ne "\e]4;$idx;rgb:$r/$g/$b\e\\"
+            echo -ne "\e]4;$idx;rgb:$r/$g/$b\e\\" 2>/dev/null
         done
 
     # Set foreground/background colors
@@ -23,11 +23,11 @@ while inotifywait -qe create,modify,attrib "$MAIN_CONFIG" &>/dev/null; do
     #     'background=0b0b0b'
     sed -n -r 's/^\w*foreground=([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2}).*/\1 \2 \3/p' "$THEME_CONFIG" |
         while read r g b; do
-            echo -ne "\e]10;rgb:$r/$g/$b\e\\"
+            echo -ne "\e]10;rgb:$r/$g/$b\e\\" 2>/dev/null
         done
     sed -n -r 's/^\w*background=([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2}).*/\1 \2 \3/p' "$THEME_CONFIG" |
         while read r g b; do
-            echo -ne "\e]11;rgb:$r/$g/$b\e\\"
+            echo -ne "\e]11;rgb:$r/$g/$b\e\\" 2>/dev/null
         done
 
     # Set cursor colors
@@ -40,8 +40,8 @@ while inotifywait -qe create,modify,attrib "$MAIN_CONFIG" &>/dev/null; do
             cursor_fg_r="${cursor_fg:0:2}"
             cursor_fg_g="${cursor_fg:2:2}"
             cursor_fg_b="${cursor_fg:4:2}"
-            echo -ne "\e]12;rgb:$cursor_bg_r/$cursor_bg_g/$cursor_bg_b\e\\"
-            echo -ne "\e]13;rgb:$cursor_fg_r/$cursor_fg_g/$cursor_fg_b\e\\"
+            echo -ne "\e]12;rgb:$cursor_bg_r/$cursor_bg_g/$cursor_bg_b\e\\" 2>/dev/null
+            echo -ne "\e]13;rgb:$cursor_fg_r/$cursor_fg_g/$cursor_fg_b\e\\" 2>/dev/null
         done
 
     # Set selection colors
@@ -49,11 +49,11 @@ while inotifywait -qe create,modify,attrib "$MAIN_CONFIG" &>/dev/null; do
     #     'selection-background=e2e2e3'
     sed -n -r 's/^\w*selection-foreground=([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2}).*/\1 \2 \3/p' "$THEME_CONFIG" |
         while read r g b; do
-            echo -ne "\e]19;rgb:$r/$g/$b\e\\"
+            echo -ne "\e]19;rgb:$r/$g/$b\e\\" 2>/dev/null
         done
     sed -n -r 's/^\w*selection-background=([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2}).*/\1 \2 \3/p' "$THEME_CONFIG" |
         while read r g b; do
-            echo -ne "\e]17;rgb:$r/$g/$b\e\\"
+            echo -ne "\e]17;rgb:$r/$g/$b\e\\" 2>/dev/null
         done
 done &
 
