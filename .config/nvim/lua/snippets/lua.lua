@@ -13,6 +13,38 @@ local c = ls.choice_node
 local d = ls.dynamic_node
 local r = ls.restore_node
 
+---Determine if the current lua file is a nvim configuration file
+---@return boolean
+local function is_nvim_lua()
+  if vim.b._ls_is_nvim_lua then
+    return true
+  end
+
+  -- Check if the file or its cwd is in nvim runtime path
+  local rtp = vim.opt.rtp:get() --[=[@as string[]]=]
+  local bufname = vim.api.nvim_buf_get_name(0)
+  local cwd = vim.fn.getcwd(0)
+  for _, path in ipairs(rtp) do
+    if u.fs.contains(path, bufname) or u.fs.contains(path, cwd) then
+      vim.b._ls_is_nvim_lua = true
+      return true
+    end
+  end
+
+  -- Check if the file contains 'vim.xxx' in surrounding 1000 lines
+  local lnum = vim.api.nvim_win_get_cursor(0)[1]
+  local content =
+    vim.api.nvim_buf_get_lines(0, math.max(0, lnum - 500), lnum + 500, false)
+  for _, line in ipairs(content) do
+    if line:match('vim%.') then
+      vim.b._ls_is_nvim_lua = true
+      return true
+    end
+  end
+
+  return false
+end
+
 M.snippets = {
   us.msn({
     { trig = 'lv' },
@@ -285,26 +317,16 @@ M.snippets = {
       q = un.qt(),
       v = i(1),
       inspect = d(2, function()
-        for _, path in
-          ipairs(vim.opt.rtp:get() --[=[@as string[]]=])
-        do
-          if u.fs.contains(path, vim.api.nvim_buf_get_name(0)) then
-            return sn(
-              nil,
-              c(1, {
-                i(nil, 'vim.inspect'),
-                i(nil, 'inspect'),
-                i(nil, 'tostring'),
-              })
-            )
-          end
-        end
         return sn(
           nil,
-          c(1, {
-            i(nil, 'inspect'),
+          c(1, is_nvim_lua() and {
             i(nil, 'vim.inspect'),
             i(nil, 'tostring'),
+            i(nil, 'inspect'),
+          } or {
+            i(nil, 'inspect'),
+            i(nil, 'tostring'),
+            i(nil, 'vim.inspect'),
           })
         )
       end),
@@ -325,26 +347,16 @@ M.snippets = {
       q = un.qt(),
       v = i(1),
       inspect = d(2, function()
-        for _, path in
-          ipairs(vim.opt.rtp:get() --[=[@as string[]]=])
-        do
-          if u.fs.contains(path, vim.api.nvim_buf_get_name(0)) then
-            return sn(
-              nil,
-              c(1, {
-                i(nil, 'vim.inspect'),
-                i(nil, 'inspect'),
-                i(nil, 'tostring'),
-              })
-            )
-          end
-        end
         return sn(
           nil,
-          c(1, {
-            i(nil, 'inspect'),
+          c(1, is_nvim_lua() and {
             i(nil, 'vim.inspect'),
             i(nil, 'tostring'),
+            i(nil, 'inspect'),
+          } or {
+            i(nil, 'inspect'),
+            i(nil, 'tostring'),
+            i(nil, 'vim.inspect'),
           })
         )
       end),
@@ -367,26 +379,16 @@ M.snippets = {
       q = un.qt(),
       v = i(1),
       inspect = d(2, function()
-        for _, path in
-          ipairs(vim.opt.rtp:get() --[=[@as string[]]=])
-        do
-          if u.fs.contains(path, vim.api.nvim_buf_get_name(0)) then
-            return sn(
-              nil,
-              c(1, {
-                i(nil, 'vim.inspect'),
-                i(nil, 'inspect'),
-                i(nil, 'tostring'),
-              })
-            )
-          end
-        end
         return sn(
           nil,
-          c(1, {
-            i(nil, 'inspect'),
+          c(1, is_nvim_lua() and {
             i(nil, 'vim.inspect'),
             i(nil, 'tostring'),
+            i(nil, 'inspect'),
+          } or {
+            i(nil, 'inspect'),
+            i(nil, 'tostring'),
+            i(nil, 'vim.inspect'),
           })
         )
       end),
