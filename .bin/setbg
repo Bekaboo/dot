@@ -48,8 +48,11 @@ setbg-foot() {
         else
             ln -sf "$themes_dir/$1.ini" "$theme_path"
         fi
-        [[ -e "$config" ]] && touch "$config" # Reload config
     )
+
+    # Reload config
+    local config_path="$CONFIG_HOME/foot/foot.ini"
+    [[ -e "$config_path" ]] && touch "$config_path"
 }
 
 setbg-kitty() {

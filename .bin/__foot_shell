@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+
+# Foot shell program executed at each launch to reload colors on config change
+# Source: https://codeberg.org/dnkl/foot/issues/708#issuecomment-1635542
+
+MAIN_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/foot/foot.ini"
+THEME_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/foot/theme.ini"
+
+while inotifywait -qe create,modify,attrib "$MAIN_CONFIG" &>/dev/null; do
+    # Set term 16 colors
+    # ex: 'regular0=0b0b0b'
+    sed -n -r 's/^\w*(regular|bright)([0-9])=([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2}).*/\1 \2 \3 \4 \5/p' "$THEME_CONFIG" |
+        while read color_type idx r g b; do
+            if [[ "$color_type" = 'bright' ]]; then
+                idx="$((idx + 8))"
+            fi
+            echo -ne "\e]4;$idx;rgb:$r/$g/$b\e\\"
+        done
+
+    # Set foreground/background colors
+    # ex: 'foreground=ffffff'
+    #     'background=0b0b0b'
+    sed -n -r 's/^\w*foreground=([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2}).*/\1 \2 \3/p' "$THEME_CONFIG" |
+        while read r g b; do
+            echo -ne "\e]10;rgb:$r/$g/$b\e\\"
+        done
+    sed -n -r 's/^\w*background=([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2}).*/\1 \2 \3/p' "$THEME_CONFIG" |
+        while read r g b; do
+            echo -ne "\e]11;rgb:$r/$g/$b\e\\"
+        done
+
+    # Set cursor colors
+    # ex: 'color=181819 e2e2e3'
+    sed -n -r 's/^\w*color=([0-9a-fA-F]{6})\s+([0-9a-fA-F]{6}).*/\1 \2/p' "$THEME_CONFIG" |
+        while read cursor_fg cursor_bg; do
+            cursor_bg_r="${cursor_bg:0:2}"
+            cursor_bg_g="${cursor_bg:2:2}"
+            cursor_bg_b="${cursor_bg:4:2}"
+            cursor_fg_r="${cursor_fg:0:2}"
+            cursor_fg_g="${cursor_fg:2:2}"
+            cursor_fg_b="${cursor_fg:4:2}"
+            echo -ne "\e]12;rgb:$cursor_bg_r/$cursor_bg_g/$cursor_bg_b\e\\"
+            echo -ne "\e]13;rgb:$cursor_fg_r/$cursor_fg_g/$cursor_fg_b\e\\"
+        done
+
+    # Set selection colors
+    # ex: 'selection-foreground=3b3e48'
+    #     'selection-background=e2e2e3'
+    sed -n -r 's/^\w*selection-foreground=([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2}).*/\1 \2 \3/p' "$THEME_CONFIG" |
+        while read r g b; do
+            echo -ne "\e]19;rgb:$r/$g/$b\e\\"
+        done
+    sed -n -r 's/^\w*selection-background=([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2}).*/\1 \2 \3/p' "$THEME_CONFIG" |
+        while read r g b; do
+            echo -ne "\e]17;rgb:$r/$g/$b\e\\"
+        done
+done &
+
+exec "$SHELL"

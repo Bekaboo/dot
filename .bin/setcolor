@@ -59,9 +59,11 @@ setcolor-foot() {
             ln -sf "$1-dark.ini" "$dark_theme_path"
             ln -sf "$1-light.ini" "$light_theme_path"
         fi
-        local config="$CONFIG_HOME/foot/foot.ini"
-        [[ -e "$config" ]] && touch "$config" # Reload config
     )
+
+    # Reload config
+    local config_path="$CONFIG_HOME/foot/foot.ini"
+    [[ -e "$config_path" ]] && touch "$config_path"
 }
 
 setcolor-kitty() {
