@@ -41,12 +41,22 @@ M.snippets = {
     desc = 'Shebang',
   }, {
     t('#!'),
-    c(1, {
-      i(nil, '/usr/bin/env bash'),
-      i(nil, '/usr/bin/env sh'),
-      i(nil, '/bin/bash'),
-      i(nil, '/bin/sh'),
-    }),
+    d(1, function()
+      return sn(
+        nil,
+        c(1, is_bash() and {
+          i(nil, '/usr/bin/env bash'),
+          i(nil, '/bin/bash'),
+          i(nil, '/usr/bin/env sh'),
+          i(nil, '/bin/sh'),
+        } or {
+          i(nil, '/usr/bin/env sh'),
+          i(nil, '/bin/sh'),
+          i(nil, '/usr/bin/env bash'),
+          i(nil, '/bin/bash'),
+        })
+      )
+    end),
   }),
   us.sn(
     {
