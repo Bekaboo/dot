@@ -299,7 +299,7 @@ M.snippets = {
       { trig = 'echeck' },
       common = { desc = 'Debug check expression value' },
     },
-    un.fmtad([[echo '<v_esc>: ' <v>]], {
+    un.fmtad([[echo '<v_esc>:' <v>]], {
       v = i(1, '"$var"'),
       v_esc = d(2, function(texts)
         local str = vim.fn.escape(texts[1][1], '\\'):gsub([[']], [['"'"']])
@@ -316,7 +316,7 @@ M.snippets = {
         desc = 'Debug check expression value (cont.)',
       },
     },
-    un.fmtad([['<v_esc>: ' <v>]], {
+    un.fmtad([['<v_esc>:' <v>]], {
       v = i(1, '"$var"'),
       v_esc = d(2, function(texts)
         local str = vim.fn.escape(texts[1][1], '\\'):gsub([[']], [['"'"']])
