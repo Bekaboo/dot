@@ -38,9 +38,11 @@ setcolor-alacritty() {
             ln -sf "$1-dark.toml" "$dark_theme_path"
             ln -sf "$1-light.toml" "$light_theme_path"
         fi
-        local config="$CONFIG_HOME/alacritty/alacritty.toml"
-        [[ -e "$config" ]] && touch "$config" # Reload config
     )
+
+    # Reload config
+    local config_path="$CONFIG_HOME/alacritty/alacritty.toml"
+    [[ -e "$config_path" ]] && touch "$config_path"
 }
 
 setcolor-foot() {
