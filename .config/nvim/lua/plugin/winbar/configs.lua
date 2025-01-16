@@ -164,6 +164,9 @@ M.opts = {
         and not vim.w[win].winbar_no_attach
         and not vim.b[buf].winbar_no_attach
         and vim.fn.win_gettype(win) == ''
+        and vim.bo[buf].bt ~= 'terminal'
+        and vim.bo[buf].bt ~= 'quickfix'
+        and vim.bo[buf].bt ~= 'prompt'
         and vim.bo[buf].ft ~= 'help'
         and vim.bo[buf].ft ~= 'diff'
         and not vim.startswith(vim.bo[buf].ft, 'git')
