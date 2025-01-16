@@ -186,16 +186,6 @@ local function preview()
     callback = vim.schedule_wrap(preview_edit),
   })
 
-  -- Preview buffer already contains contents of file to preview
-  local preview_bufname = vim.fn.bufname(preview_buf)
-  local preview_bufnewname = 'oil_preview://' .. fpath
-  if preview_bufname == preview_bufnewname then
-    return
-  end
-
-  vim.api.nvim_buf_set_name(preview_buf, preview_bufnewname)
-  preview_set_lines(preview_win)
-
   -- If previewing a directory, change cwd to that directory
   -- so that we can `gf` to files in the preview buffer;
   -- else change cwd to the parent directory of the file in preview
@@ -211,10 +201,20 @@ local function preview()
     vim.cmd('0')
   end)
 
+  -- Preview buffer already contains contents of file to preview
+  local preview_bufname = vim.fn.bufname(preview_buf)
+  local preview_bufnewname = 'oil_preview://' .. fpath
+  if preview_bufname == preview_bufnewname then
+    return
+  end
+  vim.api.nvim_buf_set_name(preview_buf, preview_bufnewname)
+
   vim.api.nvim_buf_call(preview_buf, function()
     vim.treesitter.stop(preview_buf)
     vim.bo.syntax = ''
   end)
+
+  preview_set_lines(preview_win)
 
   if vim.b[preview_buf]._oil_preview_syntax == preview_bufnewname then
     local ft = vim.filetype.match({
