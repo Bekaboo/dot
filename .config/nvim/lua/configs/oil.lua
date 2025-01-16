@@ -100,7 +100,12 @@ local function preview_set_lines(win, all)
   if not stat then
     lines = preview_show_msg('Invalid path', win_height, win_width)
   elseif stat.type == 'directory' then
-    lines = vim.fn.systemlist('ls -lhA ' .. vim.fn.shellescape(path))
+    for i, line in
+      ipairs(vim.fn.systemlist('ls -lhA ' .. vim.fn.shellescape(path)))
+    do
+      lines[i] = vim.fn.match(line, '\\v^[-dpls][-rwx]{9}') == -1 and line
+        or line:sub(1, 1) .. ' ' .. line:sub(2)
+    end
   elseif stat.size == 0 then
     lines = preview_show_msg('Empty file', win_height, win_width)
   elseif not vim.fn.system({ 'file', path }):match('text') then
@@ -189,10 +194,9 @@ local function preview()
   -- If previewing a directory, change cwd to that directory
   -- so that we can `gf` to files in the preview buffer;
   -- else change cwd to the parent directory of the file in preview
+  local stat = vim.uv.fs_stat(fpath)
   vim.api.nvim_win_call(preview_win, function()
-    local target_dir = (vim.uv.fs_stat(fpath) or {}).type == 'directory'
-        and fpath
-      or dir
+    local target_dir = (stat or {}).type == 'directory' and fpath or dir
     if vim.fn.getcwd(0) ~= target_dir then
       lcd(target_dir)
     end
@@ -216,13 +220,100 @@ local function preview()
 
   preview_set_lines(preview_win)
 
-  if vim.b[preview_buf]._oil_preview_syntax == preview_bufnewname then
-    local ft = vim.filetype.match({
-      buf = preview_buf,
-      filename = fpath,
-    })
-    if ft and not pcall(vim.treesitter.start, preview_buf, ft) then
-      vim.bo[preview_buf].syntax = ft
+  -- Colorize preview buffer with syntax highlighting
+  if (stat or {}).type == 'directory' then
+    vim.api.nvim_buf_call(preview_buf, function()
+      vim.cmd([[
+        syn match OilDirPreviewHeader /^total.*/
+        syn match OilDirPreviewTypeFile /^-/ nextgroup=OilDirPreviewFilePerms skipwhite
+        syn match OilDirPreviewTypeDir /^d/ nextgroup=OilDirPreviewDirPerms skipwhite
+        syn match OilDirPreviewTypeFifo /^p/ nextgroup=OilDirPreviewFifoPerms skipwhite
+        syn match OilDirPreviewTypeLink /^l/ nextgroup=OilDirPreviewLinkPerms skipwhite
+        syn match OilDirPreviewTypeSocket /^s/ nextgroup=OilDirPreviewSocketPerms skipwhite
+
+        for type in ['File', 'Dir', 'Fifo', 'Link', 'Socket']
+          exe substitute('syn match OilDirPreview%sPerms /\v[-rwx]{9}/ contained
+                        \ contains=OilDirPreviewPermRead,OilDirPreviewPermWrite,
+                        \ OilDirPreviewPermExec,OilDirPreviewPermNone
+                        \ nextgroup=OilDirPreview%sNumHardLinksNormal,
+                                  \ OilDirPreview%sNumHardLinksMulti
+                        \ skipwhite', '%s', type, 'g')
+          exe substitute('syn match OilDirPreview%sPerms /\v^[-rwx]+/ contained
+                        \ contains=OilDirPreviewPermRead,OilDirPreviewPermWrite,
+                                 \ OilDirPreviewPermExec,OilDirPreviewPermNone
+                        \ nextgroup=OilDirPreview%sNumHardLinksNormal,
+                                  \ OilDirPreview%sNumHardLinksMulti
+                        \ skipwhite', '%s', type, 'g')
+          exe substitute('syn match OilDirPreview%sNumHardLinksNormal /1/ contained nextgroup=OilDirPreview%sUser skipwhite', '%s', type, 'g')
+          exe substitute('syn match OilDirPreview%sNumHardLinksMulti /\v[2-9]\d*|1\d+/ contained nextgroup=OilDirPreview%sUser skipwhite', '%s', type, 'g')
+          exe substitute('syn match OilDirPreview%sUser /\v\S+/ contained nextgroup=OilDirPreview%sGroup skipwhite', '%s', type, 'g')
+          exe substitute('syn match OilDirPreview%sGroup /\v\S+/ contained nextgroup=OilDirPreview%sSize skipwhite', '%s', type, 'g')
+          exe substitute('syn match OilDirPreview%sSize /\v\S+/ contained nextgroup=OilDirPreview%sTime skipwhite', '%s', type, 'g')
+          exe substitute('syn match OilDirPreview%sTime /\v(\S+\s+){3}/ contained
+                        \ nextgroup=OilDirPreview%s,OilDirPreview%sHidden
+                        \ skipwhite', '%s', type, 'g')
+       endfor
+
+        syn match OilDirPreviewPermRead /r/ contained
+        syn match OilDirPreviewPermWrite /w/ contained
+        syn match OilDirPreviewPermExec /x/ contained
+        syn match OilDirPreviewPermNone /-/ contained
+
+        syn match OilDirPreviewDir /[^.].*/ contained
+        syn match OilDirPreviewFile /[^.].*/ contained
+        syn match OilDirPreviewSocket /[^.].*/ contained
+        syn match OilDirPreviewLink /[^.].*/ contained contains=OilDirPreviewLinkTarget
+        syn match OilDirPreviewLinkTarget /->.*/ contained
+
+        syn match OilDirPreviewDirHidden /\..*/ contained
+        syn match OilDirPreviewFileHidden /\..*/ contained
+        syn match OilDirPreviewSocketHidden /\..*/ contained
+        syn match OilDirPreviewLinkHidden /\..*/ contained contains=OilDirPreviewLinkTargetHidden
+        syn match OilDirPreviewLinkTargetHidden /->.*/ contained
+
+        hi def link OilDirPreviewHeader Title
+        hi def link OilDirPreviewTypeFile OilTypeFile
+        hi def link OilDirPreviewTypeDir OilTypeDir
+        hi def link OilDirPreviewTypeFifo OilTypeFifo
+        hi def link OilDirPreviewTypeLink OilTypeLink
+        hi def link OilDirPreviewTypeSocket OilTypeSocket
+
+        hi def link OilDirPreviewPermRead OilPermissionRead
+        hi def link OilDirPreviewPermWrite OilPermissionWrite
+        hi def link OilDirPreviewPermExec OilPermissionExecute
+        hi def link OilDirPreviewPermNone OilPermissionNone
+
+        for type in ['File', 'Dir', 'Fifo', 'Link', 'Socket']
+          exe substitute('hi def link OilDirPreview%sNumHardLinksNormal Number', '%s', type, 'g')
+          exe substitute('hi def link OilDirPreview%sNumHardLinksMulti OilDirPreview%sNumHardLinksNormal', '%s', type, 'g')
+          exe substitute('hi def link OilDirPreview%sSize Number', '%s', type, 'g')
+          exe substitute('hi def link OilDirPreview%sTime String', '%s', type, 'g')
+          exe substitute('hi def link OilDirPreview%sUser Operator', '%s', type, 'g')
+          exe substitute('hi def link OilDirPreview%sGroup Structure', '%s', type, 'g')
+        endfor
+
+        hi def link OilDirPreviewDir OilDir
+        hi def link OilDirPreviewFile OilFile
+        hi def link OilDirPreviewLink OilLink
+        hi def link OilDirPreviewLinkTarget OilLinkTarget
+        hi def link OilDirPreviewSocket OilSocket
+
+        hi def link OilDirPreviewDirHidden OilDirHidden
+        hi def link OilDirPreviewFileHidden OilFileHidden
+        hi def link OilDirPreviewLinkHidden OilLinkHidden
+        hi def link OilDirPreviewLinkTargetHidden OilLinkTargetHidden
+        hi def link OilDirPreviewSocketHidden OilSocketHidden
+      ]])
+    end)
+  else
+    if vim.b[preview_buf]._oil_preview_syntax == preview_bufnewname then
+      local ft = vim.filetype.match({
+        buf = preview_buf,
+        filename = fpath,
+      })
+      if ft and not pcall(vim.treesitter.start, preview_buf, ft) then
+        vim.bo[preview_buf].syntax = ft
+      end
     end
   end
 end
