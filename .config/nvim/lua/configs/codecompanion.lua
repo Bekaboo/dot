@@ -150,36 +150,23 @@ When given a non-programming task:
   },
 })
 
--- Set filetype to 'markdown' only in codecompanion chat buffers in normal mode for integration
-local groupid = vim.api.nvim_create_augroup('CodeCompanionFtHack', {})
 vim.api.nvim_create_autocmd('FileType', {
-  group = groupid,
+  desc = 'Set filetype to "markdown" in codecompanion chat buffer shortly for integration.',
+  group = vim.api.nvim_create_augroup('CodeCompanionFtHack', {}),
   pattern = 'codecompanion',
   callback = vim.schedule_wrap(function(info)
-    if not vim.startswith(vim.fn.mode(), 'i') then
-      vim.bo[info.buf].ft = 'markdown'
+    local buf = info.buf
+    if vim.b[buf]._cc_ft_hack then
+      return
     end
+    vim.b[buf]._cc_ft_hack = true
+    vim.bo[buf].ft = 'markdown'
+    vim.schedule(function()
+      if vim.api.nvim_buf_is_valid(buf) then
+        vim.bo[buf].ft = 'codecompanion'
+      end
+    end)
   end),
-})
-vim.api.nvim_create_autocmd('InsertEnter', {
-  group = groupid,
-  pattern = '*\\[CodeCompanion\\]*',
-  callback = function(info)
-    if vim.bo[info.buf].bt == '' then
-      return
-    end
-    vim.bo[info.buf].ft = 'codecompanion'
-  end,
-})
-vim.api.nvim_create_autocmd('InsertLeave', {
-  group = groupid,
-  pattern = '*\\[CodeCompanion\\]*',
-  callback = function(info)
-    if vim.bo[info.buf].bt == '' then
-      return
-    end
-    vim.bo[info.buf].ft = 'markdown'
-  end,
 })
 
 vim.api.nvim_create_autocmd('FileType', {
