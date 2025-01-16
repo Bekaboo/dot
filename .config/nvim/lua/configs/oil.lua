@@ -98,6 +98,7 @@ local function preview_set_lines(win, all)
   local lines = {}
 
   if not stat then
+    vim.b[buf]._oil_preview_msg_shown = bufname
     lines = preview_show_msg('Invalid path', win_height, win_width)
   elseif stat.type == 'directory' then
     for i, line in
@@ -107,8 +108,10 @@ local function preview_set_lines(win, all)
         or line:sub(1, 1) .. ' ' .. line:sub(2)
     end
   elseif stat.size == 0 then
+    vim.b[buf]._oil_preview_msg_shown = bufname
     lines = preview_show_msg('Empty file', win_height, win_width)
   elseif not vim.fn.system({ 'file', path }):match('text') then
+    vim.b[buf]._oil_preview_msg_shown = bufname
     lines = preview_show_msg('Binary file', win_height, win_width)
   else
     vim.b[buf]._oil_preview_syntax = bufname
@@ -127,6 +130,32 @@ local function preview_set_lines(win, all)
   vim.bo[buf].modifiable = false
 end
 
+---Disable window options, e.g. spell, number, signcolumn, etc. in given window
+---@param win integer? default to current window
+local function preview_disable_win_opts(win)
+  vim.api.nvim_win_call(win or 0, function()
+    vim.opt_local.spell = false
+    vim.opt_local.number = false
+    vim.opt_local.relativenumber = false
+    vim.opt_local.signcolumn = 'no'
+    vim.opt_local.foldcolumn = '0'
+    vim.opt_local.winbar = ''
+  end)
+end
+
+---Set window options, e.g. spell, number, signcolumn, etc. to global value
+---@param win integer? default to current window
+local function preview_restore_win_opts(win)
+  vim.api.nvim_win_call(win or 0, function()
+    vim.opt_local.spell = vim.go.spell
+    vim.opt_local.number = vim.go.number
+    vim.opt_local.relativenumber = vim.go.relativenumber
+    vim.opt_local.signcolumn = vim.go.signcolumn
+    vim.opt_local.foldcolumn = vim.go.foldcolumn
+    vim.opt_local.winbar = vim.go.winbar
+  end)
+end
+
 ---Preview file under cursor in a split
 ---@return nil
 local function preview()
@@ -138,6 +167,7 @@ local function preview()
   end
 
   local fpath = vim.fs.joinpath(dir, fname)
+  local stat = vim.uv.fs_stat(fpath)
 
   local oil_win = vim.api.nvim_get_current_win()
   local preview_win = preview_wins[oil_win]
@@ -164,13 +194,13 @@ local function preview()
     vim.bo[preview_buf].buftype = 'nofile'
     vim.bo[preview_buf].bufhidden = 'wipe'
     vim.bo[preview_buf].filetype = 'oil_preview'
-    vim.opt_local.spell = false
-    vim.opt_local.number = false
-    vim.opt_local.relativenumber = false
-    vim.opt_local.signcolumn = 'no'
-    vim.opt_local.foldcolumn = '0'
-    vim.opt_local.winbar = ''
     vim.api.nvim_set_current_win(oil_win)
+  end
+
+  if (stat or {}).type == 'directory' then
+    preview_disable_win_opts(preview_win)
+  else
+    preview_restore_win_opts(preview_win)
   end
 
   ---Edit corresponding file in oil preview buffer
@@ -194,7 +224,6 @@ local function preview()
   -- If previewing a directory, change cwd to that directory
   -- so that we can `gf` to files in the preview buffer;
   -- else change cwd to the parent directory of the file in preview
-  local stat = vim.uv.fs_stat(fpath)
   vim.api.nvim_win_call(preview_win, function()
     local target_dir = (stat or {}).type == 'directory' and fpath or dir
     if vim.fn.getcwd(0) ~= target_dir then
@@ -219,6 +248,11 @@ local function preview()
   end)
 
   preview_set_lines(preview_win)
+
+  -- Set some window options if showing messages instead of preview
+  if vim.b[preview_buf]._oil_preview_msg_shown == preview_bufnewname then
+    preview_disable_win_opts(preview_win)
+  end
 
   -- Colorize preview buffer with syntax highlighting
   if (stat or {}).type == 'directory' then
@@ -473,11 +507,12 @@ oil.setup({
     bufhidden = 'hide',
   },
   win_options = {
+    spell = false,
     number = false,
     relativenumber = false,
     signcolumn = 'no',
     foldcolumn = '0',
-    statuscolumn = '',
+    winbar = '',
   },
   cleanup_delay_ms = false,
   delete_to_trash = true,
