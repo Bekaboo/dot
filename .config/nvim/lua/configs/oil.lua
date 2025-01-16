@@ -41,6 +41,11 @@ local function preview_finish(oil_win)
   preview_bufs[oil_win] = nil
 end
 
+---@return string
+local function preview_get_filler()
+  return vim.opt_local.fillchars:get().diff or '-'
+end
+
 ---Generate lines for preview window when preview is not available
 ---@param msg string
 ---@param height integer
@@ -48,7 +53,7 @@ end
 ---@return string[]
 local function preview_show_msg(msg, height, width)
   local lines = {}
-  local fillchar = vim.opt_local.fillchars:get().diff or '-'
+  local fillchar = preview_get_filler()
   local msglen = #msg + 4
   local padlen_l = math.max(0, math.floor((width - msglen) / 2))
   local padlen_r = math.max(0, width - msglen - padlen_l)
@@ -249,11 +254,6 @@ local function preview()
 
   preview_set_lines(preview_win)
 
-  -- Set some window options if showing messages instead of preview
-  if vim.b[preview_buf]._oil_preview_msg_shown == preview_bufnewname then
-    preview_disable_win_opts(preview_win)
-  end
-
   -- Colorize preview buffer with syntax highlighting
   if (stat or {}).type == 'directory' then
     vim.api.nvim_buf_call(preview_buf, function()
@@ -347,6 +347,17 @@ local function preview()
     if ft and not pcall(vim.treesitter.start, preview_buf, ft) then
       vim.bo[preview_buf].syntax = ft
     end
+  elseif vim.b[preview_buf]._oil_preview_msg_shown == preview_bufnewname then
+    -- Set some window options if showing messages instead of preview
+    preview_disable_win_opts(preview_win)
+    vim.api.nvim_win_call(preview_win, function()
+      vim.cmd.syntax(
+        string.format(
+          'match NonText /\\V%s/',
+          vim.fn.escape(preview_get_filler(), '/?')
+        )
+      )
+    end)
   end
 end
 
