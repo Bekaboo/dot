@@ -188,6 +188,21 @@ vim.api.nvim_create_autocmd('FileType', {
   end),
 })
 
+---Set default highlight groups for codecompanion.nvim
+local function set_default_hlgroups()
+  vim.api.nvim_set_hl(0, 'CodeCompanionChatVariable', { link = 'Special' })
+  vim.api.nvim_set_hl(0, 'CodeCompanionChatAgent', { link = 'Constant' })
+  vim.api.nvim_set_hl(0, 'CodeCompanionChatTool', { link = 'Operator' })
+end
+
+set_default_hlgroups()
+
+vim.api.nvim_create_autocmd('ColorScheme', {
+  desc = 'Set some default hlgroups for codecompanion.',
+  group = vim.api.nvim_create_augroup('CodeCompanionSetDefaultHlgroups', {}),
+  callback = set_default_hlgroups,
+})
+
 -- stylua: ignore start
 vim.keymap.set('n', '<Leader><Leader>@', '<Cmd>CodeCompanionActions<CR>', { desc = 'Pick AI actions' })
 vim.keymap.set('n', '<Leader>@', '<Cmd>CodeCompanionChat Toggle<CR>', { desc = 'Chat with AI assistant' })
