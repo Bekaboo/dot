@@ -346,7 +346,19 @@ local function preview()
       buf = preview_buf,
       filename = fpath,
     })
-    if ft and not pcall(vim.treesitter.start, preview_buf, ft) then
+    if
+      ft
+      -- If file size is larger than the max size for treesitter, don't
+      -- start it in preview buffer to prevent highlight change after
+      -- actually loading the file
+      and (
+        stat
+          and stat.size
+          and _G.bigfile_max_size
+          and stat.size > _G.bigfile_max_size
+        or not pcall(vim.treesitter.start, preview_buf, ft)
+      )
+    then
       vim.bo[preview_buf].syntax = ft
     end
   elseif vim.b[preview_buf]._oil_preview_msg_shown == preview_bufnewname then
