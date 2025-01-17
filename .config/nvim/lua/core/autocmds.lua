@@ -46,7 +46,7 @@ augroup('BigFile', {
     end,
   },
 }, {
-  { 'BufEnter', 'BufReadPre', 'FileType', 'TextChanged' },
+  'FileType',
   {
     once = true,
     desc = 'Prevent treesitter and LSP from attaching to big files.',
