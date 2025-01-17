@@ -62,15 +62,12 @@ augroup('BigFile', {
         if buf == nil or buf == 0 then
           buf = vim.api.nvim_get_current_buf()
         end
-        if not vim.api.nvim_buf_is_valid(buf) then
-          error(string.format('Getting parser for invalid buffer %d', buf))
-        end
-        if vim.b[buf].bigfile then
-          error(
-            string.format(
-              'Getting parser for big file %s',
-              vim.api.nvim_buf_get_name(buf)
-            )
+        -- HACK: Getting parser for a big buffer can freeze nvim, so return a
+        -- fake parser on an empty buffer if current buffer is big
+        if vim.api.nvim_buf_is_valid(buf) and vim.b[buf].bigfile then
+          return vim.treesitter._create_parser(
+            vim.api.nvim_create_buf(false, true),
+            vim.treesitter.language.get_lang(vim.bo.ft) or vim.bo.ft
           )
         end
         return ts_get_parser(buf, ...)
