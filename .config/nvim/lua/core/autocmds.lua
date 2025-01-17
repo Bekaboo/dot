@@ -33,7 +33,7 @@ augroup('BigFile', {
   {
     desc = 'Detect big files.',
     callback = function(info)
-      _G.bigfile_max_lines = _G.bigfile_max_lines or 8192
+      _G.bigfile_max_lines = _G.bigfile_max_lines or 32768
 
       local buf = info.buf
       if vim.b[buf].bigfile then
