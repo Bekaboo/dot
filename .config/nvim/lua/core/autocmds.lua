@@ -102,11 +102,6 @@ augroup('BigFile', {
         return
       end
       vim.api.nvim_buf_call(buf, function()
-        vim.opt_local.colorcolumn = ''
-        vim.opt_local.foldcolumn = '0'
-        vim.opt_local.signcolumn = 'no'
-        vim.opt_local.statuscolumn = ''
-        vim.opt_local.winbar = ''
         vim.opt_local.spell = false
         vim.opt_local.swapfile = false
         vim.opt_local.undofile = false
@@ -123,7 +118,8 @@ augroup('BigFile', {
       local buf = info.buf
       if vim.b[buf].bigfile and require('utils.ts').hl_active(buf) then
         vim.treesitter.stop(buf)
-        vim.bo[buf].syntax = vim.filetype.match({ buf = buf }) or ''
+        vim.bo[buf].syntax = vim.filetype.match({ buf = buf })
+          or vim.bo[buf].bt
       end
     end,
   },

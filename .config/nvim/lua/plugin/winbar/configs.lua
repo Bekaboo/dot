@@ -160,8 +160,7 @@ M.opts = {
   bar = {
     ---@type boolean|fun(buf: integer, win: integer): boolean
     enable = function(buf, win)
-      return not vim.b.bigfile
-        and not vim.w[win].winbar_no_attach
+      return not vim.w[win].winbar_no_attach
         and not vim.b[buf].winbar_no_attach
         and vim.fn.win_gettype(win) == ''
         and vim.bo[buf].bt ~= 'terminal'
