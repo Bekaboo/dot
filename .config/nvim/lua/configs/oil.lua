@@ -177,7 +177,9 @@ local function preview()
     return
   end
 
-  local fpath = vim.fs.joinpath(dir, fname)
+  -- Follow symlinks
+  local fpath = vim.F.npcall(vim.uv.fs_realpath, vim.fs.joinpath(dir, fname))
+    or ''
 
   local oil_win = vim.api.nvim_get_current_win()
   local preview_win = preview_wins[oil_win]
