@@ -234,9 +234,6 @@ vim.fn.getcompletion = (function(cb)
 end)(vim.fn.getcompletion)
 
 cmp.setup({
-  enabled = function()
-    return not vim.b.bigfile
-  end,
   performance = {
     debounce = 0,
     throttle = 0,
