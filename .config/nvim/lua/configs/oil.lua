@@ -172,7 +172,6 @@ local function preview()
   end
 
   local fpath = vim.fs.joinpath(dir, fname)
-  local stat = vim.uv.fs_stat(fpath)
 
   local oil_win = vim.api.nvim_get_current_win()
   local preview_win = preview_wins[oil_win]
@@ -202,6 +201,15 @@ local function preview()
     vim.api.nvim_set_current_win(oil_win)
   end
 
+  -- Preview buffer already contains contents of file to preview
+  local preview_bufname = vim.fn.bufname(preview_buf)
+  local preview_bufnewname = 'oil_preview://' .. fpath
+  if preview_bufname == preview_bufnewname then
+    return
+  end
+  vim.api.nvim_buf_set_name(preview_buf, preview_bufnewname)
+
+  local stat = vim.uv.fs_stat(fpath)
   if (stat or {}).type == 'directory' then
     preview_disable_win_opts(preview_win)
   else
@@ -238,14 +246,6 @@ local function preview()
     -- see the beginning of the file when we start previewing a new file
     vim.cmd('0')
   end)
-
-  -- Preview buffer already contains contents of file to preview
-  local preview_bufname = vim.fn.bufname(preview_buf)
-  local preview_bufnewname = 'oil_preview://' .. fpath
-  if preview_bufname == preview_bufnewname then
-    return
-  end
-  vim.api.nvim_buf_set_name(preview_buf, preview_bufnewname)
 
   vim.api.nvim_buf_call(preview_buf, function()
     vim.treesitter.stop(preview_buf)
