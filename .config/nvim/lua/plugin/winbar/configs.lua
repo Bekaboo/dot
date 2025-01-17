@@ -404,6 +404,7 @@ M.opts = {
         'specifier',
         'struct',
         'switch_statement',
+        'table',
         'type',
         'type_parameter',
         'unit',

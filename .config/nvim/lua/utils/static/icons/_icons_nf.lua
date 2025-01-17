@@ -96,6 +96,7 @@ return {
     String              = '󰉾 ',
     Struct              = ' ',
     SwitchStatement     = '󰺟 ',
+    Table               = '󰅩 ',
     Terminal            = ' ',
     Text                = ' ',
     Type                = ' ',
