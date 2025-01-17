@@ -1,3 +1,5 @@
+require('ultimate-autopair.utils').maxlines = 0
+
 ---Get next two characters after cursor
 ---@return string: next two characters
 local function get_next_two_chars()
