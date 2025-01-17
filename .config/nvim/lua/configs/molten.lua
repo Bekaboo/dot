@@ -426,7 +426,9 @@ local function setup_buf_keymaps_and_commands(buf)
     buffer = buf,
     desc = 'Interrupt kernel',
   })
-  vim.keymap.set('n', '<C-j>', function()
+
+  ---Enter cell output
+  local function enter_cell_output()
     vim.cmd.MoltenEnterOutput({ mods = { noautocmd = true } })
     if vim.bo.ft ~= 'molten_output' then
       return
@@ -436,10 +438,9 @@ local function setup_buf_keymaps_and_commands(buf)
       vim.fn['matchup#loader#bufwinenter']()
     end
 
-    vim.keymap.set('n', '<C-k>', '<C-w>c', {
-      buffer = true,
-      desc = 'Exit cell output',
-    })
+    local opts = { buffer = true, desc = 'Exit cell output' }
+    vim.keymap.set('n', '<C-k>', '<C-w>c', opts)
+    vim.keymap.set('n', '<C-Up>', '<C-w>c', opts)
 
     local src_win = vim.fn.win_getid(vim.fn.winnr('#'))
     local output_win = vim.api.nvim_get_current_win()
@@ -457,7 +458,11 @@ local function setup_buf_keymaps_and_commands(buf)
         end
       end,
     })
-  end, { buffer = buf, desc = 'Enter cell output' })
+  end
+
+  local opts = { buffer = buf, desc = 'Enter cell output' }
+  vim.keymap.set('n', '<C-j>', enter_cell_output, opts)
+  vim.keymap.set('n', '<C-Down>', enter_cell_output, opts)
 
   local otk_ok
   otk_ok, otk = pcall(require, 'otter.keeper')
