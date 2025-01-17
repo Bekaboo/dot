@@ -108,12 +108,9 @@ M.opts = {
               }),
               sym:merge({
                 on_click = function()
-                  local current_menu = symbol.menu
-                  while current_menu and current_menu.prev_menu do
-                    current_menu = current_menu.prev_menu
-                  end
-                  if current_menu then
-                    current_menu:close(false)
+                  local root_menu = symbol.menu and symbol.menu:root()
+                  if root_menu then
+                    root_menu:close(false)
                   end
                   sym:jump()
                 end,
