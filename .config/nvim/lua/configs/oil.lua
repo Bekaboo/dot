@@ -13,7 +13,13 @@ local preview_request_last_timestamp = 0
 ---@param dir string
 ---@return nil
 local function lcd(dir)
-  local ok = pcall(vim.cmd.lcd, dir)
+  local ok = pcall(vim.cmd.lcd, {
+    dir,
+    mods = {
+      silent = true,
+      emsg_silent = true,
+    },
+  })
   if not ok then
     vim.notify('[oil.nvim] failed to cd to ' .. dir, vim.log.levels.WARN)
   end
