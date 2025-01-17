@@ -197,7 +197,7 @@ local function preview()
     vim.bo[preview_buf].swapfile = false
     vim.bo[preview_buf].buflisted = false
     vim.bo[preview_buf].buftype = 'nofile'
-    vim.bo[preview_buf].bufhidden = 'wipe'
+    vim.bo[preview_buf].bufhidden = 'hide'
     vim.bo[preview_buf].filetype = 'oil_preview'
     vim.api.nvim_set_current_win(oil_win)
   end
