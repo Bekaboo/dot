@@ -46,11 +46,13 @@ augroup('BigFile', {
     end,
   },
 }, {
-  { 'BufEnter', 'BufReadPre' },
+  { 'BufEnter', 'BufReadPre', 'FileType', 'TextChanged' },
   {
     once = true,
     desc = 'Prevent treesitter and LSP from attaching to big files.',
-    callback = function()
+    callback = function(info)
+      vim.api.nvim_del_autocmd(info.id)
+
       local ts_get_parser = vim.treesitter.get_parser
       local ts_foldexpr = vim.treesitter.foldexpr
       local lsp_start = vim.lsp.start
