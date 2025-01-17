@@ -250,6 +250,10 @@ local function preview()
   vim.api.nvim_buf_call(preview_buf, function()
     vim.treesitter.stop(preview_buf)
     vim.bo.syntax = ''
+    -- Because we are reusing the same preview buffer for different files, we
+    -- need to clear the `bigfile` flag so that we can enable treesitter
+    -- when previewing smaller files after previewing big files.
+    vim.b.bigfile = nil
   end)
 
   preview_set_lines(preview_win)
