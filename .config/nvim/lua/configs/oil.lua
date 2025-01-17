@@ -286,6 +286,13 @@ local function preview()
           exe substitute('syn match OilDirPreview%sTime /\v(\S+\s+){3}/ contained
                         \ nextgroup=OilDirPreview%s,OilDirPreview%sHidden
                         \ skipwhite', '%s', type, 'g')
+
+          exe substitute('hi def link OilDirPreview%sNumHardLinksNormal Number', '%s', type, 'g')
+          exe substitute('hi def link OilDirPreview%sNumHardLinksMulti OilDirPreview%sNumHardLinksNormal', '%s', type, 'g')
+          exe substitute('hi def link OilDirPreview%sSize Number', '%s', type, 'g')
+          exe substitute('hi def link OilDirPreview%sTime String', '%s', type, 'g')
+          exe substitute('hi def link OilDirPreview%sUser Operator', '%s', type, 'g')
+          exe substitute('hi def link OilDirPreview%sGroup Structure', '%s', type, 'g')
        endfor
 
         syn match OilDirPreviewPermRead /r/ contained
@@ -316,15 +323,6 @@ local function preview()
         hi def link OilDirPreviewPermWrite OilPermissionWrite
         hi def link OilDirPreviewPermExec OilPermissionExecute
         hi def link OilDirPreviewPermNone OilPermissionNone
-
-        for type in ['File', 'Dir', 'Fifo', 'Link', 'Socket']
-          exe substitute('hi def link OilDirPreview%sNumHardLinksNormal Number', '%s', type, 'g')
-          exe substitute('hi def link OilDirPreview%sNumHardLinksMulti OilDirPreview%sNumHardLinksNormal', '%s', type, 'g')
-          exe substitute('hi def link OilDirPreview%sSize Number', '%s', type, 'g')
-          exe substitute('hi def link OilDirPreview%sTime String', '%s', type, 'g')
-          exe substitute('hi def link OilDirPreview%sUser Operator', '%s', type, 'g')
-          exe substitute('hi def link OilDirPreview%sGroup Structure', '%s', type, 'g')
-        endfor
 
         hi def link OilDirPreviewDir OilDir
         hi def link OilDirPreviewFile OilFile
