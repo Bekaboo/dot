@@ -364,8 +364,6 @@ M.opts = {
       -- Types listed below must have corresponding icons
       -- in the `icons.kinds.symbols` table for the icon to be shown
       valid_types = {
-        'array',
-        'boolean',
         'break_statement',
         'call',
         'case_statement',
@@ -395,7 +393,6 @@ M.opts = {
         'module',
         'namespace',
         'null',
-        'number',
         'operator',
         'package',
         'pair',
@@ -418,9 +415,12 @@ M.opts = {
         'identifier',
         'object',
         'statement',
+        -- 'boolean',
+        -- 'number',
         -- 'text',
-        -- 'list',
         -- 'string',
+        -- 'array',
+        -- 'list',
       },
     },
     lsp = {
