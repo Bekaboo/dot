@@ -3,7 +3,6 @@ if vim.env.NVIM_NO3RD then
 end
 
 local json = require('utils.json')
-local icons = require('utils.static.icons')
 local conf_path = vim.fn.stdpath('config') --[[@as string]]
 local data_path = vim.fn.stdpath('data') --[[@as string]]
 local state_path = vim.fn.stdpath('state') --[[@as string]]
@@ -190,6 +189,7 @@ local function enable_modules(module_names)
   end
 
   defer(function()
+    local icons = require('utils.static.icons')
     require('lazy').setup(specs, {
       root = vim.g.package_path,
       lockfile = vim.g.package_lock,
