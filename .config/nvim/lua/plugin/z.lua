@@ -1,6 +1,8 @@
+local M = {}
+
 ---Change directory to the most frequently visited directory using `z`
 ---@param input string[]
-local function z(input)
+function M.z(input)
   local dest =
     vim.trim(vim.fn.system('z -e ' .. table.concat(
       vim.tbl_map(function(path)
@@ -16,23 +18,24 @@ end
 ---Complete `:Z` command
 ---@param input string?
 ---@return string[]
-local function cmp(input)
-  local candidates =
+function M.cmp(input)
+  local scored_paths =
     vim.fn.systemlist('z -l ' .. vim.fn.shellescape(input or ''))
-  local completions = {}
-  for _, candidate in ipairs(candidates) do
+  local paths = {}
+  for _, candidate in ipairs(scored_paths) do
     local path = candidate:match('^[0-9.]+%s+(.*)') -- trim score
     if path then
-      table.insert(completions, path)
+      table.insert(paths, path)
     end
   end
-  return completions
+  return paths
 end
 
 ---Setup `:Z` command
-local function setup()
+function M.setup()
   vim.fn.system('z')
   if vim.v.shell_error ~= 0 then
+    vim.notify_once('[z] `z` executable not found', vim.log.levels.WARN)
     return
   end
 
@@ -42,16 +45,12 @@ local function setup()
   vim.g.loaded_z = true
 
   vim.api.nvim_create_user_command('Z', function(args)
-    z(args.fargs)
+    M.z(args.fargs)
   end, {
     nargs = '*',
     desc = 'Change local working directory using z.',
-    complete = cmp,
+    complete = M.cmp,
   })
 end
 
-return {
-  z = z,
-  cmp = cmp,
-  setup = setup,
-}
+return M
