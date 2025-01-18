@@ -223,6 +223,7 @@ call s:command_abbrev('rm', '!rm')
 call s:command_abbrev('mv', '!mv')
 call s:command_abbrev('git', '!git')
 call s:command_abbrev('mkd', '!mkdir')
+call s:command_abbrev('tree', '!tree')
 call s:command_abbrev('mkdir', '!mkdir')
 call s:command_abbrev('touch', '!touch')
 
