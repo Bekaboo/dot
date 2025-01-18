@@ -281,6 +281,7 @@ vim.api.nvim_create_autocmd('CmdlineEnter', {
     keymap.command_abbrev('tree', '!tree')
     keymap.command_abbrev('mkdir', '!mkdir')
     keymap.command_abbrev('touch', '!touch')
+    keymap.command_abbrev('chmod', '!chmod')
     return true
   end,
 })

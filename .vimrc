@@ -225,6 +225,7 @@ call s:command_abbrev('git', '!git')
 call s:command_abbrev('tree', '!tree')
 call s:command_abbrev('mkdir', '!mkdir')
 call s:command_abbrev('touch', '!touch')
+call s:command_abbrev('chmod', '!chmod')
 
 abbrev ture  true
 abbrev Ture  True
