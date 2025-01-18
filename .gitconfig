@@ -36,7 +36,7 @@
 	; When no argument is given to `git lc`, use repo root as base path
 	; (default behavior) and all files in the repo is counted,
 	; else use current shell cwd as base path and only count files in given path
-	lc   = "!__git_lc() { git ls-files -z ${1:+\"$GIT_PREFIX$1\"} | xargs -0 wc -l; }; __git_lc"
+	lc   = "!__git_lc() { git ls-files -z ${1:+\"$GIT_PREFIX$1\"} | xargs -0 wc -l 2>/dev/null; }; __git_lc"
 	ls   = ls-files
 	m    = merge
 	ma   = merge --abort
