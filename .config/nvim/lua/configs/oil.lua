@@ -6,7 +6,6 @@ local icon_dir = vim.trim(icons.Folder)
 local preview_wins = {} ---@type table<integer, integer>
 local preview_bufs = {} ---@type table<integer, integer>
 local preview_debounce = 64 -- ms
-local preview_max_lines = 32768
 local preview_request_last_timestamp = 0
 
 ---Change window-local directory to `dir`
@@ -126,7 +125,12 @@ local function preview_set_lines(win, all)
     lines = preview_msg('Binary file', win_height, win_width)
   else
     vim.b[buf]._oil_preview_syntax = bufname
-    lines = vim.fn.readfile(path, '', all and preview_max_lines or win_height)
+    lines = vim.fn.readfile(
+      path,
+      '',
+      all and vim.g.bigfile_max_lines
+        or math.min(win_height, vim.g.bigfile_max_lines or math.huge)
+    )
   end
 
   vim.bo[buf].modifiable = true
