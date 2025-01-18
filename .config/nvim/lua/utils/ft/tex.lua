@@ -4,7 +4,7 @@ local M = {}
 ---@return boolean
 function M.in_mathzone()
   return vim.g.loaded_vimtex == 1
-    and vim.api.nvim_eval('vimtex#syntax#in_mathzone()') == 1
+    and vim.F.npcall(vim.api.nvim_eval, 'vimtex#syntax#in_mathzone()') == 1
 end
 
 ---Returns whether the cursor is in normal zone (not in math zone)
