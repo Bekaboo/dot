@@ -29,7 +29,12 @@
 	f    = fetch
 	ia   = merge-base --is-ancestor
 	l    = log --oneline --graph
-	lc   = !git ls-files -z | xargs -0 wc -l
+	; `$GIT_PREFIX` contains the relative path from repo root to current working
+	; directory with trailing slash
+	; When no argument is given to `git lc`, use repo root as base path
+	; (default behavior) and all files in the repo is counted,
+	; else use current shell cwd as base path and only count files in given path
+	lc   = "!__git_lc() { git ls-files -z ${1:+\"$GIT_PREFIX$1\"} | xargs -0 wc -l; }; __git_lc"
 	ls   = ls-files
 	m    = merge
 	mt   = mergetool
