@@ -33,6 +33,8 @@ Currently only supports Linux (X11/Wayland/TTY).
   - [Formatter](#formatter)
 - [Installation](#installation)
 - [Troubleshooting](#troubleshooting)
+- [Performance](#performance)
+  - [Big Files](#big-files)
 - [Uninstallation](#uninstallation)
 - [Config Structure](#config-structure)
 - [Tweaking this Configuration](#tweaking-this-configuration)
@@ -74,7 +76,7 @@ Currently only supports Linux (X11/Wayland/TTY).
 - Jupyter Notebook integration: edit notebooks like markdown files, run code in
   cells with simple commands and shortcuts
 - Optimization for large files, open any file larger than 100 MB and edit like
-  butter
+  butter (see [big files](#big-files))
 - Fast startup around [~25 ms](#startuptime)
 
 ## Requirements and Dependencies
@@ -292,6 +294,21 @@ issues, e.g. laggy when typing or scrolling (requires
 3. `:lua require('jit.p').stop()`
 4. `:qa!`
 5. `flamegraph.pl /tmp/nvim-profile.log > /tmp/nvim-profile-flamegraph.svg && firefox /tmp/nvim-profile-flamegraph.svg`
+
+### Big Files
+
+Customize how neovim determines large files by adjusting these settings:
+
+- `vim.g.bigfile_max_lines`
+    - Default: `32768`
+    - Buffers with number of lines exceeding this will be flagged as big file
+- `vim.g.bigfile_max_size`
+    - Default: `1048576` (bytes)
+    - Buffers with corresponding file size exceeding this will be flagged as
+      big file
+
+When a file is flagged as a big file (`vim.b.bigfile` is set), certain features
+will be disabled to improve performance.
 
 ## Uninstallation
 
