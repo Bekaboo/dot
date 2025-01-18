@@ -403,7 +403,7 @@ if s:supportevents([
 
   augroup AutoCwd
     au!
-    autocmd BufReadPost,BufWinEnter,FileChangedShellPost * ++nested
+    autocmd BufEnter * ++nested
           \ if &bt == '' && &ma | call <SID>autocwd(expand('<afile>')) | endif
   augroup END
 endif

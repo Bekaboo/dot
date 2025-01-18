@@ -196,57 +196,58 @@ augroup('AutoCwd', {
     callback = function(info)
       local client = vim.lsp.get_client_by_id(info.data.client_id)
       local root_dir = client and client.config and client.config.root_dir
-      if
-        not root_dir
-        or root_dir == vim.fs.normalize('~')
-        or root_dir == vim.fs.dirname(root_dir)
-      then
+      if not root_dir then
         return
       end
 
-      local fs_utils = require('utils.fs')
-
-      -- Keep only shortest root dir in `_G._lsp_root_dirs`,
-      -- e.g. if we have `~/project` and `~/project/subdir`, keep only
-      -- `~/project`
       _G._lsp_root_dirs = _G._lsp_root_dirs or {}
-      for i, dir in ipairs(_G._lsp_root_dirs) do
-        if fs_utils.contains(dir, root_dir) then
-          return
-        end
-        if fs_utils.contains(root_dir, dir) then
-          table.remove(_G._lsp_root_dirs, i)
-        end
-      end
-      table.insert(_G._lsp_root_dirs, root_dir)
+      _G._lsp_root_dirs[root_dir] = true
     end,
   },
 }, {
-  { 'BufWinEnter', 'WinEnter', 'FileChangedShellPost', 'LspAttach' },
+  { 'BufEnter', 'LspAttach' },
   {
     desc = 'Automatically change local current directory.',
     nested = true,
     callback = function(info)
-      if info.file == '' or vim.bo[info.buf].bt ~= '' then
+      local file = info.file
+      local buf = info.buf
+
+      if file == '' or vim.bo[buf].bt ~= '' then
         return
       end
 
       local fs_utils = require('utils.fs')
-      local bufname = vim.api.nvim_buf_get_name(info.buf)
+      local bufname = vim.api.nvim_buf_get_name(buf)
 
-      local lsp_root_dir
-      for _, dir in ipairs(_G._lsp_root_dirs or {}) do
-        if fs_utils.contains(dir, bufname) then
-          lsp_root_dir = dir
-          break
+      local lsp_root_dir = (function()
+        if not _G._lsp_root_dirs then
+          return
         end
-      end
+
+        local root
+        for dir, _ in pairs(_G._lsp_root_dirs) do
+          if
+            fs_utils.contains(dir, bufname)
+            and not fs_utils.is_home_dir(dir)
+            and not fs_utils.is_root_dir(dir)
+          then
+            root = dir
+          end
+        end
+
+        return root
+      end)()
 
       local root_dir = lsp_root_dir
-        or vim.fs.root(info.file, fs_utils.root_patterns)
+        or vim.fs.root(file, fs_utils.root_patterns)
 
-      if not root_dir or root_dir == vim.uv.os_homedir() then
-        root_dir = vim.fs.dirname(info.file)
+      if
+        not root_dir
+        or fs_utils.is_home_dir(root_dir)
+        or fs_utils.is_root_dir(root_dir)
+      then
+        root_dir = vim.fs.dirname(file)
       end
 
       -- Prevent unnecessary directory change, which triggers
@@ -255,7 +256,7 @@ augroup('AutoCwd', {
         return
       end
 
-      for _, win in ipairs(vim.fn.win_findbuf(info.buf)) do
+      for _, win in ipairs(vim.fn.win_findbuf(buf)) do
         vim.api.nvim_win_call(win, function()
           pcall(vim.cmd.lcd, {
             root_dir,
