@@ -278,7 +278,6 @@ vim.api.nvim_create_autocmd('CmdlineEnter', {
     keymap.command_abbrev('rm', '!rm')
     keymap.command_abbrev('mv', '!mv')
     keymap.command_abbrev('git', '!git')
-    keymap.command_abbrev('mkd', '!mkdir')
     keymap.command_abbrev('tree', '!tree')
     keymap.command_abbrev('mkdir', '!mkdir')
     keymap.command_abbrev('touch', '!touch')
