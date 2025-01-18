@@ -346,6 +346,18 @@ vim.lsp.handlers['workspace/symbol'] = fzf.lsp_live_workspace_symbols
 vim.diagnostic.setqflist = fzf.diagnostics_workspace
 vim.diagnostic.setloclist = fzf.diagnostics_document
 
+-- Fix fzf-lua's bug of not using source window's current cwd
+-- when used in conjunction with auto-cwd autocmd
+-- TODO: report to upstream
+local _fzf_files = fzf.files
+
+---@param opts table?
+function fzf.files(opts)
+  opts = opts or {}
+  opts.cwd = opts.cwd or vim.fn.getcwd(0)
+  return _fzf_files(opts)
+end
+
 fzf.setup({
   -- Default profile 'default-title' disables prompt in favor of title
   -- on nvim >= 0.9, but a fzf windows with split layout cannot have titles
@@ -376,7 +388,11 @@ fzf.setup({
         't',
         '<C-r>',
         [['<C-\><C-N>"' . nr2char(getchar()) . 'pi']],
-        { expr = true, buffer = true, desc = 'Insert contents in a register' }
+        {
+          expr = true,
+          buffer = true,
+          desc = 'Insert contents in a register',
+        }
       )
     end,
     on_close = function()
