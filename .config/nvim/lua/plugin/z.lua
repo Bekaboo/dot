@@ -31,6 +31,26 @@ function M.cmp(input)
   return paths
 end
 
+---Select and jump to z directories using `vim.ui.select()`
+---@param input string?
+function M.select(input)
+  local paths = M.cmp(input)
+  vim.ui.select(paths, {
+    prompt = 'Change cwd to: ',
+  }, function(choice)
+    if not choice then
+      return
+    end
+    vim.cmd.lcd({
+      vim.fn.fnameescape(choice),
+      mods = {
+        silent = true,
+        emsg_silent = true,
+      },
+    })
+  end)
+end
+
 ---Setup `:Z` command
 function M.setup()
   vim.fn.system('z')
@@ -46,6 +66,13 @@ function M.setup()
 
   vim.api.nvim_create_user_command('Z', function(args)
     M.z(args.fargs)
+  end, {
+    nargs = '*',
+    desc = 'Change local working directory using z.',
+    complete = M.cmp,
+  })
+  vim.api.nvim_create_user_command('ZSelect', function(args)
+    M.select(args.args)
   end, {
     nargs = '*',
     desc = 'Change local working directory using z.',

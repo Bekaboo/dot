@@ -129,12 +129,14 @@ vim.api.nvim_create_autocmd({ 'InsertEnter', 'CmdlineEnter' }, {
 })
 
 -- z
-vim.api.nvim_create_autocmd({ 'CmdlineEnter', 'CmdUndefined' }, {
+vim.api.nvim_create_autocmd('UIEnter', {
   group = vim.api.nvim_create_augroup('ZSetup', {}),
   desc = 'Init z plugin.',
   once = true,
-  callback = function()
-    require('plugin.z').setup()
+  callback = vim.schedule_wrap(function()
+    local z = require('plugin.z')
+    z.setup()
+    vim.keymap.set('n', '<Leader>z', z.select, { desc = 'Chagne cwd using z' })
     return true
-  end,
+  end),
 })
