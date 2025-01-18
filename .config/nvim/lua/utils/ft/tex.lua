@@ -3,7 +3,7 @@ local M = {}
 ---Returns whether the cursor is in a math zone
 ---@return boolean
 function M.in_mathzone()
-  return vim.g.loaded_vimtex == 1
+  return vim.b.vimtex_id ~= nil
     and vim.F.npcall(vim.api.nvim_eval, 'vimtex#syntax#in_mathzone()') == 1
 end
 
