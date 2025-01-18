@@ -98,7 +98,6 @@
 	wx   = log --diff-filter=X
 [merge]
 	tool = vimdiff
-	ff = false
 [mergetool]
 	keepBackup = false
 [mergetool "vimdiff"]
