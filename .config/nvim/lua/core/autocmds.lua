@@ -440,11 +440,14 @@ augroup('SessionCloseEmptyWins', {
 })
 
 augroup('ColorSchemeRestore', {
-  'UIEnter',
+  { 'UIEnter', 'OptionSet' },
   {
-    once = true,
     nested = true, -- invoke Colorscheme event for winbar plugin to clear bg for nvim < 0.11
-    callback = function()
+    callback = function(info)
+      if info.event == 'OptionSet' and info.match ~= 'termguicolors' then
+        return
+      end
+
       ---@param colors_name string
       ---@return nil
       local function load_colorscheme(colors_name)
@@ -468,10 +471,13 @@ augroup('ColorSchemeRestore', {
 
       -- Colorschemes other than the default colorscheme looks bad when the terminal
       -- does not support truecolor
-      if not vim.go.termguicolors then
+      if info.event == 'UIEnter' and not vim.go.termguicolors then
         load_colorscheme('default')
         return
       end
+
+      -- Make sure to restore colorscheme only once
+      pcall(vim.api.nvim_del_autocmd, info.id)
 
       local json = require('utils.json')
       local colors_file = vim.fs.joinpath(
@@ -523,8 +529,6 @@ augroup('ColorSchemeRestore', {
           end,
         },
       })
-
-      return true
     end,
   },
 })
