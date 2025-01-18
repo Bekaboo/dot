@@ -356,8 +356,8 @@ local function preview()
       and (
         stat
           and stat.size
-          and _G.bigfile_max_size
-          and stat.size > _G.bigfile_max_size
+          and vim.g.bigfile_max_size
+          and stat.size > vim.g.bigfile_max_size
         or not pcall(vim.treesitter.start, preview_buf, ft)
       )
     then

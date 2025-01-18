@@ -20,10 +20,10 @@ augroup('BigFile', {
   {
     desc = 'Detect big files.',
     callback = function(info)
-      _G.bigfile_max_size = _G.bigfile_max_size or 1048576
+      vim.g.bigfile_max_size = vim.g.bigfile_max_size or 1048576
 
       local stat = vim.uv.fs_stat(info.match)
-      if stat and stat.size > _G.bigfile_max_size then
+      if stat and stat.size > vim.g.bigfile_max_size then
         vim.b[info.buf].bigfile = true
       end
     end,
@@ -33,14 +33,14 @@ augroup('BigFile', {
   {
     desc = 'Detect big files.',
     callback = function(info)
-      _G.bigfile_max_lines = _G.bigfile_max_lines or 32768
+      vim.g.bigfile_max_lines = vim.g.bigfile_max_lines or 32768
 
       local buf = info.buf
       if vim.b[buf].bigfile then
         return
       end
 
-      if vim.api.nvim_buf_line_count(buf) > _G.bigfile_max_lines then
+      if vim.api.nvim_buf_line_count(buf) > vim.g.bigfile_max_lines then
         vim.b[buf].bigfile = true
       end
     end,
