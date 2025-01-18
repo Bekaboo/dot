@@ -303,6 +303,49 @@ function fzf.diagnostics_workspace(opts)
   }))
 end
 
+---Search symbols, fallback to treesitter nodes if no language server
+---supporting symbol method is attached
+function fzf.symbols()
+  if
+    vim.tbl_isempty(vim.lsp.get_clients({
+      bufnr = 0,
+      method = 'textDocument/documentSymbol',
+    }))
+  then
+    return fzf.treesitter()
+  end
+  return fzf.lsp_document_symbols()
+end
+
+-- Override `vim.lsp.buf.document_symbol()` to use `fzf.symbols()`
+-- which fallback to treesitter nodes if no symbols are provided
+-- by attached language servers
+vim.lsp.buf.document_symbol = fzf.symbols
+
+-- Overriding `vim.lsp.buf.workspace_symbol()`, not only the handler here
+-- to skip the 'Query:' input prompt -- with `fzf.lsp_live_workspace_symbols()`
+-- as handler we can update the query in live
+local _lsp_workspace_symbol = vim.lsp.buf.workspace_symbol
+
+---@diagnostic disable-next-line: duplicate-set-field
+function vim.lsp.buf.workspace_symbol(query, options)
+  _lsp_workspace_symbol(query or '', options)
+end
+
+vim.lsp.handlers['callHierarchy/incomingCalls'] = fzf.lsp_incoming_calls
+vim.lsp.handlers['callHierarchy/outgoingCalls'] = fzf.lsp_outgoing_calls
+vim.lsp.handlers['textDocument/codeAction'] = fzf.code_actions
+vim.lsp.handlers['textDocument/declaration'] = fzf.declarations
+vim.lsp.handlers['textDocument/definition'] = fzf.lsp_definitions
+vim.lsp.handlers['textDocument/documentSymbol'] = fzf.lsp_document_symbols
+vim.lsp.handlers['textDocument/implementation'] = fzf.lsp_implementations
+vim.lsp.handlers['textDocument/references'] = fzf.lsp_references
+vim.lsp.handlers['textDocument/typeDefinition'] = fzf.lsp_typedefs
+vim.lsp.handlers['workspace/symbol'] = fzf.lsp_live_workspace_symbols
+
+vim.diagnostic.setqflist = fzf.diagnostics_workspace
+vim.diagnostic.setloclist = fzf.diagnostics_document
+
 fzf.setup({
   -- Default profile 'default-title' disables prompt in favor of title
   -- on nvim >= 0.9, but a fzf windows with split layout cannot have titles
@@ -656,6 +699,7 @@ vim.keymap.set('n', '<Leader>f-', fzf.blines, { desc = 'Find lines in buffer' })
 vim.keymap.set('n', '<Leader>f=', fzf.lines, { desc = 'Find lines across buffers' })
 vim.keymap.set('n', '<Leader>fm', fzf.marks, { desc = 'Find marks' })
 vim.keymap.set('n', '<Leader>fo', fzf.oldfiles, { desc = 'Find old files' })
+vim.keymap.set('n', '<Leader>fS', fzf.symbols, { desc = 'Find lsp symbols or treesitter nodes' })
 vim.keymap.set('n', '<Leader>fsa', fzf.lsp_code_actions, { desc = 'Find code actions' })
 vim.keymap.set('n', '<Leader>fsd', fzf.lsp_definitions, { desc = 'Find symbol definitions' })
 vim.keymap.set('n', '<Leader>fsD', fzf.lsp_declarations, { desc = 'Find symbol declarations' })
@@ -670,49 +714,6 @@ vim.keymap.set('n', '<Leader>fsR', fzf.lsp_finder, { desc = 'Find symbol locatio
 vim.keymap.set('n', '<Leader>fF', fzf.builtin, { desc = 'Find all available pickers' })
 vim.keymap.set('n', '<Leader>f<Esc>', '<Nop>', { desc = 'Cancel' })
 -- stylua: ignore end
-
----Search symbols, fallback to treesitter nodes if no language server
----supporting symbol method is attached
-function fzf.symbols()
-  if
-    vim.tbl_isempty(vim.lsp.get_clients({
-      bufnr = 0,
-      method = 'textDocument/documentSymbol',
-    }))
-  then
-    return fzf.treesitter()
-  end
-  return fzf.lsp_document_symbols()
-end
-
--- Override `vim.lsp.buf.document_symbol()` to use `fzf.symbols()`
--- which fallback to treesitter nodes if no symbols are provided
--- by attached language servers
-vim.lsp.buf.document_symbol = fzf.symbols
-
--- Overriding `vim.lsp.buf.workspace_symbol()`, not only the handler here
--- to skip the 'Query:' input prompt -- with `fzf.lsp_live_workspace_symbols()`
--- as handler we can update the query in live
-local _lsp_workspace_symbol = vim.lsp.buf.workspace_symbol
-
----@diagnostic disable-next-line: duplicate-set-field
-function vim.lsp.buf.workspace_symbol(query, options)
-  _lsp_workspace_symbol(query or '', options)
-end
-
-vim.lsp.handlers['callHierarchy/incomingCalls'] = fzf.lsp_incoming_calls
-vim.lsp.handlers['callHierarchy/outgoingCalls'] = fzf.lsp_outgoing_calls
-vim.lsp.handlers['textDocument/codeAction'] = fzf.code_actions
-vim.lsp.handlers['textDocument/declaration'] = fzf.declarations
-vim.lsp.handlers['textDocument/definition'] = fzf.lsp_definitions
-vim.lsp.handlers['textDocument/documentSymbol'] = fzf.lsp_document_symbols
-vim.lsp.handlers['textDocument/implementation'] = fzf.lsp_implementations
-vim.lsp.handlers['textDocument/references'] = fzf.lsp_references
-vim.lsp.handlers['textDocument/typeDefinition'] = fzf.lsp_typedefs
-vim.lsp.handlers['workspace/symbol'] = fzf.lsp_live_workspace_symbols
-
-vim.diagnostic.setqflist = fzf.diagnostics_workspace
-vim.diagnostic.setloclist = fzf.diagnostics_document
 
 ---Set telescope default hlgroups for a borderless view
 ---@return nil
