@@ -37,6 +37,7 @@
 	lc   = "!__git_lc() { git ls-files -z ${1:+\"$GIT_PREFIX$1\"} | xargs -0 wc -l; }; __git_lc"
 	ls   = ls-files
 	m    = merge
+	ma   = merge --abort
 	mt   = mergetool
 	p    = push
 	pf   = push --force
