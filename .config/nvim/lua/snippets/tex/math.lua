@@ -77,7 +77,7 @@ return {
   }),
   -- determinant
   us.sam({ trig = 'det' }, {
-    t('\\mathrm{det}\\left('),
+    t('\\det\\left('),
     i(1),
     t('\\right)'),
   }),
@@ -242,7 +242,7 @@ return {
     un.sdn(1, '\\dot{', '}')
   ),
   us.samWr({ trig = '(\\?%w*_*%w*)ddot' }, un.sdn(1, '\\ddot{', '}')),
-  us.samWr({ trig = '(\\?%w*_*%w*)\\mathrm{d}ot' }, un.sdn(1, '\\ddot{', '}')),
+  us.samWr({ trig = '(\\?%w*_*%w*)\\operatorname{d}ot' }, un.sdn(1, '\\ddot{', '}')),
   us.samWr({ trig = '(\\?%w*_*%w*)ovl' }, un.sdn(1, '\\overline{', '}')),
   us.samWr({ trig = '(\\?%w*_*%w*)ovs' }, {
     d(1, function(_, snip)
@@ -329,6 +329,7 @@ return {
   us.sam({ trig = 'mff' }, { t('\\mff{'), i(1), t('}') }),
   us.sam({ trig = 'mrm' }, { t('\\mathrm{'), i(1), t('}') }),
   us.sam({ trig = 'mit' }, { t('\\mathit{'), i(1), t('}') }),
+  us.sam({ trig = 'op' }, { t('\\operatorname{'), i(1), t('}') }),
   us.sam({ trig = 'xx' }, t('\\times ')),
   us.sam({ trig = 'o*' }, t('\\circledast ')),
   us.sam({ trig = 'dd' }, t('\\mathrm{d}')),
@@ -413,31 +414,31 @@ return {
   us.sam({ trig = 'exists' }, t('\\exists ')),
 
   us.sam({ trig = 'log' }, {
-    t('\\mathrm{log}_{'),
+    t('\\log_{'),
     i(1, '10'),
     t('}\\left('),
     i(2),
     t('\\right)'),
   }),
   us.sam({ trig = 'lg', priority = 999 }, {
-    t('\\mathrm{lg}'),
+    t('\\lg'),
     t('\\left('),
     i(1),
     t('\\right)'),
   }),
   us.sam({ trig = 'ln', priority = 999 }, {
-    t('\\mathrm{ln}'),
+    t('\\ln'),
     t('\\left('),
     i(1),
     t('\\right)'),
   }),
   us.sam({ trig = 'argmin' }, {
-    t('\\mathrm{argmin}_{'),
+    t('\\operatorname{argmin}_{'),
     i(1),
     t('}'),
   }),
   us.sam({ trig = 'argmax' }, {
-    t('\\mathrm{argamx}_{'),
+    t('\\operatorname{argamx}_{'),
     i(1),
     t('}'),
   }),
@@ -445,13 +446,13 @@ return {
     { trig = 'min', priority = 999 },
     c(1, {
       sn(nil, {
-        t('\\mathrm{min}'),
+        t('\\min'),
         t('\\left('),
         r(1, 'expr'),
         t('\\right)'),
       }),
       sn(nil, {
-        t('\\mathrm{min}_{'),
+        t('\\min_{'),
         i(2),
         t('}'),
         t('\\left('),
@@ -464,13 +465,13 @@ return {
     { trig = 'max', priority = 999 },
     c(1, {
       sn(nil, {
-        t('\\mathrm{max}'),
+        t('\\max'),
         t('\\left('),
         r(1, 'expr'),
         t('\\right)'),
       }),
       sn(nil, {
-        t('\\mathrm{max}_{'),
+        t('\\max_{'),
         i(2),
         t('}'),
         t('\\left('),
@@ -481,42 +482,42 @@ return {
   ),
 
   us.sam({ trig = 'sin', priority = 999 }, {
-    t('\\mathrm{sin}\\left('),
+    t('\\sin\\left('),
     i(1),
     t('\\right)'),
   }),
   us.sam({ trig = 'cos', priority = 999 }, {
-    t('\\mathrm{cos}\\left('),
+    t('\\cos\\left('),
     i(1),
     t('\\right)'),
   }),
   us.sam({ trig = 'tan', priority = 999 }, {
-    t('\\mathrm{tan}\\left('),
+    t('\\tan\\left('),
     i(1),
     t('\\right)'),
   }),
   us.sam({ trig = 'asin' }, {
-    t('\\mathrm{arcsin}\\left('),
+    t('\\arcsin\\left('),
     i(1),
     t('\\right)'),
   }),
   us.sam({ trig = 'acos' }, {
-    t('\\mathrm{arccos}\\left('),
+    t('\\arccos\\left('),
     i(1),
     t('\\right)'),
   }),
   us.sam({ trig = 'atan' }, {
-    t('\\mathrm{arctan}\\left('),
+    t('\\arctan\\left('),
     i(1),
     t('\\right)'),
   }),
   us.sam({ trig = 'sc' }, {
-    t('\\mathrm{sinc}\\left('),
+    t('\\operatorname{sinc}\\left('),
     i(1),
     t('\\right)'),
   }),
   us.sam({ trig = 'exp' }, {
-    t('\\mathrm{exp}\\left('),
+    t('\\exp\\left('),
     i(1),
     t('\\right)'),
   }),
@@ -744,19 +745,19 @@ return {
 
   -- special functions and other notations
   us.sam({ trig = 'cov' }, {
-    t('\\mathrm{Cov}\\left('),
+    t('\\operatorname{Cov}\\left('),
     i(1, 'X'),
     t(','),
     i(2, 'Y'),
     t('\\right)'),
   }),
   us.sam({ trig = 'var' }, {
-    t('\\mathrm{Var}\\left('),
+    t('\\operatorname{Var}\\left('),
     i(1, 'X'),
     t('\\right)'),
   }),
-  us.sam({ trig = 'mse' }, { t('\\mathrm{MSE}') }),
-  us.sam({ trig = 'err' }, { t('\\mathrm{error}') }),
+  us.sam({ trig = 'mse' }, { t('\\operatorname{MSE}') }),
+  us.sam({ trig = 'err' }, { t('\\operatorname{error}') }),
   us.sam(
     {
       trig = 'bys',
