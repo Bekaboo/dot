@@ -78,6 +78,7 @@ vim.api.nvim_create_autocmd('FileType', {
       if not opt.fdm:last_set_loc() and not opt.fde:last_set_loc() then
         vim.opt_local.fdm = 'expr'
         vim.opt_local.fde = 'v:lua.vim.treesitter.foldexpr()'
+        vim.opt_local.fdl = 99
       end
     end)
   end,
