@@ -43,8 +43,7 @@ silent! set clipboard^=unnamedplus
 silent! set formatoptions+=n
 silent! set jumpoptions=stack
 
-" Spell check
-silent! set spell
+" Spell check options
 silent! set spellcapcheck=''
 silent! set spelllang=en_us
 silent! set spelloptions=camel
