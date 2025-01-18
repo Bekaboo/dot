@@ -259,11 +259,7 @@ function winbar_menu_t:eval_win_configs()
   -- Evaluate function-valued window configurations
   self._win_configs = {}
   for k, config in pairs(self.win_configs) do
-    if type(config) == 'function' then
-      self._win_configs[k] = config(self)
-    else
-      self._win_configs[k] = config
-    end
+    self._win_configs[k] = configs.eval(config, self)
   end
 
   -- Ensure `win` field is nil if `relative` ~= 'win', else nvim will
