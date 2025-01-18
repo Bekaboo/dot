@@ -250,14 +250,17 @@ augroup('AutoCwd', {
         root_dir = vim.fs.dirname(file)
       end
 
-      -- Prevent unnecessary directory change, which triggers
-      -- DirChanged autocmds that may update winbar unexpectedly
-      if not root_dir or root_dir == vim.fn.getcwd(0) then
+      if not root_dir then
         return
       end
 
       for _, win in ipairs(vim.fn.win_findbuf(buf)) do
         vim.api.nvim_win_call(win, function()
+          -- Prevent unnecessary directory change, which triggers
+          -- DirChanged autocmds that may update winbar unexpectedly
+          if root_dir == vim.fn.getcwd(0) then
+            return
+          end
           pcall(vim.cmd.lcd, {
             root_dir,
             mods = {
