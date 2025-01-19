@@ -56,6 +56,9 @@
 	rd   = remote rm
 	rrm  = remote rm
 	rs   = reset
+	rss  = reset --soft
+	rsm  = reset --mixed
+	rsh  = reset --hard
 	rt   = restore
 	rtp  = restore -p
 	rts  = restore --staged
