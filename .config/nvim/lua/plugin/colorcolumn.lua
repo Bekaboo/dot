@@ -4,7 +4,7 @@ local C_NORMAL, C_CC, C_ERROR
 
 ---Get background color in hex
 ---@param hlgroup_name string
----@param field string 'foreground' or 'background'
+---@param field 'fg'|'bg'
 ---@param fallback string|nil fallback color in hex, default to '#000000' if &bg is 'dark' and '#FFFFFF' if &bg is 'light'
 ---@return string hex color
 local function get_hl_hex(hlgroup_name, field, fallback)
@@ -148,7 +148,7 @@ local function setup()
     callback = update_hl_hex,
   })
 
-  vim.api.nvim_create_autocmd({ 'BufWinEnter', 'ColorScheme' }, {
+  vim.api.nvim_create_autocmd({ 'BufEnter', 'WinEnter', 'ColorScheme' }, {
     desc = 'Update colorcolumn color.',
     group = id,
     callback = function()
