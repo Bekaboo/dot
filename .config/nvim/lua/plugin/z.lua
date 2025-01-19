@@ -89,7 +89,7 @@ function M.setup()
     M.select(args.args)
   end, {
     nargs = '*',
-    desc = 'Change local working directory using z.',
+    desc = 'Pick from z directories with `vim.ui.select()`.',
     complete = M.cmp,
   })
 end
