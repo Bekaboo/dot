@@ -28,6 +28,8 @@
 	cm   = commit -m
 	co   = checkout
 	cof  = checkout --force
+	com  = "!git show-ref --verify --quiet refs/heads/master && git checkout master || git checkout main"
+	comf = "!git show-ref --verify --quiet refs/heads/master && git checkout master --force || git checkout main --force"
 	; Checkout specified commit without changing the working tree and branch
 	; pointer, aka "soft checkout"
 	cos  = "!__git_cos() { git checkout --detach && git reset --soft $1 && git checkout $1; }; __git_cos"
