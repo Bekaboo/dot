@@ -14,8 +14,8 @@ function! s:in_codeblock(...) abort
         \ , l:lnum, l:bufnr))
 endfunction
 
-function! s:ts_active() abort
-  return luaeval('require("utils.ts").active()')
+function! s:ts_is_active() abort
+  return luaeval('require("utils.ts").is_active()')
 endfunction
 
 " Find the first previous non-blank line that matches the given pattern if
@@ -59,7 +59,7 @@ function! GetMarkdownIndent() abort
   " If the code block does not have a language, in which case we should not
   " nvim-treesitter's indent expr because it always return 0 (no indentation)
   let codeblock_lang = s:in_codeblock()
-  if s:ts_active() &&
+  if s:ts_is_active() &&
         \ codeblock_lang !=# v:false &&
         \ codeblock_lang !=# '' &&
         \ codeblock_lang !~# 'markdown'

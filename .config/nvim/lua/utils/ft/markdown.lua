@@ -36,7 +36,7 @@ end
 function M.in_codeblock(lnum, buf)
   buf = buf or 0
   lnum = lnum or vim.api.nvim_win_get_cursor(0)[1]
-  if utils.ts.active(buf) then
+  if utils.ts.is_active(buf) then
     if
       not utils.ts.in_node('code_fence_content', {
         pos = { lnum - 1, 0 },

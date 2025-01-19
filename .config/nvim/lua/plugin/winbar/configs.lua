@@ -169,7 +169,7 @@ M.opts = {
         and not utils.opt.winbar:last_set_loc()
         and (
           vim.bo[buf].ft == 'markdown'
-          or utils.ts.active(buf)
+          or utils.ts.is_active(buf)
           or not vim.tbl_isempty(vim.lsp.get_clients({
             bufnr = buf,
             method = 'textDocument/documentSymbol',
