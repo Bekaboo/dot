@@ -427,12 +427,9 @@ augroup('SessionCloseEmptyWins', {
 
         for _, win in ipairs(wins) do
           local buf = vim.api.nvim_win_get_buf(win)
-          local line_count = vim.api.nvim_buf_line_count(buf)
           if
-            line_count == 0
-            or line_count == 1
-              and vim.api.nvim_buf_get_lines(buf, 0, 1, false)[1] == ''
-              and not vim.uv.fs_stat(vim.api.nvim_buf_get_name(buf))
+            require('utils.buf').is_empty(buf)
+            and not vim.uv.fs_stat(vim.api.nvim_buf_get_name(buf))
           then
             vim.api.nvim_win_close(win, false)
           end
