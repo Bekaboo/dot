@@ -30,6 +30,7 @@
 --glob=!__pycache__/
 --glob=!dosdevices/
 --glob=!env/
+--glob=!go/
 --glob=!node_modules/
 --glob=!vendor/
 --glob=!venv/

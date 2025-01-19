@@ -23,6 +23,7 @@
 __pycache__/
 dosdevices/
 env/
+go/
 node_modules/
 vendor/
 venv/
