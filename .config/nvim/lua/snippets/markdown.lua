@@ -12,7 +12,12 @@ M.math = require('snippets.tex.math')
 
 M.snippets = {
   us.mssn({
-    { trig = '# ', snippetType = 'autosnippet' },
+    {
+      trig = '# ',
+      snippetType = 'autosnippet',
+      condition = conds.at_line_end,
+      show_condition = conds.at_line_end,
+    },
     { trig = 'h1' },
   }, {
     t('# '),
