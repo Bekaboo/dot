@@ -4,12 +4,11 @@
 
 --glob=!*$*
 --glob=!*%*
---glob=!.git/
---glob=!*.venv/
 --glob=!*.env/
+--glob=!*.venv/
 --glob=!*Cache*/
---glob=!*~
 --glob=!*cache*/
+--glob=!*~
 --glob=!.*Cache*/
 --glob=!.*cache*/
 --glob=!.*wine/
@@ -17,6 +16,7 @@
 --glob=!.conda/
 --glob=!.dot/
 --glob=!.fonts/
+--glob=!.git/
 --glob=!.ipython/
 --glob=!.java/
 --glob=!.jupyter/
@@ -29,7 +29,7 @@
 --glob=!.tmp/
 --glob=!__pycache__/
 --glob=!dosdevices/
+--glob=!env/
 --glob=!node_modules/
 --glob=!vendor/
 --glob=!venv/
---glob=!env/

@@ -1,6 +1,6 @@
+*.env/
 *.git/
 *.venv/
-*.env/
 *Cache*/
 *cache*/
 .*Cache*/
@@ -22,7 +22,7 @@
 .tmp/
 __pycache__/
 dosdevices/
+env/
 node_modules/
 vendor/
 venv/
-env/
