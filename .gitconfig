@@ -14,6 +14,11 @@
 	bd   = branch -d
 	bdr  = push -d
 	bl   = branch -v
+	bs   = bisect
+	bsb  = bisect bad
+	bsg  = bisect good
+	bsr  = bisect reset
+	bss  = bisect start
 	c    = commit
 	ca   = commit --amend
 	cl   = clone
