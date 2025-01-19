@@ -593,7 +593,7 @@ fzf.setup({
     },
     find_opts = [[-type f -not -path '*/\.git/*' -not -path '*/\.venv/*' -printf '%P\n']],
     fd_opts = [[--color=never --type f --type l --hidden --follow --exclude .git --exclude .venv]],
-    rg_opts = [[--color=never --files --hidden --follow -g '!.git' -g '!.venv']],
+    rg_opts = [[--no-messages --color=never --files --hidden --follow -g '!.git' -g '!.venv']],
   },
   oldfiles = {
     prompt = 'Oldfiles> ',
@@ -620,6 +620,7 @@ fzf.setup({
       ['alt-i'] = actions.toggle_ignore,
     },
     rg_opts = table.concat({
+      '--no-messages',
       '--hidden',
       '--follow',
       '--smart-case',

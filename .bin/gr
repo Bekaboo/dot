@@ -26,7 +26,7 @@ main() {
             has cat && echo 'cat {1}'
     )
     local grep_cmd=$(
-        has rg && echo "rg --hidden --follow --smart-case --column --line-number --no-heading --color=always " ||
+        has rg && echo "rg --no-messages --hidden --follow --smart-case --column --line-number --no-heading --color=always " ||
             has grep && echo "grep -i -r -n -H -I --color=always "
     )
     local editor=$(has nvim && echo 'nvim' || has vim && echo 'vim')
