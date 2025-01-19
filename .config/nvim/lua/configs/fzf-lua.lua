@@ -97,19 +97,25 @@ function actions.switch_cwd()
     -- or root directory
     -- Use '././' instead of './' to ensure that './' is shown in the result
     -- list
-    -- stylua: ignore start
-    cmd = string.format([[%s | sed '1i ././']],
-      vim.fn.executable('fd') == 1
-        and ([[fd --hidden --follow --type d --type l]]
-          .. (vim.fn.executable('rg') == 1 and [[| rg /$]]
-              or vim.fn.executable('grep') == 1 and [[| grep /$]]))
-      or vim.fn.executable('fdfind') == 1
-        and ([[fdfind --hidden --follow --type d --type l]]
-          .. (vim.fn.executable('rg') == 1 and [[| rg /$]]
-              or vim.fn.executable('grep') == 1 and [[| grep /$]]))
-      or [[find -L * -type d -print0 | xargs -0 ls -Fd]]
+    cmd = string.format(
+      [[%s | sed '1i ././']],
+      (function()
+        local fd_cmd = vim.fn.executable('fd') == 1 and 'fd'
+          or vim.fn.executable('fdfind') == 1 and 'fdfind'
+          or nil
+
+        if not fd_cmd then
+          return [[find -L * -type d -print0 | xargs -0 ls -Fd]]
+        end
+
+        local grep_cmd = vim.fn.executable('rg') == 1 and 'rg' or 'grep'
+        return string.format(
+          [[%s --hidden --follow --type d --type l | %s /$]],
+          fd_cmd,
+          grep_cmd
+        )
+      end)()
     ),
-    -- stylua: ignore end
     fzf_opts = { ['--no-multi'] = true },
     winopts = {
       preview = {
