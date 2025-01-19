@@ -487,6 +487,8 @@ function winbar_menu_t:make_buf()
 
       if configs.opts.menu.quick_navigation then
         self:quick_navigation(cursor)
+      else
+        self.prev_cursor = vim.api.nvim_win_get_cursor(0)
       end
 
       self:update_hover_hl(self.prev_cursor)
