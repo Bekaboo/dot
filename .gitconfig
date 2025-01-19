@@ -27,6 +27,7 @@
 	clr  = clone --recursive
 	cm   = commit -m
 	co   = checkout
+	cof  = checkout --force
 	; Checkout specified commit without changing the working tree and branch
 	; pointer, aka "soft checkout"
 	cos  = "!__git_cos() { git checkout --detach && git reset --soft $1 && git checkout $1; }; __git_cos"
