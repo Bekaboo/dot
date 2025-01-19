@@ -70,7 +70,22 @@ function M.start(config, opts)
         M.default_config.root_patterns or {}
       )
     )
-  ) or validate(vim.fs.dirname(bufname))
+  )
+
+  -- Some language servers e.g. lua-language-server, refuse
+  -- to use home dir as its root dir and prints an error message
+  --
+  -- 99% of time we don't want have home dir or root dir as lsp root directory
+  -- anyway except when editing `~/.bashrc`, in which case we fallback to
+  -- the file's containing directory (the home directory)
+  if
+    not root_dir
+    or require('utils.fs').is_home_dir(root_dir)
+    or require('utils.fs').is_root_dir(root_dir)
+  then
+    root_dir = validate(vim.fs.dirname(bufname))
+  end
+
   if not root_dir then
     return
   end
