@@ -43,6 +43,12 @@ silent! set clipboard^=unnamedplus
 silent! set formatoptions+=n
 silent! set jumpoptions=stack
 
+" Enable 'exrc' only when 'secure' is working
+if exists('+secure')
+  silent! set secure
+  silent! set exrc
+endif
+
 " Spell check options
 silent! set spellcapcheck=''
 silent! set spelllang=en_us
