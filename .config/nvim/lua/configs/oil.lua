@@ -670,7 +670,7 @@ vim.api.nvim_create_autocmd('BufEnter', {
   callback = function(info)
     local buf = info.buf
     local bufname = vim.api.nvim_buf_get_name(buf)
-    if (vim.uv.fs_stat(bufname) or {}).type == 'directory' then
+    if vim.fn.isdirectory(bufname) == 1 then
       vim.b[buf]._alt_file = vim.fn.bufnr('#')
     end
   end,

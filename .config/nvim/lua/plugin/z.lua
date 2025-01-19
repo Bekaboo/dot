@@ -10,7 +10,7 @@ function M.z(input)
       end, input),
       ' '
     )))
-  if dest and (vim.uv.fs_stat(dest) or {}).type == 'directory' then
+  if dest and vim.fn.isdirectory(dest) == 1 then
     vim.cmd.lcd(vim.fn.fnameescape(dest))
   end
 end
