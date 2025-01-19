@@ -399,6 +399,19 @@ function winbar_menu_t:make_buf()
     end
   end
 
+  -- Ensure menu width is sufficient after aligning symbol icons which can
+  -- increase symbol width
+  local max_entry_width = math.max(
+    0,
+    unpack(vim.tbl_map(function(entry)
+      local w = entry:displaywidth()
+      return w
+    end, self.entries))
+  )
+  if max_entry_width > self._win_configs.width then
+    self._win_configs.width = max_entry_width
+  end
+
   -- Get lines and highlights for each line
   local lines = {} ---@type string[]
   local hl_info = {} ---@type winbar_menu_hl_info_t[][]
