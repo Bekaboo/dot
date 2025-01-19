@@ -115,7 +115,7 @@ wk.add({
   { '<Leader>fs', group = 'LSP' },
   { '<Leader>G', group = 'Debug' },
   { '<Leader><Leader>', group = 'Extra' },
-  { '<LocalLeader>l', group = 'Tex' },
+  { '<LocalLeader>l', group = 'TeX' },
 })
 
 ---Set default highlight groups for which-key.nvim
