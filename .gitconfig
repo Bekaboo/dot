@@ -56,7 +56,6 @@
 	rd   = remote rm
 	rrm  = remote rm
 	rs   = reset
-	rsp  = reset --mixed HEAD^
 	rt   = restore
 	rtp  = restore -p
 	rts  = restore --staged
