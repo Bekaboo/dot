@@ -31,9 +31,7 @@ function M.z(input)
       end, input),
       ' '
     )))
-  if dest and vim.fn.isdirectory(dest) == 1 then
-    vim.cmd.lcd(vim.fn.fnameescape(dest))
-  end
+  vim.cmd.lcd(vim.fn.fnameescape(dest))
 end
 
 ---Complete `:Z` command
@@ -67,16 +65,9 @@ function M.select(input)
   vim.ui.select(paths, {
     prompt = 'Change cwd to: ',
   }, function(choice)
-    if not choice then
-      return
+    if choice then
+      vim.cmd.lcd(vim.fn.fnameescape(choice))
     end
-    vim.cmd.lcd({
-      vim.fn.fnameescape(choice),
-      mods = {
-        silent = true,
-        emsg_silent = true,
-      },
-    })
   end)
 end
 
