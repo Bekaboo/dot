@@ -517,7 +517,9 @@ if s:supportevents('SessionLoadPost')
         let winid = win_getid(win, tab.tabnr)
         let buf = winbufnr(winid)
         let line_count = line('$', winid)
-        if line_count == 0 || (line_count == 1 && getbufline(buf, 1)[0] == '' && !filereadable(bufname(buf)))
+        if (line_count == 0 ||
+                \ line_count == 1 && getbufline(buf, 1)[0] == '') &&
+              \ !filereadable(bufname(buf))
           call win_execute(winid, 'close')
         endif
       endfor
