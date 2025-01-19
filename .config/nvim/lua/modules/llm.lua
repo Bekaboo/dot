@@ -6,9 +6,9 @@ return {
       'nvim-treesitter/nvim-treesitter',
     },
     keys = {
-      { '<Leader>+', desc = 'Inline AI help' },
-      { '<Leader><Leader>@', desc = 'Pick AI actions' },
-      { '<Leader>@', mode = 'n', desc = 'Chat with AI assistant' },
+      { '<Leader>+', desc = 'AI inline assistant' },
+      { '<Leader>!', desc = 'AI actions' },
+      { '<Leader>@', mode = 'n', desc = 'AI chat assistant' },
       {
         '<Leader>@',
         mode = 'x',

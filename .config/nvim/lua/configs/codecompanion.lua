@@ -204,8 +204,8 @@ vim.api.nvim_create_autocmd('ColorScheme', {
 })
 
 -- stylua: ignore start
-vim.keymap.set('n', '<Leader><Leader>@', '<Cmd>CodeCompanionActions<CR>', { desc = 'Pick AI actions' })
-vim.keymap.set('n', '<Leader>@', '<Cmd>CodeCompanionChat Toggle<CR>', { desc = 'Chat with AI assistant' })
+vim.keymap.set('n', '<Leader>!', '<Cmd>CodeCompanionActions<CR>', { desc = 'AI actions' })
+vim.keymap.set('n', '<Leader>@', '<Cmd>CodeCompanionChat Toggle<CR>', { desc = 'AI chat assistant' })
 vim.keymap.set('x', '<Leader>@', '<Cmd>CodeCompanionChat Add<CR>', { desc = 'Add selection to conversation with AI' })
-vim.keymap.set('n', '<Leader>+', '<Cmd>CodeCompanion<CR>', { desc = 'Inline AI help' })
+vim.keymap.set('n', '<Leader>+', '<Cmd>CodeCompanion<CR>', { desc = 'AI inline assistant' })
 -- stylua: ignore end
