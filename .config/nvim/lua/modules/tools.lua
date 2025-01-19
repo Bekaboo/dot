@@ -207,60 +207,58 @@ return {
       vim.g.loaded_fzf_file_explorer = 0
       vim.g.loaded_netrw = 0
       vim.g.loaded_netrwPlugin = 0
-      vim.api.nvim_create_autocmd('BufWinEnter', {
+      vim.api.nvim_create_autocmd('BufEnter', {
         nested = true,
-        callback = function(info)
+        -- Use `vim.schedule()` here to wait session to be loaded and
+        -- buffer attributes, e.g. buffer name, to be updated before
+        -- checking if the buffer is a directory buffer
+        callback = vim.schedule_wrap(function(info)
           local buf = info.buf
           local id = info.id
 
-          -- Use `vim.schedule()` here to wait session to be loaded and
-          -- buffer attributes, e.g. buffer name, to be updated before
-          -- checking if the buffer is a directory buffer
-          vim.schedule(function()
-            if
-              not vim.api.nvim_buf_is_valid(buf)
-              or vim.fn.bufwinid(buf) == -1
-              or vim.bo[buf].bt ~= ''
-            then
-              return
-            end
+          if
+            not vim.api.nvim_buf_is_valid(buf)
+            or vim.fn.bufwinid(buf) == -1
+            or vim.bo[buf].bt ~= ''
+          then
+            return
+          end
 
-            -- Only load oil.nvim if the buffer is a non-existing file
-            -- (e.g. scp:// or oil:// paths) or is an existing directory
-            local bufname = vim.api.nvim_buf_get_name(buf)
-            if bufname == '' then
-              return
-            end
+          local bufname = vim.api.nvim_buf_get_name(buf)
+          if bufname == '' then
+            return
+          end
 
-            local stat = vim.uv.fs_stat(bufname)
-            if stat and stat.type ~= 'directory' then
-              return
-            end
+          -- Only load oil.nvim if the buffer is a non-existing file
+          -- (e.g. scp:// or oil:// paths) or is an existing directory
+          local stat = vim.uv.fs_stat(bufname)
+          if stat and stat.type ~= 'directory' then
+            return
+          end
 
-            pcall(require, 'oil')
-            pcall(vim.api.nvim_del_autocmd, id)
+          pcall(require, 'oil')
+          pcall(vim.api.nvim_del_autocmd, id)
 
-            if not vim.api.nvim_buf_is_valid(buf) then
-              return
-            end
+          if not vim.api.nvim_buf_is_valid(buf) then
+            return
+          end
 
-            vim.api.nvim_buf_call(buf, function()
-              -- Use `pcall()` to suppress error when opening cmdwin with the
-              -- cursor is inside a modified lua or python buffer with no
-              -- corresponding file. This does not happen with other filetypes,
-              -- e.g. c/cpp or tex files
-              -- It seems that the error is caused by lua/python's lsp servers
-              -- making an hidden buffer with bufname '/' (use `:ls!` to show
-              -- the hidden buffers) because disabling lsp server configs in
-              -- `after/ftplugin/lua/lsp.lua` and `after/ftplugin/python/lsp.lua`
-              -- prevents this error and the hidden '/' buffer is gone
-              pcall(vim.cmd.edit, {
-                bang = true,
-                mods = { keepjumps = true },
-              })
-            end)
+          vim.api.nvim_buf_call(buf, function()
+            -- Use `pcall()` to suppress error when opening cmdwin with the
+            -- cursor is inside a modified lua or python buffer with no
+            -- corresponding file. This does not happen with other filetypes,
+            -- e.g. c/cpp or tex files
+            -- It seems that the error is caused by lua/python's lsp servers
+            -- making an hidden buffer with bufname '/' (use `:ls!` to show
+            -- the hidden buffers) because disabling lsp server configs in
+            -- `after/ftplugin/lua/lsp.lua` and `after/ftplugin/python/lsp.lua`
+            -- prevents this error and the hidden '/' buffer is gone
+            pcall(vim.cmd.edit, {
+              bang = true,
+              mods = { keepjumps = true },
+            })
           end)
-        end,
+        end),
       })
     end,
     config = function()
