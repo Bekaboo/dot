@@ -36,10 +36,14 @@ function M.fg_cmds(buf)
   end
 
   local cmds = {}
-  for _, stat_cmd_str in
-    ipairs(vim.split(vim.fn.system('ps h -o stat,args -g ' .. pid), '\n', {
-      trimempty = true,
-    }))
+  for stat_cmd_str in
+    vim.gsplit(
+      vim
+        .system({ 'ps', 'h', '-o', 'stat,args', '-g', tostring(pid) })
+        :wait().stdout,
+      '\n',
+      { trimempty = true }
+    )
   do
     local stat, cmd = stat_cmd_str:match('(%S+)%s+(.*)')
     if stat and stat:find('^%S+%+') then
