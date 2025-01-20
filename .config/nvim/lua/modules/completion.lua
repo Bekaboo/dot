@@ -16,7 +16,7 @@ return {
 
   {
     'hrsh7th/cmp-cmdline',
-    event = 'CmdlineEnter',
+    event = 'CmdlineEnter :',
     dependencies = 'hrsh7th/nvim-cmp',
   },
 
@@ -34,7 +34,7 @@ return {
 
   {
     'hrsh7th/cmp-buffer',
-    event = { 'CmdlineEnter', 'InsertEnter' },
+    event = { 'CmdlineEnter [/?]', 'InsertEnter' },
     dependencies = 'hrsh7th/nvim-cmp',
   },
 
@@ -58,7 +58,7 @@ return {
 
   {
     'hrsh7th/cmp-path',
-    event = { 'InsertEnter', 'CmdlineEnter' },
+    event = { 'InsertEnter', 'CmdlineEnter :' },
     dependencies = 'hrsh7th/nvim-cmp',
   },
 
