@@ -242,13 +242,13 @@ M.snippets = {
         if <cond> {
         <body>
         } else {
-        <idnt>
+        <body_else>
         }
       ]],
       {
         cond = i(1, 'cond'),
         body = un.body(2, 1),
-        idnt = un.idnt(1),
+        body_else = un.body(3, 1),
       }
     )
   ),
