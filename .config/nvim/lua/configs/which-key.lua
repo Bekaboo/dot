@@ -118,7 +118,6 @@ wk.add({
   { '<Leader>td', group = 'Delete' },
   { '<Leader>ti', group = 'Insert' },
   { '<Leader>tf', group = 'Formula' },
-  { '<Leader><Leader>', group = 'Extra' },
   { '<LocalLeader>l', group = 'TeX' },
 })
 
