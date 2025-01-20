@@ -129,7 +129,13 @@ local function preview_set_lines(win, all)
     lines = preview_msg('Binary file', win_height, win_width)
   else
     vim.b[buf]._oil_preview_syntax = bufname
-    lines = vim.fn.readfile(path, '', num_lines)
+    lines = vim
+      .iter(io.lines(path))
+      :take(num_lines)
+      :map(function(line)
+        return (line:gsub('\x0d$', ''))
+      end)
+      :totable()
   end
 
   vim.bo[buf].modifiable = true
