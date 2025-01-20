@@ -339,16 +339,22 @@ M.snippets = {
       -- Use `iferr` to generate the corresponding error check
       -- for functions with different return values
       -- See https://github.com/koron/iferr
-      local boff = vim.fn.wordcount().cursor_bytes
-      local lines = vim.fn.systemlist('iferr -pos ' .. boff, vim.fn.bufnr('%'))
-      if vim.v.shell_error ~= 0 then
+      local o = vim
+        .system(
+          { 'iferr', '-pos', vim.fn.wordcount().cursor_bytes },
+          { stdin = vim.api.nvim_buf_get_lines(0, 0, -1, false) }
+        )
+        :wait()
+      if o.code ~= 0 then
         vim.notify(
-          '[LuaSnip] iferr failed: ' .. table.concat(lines),
+          '[LuaSnip] `iferr` failed: ' .. o.stderr,
           vim.log.levels.WARN
         )
         return sn(nil, i(nil))
       end
 
+      local lines =
+        vim.split(o.stdout, '\n', { plain = true, trimempty = true })
       local first_line = table.remove(lines, 1) -- 'if err != nil {'
       local last_line = table.remove(lines, #lines) -- '}'
       local iferr_body = i(
