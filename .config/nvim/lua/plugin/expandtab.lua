@@ -1,4 +1,9 @@
 local function setup()
+  if vim.g.loaded_expandtab ~= nil then
+    return
+  end
+  vim.g.loaded_expandtab = true
+
   vim.on_key(function(key)
     if
       key ~= '\t'

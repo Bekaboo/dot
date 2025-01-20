@@ -21,6 +21,11 @@ end
 ---@param buf integer terminal buffer handler
 ---@return nil
 local function setup(buf)
+  if vim.g.loaded_term_plugin ~= nil then
+    return
+  end
+  vim.g.loaded_term_plugin = true
+
   term_set_local_keymaps_and_opts(buf)
 
   local groupid = vim.api.nvim_create_augroup('Term', {})

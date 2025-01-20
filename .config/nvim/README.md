@@ -622,6 +622,9 @@ and it should work out of the box.
       [z.lua](https://github.com/skywind3000/z.lua) or
       [z.fish](https://github.com/jethrokuan/z)
 
+Like many vim builtin plugins, these plugins can be disabled by setting the
+`g:loaded_...` flag before loading them.
+
 ### Startuptime
 
 - Neovim Version:

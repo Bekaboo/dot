@@ -76,6 +76,10 @@ vim.api.nvim_create_autocmd('FileType', {
   once = true,
   group = vim.api.nvim_create_augroup('WinBarSetup', {}),
   callback = function()
+    if vim.g.loaded_winbar ~= nil then
+      return
+    end
+
     local winbar = require('plugin.winbar')
     local api = require('plugin.winbar.api')
     winbar.setup({ bar = { hover = false } })
@@ -89,10 +93,20 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
--- tabline, statusline, statuscolumn
-vim.go.tabline = [[%!v:lua.require'plugin.tabline'()]]
-vim.go.statusline = [[%!v:lua.require'plugin.statusline'()]]
-vim.opt.statuscolumn = [[%!v:lua.require'plugin.statuscolumn'()]]
+---Load ui elements e.g. tabline, statusline, statuscolumn
+---@param name string
+local function load_ui(name)
+  local loaded_flag = 'loaded_' .. name
+  if vim.g[loaded_flag] ~= nil then
+    return
+  end
+  vim.g[loaded_flag] = true
+  vim.opt[name] = string.format("%%!v:lua.require'plugin.%s'()", name)
+end
+
+load_ui('tabline')
+load_ui('statusline')
+load_ui('statuscolumn')
 
 -- term
 vim.api.nvim_create_autocmd('TermOpen', {
@@ -135,6 +149,10 @@ vim.api.nvim_create_autocmd({ 'UIEnter', 'CmdlineEnter', 'CmdUndefined' }, {
   once = true,
   callback = function()
     vim.schedule(function()
+      if vim.g.loaded_z then
+        return
+      end
+
       local z = require('plugin.z')
       z.setup()
       vim.keymap.set('n', '<Leader>z', z.select, {

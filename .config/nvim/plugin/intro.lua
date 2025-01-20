@@ -1,3 +1,8 @@
+if vim.g.loaded_intro ~= nil then
+  return
+end
+vim.g.loaded_intro = true
+
 ---Check if the intro message is disabled by user
 ---@return boolean
 local function intro_disabled()
