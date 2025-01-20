@@ -107,36 +107,43 @@ local function preview_set_lines(win, all)
   local win_width = vim.api.nvim_win_get_width(win)
   local num_lines = all and vim.g.bigfile_max_lines
     or math.min(win_height, vim.g.bigfile_max_lines or math.huge)
-  local lines = {}
 
-  if not stat then
-    vim.b[buf]._oil_preview_msg_shown = bufname
-    lines = preview_msg('Invalid path', win_height, win_width)
-  elseif stat.type == 'directory' then
-    lines = vim
-      .iter(vim.gsplit(vim.system({ 'ls', '-lhA', path }):wait().stdout, '\n'))
-      :take(num_lines)
-      :map(function(line)
-        return vim.fn.match(line, '\\v^[-dpls][-rwx]{9}') == -1 and line
-          or line:sub(1, 1) .. ' ' .. line:sub(2)
-      end)
-      :totable()
-  elseif stat.size == 0 then
-    vim.b[buf]._oil_preview_msg_shown = bufname
-    lines = preview_msg('Empty file', win_height, win_width)
-  elseif not vim.system({ 'file', path }):wait().stdout:match('text') then
-    vim.b[buf]._oil_preview_msg_shown = bufname
-    lines = preview_msg('Binary file', win_height, win_width)
-  else
+  local lines = (function()
+    if not stat then
+      vim.b[buf]._oil_preview_msg_shown = bufname
+      return preview_msg('Invalid path', win_height, win_width)
+    end
+
+    if stat.type == 'directory' then
+      return vim
+        .iter(vim.gsplit(vim.system({ 'ls', '-lhA', path }):wait().stdout, '\n'))
+        :take(num_lines)
+        :map(function(line)
+          return vim.fn.match(line, '\\v^[-dpls][-rwx]{9}') == -1 and line
+            or line:sub(1, 1) .. ' ' .. line:sub(2)
+        end)
+        :totable()
+    end
+
+    if stat.size == 0 then
+      vim.b[buf]._oil_preview_msg_shown = bufname
+      return preview_msg('Empty file', win_height, win_width)
+    end
+
+    if not vim.system({ 'file', path }):wait().stdout:match('text') then
+      vim.b[buf]._oil_preview_msg_shown = bufname
+      return preview_msg('Binary file', win_height, win_width)
+    end
+
     vim.b[buf]._oil_preview_syntax = bufname
-    lines = vim
+    return vim
       .iter(io.lines(path))
       :take(num_lines)
       :map(function(line)
         return (line:gsub('\x0d$', ''))
       end)
       :totable()
-  end
+  end)()
 
   vim.bo[buf].modifiable = true
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
