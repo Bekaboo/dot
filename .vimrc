@@ -1584,8 +1584,19 @@ if s:supportevents('FileType')
   augroup QfSettings
     au!
     au FileType qf if win_gettype() ==# 'quickfix' | wincmd J | endif |
-          \ silent! setlocal nobl nolist nospell nornu scl=no cc=0 |
+          \ silent! setlocal nobl nolist nospell nonu nornu scl=no cc=0 |
           \ silent! packadd cfilter
+  augroup END
+endif
+" }}}2
+
+" Command window settings {{{2
+if s:supportevents('FileType')
+  augroup CmdwinSettings
+    au!
+    au FileType vim if win_gettype() ==# 'command' |
+          \ silent! setlocal nobl nonu nornu scl=no cc=0 |
+          \ endif
   augroup END
 endif
 " }}}2
