@@ -480,6 +480,7 @@ cmp.setup.cmdline('/', {
     },
   },
 })
+
 cmp.setup.cmdline('?', {
   enabled = true,
   sources = {
@@ -491,9 +492,42 @@ cmp.setup.cmdline('?', {
     },
   },
 })
--- Use cmdline & path source for ':'.
+
+local cmdcompltype = ''
 cmp.setup.cmdline(':', {
-  enabled = true,
+  enabled = function()
+    -- Don't auto complete shell cmd which can be slow and block nvim
+    -- on some systems, e.g. Windows, Android, etc.
+    -- Commands that use shell cmd completion: `:!` and `:term`, etc.
+    --
+    -- cmp-cmdline provides an option `ignore_cmds` to disable auto
+    -- completion for certain commands but that's insufficient because
+    -- it only detect the start of cmd line instead of checking the
+    -- actual completion type and will fail when the command is in the
+    -- middle of the cmdline, e.g. (`:echo 'test' | !xxx` or `:hor term xxx`)
+    local cur_cmdcompltype = vim.fn.getcmdcompltype()
+    local prev_cmdcompltype = cmdcompltype
+    cmdcompltype = cur_cmdcompltype
+    if cur_cmdcompltype == 'shellcmd' then
+      -- When `enabled()` returns false, nvim-cmp does not close
+      -- previous completion menu, as a workaround we manually call
+      -- `cmp.close()` here
+      -- We can still manually trigger shell cmd completion so only close the
+      -- completion window when the completion type has just changed to
+      -- 'shellcmd' to avoid menu being closed when cycling through shell cmd
+      -- completions
+      if prev_cmdcompltype ~= cur_cmdcompltype then
+        cmp.close()
+      end
+      -- HACK: nvim-cmp won't update the completion menu after manually
+      -- triggering it if `enabled()` returns false
+      if cmp.visible() then
+        cmp.core:on_change('TextChanged')
+      end
+      return false
+    end
+    return true
+  end,
   sources = {
     {
       name = 'cmdline',
