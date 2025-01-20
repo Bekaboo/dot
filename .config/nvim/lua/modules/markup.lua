@@ -19,12 +19,11 @@ return {
   {
     'dhruvasagar/vim-table-mode',
     cmd = { 'TableModeToggle', 'TableModeEnable', 'TableModeRealign' },
-    event = 'BufWritePre',
-    init = function()
-      vim.g.table_mode_syntax = 0
-      vim.g.table_mode_disable_mappings = 1
-      vim.g.table_mode_disable_tableize_mappings = 1
-    end,
+    event = { 'BufWritePre', 'TextChangedI' },
+    keys = {
+      { '<Leader>tm', desc = 'Table mode toggle' },
+      { '<Leader>tt', desc = 'Table mode tableize' },
+    },
     config = function()
       require('configs.vim-table-mode')
     end,

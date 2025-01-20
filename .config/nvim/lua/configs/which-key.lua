@@ -114,6 +114,10 @@ wk.add({
   { '<Leader>fg', group = 'Git' },
   { '<Leader>fs', group = 'LSP' },
   { '<Leader>G', group = 'Debug' },
+  { '<Leader>t', group = 'Table mode' },
+  { '<Leader>td', group = 'Delete' },
+  { '<Leader>ti', group = 'Insert' },
+  { '<Leader>tf', group = 'Formula' },
   { '<Leader><Leader>', group = 'Extra' },
   { '<LocalLeader>l', group = 'TeX' },
 })
