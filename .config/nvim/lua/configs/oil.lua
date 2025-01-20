@@ -105,32 +105,31 @@ local function preview_set_lines(win, all)
   local stat = vim.uv.fs_stat(path)
   local win_height = vim.api.nvim_win_get_height(win)
   local win_width = vim.api.nvim_win_get_width(win)
+  local num_lines = all and vim.g.bigfile_max_lines
+    or math.min(win_height, vim.g.bigfile_max_lines or math.huge)
   local lines = {}
 
   if not stat then
     vim.b[buf]._oil_preview_msg_shown = bufname
     lines = preview_msg('Invalid path', win_height, win_width)
   elseif stat.type == 'directory' then
-    for i, line in
-      ipairs(vim.fn.systemlist('ls -lhA ' .. vim.fn.shellescape(path)))
-    do
-      lines[i] = vim.fn.match(line, '\\v^[-dpls][-rwx]{9}') == -1 and line
-        or line:sub(1, 1) .. ' ' .. line:sub(2)
-    end
+    lines = vim
+      .iter(vim.gsplit(vim.system({ 'ls', '-lhA', path }):wait().stdout, '\n'))
+      :take(num_lines)
+      :map(function(line)
+        return vim.fn.match(line, '\\v^[-dpls][-rwx]{9}') == -1 and line
+          or line:sub(1, 1) .. ' ' .. line:sub(2)
+      end)
+      :totable()
   elseif stat.size == 0 then
     vim.b[buf]._oil_preview_msg_shown = bufname
     lines = preview_msg('Empty file', win_height, win_width)
-  elseif not vim.fn.system({ 'file', path }):match('text') then
+  elseif not vim.system({ 'file', path }):wait().stdout:match('text') then
     vim.b[buf]._oil_preview_msg_shown = bufname
     lines = preview_msg('Binary file', win_height, win_width)
   else
     vim.b[buf]._oil_preview_syntax = bufname
-    lines = vim.fn.readfile(
-      path,
-      '',
-      all and vim.g.bigfile_max_lines
-        or math.min(win_height, vim.g.bigfile_max_lines or math.huge)
-    )
+    lines = vim.fn.readfile(path, '', num_lines)
   end
 
   vim.bo[buf].modifiable = true
