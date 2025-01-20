@@ -1,5 +1,29 @@
 require('ultimate-autopair.utils').maxlines = 0
 
+---Filetype options memoization
+---@type table<string, table<string, string|integer|boolean|table>>
+local ft_opts = vim.defaulttable(function()
+  return {}
+end)
+
+---Get option value for given filetype, with memoization for performance
+---This fixes sluggish `<CR>` in markdown files
+---TODO: upstream to ultimate-autopair
+---@param ft string
+---@param opt string
+---@diagnostic disable-next-line: duplicate-set-field
+require('ultimate-autopair.utils').ft_get_option = function(ft, opt)
+  local opts = ft_opts[ft]
+  local opt_val = opts[opt]
+  if opt_val ~= nil then
+    return opt_val
+  end
+
+  opt_val = vim.F.npcall(vim.filetype.get_option, ft, opt) or vim.bo[opt]
+  opts[opt] = opt_val
+  return opt_val
+end
+
 ---Get next two characters after cursor
 ---@return string: next two characters
 local function get_next_two_chars()
