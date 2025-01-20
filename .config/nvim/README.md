@@ -551,6 +551,7 @@ and it should work out of the box.
         - [vim-rhubarb](https://github.com/tpope/vim-rhubarb) (dependency)
         - [fugitive-gitlab.vim](https://github.com/shumphrey/fugitive-gitlab.vim) (dependency)
     - [oil.nvim](https://github.com/stevearc/oil.nvim)
+    - [quicker.nvim](https://github.com/stevearc/quicker.nvim)
     - [which-key.nvim](https://github.com/folke/which-key.nvim)
 - **LSP**
     - [clangd_extensions.nvim](https://github.com/p00f/clangd_extensions.nvim)

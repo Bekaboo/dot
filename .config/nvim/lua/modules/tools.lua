@@ -272,6 +272,14 @@ return {
   },
 
   {
+    'stevearc/quicker.nvim',
+    ft = 'qf',
+    config = function()
+      require('configs.quicker')
+    end,
+  },
+
+  {
     'folke/which-key.nvim',
     event = 'VeryLazy',
     config = function()
