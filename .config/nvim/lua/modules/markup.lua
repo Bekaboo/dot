@@ -19,7 +19,8 @@ return {
   {
     'dhruvasagar/vim-table-mode',
     cmd = { 'TableModeToggle', 'TableModeEnable', 'TableModeRealign' },
-    event = { 'BufWritePre', 'TextChangedI' },
+    event = 'BufWritePre',
+    ft = { 'markdown', 'text' },
     keys = {
       { '<Leader>tm', desc = 'Table mode toggle' },
       { '<Leader>tt', desc = 'Table mode tableize' },
