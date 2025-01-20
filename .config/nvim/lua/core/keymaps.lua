@@ -119,7 +119,7 @@ vim.api.nvim_create_autocmd('UIEnter', {
       -- stylua: ignore end
 
       -- Wisely exit terminal mode with <Esc>
-      vim.keymap.set(
+      map(
         't',
         '<Esc>',
         [[v:lua.require'utils.term'.running_tui() ? "<Esc>" : "<Cmd>stopi<CR>"]],
