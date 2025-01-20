@@ -40,6 +40,10 @@ quicker.setup({
     soft_cross = vim.go.tgc and boxes.single.hr or boxes.single.x,
     soft_end = vim.go.tgc and boxes.single.hr or boxes.single.xr,
   },
+  on_qf = function(buf)
+    -- Disable custom qf syntax, see `syntax/qf.vim`
+    vim.bo[buf].syntax = ''
+  end,
   max_filename_width = function()
     return math.ceil(vim.go.columns / 2)
   end,
