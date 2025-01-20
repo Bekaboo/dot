@@ -21,12 +21,6 @@ vim.api.nvim_create_autocmd({ 'Filetype', 'BufEnter' }, {
   end,
 })
 
-vim.api.nvim_create_autocmd('Filetype', {
-  pattern = 'markdown',
-  group = vim.api.nvim_create_augroup('TableModeSetTableCorner', {}),
-  command = 'let b:table_mode_corner = "|"',
-})
-
 vim.api.nvim_create_autocmd('BufWritePre', {
   group = vim.api.nvim_create_augroup('TableModeFormatOnSave', {}),
   callback = function(info)
