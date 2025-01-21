@@ -1,5 +1,5 @@
 local dap = require('dap')
-local keymap = require('utils.keymap')
+local key = require('utils.key')
 local icons = require('utils.static.icons')
 
 local function set_cond_breakpoint()
@@ -73,7 +73,7 @@ vim.keymap.set('n', '<Leader>G<Esc>', '<Nop>', { desc = 'Cancel debug action' })
 -- stylua: ignore end
 
 -- When there's active dap session, use `<CR>` to repeat the last dap function
-keymap.amend('n', '<CR>', function(fallback)
+key.amend('n', '<CR>', function(fallback)
   if dap.session() then
     last_dap_fn()
     return

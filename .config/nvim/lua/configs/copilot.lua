@@ -20,15 +20,15 @@ require('copilot').setup({
 
 vim.defer_fn(function()
   local suggestion = require('copilot.suggestion')
-  local keymap = require('utils.keymap')
-  keymap.amend('i', '<C-f>', function(fallback)
+  local key = require('utils.key')
+  key.amend('i', '<C-f>', function(fallback)
     if suggestion.is_visible() then
       suggestion.accept()
     else
       fallback()
     end
   end, { desc = '[copilot] accept suggestion' })
-  keymap.amend('i', '<M-f>', function(fallback)
+  key.amend('i', '<M-f>', function(fallback)
     if suggestion.is_visible() then
       suggestion.accept_word()
     else

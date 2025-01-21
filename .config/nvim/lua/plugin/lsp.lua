@@ -120,7 +120,7 @@ local function setup_keymaps()
     )
   end, { desc = 'Yank diagnostic message on current line' })
 
-  local c = utils.keymap.count_wrap
+  local c = utils.key.count_wrap
   ---@param direction 'prev'|'next'
   ---@param level 'ERROR'|'WARN'|'INFO'|'HINT'
   ---@return function
@@ -1422,7 +1422,7 @@ end
 ---@return nil
 local function setup_commands(meta, subcommand_info_list, fn_scope)
   -- metacommand -> MetaCommand abbreviation
-  utils.keymap.command_abbrev(meta:lower(), meta)
+  utils.key.command_abbrev(meta:lower(), meta)
   -- Format: MetaCommand sub_command opts ...
   vim.api.nvim_create_user_command(
     meta,
