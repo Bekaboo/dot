@@ -4,6 +4,10 @@ local quicker = require('quicker')
 
 quicker.setup({
   use_default_opts = false,
+  opts = {
+    -- Required for type icons to work
+    signcolumn = 'auto',
+  },
   keys = {
     {
       'g>',
