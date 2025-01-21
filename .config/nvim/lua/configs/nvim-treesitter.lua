@@ -28,10 +28,9 @@ require('nvim-treesitter.configs').setup({
   highlight = {
     enable = not vim.g.vscode,
     disable = function(lang, buf)
-      return lang == 'latex'
-        or lang == 'tmux'
-        or vim.b[buf].bigfile
+      return vim.b[buf].bigfile
         or vim.fn.win_gettype() == 'command'
+        or vim.b[buf].vimtex_id and lang == 'latex'
     end,
     -- Enable additional vim regex highlighting
     -- in markdown files to get vimtex math conceal
