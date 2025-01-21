@@ -5,7 +5,7 @@ local icon_dir = vim.trim(icons.Folder)
 
 local preview_wins = {} ---@type table<integer, integer>
 local preview_bufs = {} ---@type table<integer, integer>
-local preview_debounce = 64 -- ms
+local preview_debounce = 16 -- ms
 local preview_request_last_timestamp = 0
 
 ---Change window-local directory to `dir`
