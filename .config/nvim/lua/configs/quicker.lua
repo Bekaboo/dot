@@ -23,11 +23,11 @@ quicker.setup({
     },
   },
   type_icons = {
-    E = vim.g.has_nf and icons.DiagnosticSignError or 'ERROR',
-    W = vim.g.has_nf and icons.DiagnosticSignWarn or 'WARN',
-    I = vim.g.has_nf and icons.DiagnosticSignInfo or 'INFO',
-    N = vim.g.has_nf and icons.DiagnosticSignHint or 'NOTE',
-    H = vim.g.has_nf and icons.DiagnosticSignHint or 'HINT',
+    E = icons.DiagnosticSignError,
+    W = icons.DiagnosticSignWarn,
+    I = icons.DiagnosticSignInfo,
+    N = icons.DiagnosticSignHint,
+    H = icons.DiagnosticSignHint,
   },
   borders = {
     vert = vim.go.tgc and ' ' or boxes.single.vt,
