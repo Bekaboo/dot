@@ -51,6 +51,8 @@
 	p    = push
 	pf   = push --force
 	pk   = cherry-pick
+	pka  = cherry-pick --abort
+	pkc  = cherry-pick --continue
 	pl   = pull
 	r    = remote
 	ra   = remote add
