@@ -13,7 +13,7 @@ local function has_z()
     return true
   end
 
-  vim.notify_once('[z] `z` command not available', vim.log.levels.WARN)
+  vim.notify_once('[z] `z` command not available\n', vim.log.levels.WARN)
   return false
 end
 
