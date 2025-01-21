@@ -12,14 +12,12 @@ local r = ls.restore_node
 
 return {
   us.samWr({ trig = '(%a)(%d)' }, {
-    d(1, function(_, snip)
-      local symbol = snip.captures[1]
-      local subscript = snip.captures[2]
-      return sn(nil, {
-        t(symbol),
-        t('_'),
-        t(subscript),
-      })
+    f(function(_, parent)
+      return string.format(
+        '%s_%s',
+        parent.snippet.captures[1],
+        parent.snippet.captures[2]
+      )
     end),
   }),
   us.msamWr({
