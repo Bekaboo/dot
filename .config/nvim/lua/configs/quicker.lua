@@ -22,6 +22,11 @@ quicker.setup({
       desc = 'Collapse quickfix context',
     },
   },
+  highlight = {
+    lsp = true,
+    treesitter = true,
+    load_buffers = false,
+  },
   type_icons = {
     E = icons.DiagnosticSignError,
     W = icons.DiagnosticSignWarn,
