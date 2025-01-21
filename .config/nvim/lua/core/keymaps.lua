@@ -227,8 +227,8 @@ vim.api.nvim_create_autocmd('UIEnter', {
       map({ 'o', 'x' }, 'a`', '2i`', { noremap = false, desc = 'Selet around backticks' })
 
       -- Close all floating windows
-      map({ 'n', 'x' }, 'q', function() require('utils.misc').close_floats('q') end, { desc = 'Close all floating windows or start recording macro' })
-      map('n', '<Esc>', function() require('utils.misc').close_floats('<Esc>') end, { desc = 'Close all floating windows' })
+      map({ 'n', 'x' }, 'q', function() require('utils.misc').close_floats_keymap('q') end, { desc = 'Close all floating windows or start recording macro' })
+      map('n', '<Esc>', function() require('utils.misc').close_floats_keymap('<Esc>') end, { desc = 'Close all floating windows' })
 
       -- Enter insert mode, add a space after the cursor
       map({ 'n', 'x' }, '<M-i>', 'i<Space><Left>', { desc = 'Insert with a space after the cursor' })

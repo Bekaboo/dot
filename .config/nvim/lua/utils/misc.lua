@@ -256,13 +256,13 @@ function M.goto_paragraph_lastline()
   end
 end
 
----Close floating windows with a given key
+---Close floating windows with a given key, supposed to be used in a keymap
 --- 1. If current window is a floating window, close it and return
 --- 2. Else, close all floating windows that can be focused
 --- 3. Fallback to `key` if no floating window can be focused
 ---@param key string
 ---@return nil
-function M.close_floats(key)
+function M.close_floats_keymap(key)
   local current_win = vim.api.nvim_get_current_win()
 
   -- Only close current win if it's a floating window
