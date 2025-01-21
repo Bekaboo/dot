@@ -34,24 +34,24 @@ vim.keymap.set({ 'n', 'x' }, ']C', function() gs.nav_hunk('last') end, { desc = 
 
 -- Actions
 -- stylua: ignore start
-vim.keymap.set('n', '<leader>gs', gs.stage_hunk, { desc = 'Git stage current hunk' })
-vim.keymap.set('n', '<leader>gr', gs.reset_hunk, { desc = 'Git reset current hunk' })
-vim.keymap.set('n', '<leader>gS', gs.stage_buffer, { desc = 'Git stage current buffer' })
-vim.keymap.set('n', '<leader>gR', gs.reset_buffer, { desc = 'Git reset current buffer' })
-vim.keymap.set('n', '<leader>gp', gs.preview_hunk, { desc = 'Git preview current hunk' })
-vim.keymap.set('n', '<leader>gb', gs.blame_line, { desc = 'Git blame current line' })
-vim.keymap.set('n', '<leader>gq', gs.setloclist, { desc = 'Git list file hunks' })
-vim.keymap.set('n', '<leader>gQ', function() gs.setqflist('all') end, { desc = 'Git list repo hunks' })
-vim.keymap.set('n', '<leader>g<esc>', '<nop>')
+vim.keymap.set('n', '<Leader>gs', gs.stage_hunk, { desc = 'Git stage current hunk' })
+vim.keymap.set('n', '<Leader>gr', gs.reset_hunk, { desc = 'Git reset current hunk' })
+vim.keymap.set('n', '<Leader>gS', gs.stage_buffer, { desc = 'Git stage current buffer' })
+vim.keymap.set('n', '<Leader>gR', gs.reset_buffer, { desc = 'Git reset current buffer' })
+vim.keymap.set('n', '<Leader>gp', gs.preview_hunk, { desc = 'Git preview current hunk' })
+vim.keymap.set('n', '<Leader>gb', gs.blame_line, { desc = 'Git blame current line' })
+vim.keymap.set('n', '<Leader>gq', gs.setloclist, { desc = 'Git list file hunks' })
+vim.keymap.set('n', '<Leader>gQ', function() gs.setqflist('all') end, { desc = 'Git list repo hunks' })
+vim.keymap.set('n', '<Leader>g<Esc>', '<Nop>')
 -- stylua: ignore end
 
-vim.keymap.set('x', '<leader>gs', function()
+vim.keymap.set('x', '<Leader>gs', function()
   gs.stage_hunk({
     vim.fn.line('.'),
     vim.fn.line('v'),
   })
 end, { desc = 'Git stage current selection' })
-vim.keymap.set('x', '<leader>gr', function()
+vim.keymap.set('x', '<Leader>gr', function()
   gs.reset_hunk({
     vim.fn.line('.'),
     vim.fn.line('v'),
@@ -60,6 +60,6 @@ end, { desc = 'Git reset current selection' })
 
 -- Text object
 -- stylua: ignore start
-vim.keymap.set({ 'o', 'x' }, 'ic', ':<C-U>Gitsigns select_hunk<CR>', { silent = true, desc = 'Select git hunk' })
-vim.keymap.set({ 'o', 'x' }, 'ac', ':<C-U>Gitsigns select_hunk<CR>', { silent = true, desc = 'Select git hunk' })
+vim.keymap.set({ 'o', 'x' }, 'ic', ':<C-u>Gitsigns select_hunk<CR>', { silent = true, desc = 'Select git hunk' })
+vim.keymap.set({ 'o', 'x' }, 'ac', ':<C-u>Gitsigns select_hunk<CR>', { silent = true, desc = 'Select git hunk' })
 -- stylua: ignore end
