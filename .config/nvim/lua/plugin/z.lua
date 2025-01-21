@@ -26,6 +26,18 @@ local function get_arg_str(args)
     return ''
   end
 
+  -- HACK: if the last element is a full path, only use it instead of all arguments
+  -- as arguments for `z` command
+  -- This is because nvim completion only works for single word and when multiple
+  -- args are given to `:Z`, e.g. `:Z foo bar`, hitting tab will complete it as
+  -- `:Z foo /foo/bar/baz`, assuming `/foo/bar/baz` is in z's database
+  -- Without this trick 'foo /foo/bar/baz' will be passed to `z -e` shell command
+  -- to get the best matching path, which is of course empty
+  local last_arg = args[#args]
+  if last_arg and require('utils.fs').is_full_path(last_arg) then
+    return vim.fn.shellescape(last_arg)
+  end
+
   return table.concat(
     vim.tbl_map(function(path)
       return vim.fn.shellescape(vim.fn.expand(path))
