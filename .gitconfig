@@ -33,7 +33,6 @@
 	; Checkout specified commit without changing the working tree and branch
 	; pointer, aka "soft checkout"
 	cos  = "!__git_cos() { git checkout --detach && git reset --soft $1 && git checkout $1; }; __git_cos"
-	cp   = cherry-pick
 	d    = diff
 	ds   = diff --cached
 	f    = fetch
@@ -51,6 +50,7 @@
 	mt   = mergetool
 	p    = push
 	pf   = push --force
+	pk   = cherry-pick
 	pl   = pull
 	r    = remote
 	ra   = remote add
