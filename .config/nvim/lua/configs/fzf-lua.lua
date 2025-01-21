@@ -230,7 +230,44 @@ function actions.arg_search_add()
   })
 end
 
-function actions._file_edit_or_qf(selected, opts)
+local _file_split = actions.file_split
+local _file_vsplit = actions.file_vsplit
+local _file_tabedit = actions.file_tabedit
+local _file_sel_to_qf = actions.file_sel_to_qf
+local _file_sel_to_ll = actions.file_sel_to_ll
+local _buf_split = actions.buf_split
+local _buf_vsplit = actions.buf_vsplit
+local _buf_tabedit = actions.buf_tabedit
+
+---@diagnostic disable-next-line: duplicate-set-field
+function actions.file_split(...)
+  local win = vim.api.nvim_get_current_win()
+  _file_split(...)
+  if vim.api.nvim_win_is_valid(win) and utils.win.is_empty(win) then
+    vim.api.nvim_win_close(win, false)
+  end
+end
+
+---@diagnostic disable-next-line: duplicate-set-field
+function actions.file_vsplit(...)
+  local win = vim.api.nvim_get_current_win()
+  _file_vsplit(...)
+  if vim.api.nvim_win_is_valid(win) and utils.win.is_empty(win) then
+    vim.api.nvim_win_close(win, false)
+  end
+end
+
+---@diagnostic disable-next-line: duplicate-set-field
+function actions.file_tabedit(...)
+  local tab = vim.api.nvim_get_current_tabpage()
+  _file_tabedit(...)
+  if vim.api.nvim_tabpage_is_valid(tab) and utils.tab.is_empty(tab) then
+    vim.api.nvim_win_close(vim.api.nvim_tabpage_list_wins(tab)[1], false)
+  end
+end
+
+---@diagnostic disable-next-line: duplicate-set-field
+function actions.file_edit_or_qf(selected, opts)
   if #selected > 1 then
     actions.file_sel_to_qf(selected, opts)
     vim.cmd.cfirst()
@@ -240,19 +277,48 @@ function actions._file_edit_or_qf(selected, opts)
   end
 end
 
-function actions._file_sel_to_qf(selected, opts)
-  actions.file_sel_to_qf(selected, opts)
+---@diagnostic disable-next-line: duplicate-set-field
+function actions.file_sel_to_qf(selected, opts)
+  _file_sel_to_qf(selected, opts)
   if #selected > 1 then
     vim.cmd.cfirst()
     vim.cmd.copen()
   end
 end
 
-function actions._file_sel_to_ll(selected, opts)
-  actions.file_sel_to_ll(selected, opts)
+---@diagnostic disable-next-line: duplicate-set-field
+function actions.file_sel_to_ll(selected, opts)
+  _file_sel_to_ll(selected, opts)
   if #selected > 1 then
     vim.cmd.lfirst()
     vim.cmd.lopen()
+  end
+end
+
+---@diagnostic disable-next-line: duplicate-set-field
+function actions.buf_split(...)
+  local win = vim.api.nvim_get_current_win()
+  _buf_split(...)
+  if vim.api.nvim_win_is_valid(win) and utils.win.is_empty(win) then
+    vim.api.nvim_win_close(win, false)
+  end
+end
+
+---@diagnostic disable-next-line: duplicate-set-field
+function actions.buf_vsplit(...)
+  local win = vim.api.nvim_get_current_win()
+  _buf_vsplit(...)
+  if vim.api.nvim_win_is_valid(win) and utils.win.is_empty(win) then
+    vim.api.nvim_win_close(win, false)
+  end
+end
+
+---@diagnostic disable-next-line: duplicate-set-field
+function actions.buf_tabedit(...)
+  local tab = vim.api.nvim_get_current_tabpage()
+  _buf_tabedit(...)
+  if vim.api.nvim_tabpage_is_valid(tab) and utils.tab.is_empty(tab) then
+    vim.api.nvim_win_close(vim.api.nvim_tabpage_list_wins(tab)[1], false)
   end
 end
 
@@ -274,19 +340,24 @@ core.ACTION_DEFINITIONS[actions.arg_search_add] = { 'add new file' }
 core.ACTION_DEFINITIONS[actions.search] = { 'edit' }
 core.ACTION_DEFINITIONS[actions.ex_run] = { 'edit' }
 
--- stylua: ignore start
 config._action_to_helpstr[actions.toggle_dir] = 'toggle-dir'
 config._action_to_helpstr[actions.switch_provider] = 'switch-provider'
 config._action_to_helpstr[actions.switch_cwd] = 'change-cwd'
 config._action_to_helpstr[actions.arg_del] = 'delete'
 config._action_to_helpstr[actions.del_autocmd] = 'delete-autocmd'
 config._action_to_helpstr[actions.arg_search_add] = 'search-and-add-new-file'
+config._action_to_helpstr[actions.file_split] = 'file-split'
+config._action_to_helpstr[actions.file_vsplit] = 'file-vsplit'
+config._action_to_helpstr[actions.file_tabedit] = 'file-tabedit'
+config._action_to_helpstr[actions.file_edit_or_qf] = 'file-edit-or-qf'
+config._action_to_helpstr[actions.file_sel_to_qf] = 'file-select-to-quickfix'
+config._action_to_helpstr[actions.file_sel_to_ll] = 'file-select-to-loclist'
+config._action_to_helpstr[actions.buf_split] = 'buffer-split'
+config._action_to_helpstr[actions.buf_vsplit] = 'buffer-vsplit'
+config._action_to_helpstr[actions.buf_tabedit] = 'buffer-tabedit'
+config._action_to_helpstr[actions.buf_edit_or_qf] = 'buffer-edit-or-qf'
 config._action_to_helpstr[actions.buf_sel_to_qf] = 'buffer-select-to-quickfix'
 config._action_to_helpstr[actions.buf_sel_to_ll] = 'buffer-select-to-loclist'
-config._action_to_helpstr[actions._file_sel_to_qf] = 'file-select-to-quickfix'
-config._action_to_helpstr[actions._file_sel_to_ll] = 'file-select-to-loclist'
-config._action_to_helpstr[actions._file_edit_or_qf] = 'file-edit-or-qf'
--- stylua: ignore end
 
 -- Use different prompts for document and workspace diagnostics
 -- by overriding `fzf.diagnostics_workspace()` and `fzf.diagnostics_document()`
@@ -489,15 +560,15 @@ fzf.setup({
       ['alt-s'] = actions.file_split,
       ['alt-v'] = actions.file_vsplit,
       ['alt-t'] = actions.file_tabedit,
-      ['alt-q'] = actions._file_sel_to_qf,
-      ['alt-l'] = actions._file_sel_to_ll,
-      ['enter'] = actions._file_edit_or_qf,
+      ['alt-q'] = actions.file_sel_to_qf,
+      ['alt-l'] = actions.file_sel_to_ll,
+      ['enter'] = actions.file_edit_or_qf,
     },
     buffers = {
-      ['enter'] = actions.buf_edit_or_qf,
       ['alt-s'] = actions.buf_split,
       ['alt-v'] = actions.buf_vsplit,
       ['alt-t'] = actions.buf_tabedit,
+      ['enter'] = actions.buf_edit_or_qf,
     },
   },
   defaults = {

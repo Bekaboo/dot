@@ -156,4 +156,16 @@ M.restratio = M.rest(function(win, ratio)
   end
 end, ratios)
 
+---Check if a window is empty
+---A window is considered 'empty' if its containing buffer is empty
+---@param win integer? default to current window
+---@return boolean
+function M.is_empty(win)
+  win = win or vim.api.nvim_get_current_win()
+  if not vim.api.nvim_win_is_valid(win) then
+    return true
+  end
+  return require('utils.buf').is_empty(vim.api.nvim_win_get_buf(win))
+end
+
 return M
