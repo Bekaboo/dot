@@ -117,54 +117,39 @@ local function snip_node_has_length(node)
   return start_pos[1] ~= end_pos[1] or start_pos[2] ~= end_pos[2]
 end
 
+---Convert a range into lsp format range
+---@param range integer[][] 0-based range
+---@return lsp_range_t
+local function range_convert(range)
+  local s = range[1]
+  local e = range[2]
+  return {
+    start = { line = s[1], character = s[2] },
+    ['end'] = { line = e[1], character = e[2] },
+  }
+end
+
 ---Check if range1 contains range2
 ---If range1 == range2, return true
 ---@param range1 integer[][] 0-based range
 ---@param range2 integer[][] 0-based range
 ---@return boolean
 local function range_contains(range1, range2)
-  -- stylua: ignore start
-  return (
-    range2[1][1] > range1[1][1]
-    or (range2[1][1] == range1[1][1]
-        and range2[1][2] >= range1[1][2])
-    )
-    and (
-      range2[1][1] < range1[2][1]
-      or (range2[1][1] == range1[2][1]
-          and range2[1][2] <= range1[2][2])
-    )
-    and (
-      range2[2][1] > range1[1][1]
-      or (range2[2][1] == range1[1][1]
-          and range2[2][2] >= range1[1][2])
-    )
-    and (
-      range2[2][1] < range1[2][1]
-      or (range2[2][1] == range1[2][1]
-          and range2[2][2] <= range1[2][2])
-    )
-  -- stylua: ignore end
+  return require('utils.lsp').range_contains(
+    range_convert(range1),
+    range_convert(range2)
+  )
 end
 
 ---Check if the cursor position is in the given range
 ---@param range integer[][] 0-based range
----@param cursor integer[] 1,0-based cursor position
+---@param cursor integer[]? 1,0-based cursor position
 ---@return boolean
 local function in_range(range, cursor)
-  local cursor0 = { cursor[1] - 1, cursor[2] }
-  -- stylua: ignore start
-  return (
-    cursor0[1] > range[1][1]
-    or (cursor0[1] == range[1][1]
-        and cursor0[2] >= range[1][2])
-    )
-    and (
-      cursor0[1] < range[2][1]
-      or (cursor0[1] == range[2][1]
-          and cursor0[2] <= range[2][2])
-    )
-  -- stylua: ignore end
+  return require('utils.lsp').range_contains_cursor(
+    range_convert(range),
+    cursor
+  )
 end
 
 ---Find the parent (a previous node that contains the current node) of the node
