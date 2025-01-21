@@ -5,7 +5,6 @@ return {
     config = function()
       require('configs.nvim-cmp')
     end,
-    dependencies = 'L3MON4D3/LuaSnip',
   },
 
   {
@@ -50,10 +49,7 @@ return {
   {
     'saadparwaiz1/cmp_luasnip',
     event = 'InsertEnter',
-    dependencies = {
-      'hrsh7th/nvim-cmp',
-      'L3MON4D3/LuaSnip',
-    },
+    dependencies = 'hrsh7th/nvim-cmp',
   },
 
   {
