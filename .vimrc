@@ -617,8 +617,8 @@ omap a` 2i`
 " }}}2
 
 " Edit current file path {{{2
-nnoremap -      :e%:p:h<CR>
-xnoremap - <Esc>:e%:p:h<CR>
+nnoremap <expr> -                isdirectory(expand('%:p:h')) ? ':e%:p:h<CR>' : '<Cmd>e ' . fnameescape(getcwd(0)) . '<CR>'
+xnoremap <expr> - '<C-\><C-n>' . isdirectory(expand('%:p:h')) ? ':e%:p:h<CR>' : '<Cmd>e ' . fnameescape(getcwd(0)) . '<CR>'
 " }}}2
 
 " Enter insert mode with a space after the cursor {{{2

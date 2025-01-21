@@ -208,6 +208,18 @@ vim.api.nvim_create_autocmd('UIEnter', {
         }
       )
 
+      -- Edit current file's directory
+      map(
+        { 'n', 'x' },
+        '-',
+        [[isdirectory(expand('%:p:h')) ? '<Cmd>e%:p:h<CR>' : '<Cmd>e ' . fnameescape(getcwd(0)) . '<CR>']],
+        {
+          expr = true,
+          replace_keycodes = false,
+          desc = "Edit current file's directory",
+        }
+      )
+
       -- Don't include extra spaces around quotes
       -- stylua: ignore start
       map({ 'o', 'x' }, 'a"', '2i"', { noremap = false, desc = 'Selet around double quotes' })
@@ -217,9 +229,6 @@ vim.api.nvim_create_autocmd('UIEnter', {
       -- Close all floating windows
       map({ 'n', 'x' }, 'q', function() require('utils.misc').close_floats('q') end, { desc = 'Close all floating windows or start recording macro' })
       map('n', '<Esc>', function() require('utils.misc').close_floats('<Esc>') end, { desc = 'Close all floating windows' })
-
-      -- Edit current file's directory
-      map({ 'n', 'x' }, '-', '<Cmd>e%:p:h<CR>', { desc = 'Edit current file\'s directory' })
 
       -- Enter insert mode, add a space after the cursor
       map({ 'n', 'x' }, '<M-i>', 'i<Space><Left>', { desc = 'Insert with a space after the cursor' })
