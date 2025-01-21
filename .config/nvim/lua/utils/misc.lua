@@ -260,25 +260,31 @@ end
 --- 1. If current window is a floating window, close it and return
 --- 2. Else, close all floating windows that can be focused
 --- 3. Fallback to `key` if no floating window can be focused
+---@param key string
 ---@return nil
 function M.close_floats(key)
-  local count = 0
   local current_win = vim.api.nvim_get_current_win()
-  -- Close current win only if it's a floating window
-  if vim.api.nvim_win_get_config(current_win).relative ~= '' then
+
+  -- Only close current win if it's a floating window
+  if vim.fn.win_gettype(current_win) == 'popup' then
     vim.api.nvim_win_close(current_win, true)
     return
   end
+
+  -- Else close all focusable floating windows in current tab page
+  local win_closed = false
   for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-    if vim.api.nvim_win_is_valid(win) then
-      local config = vim.api.nvim_win_get_config(win)
-      if config.relative ~= '' and config.focusable then
-        vim.api.nvim_win_close(win, false) -- do not force
-        count = count + 1
-      end
+    if
+      vim.fn.win_gettype(win) == 'popup'
+      and vim.api.nvim_win_get_config(win).focusable
+    then
+      vim.api.nvim_win_close(win, false) -- do not force
+      win_closed = true
     end
   end
-  if count == 0 then -- Fallback
+
+  -- If no floating window is closed, fallback
+  if not win_closed then
     vim.api.nvim_feedkeys(
       vim.api.nvim_replace_termcodes(key, true, true, true),
       'n',
