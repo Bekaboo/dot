@@ -127,6 +127,7 @@ function M.contains(dir, sub)
 end
 
 ---Check if given directory is root directory
+---@param dir string
 ---@return boolean
 function M.is_root_dir(dir)
   return dir == vim.fs.dirname(dir)
@@ -137,6 +138,7 @@ end
 local home
 
 ---Check if given directory is home directory
+---@param dir string
 ---@return boolean
 function M.is_home_dir(dir)
   if not home then
