@@ -537,7 +537,7 @@ fzf.setup({
     },
   },
   buffers = {
-    show_unlisted = true,
+    show_unlisted = false,
     show_unloaded = true,
     ignore_current_buffer = false,
     no_action_set_cursor = true,
