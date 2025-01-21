@@ -7,7 +7,6 @@ local t = ls.text_node
 local i = ls.insert_node
 local c = ls.choice_node
 local d = ls.dynamic_node
-local f = ls.function_node
 
 ---Check if current file is bash
 ---@return boolean
@@ -20,18 +19,6 @@ local function is_bash()
   -- Check first line for bash shebang
   local first_line = vim.api.nvim_buf_get_lines(0, 0, 1, false)[1] or ''
   return first_line:match('^#!.*bash') ~= nil
-end
-
----Determine opening bracket type based on file detection
----@return string
-local function get_lbrkt()
-  return is_bash() and '[[' or '['
-end
-
----Determine closing bracket type based on file detection
----@return string
-local function get_rbrkt()
-  return is_bash() and ']]' or ']'
 end
 
 M.snippets = {
@@ -65,13 +52,11 @@ M.snippets = {
     },
     un.fmtad(
       [[
-        if <lbrkt> <cond> <rbrkt>; then
+        if <cond>; then
         <body>
         fi
       ]],
       {
-        lbrkt = f(get_lbrkt),
-        rbrkt = f(get_rbrkt),
         cond = i(1),
         body = un.body(2, 1),
       }
@@ -86,15 +71,13 @@ M.snippets = {
     },
     un.fmtad(
       [[
-        if <lbrkt> <cond> <rbrkt>; then
+        if <cond>; then
         <body>
         else
         <idnt><else_body>
         fi
       ]],
       {
-        lbrkt = f(get_lbrkt),
-        rbrkt = f(get_rbrkt),
         cond = i(1),
         body = un.body(2, 1),
         else_body = i(3),
@@ -110,12 +93,10 @@ M.snippets = {
     },
     un.fmtad(
       [[
-        elif <lbrkt> <cond> <rbrkt>; then
+        elif <cond>; then
         <body>
       ]],
       {
-        lbrkt = f(get_lbrkt),
-        rbrkt = f(get_rbrkt),
         cond = i(1),
         body = un.body(2, 1),
       }
@@ -147,13 +128,11 @@ M.snippets = {
     },
     un.fmtad(
       [[
-        while <lbrkt> <cond> <rbrkt>; do
+        while <cond>; do
         <body>
         done
       ]],
       {
-        lbrkt = f(get_lbrkt),
-        rbrkt = f(get_rbrkt),
         cond = i(1),
         body = un.body(2, 1),
       }
@@ -243,13 +222,11 @@ M.snippets = {
     },
     un.fmtad(
       [[
-        until <lbrkt> <cond> <rbrkt>; do
+        until <cond>; do
         <body>
         done
       ]],
       {
-        lbrkt = f(get_lbrkt),
-        rbrkt = f(get_rbrkt),
         cond = i(1),
         body = un.body(2, 1),
       }
