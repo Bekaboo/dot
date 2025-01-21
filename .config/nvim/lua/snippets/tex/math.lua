@@ -777,6 +777,11 @@ return {
     i(1, 'X'),
     t('\\right)'),
   }),
+  us.sam({ trig = 'eva' }, {
+    t('\\operatorname{E}\\left['),
+    i(1, 'X'),
+    t('\\right]'),
+  }),
   us.sam({ trig = 'mse' }, { t('\\operatorname{MSE}') }),
   us.sam({ trig = 'err' }, { t('\\operatorname{error}') }),
   us.sam(
