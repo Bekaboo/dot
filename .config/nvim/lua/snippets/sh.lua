@@ -57,8 +57,8 @@ M.snippets = {
         fi
       ]],
       {
-        cond = i(1),
-        body = un.body(2, 1),
+        cond = i(1, 'true'),
+        body = un.body(2, 1, ':'),
       }
     )
   ),
@@ -78,9 +78,9 @@ M.snippets = {
         fi
       ]],
       {
-        cond = i(1),
-        body = un.body(2, 1),
-        else_body = i(3),
+        cond = i(1, 'true'),
+        body = un.body(2, 1, ':'),
+        else_body = i(3, ':'),
         idnt = un.idnt(1),
       }
     )
@@ -97,8 +97,8 @@ M.snippets = {
         <body>
       ]],
       {
-        cond = i(1),
-        body = un.body(2, 1),
+        cond = i(1, 'true'),
+        body = un.body(2, 1, ':'),
       }
     )
   ),
@@ -116,7 +116,7 @@ M.snippets = {
       {
         var = i(1, 'item'),
         items = i(2, '${items[@]}'),
-        body = un.body(3, 1),
+        body = un.body(3, 1, ':'),
       }
     )
   ),
@@ -133,8 +133,8 @@ M.snippets = {
         done
       ]],
       {
-        cond = i(1),
-        body = un.body(2, 1),
+        cond = i(1, 'false'),
+        body = un.body(2, 1, ':'),
       }
     )
   ),
@@ -175,7 +175,7 @@ M.snippets = {
       {
         expr = i(1, '$1'),
         pattern = i(2, '*'),
-        body = un.body(3, 2),
+        body = un.body(3, 2, ':'),
         idnt = un.idnt(1),
       }
     )
@@ -193,7 +193,7 @@ M.snippets = {
       ]],
       {
         pattern = i(1, '*'),
-        body = un.body(2, 1),
+        body = un.body(2, 1, ':'),
       }
     )
   ),
@@ -211,7 +211,7 @@ M.snippets = {
       {
         var = i(1, 'item'),
         items = i(2, '${items[@]}'),
-        body = un.body(3, 1),
+        body = un.body(3, 1, ':'),
       }
     )
   ),
@@ -227,8 +227,8 @@ M.snippets = {
         done
       ]],
       {
-        cond = i(1),
-        body = un.body(2, 1),
+        cond = i(1, 'true'),
+        body = un.body(2, 1, ':'),
       }
     )
   ),
@@ -348,7 +348,7 @@ M.snippets = {
       ]],
       {
         opts = i(1, 'abc:'),
-        body = un.body(2, 2),
+        body = un.body(2, 2, ':'),
         idnt = un.idnt(1),
       }
     )
