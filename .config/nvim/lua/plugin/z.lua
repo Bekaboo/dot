@@ -41,8 +41,13 @@ function M.z(input)
     return
   end
 
-  local dest = vim.trim(vim.fn.system('z -e ' .. get_arg_str(input)))
-  vim.cmd.lcd(vim.fn.fnameescape(dest))
+  local output = vim.trim(vim.fn.system('z -e ' .. get_arg_str(input)))
+  if vim.v.shell_error ~= 0 then
+    vim.notify('[z] ' .. output)
+    return
+  end
+
+  vim.cmd.lcd(vim.fn.fnameescape(output))
 end
 
 ---List matching z directories given input
@@ -53,8 +58,14 @@ function M.list(input)
     return {}
   end
 
+  local output = vim.fn.systemlist('z -l ' .. get_arg_str(input))
+  if vim.v.shell_error ~= 0 then
+    vim.notify('[z] ' .. output)
+    return {}
+  end
+
   local paths = {}
-  for _, candidate in ipairs(vim.fn.systemlist('z -l ' .. get_arg_str(input))) do
+  for _, candidate in ipairs(output) do
     local path = candidate:match('^[0-9.]+%s+(.*)') -- trim score
     if path then
       table.insert(paths, path)
