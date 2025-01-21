@@ -273,7 +273,7 @@ return {
 
   {
     'stevearc/quicker.nvim',
-    ft = 'qf',
+    event = 'VeryLazy',
     config = function()
       require('configs.quicker')
     end,
