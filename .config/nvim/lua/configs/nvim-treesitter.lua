@@ -46,3 +46,9 @@ require('nvim-treesitter.configs').setup({
     },
   },
 })
+
+-- stylua: ignore start
+-- Text object for treesitter nodes
+vim.keymap.set('o', 'in', '<Cmd>silent! normal van<CR>', { noremap = false, desc = 'Inside named node' })
+vim.keymap.set('o', 'an', '<Cmd>silent! normal van<CR>', { noremap = false, desc = 'Around named node' })
+-- stylua: ignore off
