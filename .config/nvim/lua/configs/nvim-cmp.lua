@@ -531,10 +531,21 @@ cmp.setup.cmdline(':', {
   sources = {
     {
       name = 'cmdline',
-      option = {
-        ignore_cmds = {},
-      },
-      group_index = 2,
+      option = { ignore_cmds = {} },
+    },
+  },
+  sorting = {
+    comparators = {
+      ---@return boolean?
+      function(...)
+        -- For custom completions, keep original order
+        if cmdcompltype == '' or vim.startswith(cmdcompltype, 'custom') then
+          return cmp.config.compare.order(...)
+        end
+      end,
+      cmp.config.compare.score,
+      cmp.config.compare.exact,
+      cmp.config.compare.recently_used,
     },
   },
 })
