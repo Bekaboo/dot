@@ -318,7 +318,7 @@ cmp.setup({
         end
       end,
       ['i'] = function(fallback)
-        if luasnip.locally_jumpable(-1) then
+        if luasnip.jumpable(-1) then
           local prev = luasnip.jump_destination(-1)
           local _, snip_dest_end = prev:get_buf_position()
           snip_dest_end[1] = snip_dest_end[1] + 1 -- (1, 0) indexed
@@ -344,7 +344,7 @@ cmp.setup({
       ['i'] = function(fallback)
         if luasnip.expandable() then
           luasnip.expand()
-        elseif luasnip.locally_jumpable(1) then
+        elseif luasnip.jumpable(1) then
           local buf = vim.api.nvim_get_current_buf()
           local current = luasnip.session.current_nodes[buf]
           local parent = node_find_parent(current)
