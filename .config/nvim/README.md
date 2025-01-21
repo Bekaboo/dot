@@ -14,7 +14,7 @@ experiment, and adapt it to your liking. Feel free to use it as a starting
 point for your configuration or borrow elements you find useful. Issues and PRs
 are welcome.
 
-Currently only supports Linux (X11/Wayland/TTY).
+Currently only tested on Linux (X11/Wayland/TTY) and Android (Termux).
 
 <center>
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/299137e7-9438-489b-b98b-7211a62678ae" width=46%>  
