@@ -494,7 +494,7 @@ fzf.setup({
       ['enter'] = actions._file_edit_or_qf,
     },
     buffers = {
-      ['enter'] = actions.buf_edit,
+      ['enter'] = actions.buf_edit_or_qf,
       ['alt-s'] = actions.buf_split,
       ['alt-v'] = actions.buf_vsplit,
       ['alt-t'] = actions.buf_tabedit,
