@@ -12,6 +12,7 @@
 	aup  = add -up
 	b    = branch
 	bd   = branch -d
+	bdf  = branch -d --force
 	bdr  = push -d
 	bl   = branch -v
 	bs   = bisect
