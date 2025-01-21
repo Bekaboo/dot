@@ -37,10 +37,11 @@ vim.keymap.set({ 'n', 'x' }, ']C', function() gs.nav_hunk('last') end, { desc = 
 vim.keymap.set('n', '<leader>gs', gs.stage_hunk, { desc = 'Git stage current hunk' })
 vim.keymap.set('n', '<leader>gr', gs.reset_hunk, { desc = 'Git reset current hunk' })
 vim.keymap.set('n', '<leader>gS', gs.stage_buffer, { desc = 'Git stage current buffer' })
-vim.keymap.set('n', '<leader>gu', gs.undo_stage_hunk, { desc = 'Git unstage current hunk' })
 vim.keymap.set('n', '<leader>gR', gs.reset_buffer, { desc = 'Git reset current buffer' })
 vim.keymap.set('n', '<leader>gp', gs.preview_hunk, { desc = 'Git preview current hunk' })
 vim.keymap.set('n', '<leader>gb', gs.blame_line, { desc = 'Git blame current line' })
+vim.keymap.set('n', '<leader>gq', gs.setloclist, { desc = 'Git list file hunks' })
+vim.keymap.set('n', '<leader>gQ', function() gs.setqflist('all') end, { desc = 'Git list repo hunks' })
 vim.keymap.set('n', '<leader>g<esc>', '<nop>')
 -- stylua: ignore end
 
@@ -49,13 +50,13 @@ vim.keymap.set('x', '<leader>gs', function()
     vim.fn.line('.'),
     vim.fn.line('v'),
   })
-end, { desc = 'Git stage current hunk' })
+end, { desc = 'Git stage current selection' })
 vim.keymap.set('x', '<leader>gr', function()
   gs.reset_hunk({
     vim.fn.line('.'),
     vim.fn.line('v'),
   })
-end, { desc = 'Git reset current hunk' })
+end, { desc = 'Git reset current selection' })
 
 -- Text object
 -- stylua: ignore start
