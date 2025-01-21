@@ -30,15 +30,6 @@ local snip = setmetatable({}, {
   end,
 })
 
----Hack: `nvim_lsp` and `nvim_lsp_signature_help` source still use
----deprecated `vim.lsp.buf_get_clients()`, which is slower due to
----the deprecation and version check in that function. Overwrite
----it using `vim.lsp.get_clients()` to improve performance.
----@diagnostic disable-next-line: duplicate-set-field
-function vim.lsp.buf_get_clients(bufnr)
-  return vim.lsp.get_clients({ buffer = bufnr })
-end
-
 ---@type string?
 local last_key
 
