@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Tue Jan 14 11:58:40 AM EST 2025
+-- Last Updated: Wed Jan 22 12:20:05 AM EST 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -24,11 +24,9 @@ local c_shaded
 local c_faint
 local c_faded
 local c_grass
-local c_tea
 local c_pine
 local c_lavender
 local c_violet
-local c_vermillion
 local c_black
 
 if vim.go.bg == 'dark' then
@@ -44,11 +42,9 @@ if vim.go.bg == 'dark' then
   c_faint      = '#6d7d9a'
   c_faded      = '#99aac8'
   c_grass      = '#43565a'
-  c_tea        = '#495c60'
-  c_pine       = '#79968b'
+  c_pine       = '#8eb0a2'
   c_lavender   = '#48506e'
-  c_violet     = '#616b96'
-  c_vermillion = '#c85926'
+  c_violet     = '#97a5dc'
   c_black      = '#1c2027'
 else
   c_foreground = '#495b64'
@@ -63,11 +59,9 @@ else
   c_faint      = '#bec8cc'
   c_faded      = '#9fadb4'
   c_grass      = '#e8f5e9'
-  c_tea        = '#ccdcdb'
   c_pine       = '#608c88'
   c_lavender   = '#f4eef8'
   c_violet     = '#d9caf0'
-  c_vermillion = '#ff6f00'
   c_black      = '#5b6c75'
 end
 -- stylua: ignore end
@@ -129,7 +123,7 @@ local hlgroups = {
   DiffAdded = { fg = c_pine },
   DiffChange = { bg = c_lavender },
   DiffDelete = { fg = c_faint },
-  DiffText = { fg = c_foreground, bg = c_violet },
+  DiffText = { fg = c_strong, bg = c_violet },
   Directory = { fg = c_faded },
   EndOfBuffer = { fg = c_subtle },
   ErrorMsg = { fg = c_popout },
@@ -472,7 +466,7 @@ local hlgroups = {
   CmpItemKindValue = { link = 'Number' },
   CmpItemKindClass = { link = 'Type' },
   CmpItemKindStruct = { link = 'Type' },
-  CmpItemKindEvent = { fg = c_tea },
+  CmpItemKindEvent = { fg = c_pine },
   CmpItemKindInterface = { fg = c_faded },
   CmpItemKindFile = { link = 'Identifier' },
   CmpItemKindFolder = { link = 'Directory' },
@@ -482,7 +476,7 @@ local hlgroups = {
   CmpVirtualText = { fg = c_faint, italic = true },
 
   -- gitsigns
-  GitSignsAdd = { fg = c_tea },
+  GitSignsAdd = { fg = c_pine },
   GitSignsAddInline = { fg = c_pine },
   GitSignsAddLnInline = { fg = c_pine },
   GitSignsAddPreview = { fg = c_pine },
@@ -490,7 +484,7 @@ local hlgroups = {
   GitSignsChangeInline = { fg = c_violet },
   GitSignsChangeLnInline = { fg = c_violet },
   GitSignsCurrentLineBlame = { fg = c_violet },
-  GitSignsDelete = { fg = c_vermillion },
+  GitSignsDelete = { fg = c_popout },
   GitSignsDeleteInline = { fg = c_popout },
   GitSignsDeleteLnInline = { fg = c_popout },
   GitSignsDeletePreview = { fg = c_popout },
