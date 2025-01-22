@@ -62,7 +62,7 @@ ls.setup({
   ext_opts = {
     [ls_types.choiceNode] = {
       active = {
-        virt_text = { { static.icons.ArrowLeftRight, 'Number' } },
+        virt_text = { { static.icons.ArrowUpDown, 'Number' } },
       },
     },
     [ls_types.insertNode] = {
