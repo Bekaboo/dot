@@ -8,10 +8,10 @@ local static = require('utils.static')
 local loaded_fts = {}
 
 ---Load snippets for a given filetype
----@param ft string
+---@param ft string?
 ---@return nil
 local function load_snippets(ft)
-  if loaded_fts[ft] then
+  if not ft or loaded_fts[ft] then
     return
   end
   loaded_fts[ft] = true
@@ -28,13 +28,16 @@ end
 -- 'html_inline' (lang returned from treesitter when using
 -- `from_pos_or_filetype()` as the filetype function)
 local lang_ft_map = {
-  markdown_inline = { 'markdown' },
-  html_inline = { 'html' },
-  html = { 'markdown' },
+  glimmer = 'handlebars',
+  html = 'markdown',
+  html_inline = 'html',
+  latex = 'tex',
+  markdown_inline = 'markdown',
+  tsx = 'typescriptreact',
 }
 
-for lang, fts in pairs(lang_ft_map) do
-  ls.filetype_extend(lang, fts)
+for lang, ft in pairs(lang_ft_map) do
+  ls.filetype_extend(lang, { ft })
 end
 
 ls.setup({
@@ -44,9 +47,7 @@ ls.setup({
     local langs = ls_ft.from_pos_or_filetype()
     for _, lang in ipairs(langs) do
       load_snippets(lang)
-      for _, ft in ipairs(lang_ft_map[lang] or {}) do
-        load_snippets(ft)
-      end
+      load_snippets(lang_ft_map[lang])
     end
     return langs
   end,
