@@ -40,7 +40,7 @@ silent! set sessionoptions+=globals
 silent! set viminfo=!,'100,<50,s10,h
 silent! set diffopt+=algorithm:histogram,indent-heuristic
 silent! set clipboard^=unnamedplus
-silent! set formatoptions+=n
+silent! set formatoptions+=nor
 silent! set jumpoptions=stack
 
 " Enable 'exrc' only when 'secure' is working

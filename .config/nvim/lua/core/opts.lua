@@ -85,8 +85,9 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
--- Recognize numbered lists when formatting text
-vim.opt.formatoptions:append('n')
+-- Recognize numbered lists when formatting text and
+-- continue comments on new lines
+vim.opt.formatoptions:append('nor')
 
 -- Spell check
 local spellcheck_set
