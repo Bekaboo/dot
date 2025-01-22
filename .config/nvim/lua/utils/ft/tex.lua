@@ -7,11 +7,10 @@ function M.in_mathzone()
     return vim.F.npcall(vim.api.nvim_eval, 'vimtex#syntax#in_mathzone()') == 1
   end
 
-  return require('utils.ts').in_node(function(type)
-    return type:match('formula')
-      or type:match('equation')
-      or type:match('math')
-  end, { ignore_injections = false })
+  return require('utils.ts').in_node(
+    { 'formula', 'equation', 'math' },
+    { ignore_injections = false }
+  )
 end
 
 ---Returns whether the cursor is in normal zone (not in math zone)

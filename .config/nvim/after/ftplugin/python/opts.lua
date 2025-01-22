@@ -13,8 +13,7 @@ if tsu.is_active() then
   local function iabbr_normalzone(trig, expansion)
     vim.keymap.set('ia', trig, function()
       return tsu.is_active()
-          and not tsu.in_node('comment')
-          and not tsu.in_node('string')
+          and not tsu.in_node({ 'comment', 'string' })
           and expansion
         or trig
     end, {

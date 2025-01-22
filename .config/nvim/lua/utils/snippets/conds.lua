@@ -45,7 +45,7 @@ function M.ts_active()
 end
 
 ---Returns whether current cursor is in a comment
----@param type string
+---@param type string|string[]
 ---@param opts vim.treesitter.get_node.Opts?
 ---@return snip_cond_t
 function M.in_tsnode(type, opts)
