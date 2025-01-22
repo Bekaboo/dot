@@ -33,13 +33,13 @@ M.snippets = {
         nil,
         c(1, is_bash() and {
           i(nil, '/usr/bin/env bash'),
-          i(nil, '/bin/bash'),
           i(nil, '/usr/bin/env sh'),
+          i(nil, '/bin/bash'),
           i(nil, '/bin/sh'),
         } or {
           i(nil, '/usr/bin/env sh'),
-          i(nil, '/bin/sh'),
           i(nil, '/usr/bin/env bash'),
+          i(nil, '/bin/sh'),
           i(nil, '/bin/bash'),
         })
       )
