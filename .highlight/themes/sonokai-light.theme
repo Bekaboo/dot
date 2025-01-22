@@ -1,0 +1,56 @@
+-- vim: ft=lua:et:ts=2:sts=2:sw=2:
+
+Description = 'Sonokai Light Theme'
+Categories = { 'light' }
+
+local palette = {
+  bg0         = '#f3f3f3',
+  bg1         = '#e7e7e7',
+  bg2         = '#e3e3e3',
+  bg3         = '#d4d4d4',
+  bg4         = '#cbcbcb',
+  diff_red    = '#ffc1ce',
+  diff_green  = '#cde2b7',
+  diff_blue   = '#afd5e0',
+  fg          = '#181819',
+  red         = '#d44e69',
+  orange      = '#be683c',
+  yellow      = '#be9b44',
+  green       = '#72ac38',
+  blue        = '#65b1c2',
+  purple      = '#a793e3',
+  grey        = '#7f8490',
+  grey_dim    = '#595f6f',
+}
+
+Default = { Colour = palette.fg }
+Canvas = { Colour = palette.bg2 }
+Number = { Colour = palette.purple }
+Escape = { Colour = palette.yellow }
+String = { Colour = palette.yellow }
+BlockComment = { Colour = palette.grey }
+PreProcessor = { Colour = palette.red }
+LineNum = { Colour = palette.grey_dim }
+StringPreProc = String
+LineComment   = BlockComment
+Operator      = { Colour = palette.red }
+Interpolation = Operator
+
+Keywords = {
+  { Colour= palette.red },
+}
+
+-- new LSP based elements:
+SemanticTokenTypes  = {
+  { Type = 'keyword', Style = { Colour = palette.red } },
+  { Type = 'type', Style = { Colour = palette.blue } },
+  { Type = 'function', Style = { Colour = palette.green } },
+  { Type = 'method', Style = { Colour = palette.green } },
+  { Type = 'class', Style =  { Colour = palette.blue } },
+  { Type = 'struct', Style = { Colour = palette.blue } },
+  { Type = 'parameter', Style = { Colour = palette.fg } },
+  { Type = 'variable', Style = { Colour = palette.fg } },
+  { Type = 'number', Style = Number },
+  { Type = 'regexp', Style = Escape },
+  { Type = 'operator', Style = Operator },
+}
