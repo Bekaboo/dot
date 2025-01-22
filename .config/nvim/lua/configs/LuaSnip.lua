@@ -39,6 +39,8 @@ end
 
 ls.setup({
   ft_func = function()
+    load_snippets('all')
+
     local langs = ls_ft.from_pos_or_filetype()
     for _, lang in ipairs(langs) do
       load_snippets(lang)
