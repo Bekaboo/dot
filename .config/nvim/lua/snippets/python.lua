@@ -19,9 +19,7 @@ M.snippets = {
     t('#!'),
     c(1, {
       i(nil, '/usr/bin/env python3'),
-      i(nil, '/usr/bin/env python2'),
       i(nil, '/usr/bin/python3'),
-      i(nil, '/usr/bin/python2'),
     }),
   }),
   us.sn({
