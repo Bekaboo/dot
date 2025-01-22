@@ -404,8 +404,30 @@ cmp.setup({
         end
       end,
     },
-    ['<Down>'] = cmp.mapping(cmp.mapping.select_next_item(), { 'i', 'c' }),
-    ['<Up>'] = cmp.mapping(cmp.mapping.select_prev_item(), { 'i', 'c' }),
+    ['<Up>'] = {
+      ['c'] = cmp.mapping.select_prev_item(),
+      ['i'] = function()
+        if cmp.visible() then
+          cmp.select_prev_item()
+        elseif snip.choice_active() then
+          snip.change_choice(-1)
+        else
+          cmp.complete()
+        end
+      end,
+    },
+    ['<Down>'] = {
+      ['c'] = cmp.mapping.select_next_item(),
+      ['i'] = function()
+        if cmp.visible() then
+          cmp.select_next_item()
+        elseif snip.choice_active() then
+          snip.change_choice(1)
+        else
+          cmp.complete()
+        end
+      end,
+    },
     ['<PageDown>'] = cmp.mapping(
       cmp.mapping.select_next_item({
         count = vim.o.pumheight ~= 0 and math.ceil(vim.o.pumheight / 2) or 8,
