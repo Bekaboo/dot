@@ -66,37 +66,22 @@ local function format_title()
     return
   end
 
-  local word_lower = word:lower()
   local is_first = line:match('^#+%s+([%w_]+)$') == word
-  if
-    #word < 3 and not is_first
-    or word_lower ~= word and _G._title_lowercase_words[word_lower]
-  then
-    vim.api.nvim_buf_set_text(
-      0,
-      cursor[1] - 1,
-      cursor[2] - #word,
-      cursor[1] - 1,
-      cursor[2],
-      { word_lower }
-    )
-    return
-  end
+  local should_upper = is_first
+    or not (_G._title_lowercase_words[word:lower()] or #word < 3)
 
-  local word_upper = word:sub(1, 1):upper() .. word:sub(2)
-  if
-    word_upper ~= word
-    and (is_first or not _G._title_lowercase_words[word_lower])
-  then
-    vim.api.nvim_buf_set_text(
-      0,
-      cursor[1] - 1,
-      cursor[2] - #word,
-      cursor[1] - 1,
-      cursor[2],
-      { word_upper }
-    )
-    return
+  if should_upper then
+    local word_upper = word:sub(1, 1):upper() .. word:sub(2)
+    if word_upper ~= word then
+      vim.api.nvim_buf_set_text(
+        0,
+        cursor[1] - 1,
+        cursor[2] - #word,
+        cursor[1] - 1,
+        cursor[2],
+        { word_upper }
+      )
+    end
   end
 end
 
