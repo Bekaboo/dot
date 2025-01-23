@@ -86,7 +86,6 @@ function M.list(input)
   return paths
 end
 
-local cmp_num_trigs_cache ---@type integer?
 local cmp_args_cache ---@type string?
 local cmp_list_cache ---@type string[]?
 
@@ -108,19 +107,23 @@ function M.cmp(cmd)
     -- TODO: only split on spaces that are not escaped
     local argslead = cmdline:sub(1, cursorpos):gsub(cmd_reg, '')
     local trigs = vim.split(argslead, ' ', { trimempty = true })
-    local num_trigs = #trigs
 
     -- Avoid calling `z` on each keystroke when auto completion is enabled
     if
       cmp_args_cache
       and cmp_list_cache
-      and cmp_num_trigs_cache == num_trigs
       and vim.startswith(argslead, cmp_args_cache)
     then
-      return cmp_list_cache
+      return vim
+        .iter(cmp_list_cache)
+        :filter(function(path)
+          return vim.iter(trigs):all(function(trig)
+            return path:find(trig, 1, true)
+          end)
+        end)
+        :totable()
     end
 
-    cmp_num_trigs_cache = num_trigs
     cmp_args_cache = argslead
     cmp_list_cache = M.list(trigs)
     return cmp_list_cache
