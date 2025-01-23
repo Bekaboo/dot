@@ -124,6 +124,27 @@ M.snippets = {
     un.body(2, 1),
     t({ '', 'end' }),
   }),
+  us.msn(
+    {
+      { trig = 'ifn' },
+      { trig = 'ifun' },
+      { trig = 'ifunc' },
+      { trig = 'ifunction' },
+      common = { desc = 'Immediate function evaluation' },
+    },
+    un.fmtad(
+      [[
+        (function(<params>)
+        <body>
+        end)(<val>)
+      ]],
+      {
+        val = i(1),
+        params = i(2),
+        body = un.body(3, 1),
+      }
+    )
+  ),
   us.msn({
     { trig = 'me' },
     { trig = 'method' },
