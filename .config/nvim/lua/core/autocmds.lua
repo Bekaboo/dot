@@ -441,8 +441,13 @@ augroup('ColorSchemeRestore', {
   {
     nested = true, -- invoke Colorscheme event for winbar plugin to clear bg for nvim < 0.11
     callback = function(info)
-      if info.event == 'OptionSet' and info.match ~= 'termguicolors' then
-        return
+      if info.event == 'OptionSet' then
+        if info.match ~= 'termguicolors' then
+          return
+        end
+        if vim.go.termguicolors then
+          pcall(vim.api.nvim_del_autocmd, info.id)
+        end
       end
 
       ---@param colors_name string
@@ -466,8 +471,10 @@ augroup('ColorSchemeRestore', {
         end
       end
 
-      -- Make sure to restore colorscheme only once
-      pcall(vim.api.nvim_del_autocmd, info.id)
+      -- 1. Restore dark/light background and colorscheme from json so that nvim
+      --    "remembers" the background and colorscheme when it is restarted.
+      -- 2. Spawn setbg/setcolors on colorscheme change to make other nvim instances
+      --    and system color consistent with the current nvim instance.
 
       local json = require('utils.json')
       local colors_file = vim.fs.joinpath(
@@ -475,20 +482,14 @@ augroup('ColorSchemeRestore', {
         'colors.json'
       )
 
-      -- 1. Restore dark/light background and colorscheme from json so that nvim
-      --    "remembers" the background and colorscheme when it is restarted.
-      -- 2. Spawn setbg/setcolors on colorscheme change to make other nvim instances
-      --    and system color consistent with the current nvim instance.
+      local c = json.read(colors_file)
+      c.colors_name = c.colors_name or 'macro'
 
-      local saved = json.read(colors_file)
-      saved.colors_name = saved.colors_name or 'macro'
-
-      if vim.go.termguicolors and saved.bg then
-        vim.go.bg = saved.bg
+      if c.colors_name and c.colors_name ~= vim.g.colors_name then
+        load_colorscheme(c.colors_name)
       end
-
-      if saved.colors_name and saved.colors_name ~= vim.g.colors_name then
-        load_colorscheme(saved.colors_name)
+      if c.bg and vim.go.termguicolors then
+        vim.go.bg = c.bg
       end
 
       augroup('ColorSchemeSync', {
@@ -502,21 +503,21 @@ augroup('ColorSchemeRestore', {
             end
 
             vim.schedule(function()
-              local data = json.read(colors_file)
-              if
-                data.colors_name ~= vim.g.colors_name or data.bg ~= vim.go.bg
-              then
-                data.colors_name = vim.g.colors_name
-                data.bg = vim.go.bg
-                if not json.write(colors_file, data) then
-                  return
-                end
+              local d = json.read(colors_file)
+              if d.colors_name == vim.g.colors_name and d.bg == vim.go.bg then
+                return
               end
 
-              if vim.g.termguicolors then
+              if d.colors_name ~= vim.g.colors_name then
+                d.colors_name = vim.g.colors_name
+                pcall(vim.system, { 'setcolor', vim.g.colors_name })
+              end
+              if d.bg ~= vim.go.bg and vim.go.termguicolors then
+                d.bg = vim.go.bg
                 pcall(vim.system, { 'setbg', vim.go.bg })
               end
-              pcall(vim.system, { 'setcolor', vim.g.colors_name })
+
+              json.write(colors_file, d)
             end)
           end,
         },
