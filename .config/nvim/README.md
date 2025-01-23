@@ -613,7 +613,7 @@ and it should work out of the box.
     - Released as [dropbar.nvim](https://github.com/Bekaboo/dropbar.nvim)
 - [markdown-title](after/ftplugin/markdown/title.lua)
     - Automatically capitalize the first letter of each word in markdown titles
-    - Use `:MarkdownFormatTitle enable/disable` to enable or disable this
+    - Use `:MarkdownAutoFormatTitle enable/disable` to enable or disable this
       feature
 - [markdown-codeblock](after/ftplugin/markdown/codeblock.lua)
     - Add shadings to markdown code blocks

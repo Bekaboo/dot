@@ -92,7 +92,7 @@ vim.api.nvim_create_autocmd('TextChangedI', {
   callback = format_title,
 })
 
-vim.api.nvim_buf_create_user_command(buf, 'MarkdownFormatTitle', function(args)
+vim.api.nvim_buf_create_user_command(buf, 'MarkdownAutoFormatTitle', function(args)
   local parsed_args = utils.cmd.parse_cmdline_args(args.fargs)
   local scope = vim[parsed_args.global and 'g' or 'b']
 
