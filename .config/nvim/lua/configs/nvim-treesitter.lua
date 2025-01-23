@@ -1,5 +1,24 @@
+local ts_configs = require('nvim-treesitter.configs')
+local ts_parsers = require('nvim-treesitter.parsers')
+
+-- HACK: improve file reading speed: first read the file
+-- then load modules
+ts_configs.reattach_module = vim.schedule_wrap(ts_configs.reattach_module)
+ts_configs.setup = vim.schedule_wrap(ts_configs.setup)
+
+-- Fix: invalid buffer id cause by hack above
+ts_parsers.get_buf_lang = (function(cb)
+  ---@param buf number? or current buffer
+  return function(buf)
+    if buf and not vim.api.nvim_buf_is_valid(buf) then
+      return {}
+    end
+    return cb(buf)
+  end
+end)(ts_parsers.get_buf_lang)
+
 ---@diagnostic disable-next-line: missing-fields
-require('nvim-treesitter.configs').setup({
+ts_configs.setup({
   -- Make sure that we install all parsers shipped with neovim so that we don't
   -- end up with using nvim-treesitter's queries and neovim's shipped parsers,
   -- which are incompatible with nvim-treesitter's
