@@ -518,23 +518,33 @@ M.snippets = {
     c(1, {
       un.fmtad(
         [[
-          go func() {
+          go func(<args>) {
           <body>
-          }()
+          }(<vals>)
         ]],
         {
-          body = un.body(1, 1),
+          vals = r(1, 'vals'),
+          args = r(2, 'args'),
+          body = un.body(3, 1),
         }
       ),
       un.fmtad(
         [[
-          go func() { <body> }()
+          go func(<args>) { <body> }(<vals>)
         ]],
         {
+          vals = r(1, 'vals'),
+          args = r(2, 'args'),
           body = un.body(1, 0),
         }
       ),
-    })
+    }),
+    {
+      stored = {
+        vals = i(),
+        args = i(),
+      },
+    }
   ),
   us.sn(
     {
