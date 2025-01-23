@@ -24,20 +24,23 @@ return {
       'TSEditQueryUserAfter',
     },
     event = 'FileType',
-    config = function()
-      vim.schedule(function()
-        require('configs.nvim-treesitter')
-      end)
-    end,
+    -- Some parsers, e.g. cuda parsers can slow down file reading speed
+    -- if loaded on `FileType` event, so defer setting up nvim-treesitter
+    -- to first read the file then enable treesitter afterwards
+    config = vim.schedule_wrap(function()
+      require('configs.nvim-treesitter')
+    end),
   },
 
   {
     'nvim-treesitter/nvim-treesitter-textobjects',
     dependencies = 'nvim-treesitter/nvim-treesitter',
     event = 'FileType',
-    config = function()
+    -- Plugins that require nvim-treesitter and loaded on `FileType` must be scheduled
+    -- as well to avoid loading nvim-treesitter early
+    config = vim.schedule_wrap(function()
       require('configs.nvim-treesitter-textobjects')
-    end,
+    end),
   },
 
   {
