@@ -622,19 +622,17 @@ local function set_default_hlgroups()
     local merged_attr = vim.tbl_deep_extend('keep', attr, default_attr)
     utils.hl.set_default(0, hlgroup_name, merged_attr)
   end
-  sethl('StatusLineGitAdded', { fg = 'GitSignsAdd' })
-  sethl('StatusLineGitChanged', { fg = 'GitSignsChange' })
-  sethl('StatusLineGitRemoved', { fg = 'GitSignsDelete' })
-  sethl('StatusLineDiagnosticHint', { fg = 'DiagnosticSignHint' })
-  sethl('StatusLineDiagnosticInfo', { fg = 'DiagnosticSignInfo' })
-  sethl('StatusLineDiagnosticWarn', { fg = 'DiagnosticSignWarn' })
-  sethl('StatusLineDiagnosticError', { fg = 'DiagnosticSignError' })
-  sethl('StatusLineHeader', { fg = 'TabLine', bg = 'fg', reverse = true })
-  sethl('StatusLineHeaderModified', {
-    fg = 'Special',
-    bg = 'fg',
-    reverse = true,
-  })
+  -- stylua: ignore start
+  sethl('StatusLineGitAdded', { fg = 'GitSignsAdd',  ctermfg = 'GitSignsAdd' })
+  sethl('StatusLineGitChanged', {  fg = 'GitSignsChange', ctermfg = 'GitSignsChange' })
+  sethl('StatusLineGitRemoved', {  fg = 'GitSignsDelete', ctermfg = 'GitSignsDelete' })
+  sethl('StatusLineDiagnosticHint', {  fg = 'DiagnosticSignHint', ctermfg = 'DiagnosticSignHint' })
+  sethl('StatusLineDiagnosticInfo', {  fg = 'DiagnosticSignInfo', ctermfg = 'DiagnosticSignInfo' })
+  sethl('StatusLineDiagnosticWarn', {  fg = 'DiagnosticSignWarn', ctermfg = 'DiagnosticSignWarn' })
+  sethl('StatusLineDiagnosticError', {  fg = 'DiagnosticSignError', ctermfg = 'DiagnosticSignError' })
+  sethl('StatusLineHeader', { fg = 'TabLine', bg = 'fg', ctermfg = 'TabLine', ctermbg = 'fg', reverse = true })
+  sethl('StatusLineHeaderModified', { fg = 'Special', bg = 'fg', ctermfg = 'Special', ctermbg = 'fg', reverse = true })
+  -- stylua: ignore off
 end
 
 set_default_hlgroups()

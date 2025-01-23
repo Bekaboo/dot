@@ -466,13 +466,6 @@ augroup('ColorSchemeRestore', {
         end
       end
 
-      -- Colorschemes other than the default colorscheme looks bad when the terminal
-      -- does not support truecolor
-      if info.event == 'UIEnter' and not vim.go.termguicolors then
-        load_colorscheme('default')
-        return
-      end
-
       -- Make sure to restore colorscheme only once
       pcall(vim.api.nvim_del_autocmd, info.id)
 
@@ -490,7 +483,7 @@ augroup('ColorSchemeRestore', {
       local saved = json.read(colors_file)
       saved.colors_name = saved.colors_name or 'macro'
 
-      if saved.bg then
+      if vim.go.termguicolors and saved.bg then
         vim.go.bg = saved.bg
       end
 
@@ -520,7 +513,9 @@ augroup('ColorSchemeRestore', {
                 end
               end
 
-              pcall(vim.system, { 'setbg', vim.go.bg })
+              if vim.g.termguicolors then
+                pcall(vim.system, { 'setbg', vim.go.bg })
+              end
               pcall(vim.system, { 'setcolor', vim.g.colors_name })
             end)
           end,

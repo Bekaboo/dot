@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Thu Jan 16 03:21:04 AM EST 2025
+-- Last Updated: Thu Jan 23 02:14:35 PM EST 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -51,81 +51,81 @@ local c_yellow_blend
 local c_smoke_blend
 
 if vim.go.bg == 'dark' then
-  c_yellow         = '#e6bb86'
-  c_earth          = '#c1a575'
-  c_orange         = '#f0a16c'
-  c_pink           = '#f49ba7'
-  c_ochre          = '#e87c69'
-  c_scarlet        = '#d85959'
-  c_wine           = '#a54a4a'
-  c_tea            = '#a4bd84'
-  c_aqua           = '#79ada7'
-  c_turquoise      = '#7fa0af'
-  c_flashlight     = '#add0ef'
-  c_skyblue        = '#a5d5ff'
-  c_cerulean       = '#86aadc'
-  c_lavender       = '#caafeb'
-  c_purple         = '#a48fd1'
-  c_magenta        = '#dc8ed3'
-  c_pigeon         = '#8f9fbc'
-  c_cumulonimbus   = '#708296'
-  c_thunder        = '#454e5a'
-  c_smoke          = '#e2e2e8'
-  c_beige          = '#b1aca7'
-  c_steel          = '#606d86'
-  c_iron           = '#313742'
-  c_deepsea        = '#404954'
-  c_ocean          = '#363c46'
-  c_jeans          = '#2f353e'
-  c_space          = '#13161f'
-  c_black          = '#09080b'
-  c_shadow         = '#09080b'
-  c_tea_blend      = '#425858'
-  c_aqua_blend     = '#2f3f48'
-  c_purple_blend   = '#33374b'
-  c_lavender_blend = '#4b4b6e'
-  c_scarlet_blend  = '#4b323c'
-  c_wine_blend     = '#3e3136'
-  c_yellow_blend   = '#4d4d50'
-  c_smoke_blend    = '#272d3a'
+  c_yellow         = { '#e6bb86', 179 }
+  c_earth          = { '#c1a575', 137 }
+  c_orange         = { '#f0a16c', 215 }
+  c_pink           = { '#f49ba7', 217 }
+  c_ochre          = { '#e87c69', 167 }
+  c_scarlet        = { '#d85959', 167 }
+  c_wine           = { '#a54a4a', 131 }
+  c_tea            = { '#a4bd84', 107 }
+  c_aqua           = { '#79ada7', 109 }
+  c_turquoise      = { '#7fa0af', 109 }
+  c_flashlight     = { '#add0ef', 153 }
+  c_skyblue        = { '#a5d5ff', 153 }
+  c_cerulean       = { '#86aadc', 110 }
+  c_lavender       = { '#caafeb', 183 }
+  c_purple         = { '#a48fd1', 176 }
+  c_magenta        = { '#dc8ed3', 176 }
+  c_pigeon         = { '#8f9fbc', 103 }
+  c_cumulonimbus   = { '#708296', 103 }
+  c_thunder        = { '#454e5a', 59  }
+  c_smoke          = { '#e2e2e8', 254 }
+  c_beige          = { '#b1aca7', 248 }
+  c_steel          = { '#606d86', 60  }
+  c_iron           = { '#313742', 237 }
+  c_deepsea        = { '#404954', 238 }
+  c_ocean          = { '#363c46', 237 }
+  c_jeans          = { '#2f353e', 236 }
+  c_space          = { '#13161f', 234 }
+  c_black          = { '#09080b', 233 }
+  c_shadow         = { '#09080b', 233 }
+  c_tea_blend      = { '#425858', 240 }
+  c_aqua_blend     = { '#2f3f48', 238 }
+  c_purple_blend   = { '#33374b', 238 }
+  c_lavender_blend = { '#4b4b6e', 60  }
+  c_scarlet_blend  = { '#4b323c', 52  }
+  c_wine_blend     = { '#3e3136', 52  }
+  c_yellow_blend   = { '#4d4d50', 239 }
+  c_smoke_blend    = { '#272d3a', 236 }
 else
-  c_yellow         = '#c88500'
-  c_earth          = '#b48327'
-  c_orange         = '#a84a24'
-  c_pink           = '#df6d73'
-  c_ochre          = '#c84b2b'
-  c_scarlet        = '#d85959'
-  c_wine           = '#a52929'
-  c_tea            = '#5f8c3f'
-  c_aqua           = '#3b8f84'
-  c_turquoise      = '#29647a'
-  c_flashlight     = '#97c0dc'
-  c_skyblue        = '#4c99d4'
-  c_cerulean       = '#3c70b4'
-  c_lavender       = '#9d7bca'
-  c_purple         = '#8b71c7'
-  c_magenta        = '#ac4ea1'
-  c_pigeon         = '#6666a8'
-  c_cumulonimbus   = '#486a91'
-  c_thunder        = '#dfd6ce'
-  c_smoke          = '#404553'
-  c_beige          = '#385372'
-  c_steel          = '#9a978a'
-  c_iron           = '#b8b7b3'
-  c_deepsea        = '#e6ded6'
-  c_ocean          = '#f0e8e2'
-  c_jeans          = '#faf4ed'
-  c_space          = '#faf7ee'
-  c_black          = '#efefef'
-  c_shadow         = '#3c3935'
-  c_tea_blend      = '#bdc8ad'
-  c_aqua_blend     = '#c4cdc2'
-  c_purple_blend   = '#e1dbe2'
-  c_lavender_blend = '#bcb0cd'
-  c_scarlet_blend  = '#e6b8b3'
-  c_wine_blend     = '#e6c9c3'
-  c_yellow_blend   = '#ebe0ce'
-  c_smoke_blend    = '#e4e4e2'
+  c_yellow         = { '#c88500', 172 }
+  c_earth          = { '#b48327', 136 }
+  c_orange         = { '#a84a24', 130 }
+  c_pink           = { '#df6d73', 168 }
+  c_ochre          = { '#c84b2b', 166 }
+  c_scarlet        = { '#d85959', 167 }
+  c_wine           = { '#a52929', 124 }
+  c_tea            = { '#5f8c3f', 65  }
+  c_aqua           = { '#3b8f84', 66  }
+  c_turquoise      = { '#29647a', 24  }
+  c_flashlight     = { '#97c0dc', 110 }
+  c_skyblue        = { '#4c99d4', 68  }
+  c_cerulean       = { '#3c70b4', 25  }
+  c_lavender       = { '#9d7bca', 140 }
+  c_purple         = { '#8b71c7', 140 }
+  c_magenta        = { '#ac4ea1', 132 }
+  c_pigeon         = { '#6666a8', 61  }
+  c_cumulonimbus   = { '#486a91', 60  }
+  c_thunder        = { '#dfd6ce', 253 }
+  c_smoke          = { '#404553', 238 }
+  c_beige          = { '#385372', 60  }
+  c_steel          = { '#9a978a', 247 }
+  c_iron           = { '#b8b7b3', 249 }
+  c_deepsea        = { '#e6ded6', 254 }
+  c_ocean          = { '#f0e8e2', 255 }
+  c_jeans          = { '#faf4ed', 255 }
+  c_space          = { '#faf7ee', 255 }
+  c_black          = { '#efefef', 255 }
+  c_shadow         = { '#3c3935', 237 }
+  c_tea_blend      = { '#bdc8ad', 151 }
+  c_aqua_blend     = { '#c4cdc2', 251 }
+  c_purple_blend   = { '#e1dbe2', 254 }
+  c_lavender_blend = { '#bcb0cd', 182 }
+  c_scarlet_blend  = { '#e6b8b3', 217 }
+  c_wine_blend     = { '#e6c9c3', 224 }
+  c_yellow_blend   = { '#ebe0ce', 224 }
+  c_smoke_blend    = { '#e4e4e2', 254 }
 end
 -- stylua: ignore end
 -- }}}
@@ -133,39 +133,39 @@ end
 -- Set terminal colors {{{
 -- stylua: ignore start
 if vim.go.bg == 'dark' then
-  vim.g.terminal_color_0  = c_ocean
-  vim.g.terminal_color_1  = c_ochre
-  vim.g.terminal_color_2  = c_tea
-  vim.g.terminal_color_3  = c_yellow
-  vim.g.terminal_color_4  = c_cumulonimbus
-  vim.g.terminal_color_5  = c_lavender
-  vim.g.terminal_color_6  = c_aqua
-  vim.g.terminal_color_7  = c_smoke
-  vim.g.terminal_color_8  = c_smoke
-  vim.g.terminal_color_9  = c_ochre
-  vim.g.terminal_color_10 = c_tea
-  vim.g.terminal_color_11 = c_yellow
-  vim.g.terminal_color_12 = c_cumulonimbus
-  vim.g.terminal_color_13 = c_lavender
-  vim.g.terminal_color_14 = c_aqua
-  vim.g.terminal_color_15 = c_pigeon
+  vim.g.terminal_color_0  = c_ocean[1]
+  vim.g.terminal_color_1  = c_ochre[1]
+  vim.g.terminal_color_2  = c_tea[1]
+  vim.g.terminal_color_3  = c_yellow[1]
+  vim.g.terminal_color_4  = c_cumulonimbus[1]
+  vim.g.terminal_color_5  = c_lavender[1]
+  vim.g.terminal_color_6  = c_aqua[1]
+  vim.g.terminal_color_7  = c_smoke[1]
+  vim.g.terminal_color_8  = c_smoke[1]
+  vim.g.terminal_color_9  = c_ochre[1]
+  vim.g.terminal_color_10 = c_tea[1]
+  vim.g.terminal_color_11 = c_yellow[1]
+  vim.g.terminal_color_12 = c_cumulonimbus[1]
+  vim.g.terminal_color_13 = c_lavender[1]
+  vim.g.terminal_color_14 = c_aqua[1]
+  vim.g.terminal_color_15 = c_pigeon[1]
 else
-  vim.g.terminal_color_0  = c_ocean
-  vim.g.terminal_color_1  = c_ochre
-  vim.g.terminal_color_2  = c_tea
-  vim.g.terminal_color_3  = c_yellow
-  vim.g.terminal_color_4  = c_flashlight
-  vim.g.terminal_color_5  = c_pigeon
-  vim.g.terminal_color_6  = c_aqua
-  vim.g.terminal_color_7  = c_smoke
-  vim.g.terminal_color_8  = c_smoke
-  vim.g.terminal_color_9  = c_ochre
-  vim.g.terminal_color_10 = c_tea
-  vim.g.terminal_color_11 = c_yellow
-  vim.g.terminal_color_12 = c_cumulonimbus
-  vim.g.terminal_color_13 = c_pigeon
-  vim.g.terminal_color_14 = c_aqua
-  vim.g.terminal_color_15 = c_pigeon
+  vim.g.terminal_color_0  = c_ocean[1]
+  vim.g.terminal_color_1  = c_ochre[1]
+  vim.g.terminal_color_2  = c_tea[1]
+  vim.g.terminal_color_3  = c_yellow[1]
+  vim.g.terminal_color_4  = c_flashlight[1]
+  vim.g.terminal_color_5  = c_pigeon[1]
+  vim.g.terminal_color_6  = c_aqua[1]
+  vim.g.terminal_color_7  = c_smoke[1]
+  vim.g.terminal_color_8  = c_smoke[1]
+  vim.g.terminal_color_9  = c_ochre[1]
+  vim.g.terminal_color_10 = c_tea[1]
+  vim.g.terminal_color_11 = c_yellow[1]
+  vim.g.terminal_color_12 = c_cumulonimbus[1]
+  vim.g.terminal_color_13 = c_pigeon[1]
+  vim.g.terminal_color_14 = c_aqua[1]
+  vim.g.terminal_color_15 = c_pigeon[1]
 end
 -- }}}
 
@@ -773,8 +773,13 @@ local hlgroups = {
 -- }}}1
 
 -- Set highlight groups {{{1
-for hlgroup_name, hlgroup_attr in pairs(hlgroups) do
-  vim.api.nvim_set_hl(0, hlgroup_name, hlgroup_attr)
+for name, attr in pairs(hlgroups) do
+  attr.ctermbg = attr.bg and attr.bg[2]
+  attr.ctermfg = attr.fg and attr.fg[2]
+  attr.bg = attr.bg and attr.bg[1]
+  attr.fg = attr.fg and attr.fg[1]
+  attr.sp = attr.sp and attr.sp[1]
+  vim.api.nvim_set_hl(0, name, attr)
 end
 -- }}}1
 

@@ -863,6 +863,8 @@ local function set_default_hlgroups()
   hl.set_default(0, 'TelescopeTitle', {
     fg = hl_norm.bg,
     bg = hl_special.fg,
+    ctermfg = hl_norm.ctermbg,
+    ctermbg = hl_special.ctermfg,
     bold = true,
   })
 end
