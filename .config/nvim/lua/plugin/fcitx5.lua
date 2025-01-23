@@ -6,10 +6,7 @@ local function setup()
   end
   vim.g.loaded_fcitx5 = true
 
-  if
-    vim.env.SSH_TTY
-    or vim.uv.os_uname().sysname:match('nix$') and not vim.g.display
-  then
+  if vim.env.SSH_TTY then
     return
   end
 
@@ -20,27 +17,27 @@ local function setup()
   end
 
   -- This is how it works:
-  -- - vim.b[{buf}].__im_restore is set when the input method is temporarily
+  -- - vim.b[{buf}]._im_restore is set when the input method is temporarily
   --   disabled for the buffer {buf} and should be restored when entering
   --   'input modes' (*).
-  -- - vim.g.__im_input_enter records the last buffer where we entered
+  -- - vim.g._im_input_enter records the last buffer where we entered
   --   'input modes'.
   --
-  -- When we enter 'input modes', flag `vim.g.__im_input_enter` is set to
-  -- `<abuf>`, and if `__im_restore` is set for `<abuf>`, we clear it and
+  -- When we enter 'input modes', flag `vim.g._im_input_enter` is set to
+  -- `<abuf>`, and if `_im_restore` is set for `<abuf>`, we clear it and
   -- restore/activate the input method.
   --
   -- When we leave 'input modes', we check if input method is activated, and if
-  -- so, we disable it and set `__im_restore` for buffer recorded in
-  -- `__im_input_enter`. Notice that `__im_input_enter` is not necessarily the
+  -- so, we disable it and set `_im_restore` for buffer recorded in
+  -- `_im_input_enter`. Notice that `_im_input_enter` is not necessarily the
   -- same as `<abuf>` or current buffer, e.g. when we enter an normal buffer in
   -- a normal window from a terminal buffer in terminal window using a key
   -- mapped to `<Cmd>wincmd h/j/k/l/...<CR>`, we switch to non-input mode
   -- (normal mode) from input mode (terminal mode) AFTER entering the normal
-  -- buffer, however, we want to set `__im_restore` flag for the terminal
+  -- buffer, however, we want to set `_im_restore` flag for the terminal
   -- buffer instead of the current (normal) buffer. That's why we need to
   -- keep track of the last buffer where we entered 'input modes' in
-  -- `__im_input_enter`.
+  -- `_im_input_enter`.
   --
   -- (*) 'input modes' are modes where the input method should be activated,
   -- including insert mode, replace mode, terminal mode, select mode, and
@@ -64,13 +61,13 @@ local function setup()
   ---Callback to invoke when (possibly) enter input mode
   ---@param buf integer buffer handler
   ---@return nil
-  local function input_mode_enter_callback(buf)
+  local function on_input_enter(buf)
     if not inside_input_mode() then
       return
     end
-    vim.g.__im_input_enter = buf
-    if vim.b[buf].__im_restore then
-      vim.b[buf].__im_restore = nil
+    vim.g._im_input_enter = buf
+    if vim.b[buf]._im_restore then
+      vim.b[buf]._im_restore = nil
       vim.system({ fcitx_cmd, '-o' })
     end
   end
@@ -78,36 +75,37 @@ local function setup()
   ---Callback to invoke when (possibly) leave input mode
   ---@param buf integer handler
   ---@return nil
-  local function input_mode_leave_callback(buf)
+  local function on_input_leave(buf)
     if inside_input_mode() then
       return
     end
     vim.system({ fcitx_cmd }, {}, function(obj)
       if obj.code ~= 0 or tonumber(obj.stdout) == 2 then
         vim.system({ fcitx_cmd, '-c' })
-        -- `vim.g.__im_input_enter` may not be set, in which case it
+        -- `vim.g._im_input_enter` may not be set, in which case it
         -- should just be the current buffer
-        vim.g.__im_input_enter = vim.g.__im_input_enter or buf
+        vim.g._im_input_enter = vim.g._im_input_enter or buf
         vim.schedule(function()
-          if vim.api.nvim_buf_is_valid(vim.g.__im_input_enter) then
-            vim.b[vim.g.__im_input_enter].__im_restore = true
+          local b = vim.g._im_input_enter
+          if vim.api.nvim_buf_is_valid(b) then
+            vim.b[b]._im_restore = true
           end
         end)
       end
     end)
   end
 
-  local current_buf = vim.api.nvim_get_current_buf()
-  input_mode_leave_callback(current_buf)
-  input_mode_enter_callback(current_buf)
+  local buf = vim.api.nvim_get_current_buf()
+  on_input_leave(buf)
+  on_input_enter(buf)
 
   local groupid = vim.api.nvim_create_augroup('IMSwitch', {})
   vim.api.nvim_create_autocmd('ModeChanged', {
-    desc = 'Try re-activate input method when entering input modes.',
+    desc = 'Try to re-activate input method when entering input modes.',
     group = groupid,
     pattern = '*:[ictRss\x13]*',
     callback = function(info)
-      input_mode_enter_callback(info.buf)
+      on_input_enter(info.buf)
     end,
   })
   vim.api.nvim_create_autocmd('ModeChanged', {
@@ -115,7 +113,7 @@ local function setup()
     group = groupid,
     pattern = '[ictRss\x13]*:*',
     callback = function(info)
-      input_mode_leave_callback(info.buf)
+      on_input_leave(info.buf)
     end,
   })
 end
