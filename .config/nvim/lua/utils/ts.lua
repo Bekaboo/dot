@@ -32,7 +32,7 @@ function M.is_active(buf)
 end
 
 ---Returns whether cursor is in a specific type of treesitter node
----@param types string|string[]|fun(type: string): boolean type of node, or function to check node type
+---@param types string|string[]|fun(types: string|string[]): boolean type of node, or function to check node type
 ---@param opts vim.treesitter.get_node.Opts?
 ---@return boolean
 function M.in_node(types, opts)
