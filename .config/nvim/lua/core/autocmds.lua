@@ -364,15 +364,11 @@ augroup('FixCmdLineIskeyword', {
 })
 
 augroup('SpecialBufHl', {
-  { 'BufWinEnter', 'BufNew', 'FileType', 'TermOpen' },
+  { 'BufEnter', 'BufNew', 'FileType', 'TermOpen' },
   {
     desc = 'Set background color for special buffers.',
     callback = function(info)
       if vim.bo[info.buf].bt == '' then
-        return
-      end
-      local stat = vim.uv.fs_stat(vim.api.nvim_buf_get_name(info.buf))
-      if stat and stat.type == 'file' then
         return
       end
       -- Current window isn't necessarily the window of the buffer that
@@ -384,11 +380,11 @@ augroup('SpecialBufHl', {
       if winid == -1 then
         return
       end
+      local wintype = vim.fn.win_gettype(winid)
+      if wintype == 'popup' or wintype == 'autocmd' then
+        return
+      end
       vim.api.nvim_win_call(winid, function()
-        local wintype = vim.fn.win_gettype()
-        if wintype == 'popup' or wintype == 'autocmd' then
-          return
-        end
         vim.opt_local.winhl:append({
           Normal = 'NormalSpecial',
           EndOfBuffer = 'NormalSpecial',
