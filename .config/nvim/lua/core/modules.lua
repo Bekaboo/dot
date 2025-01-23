@@ -15,7 +15,7 @@ local state_path = vim.fn.stdpath('state') --[[@as string]]
 local function system_sync(cmd, opts, loglev)
   local obj = vim.system(cmd, opts):wait()
   if obj.code ~= 0 then
-    vim.notify('[modules]: ' .. obj.stderr, loglev or vim.log.levels.WARN)
+    vim.notify('[modules] ' .. obj.stderr, loglev or vim.log.levels.WARN)
     return false
   end
   return true
