@@ -24,6 +24,23 @@ require('clangd_extensions').setup({
   symbol_info = { border = 'solid' },
 })
 
+vim.api.nvim_create_autocmd('FileType', {
+  desc = 'Set clangd keymaps.',
+  group = vim.api.nvim_create_augroup('ClangdSetKeymaps', {}),
+  pattern = { 'c', 'cpp', 'objc', 'objcpp', 'cuda' },
+  callback = function(info)
+    vim.keymap.set(
+      'n',
+      '<Leader>6',
+      require('clangd_extensions.switch_source_header').switch_source_header,
+      {
+        buffer = info.buf,
+        desc = 'Switch between source and header',
+      }
+    )
+  end,
+})
+
 -- Insert comparator in nvim-cmp's comparators list
 local cmp_ok, cmp = pcall(require, 'cmp')
 if cmp_ok then
