@@ -2,10 +2,13 @@ if vim.env.NVIM_NO3RD then
   return
 end
 
-local json = require('utils.json')
 local conf_path = vim.fn.stdpath('config') --[[@as string]]
 local data_path = vim.fn.stdpath('data') --[[@as string]]
 local state_path = vim.fn.stdpath('state') --[[@as string]]
+
+vim.g.package_path = vim.fs.joinpath(data_path, 'packages')
+vim.g.package_lock = vim.fs.joinpath(conf_path, 'package-lock.json')
+vim.g.startup_file = vim.fs.joinpath(state_path, 'startup.json')
 
 ---Run a system command synchronously and print message on error
 ---@param cmd string[]
@@ -24,14 +27,13 @@ end
 ---Install package manager if not already installed
 ---@return boolean success
 local function bootstrap()
-  vim.g.package_path = vim.fs.joinpath(data_path, 'packages')
-  vim.g.package_lock = vim.fs.joinpath(conf_path, 'package-lock.json')
   local lazy_path = vim.fs.joinpath(vim.g.package_path, 'lazy.nvim')
-  if vim.uv.fs_stat(lazy_path) then
+  if vim.fn.isdirectory(lazy_path) == 1 then
     vim.opt.rtp:prepend(lazy_path)
     return true
   end
 
+  local json = require('utils.json')
   local startup_file = vim.fs.joinpath(state_path, 'startup.json')
   local startup_data = json.read(startup_file)
   if startup_data.bootstrap == false then
