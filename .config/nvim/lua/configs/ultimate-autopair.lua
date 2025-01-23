@@ -1,5 +1,3 @@
-require('ultimate-autopair.utils').maxlines = 0
-
 ---Filetype options memoization
 ---@type table<string, table<string, string|integer|boolean|table>>
 local ft_opts = vim.defaulttable(function()
