@@ -1,5 +1,6 @@
 local icons = require('utils.static.icons')
 local wk_win = require('which-key.win')
+local wk_trig = require('which-key.triggers')
 local wk_plugin_regs = require('which-key.plugins.registers')
 local wk_plugin_marks = require('which-key.plugins.marks')
 
@@ -13,6 +14,20 @@ wk_win.show = (function(show_fn)
     return show_fn(self, opts, ...)
   end
 end)(wk_win.show)
+
+-- `<M->` will be added as a trigger if keymap `<M->>` (aka alt + left-angle)
+-- is set, conflicting with the default visual mode keymap `<`
+-- TODO: report to upstream
+---@param add_fn function
+wk_trig.add = (function(add_fn)
+  ---@param trig wk.Trigger
+  return function(trig)
+    if trig.keys == '<M->' then
+      return
+    end
+    add_fn(trig)
+  end
+end)(wk_trig.add)
 
 ---Hijack `fn` to hide descriptions in its returned items
 ---@param fn fun(...): wk.Plugin.item[]
