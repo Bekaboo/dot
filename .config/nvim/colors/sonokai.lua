@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Sun Jan 12 06:13:36 PM EST 2025
+-- Last Updated: Thu Jan 23 02:41:06 PM EST 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -508,11 +508,11 @@ local hlgroups = {
 
   -- lazy.nvim
   LazyProgressTodo = { fg = c_bg4 },
-  -- }}}
 
   -- statusline
   StatusLineHeader = { bg = c_purple, fg = c_bg0 },
   StatusLineHeaderModified = { bg = c_yellow, fg = c_bg0 },
+  -- }}}
 }
 -- }}}1
 
