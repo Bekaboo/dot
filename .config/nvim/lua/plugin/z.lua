@@ -21,7 +21,7 @@ end
 ---used as a shell command argument
 ---@param args string[]?
 ---@return string
-local function get_arg_str(args)
+local function argesc(args)
   if not args then
     return ''
   end
@@ -46,58 +46,13 @@ local function get_arg_str(args)
   )
 end
 
----Change directory to the most frequently visited directory using `z`
----@param input string[]
-function M.z(input)
-  if not has_z() then
-    return
-  end
-
-  local output = vim.trim(vim.fn.system('z -e ' .. get_arg_str(input)))
-  if vim.v.shell_error ~= 0 then
-    vim.notify('[z] ' .. output)
-    return
-  end
-
-  local path_escaped = vim.fn.fnameescape(output)
-  -- Schedule to allow oil.nvim to conceal line headers correctly
-  vim.schedule(function()
-    vim.cmd.edit(path_escaped)
-    vim.cmd.lcd({ path_escaped, mods = { silent = true } })
-  end)
-end
-
----List matching z directories given input
----@param input string[]?
----@return string[]
-function M.list(input)
-  if not has_z() then
-    return {}
-  end
-
-  local output = vim.fn.systemlist('z -l ' .. get_arg_str(input))
-  if vim.v.shell_error ~= 0 then
-    vim.notify('[z] ' .. output)
-    return {}
-  end
-
-  local paths = {}
-  for _, candidate in ipairs(output) do
-    local path = candidate:match('^[0-9.]+%s+(.*)') -- trim score
-    if path then
-      table.insert(paths, path)
-    end
-  end
-  return paths
-end
-
 local cmp_args_cache ---@type string?
 local cmp_list_cache ---@type string[]?
 
 ---Return a complete function for given z command
 ---@param cmd string
 ---@return function
-function M.cmp(cmd)
+local function cmp(cmd)
   local cmd_reg = string.format('.*%s%%s+', cmd)
   ---@param cmdline string the entire command line
   ---@param cursorpos integer cursor position in the command line
@@ -135,6 +90,60 @@ function M.cmp(cmd)
   end
 end
 
+---Return a command function
+---@param cb fun(fargs: string[])
+---@return function
+local function cmd(cb)
+  return function(args)
+    cb(args.fargs)
+  end
+end
+
+---Change directory to the most frequently visited directory using `z`
+---@param input string[]
+function M.z(input)
+  if not has_z() then
+    return
+  end
+
+  local output = vim.trim(vim.fn.system('z -e ' .. argesc(input)))
+  if vim.v.shell_error ~= 0 then
+    vim.notify('[z] ' .. output)
+    return
+  end
+
+  local path_escaped = vim.fn.fnameescape(output)
+  -- Schedule to allow oil.nvim to conceal line headers correctly
+  vim.schedule(function()
+    vim.cmd.edit(path_escaped)
+    vim.cmd.lcd({ path_escaped, mods = { silent = true } })
+  end)
+end
+
+---List matching z directories given input
+---@param input string[]?
+---@return string[]
+function M.list(input)
+  if not has_z() then
+    return {}
+  end
+
+  local output = vim.fn.systemlist('z -l ' .. argesc(input))
+  if vim.v.shell_error ~= 0 then
+    vim.notify('[z] ' .. output)
+    return {}
+  end
+
+  local paths = {}
+  for _, candidate in ipairs(output) do
+    local path = candidate:match('^[0-9.]+%s+(.*)') -- trim score
+    if path then
+      table.insert(paths, path)
+    end
+  end
+  return paths
+end
+
 ---Select and jump to z directories using `vim.ui.select()`
 ---@param input string[]?
 function M.select(input)
@@ -163,19 +172,15 @@ function M.setup()
   end
   vim.g.loaded_z = true
 
-  vim.api.nvim_create_user_command('Z', function(args)
-    M.z(args.fargs)
-  end, {
-    nargs = '*',
+  vim.api.nvim_create_user_command('Z', cmd(M.z), {
     desc = 'Change and edit local working directory using z.',
-    complete = M.cmp('Z'),
-  })
-  vim.api.nvim_create_user_command('ZSelect', function(args)
-    M.select(args.fargs)
-  end, {
+    complete = cmp('Z'),
     nargs = '*',
+  })
+  vim.api.nvim_create_user_command('ZSelect', cmd(M.select), {
     desc = 'Pick from z directories with `vim.ui.select()`.',
-    complete = M.cmp('ZSelect'),
+    complete = cmp('ZSelect'),
+    nargs = '*',
   })
 end
 
