@@ -661,18 +661,41 @@ vim.api.nvim_create_autocmd('BufEnter', {
   end,
 })
 
+---Change cwd in oil buffer to follow the directory shown in the buffer
+---@param buf integer? default to current buffer
+local function oil_cd(buf)
+  buf = buf or vim.api.nvim_get_current_buf()
+  if not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].ft ~= 'oil' then
+    return
+  end
+
+  vim.api.nvim_buf_call(buf, function()
+    local oildir = vim.fs.normalize(oil.get_current_dir())
+    if vim.fn.isdirectory(oildir) == 0 then
+      return
+    end
+
+    for _, win in ipairs(vim.fn.win_findbuf(buf)) do
+      vim.api.nvim_win_call(win, function()
+        -- Always change local cwd without checking if current cwd is already
+        -- `oildir`, else setting local cwd for preview window can change
+        -- (global) cwd of oil buffer unexpectedly
+        lcd(oildir)
+      end)
+    end
+  end)
+end
+
+for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+  oil_cd(buf)
+end
+
 vim.api.nvim_create_autocmd({ 'BufEnter', 'TextChanged' }, {
   desc = 'Set cwd to follow directory shown in oil buffers.',
   group = groupid,
   pattern = 'oil://*',
   callback = function(info)
-    if vim.bo[info.buf].filetype == 'oil' then
-      local cwd = vim.fs.normalize(vim.fn.getcwd(vim.fn.winnr()))
-      local oildir = vim.fs.normalize(oil.get_current_dir())
-      if cwd ~= oildir and vim.uv.fs_stat(oildir) then
-        lcd(oildir)
-      end
-    end
+    oil_cd(info.buf)
   end,
 })
 
