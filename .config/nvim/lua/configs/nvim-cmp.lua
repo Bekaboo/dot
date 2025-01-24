@@ -294,6 +294,7 @@ cmp.setup({
           or icons[item.kind]
           or ''
       end
+
       clamp(item, 'abbr', vim.o.pw, math.max(60, math.ceil(vim.o.co * 0.4)))
       clamp(item, 'menu', 0, math.max(16, math.ceil(vim.o.co * 0.2)))
       return item
@@ -309,28 +310,30 @@ cmp.setup({
       ['c'] = function()
         if cmp.visible() then
           cmp.select_prev_item()
-        elseif tabout.get_jump_pos(-1) then
-          tabout.jump(-1)
-        else
-          cmp.complete()
+          return
         end
+        if tabout.get_jump_pos(-1) then
+          tabout.jump(-1)
+          return
+        end
+        cmp.complete()
       end,
       ['i'] = function(fallback)
-        if snip.jumpable(-1) then
-          local tabout_dest = tabout.get_jump_pos(-1)
-          local snip_dest = (function()
-            local prev = snip.jump_destination(-1)
-            if not prev then
-              return
-            end
-            local _, dest = prev:get_buf_position()
-            dest[1] = dest[1] + 1 -- (1, 0) indexed
-            return dest
-          end)()
-          if not jump_to_closer(snip_dest, tabout_dest, -1) then
-            fallback()
+        if not snip.jumpable(-1) then
+          fallback()
+          return
+        end
+        local tabout_dest = tabout.get_jump_pos(-1)
+        local snip_dest = (function()
+          local prev = snip.jump_destination(-1)
+          if not prev then
+            return
           end
-        else
+          local _, dest = prev:get_buf_position()
+          dest[1] = dest[1] + 1 -- (1, 0) indexed
+          return dest
+        end)()
+        if not jump_to_closer(snip_dest, tabout_dest, -1) then
           fallback()
         end
       end,
@@ -339,40 +342,44 @@ cmp.setup({
       ['c'] = function()
         if cmp.visible() then
           cmp.select_next_item()
-        elseif tabout.get_jump_pos(1) then
-          tabout.jump(1)
-        else
-          cmp.complete()
+          return
         end
+        if tabout.get_jump_pos(1) then
+          tabout.jump(1)
+          return
+        end
+        cmp.complete()
       end,
       ['i'] = function(fallback)
         if snip.expandable() then
           snip.expand()
-        elseif snip.jumpable(1) then
-          local tabout_dest = tabout.get_jump_pos(1)
-          local snip_range = (function()
-            local buf = vim.api.nvim_get_current_buf()
-            local node = snip.session
-              and snip.session.current_nodes
-              and snip.session.current_nodes[buf]
-            if not node then
-              return
-            end
-            local parent = snip_node_find_parent(node)
-            return snip_node_has_length(node) and { node:get_buf_position() }
-              or parent and { parent:get_buf_position() }
-          end)()
-          if
-            tabout_dest
-            and snip_range
-            and in_range(snip_range, tabout_dest)
-          then
-            tabout.jump(1)
-          else
-            snip.jump(1)
-          end
-        else
+          return
+        end
+        if not snip.jumpable(1) then
           fallback()
+          return
+        end
+        local tabout_dest = tabout.get_jump_pos(1)
+        local snip_range = (function()
+          local buf = vim.api.nvim_get_current_buf()
+          local node = snip.session
+            and snip.session.current_nodes
+            and snip.session.current_nodes[buf]
+          if not node then
+            return
+          end
+          local parent = snip_node_find_parent(node)
+          return snip_node_has_length(node) and { node:get_buf_position() }
+            or parent and { parent:get_buf_position() }
+        end)()
+        if
+          tabout_dest
+          and snip_range
+          and in_range(snip_range, tabout_dest)
+        then
+          tabout.jump(1)
+        else
+          snip.jump(1)
         end
       end,
     },
@@ -381,11 +388,13 @@ cmp.setup({
       ['i'] = function()
         if cmp.visible() then
           cmp.select_prev_item()
-        elseif snip.choice_active() then
-          snip.change_choice(-1)
-        else
-          cmp.complete()
+          return
         end
+        if snip.choice_active() then
+          snip.change_choice(-1)
+          return
+        end
+        cmp.complete()
       end,
     },
     ['<C-n>'] = {
@@ -393,11 +402,13 @@ cmp.setup({
       ['i'] = function()
         if cmp.visible() then
           cmp.select_next_item()
-        elseif snip.choice_active() then
-          snip.change_choice(1)
-        else
-          cmp.complete()
+          return
         end
+        if snip.choice_active() then
+          snip.change_choice(1)
+          return
+        end
+        cmp.complete()
       end,
     },
     ['<Up>'] = {
@@ -405,11 +416,13 @@ cmp.setup({
       ['i'] = function()
         if cmp.visible() then
           cmp.select_prev_item()
-        elseif snip.choice_active() then
-          snip.change_choice(-1)
-        else
-          cmp.complete()
+          return
         end
+        if snip.choice_active() then
+          snip.change_choice(-1)
+          return
+        end
+        cmp.complete()
       end,
     },
     ['<Down>'] = {
@@ -417,11 +430,13 @@ cmp.setup({
       ['i'] = function()
         if cmp.visible() then
           cmp.select_next_item()
-        elseif snip.choice_active() then
-          snip.change_choice(1)
-        else
-          cmp.complete()
+          return
         end
+        if snip.choice_active() then
+          snip.change_choice(1)
+          return
+        end
+        cmp.complete()
       end,
     },
     ['<PageDown>'] = cmp.mapping(
@@ -441,9 +456,9 @@ cmp.setup({
     ['<C-e>'] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.abort()
-      else
-        fallback()
+        return
       end
+      fallback()
     end, { 'i', 'c' }),
     ['<C-y>'] = cmp.mapping(cmp.mapping.confirm(), { 'i', 'c' }),
   },
