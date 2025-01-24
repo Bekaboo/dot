@@ -53,9 +53,10 @@ function M.in_node(types, opts)
   if type(types) == 'string' then
     types = { types }
   end
-  return vim.iter(types):any(function(t)
+  local result = vim.iter(types):any(function(t)
     return nt:match(t)
   end)
+  return result
 end
 
 ---Get language at given buffer position, useful in files with injected syntax
