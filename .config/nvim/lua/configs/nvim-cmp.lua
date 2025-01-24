@@ -252,10 +252,6 @@ cmp.setup({
   },
   confirmation = {
     default_behavior = cmp.ConfirmBehavior.Replace,
-    get_commit_characters = function(commit_characters)
-      vim.list_extend(commit_characters, { '.', ':', '(', '{' })
-      return commit_characters
-    end,
   },
   formatting = {
     fields = vim.g.has_nf and { 'kind', 'abbr', 'menu' } or nil,
