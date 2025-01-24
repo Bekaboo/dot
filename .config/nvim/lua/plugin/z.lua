@@ -59,7 +59,12 @@ function M.z(input)
     return
   end
 
-  vim.cmd.lcd(vim.fn.fnameescape(output))
+  local path_escaped = vim.fn.fnameescape(output)
+  -- Schedule to allow oil.nvim to conceal line headers correctly
+  vim.schedule(function()
+    vim.cmd.edit(path_escaped)
+    vim.cmd.lcd({ path_escaped, mods = { silent = true } })
+  end)
 end
 
 ---List matching z directories given input
@@ -138,13 +143,17 @@ function M.select(input)
   end
 
   local paths = M.list(input)
-  vim.ui.select(paths, {
-    prompt = 'Change cwd to: ',
-  }, function(choice)
-    if choice then
-      vim.cmd.lcd(vim.fn.fnameescape(choice))
-    end
-  end)
+  vim.ui.select(
+    paths,
+    { prompt = 'Change cwd to: ' },
+    vim.schedule_wrap(function(choice)
+      if choice then
+        local path_escaped = vim.fn.fnameescape(choice)
+        vim.cmd.edit(path_escaped)
+        vim.cmd.lcd({ path_escaped, mods = { silent = true } })
+      end
+    end)
+  )
 end
 
 ---Setup `:Z` command
@@ -158,7 +167,7 @@ function M.setup()
     M.z(args.fargs)
   end, {
     nargs = '*',
-    desc = 'Change local working directory using z.',
+    desc = 'Change and edit local working directory using z.',
     complete = M.cmp('Z'),
   })
   vim.api.nvim_create_user_command('ZSelect', function(args)

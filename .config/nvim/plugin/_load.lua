@@ -156,7 +156,7 @@ vim.api.nvim_create_autocmd({ 'UIEnter', 'CmdlineEnter', 'CmdUndefined' }, {
       local z = require('plugin.z')
       z.setup()
       vim.keymap.set('n', '<Leader>z', z.select, {
-        desc = 'Chagne cwd using z',
+        desc = 'Chagne and open cwd using z',
       })
     end)
     return true
