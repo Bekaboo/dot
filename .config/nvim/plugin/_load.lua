@@ -111,8 +111,8 @@ load_ui('statuscolumn')
 -- term
 vim.api.nvim_create_autocmd('TermOpen', {
   group = vim.api.nvim_create_augroup('TermSetup', {}),
-  callback = function(info)
-    require('plugin.term').setup(info.buf)
+  callback = function()
+    require('plugin.term').setup()
   end,
 })
 

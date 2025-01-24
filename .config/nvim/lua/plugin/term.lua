@@ -1,39 +1,63 @@
----Set local terminal keymaps and options, start insert immediately
----@param buf integer terminal buffer handler
+---Initial setup for a terminal buffer
+---@param buf integer? terminal buffer handler
 ---@return nil
-local function term_set_local_keymaps_and_opts(buf)
+local function term_init(buf)
+  buf = buf or vim.api.nvim_get_current_buf()
   if not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].bt ~= 'terminal' then
     return
   end
 
-  vim.opt_local.nu = false
-  vim.opt_local.rnu = false
-  vim.opt_local.spell = false
-  vim.opt_local.statuscolumn = ''
-  vim.opt_local.signcolumn = 'no'
-  if vim.fn.win_gettype() == 'popup' then
-    vim.opt_local.scrolloff = 0
-    vim.opt_local.sidescrolloff = 0
-  end
-  vim.cmd.startinsert()
+  vim.api.nvim_buf_call(buf, function()
+    vim.opt_local.nu = false
+    vim.opt_local.rnu = false
+    vim.opt_local.spell = false
+    vim.opt_local.statuscolumn = ''
+    vim.opt_local.signcolumn = 'no'
+    if vim.fn.win_gettype() == 'popup' then
+      vim.opt_local.scrolloff = 0
+      vim.opt_local.sidescrolloff = 0
+    end
+    vim.cmd.startinsert()
+  end)
+
+  -- Rename terminal in a way that can be recovered from a session file
+  vim.api.nvim_buf_create_user_command(buf, 'TermRename', function(args)
+    vim.cmd.file(
+      string.format(
+        '%s%s',
+        vim.api.nvim_buf_get_name(0):gsub('%s*#%s.*', ''),
+        args.args == '' and '' or ' \\# ' .. vim.fn.fnameescape(args.args)
+      )
+    )
+  end, {
+    nargs = '?',
+    desc = 'Rename current terminal',
+  })
 end
 
----@param buf integer terminal buffer handler
+---Plugin initialize function
 ---@return nil
-local function setup(buf)
+local function setup()
   if vim.g.loaded_term_plugin ~= nil then
     return
   end
   vim.g.loaded_term_plugin = true
 
-  term_set_local_keymaps_and_opts(buf)
+  vim
+    .iter(vim.api.nvim_list_bufs())
+    :filter(function(buf)
+      return vim.bo[buf].bt == 'terminal'
+    end)
+    :each(function(buf)
+      term_init(buf)
+    end)
 
   local groupid = vim.api.nvim_create_augroup('Term', {})
   vim.api.nvim_create_autocmd('TermOpen', {
     group = groupid,
     desc = 'Set terminal keymaps and options, open term in split.',
     callback = function(info)
-      term_set_local_keymaps_and_opts(info.buf)
+      term_init(info.buf)
     end,
   })
 
