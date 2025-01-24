@@ -160,10 +160,6 @@ vim.api.nvim_create_autocmd('UIEnter', {
   once = true,
   callback = function()
     vim.schedule(function()
-      -- Getting system clipboard on termux blocks nvim
-      if vim.fn.executable('termux-clipboard-set') == 1 then
-        return
-      end
       vim.opt.clipboard:append('unnamedplus')
     end)
     return true
