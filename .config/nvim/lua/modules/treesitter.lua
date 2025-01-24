@@ -23,7 +23,9 @@ return {
       'TSEditQuery',
       'TSEditQueryUserAfter',
     },
-    event = 'FileType',
+    -- Skip loading nvim-treesitter for plugin-specific filetypes containing underscores
+    -- (e.g. 'cmp_menu') to improve initial cmdline responsiveness on slower systems
+    event = 'FileType [^_]\\+',
     config = function()
       require('configs.nvim-treesitter')
     end,
@@ -32,7 +34,7 @@ return {
   {
     'nvim-treesitter/nvim-treesitter-textobjects',
     dependencies = 'nvim-treesitter/nvim-treesitter',
-    event = 'FileType',
+    event = 'FileType [^_]\\+',
     config = function()
       require('configs.nvim-treesitter-textobjects')
     end,
