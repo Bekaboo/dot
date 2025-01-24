@@ -51,9 +51,9 @@ local formatter = vim.fn.executable('black') == 1
 
 ---Disable lsp formatting capabilities if efm launched successfully
 ---@type fun(client: vim.lsp.Client, bufnr: integer)?
-local on_attach
+local disable_formatting
 if formatter then
-  function on_attach(client)
+  function disable_formatting(client)
     client.server_capabilities.documentFormattingProvider = false
   end
 end
@@ -62,7 +62,47 @@ local server_configs = {
   {
     cmd = { 'pyright-langserver', '--stdio' },
     root_patterns = vim.list_extend({ 'pyrightconfig.json' }, root_patterns),
-    on_attach = on_attach,
+    on_attach = function(client)
+      if disable_formatting then
+        disable_formatting(client)
+      end
+      vim.api.nvim_buf_create_user_command(
+        0,
+        'PyrightOrganizeImports',
+        function()
+          client.request('workspace/executeCommand', {
+            command = 'pyright.organizeimports',
+            arguments = { vim.uri_from_bufnr(0) },
+          }, nil, 0)
+        end,
+        { desc = 'Organize python imports' }
+      )
+      vim.api.nvim_buf_create_user_command(
+        0,
+        'PyrightSetPythonPath',
+        function(args)
+          if client.settings then
+            client.settings.python = vim.tbl_deep_extend(
+              'force',
+              client.settings.python,
+              { pythonPath = args.args }
+            )
+          else
+            client.config.settings = vim.tbl_deep_extend(
+              'force',
+              client.config.settings,
+              { python = { pythonPath = args.args } }
+            )
+          end
+          client.notify('workspace/didChangeConfiguration', { settings = nil })
+        end,
+        {
+          desc = 'Reconfigure pyright with the provided python path',
+          nargs = 1,
+          complete = 'file',
+        }
+      )
+    end,
     settings = {
       python = {
         analysis = {
@@ -76,12 +116,12 @@ local server_configs = {
   {
     cmd = { 'pylsp' },
     root_patterns = root_patterns,
-    on_attach = on_attach,
+    on_attach = disable_formatting,
   },
   {
     cmd = { 'jedi-language-server' },
     root_patterns = root_patterns,
-    on_attach = on_attach,
+    on_attach = disable_formatting,
   },
 }
 
