@@ -843,6 +843,7 @@ endfor
 autocmd TextChangedI,BufReadPost,StdinReadPost * ++once
       \ nnoremap <Esc>] <C-w>] |
       \ xnoremap <Esc>] <C-w>] |
+      \ xnoremap  <nowait> <Esc> <Esc>
 " }}}2
 
 " Readline keymaps {{{2
