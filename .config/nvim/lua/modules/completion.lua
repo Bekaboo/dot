@@ -21,13 +21,13 @@ return {
 
   {
     'hrsh7th/cmp-nvim-lsp',
-    event = 'InsertEnter',
+    event = 'LspAttach',
     dependencies = 'hrsh7th/nvim-cmp',
   },
 
   {
     'hrsh7th/cmp-nvim-lsp-signature-help',
-    event = 'InsertEnter',
+    event = 'LspAttach',
     dependencies = 'hrsh7th/nvim-cmp',
   },
 
@@ -40,10 +40,7 @@ return {
   {
     'rcarriga/cmp-dap',
     lazy = true,
-    dependencies = {
-      'mfussenegger/nvim-dap',
-      'hrsh7th/nvim-cmp',
-    },
+    dependencies = 'hrsh7th/nvim-cmp',
   },
 
   {
