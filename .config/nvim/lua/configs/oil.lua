@@ -716,7 +716,7 @@ vim.api.nvim_create_autocmd('BufEnter', {
   group = groupid,
   pattern = 'oil://*',
   callback = function(info)
-    -- Only set cursor position when first entering an oil buffer.
+    -- Only set cursor position when first entering an oil buffer in current window
     -- This prevents cursor from resetting to the original file when switching
     -- between oil and preview windows, e.g.
     -- 1. Open `foo/bar.txt`
@@ -726,10 +726,20 @@ vim.api.nvim_create_autocmd('BufEnter', {
     -- 5. Switch to preview window
     -- 6. Switch back to oil buffer
     -- Without this check, cursor would incorrectly reset to `bar.txt`
-    if vim.b[info.buf]._oil_entered then
+    -- Setting a boolean flag i.e. set `_oil_entered` to `true` or `false`
+    -- is not enough because oil reuses buffers for the same directory, consider
+    -- the following case:
+    -- 1. `:vsplit`
+    -- 2. `:e .` to open oil in one split
+    -- 3. `:close`
+    -- 4. `:e .` to open oil in another split (reuse oil buffer!)
+    -- If we use a boolean flag for `_oil_entered`, we will not able to set cursor
+    -- position in oil buffer on step 4 because the flag is set in step 2.
+    local win = vim.api.nvim_get_current_win()
+    if vim.b[info.buf]._oil_entered == win then
       return
     end
-    vim.b[info.buf]._oil_entered = true
+    vim.b[info.buf]._oil_entered = win
     -- Place cursor on the alternate buffer if we are opening
     -- the parent directory of the alternate buffer
     local alt_file = vim.fn.bufnr('#')
