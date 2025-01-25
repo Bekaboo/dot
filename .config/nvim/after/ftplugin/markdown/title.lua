@@ -92,45 +92,48 @@ vim.api.nvim_create_autocmd('TextChangedI', {
   callback = format_title,
 })
 
-vim.api.nvim_buf_create_user_command(buf, 'MarkdownAutoFormatTitle', function(args)
-  local parsed_args = utils.cmd.parse_cmdline_args(args.fargs)
-  local scope = vim[parsed_args.global and 'g' or 'b']
-
-  if scope.md_fmt_title == nil then
-    scope.md_fmt_title = vim.g.md_fmt_title
-  end
-
-  if args.bang or vim.tbl_contains(parsed_args, 'toggle') then
-    scope.md_fmt_title = not scope.md_fmt_title
-    return
-  end
-  if args.fargs[1] == '&' or vim.tbl_contains(parsed_args, 'reset') then
-    scope.md_fmt_title = true
-    return
-  end
-  if args.fargs[1] == '?' or vim.tbl_contains(parsed_args, 'status') then
-    vim.notify(tostring(scope.md_fmt_title))
-    return
-  end
-  if vim.tbl_contains(parsed_args, 'enable') then
-    scope.md_fmt_title = true
-    return
-  end
-  if vim.tbl_contains(parsed_args, 'disable') then
-    scope.md_fmt_title = false
-    return
-  end
-end, {
-  nargs = '*',
-  bang = true,
-  complete = utils.cmd.complete({
-    'enable',
-    'disable',
-    'toggle',
-    'status',
-  }, {
-    ['global'] = { 'v:true', 'v:false' },
-    ['local'] = { 'v:true', 'v:false' },
-  }),
-  desc = 'Set whether to automatically capitalize the first letter of words in markdown titles',
-})
+vim.api.nvim_buf_create_user_command(
+  buf,
+  'MarkdownAutoFormatTitle',
+  function(args)
+    local parsed_args = utils.cmd.parse_cmdline_args(args.fargs)
+    local scope = vim[parsed_args.global and 'g' or 'b']
+    if scope.md_fmt_title == nil then
+      scope.md_fmt_title = vim.g.md_fmt_title
+    end
+    if args.bang or vim.tbl_contains(parsed_args, 'toggle') then
+      scope.md_fmt_title = not scope.md_fmt_title
+      return
+    end
+    if args.fargs[1] == '&' or vim.tbl_contains(parsed_args, 'reset') then
+      scope.md_fmt_title = true
+      return
+    end
+    if args.fargs[1] == '?' or vim.tbl_contains(parsed_args, 'status') then
+      vim.notify(tostring(scope.md_fmt_title))
+      return
+    end
+    if vim.tbl_contains(parsed_args, 'enable') then
+      scope.md_fmt_title = true
+      return
+    end
+    if vim.tbl_contains(parsed_args, 'disable') then
+      scope.md_fmt_title = false
+      return
+    end
+  end,
+  {
+    nargs = '*',
+    bang = true,
+    complete = utils.cmd.complete({
+      'enable',
+      'disable',
+      'toggle',
+      'status',
+    }, {
+      ['global'] = { 'v:true', 'v:false' },
+      ['local'] = { 'v:true', 'v:false' },
+    }),
+    desc = 'Set whether to automatically capitalize the first letter of words in markdown titles',
+  }
+)
