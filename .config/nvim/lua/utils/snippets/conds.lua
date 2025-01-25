@@ -26,8 +26,7 @@ end
 ---Returns whether the cursor is in a code block
 ---@return boolean
 function M.in_codeblock()
-  local cursor = vim.api.nvim_win_get_cursor(0)
-  return utils.ft.markdown.in_codeblock(cursor[1])
+  return utils.ft.markdown.in_codeblock(vim.fn.line('.'))
 end
 
 ---Returns whether current cursor is in a comment
@@ -63,7 +62,7 @@ end
 function M.before_pattern(pattern)
   return vim.api
     .nvim_get_current_line()
-    :sub(vim.api.nvim_win_get_cursor(0)[2] + 1)
+    :sub(vim.fn.col('.'))
     :match('^' .. pattern) ~= nil
 end
 
@@ -75,7 +74,7 @@ function M.after_pattern(pattern)
   return lsconds.make_condition(function(_, matched_trigger)
     return vim.api
       .nvim_get_current_line()
-      :sub(1, vim.api.nvim_win_get_cursor(0)[2])
+      :sub(1, vim.fn.col('.') - 1)
       :gsub(vim.pesc(matched_trigger) .. '$', '', 1)
       :match(pattern .. '$') ~= nil
   end)
@@ -87,14 +86,14 @@ end
 function M.at_line_start(_, matched_trigger)
   return vim.api
     .nvim_get_current_line()
-    :sub(1, vim.api.nvim_win_get_cursor(0)[2])
+    :sub(1, vim.fn.col('.') - 1)
     :gsub(matched_trigger or '%S*', '') == ''
 end
 
 ---Returns whether the cursor is at the end of a line
 ---@return boolean
 function M.at_line_end()
-  return vim.api.nvim_win_get_cursor(0)[2] == #vim.api.nvim_get_current_line()
+  return vim.fn.col('.') - 1 == #vim.api.nvim_get_current_line()
 end
 
 ---Returns whether the previous line matches a pattern
@@ -105,9 +104,7 @@ function M.prev_line_matches(pattern)
   if lnum <= 1 then
     return false
   end
-  return vim.api
-    .nvim_buf_get_lines(0, lnum - 2, lnum - 1, true)[1]
-    :match(pattern) ~= nil
+  return vim.fn.getbufoneline(0, lnum - 1):match(pattern) ~= nil
 end
 
 ---Returns whether the next line matches a pattern
@@ -118,8 +115,7 @@ function M.next_line_matches(pattern)
   if lnum >= vim.api.nvim_buf_line_count(0) then
     return false
   end
-  return vim.api.nvim_buf_get_lines(0, lnum, lnum + 1, true)[1]:match(pattern)
-    ~= nil
+  return vim.fn.getbufoneline(0, lnum):match(pattern) ~= nil
 end
 
 return M
