@@ -11,7 +11,7 @@ local d = ls.dynamic_node
 M.math = require('snippets.tex.math')
 
 M.snippets = {
-  us.msn({
+  us.mssn({
     { trig = 'h1' },
     {
       trig = '# ',
