@@ -78,10 +78,10 @@ M.snippets = {
     },
     un.fmtd(
       [[
-      const int bw = blockDim.x;
-      const int bx = blockIdx.x;
-      const int tx = threadIdx.x;
-    ]],
+        const int bw = blockDim.x;
+        const int bx = blockIdx.x;
+        const int tx = threadIdx.x;
+      ]],
       {}
     )
   ),
@@ -92,13 +92,13 @@ M.snippets = {
     },
     un.fmtd(
       [[
-      const int bw = blockDim.x;
-      const int bh = blockDim.y;
-      const int bx = blockIdx.x;
-      const int by = blockIdx.y;
-      const int tx = threadIdx.x;
-      const int ty = threadIdx.y;
-    ]],
+        const int bw = blockDim.x;
+        const int bh = blockDim.y;
+        const int bx = blockIdx.x;
+        const int by = blockIdx.y;
+        const int tx = threadIdx.x;
+        const int ty = threadIdx.y;
+      ]],
       {}
     )
   ),
@@ -109,16 +109,16 @@ M.snippets = {
     },
     un.fmtd(
       [[
-      const int bw = blockDim.x;
-      const int bh = blockDim.y;
-      const int bd = blockDim.z;
-      const int bx = blockIdx.x;
-      const int by = blockIdx.y;
-      const int bz = blockIdx.z;
-      const int tx = threadIdx.x;
-      const int ty = threadIdx.y;
-      const int tz = threadIdx.z;
-    ]],
+        const int bw = blockDim.x;
+        const int bh = blockDim.y;
+        const int bd = blockDim.z;
+        const int bx = blockIdx.x;
+        const int by = blockIdx.y;
+        const int bz = blockIdx.z;
+        const int tx = threadIdx.x;
+        const int ty = threadIdx.y;
+        const int tz = threadIdx.z;
+      ]],
       {}
     )
   ),
