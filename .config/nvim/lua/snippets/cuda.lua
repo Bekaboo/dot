@@ -5,10 +5,59 @@ local ls = require('luasnip')
 local t = ls.text_node
 local i = ls.insert_node
 local c = ls.choice_node
+local r = ls.restore_node
 
 M.c = require('snippets.c').snippets
 
 M.snippets = {
+  us.msn(
+    {
+      { trig = 'fn' },
+      { trig = 'fun' },
+      { trig = 'func' },
+      { trig = 'function' },
+      common = {
+        desc = 'Function definition/declaration',
+        priority = 1001, -- prioritize over function snippets imported from c
+      },
+    },
+    c(1, {
+      un.fmtad(
+        [[
+          <qualifier> <type> <func>(<params>) {
+          <body>
+          }
+        ]],
+        {
+          qualifier = r(1, 'qualifier'),
+          type = r(2, 'type'),
+          func = r(3, 'func'),
+          params = i(4, 'int'),
+          body = un.body(5, 1),
+        }
+      ),
+      un.fmtad('<qualifier> <type> <func>(<params>);', {
+        qualifier = r(1, 'qualifier'),
+        type = r(2, 'type'),
+        func = r(3, 'func'),
+        params = i(4, 'int'),
+      }),
+    }),
+    {
+      common_opts = {
+        stored = {
+          qualifier = c(1, {
+            i(nil, '__host__'),
+            i(nil, '__device__'),
+            i(nil, '__global__'),
+            i(nil, '__host__ __device__'),
+          }),
+          type = i(2, 'int'),
+          func = i(3, 'fn_name'),
+        },
+      },
+    }
+  ),
   -- Macros
   us.sn({ trig = 'ts', priority = 999 }, t('TILE_SIZE')),
   us.sn({ trig = 'dts' }, {
