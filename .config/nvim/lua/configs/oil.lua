@@ -119,8 +119,9 @@ local function preview_set_lines(win, all)
         .iter(vim.gsplit(vim.system({ 'ls', '-lhA', path }):wait().stdout, '\n'))
         :take(num_lines)
         :map(function(line)
-          return vim.fn.match(line, '\\v^[-dpls][-rwx]{9}') == -1 and line
+          local result = vim.fn.match(line, '\\v^[-dpls][-rwxs]{9}') == -1 and line
             or line:sub(1, 1) .. ' ' .. line:sub(2)
+          return result
         end)
         :totable()
     end
@@ -288,15 +289,15 @@ local function preview()
         syn match OilDirPreviewTypeSocket /^s/ nextgroup=OilDirPreviewSocketPerms skipwhite
 
         for type in ['File', 'Dir', 'Fifo', 'Link', 'Socket']
-          exe substitute('syn match OilDirPreview%sPerms /\v[-rwx]{9}/ contained
+          exe substitute('syn match OilDirPreview%sPerms /\v[-rwxs]{9}/ contained
                         \ contains=OilDirPreviewPermRead,OilDirPreviewPermWrite,
-                        \ OilDirPreviewPermExec,OilDirPreviewPermNone
+                        \ OilDirPreviewPermExec,OilDirPreviewPermSetuid,OilDirPreviewPermNone
                         \ nextgroup=OilDirPreview%sNumHardLinksNormal,
                                   \ OilDirPreview%sNumHardLinksMulti
                         \ skipwhite', '%s', type, 'g')
-          exe substitute('syn match OilDirPreview%sPerms /\v^[-rwx]+/ contained
+          exe substitute('syn match OilDirPreview%sPerms /\v^[-rwxs]+/ contained
                         \ contains=OilDirPreviewPermRead,OilDirPreviewPermWrite,
-                                 \ OilDirPreviewPermExec,OilDirPreviewPermNone
+                                 \ OilDirPreviewPermExec,OilDirPreviewPermSetuid,OilDirPreviewPermNone
                         \ nextgroup=OilDirPreview%sNumHardLinksNormal,
                                   \ OilDirPreview%sNumHardLinksMulti
                         \ skipwhite', '%s', type, 'g')
@@ -320,6 +321,7 @@ local function preview()
         syn match OilDirPreviewPermRead /r/ contained
         syn match OilDirPreviewPermWrite /w/ contained
         syn match OilDirPreviewPermExec /x/ contained
+        syn match OilDirPreviewPermSetuid /s/ contained
         syn match OilDirPreviewPermNone /-/ contained
 
         syn match OilDirPreviewDir /[^.].*/ contained
@@ -344,6 +346,7 @@ local function preview()
         hi def link OilDirPreviewPermRead OilPermissionRead
         hi def link OilDirPreviewPermWrite OilPermissionWrite
         hi def link OilDirPreviewPermExec OilPermissionExecute
+        hi def link OilDirPreviewPermSetuid OilPermissionSetuid
         hi def link OilDirPreviewPermNone OilPermissionNone
 
         hi def link OilDirPreviewDir OilDir
@@ -492,6 +495,7 @@ local permission_hlgroups = setmetatable({
   ['r'] = 'OilPermissionRead',
   ['w'] = 'OilPermissionWrite',
   ['x'] = 'OilPermissionExecute',
+  ['s'] = 'OilPermissionSetuid',
 }, {
   __index = function()
     return 'OilDir'
@@ -796,6 +800,7 @@ local function oil_sethl()
   sethl(0, 'OilPermissionRead', { fg = 'DiagnosticSignWarn' })
   sethl(0, 'OilPermissionWrite', { fg = 'DiagnosticSignError' })
   sethl(0, 'OilPermissionExecute', { fg = 'DiagnosticSignInfo' })
+  sethl(0, 'OilPermissionSetuid', { fg = 'DiagnosticSignHint' })
   sethl(0, 'OilTypeDir', { fg = 'Directory' })
   sethl(0, 'OilTypeFifo', { fg = 'Special' })
   sethl(0, 'OilTypeFile', { fg = 'NonText' })
