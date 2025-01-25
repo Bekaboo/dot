@@ -88,7 +88,7 @@ function M.at_line_start(_, matched_trigger)
   return vim.api
     .nvim_get_current_line()
     :sub(1, vim.api.nvim_win_get_cursor(0)[2])
-    :gsub(matched_trigger or '', '') == ''
+    :gsub(matched_trigger or '%S*', '') == ''
 end
 
 ---Returns whether the cursor is at the end of a line
