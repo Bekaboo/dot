@@ -169,8 +169,11 @@ M.opts = {
         and ft ~= 'query'
         and ft ~= 'help'
         and ft ~= 'diff'
-        and not vim.startswith(vim.bo[buf].ft, 'git')
-        and not utils.opt.winbar:last_set_loc()
+        and not vim.startswith(ft, 'git')
+        and not vim.api.nvim_get_option_info2('winbar', {
+          win = win,
+          scope = 'local',
+        }).was_set
         and (
           ft == 'markdown'
           or utils.ts.is_active(buf)
