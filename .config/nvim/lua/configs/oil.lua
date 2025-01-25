@@ -291,12 +291,6 @@ local function preview()
         for type in ['File', 'Dir', 'Fifo', 'Link', 'Socket']
           exe substitute('syn match OilDirPreview%sPerms /\v[-rwxs]{9}/ contained
                         \ contains=OilDirPreviewPermRead,OilDirPreviewPermWrite,
-                        \ OilDirPreviewPermExec,OilDirPreviewPermSetuid,OilDirPreviewPermNone
-                        \ nextgroup=OilDirPreview%sNumHardLinksNormal,
-                                  \ OilDirPreview%sNumHardLinksMulti
-                        \ skipwhite', '%s', type, 'g')
-          exe substitute('syn match OilDirPreview%sPerms /\v^[-rwxs]+/ contained
-                        \ contains=OilDirPreviewPermRead,OilDirPreviewPermWrite,
                                  \ OilDirPreviewPermExec,OilDirPreviewPermSetuid,OilDirPreviewPermNone
                         \ nextgroup=OilDirPreview%sNumHardLinksNormal,
                                   \ OilDirPreview%sNumHardLinksMulti
