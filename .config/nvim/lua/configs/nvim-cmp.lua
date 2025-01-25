@@ -413,7 +413,7 @@ cmp.setup({
     },
     ['<Up>'] = {
       ['c'] = cmp.mapping.select_prev_item(),
-      ['i'] = function()
+      ['i'] = function(fallback)
         if cmp.visible() then
           cmp.select_prev_item()
           return
@@ -422,12 +422,12 @@ cmp.setup({
           snip.change_choice(-1)
           return
         end
-        cmp.complete()
+        fallback()
       end,
     },
     ['<Down>'] = {
       ['c'] = cmp.mapping.select_next_item(),
-      ['i'] = function()
+      ['i'] = function(fallback)
         if cmp.visible() then
           cmp.select_next_item()
           return
@@ -436,7 +436,7 @@ cmp.setup({
           snip.change_choice(1)
           return
         end
-        cmp.complete()
+        fallback()
       end,
     },
     ['<PageDown>'] = cmp.mapping(
