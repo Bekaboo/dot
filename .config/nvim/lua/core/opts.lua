@@ -60,30 +60,6 @@ vim.api.nvim_create_autocmd('UIEnter', {
 -- Folding
 vim.opt.foldlevelstart = 99
 vim.opt.foldtext = ''
-vim.api.nvim_create_autocmd('FileType', {
-  group = vim.api.nvim_create_augroup('TSFolding', {}),
-  desc = 'Set treesitter folding.',
-  callback = function(info)
-    local buf = info.buf
-    if vim.b[buf].bigfile then
-      return
-    end
-
-    local ts = require('utils.ts')
-    if not ts.is_active(buf) then
-      return
-    end
-
-    local opt = require('utils.opt')
-    vim.api.nvim_buf_call(buf, function()
-      if not opt.fdm:last_set_loc() and not opt.fde:last_set_loc() then
-        vim.opt_local.fdm = 'expr'
-        vim.opt_local.fde = 'v:lua.vim.treesitter.foldexpr()'
-        vim.opt_local.fdl = 99
-      end
-    end)
-  end,
-})
 
 -- Recognize numbered lists when formatting text and
 -- continue comments on new lines
