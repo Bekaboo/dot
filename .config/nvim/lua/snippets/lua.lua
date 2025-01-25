@@ -107,6 +107,7 @@ M.snippets = {
           'binary_expression', -- <expression> and function() ... end
           'parenthesized_expression', -- (function() ... end)()
           'function_declaration', -- 'function' as trigger
+          'ERROR', -- using 'function' as trigger in `val = function...`
         }, { ignore_injections = false })
       then
         -- Unnamed function
