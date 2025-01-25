@@ -715,7 +715,21 @@ vim.api.nvim_create_autocmd('BufEnter', {
   desc = 'Set last cursor position in oil buffers when editing parent dir.',
   group = groupid,
   pattern = 'oil://*',
-  callback = function()
+  callback = function(info)
+    -- Only set cursor position when first entering an oil buffer.
+    -- This prevents cursor from resetting to the original file when switching
+    -- between oil and preview windows, e.g.
+    -- 1. Open `foo/bar.txt`
+    -- 2. Run `:e %:p:h` to open `foo/` in oil - cursor starts on `bar.txt`
+    -- 3. Open preview window
+    -- 4. Move cursor to different files in oil buffer
+    -- 5. Switch to preview window
+    -- 6. Switch back to oil buffer
+    -- Without this check, cursor would incorrectly reset to `bar.txt`
+    if vim.b[info.buf]._oil_entered then
+      return
+    end
+    vim.b[info.buf]._oil_entered = true
     -- Place cursor on the alternate buffer if we are opening
     -- the parent directory of the alternate buffer
     local alt_file = vim.fn.bufnr('#')
