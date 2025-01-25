@@ -27,10 +27,16 @@ require('utils.lsp').start({
     vim.api.nvim_buf_create_user_command(0, 'CargoReload', function()
       client.request('rust-analyzer/reloadWorkspace', nil, function(err)
         if err then
-          vim.notify('Corresponding reload cargo workspace: ' .. tostring(err))
+          vim.notify(
+            string.format(
+              '[%s] Corresponding reload cargo workspace: %s',
+              client.name,
+              tostring(err)
+            )
+          )
           return
         end
-        vim.notify('Cargo workspace reloaded')
+        vim.notify(string.format('[%s] Cargo workspace reloaded', client.name))
       end, 0)
     end, { description = 'Reload current cargo workspace' })
   end,

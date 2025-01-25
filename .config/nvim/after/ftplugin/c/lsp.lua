@@ -34,7 +34,12 @@ local function switch_source_header(client)
     vim.lsp.util.make_text_document_params(buf),
     function(err, result)
       if err or not result then
-        vim.notify('Corresponding file cannot be determined')
+        vim.notify(
+          string.format(
+            '[%s] Corresponding file cannot be determined',
+            client.name
+          )
+        )
         if err then
           vim.notify('Error: ' .. err)
         end

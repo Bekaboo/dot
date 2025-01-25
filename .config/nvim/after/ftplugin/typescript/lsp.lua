@@ -155,11 +155,13 @@ if eslint_cmd then
           return 4 -- approved
         end,
         ['eslint/probeFailed'] = function()
-          vim.notify('ESLint probe failed')
+          vim.notify(string.format('[%s] ESLint probe failed', eslint_cmd))
           return {}
         end,
         ['eslint/noLibrary'] = function()
-          vim.notify('Unable to find ESLint library')
+          vim.notify(
+            string.format('[%s] Unable to find ESLint library', eslint_cmd)
+          )
           return {}
         end,
       },
