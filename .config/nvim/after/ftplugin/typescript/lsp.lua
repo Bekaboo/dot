@@ -106,7 +106,7 @@ if eslint_cmd then
   if vim.endswith(eslint_cmd, 'eslint-language-server') then
     -- Source: https://github.com/neovim/nvim-lspconfig/blob/master/lua/lspconfig/configs/eslint.lua
     eslint_client_id = lsp.start({
-      cmd = { 'eslint-language-server', '--stdio' },
+      cmd = { eslint_cmd, '--stdio' },
       settings = {
         validate = 'on',
         packageManager = nil,
