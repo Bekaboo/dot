@@ -1612,4 +1612,4 @@ endif
 " }}}2
 " }}}1
 
-" vim:tw=79:ts=2:sts=2:sw=2:et:fdm=marker:fdl=0:ft=vim:norl:
+" vim:tw=79:ts=2:sts=2:sw=2:et:fdm=marker:ft=vim:norl:
