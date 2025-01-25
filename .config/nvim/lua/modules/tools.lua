@@ -107,27 +107,14 @@ return {
           -- is basically the same as that used in fzf config file:
           -- lua/configs/fzf-lua.lua
           fzf_ui.register(function(_, items)
+            local height = #items + 1
             return {
               winopts = {
                 split = string.format(
-                  [[
-                    let tabpage_win_list = nvim_tabpage_list_wins(0) |
-                    \ call v:lua.require'utils.win'.saveheights(tabpage_win_list) |
-                    \ call v:lua.require'utils.win'.saveviews(tabpage_win_list) |
-                    \ unlet tabpage_win_list |
-                    \ let g:_fzf_vim_lines = &lines |
-                    \ let g:_fzf_leave_win = win_getid(winnr()) |
-                    \ let g:_fzf_splitkeep = &splitkeep | let &splitkeep = "topline" |
-                    \ let g:_fzf_cmdheight = &cmdheight | let &cmdheight = 0 |
-                    \ let g:_fzf_laststatus = &laststatus | let &laststatus = 0 |
-                    \ botright %dnew |
-                    \ let w:winbar_no_attach = v:true |
-                    \ setlocal bt=nofile bh=wipe nobl noswf wfh
-                  ]],
-                  math.min(
-                    10 + vim.go.ch + (vim.go.ls == 0 and 0 or 1),
-                    #items + 1
-                  )
+                  '%s | if %d < winheight(0) | resize %d | endif',
+                  vim.trim(require('fzf-lua.config').setup_opts.winopts.split),
+                  height,
+                  height
                 ),
               },
             }
