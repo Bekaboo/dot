@@ -106,6 +106,7 @@ M.snippets = {
           'table_constructor', -- unnamed function in list
           'binary_expression', -- <expression> and function() ... end
           'parenthesized_expression', -- (function() ... end)()
+          'function_declaration', -- 'function' as trigger
         }, { ignore_injections = false })
       then
         -- Unnamed function
