@@ -41,19 +41,20 @@ end
 ---Returns whether the cursor is in a normal zone
 ---@return boolean
 function M.in_normalzone()
-  -- Markdown and tex files have their special rules to check
-  -- math zones and code blocks
+  if utils.ts.is_active() then
+    return not utils.ts.in_node(
+      { 'comment', 'string', 'block' },
+      { ignore_injections = false }
+    )
+  end
+
+  -- If treesitter is not active, we can only check for markdown and tex
+  -- using the regex method to ensure we are not in a code block or math zone
   if vim.bo.ft == 'markdown' or vim.bo.ft == 'tex' then
     return utils.ft[vim.bo.ft].in_normalzone()
   end
 
-  if not utils.ts.is_active() then
-    return true
-  end
-  return not utils.ts.in_node(
-    { 'comment', 'string' },
-    { ignore_injections = false }
-  )
+  return true
 end
 
 ---Returns whether the cursor is before a pattern
