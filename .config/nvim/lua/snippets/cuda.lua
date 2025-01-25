@@ -71,10 +71,11 @@ M.snippets = {
   us.sn({ trig = 'tx' }, t('threadIdx.x')),
   us.sn({ trig = 'ty' }, t('threadIdy.y')),
   us.sn({ trig = 'tz' }, t('threadIdz.z')),
-  us.sn(
+  us.msn(
     {
-      trig = 'idx1',
-      dscr = 'Indexes for 1D grid',
+      { trig = 'i1' },
+      { trig = 'idx1' },
+      common = { dscr = 'Indexes for 1D grid' },
     },
     un.fmtd(
       [[
@@ -85,10 +86,11 @@ M.snippets = {
       {}
     )
   ),
-  us.sn(
+  us.msn(
     {
-      trig = 'idx2',
-      dscr = 'Indexes for 2D grid',
+      { trig = 'i2' },
+      { trig = 'idx2' },
+      common = { dscr = 'Indexes for 2D grid' },
     },
     un.fmtd(
       [[
@@ -102,10 +104,11 @@ M.snippets = {
       {}
     )
   ),
-  us.sn(
+  us.msn(
     {
-      trig = 'idx3',
-      dscr = 'Indexes for 3D grid',
+      { trig = 'i3' },
+      { trig = 'idx3' },
+      common = { dscr = 'Indexes for 3D grid' },
     },
     un.fmtd(
       [[
