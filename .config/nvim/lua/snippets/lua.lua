@@ -106,7 +106,7 @@ M.snippets = {
           'table_constructor', -- unnamed function in list
           'binary_expression', -- <expression> and function() ... end
           'parenthesized_expression', -- (function() ... end)()
-        }, { ignore_injections = false })()
+        }, { ignore_injections = false })
       then
         -- Unnamed function
         return sn(nil, {
