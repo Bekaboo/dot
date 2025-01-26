@@ -48,6 +48,32 @@ linter = linter -- luacheck: ignore 311
     },
   })
 
+linter = linter -- luacheck: ignore 311
+  or (function()
+    local flake8_root_patterns = vim.list_extend({ '.flake8' }, root_patterns)
+    return lsp.start({
+      cmd = { 'efm-langserver' },
+      requires = { 'flake8' },
+      name = 'efm-linter-flake8',
+      root_patterns = flake8_root_patterns,
+      settings = {
+        languages = {
+          -- Source: https://github.com/creativenull/efmls-configs-nvim/blob/main/lua/efmls-configs/linters/flake8.lua
+          python = {
+            {
+              lintSource = 'flake8',
+              lintCommand = 'flake8 -',
+              lintFormats = { 'stdin:%l:%c: %t%n %m' },
+              lintIgnoreExitCode = true,
+              lintStdin = true,
+              rootMarkers = flake8_root_patterns,
+            },
+          },
+        },
+      },
+    })
+  end)()
+
 -- Use efm to attach black formatter as a language server
 formatter = formatter
   or lsp.start({
