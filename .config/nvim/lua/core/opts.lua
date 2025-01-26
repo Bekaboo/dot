@@ -78,7 +78,7 @@ local function spellcheck()
 
   local function set_spellcheck()
     -- Don't set spell if it was already set elsewhere
-    if vim.api.nvim_get_option_info2('spell', {}).was_set then
+    if require('utils.opt').spell:was_locally_set({ win = 0 }) then
       return
     end
     vim.opt.spell = true

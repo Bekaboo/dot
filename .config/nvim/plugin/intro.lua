@@ -172,8 +172,12 @@ vim.api.nvim_create_autocmd('UIEnter', {
     end
 
     win = vim.api.nvim_open_win(buf, false, win_config)
-    vim.wo[win].winhl = 'NormalFloat:Normal,Search:,Incsearch:'
-    vim.wo[win].spell = false
+
+    -- Using `vim.w[win]` will change global value and affect other windows
+    vim.api.nvim_win_call(win, function()
+      vim.opt_local.winhl = 'NormalFloat:Normal,Search:,Incsearch:'
+      vim.opt_local.spell = false
+    end)
     return true
   end,
 })
