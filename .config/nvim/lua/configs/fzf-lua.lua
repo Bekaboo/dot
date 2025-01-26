@@ -382,16 +382,16 @@ end
 
 ---Search symbols, fallback to treesitter nodes if no language server
 ---supporting symbol method is attached
-function fzf.symbols()
+function fzf.symbols(opts)
   if
     vim.tbl_isempty(vim.lsp.get_clients({
       bufnr = 0,
       method = 'textDocument/documentSymbol',
     }))
   then
-    return fzf.treesitter()
+    return fzf.treesitter(opts)
   end
-  return fzf.lsp_document_symbols()
+  return fzf.lsp_document_symbols(opts)
 end
 
 -- Override `vim.lsp.buf.document_symbol()` to use `fzf.symbols()`
