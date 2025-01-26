@@ -8,45 +8,64 @@ local root_patterns = {
   'setup.py',
 }
 
-lsp.start({
-  cmd = { 'efm-langserver' },
-  requires = { 'pylint' },
-  name = 'efm-linter-pylint',
-  root_patterns = root_patterns,
-  settings = {
-    languages = {
-      python = {
-        {
-          lintSource = 'pylint',
-          lintCommand = 'pylint --score=no "${INPUT}"',
-          lintFormats = { '%f:%l:%c: %t%.%#: %m' },
-          lintStdin = false,
-          lintSeverity = 2,
-          rootMarkers = root_patterns,
-        },
-      },
-    },
-  },
+local linter, formatter
+
+local ruff = lsp.start({
+  cmd = { 'ruff', 'server' },
+  root_patterns = vim.list_extend(
+    { 'ruff.toml', '.ruff.toml' },
+    root_patterns
+  ),
+  settings = {},
 })
 
--- Use efm to attach black formatter as a language server
-local formatter = lsp.start({
-  cmd = { 'efm-langserver' },
-  requires = { 'black' },
-  root_patterns = root_patterns,
-  name = 'efm-formatter-black',
-  init_options = { documentFormatting = true },
-  settings = {
-    languages = {
-      python = {
-        {
-          formatCommand = 'black --no-color -q -',
-          formatStdin = true,
+-- Prefer ruff over pylint and black as linter and formatter
+if ruff then
+  linter = ruff
+  formatter = ruff
+end
+
+linter = linter -- luacheck: ignore 311
+  or lsp.start({
+    cmd = { 'efm-langserver' },
+    requires = { 'pylint' },
+    name = 'efm-linter-pylint',
+    root_patterns = root_patterns,
+    settings = {
+      languages = {
+        python = {
+          {
+            lintSource = 'pylint',
+            lintCommand = 'pylint --score=no "${INPUT}"',
+            lintFormats = { '%f:%l:%c: %t%.%#: %m' },
+            lintStdin = false,
+            lintSeverity = 2,
+            rootMarkers = root_patterns,
+          },
         },
       },
     },
-  },
-})
+  })
+
+-- Use efm to attach black formatter as a language server
+formatter = formatter
+  or lsp.start({
+    cmd = { 'efm-langserver' },
+    requires = { 'black' },
+    root_patterns = root_patterns,
+    name = 'efm-formatter-black',
+    init_options = { documentFormatting = true },
+    settings = {
+      languages = {
+        python = {
+          {
+            formatCommand = 'black --no-color -q -',
+            formatStdin = true,
+          },
+        },
+      },
+    },
+  })
 
 ---Disable lsp formatting capabilities if efm launched successfully
 ---@type fun(client: vim.lsp.Client, bufnr: integer)?
