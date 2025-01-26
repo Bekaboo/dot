@@ -6,6 +6,7 @@ local root_patterns = {
   'requirements.txt',
   'setup.cfg',
   'setup.py',
+  'tox.ini',
 }
 
 local linter, formatter
