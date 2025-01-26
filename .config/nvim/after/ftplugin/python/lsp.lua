@@ -39,9 +39,9 @@ linter = linter -- luacheck: ignore 311
           python = {
             {
               lintSource = 'pylint',
-              lintCommand = 'pylint --score=no "${INPUT}"',
+              lintCommand = 'pylint --score=no --from-stdin "${INPUT}"',
               lintFormats = { '%f:%l:%c: %t%.%#: %m' },
-              lintStdin = false,
+              lintStdin = true,
               lintSeverity = 2,
               rootMarkers = pylint_root_patterns,
             },
