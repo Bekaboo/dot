@@ -157,8 +157,10 @@ function M.select(input)
       return
     end
     local dir_escaped = vim.fn.fnameescape(dir)
-    vim.cmd.edit(dir_escaped)
-    vim.cmd.lcd({ dir_escaped, mods = { silent = true } })
+    vim.schedule(function()
+      vim.cmd.edit(dir_escaped)
+      vim.cmd.lcd({ dir_escaped, mods = { silent = true } })
+    end)
   end
 
   local dirs = M.list(input)
@@ -167,7 +169,7 @@ function M.select(input)
 
   -- Fallback to `vim.ui.select()` if fzf-lua is not installed
   if not has_fzf then
-    vim.ui.select(dirs, { prompt = prompt }, vim.schedule_wrap(open_dir))
+    vim.ui.select(dirs, { prompt = prompt }, open_dir)
     return
   end
 
