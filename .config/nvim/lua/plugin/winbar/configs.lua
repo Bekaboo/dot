@@ -229,6 +229,7 @@ M.opts = {
   menu = {
     -- When on, preview the symbol in the source window
     preview = true,
+    hover = true,
     -- When on, set the cursor to the closest clickable component
     -- on CursorMoved
     quick_navigation = true,
@@ -286,7 +287,9 @@ M.opts = {
           return
         end
         local mouse = vim.fn.getmousepos()
-        utils.menu.update_hover_hl(mouse)
+        if M.opts.menu.hover then
+          utils.menu.update_hover_hl(mouse)
+        end
         if M.opts.menu.preview then
           utils.menu.update_preview(mouse)
         end
