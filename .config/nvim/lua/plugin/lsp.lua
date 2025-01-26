@@ -1503,7 +1503,7 @@ end
 
 ---Set up diagnostic signs and virtual text
 ---@return nil
-local function setup_diagnostic()
+local function setup_diagnostic_configs()
   local icons = utils.static.icons
   vim.diagnostic.config({
     virtual_text = {
@@ -1527,6 +1527,72 @@ local function setup_diagnostic()
   })
 end
 
+---Setup diagnostic handlers overrides
+local function setup_diagnostic_overrides()
+  ---Filter out diagnostics that overlap with diagnostics from other sources
+  ---For each diagnostic, checks if there exists another diagnostic from a different
+  ---namespace that:
+  ---
+  --- - is on the same line
+  --- - has the same start column
+  --- - has the same end column
+  --- - has the same end line
+  ---
+  ---If multiple diagnostics overlap, prefer the one with higher severity
+  ---
+  ---This helps reduce redundant diagnostics when multiple language servers
+  ---(usually a language server and a linter hooked to an lsp wrapper) report
+  ---the same issue for the same range
+  ---@param diags vim.Diagnostic[]
+  ---@return vim.Diagnostic[]
+  local function filter_overlapped(diags)
+    return vim
+      .iter(diags)
+      :filter(function(diag) ---@param diag diagnostic_t
+        ---@class diagnostic_t: vim.Diagnostic
+        ---@field _hidden boolean whether the diagnostic is shown as virtual text
+
+        diag._hidden = vim
+          .iter(vim.diagnostic.get(diag.bufnr, { lnum = diag.lnum }))
+          :any(function(d) ---@param d diagnostic_t
+            return not d._hidden
+              and d.namespace ~= diag.namespace
+              and d.severity >= diag.severity
+              and d.col == diag.col
+              and d.end_col == diag.end_col
+              and d.end_lnum == diag.end_lnum
+          end)
+
+        return not diag._hidden
+      end)
+      :totable()
+  end
+
+  ---Truncates multi-line diagnostic messages to their first line
+  ---@param diags vim.Diagnostic[]
+  ---@return vim.Diagnostic[]
+  local function truncate_multiline(diags)
+    return vim
+      .iter(diags)
+      :map(function(d) ---@param d vim.Diagnostic
+        local first_line = vim.gsplit(d.message, '\n')()
+        if not first_line or first_line == d.message then
+          return d
+        end
+        return vim.tbl_extend('keep', {
+          message = first_line,
+        }, d)
+      end)
+      :totable()
+  end
+
+  vim.diagnostic.handlers.virtual_text.show = (function(cb)
+    return function(ns, buf, diags, opts)
+      return cb(ns, buf, truncate_multiline(filter_overlapped(diags)), opts)
+    end
+  end)(vim.diagnostic.handlers.virtual_text.show)
+end
+
 ---Set up LSP and diagnostic
 ---@return nil
 local function setup()
@@ -1538,7 +1604,8 @@ local function setup()
   setup_lsp_overrides()
   setup_lsp_autoformat()
   setup_lsp_stopdetached()
-  setup_diagnostic()
+  setup_diagnostic_overrides()
+  setup_diagnostic_configs()
   setup_keymaps()
   setup_commands('Lsp', subcommands.lsp, function(name)
     return vim.lsp[name] or vim.lsp.buf[name]
