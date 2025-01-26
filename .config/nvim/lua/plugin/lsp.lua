@@ -1546,6 +1546,16 @@ local function setup_diagnostic_overrides()
   ---@param diags vim.Diagnostic[]
   ---@return vim.Diagnostic[]
   local function filter_overlapped(diags)
+    ---Diagnostics cache, indexed by buffer number and line number (0-indexed)
+    ---to avoid calling `vim.diagnostic.get()` for the same buffer and line
+    ---repeatedly
+    ---@type table<integer, table<integer, vim.Diagnostic[]>>
+    local diags_cache = vim.defaulttable(function(bufnr)
+      return vim.defaulttable(function(lnum)
+        return vim.diagnostic.get(bufnr, { lnum = lnum })
+      end)
+    end)
+
     return vim
       .iter(diags)
       :filter(function(diag) ---@param diag diagnostic_t
@@ -1553,7 +1563,7 @@ local function setup_diagnostic_overrides()
         ---@field _hidden boolean whether the diagnostic is shown as virtual text
 
         diag._hidden = vim
-          .iter(vim.diagnostic.get(diag.bufnr, { lnum = diag.lnum }))
+          .iter(diags_cache[diag.bufnr][diag.lnum])
           :any(function(d) ---@param d diagnostic_t
             return not d._hidden
               and d.namespace ~= diag.namespace
