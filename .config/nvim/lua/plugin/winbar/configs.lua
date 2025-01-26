@@ -170,10 +170,7 @@ M.opts = {
         and ft ~= 'help'
         and ft ~= 'diff'
         and not vim.startswith(ft, 'git')
-        and not vim.api.nvim_get_option_info2('winbar', {
-          win = win,
-          scope = 'local',
-        }).was_set
+        and not utils.opt.winbar:was_locally_set({ win = 0 })
         and (
           ft == 'markdown'
           or utils.ts.is_active(buf)
