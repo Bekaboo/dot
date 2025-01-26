@@ -26,16 +26,22 @@ local function argesc(args)
     return ''
   end
 
-  -- HACK: if the last element is a full path, only use it instead of all arguments
-  -- as arguments for `z` command
+  -- HACK: if the last element is a directory, only use it instead of all
+  -- arguments as arguments for `z` command
   -- This is because nvim completion only works for single word and when multiple
   -- args are given to `:Z`, e.g. `:Z foo bar`, hitting tab will complete it as
   -- `:Z foo /foo/bar/baz`, assuming `/foo/bar/baz` is in z's database
   -- Without this trick 'foo /foo/bar/baz' will be passed to `z -e` shell command
   -- to get the best matching path, which is of course empty
   local last_arg = args[#args]
-  if last_arg and require('utils.fs').is_full_path(last_arg) then
-    return vim.fn.shellescape(last_arg)
+  if last_arg and vim.fn.isdirectory(last_arg) == 1 then
+    -- `last_arg` can be a relative path and may contain chars like '~' which
+    -- is not recognized by `z`, so first convert it to absolute path
+    -- Also need to trim trailing slashes using `vim.fs.normalize()` to make
+    -- `z -e` happy
+    return vim.fn.shellescape(
+      vim.fs.normalize(vim.fn.fnamemodify(last_arg, ':p'))
+    )
   end
 
   return table.concat(
@@ -138,7 +144,7 @@ function M.list(input)
   for _, candidate in ipairs(output) do
     local path = candidate:match('^[0-9.]+%s+(.*)') -- trim score
     if path then
-      table.insert(paths, path)
+      table.insert(paths, vim.fn.fnamemodify(path, ':~:.'))
     end
   end
   return paths
@@ -179,6 +185,7 @@ function M.select(input)
       fzf.fzf_exec(
         dirs,
         vim.tbl_deep_extend('force', {
+          cwd = vim.fn.getcwd(0),
           prompt = prompt,
           actions = {
             ['enter'] = {
