@@ -490,23 +490,23 @@ and it should work out of the box.
 
 ### Showcases
 
-- File manager using [oil.nvim](https://github.com/stevearc/oil.nvim)
+- File manager using [oil.nvim](https://github.com/stevearc/oil.nvim)<br>
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/26bb146f-7637-4f68-acd7-baecc08f1eaf" width=75%>
 
-- DAP support powered by [nvim-dap](https://github.com/mfussenegger/nvim-dap) and [nvim-dap-ui](https://github.com/rcarriga/nvim-dap-ui)
+- DAP support powered by [nvim-dap](https://github.com/mfussenegger/nvim-dap) and [nvim-dap-ui](https://github.com/rcarriga/nvim-dap-ui)<br>
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/f6c7e6ce-283b-43d7-8bc3-e8b24513a03b" width=75%>
 
-- Jupyter Notebook integration using [jupytext](lua/plugin/jupytext.lua) and [molten-nvim](https://github.com/benlubas/molten-nvim)
+- Jupyter Notebook integration using [jupytext](lua/plugin/jupytext.lua) and [molten-nvim](https://github.com/benlubas/molten-nvim)<br>
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/ce212348-8b89-4a03-a222-ab74f0338a7d" width=75%>
 
-- Winbar with IDE-like drop-down menus using [dropbar.nvim](https://github.com/Bekaboo/dropbar.nvim)
+- Winbar with IDE-like drop-down menus using [dropbar.nvim](https://github.com/Bekaboo/dropbar.nvim)<br>
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/247401a9-6127-4d73-bb21-ceb847d8f7b9" width=75%>
 
-- LSP hover & completion thanks to neovim builtin LSP client and [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
+- LSP hover & completion thanks to neovim builtin LSP client and [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)<br>
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/13589137-b5c7-4104-810c-f8cdc56f9d1b" width=75%>
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/60c5b599-4191-494d-ad83-1ca7a84eab17" width=75%>
 
-- Git integration: [fugitive](https://github.com/tpope/vim-fugitive) and [gitsigns.nvim](https://github.com/tpope/vim-fugitive)
+- Git integration: [fugitive](https://github.com/tpope/vim-fugitive) and [gitsigns.nvim](https://github.com/tpope/vim-fugitive)<br>
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/a5e0a41d-4e85-4bfc-a39d-cc7b76abedcf" width=75%>
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/73da4ee1-8f6c-440a-9eb9-0bcf3bc8e3ea" width=75%>
 
