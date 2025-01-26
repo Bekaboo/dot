@@ -1,21 +1,21 @@
 local lsp = require('utils.lsp')
 
-local efm = vim.fn.executable('shfmt') == 1
-  and lsp.start({
-    cmd = { 'efm-langserver' },
-    name = 'efm-formatter-shfmt',
-    init_options = { documentFormatting = true },
-    settings = {
-      languages = {
-        sh = {
-          {
-            formatCommand = 'shfmt --filename ${INPUT} -',
-            formatStdin = true,
-          },
+local efm = lsp.start({
+  cmd = { 'efm-langserver' },
+  requires = { 'shfmt' },
+  name = 'efm-formatter-shfmt',
+  init_options = { documentFormatting = true },
+  settings = {
+    languages = {
+      sh = {
+        {
+          formatCommand = 'shfmt --filename ${INPUT} -',
+          formatStdin = true,
         },
       },
     },
-  })
+  },
+})
 
 lsp.start({
   cmd = { 'bash-language-server', 'start' },

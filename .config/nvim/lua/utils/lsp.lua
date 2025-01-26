@@ -30,6 +30,7 @@ M.default_config = {
 ---@field flags? table
 ---@field root_dir? string
 ---@field root_patterns? string[]
+---@field requires? string[] additional executables required to start the language server
 
 ---Wrapper of `vim.lsp.start()`, starts and attaches LSP client for
 ---the current buffer
@@ -43,7 +44,12 @@ function M.start(config, opts)
 
   local cmd_type = type(config.cmd)
   local cmd_exec = cmd_type == 'table' and config.cmd[1]
-  if cmd_type == 'table' and vim.fn.executable(cmd_exec or '') == 0 then
+  if
+    cmd_type == 'table' and vim.fn.executable(cmd_exec or '') == 0
+    or vim.iter(config.requires or {}):any(function(e)
+      return vim.fn.executable(e) == 0
+    end)
+  then
     return
   end
 
