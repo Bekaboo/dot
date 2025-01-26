@@ -819,7 +819,7 @@ local subcommands = {
     inlay_hint_toggle = {
       fn_override = function(args)
         vim.lsp.inlay_hint.enable(
-          not vim.lsp.inlay_hint.is_enabled(),
+          not vim.lsp.inlay_hint.is_enabled(args.filter),
           args.filter
         )
       end,
