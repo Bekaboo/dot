@@ -27,26 +27,29 @@ if ruff then
 end
 
 linter = linter -- luacheck: ignore 311
-  or lsp.start({
-    cmd = { 'efm-langserver' },
-    requires = { 'pylint' },
-    name = 'efm-linter-pylint',
-    root_patterns = root_patterns,
-    settings = {
-      languages = {
-        python = {
-          {
-            lintSource = 'pylint',
-            lintCommand = 'pylint --score=no "${INPUT}"',
-            lintFormats = { '%f:%l:%c: %t%.%#: %m' },
-            lintStdin = false,
-            lintSeverity = 2,
-            rootMarkers = root_patterns,
+  or (function()
+    local pylint_root_patterns = vim.list_extend({ 'pylintrc' }, root_patterns)
+    return lsp.start({
+      cmd = { 'efm-langserver' },
+      requires = { 'pylint' },
+      name = 'efm-linter-pylint',
+      root_patterns = pylint_root_patterns,
+      settings = {
+        languages = {
+          python = {
+            {
+              lintSource = 'pylint',
+              lintCommand = 'pylint --score=no "${INPUT}"',
+              lintFormats = { '%f:%l:%c: %t%.%#: %m' },
+              lintStdin = false,
+              lintSeverity = 2,
+              rootMarkers = pylint_root_patterns,
+            },
           },
         },
       },
-    },
-  })
+    })
+  end)()
 
 linter = linter -- luacheck: ignore 311
   or (function()
