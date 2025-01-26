@@ -151,18 +151,44 @@ function M.select(input)
     return
   end
 
-  local paths = M.list(input)
-  vim.ui.select(
-    paths,
-    { prompt = 'Change cwd to: ' },
-    vim.schedule_wrap(function(choice)
-      if choice then
-        local path_escaped = vim.fn.fnameescape(choice)
-        vim.cmd.edit(path_escaped)
-        vim.cmd.lcd({ path_escaped, mods = { silent = true } })
-      end
-    end)
-  )
+  ---@param dir string?
+  local function open_dir(dir)
+    if not dir then
+      return
+    end
+    local dir_escaped = vim.fn.fnameescape(dir)
+    vim.cmd.edit(dir_escaped)
+    vim.cmd.lcd({ dir_escaped, mods = { silent = true } })
+  end
+
+  local dirs = M.list(input)
+  local prompt = 'Open directory: '
+  local has_fzf, fzf = pcall(require, 'fzf-lua')
+
+  -- Fallback to `vim.ui.select()` if fzf-lua is not installed
+  if not has_fzf then
+    vim.ui.select(dirs, { prompt = prompt }, vim.schedule_wrap(open_dir))
+    return
+  end
+
+  -- Register as an fzf picker
+  fzf.z = fzf.z
+    or function(opts)
+      fzf.fzf_exec(
+        dirs,
+        vim.tbl_deep_extend('force', {
+          prompt = prompt,
+          actions = {
+            ['enter'] = {
+              fn = function(selection)
+                open_dir(unpack(selection))
+              end,
+            },
+          },
+        }, opts)
+      )
+    end
+  fzf.z()
 end
 
 ---Setup `:Z` command
