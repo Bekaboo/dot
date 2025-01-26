@@ -199,12 +199,12 @@ function M.setup()
   vim.g.loaded_z = true
 
   vim.api.nvim_create_user_command('Z', cmd(M.z), {
-    desc = 'Change and edit local working directory using z.',
+    desc = 'Open a directory from z.',
     complete = cmp('Z'),
     nargs = '*',
   })
   vim.api.nvim_create_user_command('ZSelect', cmd(M.select), {
-    desc = 'Pick from z directories with `vim.ui.select()`.',
+    desc = 'Open a directory from z interactively.',
     complete = cmp('ZSelect'),
     nargs = '*',
   })
