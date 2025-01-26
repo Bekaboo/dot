@@ -112,8 +112,14 @@ vim.api.nvim_create_autocmd('Syntax', {
 })
 
 local function set_default_hlgroups()
-  vim.api.nvim_set_hl(0, 'CodeBlock', { link = 'CursorLine', default = true })
-  vim.api.nvim_set_hl(0, 'Dash', { link = 'LineNr', default = true })
+  local hl = require('utils.hl')
+  hl.set_default(0, 'CodeBlock', { link = 'CursorLine' })
+  hl.set_default(0, 'Dash', { link = 'LineNr' })
+  hl.set(0, 'markdownCode', { bg = 'CodeBlock' })
+  hl.set(0, 'markdownCodeDelimiter', { bg = 'CodeBlock' })
+  -- Custom markdown syntax hl
+  hl.set(0, 'mkdCode', { bg = 'CodeBlock' })
+  hl.set(0, 'mkdCodeDelimiter', { bg = 'CodeBlock' })
 end
 
 set_default_hlgroups()
