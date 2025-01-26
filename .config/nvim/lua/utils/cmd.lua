@@ -19,9 +19,9 @@ function M.parse_cmdline_args(fargs)
   local parsed = {}
   -- First pass: parse arguments into a plain table
   for _, arg in ipairs(fargs) do
-    local key, val = arg:match('^%-%-(%S+)=(.*)$')
+    local key, val = arg:match('^%+%+(%S+)=(.*)$')
     if not key then
-      key = arg:match('^%-%-(%S+)$')
+      key = arg:match('^%+%+(%S+)$')
     end
     local val_expanded = vim.fn.expand(val)
     if type(val) == 'string' and vim.uv.fs_stat(val_expanded) then
@@ -83,7 +83,7 @@ function M.complete_opts(opts)
     if not opts or vim.tbl_isempty(opts) then
       return {}
     end
-    local optkey, eq, optval = arglead:match('^%-%-([^%s=]+)(=?)([^%s=]*)$')
+    local optkey, eq, optval = arglead:match('^%+%+([^%s=]+)(=?)([^%s=]*)$')
     -- Complete option values
     if optkey and eq == '=' then
       local candidate_vals = vim.tbl_map(
@@ -95,7 +95,7 @@ function M.complete_opts(opts)
       return candidate_vals
           and vim.tbl_map(
             function(val)
-              return '--' .. optkey .. '=' .. val
+              return '++' .. optkey .. '=' .. val
             end,
             vim.tbl_filter(function(val)
               return val:find(optval, 1, true) == 1
@@ -109,7 +109,7 @@ function M.complete_opts(opts)
         return compl:find(arglead, 1, true) == 1
       end,
       vim.tbl_map(function(k)
-        return '--' .. k
+        return '++' .. k
       end, M.optkeys(opts))
     )
   end
