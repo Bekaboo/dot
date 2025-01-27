@@ -96,6 +96,31 @@ formatter = formatter
     },
   })
 
+-- Neither black or ruff(*) sort imports on format, so...
+-- * Technically ruff can sort imports using the code action
+-- `source.organizeImports.ruff` but it is not considered as a format operation
+-- and will not run on `vim.lsp.buf.format()`, see
+-- https://github.com/astral-sh/ruff/issues/8926#issuecomment-1834048218
+local isort_root_patterns = vim.list_extend({ '.isort.cfg' }, root_patterns)
+lsp.start({
+  cmd = { 'efm-langserver' },
+  requires = { 'isort' },
+  root_patterns = isort_root_patterns,
+  name = 'efm-formatter-isort',
+  init_options = { documentFormatting = true },
+  settings = {
+    languages = {
+      python = {
+        {
+          formatCommand = 'isort --quiet -',
+          formatStdin = true,
+          rootMarkers = isort_root_patterns,
+        },
+      },
+    },
+  },
+})
+
 ---Disable lsp formatting capabilities if efm launched successfully
 ---@type fun(client: vim.lsp.Client, bufnr: integer)?
 local disable_formatting
