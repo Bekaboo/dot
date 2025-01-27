@@ -15,7 +15,6 @@ M.snippets = {
       { trig = 'fn' },
       { trig = 'fun' },
       { trig = 'func' },
-      { trig = 'function' },
       common = {
         desc = 'Function definition/declaration',
         priority = 1001, -- prioritize over function snippets imported from c

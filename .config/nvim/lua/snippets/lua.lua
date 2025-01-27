@@ -80,7 +80,6 @@ M.snippets = {
     { trig = 'lfn' },
     { trig = 'lfun' },
     { trig = 'lfunc' },
-    { trig = 'lfunction' },
   }, {
     t('local function '),
     i(1, 'func'),
@@ -94,7 +93,6 @@ M.snippets = {
     { trig = 'fn' },
     { trig = 'fun' },
     { trig = 'func' },
-    { trig = 'function' },
   }, {
     d(1, function()
       if
@@ -106,8 +104,6 @@ M.snippets = {
           'table_constructor', -- unnamed function in list
           'binary_expression', -- <expression> and function() ... end
           'parenthesized_expression', -- (function() ... end)()
-          'function_declaration', -- 'function' as trigger
-          'ERROR', -- using 'function' as trigger in `val = function...`
         }, { ignore_injections = false })
       then
         -- Unnamed function
@@ -134,7 +130,6 @@ M.snippets = {
       { trig = 'ifn' },
       { trig = 'ifun' },
       { trig = 'ifunc' },
-      { trig = 'ifunction' },
       common = { desc = 'Immediate function evaluation' },
     },
     un.fmtad(
@@ -353,11 +348,8 @@ M.snippets = {
     i(1),
     t(')'),
   }),
-  us.msn(
-    {
-      { trig = 'pck' },
-      { trig = 'pcheck' },
-    },
+  us.sn(
+    { trig = 'pck' },
     un.fmtad('print(<q><v_esc>: <q> .. <inspect>(<v>)<e>)', {
       q = un.qt(),
       v = i(1),
@@ -383,11 +375,7 @@ M.snippets = {
     })
   ),
   us.msn(
-    {
-      common = { priority = 999 },
-      { trig = 'ck' },
-      { trig = 'check' },
-    },
+    { trig = 'ck', priority = 999 },
     un.fmtad('<q><v_esc>: <q> .. <inspect>(<v>)', {
       q = un.qt(),
       v = i(1),
@@ -411,11 +399,8 @@ M.snippets = {
       end, { 1 }),
     })
   ),
-  us.msnr(
-    {
-      { trig = '(%S*)(%s*)%.%.%s*ck' },
-      { trig = '(%S*)(%s*)%.%.%s*check' },
-    },
+  us.snr(
+    { trig = '(%S*)(%s*)%.%.%s*ck' },
     un.fmtad('<spc>.. <q>, <v_esc>: <q> .. <inspect>(<v>)', {
       spc = f(function(_, snip, _)
         return snip.captures[1] == '' and snip.captures[2]

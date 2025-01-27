@@ -141,8 +141,8 @@ M.snippets = {
   us.msn(
     {
       { trig = 'fn' },
+      { trig = 'fun' },
       { trig = 'func' },
-      { trig = 'function' },
       common = { desc = 'Function definition' },
     },
     un.fmtad(
@@ -272,8 +272,6 @@ M.snippets = {
     {
       { trig = 'pck' },
       { trig = 'eck' },
-      { trig = 'pcheck' },
-      { trig = 'echeck' },
       common = { desc = 'Debug check expression value' },
     },
     un.fmtad([[echo '<v_esc>:' <v>]], {
@@ -284,14 +282,11 @@ M.snippets = {
       end, { 1 }),
     })
   ),
-  us.msn(
+  us.sn(
     {
-      { trig = 'ck' },
-      { trig = 'check' },
-      common = {
-        priority = 999,
-        desc = 'Debug check expression value (cont.)',
-      },
+      trig = 'ck',
+      priority = 999,
+      desc = 'Debug check expression value (cont.)',
     },
     un.fmtad([['<v_esc>:' <v>]], {
       v = i(1, '"$var"'),
@@ -335,7 +330,7 @@ M.snippets = {
   us.msn(
     {
       { trig = 'go' },
-      { trig = 'getopts' },
+      { trig = 'geto' },
       common = { desc = 'getopts option parsing' },
     },
     un.fmtad(
@@ -361,9 +356,9 @@ M.snippets = {
     un.fmtad('trap <cmd> <sig>', {
       cmd = i(1, 'cleanup'),
       sig = c(2, {
-        t('EXIT'),
-        t('SIGINT SIGTERM'),
-        t('ERR'),
+        i(nil, 'EXIT'),
+        i(nil, 'SIGINT SIGTERM'),
+        i(nil, 'ERR'),
       }),
     })
   ),

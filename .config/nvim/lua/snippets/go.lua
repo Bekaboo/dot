@@ -132,11 +132,10 @@ M.snippets = {
       expr = i(1),
     })
   ),
-  us.msn(
+  us.sn(
     {
-      { trig = 'ck' },
-      { trig = 'check' },
-      common = { desc = 'Check a value of a variable' },
+      trig = 'ck',
+      desc = 'Check a value of a variable',
     },
     un.fmtad('"<expr_escaped>:", <expr>', {
       expr = i(1),
@@ -145,11 +144,10 @@ M.snippets = {
       end, { 1 }),
     })
   ),
-  us.msn(
+  us.sn(
     {
-      { trig = 'pck' },
-      { trig = 'pcheck' },
-      common = { desc = 'Check a value of a variable through fmt.Println()' },
+      trig = 'pck',
+      desc = 'Check a value of a variable through fmt.Println()',
     },
     un.fmtad('fmt.Println("<expr_escaped>:", <expr>)', {
       expr = i(1),
@@ -567,7 +565,6 @@ M.snippets = {
       { trig = 'fn' },
       { trig = 'fun' },
       { trig = 'func' },
-      { trig = 'function' },
       { trig = 'def' },
       common = { desc = 'Function definition' },
     },

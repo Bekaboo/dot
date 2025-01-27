@@ -127,7 +127,6 @@ M.snippets = {
     {
       { trig = 'fn' },
       { trig = 'func' },
-      { trig = 'function' },
       common = { desc = 'Function definition' },
     },
     un.fmtad(
@@ -226,8 +225,6 @@ M.snippets = {
     {
       { trig = 'pck' },
       { trig = 'eck' },
-      { trig = 'pcheck' },
-      { trig = 'echeck' },
       common = { desc = 'Debug check expression value' },
     },
     un.fmtad([[echo '<v_esc>:' <v>]], {
@@ -238,14 +235,11 @@ M.snippets = {
       end, { 1 }),
     })
   ),
-  us.msn(
+  us.sn(
     {
-      { trig = 'ck' },
-      { trig = 'check' },
-      common = {
-        priority = 999,
-        desc = 'Debug check expression value (cont.)',
-      },
+      trig = 'ck',
+      priority = 999,
+      desc = 'Debug check expression value (cont.)',
     },
     un.fmtad([['<v_esc>:' <v>]], {
       v = i(1, '"$var"'),
