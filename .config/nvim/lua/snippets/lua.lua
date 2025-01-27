@@ -3,7 +3,6 @@ local u = require('utils')
 local un = require('utils.snippets.nodes')
 local uf = require('utils.snippets.funcs')
 local us = require('utils.snippets.snips')
-local uc = require('utils.snippets.conds')
 local ls = require('luasnip')
 local sn = ls.snippet_node
 local t = ls.text_node
@@ -96,7 +95,7 @@ M.snippets = {
   }, {
     d(1, function()
       if
-        uc.in_tsnode({
+        u.ts.in_node({
           'field', --- { function() ... end, ... }
           'arguments', -- foo(function() ... end, ...)
           'assignment', -- val = function() ... end
