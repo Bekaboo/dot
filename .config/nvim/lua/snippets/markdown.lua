@@ -38,8 +38,8 @@ M.snippets = {
           or #word_lower_trimmed >= 3
             and not _G._title_lowercase_words[word_lower_trimmed]
         )
-            and word_lower:gsub('^%l', string.upper)
-          or word_lower
+            and word:gsub('^%l', string.upper)
+          or word
       end
       return sn(nil, i(1, table.concat(title_words)))
     end),
