@@ -17,7 +17,6 @@ local ruff = lsp.start({
     { 'ruff.toml', '.ruff.toml' },
     root_patterns
   ),
-  settings = {},
 })
 
 -- Prefer ruff over pylint and black as linter and formatter
