@@ -121,7 +121,6 @@ local function range_convert(range)
 end
 
 ---Check if range1 contains range2
----If range1 == range2, return true
 ---@param range1 integer[][] 0-based range
 ---@param range2 integer[][] 0-based range
 ---@return boolean
@@ -359,6 +358,7 @@ cmp.setup({
           fallback()
           return
         end
+
         local tabout_dest = tabout.get_jump_pos(1)
         local snip_range = (function()
           local buf = vim.api.nvim_get_current_buf()
@@ -372,12 +372,34 @@ cmp.setup({
           return snip_node_has_length(node) and { node:get_buf_position() }
             or parent and { parent:get_buf_position() }
         end)()
+
+        -- If tabout destination is inside current snippet node, use `tabout.jump()`
+        -- to jump inside current node without leaving it
+        -- We can use `snip.jump()` once we reach the boundary of current
+        -- snippet node
+        -- |<------ current node range ----->|
+        -- |.... ) .... ] ............ } ....|
+        --        1      2              3      (tabout jump positions)
         if
           tabout_dest
           and snip_range
           and in_range(snip_range, tabout_dest)
         then
-          tabout.jump(1)
+          local snip_dest = (function()
+            local dest = snip.jump_destination(1):get_buf_position()
+            return { dest[1] + 1, dest[2] } -- convert to (1,0) index
+          end)()
+          -- In cases where tabout jump destination is the same as snippet jump
+          -- destination, use `snip.jump()` to clear the snippet jump point
+          -- |<------ current node range ----->|
+          -- |........... ] ...................|
+          --               1                     (tabout jump position)
+          --               1                     (snippet jump position)
+          if vim.deep_equal(tabout_dest, snip_dest) then
+            snip.jump(1)
+          else
+            tabout.jump(1)
+          end
         else
           snip.jump(1)
         end
