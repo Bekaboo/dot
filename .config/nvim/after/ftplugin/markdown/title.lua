@@ -67,8 +67,7 @@ local function format_title()
   end
 
   local is_first = line:match('^#+%s+([%w_]+)$') == word
-  local should_upper = is_first
-    or not (_G._title_lowercase_words[word:lower()] or #word < 3)
+  local should_upper = is_first or not _G._title_lowercase_words[word:lower()]
 
   if should_upper then
     local word_upper = word:sub(1, 1):upper() .. word:sub(2)

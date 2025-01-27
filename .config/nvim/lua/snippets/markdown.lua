@@ -31,12 +31,9 @@ M.snippets = {
         vim.fn.fnamemodify(fname, ':t:r'):gsub('^%d*_*', ''):gsub('_', ' ')
       local title_words = vim.fn.split(title, '\\W\\zs', 0)
       for idx, word in ipairs(title_words) do
-        local word_lower = word:lower()
-        local word_lower_trimmed = vim.trim(word_lower)
         title_words[idx] = (
           idx == 1 -- first word should always be capitalized
-          or #word_lower_trimmed >= 3
-            and not _G._title_lowercase_words[word_lower_trimmed]
+          or not _G._title_lowercase_words[vim.trim(word:lower())]
         )
             and word:gsub('^%l', string.upper)
           or word
