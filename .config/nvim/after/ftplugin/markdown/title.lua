@@ -67,7 +67,8 @@ local function format_title()
   end
 
   local is_first = line:match('^#+%s+([%w_]+)$') == word
-  local should_upper = is_first or not _G._title_lowercase_words[word:lower()]
+  local word_lower = word:lower()
+  local should_upper = is_first or not _G._title_lowercase_words[word_lower]
 
   if should_upper then
     local word_upper = word:sub(1, 1):upper() .. word:sub(2)
@@ -81,6 +82,21 @@ local function format_title()
         { word_upper }
       )
     end
+  elseif word ~= word_lower then
+    -- Replace the word before cursor when it should be all lower-cased but not
+    -- This can happen after we finished typing a word in the lower-cased words
+    -- list, e.g. 'is': after typing 'i', the word captured is 'i' which is not
+    -- in the list and is capitalized (assuming it is not the first word in the
+    -- title); then we type 's', the word captured is 'Is' which is in the list
+    -- but not lower-cased, we need to fix this by replacing 'Is' with 'is'
+    vim.api.nvim_buf_set_text(
+      0,
+      cursor[1] - 1,
+      cursor[2] - #word,
+      cursor[1] - 1,
+      cursor[2],
+      { word_lower }
+    )
   end
 end
 
