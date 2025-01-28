@@ -261,10 +261,7 @@ return {
 
   {
     'stevearc/quicker.nvim',
-    lazy = true,
-    init = function()
-      vim.opt.qftf = [[v:lua.require'quicker.display'.quickfixtextfunc]]
-    end,
+    event = 'VeryLazy',
     config = function()
       require('configs.quicker')
     end,
