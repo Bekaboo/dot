@@ -27,7 +27,7 @@ vim.api.nvim_create_autocmd('FileType', {
     local buf = info.buf
     if vim.bo[buf].ma and utils.ts.is_active(buf) then
       -- Enable completion only, disable diagnostics
-      ot.activate({ 'python', 'bash', 'lua' }, true, false)
+      ot.activate(nil, nil, false)
     end
   end,
 })
