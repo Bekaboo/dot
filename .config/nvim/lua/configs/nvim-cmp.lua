@@ -173,10 +173,11 @@ local function jump_to_closer(snip_dest, tabout_dest, direction)
   if not dest then
     return false
   end
-  if vim.deep_equal(dest, tabout_dest) then
-    tabout.jump(direction)
-  else
+  -- Prefer snippet jump to break ties
+  if vim.deep_equal(dest, snip_dest) then
     snip.jump(direction)
+  else
+    tabout.jump(direction)
   end
   return true
 end
@@ -373,6 +374,16 @@ cmp.setup({
             or parent and { parent:get_buf_position() }
         end)()
 
+        -- Don't tabout if it jumps out current snippet range
+        if
+          not tabout_dest
+          or not snip_range
+          or not in_range(snip_range, tabout_dest)
+        then
+          snip.jump(1)
+          return
+        end
+
         -- If tabout destination is inside current snippet node, use `tabout.jump()`
         -- to jump inside current node without leaving it
         -- We can use `snip.jump()` once we reach the boundary of current
@@ -380,29 +391,14 @@ cmp.setup({
         -- |<------ current node range ----->|
         -- |.... ) .... ] ............ } ....|
         --        1      2              3      (tabout jump positions)
-        if
-          tabout_dest
-          and snip_range
-          and in_range(snip_range, tabout_dest)
-        then
-          local snip_dest = (function()
-            local dest = snip.jump_destination(1):get_buf_position()
-            return { dest[1] + 1, dest[2] } -- convert to (1,0) index
-          end)()
-          -- In cases where tabout jump destination is the same as snippet jump
-          -- destination, use `snip.jump()` to clear the snippet jump point
-          -- |<------ current node range ----->|
-          -- |........... ] ...................|
-          --               1                     (tabout jump position)
-          --               1                     (snippet jump position)
-          if vim.deep_equal(tabout_dest, snip_dest) then
-            snip.jump(1)
-          else
-            tabout.jump(1)
-          end
-        else
-          snip.jump(1)
-        end
+        local snip_dest = (function()
+          local dest = snip.jump_destination(1):get_buf_position()
+          return { dest[1] + 1, dest[2] } -- convert to (1,0) index
+        end)()
+
+        -- Jump to tabout or snippet destination depending on their distance
+        -- from cursor, prefer snippet jump to break ties
+        jump_to_closer(snip_dest, tabout_dest, 1)
       end,
     },
     ['<C-p>'] = {
