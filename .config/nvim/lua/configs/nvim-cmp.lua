@@ -47,12 +47,10 @@ local snip = setmetatable({}, {
         return vim.snippet.active({ direction = direction or 1 })
       end
       self.jump = vim.snippet.jump
-      -- stylua: ignore start
-      self.jump_destination = function(_) return nil end
-      self.expandable = function() return false end
-      self.choice_active = function() return false end
-      self.change_choice = function(_) end
-      -- stylua: ignore off
+      self.jump_destination = function() end
+      self.expandable = function() end
+      self.choice_active = function() end
+      self.change_choice = function() end
     end
     return rawget(self, key)
   end,
