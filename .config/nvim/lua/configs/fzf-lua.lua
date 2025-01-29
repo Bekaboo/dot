@@ -540,6 +540,7 @@ fzf.setup({
   keymap = {
     -- Overrides default completion completely
     builtin = {
+      ['<C-_>'] = 'toggle-help',
       ['<F1>'] = 'toggle-help',
       ['<F2>'] = 'toggle-fullscreen',
     },
