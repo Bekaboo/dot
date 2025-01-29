@@ -3,8 +3,9 @@ local icons = require('utils.static.icons')
 local adapter = (function()
   for _, backend in ipairs({
     'anthropic',
-    'huggingface',
     'azure_openai',
+    'deepseek',
+    'huggingface',
     'openai',
     'gemini',
     'xai',
