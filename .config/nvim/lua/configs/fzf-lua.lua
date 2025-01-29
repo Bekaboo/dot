@@ -572,7 +572,7 @@ fzf.setup({
     },
   },
   defaults = {
-    headers = { 'actions' },
+    headers = false,
     actions = {
       ['ctrl-]'] = actions.switch_provider,
     },
