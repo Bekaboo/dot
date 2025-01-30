@@ -51,7 +51,9 @@ When given a programming task:
 - You must only give one XML code block for each conversation turn when you are
   asked to make changes to the code. Never return multiple XML code blocks in
   one reply.
-- You must include buffer number in XML code blocks when modify buffers.
+- You must include a buffer number in XML code blocks when modify buffers.
+- You must not include a buffer number in normal code blocks when not modifing
+  buffers.
 - Avoid line numbers in code blocks.
 - Never incldue comments in code blocks unless asked to do so.
 - Never add comments to existing code unless you are changing the code or asked
