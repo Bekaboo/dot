@@ -31,6 +31,7 @@ M.default_config = {
 ---@field root_dir? string
 ---@field root_patterns? string[]
 ---@field requires? string[] additional executables required to start the language server
+---@field buf_support? boolean whether the language server works on buffers without corresponding files
 
 ---Wrapper of `vim.lsp.start()`, starts and attaches LSP client for
 ---the current buffer
@@ -55,6 +56,10 @@ function M.start(config, opts)
 
   local name = cmd_exec
   local bufname = vim.api.nvim_buf_get_name(0)
+
+  if config.buf_support == false and not vim.uv.fs_stat(bufname) then
+    return
+  end
 
   ---Check if a directory is valid, return it if so, else return nil
   ---@param dir string?

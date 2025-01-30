@@ -13,6 +13,7 @@ local linter, formatter
 
 local ruff = lsp.start({
   cmd = { 'ruff', 'server' },
+  buf_support = false,
   root_patterns = vim.list_extend(
     { 'ruff.toml', '.ruff.toml' },
     root_patterns
