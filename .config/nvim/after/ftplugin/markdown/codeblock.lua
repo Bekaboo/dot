@@ -120,6 +120,8 @@ local function set_default_hlgroups()
   -- Custom markdown syntax hl
   hl.set(0, 'mkdCode', { bg = 'CodeBlock' })
   hl.set(0, 'mkdCodeDelimiter', { bg = 'CodeBlock' })
+  -- Treesitter hl
+  hl.set(0, '@markup.raw.markdown_inline', { fg = 'String', bg = 'CodeBlock' })
 end
 
 set_default_hlgroups()
