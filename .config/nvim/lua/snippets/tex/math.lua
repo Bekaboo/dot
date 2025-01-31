@@ -568,8 +568,8 @@ return {
       ]],
       {
         env = c(1, {
-          i(nil, 'align'),
           i(nil, 'align*'),
+          i(nil, 'align'),
         }),
         text = un.body(2, 1),
       }
@@ -585,8 +585,8 @@ return {
       ]],
       {
         env = c(1, {
-          i(nil, 'equation'),
           i(nil, 'equation*'),
+          i(nil, 'equation'),
         }),
         text = un.body(2, 1),
       }
