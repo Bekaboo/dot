@@ -416,7 +416,11 @@ return {
 
   us.sam({ trig = 'log' }, {
     t('\\log_{'),
-    i(1, '10'),
+    c(1, {
+      i(nil, '2'),
+      i(nil, '10'),
+      i(nil, 'e'),
+    }),
     t('}\\left('),
     i(2),
     t('\\right)'),
