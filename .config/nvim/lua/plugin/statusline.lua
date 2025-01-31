@@ -336,6 +336,10 @@ function _G._statusline.fname()
     return utils.stl.escape(fname)
   end
 
+  if vim.bo.bt == 'quickfix' then
+    return vim.w.quickfix_title or ''
+  end
+
   -- Terminal buffer, show terminal command and id
   if vim.bo.bt == 'terminal' then
     local id, cmd = bname:match('^term://.*/(%d+):(.*)')
@@ -564,7 +568,7 @@ end
 ---@type table<string, string>
 local components = {
   align        = [[%=]],
-  flag         = [[%{%&bt==#''?'':(&bt==#'help'?'%h ':(&pvw?'%w ':''))%}]],
+  flag         = [[%{%&bt==#''?'':(&bt==#'help'?'%h ':(&pvw?'%w ':(&bt==#'quickfix'?'%q ':'')))%}]],
   diag         = [[%{%v:lua._statusline.diag()%}]],
   fname        = [[%{%v:lua._statusline.fname()%} ]],
   info         = [[%{%v:lua._statusline.info()%}]],
@@ -605,6 +609,9 @@ setmetatable(_G._statusline, {
       or stl_nc
   end,
 })
+
+-- Prevent statusline from being overridden by qf ftplugin in quickfix windows
+vim.g.qf_disable_statusline = true
 
 ---Set default highlight groups for statusline components
 ---@return  nil
