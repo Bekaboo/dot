@@ -343,6 +343,7 @@ cmp.setup({
           return
         end
         cmp.complete()
+        cmp.select_prev_item()
       end,
       ['i'] = function(fallback)
         if not snip.jumpable(-1) then
@@ -375,6 +376,7 @@ cmp.setup({
           return
         end
         cmp.complete()
+        cmp.select_next_item()
       end,
       ['i'] = function(fallback)
         if snip.expandable() then
@@ -439,6 +441,7 @@ cmp.setup({
           return
         end
         cmp.complete()
+        cmp.select_prev_item()
       end,
     },
     ['<C-n>'] = {
@@ -453,6 +456,7 @@ cmp.setup({
           return
         end
         cmp.complete()
+        cmp.select_next_item()
       end,
     },
     ['<Up>'] = {
