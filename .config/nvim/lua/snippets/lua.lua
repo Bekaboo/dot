@@ -373,7 +373,7 @@ M.snippets = {
       e = i(4),
     })
   ),
-  us.msn(
+  us.sn(
     { trig = 'ck', priority = 999 },
     un.fmtad('<q><v_esc>: <q> .. <inspect>(<v>)', {
       q = un.qt(),
