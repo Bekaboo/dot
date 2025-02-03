@@ -55,7 +55,7 @@ end
 function M.in_normalzone()
   if utils.ts.is_active() then
     return not utils.ts.in_node(
-      { 'comment', 'string', 'block' },
+      { 'comment', 'string', 'fence' },
       { ignore_injections = false }
     )
   end
