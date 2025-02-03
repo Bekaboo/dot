@@ -525,7 +525,9 @@ function winbar_menu_t:make_buf()
     group = groupid,
     buffer = self.buf,
     callback = function()
-      self:close()
+      if vim.bo.ft ~= 'winbar_menu' then
+        self:close()
+      end
     end,
   })
 end
@@ -598,6 +600,8 @@ function winbar_menu_t:update_scrollbar()
       border = 'none',
       relative = 'win',
       win = self.win,
+      focusable = false,
+      noautocmd = true,
       zindex = menu_win_configs.zindex,
     }
     self.scrollbar.background = vim.api.nvim_open_win(
