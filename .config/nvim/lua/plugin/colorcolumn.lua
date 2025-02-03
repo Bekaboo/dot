@@ -91,7 +91,7 @@ local function cc_update(winid)
   -- entry from LSP server using omnifunc `<C-x><C-o>`
   ---@diagnostic disable-next-line: param-type-mismatch
   local length = vim.fn.strdisplaywidth(vim.fn.getline('.'))
-  local thresh = math.floor(0.75 * cc)
+  local thresh = math.floor(cc / 2)
   if length < thresh then
     cc_conceal(winid)
     return
