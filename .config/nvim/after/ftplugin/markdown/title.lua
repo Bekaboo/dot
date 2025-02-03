@@ -52,12 +52,7 @@ local function format_title()
 
   local cursor = vim.api.nvim_win_get_cursor(0)
   local line = vim.api.nvim_get_current_line()
-  local lnum = vim.fn.line('.')
-  if
-    not line:match('^#+%s')
-    or utils.ft.markdown.in_codeblock(lnum)
-    or utils.ft.markdown.in_codeinline(cursor)
-  then
+  if not utils.ts.in_node('heading') and not utils.syn.in_group('H%d$') then
     return
   end
 

@@ -7,15 +7,14 @@ setlocal autoindent
 setlocal indentexpr=GetMarkdownIndent()
 setlocal indentkeys=!^F,o,O,0&,<Space>
 
-function! s:in_codeblock(...) abort
-  let l:lnum = get(a:000, 0, v:lnum)
-  let l:bufnr = get(a:000, 1, bufnr('%'))
-  return luaeval(printf('require("utils.ft.markdown").in_codeblock(%d, %d)'
-        \ , l:lnum, l:bufnr))
-endfunction
-
 function! s:ts_is_active() abort
   return luaeval('require("utils.ts").is_active()')
+endfunction
+
+function! s:in_codeblock() abort
+  return s:ts_is_active()
+        \ ? luaeval(printf('require("utils.ts").in_node("fence")'))
+        \ : luaeval(printf('require("utils.syn").in_group("CodeBlock")'))
 endfunction
 
 " Find the first previous non-blank line that matches the given pattern if
@@ -56,14 +55,10 @@ function! GetMarkdownIndent() abort
 
   " Treesitter indent in insert mode is laggy, but we need it to get correct
   " indent in code blocks
-  " If the code block does not have a language, in which case we should not
+  " If the code block does not have a language, we should not use
   " nvim-treesitter's indent expr because it always return 0 (no indentation)
-  let codeblock_lang = s:in_codeblock()
-  if s:ts_is_active() &&
-        \ codeblock_lang !=# v:false &&
-        \ codeblock_lang !=# '' &&
-        \ codeblock_lang !~# 'markdown'
-    return nvim_treesitter#indent()
+  if s:in_codeblock()
+    return nvim_treesitter#indent() || l:default
   endif
 
   " Indent unordered list bullet points

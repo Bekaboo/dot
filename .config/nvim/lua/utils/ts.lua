@@ -87,10 +87,6 @@ function M.in_node(types, opts)
     return false
   end
 
-  if type(types) == 'string' then
-    types = { types }
-  end
-
   ---Check if given node type matches any of the types given in `types`
   ---@type fun(t: string): boolean?
   local check_type_match = vim.is_callable(types)
@@ -98,6 +94,9 @@ function M.in_node(types, opts)
         return types(nt)
       end
     or function(nt)
+      if type(types) == 'string' then
+        types = { types }
+      end
       return vim.iter(types):any(function(t)
         return nt:match(t)
       end)
