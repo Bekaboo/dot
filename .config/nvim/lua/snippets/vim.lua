@@ -53,10 +53,10 @@ M.snippets = {
       end, { 1 }),
     })
   ),
-  us.msn(
+  us.sn(
     {
-      common = { priority = 999 },
-      { trig = 'ck' },
+      trig = 'ck',
+      priority = 999,
     },
     un.fmtad('<q><v_esc>: <q> <v>', {
       q = un.qt(),

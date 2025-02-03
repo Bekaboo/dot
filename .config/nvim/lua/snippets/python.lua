@@ -333,7 +333,7 @@ M.snippets = {
   us.msn(
     {
       { trig = 'me' },
-      { trig = 'method' },
+      { trig = 'meth' },
       common = { desc = 'Method definition' },
     },
     un.fmtad(
@@ -348,13 +348,10 @@ M.snippets = {
       }
     )
   ),
-  us.msn(
+  us.sn(
     {
-      { trig = 'cls' },
-      { trig = 'class' },
-      { trig = 'tp' },
-      { trig = 'type' },
-      common = { desc = 'Class definition' },
+      trig = 'cls',
+      desc = 'Class definition',
     },
     un.fmtad(
       [[
@@ -454,10 +451,10 @@ M.snippets = {
       }
     )
   ),
-  us.msn(
+  us.sn(
     {
-      { trig = 'exc' },
-      common = { desc = 'except statement' },
+      trig = 'exc',
+      desc = 'except statement',
     },
     un.fmtad(
       [[

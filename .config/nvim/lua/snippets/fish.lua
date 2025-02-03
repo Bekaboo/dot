@@ -187,8 +187,6 @@ M.snippets = {
   us.msn({
     { trig = 'p' },
     { trig = 'e' },
-    { trig = 'echo' },
-    { trig = 'echo' },
     common = { desc = 'echo command' },
   }, {
     t('echo '),
@@ -249,10 +247,9 @@ M.snippets = {
       end, { 1 }),
     })
   ),
-  us.msn({
-    { trig = 'r' },
-    { trig = 'read' },
-    common = { desc = 'read input' },
+  us.sn({
+    trig = 'r',
+    desc = 'read input',
   }, {
     t('read '),
     c(1, {
@@ -282,8 +279,8 @@ M.snippets = {
   }),
   us.msn(
     {
-      { trig = 'arg' },
-      { trig = 'argparse' },
+      { trig = 'ap' },
+      { trig = 'argp' },
       common = { desc = 'argparse option parsing' },
     },
     un.fmtad(

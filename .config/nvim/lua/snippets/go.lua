@@ -640,7 +640,7 @@ M.snippets = {
   us.msn(
     {
       { trig = 'me' },
-      { trig = 'method' },
+      { trig = 'meth' },
       common = { desc = 'Method definition' },
     },
     un.fmtad(
@@ -661,11 +661,7 @@ M.snippets = {
   us.msn(
     {
       { trig = 'cls' },
-      { trig = 'class' },
-      { trig = 'tp' },
-      { trig = 'type' },
       { trig = 'st' },
-      { trig = 'struct' },
       common = { desc = 'Struct definition' },
     },
     un.fmtad(

@@ -146,7 +146,7 @@ M.snippets = {
   ),
   us.msn({
     { trig = 'me' },
-    { trig = 'method' },
+    { trig = 'meth' },
   }, {
     t('function '),
     i(1, 'class'),
@@ -294,19 +294,15 @@ M.snippets = {
   }, {
     t('return '),
   }),
-  us.msn({
-    { trig = 'p' },
-  }, {
+  us.sn({ trig = 'p' }, {
     t('print('),
     i(1),
     t(')'),
   }),
-  us.msn(
+  us.sn(
     {
-      {
-        trig = 'pl',
-        dscr = 'Print a line',
-      },
+      trig = 'pl',
+      dscr = 'Print a line',
     },
     un.fmtad('print(<q><v><q>)', {
       q = un.qt(),
