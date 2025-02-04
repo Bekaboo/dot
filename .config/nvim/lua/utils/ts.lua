@@ -51,8 +51,6 @@ function M.get_node(opts)
     return vim.treesitter.get_node(opts)
   end
 
-  opts = opts or {}
-
   -- Fix cursor position in insert mode -- if currently in insert mode,
   -- shift `pos` left by one character because we care about the node
   -- before cursor instead of under it since we are inserting text
