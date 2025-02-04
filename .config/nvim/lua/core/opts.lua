@@ -129,6 +129,7 @@ vim.opt.gcr = {
 vim.opt.diffopt:append({
   'algorithm:histogram',
   'indent-heuristic',
+  'linematch:60'
 })
 
 -- Use system clipboard
