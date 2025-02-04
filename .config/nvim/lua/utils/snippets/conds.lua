@@ -32,7 +32,10 @@ local M = setmetatable({ _ = {} }, {
 ---@return boolean
 function M.in_mathzone()
   if utils.ts.is_active() then
-    return utils.ts.in_node({ 'math' })
+    return utils.ts.in_node(
+      { 'formula', 'equation', 'math' },
+      { ignore_injections = false }
+    )
   end
 
   if vim.b.current_syntax then
