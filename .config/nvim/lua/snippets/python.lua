@@ -508,6 +508,24 @@ M.snippets = {
     un.body(1, 0),
     t({ '', '# fmt: on' }),
   }),
+  us.msn(
+    {
+      { trig = 'ds' },
+      { trig = 'docs' },
+      common = { desc = 'Docstring' },
+    },
+    un.fmtad(
+      [[
+        <q><q><q>
+        <body>
+        <q><q><q>
+      ]],
+      {
+        q = un.qt(),
+        body = un.body(1, 0),
+      }
+    )
+  ),
 }
 
 return M
