@@ -29,7 +29,7 @@ set -gx FZF_DEFAULT_OPTS "--reverse \
     --bind=alt-v:preview-half-page-up,ctrl-v:preview-half-page-down"
 
 # If supports 256 colors
-if test (tput colors 2>/dev/null) -lt 256
+if not type -q tput; or test (tput colors 2>/dev/null) -lt 256
     set -gxa FZF_DEFAULT_OPTS --no-unicode '--marker=+\ ' '--pointer=>\ '
 end
 
