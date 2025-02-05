@@ -39,6 +39,7 @@ Supported formats:
   *.rar      - rar archive
   *.tar      - tar archive
   *.zip      - zip archive
+  *.7z       - 7-zip archive
 EOF
 }
 
