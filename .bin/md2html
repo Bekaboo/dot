@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
 md2html() {
@@ -15,14 +15,19 @@ md2html() {
 
 main() {
     for file in "$@"; do
-        # Pictures in markdown cannot be fetched if
-        # we are not in the same directory.
-        cd "$(dirname "$(readlink -f "$file")")" >/dev/null 2>&1 || exit 1
-        md2html "$(basename "$file")" || {
-            echo >&2 "md2html: error: pandoc failed to convert '$file'"
+        oldpwd=$PWD
+
+        # Pictures in markdown cannot be fetched if we are not in the same
+        # directory
+        cd "$(dirname "$(realpath "$file")")" >/dev/null 2>&1 || exit 1
+
+        if ! md2html "$(basename "$file")"; then
+            echo "md2html: error: pandoc failed to convert '$file'" >&2
+            cd "$oldpwd" >/dev/null 2>&1
             exit 1
-        }
-        cd - >/dev/null 2>&1
+        fi
+
+        cd "$oldpwd" >/dev/null 2>&1
     done
 }
 

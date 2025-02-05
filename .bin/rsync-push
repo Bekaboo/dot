@@ -1,22 +1,22 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # vim:ft=sh:ts=4:sw=4:sts=4:et:
 # Automatically push files from <src> to <dest> on local file change
 
 main() {
-    if ! command -v rsync &>/dev/null ||
-        ! command -v inotifywait &>/dev/null; then
+    if ! command -v rsync >/dev/null 2>&1 ||
+        ! command -v inotifywait >/dev/null 2>&1; then
         echo 'rsync or inotifywait not found, exit'
         exit 1
     fi
 
-    local src="$1"
-    local dst="$2"
-    if [[ -z "$1" || -z "$2" ]]; then
-        echo "Usage: $(basename $0) <src> <dst>"
+    src="$1"
+    dst="$2"
+    if [ -z "$1" ] || [ -z "$2" ]; then
+        echo "Usage: $(basename "$0") <src> <dst>"
         exit 1
     fi
 
-    while inotifywait -r -e modify,create,delete,move "$src" &>/dev/null; do
+    while inotifywait -r -e modify,create,delete,move "$src" >/dev/null 2>&1; do
         echo "Detected changes, syncing $src to $dst..."
         rsync -auzvP --filter=":- $src/.gitignore" "$src" "$dst"
     done

@@ -1,15 +1,22 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
 # Convert hex color code to rgb format, receives
 # multiple hex color codes from stdin, one per line
 hex2rgb() {
-    local hex="$(</dev/stdin)"
-    local r g b
-    for hex in $hex; do
-        r=$(printf '0x%0.2s' "$hex")
-        g=$(printf '0x%0.2s' "${hex#??}")
-        b=$(printf '0x%0.2s' "${hex#????}")
+    hex=$(cat)
+    for hex_code in $hex; do
+        hex_code=${hex_code#\#}
+
+        r=${hex_code%????}
+        g=${hex_code#??}
+        g=${g%??}
+        b=${hex_code#????}
+
+        r=$(printf '%d' "0x$r")
+        g=$(printf '%d' "0x$g")
+        b=$(printf '%d' "0x$b")
+
         printf '%d,%d,%d\n' "$r" "$g" "$b"
     done
 }

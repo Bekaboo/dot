@@ -1,9 +1,9 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
 VIM_COMMAND=$(command -v nvim || command -v vim)
 ARGS="$*"
 
-[[ -z "$ARGS" ]] &&
+[ -z "$ARGS" ] &&
     $VIM_COMMAND +'Git' +'silent! only' ||
     $VIM_COMMAND +"exe escape('Git -p $ARGS', \"\\'\")" +'silent! only'

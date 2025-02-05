@@ -1,17 +1,17 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # vim:ft=sh:ts=4:sw=4:sts=4:et:
 # Fetch files from <src> to <dest> periodically
 
 main() {
-    if ! command -v rsync &>/dev/null; then
+    if ! command -v rsync >/dev/null 2>&1; then
         echo 'rsync not found, exit'
         exit 1
     fi
 
-    local src="$1"
-    local dst="$2"
-    if [[ -z "$1" || -z "$2" ]]; then
-        echo "Usage: $(basename $0) <src> <dst>"
+    src="$1"
+    dst="$2"
+    if [ -z "$1" ] || [ -z "$2" ]; then
+        echo "Usage: $(basename "$0") <src> <dst>"
         exit 1
     fi
 

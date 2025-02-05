@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
 CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
@@ -13,25 +13,25 @@ has() {
 
 # Convert a color name to capital style
 # gruvbox-material -> Gruvbox Material
-get-cap-theme-name() {
+get_cap_theme_name() {
     # $1: name of the fish theme
     if ! has awk || ! has sed; then
         return 1
     fi
-    local theme_name=$(echo "$1" |
+    theme_name=$(echo "$1" |
         sed 's/-/ /g' |
         awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2));}1')
     echo "$theme_name"
 }
 
-setcolor-alacritty() {
+setcolor_alacritty() {
     # $1: name of the colorscheme
     (
-        cd "$CONFIG_HOME/alacritty/themes"
-        local dark_theme_path="dark.toml"
-        local light_theme_path="light.toml"
+        cd "$CONFIG_HOME/alacritty/themes" || return 1
+        dark_theme_path="dark.toml"
+        light_theme_path="light.toml"
         # If $1 is empty, only need to ensure symlink to color theme files exists
-        if [[ -z "$1" ]]; then
+        if [ -z "$1" ]; then
             ln -s "$DEFAULT_COLOR-dark.toml" "$dark_theme_path" 2>/dev/null
             ln -s "$DEFAULT_COLOR-light.toml" "$light_theme_path" 2>/dev/null
         else
@@ -41,18 +41,17 @@ setcolor-alacritty() {
     )
 
     # Reload config
-    local config_path="$CONFIG_HOME/alacritty/alacritty.toml"
-    [[ -e "$config_path" ]] && touch "$config_path"
+    config_path="$CONFIG_HOME/alacritty/alacritty.toml"
+    [ -e "$config_path" ] && touch "$config_path"
 }
 
-setcolor-foot() {
+setcolor_foot() {
     # $1: name of the colorscheme
     (
-        cd "$CONFIG_HOME/foot/themes"
-        local dark_theme_path="dark.ini"
-        local light_theme_path="light.ini"
-        # If $1 is empty, only need to ensure symlink to color theme files exists
-        if [[ -z "$1" ]]; then
+        cd "$CONFIG_HOME/foot/themes" || return 1
+        dark_theme_path="dark.ini"
+        light_theme_path="light.ini"
+        if [ -z "$1" ]; then
             ln -s "$DEFAULT_COLOR-dark.ini" "$dark_theme_path" 2>/dev/null
             ln -s "$DEFAULT_COLOR-light.ini" "$light_theme_path" 2>/dev/null
         else
@@ -61,19 +60,17 @@ setcolor-foot() {
         fi
     )
 
-    # Reload config
-    local config_path="$CONFIG_HOME/foot/foot.ini"
-    [[ -e "$config_path" ]] && touch "$config_path"
+    config_path="$CONFIG_HOME/foot/foot.ini"
+    [ -e "$config_path" ] && touch "$config_path"
 }
 
-setcolor-kitty() {
+setcolor_kitty() {
     # $1: name of the colorscheme
     (
-        cd "$CONFIG_HOME/kitty/themes"
-        local dark_theme_path="dark.conf"
-        local light_theme_path="light.conf"
-        # If $1 is empty, only need to ensure symlink to color theme files exists
-        if [[ -z "$1" ]]; then
+        cd "$CONFIG_HOME/kitty/themes" || return 1
+        dark_theme_path="dark.conf"
+        light_theme_path="light.conf"
+        if [ -z "$1" ]; then
             ln -s "$DEFAULT_COLOR-dark.conf" "$dark_theme_path" 2>/dev/null
             ln -s "$DEFAULT_COLOR-light.conf" "$light_theme_path" 2>/dev/null
         else
@@ -82,20 +79,19 @@ setcolor-kitty() {
         fi
         if has kitty; then
             for pid in $(pgrep kitty); do
-                kill -SIGUSR1 $pid
+                kill -SIGUSR1 "$pid"
             done
         fi
     )
 }
 
-setcolor-termux() {
+setcolor_termux() {
     # $1: name of the colorscheme
     (
-        cd "$HOME/.termux/colors"
-        local dark_color_path="dark.properties"
-        local light_color_path="light.properties"
-        # If $1 is empty, only need to ensure symlink to color theme files exists
-        if [[ -z "$1" ]]; then
+        cd "$HOME/.termux/colors" || return 1
+        dark_color_path="dark.properties"
+        light_color_path="light.properties"
+        if [ -z "$1" ]; then
             ln -s "$DEFAULT_COLOR-dark.properties" "$dark_color_path" 2>/dev/null
             ln -s "$DEFAULT_COLOR-light.properties" "$light_color_path" 2>/dev/null
         else
@@ -108,33 +104,31 @@ setcolor-termux() {
     )
 }
 
-setcolor-wezterm() {
+setcolor_wezterm() {
     # $1: name of the colorscheme
     (
-        cd "$CONFIG_HOME/wezterm/colors"
-        local dark_theme_path="dark.toml"
-        local light_theme_path="light.toml"
-        # If $1 is empty, only need to ensure stomlink to color theme files exists
-        if [[ -z "$1" ]]; then
+        cd "$CONFIG_HOME/wezterm/colors" || return 1
+        dark_theme_path="dark.toml"
+        light_theme_path="light.toml"
+        if [ -z "$1" ]; then
             ln -s "$DEFAULT_COLOR-dark.toml" "$dark_theme_path" 2>/dev/null
             ln -s "$DEFAULT_COLOR-light.toml" "$light_theme_path" 2>/dev/null
         else
             ln -sf "$1-dark.toml" "$dark_theme_path"
             ln -sf "$1-light.toml" "$light_theme_path"
         fi
-        local config="$CONFIG_HOME/wezterm/wezterm.lua"
-        [[ -e "$config" ]] && touch "$config" # Reload config
+        config="$CONFIG_HOME/wezterm/wezterm.lua"
+        [ -e "$config" ] && touch "$config" # Reload config
     )
 }
 
-setcolor-highlight() {
+setcolor_highlight() {
     # $1: name of the colorscheme
     (
-        cd "$HOME/.highlight/themes"
-        local dark_theme_path="dark.theme"
-        local light_theme_path="light.theme"
-        # If $1 is empty, only need to ensure symlink to color theme files exists
-        if [[ -z "$1" ]]; then
+        cd "$HOME/.highlight/themes" || return 1
+        dark_theme_path="dark.theme"
+        light_theme_path="light.theme"
+        if [ -z "$1" ]; then
             ln -s "$DEFAULT_COLOR-dark.theme" "$dark_theme_path" 2>/dev/null
             ln -s "$DEFAULT_COLOR-light.theme" "$light_theme_path" 2>/dev/null
         else
@@ -144,9 +138,9 @@ setcolor-highlight() {
     )
 }
 
-setcolor-nvim() {
+setcolor_nvim() {
     # $1: name of the colorscheme
-    if [[ -z "$1" ]] || ! has nvim || ! has nvim-socks; then
+    if [ -z "$1" ] || ! has nvim || ! has nvim-socks; then
         return 1
     fi
     for sock in $(nvim-socks); do
@@ -156,12 +150,12 @@ setcolor-nvim() {
                 unlet g:script_set_colors | endif<CR>" +'qa!' 2>/dev/null
     done
     if has jq; then
-        local colors_json="$STATE_HOME/nvim/colors.json"
-        if [[ ! -e "$colors_json" ]]; then
+        colors_json="$STATE_HOME/nvim/colors.json"
+        if [ ! -e "$colors_json" ]; then
             touch "$colors_json"
         fi
-        local colors_name=$(jq -r '.colors_name' "$colors_json")
-        if [[ "$colors_name" != "$1" ]]; then
+        colors_name=$(jq -r '.colors_name' "$colors_json")
+        if [ "$colors_name" != "$1" ]; then
             jq --arg colors_name "$1" '.colors_name = $colors_name' \
                 "$colors_json" >"$colors_json.tmp"
             mv "$colors_json.tmp" "$colors_json"
@@ -169,30 +163,34 @@ setcolor-nvim() {
     fi
 }
 
-get-new-profile-name() {
+get_new_profile_name() {
     # $1: path to config file
     # $2: name of the colorscheme
-    local current_profile=$(kreadconfig5 --file "$1" \
+    current_profile=$(kreadconfig5 --file "$1" \
         --group 'Desktop Entry' --key 'DefaultProfile')
-    local current_profile_name=${current_profile%\.profile}
-    local new_profile_name=$(get-cap-theme-name "$2")
+    current_profile_name=${current_profile%\.profile}
+    new_profile_name=$(get_cap_theme_name "$2")
     new_profile_name=$(echo "$current_profile_name" |
         sed "s/^\(.*\)\(Light\|Dark\|light\|dark\)/${new_profile_name} \2/")
     # If new profile name is empty, use default profile
-    [[ -z "$new_profile_name" ]] &&
-        new_profile_name="${DEFAULT_COLOR^} ${DEFAULT_BG^}"
+    [ -z "$new_profile_name" ] && {
+        case "$DEFAULT_BG" in
+        dark) new_profile_name="$(echo "$DEFAULT_COLOR" | sed 's/.*/\u&/') Dark" ;;
+        light) new_profile_name="$(echo "$DEFAULT_COLOR" | sed 's/.*/\u&/') Light" ;;
+        esac
+    }
     echo "$new_profile_name"
 }
 
-konsole-switch-profile-colorscheme() {
+konsole_switch_profile_colorscheme() {
     # $1: name of the app
     # $2: colorscheme name
     if ! has kreadconfig5 || ! has kwriteconfig5; then
         return 1
     fi
-    local rc="$CONFIG_HOME/${1}rc"
-    local new_profile_name=$(get-new-profile-name "$rc" "$2")
-    if [[ -e "$DATA_HOME/konsole/$new_profile_name.profile" ]]; then
+    rc="$CONFIG_HOME/${1}rc"
+    new_profile_name=$(get_new_profile_name "$rc" "$2")
+    if [ -e "$DATA_HOME/konsole/$new_profile_name.profile" ]; then
         kwriteconfig5 --file "$rc" \
             --group 'Desktop Entry' \
             --key DefaultProfile "$new_profile_name.profile"
@@ -200,29 +198,29 @@ konsole-switch-profile-colorscheme() {
     fi
 }
 
-setcolor-konsole-yakuake() {
+setcolor_konsole_yakuake() {
     # $1: name of the colorscheme
-    if [[ -z "$1" ]]; then
+    if [ -z "$1" ]; then
         return 1
     fi
-    konsole-switch-profile-colorscheme konsole "$1"
-    konsole-switch-profile-colorscheme yakuake "$1"
-    konsole-switch-profile-colorscheme dolphin "$1"
-    konsole-switch-profile-colorscheme kate "$1"
+    konsole_switch_profile_colorscheme konsole "$1"
+    konsole_switch_profile_colorscheme yakuake "$1"
+    konsole_switch_profile_colorscheme dolphin "$1"
+    konsole_switch_profile_colorscheme kate "$1"
 }
 
-setcolor-fish() {
+setcolor_fish() {
     # $1: name of the colorscheme
     (
-        cd "$CONFIG_HOME/fish/themes"
-        local dark_theme_path="Dark.theme"
-        local light_theme_path="Light.theme"
-        local default_theme_name=$(get-cap-theme-name "$DEFAULT_COLOR")
-        if [[ -z "$1" ]]; then
+        cd "$CONFIG_HOME/fish/themes" || return 1
+        dark_theme_path="Dark.theme"
+        light_theme_path="Light.theme"
+        default_theme_name=$(get_cap_theme_name "$DEFAULT_COLOR")
+        if [ -z "$1" ]; then
             ln -s "${default_theme_name} Dark.theme" "$dark_theme_path" 2>/dev/null
             ln -s "${default_theme_name} Light.theme" "$light_theme_path" 2>/dev/null
         else
-            local theme_name=$(get-cap-theme-name "$1")
+            theme_name=$(get_cap_theme_name "$1")
             ln -sf "${theme_name} Dark.theme" "$dark_theme_path"
             ln -sf "${theme_name} Light.theme" "$light_theme_path"
         fi
@@ -231,46 +229,51 @@ setcolor-fish() {
     )
 }
 
-declare -A plasma_color_wallpaper_map=(
-    ['nano']="$DATA_HOME/wallpapers/Fish"
-    ['macro']="$DATA_HOME/wallpapers/Clouds"
-    ['everforest']="$DATA_HOME/wallpapers/Foggy Forest"
-    ['gruvbox-material']="$DATA_HOME/wallpapers/Foggy Forest"
-    ['sonokai']="$DATA_HOME/wallpapers/Lofoten Sunset"
-)
+# Replace declare -A with a lookup function for POSIX compatibility
+get_plasma_wallpaper() {
+    case "$1" in
+    nano) echo "$DATA_HOME/wallpapers/Fish" ;;
+    macro) echo "$DATA_HOME/wallpapers/Clouds" ;;
+    everforest | gruvbox-material) echo "$DATA_HOME/wallpapers/Foggy Forest" ;;
+    sonokai) echo "$DATA_HOME/wallpapers/Lofoten Sunset" ;;
+    *) echo "" ;;
+    esac
+}
 
-declare -A plasma_color_splash_map=(
-    ['macro']="$DATA_HOME/plasma/look-and-feel/rain_on_glass"
-    ['everforest']="$DATA_HOME/plasma/look-and-feel/arch_foggy_forest"
-    ['gruvbox-material']="$DATA_HOME/plasma/look-and-feel/arch_foggy_forest"
-)
+get_plasma_splash() {
+    case "$1" in
+    macro) echo "$DATA_HOME/plasma/look-and-feel/rain_on_glass" ;;
+    everforest | gruvbox-material) echo "$DATA_HOME/plasma/look-and-feel/arch_foggy_forest" ;;
+    *) echo "" ;;
+    esac
+}
 
-setcolor-plasma() {
+setcolor_plasma() {
     # $1: name of the colorscheme
-    if [[ -z "$1" ]]; then
+    if [ -z "$1" ]; then
         return 1
     fi
     # gruvbox-material -> GruvboxMaterial
-    local new_theme_name=$(get-cap-theme-name "$1" | sed 's/ //g')
+    new_theme_name=$(get_cap_theme_name "$1" | sed 's/ //g')
     if has plasma-apply-desktoptheme; then
-        local current_theme=$(plasma-get-current-desktoptheme)
-        local bg=$(echo "$current_theme" | grep -o 'Light\|Dark')
-        local new_theme="$new_theme_name${bg:-$DEFAULT_BG}"
-        if [[ "$current_theme" != "$new_theme" ]]; then
-            plasma-apply-desktoptheme "$new_theme" &>/dev/null
+        current_theme=$(plasma-get-current-desktoptheme)
+        bg=$(echo "$current_theme" | grep -o 'Light\|Dark')
+        new_theme="$new_theme_name${bg:-$DEFAULT_BG}"
+        if [ "$current_theme" != "$new_theme" ]; then
+            plasma-apply-desktoptheme "$new_theme" >/dev/null 2>&1
         fi
     fi
     if has plasma-apply-colorscheme; then
-        local current_scheme=$(plasma-get-current-colorscheme)
-        local bg=$(echo "$current_scheme" | grep -o 'Light\|Dark')
-        local new_scheme="$new_theme_name${bg:-$DEFAULT_BG}"
-        if [[ "$current_scheme" != "$new_scheme" ]]; then
-            plasma-apply-colorscheme "$new_scheme" &>/dev/null
+        current_scheme=$(plasma-get-current-colorscheme)
+        bg=$(echo "$current_scheme" | grep -o 'Light\|Dark')
+        new_scheme="$new_theme_name${bg:-$DEFAULT_BG}"
+        if [ "$current_scheme" != "$new_scheme" ]; then
+            plasma-apply-colorscheme "$new_scheme" >/dev/null 2>&1
         fi
     fi
     # Also change the wallpaper for different color schemes
-    local wallpaper="${plasma_color_wallpaper_map[$1]}"
-    if [[ -e "$wallpaper" ]]; then
+    wallpaper=$(get_plasma_wallpaper "$1")
+    if [ -e "$wallpaper" ]; then
         if has dbus-send; then # Change normal wallpaper
             dbus-send --session --dest=org.kde.plasmashell \
                 --type=method_call /PlasmaShell \
@@ -281,7 +284,7 @@ setcolor-plasma() {
                     d.wallpaperPlugin = 'org.kde.image';
                     d.currentConfigGroup = Array('Wallpaper', 'org.kde.image', 'General');
                     d.writeConfig('Image', 'file://$wallpaper');
-                }" &>/dev/null
+                }" >/dev/null 2>&1
         fi
         if has kwriteconfig5; then # Change lockscreen wallpaper
             kwriteconfig5 --file "$CONFIG_HOME/kscreenlockerrc" \
@@ -293,9 +296,9 @@ setcolor-plasma() {
         fi
     fi
     # Change splash screen
-    local splash="${plasma_color_splash_map[$1]}"
+    splash=$(get_plasma_splash "$1")
     if has kwriteconfig5 && has basename; then
-        if [[ -e "$splash" ]]; then
+        if [ -e "$splash" ]; then
             kwriteconfig5 --file "$CONFIG_HOME/ksplashrc" \
                 --group KSplash --key Theme "$(basename "$splash")"
         else
@@ -306,12 +309,12 @@ setcolor-plasma() {
 }
 
 usage() {
-    echo "Usage: $(basename $0) [<colorscheme>]"
+    echo "Usage: $(basename "$0") [<colorscheme>]"
     exit 0
 }
 
 main() {
-    local color=''
+    color=''
     for arg in "$@"; do
         case "$arg" in
         -h | --help)
@@ -323,17 +326,16 @@ main() {
             ;;
         esac
     done
-    setcolor-alacritty "$color" &
-    setcolor-foot "$color" &
-    setcolor-kitty "$color" &
-    setcolor-wezterm "$color" &
-    setcolor-konsole-yakuake "$color" &
-    setcolor-termux "$color" &
-    setcolor-highlight "$color" &
-    setcolor-nvim "$color" &
-    setcolor-fish "$color" &
-    setcolor-plasma "$color" &
-    return 0
+    setcolor_alacritty "$color" &
+    setcolor_foot "$color" &
+    setcolor_kitty "$color" &
+    setcolor_wezterm "$color" &
+    setcolor_konsole_yakuake "$color" &
+    setcolor_termux "$color" &
+    setcolor_highlight "$color" &
+    setcolor_nvim "$color" &
+    setcolor_fish "$color" &
+    setcolor_plasma "$color" &
 }
 
 main "$@"

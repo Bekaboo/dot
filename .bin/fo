@@ -1,15 +1,24 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
 main() {
-    local files=($(nvim -u NONE --headless +'lua io.write(table.concat(vim.v.oldfiles, "\n") .. "\n")' +qa |
+    # Use a temporary file to store the file list since POSIX sh doesn't support arrays
+    tmpfile=$(mktemp)
+    trap 'rm -f "$tmpfile"' EXIT
+
+    # Get oldfiles from nvim and filter existing files
+    nvim -u NONE --headless +'lua io.write(table.concat(vim.v.oldfiles, "\n") .. "\n")' +qa |
         sed -e 's/^\s*\S*:\/\///' |
         while read -r file; do
-            [[ -e "$file" ]] && echo "$file"
+            [ -e "$file" ] && echo "$file"
         done |
-        fzf))
+        fzf >"$tmpfile"
 
-    [[ "${#files[@]}" -gt 0 ]] && ${EDITOR:-nvim} "${files[@]}"
+    # Check if we got any files
+    if [ -s "$tmpfile" ]; then
+        # Use xargs to handle multiple files properly
+        xargs ${EDITOR:-nvim} <"$tmpfile"
+    fi
 }
 
 main "$@"

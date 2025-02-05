@@ -1,11 +1,20 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
-__has() {
+# Check if a command exists
+has() {
     command -v "$1" >/dev/null 2>&1
 }
 
-local qdbus_cmd=$(__has qdbus && echo qdbus ||
-    { __has qdbus6 && echo qdbus6; })
+# Find available qdbus command
+if has qdbus; then
+    qdbus_cmd="qdbus"
+elif has qdbus6; then
+    qdbus_cmd="qdbus6"
+else
+    echo "Error: neither qdbus nor qdbus6 found" >&2
+    exit 1
+fi
 
+# Save current KDE Plasma session
 "$qdbus_cmd" org.kde.ksmserver /KSMServer saveCurrentSession

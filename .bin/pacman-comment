@@ -1,29 +1,40 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
+PKGS_LOGPATH="/var/log"
+PKGS_LOGFILE="/var/log/pacman-pkg-comments.log"
+
 prepare() {
-    if [[ "$EUID" -ne 0 ]]; then
-        echo >&2 "error: you cannot perform this operation unless you are root."
+    # Check for root privileges
+    if [ "$(id -u)" -ne 0 ]; then
+        echo "error: you cannot perform this operation unless you are root." >&2
         exit 1
     fi
-    PKGS_LOGPATH="/var/log/"
-    PKGS_LOGFILE="/var/log/pacman-pkg-comments.log"
-    [[ ! -d "$PKGS_LOGPATH" ]] &&
-        echo -e "\033[1;33mwarning:\033[0m comment file does not exit" && exit 1
-    return 0
+
+    # Check if log directory exists
+    if [ ! -d "$PKGS_LOGPATH" ]; then
+        printf "\033[1;33mwarning:\033[0m comment file does not exist\n" >&2
+        exit 1
+    fi
 }
 
 add_comments() {
-    # Is nvim/vim/vi available?
-    VEDITOR=$(command -v nvim || command -v vim || command -v vi)
-    if [[ -f "$VEDITOR" ]]; then
-        EXCMD="set expandtab softtabstop=4 tabstop=4 shiftwidth=4"
-        # Let vi search for the newly installed packages, redirect I/O to terminal
-        $VEDITOR -c "$EXCMD" "$PKGS_LOGFILE" </dev/tty >/dev/tty
+    # Find available editor
+    for vim_cmd in nvim vim vi; do
+        if command -v "$vim_cmd" >/dev/null 2>&1; then
+            vim_cmd=$(command -v "$vim_cmd")
+            break
+        fi
+    done
+
+    if [ -n "$vim_cmd" ]; then
+        # Redirect I/O to terminal for interactive use
+        $vim_cmd -c "set expandtab softtabstop=4 tabstop=4 shiftwidth=4" \
+            "$PKGS_LOGFILE" </dev/tty >/dev/tty
     else
-        echo -e "\033[1;33mwarning:\033[0m vi not available -- add comments to ${PKGS_LOGFILE} manually"
+        printf "\033[1;33mwarning:\033[0m vi not available -- add comments to %s manually\n" \
+            "$PKGS_LOGFILE" >&2
     fi
-    return 0
 }
 
 prepare

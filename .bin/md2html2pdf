@@ -1,10 +1,10 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
 md2html2pdf() {
     pandoc \
         --katex \
-        --pdf-engine="${PDF_ENGINE}" \
+        --pdf-engine="$PDF_ENGINE" \
         -V margin-top=10 \
         -V margin-bottom=10 \
         -V margin-left=8 \
@@ -18,40 +18,40 @@ md2html2pdf() {
 
 main() {
     PDF_ENGINE="wkhtmltopdf"
-    while getopts "lxmhp" OPT; do
-        case $OPT in
-        l)
-            PDF_ENGINE="lualatex"
-            ;;
-        x)
-            PDF_ENGINE="xelatex"
-            ;;
-        m)
-            PDF_ENGINE="latexmk"
-            ;;
-        h)
-            PDF_ENGINE="wkhtmltopdf"
-            ;;
-        p)
-            PDF_ENGINE="pdflatex"
-            ;;
-        \?)
-            echo "Usage: $(basename "$0") [-l|-x|-m|-h|-p] files" >&2
+    while getopts "lxmhp" opt; do
+        case $opt in
+        l) PDF_ENGINE="lualatex" ;;
+        x) PDF_ENGINE="xelatex" ;;
+        m) PDF_ENGINE="latexmk" ;;
+        h) PDF_ENGINE="wkhtmltopdf" ;;
+        p) PDF_ENGINE="pdflatex" ;;
+        ?)
+            printf "Usage: %s [-l|-x|-m|-h|-p] files\n" "$(basename "$0")" >&2
             exit 1
             ;;
         esac
     done
     shift $((OPTIND - 1))
 
+    [ $# -eq 0 ] && {
+        echo "Error: no input files" >&2
+        exit 1
+    }
+
     for file in "$@"; do
-        # Pictures in markdown cannot be fetched if
-        # we are not in the same directory.
-        cd "$(dirname "$(readlink -f "$file")")" >/dev/null 2>&1 || exit 1
-        md2html2pdf "$(basename "$file")" || {
-            echo >&2 "md2html2pdf: error: pandoc failed to convert '$file'"
+        oldpwd=$PWD
+
+        # Pictures in markdown cannot be fetched if we are not in the same
+        # directory
+        cd "$(dirname $(realpath "$file"))" >/dev/null 2>&1 || exit 1
+
+        if ! md2html2pdf "$(basename "$file")"; then
+            echo "md2html2pdf: error: pandoc failed to convert '$file'" >&2
+            cd "$oldpwd" >/dev/null 2>&1
             exit 1
-        }
-        cd - >/dev/null 2>&1
+        fi
+
+        cd "$oldpwd" >/dev/null 2>&1
     done
 }
 

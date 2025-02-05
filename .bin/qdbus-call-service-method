@@ -1,29 +1,47 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
-__has() {
+# Check if a command exists
+has() {
     command -v "$1" >/dev/null 2>&1
 }
 
+# Print usage message
+usage() {
+    printf "Usage: %s <service name> <method name> [method arguments]\n" \
+        "$(basename "$0")" >&2
+}
+
 main() {
-    # $1: name of the service
-    # $2: method name
-    # $3, $4, ...: method arguments
-    local qdbus_cmd=$(__has qdbus && echo qdbus ||
-        { __has qdbus6 && echo qdbus6; })
-    if [[ -z "$qdbus_cmd" ]]; then
-        echo "qdbus not found" >&2
+    if has qdbus; then
+        qdbus_cmd="qdbus"
+    elif has qdbus6; then
+        qdbus_cmd="qdbus6"
+    else
+        echo "Error: neither qdbus nor qdbus6 found" >&2
         exit 1
     fi
-    if [[ -z "$1" || -z "$2" ]]; then
-        echo "Usage: $(basename $0) <service name> <method name> [method arguments]" >&2
+
+    if [ -z "$1" ] || [ -z "$2" ]; then
+        usage
         exit 1
     fi
-    for service in $("$qdbus_cmd" | grep -iP "$1"); do
-        for obj in $("$qdbus_cmd" "$service"); do
-            local methods=$("$qdbus_cmd" "$service" "$obj")
-            if [[ "$methods" =~ "$2" ]]; then
-                "$qdbus_cmd" "$service" "$obj" "$2" "${@:3}"
+
+    service_pattern="$1"
+    method_name="$2"
+    shift 2
+
+    # List all matching services
+    services=$("$qdbus_cmd" | grep -i "$service_pattern") || {
+        exit 1
+    }
+
+    printf '%s\n' "$services" | while read -r service; do
+        objects=$("$qdbus_cmd" "$service") || continue
+        printf '%s\n' "$objects" | while read -r obj; do
+            methods=$("$qdbus_cmd" "$service" "$obj") || continue
+            if printf '%s\n' "$methods" | grep -q "$method_name"; then
+                "$qdbus_cmd" "$service" "$obj" "$method_name" "$@"
             fi
         done
     done

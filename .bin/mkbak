@@ -1,9 +1,9 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 # Make a backup for a file or directory
 
 print_help() {
-    local script_name=$(basename "$0")
+    script_name=$(basename "$0")
     cat <<EOF
 ${script_name} - make backup
 Usage: ${script_name} <file>
@@ -13,26 +13,36 @@ Options:
 EOF
 }
 
+# Remove trailing slashes from path
+clean_path() {
+    while [ "${1%/}" != "$1" ]; do
+        set -- "${1%/}"
+    done
+    printf '%s\n' "$1"
+}
+
 main() {
-    if [[ -z "$1" ]] || [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+    case "$1" in
+    '' | -h | --help)
         print_help
         return 0
-    fi
+        ;;
+    esac
 
-    local src="$1"
-    shopt -s extglob && local bak="${1%%+(/)}.bak"
+    src="$1"
+    bak="$(clean_path "$1").bak"
 
-    if [[ ! -e "$src" ]]; then
-        echo "'$src' does not exist" 2>&1
+    if [ ! -e "$src" ]; then
+        echo "'$src' does not exist" >&2
         return 1
     fi
 
-    if [[ -e "$bak" ]]; then
-        echo "'$bak' already exists"
+    if [ -e "$bak" ]; then
+        echo "'$bak' already exists" >&2
         return 1
     fi
 
-    cp -Lr "$src" "$bak"
+    cp -LR "$src" "$bak"
 }
 
 main "$@"

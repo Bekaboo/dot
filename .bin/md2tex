@@ -1,5 +1,13 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # vim: ft=sh ts=4 sw=4 sts=4 et :
+
+# Get absolute path without using realpath/readlink
+abs_path() {
+    case "$1" in
+    /*) printf '%s\n' "$1" ;;
+    *) printf '%s/%s\n' "$PWD" "$1" ;;
+    esac
+}
 
 md2tex() {
     pandoc \
@@ -11,15 +19,27 @@ md2tex() {
 }
 
 main() {
+    if [ $# -eq 0 ]; then
+        echo "Error: no input files" >&2
+        printf "Usage: %s files...\n" "$(basename "$0")" >&2
+        exit 1
+    fi
+
     for file in "$@"; do
-        # Pictures in markdown cannot be fetched if
-        # we are not in the same directory.
-        cd "$(dirname "$(readlink -f "$file")")" >/dev/null 2>&1 || exit 1
-        md2tex "$(basename "$file")" || {
-            echo >&2 "md2tex: error: pandoc failed to convert '$file'"
-            exit 1
-        }
-        cd - >/dev/null 2>&1
+        oldpwd=$PWD
+
+        # Pictures in markdown cannot be fetched if we are not in the same
+        # directory
+        cd "$(dirname "$(realpath "$file")")" >/dev/null 2>&1 || exit 1
+
+        if ! md2tex "$(basename "$file")"; then
+            rc=$?
+            echo "md2tex: error: pandoc failed to convert '$file' with exit code $rc" >&2
+            cd "$oldpwd" >/dev/null 2>&1
+            exit $rc
+        fi
+
+        cd "$oldpwd" >/dev/null 2>&1
     done
 }
 

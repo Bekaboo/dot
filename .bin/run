@@ -1,33 +1,42 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
 build() {
     case "$1" in
     *.c) gcc "$1" -o "$2" ;;
     *.cpp) g++ "$1" -o "$2" ;;
+    *)
+        echo >&2 "run: error: unsupported file type"
+        exit 1
+        ;;
     esac
 }
 
-exec() {
+run_executable() {
     "$1"
 }
 
 main() {
-    local src=$(fullpath "$1")
-    local executable=$(echo "$src" | sed -E 's/\.(c|cpp)$/.run/')
-    if [[ "$src" == "$executable" ]]; then
+    src=$(command -v realpath >/dev/null 2>&1 && realpath "$1" || readlink -f "$1")
+    executable=$(echo "$src" | sed -E 's/\.(c|cpp)$/.run/')
+    if [ "$src" = "$executable" ]; then
         echo >&2 "run: error: file name cannot be the same as the run file name"
         exit 1
     fi
 
-    build "$src" "$executable"
-    if [[ ! -f "$executable" ]]; then
-        echo >&2 "run: error: cannot remove run file because it does not exist"
+    if [ ! -f "$src" ]; then
+        echo >&2 "run: error: source file does not exist"
         exit 1
     fi
 
-    exec "$executable"
-    rm "$executable"
+    build "$src" "$executable"
+    if [ ! -f "$executable" ]; then
+        echo >&2 "run: error: build failed"
+        exit 1
+    fi
+
+    run_executable "$executable"
+    rm -f "$executable"
 }
 
 main "$1"

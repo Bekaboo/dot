@@ -1,8 +1,8 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 # Watch for sleep signal to check & set bg on awake from sleep
 
-if ! command -v checkbg &>/dev/null; then
+if ! command -v checkbg >/dev/null 2>&1; then
     echo "Error: checkbg not found"
     exit 1
 fi
@@ -10,7 +10,9 @@ fi
 dbus-monitor --system "type='signal', \
         interface='org.freedesktop.login1.Manager', \
         member=PrepareForSleep" | while read x; do
-    if [[ "$x" == *"boolean false"* ]]; then
-        checkbg
-    fi
+    case "$x" in
+        *"boolean false"*)
+            checkbg
+            ;;
+    esac
 done

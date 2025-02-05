@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
 # Function to read input, concatenate it, and process it with 'trans'
@@ -6,28 +6,32 @@ process_input() {
     echo '----------------------------------------'
     echo '•'
 
-    local input=""
-    local line_empty=""
+    input=""
+    line_empty=""
+
     # Concat all lines until an empty line is found
     while IFS= read -r line; do
-        if [[ -z "$line" ]]; then
+        if [ -z "$line" ]; then
             line_empty=1
             break
         fi
         input="$input $line"
     done
 
-    # Remove leading whitespace
     input=$(echo "$input" | sed 's/^ *//')
 
     # If input is empty:
     # 1. return 1 if the last line is not empty (received ctrl-d)
     # 2. otherwise return 0
-    if [[ -z "$input" ]]; then
-        return "$([[ "$line_empty" ]] && echo 0 || echo 1)"
+    if [ -z "$input" ]; then
+        if [ -n "$line_empty" ]; then
+            return 0
+        else
+            return 1
+        fi
     fi
 
-    local output=$(echo "$input" | trans -b -no-auto :zh)
+    output=$(echo "$input" | trans -b -no-auto :zh)
 
     echo "◦"
     echo "$output"

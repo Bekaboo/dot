@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
 # Open a file using $EDITOR or xdg-open
@@ -9,26 +9,38 @@ gx() {
         return 1
     fi
 
-    local -a text_files=()
-    local -a other_files=()
+    # Create temporary files to store file lists
+    text_files=$(mktemp)
+    other_files=$(mktemp)
+    trap 'rm -f "$text_files" "$other_files"' EXIT
+
+    # Categorize files based on their type
     for file in "$@"; do
-        [[ "$(file -b "$file")" =~ text|empty ]] &&
-            text_files+=("$file") ||
-            other_files+=("$file")
+        if file -b "$file" | grep -qE 'text|empty'; then
+            printf '%s\n' "$file" >>"$text_files"
+        else
+            printf '%s\n' "$file" >>"$other_files"
+        fi
     done
 
+    # Handle non-text files with xdg-open
     if command -v xdg-open >/dev/null 2>&1; then
-        for file in "${other_files[@]}"; do
+        while read -r file; do
             xdg-open "$file" >/dev/null 2>&1
-        done
-    elif [[ "${#other_files[@]}" > 0 ]]; then
-        echo "xdg-open not found, omit opening files ${other_files[@]}" >&2
+        done <"$other_files"
+    elif [ -s "$other_files" ]; then
+        echo "xdg-open not found, omit opening files:" >&2
+        cat "$other_files" >&2
     fi
-    if (("${#text_files[@]}" > 0)); then
-        if command -v "$EDITOR" 2>&1 >/dev/null; then
-            "$EDITOR" "${text_files[@]}"
+
+    # Handle text files with $EDITOR
+    if [ -s "$text_files" ]; then
+        if command -v "$EDITOR" >/dev/null 2>&1; then
+            # Use xargs to handle multiple files
+            xargs "$EDITOR" <"$text_files"
         else
-            echo "\$EDITOR not found, omit opening files ${text_files[@]}" >&2
+            echo "\$EDITOR not found, omit opening files:" >&2
+            cat "$text_files" >&2
         fi
     fi
 }

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
 CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
@@ -11,20 +11,23 @@ has() {
     command -v "$1" >/dev/null 2>&1
 }
 
-get-theme-variant() {
+get_theme_variant() {
     # $1: name of the old theme
     # $2: 'light' or 'dark'
-    echo "$1" | sed "s/dark\|light/$2/" | sed "s/Dark\|Light/${2^}/"
+    case "$2" in
+    light) echo "$1" | sed 's/dark\|light/light/' | sed 's/Dark\|Light/Light/' ;;
+    dark) echo "$1" | sed 's/dark\|light/dark/' | sed 's/Dark\|Light/Dark/' ;;
+    esac
 }
 
-setbg-alacritty() {
+setbg_alacritty() {
     # $1: 'light' or 'dark'
     (
-        cd "$CONFIG_HOME/alacritty"
-        local theme_path="theme.toml"
-        local themes_dir="themes"
+        cd "$CONFIG_HOME/alacritty" || return 1
+        theme_path="theme.toml"
+        themes_dir="themes"
         # If $1 is empty, only need to ensure symlink to color theme file exists
-        if [[ -z "$1" ]]; then
+        if [ -z "$1" ]; then
             ln -s "$themes_dir/$DEFAULT_BG.toml" "$theme_path" 2>/dev/null
         else
             ln -sf "$themes_dir/$1.toml" "$theme_path"
@@ -32,18 +35,17 @@ setbg-alacritty() {
     )
 
     # Reload config
-    local config_path="$CONFIG_HOME/alacritty/alacritty.toml"
-    [[ -e "$config_path" ]] && touch "$config_path"
+    config_path="$CONFIG_HOME/alacritty/alacritty.toml"
+    [ -e "$config_path" ] && touch "$config_path"
 }
 
-setbg-foot() {
+setbg_foot() {
     # $1: 'light' or 'dark'
     (
-        cd "$CONFIG_HOME/foot"
-        local theme_path="theme.ini"
-        local themes_dir="themes"
-        # If $1 is empty, only need to ensure symlink to color theme file exists
-        if [[ -z "$1" ]]; then
+        cd "$CONFIG_HOME/foot" || return 1
+        theme_path="theme.ini"
+        themes_dir="themes"
+        if [ -z "$1" ]; then
             ln -s "$themes_dir/$DEFAULT_BG.ini" "$theme_path" 2>/dev/null
         else
             ln -sf "$themes_dir/$1.ini" "$theme_path"
@@ -51,37 +53,36 @@ setbg-foot() {
     )
 
     # Reload config
-    local config_path="$CONFIG_HOME/foot/foot.ini"
-    [[ -e "$config_path" ]] && touch "$config_path"
+    config_path="$CONFIG_HOME/foot/foot.ini"
+    [ -e "$config_path" ] && touch "$config_path"
 }
 
-setbg-kitty() {
+setbg_kitty() {
     # $1: 'light' or 'dark'
     (
-        cd "$CONFIG_HOME/kitty"
-        local theme_path="current-theme.conf"
-        local themes_dir="themes"
-        if [[ -z $1 ]]; then
+        cd "$CONFIG_HOME/kitty" || return 1
+        theme_path="current-theme.conf"
+        themes_dir="themes"
+        if [ -z "$1" ]; then
             ln -s "$themes_dir/$DEFAULT_BG.conf" "$theme_path" 2>/dev/null
         else
             ln -sf "$themes_dir/$1.conf" "$theme_path"
         fi
         if has kitty; then
             for pid in $(pgrep kitty); do
-                kill -SIGUSR1 $pid
+                kill -SIGUSR1 "$pid"
             done
         fi
     )
 }
 
-setbg-wezterm() {
+setbg_wezterm() {
     # $1: 'light' or 'dark'
     (
-        cd "$CONFIG_HOME/wezterm"
-        local theme_path="theme.toml"
-        local themes_dir="colors"
-        # If $1 is empty, only need to ensure symlink to color theme file exists
-        if [[ -z "$1" ]]; then
+        cd "$CONFIG_HOME/wezterm" || return 1
+        theme_path="theme.toml"
+        themes_dir="colors"
+        if [ -z "$1" ]; then
             ln -s "$themes_dir/$DEFAULT_BG.toml" "$theme_path" 2>/dev/null
         else
             ln -sf "$themes_dir/$1.toml" "$theme_path"
@@ -89,14 +90,13 @@ setbg-wezterm() {
     )
 }
 
-setbg-highlight() {
+setbg_highlight() {
     # $1: 'light' or 'dark'
     (
-        cd "$HOME/.highlight"
-        local themes_dir="themes"
-        local theme_path="highlight.theme"
-        # If $1 is empty, only need to ensure symlink to color theme file exists
-        if [[ -z "$1" ]]; then
+        cd "$HOME/.highlight" || return 1
+        themes_dir="themes"
+        theme_path="highlight.theme"
+        if [ -z "$1" ]; then
             ln -s "$themes_dir/$DEFAULT_BG.theme" "$theme_path" 2>/dev/null
         else
             ln -sf "$themes_dir/$1.theme" "$theme_path"
@@ -104,9 +104,9 @@ setbg-highlight() {
     )
 }
 
-setbg-nvim() {
+setbg_nvim() {
     # $1: 'light' or 'dark'
-    if [[ -z "$1" ]] || ! has nvim || ! has nvim-socks; then
+    if [ -z "$1" ] || ! has nvim || ! has nvim-socks; then
         return 1
     fi
     for sock in $(nvim-socks); do
@@ -116,12 +116,12 @@ setbg-nvim() {
             2>/dev/null
     done
     if has jq; then
-        local colors_json="$STATE_HOME/nvim/colors.json"
-        if [[ ! -e "$colors_json" ]]; then
+        colors_json="$STATE_HOME/nvim/colors.json"
+        if [ ! -e "$colors_json" ]; then
             touch "$colors_json"
         fi
-        local bg=$(jq -r '.bg' "$colors_json")
-        if [[ "$bg" != "$1" ]]; then
+        bg=$(jq -r '.bg' "$colors_json")
+        if [ "$bg" != "$1" ]; then
             jq --arg bg "$1" '.bg = $bg' \
                 "$colors_json" >"$colors_json.tmp"
             mv "$colors_json.tmp" "$colors_json"
@@ -129,49 +129,53 @@ setbg-nvim() {
     fi
 }
 
-setbg-plasma() {
+setbg_plasma() {
     # $1: 'light' or 'dark'
-    if [[ -z "$1" ]]; then
+    if [ -z "$1" ]; then
         return 1
     fi
     if has plasma-apply-desktoptheme; then
-        local current_theme=$(plasma-get-current-desktoptheme)
-        local new_theme=$(get-theme-variant "$current_theme" "$1")
-        if [[ "$current_theme" != "$new_theme" ]]; then
-            plasma-apply-desktoptheme "$new_theme" &>/dev/null
+        current_theme=$(plasma-get-current-desktoptheme)
+        new_theme=$(get_theme_variant "$current_theme" "$1")
+        if [ "$current_theme" != "$new_theme" ]; then
+            plasma-apply-desktoptheme "$new_theme" >/dev/null 2>&1
         fi
     fi
     if has plasma-apply-colorscheme; then
-        local current_scheme=$(plasma-get-current-colorscheme)
-        local new_scheme=$(get-theme-variant "$current_scheme" "$1")
-        if [[ "$current_scheme" != "$new_scheme" ]]; then
-            plasma-apply-colorscheme "$new_scheme" &>/dev/null
+        current_scheme=$(plasma-get-current-colorscheme)
+        new_scheme=$(get_theme_variant "$current_scheme" "$1")
+        if [ "$current_scheme" != "$new_scheme" ]; then
+            plasma-apply-colorscheme "$new_scheme" >/dev/null 2>&1
         fi
     fi
 }
 
-get-new-profile-name() {
+get_new_profile_name() {
     # $1: path to config file
     # $2: 'light' or 'dark'
-    local current_profile=$(kreadconfig5 --file "$1" \
+    current_profile=$(kreadconfig5 --file "$1" \
         --group 'Desktop Entry' --key 'DefaultProfile')
-    local current_profile_name=${current_profile%\.profile}
-    local new_profile_name=$(get-theme-variant "$current_profile_name" "$2")
+    current_profile_name=${current_profile%%.profile}
+    new_profile_name=$(get_theme_variant "$current_profile_name" "$2")
     # If new profile name is empty, use default profile
-    [[ -z "$new_profile_name" ]] &&
-        new_profile_name="${DEFAULT_COLOR^} ${DEFAULT_BG^}"
+    [ -z "$new_profile_name" ] && {
+        case "$DEFAULT_BG" in
+        dark) new_profile_name="$DEFAULT_COLOR Dark" ;;
+        light) new_profile_name="$DEFAULT_COLOR Light" ;;
+        esac
+    }
     echo "$new_profile_name"
 }
 
-konsole-switch-profile-bg() {
+konsole_switch_profile_bg() {
     # $1: name of the app
     # $2: 'light' or 'dark'
     if ! has kreadconfig5 || ! has kwriteconfig5; then
         return 1
     fi
-    local rc="$CONFIG_HOME/${1}rc"
-    local new_profile_name=$(get-new-profile-name "$rc" "$2")
-    if [[ -e "$DATA_HOME/konsole/$new_profile_name.profile" ]]; then
+    rc="$CONFIG_HOME/${1}rc"
+    new_profile_name=$(get_new_profile_name "$rc" "$2")
+    if [ -e "$DATA_HOME/konsole/$new_profile_name.profile" ]; then
         kwriteconfig5 --file "$rc" \
             --group 'Desktop Entry' \
             --key DefaultProfile "$new_profile_name.profile"
@@ -179,21 +183,21 @@ konsole-switch-profile-bg() {
     fi
 }
 
-setbg-konsole-yakuake() {
+setbg_konsole_yakuake() {
     # $1: 'light' or 'dark'
-    konsole-switch-profile-bg konsole "$1"
-    konsole-switch-profile-bg yakuake "$1"
-    konsole-switch-profile-bg dolphin "$1"
-    konsole-switch-profile-bg kate "$1"
+    konsole_switch_profile_bg konsole "$1"
+    konsole_switch_profile_bg yakuake "$1"
+    konsole_switch_profile_bg dolphin "$1"
+    konsole_switch_profile_bg kate "$1"
 }
 
-setbg-termux() {
+setbg_termux() {
     # $1: 'light' or 'dark'
     (
-        cd "$HOME/.termux"
-        local theme_path="colors.properties"
-        local themes_dir="colors"
-        if [[ -z $1 ]]; then
+        cd "$HOME/.termux" || return 1
+        theme_path="colors.properties"
+        themes_dir="colors"
+        if [ -z "$1" ]; then
             ln -s "$themes_dir/$DEFAULT_BG.properties" "$theme_path" 2>/dev/null
         else
             ln -sf "$themes_dir/$1.properties" "$theme_path"
@@ -204,13 +208,15 @@ setbg-termux() {
     )
 }
 
-setbg-okular() {
+setbg_okular() {
     # $1: 'light' or 'dark'
-    if [[ -z "$1" ]] || ! has okular || ! has kwriteconfig5; then
+    if [ -z "$1" ] || ! has okular || ! has kwriteconfig5; then
         return 1
     fi
-    # Code adapted from https://gitlab.com/LADlSLAV/yabotss
-    local changecolors=$([[ $1 == dark ]] && echo true || echo false)
+    case "$1" in
+    dark) changecolors="true" ;;
+    light) changecolors="false" ;;
+    esac
     kwriteconfig5 --file "$CONFIG_HOME/okularpartrc" \
         --group Document \
         --key ChangeColors "$changecolors"
@@ -218,74 +224,84 @@ setbg-okular() {
         "$changecolors"
 }
 
-setbg-vscode() {
+setbg_vscode() {
     # $1: 'light' or 'dark'
-    local rc="$CONFIG_HOME/Code/User/settings.json"
-    if [[ -z "$1" ]] || [[ ! -e "$rc" ]] || ! has jq; then
+    rc="$CONFIG_HOME/Code/User/settings.json"
+    if [ -z "$1" ] || [ ! -e "$rc" ] || ! has jq; then
         return 1
     fi
 
     # Skip if auto detect is enabled
-    local auto_detect=$(jq -r '."window.autoDetectColorScheme"' "$rc")
-    if [[ "$auto_detect" == "true" ]]; then
+    auto_detect=$(jq -r '."window.autoDetectColorScheme"' "$rc")
+    if [ "$auto_detect" = "true" ]; then
         return 0
     fi
 
-    local current_theme=$(jq -r '."workbench.colorTheme"' "$rc")
-    local new_theme=$(get-theme-variant "$current_theme" "$1")
-    [[ -z "$new_theme" ]] && new_theme=$([[ "$1" == dark ]] &&
-        echo "$(jq -r '."workbench.preferredDarkColorTheme"' "$rc")" ||
-        echo "$(jq -r '."workbench.preferredLightColorTheme"' "$rc")")
-    if [[ -z "$new_theme" || "$new_theme" == null ]]; then
-        new_theme=$(get-theme-variant "${theme:-"Default ${DEFAULT_BG^} Modern"}" "$1")
+    current_theme=$(jq -r '."workbench.colorTheme"' "$rc")
+    new_theme=$(get_theme_variant "$current_theme" "$1")
+    [ -z "$new_theme" ] && {
+        if [ "$1" = "dark" ]; then
+            new_theme=$(jq -r '."workbench.preferredDarkColorTheme"' "$rc")
+        else
+            new_theme=$(jq -r '."workbench.preferredLightColorTheme"' "$rc")
+        fi
+    }
+    if [ -z "$new_theme" ] || [ "$new_theme" = "null" ]; then
+        new_theme=$(get_theme_variant "Default ${DEFAULT_BG} Modern" "$1")
     fi
-    if [[ "$theme" != "$new_theme" ]]; then
-        local tmp=$(mktemp)
+    if [ "$theme" != "$new_theme" ]; then
+        tmp=$(mktemp)
         jq ".\"workbench.colorTheme\" = \"$new_theme\"" "$rc" >"$tmp" &&
             mv "$tmp" "$rc"
     fi
 }
 
-setbg-fish() {
+setbg_fish() {
     # $1: 'light' or 'dark'
     (
-        cd "$CONFIG_HOME/fish/themes"
-        local theme_path="Current.theme"
-        if [[ -z "$1" ]]; then
-            ln -s "${DEFAULT_BG^}.theme" "$theme_path" 2>/dev/null
+        cd "$CONFIG_HOME/fish/themes" || return 1
+        theme_path="Current.theme"
+        if [ -z "$1" ]; then
+            case "$DEFAULT_BG" in
+            dark) ln -s "Dark.theme" "$theme_path" 2>/dev/null ;;
+            light) ln -s "Light.theme" "$theme_path" 2>/dev/null ;;
+            esac
         else
-            ln -sf "${1^}.theme" "$theme_path"
+            case "$1" in
+            dark) ln -sf "Dark.theme" "$theme_path" ;;
+            light) ln -sf "Light.theme" "$theme_path" ;;
+            esac
         fi
         has fish &&
             fish -c 'set -U __fish_reload_theme (head -c 16 /dev/urandom | base32)'
     )
 }
 
-setbg-glow() {
+setbg_glow() {
     # $1: 'light' or 'dark'
-    local config="$CONFIG_HOME/glow/glow.toml"
-    if [[ -z "$1" ]]; then
+    config="$CONFIG_HOME/glow/glow.toml"
+    if [ -z "$1" ]; then
         return 1
     fi
-    if [[ ! -e "$config" ]]; then
+    if [ ! -e "$config" ]; then
         mkdir -p "$(dirname "$config")"
         echo 'style: "dark"' >"$config"
     fi
     # style: "<style_name>"
-    local theme=$(grep -Po '(?<=style: ")[^"]+' "$config")
-    local new_theme=$(get-theme-variant "$theme" "$1")
-    if [[ "$theme" != "$new_theme" ]]; then
+    theme=$(grep -Po '(?<=style: ")[^"]+' "$config")
+    new_theme=$(get_theme_variant "$theme" "$1")
+    if [ "$theme" != "$new_theme" ]; then
         sed -i "s/style: \"$theme\"/style: \"$new_theme\"/" "$config"
     fi
 }
 
-setbg-libreoffice() {
-    if [[ -z "$1" ]]; then
+setbg_libreoffice() {
+    if [ -z "$1" ]; then
         return 1
     fi
 
-    local config="$CONFIG_HOME/libreoffice/4/user/registrymodifications.xcu"
-    if [[ ! -e "$config" ]]; then
+    config="$CONFIG_HOME/libreoffice/4/user/registrymodifications.xcu"
+    if [ ! -e "$config" ]; then
         mkdir -p "$(dirname "$config")"
         echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <oor:items xmlns:oor=\"http://openoffice.org/2001/registry\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">
@@ -295,24 +311,30 @@ setbg-libreoffice() {
     # Add symbol style config if not found in the config file
     if ! grep -qE '<item oor:path="/org.openoffice.Office.Common/Misc"><prop oor:name="SymbolStyle" oor:op="fuse"><value>[a-zA-Z0-9_-]+</value></prop></item>' "$config"; then
         # Default style is 'breeze' or 'breeze_dark' depending on arg 1
-        local theme=$([[ "$1" == "dark" ]] && echo "breeze_dark" || echo "breeze")
+        case "$1" in
+        dark) theme="breeze_dark" ;;
+        light) theme="breeze" ;;
+        esac
         sed -i "/<\/oor:items>/i <item oor:path=\"/org.openoffice.Office.Common/Misc\"><prop oor:name=\"SymbolStyle\" oor:op=\"fuse\"><value>$theme</value></prop></item>" "$config"
     fi
 
-    local theme=$(grep -Po '(?<=\<item oor:path="/org.openoffice.Office.Common/Misc">\<prop oor:name="SymbolStyle" oor:op="fuse">\<value>)[a-zA-Z0-9_-]+' "$config")
-    local theme_no_suffix=$(echo "$theme" | sed -E 's/(_dark)+//')
-    local new_theme=$([[ "$1" == 'dark' ]] && echo "${theme_no_suffix}_dark" || echo "$theme_no_suffix")
+    theme=$(grep -Po '(?<=\<item oor:path="/org.openoffice.Office.Common/Misc">\<prop oor:name="SymbolStyle" oor:op="fuse">\<value>)[a-zA-Z0-9_-]+' "$config")
+    theme_no_suffix=$(echo "$theme" | sed -E 's/(_dark)+//')
+    case "$1" in
+    dark) new_theme="${theme_no_suffix}_dark" ;;
+    light) new_theme="$theme_no_suffix" ;;
+    esac
 
     sed -i -E "s/(<item oor:path=\"\/org.openoffice.Office.Common\/Misc\"><prop oor:name=\"SymbolStyle\" oor:op=\"fuse\"><value>)([a-zA-Z0-9_-]+)(<\/value><\/prop><\/item>)/\1$new_theme\3/" "$config"
 }
 
 usage() {
-    echo "Usage: $(basename $0) [light|dark]"
+    echo "Usage: $(basename "$0") [light|dark]"
     exit 0
 }
 
 main() {
-    local bg=''
+    bg=''
     for arg in "$@"; do
         case "$arg" in
         light | dark)
@@ -324,21 +346,20 @@ main() {
             ;;
         esac
     done
-    setbg-alacritty "$bg" &
-    setbg-foot "$bg" &
-    setbg-kitty "$bg" &
-    setbg-wezterm "$bg" &
-    setbg-konsole-yakuake "$bg" &
-    setbg-termux "$bg" &
-    setbg-highlight "$bg" &
-    setbg-nvim "$bg" &
-    setbg-fish "$bg" &
-    setbg-glow "$bg" &
-    setbg-vscode "$bg" &
-    setbg-plasma "$bg" &
-    setbg-okular "$bg" &
-    setbg-libreoffice "$bg" &
-    return 0
+    setbg_alacritty "$bg" &
+    setbg_foot "$bg" &
+    setbg_kitty "$bg" &
+    setbg_wezterm "$bg" &
+    setbg_highlight "$bg" &
+    setbg_nvim "$bg" &
+    setbg_plasma "$bg" &
+    setbg_konsole_yakuake "$bg" &
+    setbg_termux "$bg" &
+    setbg_okular "$bg" &
+    setbg_vscode "$bg" &
+    setbg_fish "$bg" &
+    setbg_glow "$bg" &
+    setbg_libreoffice "$bg" &
 }
 
 main "$@"

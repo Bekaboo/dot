@@ -1,21 +1,23 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
-# Hijack fzf command for extra functionality, including adaptive hight,
+# Hijack fzf command for extra functionality, including adaptive height,
 # flexible preview window layout, and image preview with ueberzugpp
 
 has() {
     command -v "$1" >/dev/null 2>&1
 }
 
-readonly lines=$(has tput && tput lines || echo "$LINES")
-readonly cols=$(has tput && tput cols || echo "$COLUMNS")
+# Get terminal size
+lines=$(has tput && tput lines || echo "${LINES:-24}")
+cols=$(has tput && tput cols || echo "${COLUMNS:-80}")
 
+# Get cursor position or return 1;1 if not available
 # Source:
 # https://stackoverflow.com/questions/2575037/how-to-get-the-cursor-position-in-bash
 cursorpos() {
     # R/w to /dev/tty blocks in nvim's `jobstart()`
-    if [[ -n "$NVIM" ]]; then
+    if [ -n "$NVIM" ]; then
         echo '1;1'
         return
     fi
@@ -26,49 +28,51 @@ cursorpos() {
         return
     fi
 
-    # Test reading from tty with timeout (0.1 sec), return fake cursor
-    # position if timeout
-    read -t 0.1 -n 0 <>/dev/tty
-    if [ $? -ne 0 ]; then
+    # Test reading from tty with timeout, return fake cursor position if timeout
+    read -t 0.1 -n 0 <>/dev/tty || {
         exec 3>&-
         echo '1;1'
         return
-    fi
+    }
     exec 3>&-
 
     # Now we can safely access /dev/tty
     exec </dev/tty
     oldstty=$(stty -g)
     stty raw -echo min 0
-    echo -en "\033[6n" >/dev/tty
-    IFS=';' read -r -t 0.1 -d R -a pos
-    stty $oldstty
+    printf '\033[6n' >/dev/tty
 
-    if [ ${#pos[@]} -ne 2 ]; then
+    # Read cursor position response
+    pos=$(dd count=1 bs=32 2>/dev/null)
+    stty "$oldstty"
+
+    # Parse response of format "ESC[row;colR"
+    case "$pos" in
+    *'['*';'*R*)
+        row=${pos#*[}
+        row=${row%;*}
+        col=${pos#*;}
+        col=${col%R}
+        echo "$((row - 1));$((col - 1))"
+        ;;
+    *)
         echo '1;1'
-        return
-    fi
-
-    row=$((${pos[0]:2} - 1))
-    col=$((${pos[1]} - 1))
-    echo "$row;$col"
+        ;;
+    esac
 }
 
 # Normalize percentage to number
-normalize-fzf-geometry() {
+normalize_fzf_geometry() {
     # $1: number or percentage
     # $2: total
-    [[ -z "$1" ]] && return
-    [[ "$1" =~ %$ ]] &&
-        echo $(($1 * $2 / 100)) ||
-        echo "$1"
+    case "$1" in
+    *%) echo "$((${1%\%} * $2 / 100))" ;;
+    *) echo "$1" ;;
+    esac
 }
 
-# Get fzf option value from $FZF_DEFAULT_OPTS environment variable,
-# option name must be a long option name and option value must contain
-# no space, if there are multiple values for the option, only the last one
-# will be returned
-get-fzf-long-opt-no-space() {
+# Get fzf option value
+get_fzf_long_opt_no_space() {
     # $1: long option name
     # $2: default value of the option if not set
     if ! has grep; then
@@ -76,15 +80,12 @@ get-fzf-long-opt-no-space() {
         return 1
     fi
 
-    local opt_val=$(echo "$FZF_DEFAULT_OPTS" |
-        grep -oP "$(printf '(--%s(=(\s|\S*)|\s*\S*))' "$1")" |
-        tail -n1 |
-        sed "$(printf 's/^--%s=\\?//' "$1")" |
-        sed 's/\s*//g' |
-        sed "s/^[\"']|[\"']\$//g")
-    [[ -z "$opt_val" ]] &&
-        echo "$2" ||
-        echo "$opt_val"
+    val=$(printf '%s' "$FZF_DEFAULT_OPTS" | grep -o -- "--$1=[^ ]*" | tail -n1)
+    val=${val#--$1=}
+    val=${val#[\"\']}
+    val=${val%[\"\']}
+
+    [ -z "$val" ] && echo "$2" || echo "$val"
 }
 
 # Get fzf margin or padding from $FZF_DEFAULT_OPTS environment variable fzf
@@ -92,193 +93,123 @@ get-fzf-long-opt-no-space() {
 # accordingly but information about padding and margin is not provided, so we
 # have to calculate it according to $FZF_DEFAULT_OPTS, this is not ideal since
 # it won't work if user overrides the preview window settings in $@
-get-fzf-geometry-normalized() {
+get_fzf_geometry_normalized() {
     # $1: 'margin' or 'padding'
     # $2: 'top', 'bottom', 'left', or 'right'
-    local geometry=$(get-fzf-long-opt-no-space "$1" 0)
-    if [[ "$?" -ne 0 ]]; then
-        echo "$geometry"
+    geometry=$(get_fzf_long_opt_no_space "$1" 0)
+    [ $? -ne 0 ] && echo "$geometry" && return 1
+
+    case "$2" in
+    top | bottom) total=$lines ;;
+    *) total=$cols ;;
+    esac
+
+    case "$geometry" in
+    [0-9]*% | [0-9]*)
+        normalize_fzf_geometry "$geometry" "$total"
+        ;;
+    [0-9]*%,[0-9]*% | [0-9]*,[0-9]*)
+        case "$2" in
+        top | bottom) val=${geometry%%,*} ;;
+        *) val=${geometry##*,} ;;
+        esac
+        normalize_fzf_geometry "$val" "$total"
+        ;;
+    *)
+        echo 0
+        ;;
+    esac
+}
+
+main() {
+    # Create temporary directory
+    tmp_dir=$(mktemp -d -t "$(basename "$0").XXXXXXXX")
+    [ ! -d "$tmp_dir" ] && echo 'Failed to create temp dir' >&2 && return 1
+
+    trap 'rm -rf "$tmp_dir"' HUP INT QUIT ABRT EXIT
+
+    # Link files to avoid recursion
+    script_dir=$(dirname "$0")
+    for file in "$script_dir"/*; do
+        [ "$file" = "$0" ] && continue
+        ln -s "$file" "$tmp_dir"
+    done
+
+    # Update PATH
+    PATH=$(printf '%s' "$PATH" | tr ':' '\n' | sed "s|^$script_dir\$|$tmp_dir|" | tr '\n' ':' | sed 's/:$//')
+
+    if ! has fzf; then
+        echo 'fzf not found' >&2
         return 1
     fi
 
-    [[ "$2" = 'top' || "$2" = 'bottom' ]] &&
-        local total="$lines" ||
-        local total="$cols"
+    # Calculate adaptive height
+    cursor=$(cursorpos)
+    cursor_row=${cursor%;*}
+    fzf_height=$((lines - cursor_row - 1))
+    min_height=$(get_fzf_long_opt_no_space min-height 10)
 
-    # same margin/padding for all sides
-    if [[ "$geometry" =~ ^[0-9]+%?$ ]]; then
-        echo $(normalize-fzf-geometry "$geometry" "$total")
-        return
-    fi
-    # vertical,horizontal margin/padding
-    if [[ "$geometry" =~ ^[0-9]+%?,[0-9]%?$ ]]; then
-        [[ "$2" = 'top' || "$2" = 'bottom' ]] &&
-            local value="${geometry%%,*}" ||
-            local value="${geometry##*,}"
-        echo $(normalize-fzf-geometry "$value" "$total")
-        return
-    fi
-    # top,horizontal,bottom margin/padding
-    if [[ "$geometry" =~ ^[0-9]+%?,[0-9]+%?,[0-9]%?$ ]]; then
-        local select_field
-        case "$2" in
-        top) select_field=1 ;;
-        bottom) select_field=3 ;;
-        left | right) select_field=2 ;;
-        esac
-        echo $(normalize-fzf-geometry \
-            "$(echo "$geometry" | cut -d, -f $select_field)" "$total")
-        return
-    fi
-    # top,right,bottom,left margin/padding
-    if [[ "$geometry" =~ ^[0-9]+%?,[0-9]+%?,[0-9]%?,[0-9]+%?$ ]]; then
-        local select_field
-        case "$2" in
-        top) select_field=1 ;;
-        right) select_field=2 ;;
-        bottom) select_field=3 ;;
-        left) select_field=4 ;;
-        esac
-        echo $(normalize-fzf-geometry \
-            "$(echo "$geometry" | cut -d, -f $select_field)" "$total")
-        return
-    fi
+    [ "$fzf_height" -lt "$min_height" ] && fzf_height=$min_height
+    [ "$fzf_height" -gt "$lines" ] && fzf_height=$lines
 
-    echo 0
-    return 1 # Should not reach here
-}
+    opts="--height=$fzf_height"
 
-readonly -A fzf_margin=(
-    [top]=$(get-fzf-geometry-normalized margin top)
-    [right]=$(get-fzf-geometry-normalized margin right)
-    [bottom]=$(get-fzf-geometry-normalized margin bottom)
-    [left]=$(get-fzf-geometry-normalized margin left)
-)
-readonly -A fzf_padding=(
-    [top]=$(get-fzf-geometry-normalized padding top)
-    [right]=$(get-fzf-geometry-normalized padding right)
-    [bottom]=$(get-fzf-geometry-normalized padding bottom)
-    [left]=$(get-fzf-geometry-normalized padding left)
-)
+    # Calculate preview window layout
+    margin_top=$(get_fzf_geometry_normalized margin top)
+    margin_right=$(get_fzf_geometry_normalized margin right)
+    margin_bottom=$(get_fzf_geometry_normalized margin bottom)
+    margin_left=$(get_fzf_geometry_normalized margin left)
+    padding_top=$(get_fzf_geometry_normalized padding top)
+    padding_right=$(get_fzf_geometry_normalized padding right)
+    padding_bottom=$(get_fzf_geometry_normalized padding bottom)
+    padding_left=$(get_fzf_geometry_normalized padding left)
 
-main() {
-    (
-        local script_dir=$(dirname "$0")
-        local tmp_dir=$(mktemp -d -t "$(basename "$0")".XXXXXXXX)
-        if [[ ! -d "$tmp_dir" ]]; then
-            echo 'Failed to create temp dir' >&2
-            return 1
-        fi
-        trap 'rm -rf "$tmp_dir"' SIGHUP SIGINT SIGQUIT SIGABRT EXIT
+    inner_height=$((fzf_height - margin_top - margin_bottom - padding_top - padding_bottom))
+    inner_width=$((cols - margin_left - margin_right - padding_left - padding_right))
 
-        # Avoid infinite recursion calling `fzf` without affecting
-        # other executables under the same path:
-        # Link all files under $script_dir except this script to $tmp_dir
-        # and replace $script_dir with $tmp_dir in $PATH
-        for file in "$script_dir"/*; do
-            [[ "$file" = "$0" ]] && continue
-            ln -s "$file" "$tmp_dir"
-        done
+    [ "$inner_height" -lt 1 ] && inner_height=1
+    [ "$inner_width" -lt 1 ] && inner_width=1
 
-        export PATH=$(echo -n "$PATH" |
-            awk -v RS=: -v ORS=: \
-                -v script_dir="$script_dir" \
-                -v tmp_dir="$tmp_dir" \
-                '{ if ($0 == script_dir) print tmp_dir; else print $0 }' |
-            sed 's/:$//')
-
-        if ! has fzf; then
-            echo 'fzf not found' >&2
-            return 1
-        fi
-
-        local opts
-
-        # Adaptive height
-        local cursor=$(cursorpos) # line;column
-        local fzf_height=$(($lines - ${cursor%%;*} - 1))
-        local fzf_min_height_default=$(get-fzf-long-opt-no-space \
-            min-height 10)
-        (($fzf_height < $fzf_min_height_default)) &&
-            fzf_height=$fzf_min_height_default
-        (($fzf_height > $lines)) && fzf_height=$lines
-        opts+="--height=$fzf_height "
-
-        # Flexible preview window layout
-        local preview_window_orientation
-        local preview_disabled='false'
-        # Disable preview window if the fzf inner window is too small,
-        # use horizontal layout if it is wide, or vertical layout if
-        # it is tall
-        local fzf_inner_height=$(($fzf_height - \
-            ${fzf_margin[bottom]} - \
-            ${fzf_margin[top]} - \
-            ${fzf_padding[bottom]} - \
-            ${fzf_padding[top]}))
-        local fzf_inner_width=$(($cols - \
-            ${fzf_margin[left]} - \
-            ${fzf_margin[right]} - \
-            ${fzf_padding[left]} - \
-            ${fzf_padding[right]}))
-
-        fzf_inner_height=$(($fzf_inner_height >= 1 ? $fzf_inner_height : 1))
-        fzf_inner_width=$(($fzf_inner_width >= 1 ? $fzf_inner_width : 1))
-
-        if ((fzf_inner_height > 16)) || ((fzf_inner_width > 48)); then
-            ((fzf_inner_width > fzf_inner_height * 3)) &&
-                ((fzf_inner_width >= 80)) &&
-                preview_window_orientation='right' ||
-                preview_window_orientation='down'
-            opts+="--preview-window=$preview_window_orientation "
+    if [ "$inner_height" -gt 16 ] || [ "$inner_width" -gt 48 ]; then
+        if [ "$inner_width" -gt $((inner_height * 3)) ] && [ "$inner_width" -ge 80 ]; then
+            preview_window_orientation='right'
         else
-            opts+='--no-preview '
-            preview_disabled='true'
+            preview_window_orientation='down'
         fi
+        opts="$opts --preview-window=$preview_window_orientation"
+    else
+        opts="$opts --no-preview"
+        preview_disabled=true
+    fi
 
-        # Launch ueberzugpp for image preview if we did not
-        # disable preview in the previous step, notice that
-        # this does not necessarily mean that preview is enabled
-        # (which eventually depends on $FZF_DEFAULT_OPTS and arguments
-        # passed to fzf via $@), it only ensures that ueberzugpp is up
-        # when we need it
-        if has ueberzugpp &&
-            [[ "$FZF_PREVIEW_DISABLE_UB" != 'true' &&
-                "$preview_disabled" = 'false' ]]; then
-            local ub_pid_file="/tmp/.$(uuidgen)"
-            # HACK: need to redirect stdout and stderr to /dev/null, else
-            # ctrl-r history search will be messed up
-            ueberzugpp layer \
-                --silent \
-                --no-stdin \
-                --use-escape-codes \
-                --pid-file "$ub_pid_file" >/dev/null 2>&1
-            # ueberzugpp will listen to this socket
-            export UB_SOCK="/tmp/ueberzugpp-$(cat "$ub_pid_file").socket"
-            # Export additional geometry information for the previewer
-            # to adjust the position of the image shown by ueberzugpp
-            export FZF_PREVIEW_ORIENTATION="$preview_window_orientation"
-            export FZF_HEIGHT="$fzf_height"
-            export FZF_MARGIN_TOP="${fzf_margin[top]}"
-            export FZF_MARGIN_RIGHT="${fzf_margin[right]}"
-            export FZF_MARGIN_BOTTOM="${fzf_margin[bottom]}"
-            export FZF_MARGIN_LEFT="${fzf_margin[left]}"
-            export FZF_PADDING_TOP="${fzf_padding[top]}"
-            export FZF_PADDING_RIGHT="${fzf_padding[right]}"
-            export FZF_PADDING_BOTTOM="${fzf_padding[bottom]}"
-            export FZF_PADDING_LEFT="${fzf_padding[left]}"
-            # fzf overrides $LINES and $COLUMNS according to the to preview window
-            # size, we need to override them back to the original values so that
-            # ueberzugpp can calculate the correct position of the image
-            export FZF_TERM_LINES="$lines"
-            export FZF_TERM_COLUMNS="$cols"
-        fi
+    # Setup ueberzugpp if available
+    if has ueberzugpp && [ "$FZF_PREVIEW_DISABLE_UB" != 'true' ] && [ "$preview_disabled" != 'true' ]; then
+        ub_pid_file="/tmp/.$(uuidgen)"
+        ueberzugpp layer --silent --no-stdin --use-escape-codes --pid-file "$ub_pid_file" >/dev/null 2>&1
 
-        FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS $opts" fzf "$@"
+        # Export variables for previewer
+        UB_SOCK="/tmp/ueberzugpp-$(cat "$ub_pid_file").socket"
+        export UB_SOCK
+        export FZF_PREVIEW_ORIENTATION="$preview_window_orientation"
+        export FZF_HEIGHT="$fzf_height"
+        export FZF_MARGIN_TOP="$margin_top"
+        export FZF_MARGIN_RIGHT="$margin_right"
+        export FZF_MARGIN_BOTTOM="$margin_bottom"
+        export FZF_MARGIN_LEFT="$margin_left"
+        export FZF_PADDING_TOP="$padding_top"
+        export FZF_PADDING_RIGHT="$padding_right"
+        export FZF_PADDING_BOTTOM="$padding_bottom"
+        export FZF_PADDING_LEFT="$padding_left"
+        export FZF_TERM_LINES="$lines"
+        export FZF_TERM_COLUMNS="$cols"
+    fi
 
-        # Close ueberzugpp after fzf exits
-        [[ -n "$UB_SOCK" ]] && ueberzugpp cmd -s "$UB_SOCK" -a exit &
-        [[ -e "$ub_pid_file" ]] && rm -f "$ub_pid_file" &
-    )
+    # Run fzf with our options
+    FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS $opts" fzf "$@"
+
+    # Cleanup ueberzugpp
+    [ -n "$UB_SOCK" ] && ueberzugpp cmd -s "$UB_SOCK" -a exit &
+    [ -e "$ub_pid_file" ] && rm -f "$ub_pid_file" &
 }
 
 main "$@"

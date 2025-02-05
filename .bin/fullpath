@@ -1,7 +1,15 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
-echo "$(
-    cd "$(dirname "$1")"
+if [ -z "$1" ]; then
     pwd
-)/$(basename "$1")"
+    exit 0
+fi
+
+case "$1" in
+.) pwd ;;
+..) cd .. && pwd ;;
+./*) printf '%s/%s\n' "$(pwd)" "${1#./}" ;;
+../*) printf '%s/%s\n' "$(cd .. && pwd)" "${1#../}" ;;
+*) printf '%s/%s\n' "$(cd "$(dirname "$1")" && pwd)" "$(basename "$1")" ;;
+esac
