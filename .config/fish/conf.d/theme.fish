@@ -1,5 +1,5 @@
 if not status is-interactive
-    return
+    exit
 end
 
 function __fish_reload_theme \

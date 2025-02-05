@@ -1,5 +1,5 @@
 if not status is-interactive
-    return
+    exit
 end
 
 # Source:

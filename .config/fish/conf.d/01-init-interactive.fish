@@ -1,6 +1,6 @@
 # Initialization for interactive shell
 if not status is-interactive
-    return
+    exit
 end
 
 # Fzf configs

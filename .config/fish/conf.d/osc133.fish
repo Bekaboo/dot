@@ -2,7 +2,7 @@
 # Source: https://codeberg.org/dnkl/foot/wiki#fish-2
 
 if not status is-interactive; or test (string split . "$version")[1] -ge 4
-    return
+    exit
 end
 
 function __osc133_cmd_start --on-event fish_preexec

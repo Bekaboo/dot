@@ -1,6 +1,6 @@
 # TTY Terminal Colors
 if not status is-interactive; or test $TERM != linux
-    return
+    exit
 end
 
 echo -en "\e]P00D0C0C" #black

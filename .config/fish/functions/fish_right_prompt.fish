@@ -5,7 +5,7 @@ function __fish_venv_prompt
 end
 
 function fish_right_prompt --description 'Write out the right prompt'
-    set -l vcs_info (string match -gr '([^() ]+)' (fish_vcs_prompt))
+    set -l vcs_info (string match -r '[^() ]+' (fish_vcs_prompt))
     set -l venv_info (test -n "$VIRTUAL_ENV"
         and echo (basename $VIRTUAL_ENV)
         or echo '')
