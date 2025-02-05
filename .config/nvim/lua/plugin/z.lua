@@ -157,47 +157,16 @@ function M.select(input)
     return
   end
 
-  ---@param dir string?
-  local function open_dir(dir)
-    if not dir then
-      return
+  vim.ui.select(
+    M.list(input),
+    { prompt = 'Open directory: ' },
+    function(dir) ---@param dir string?
+      if not dir then
+        return
+      end
+      M.z({ dir })
     end
-    local dir_escaped = vim.fn.fnameescape(dir)
-    vim.schedule(function()
-      vim.cmd.edit(dir_escaped)
-      vim.cmd.lcd({ dir_escaped, mods = { silent = true } })
-    end)
-  end
-
-  local dirs = M.list(input)
-  local prompt = 'Open directory: '
-  local has_fzf, fzf = pcall(require, 'fzf-lua')
-
-  -- Fallback to `vim.ui.select()` if fzf-lua is not installed
-  if not has_fzf then
-    vim.ui.select(dirs, { prompt = prompt }, open_dir)
-    return
-  end
-
-  -- Register as an fzf picker
-  fzf.z = fzf.z
-    or function(opts)
-      fzf.fzf_exec(
-        dirs,
-        vim.tbl_deep_extend('force', {
-          cwd = vim.fn.getcwd(0),
-          prompt = prompt,
-          actions = {
-            ['enter'] = {
-              fn = function(selection)
-                open_dir(unpack(selection))
-              end,
-            },
-          },
-        }, opts)
-      )
-    end
-  fzf.z()
+  )
 end
 
 ---Setup `:Z` command

@@ -50,6 +50,7 @@ return {
       { '<Leader>f=', desc = 'Find lines across buffers' },
       { '<Leader>fm', desc = 'Find marks' },
       { '<Leader>fo', desc = 'Find oldfiles' },
+      { '<Leader>fz', desc = 'Find directories from z' },
       { '<Leader>fs', desc = 'Find lsp symbols or treesitter nodes' },
       { '<Leader>fSa', desc = 'Find code actions' },
       { '<Leader>fSd', desc = 'Find symbol definitions' },

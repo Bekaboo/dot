@@ -435,6 +435,29 @@ function fzf.files(opts)
   return _fzf_files(opts)
 end
 
+-- Select dirs from `zoxide`, fallback to shell `z` command
+function fzf.z(opts)
+  if vim.fn.executable('zoxide') == 1 then
+    return fzf.zoxide(opts)
+  end
+  local has_z_plugin, z = pcall(require, 'plugin.z')
+  if has_z_plugin then
+    z.setup()
+    return fzf.fzf_exec(
+      z.list(),
+      vim.tbl_deep_extend('force', {
+        cwd = vim.fn.getcwd(0),
+        prompt = 'Open directory: ',
+        actions = {
+          ['enter'] = {
+            fn = z.z,
+          },
+        },
+      }, opts)
+    )
+  end
+end
+
 fzf.setup({
   -- Default profile 'default-title' disables prompt in favor of title
   -- on nvim >= 0.9, but a fzf windows with split layout cannot have titles
@@ -795,6 +818,7 @@ vim.keymap.set('n', '<Leader>f-', fzf.blines, { desc = 'Find lines in buffer' })
 vim.keymap.set('n', '<Leader>f=', fzf.lines, { desc = 'Find lines across buffers' })
 vim.keymap.set('n', '<Leader>fm', fzf.marks, { desc = 'Find marks' })
 vim.keymap.set('n', '<Leader>fo', fzf.oldfiles, { desc = 'Find old files' })
+vim.keymap.set('n', '<Leader>fz', fzf.z, { desc = 'Find directories from z' })
 vim.keymap.set('n', '<Leader>fs', fzf.symbols, { desc = 'Find lsp symbols or treesitter nodes' })
 vim.keymap.set('n', '<Leader>fSa', fzf.lsp_code_actions, { desc = 'Find code actions' })
 vim.keymap.set('n', '<Leader>fSd', fzf.lsp_definitions, { desc = 'Find symbol definitions' })
