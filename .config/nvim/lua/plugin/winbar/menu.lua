@@ -519,15 +519,16 @@ function winbar_menu_t:make_buf()
     buffer = self.buf,
     callback = function()
       self:update_hover_hl()
-    end,
-  })
-  vim.api.nvim_create_autocmd('WinLeave', {
-    group = groupid,
-    buffer = self.buf,
-    callback = function()
-      if vim.bo.ft ~= 'winbar_menu' then
-        self:close()
-      end
+
+      -- BufLeave event fires BEFORE actually switching buffers, so schedule a
+      -- check to run after buffer switch is complete
+      -- If we've switched to a non-menu buffer, close all menus starting from
+      -- root, this ensures proper cleanup when leaving menu navigation
+      vim.schedule(function()
+        if vim.bo.ft ~= 'winbar_menu' then
+          self:root():close()
+        end
+      end)
     end,
   })
 end
