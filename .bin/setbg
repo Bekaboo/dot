@@ -257,7 +257,7 @@ setbg-fish() {
             ln -sf "${1^}.theme" "$theme_path"
         fi
         has fish &&
-            fish -c 'set -U __fish_reload_theme "$(head -c 16 /dev/urandom | base32)"'
+            fish -c 'set -U __fish_reload_theme (head -c 16 /dev/urandom | base32)'
     )
 }
 
