@@ -1,3 +1,5 @@
+local ap_utils = require('ultimate-autopair.utils')
+
 ---Filetype options memoization
 ---@type table<string, table<string, string|integer|boolean|table>>
 local ft_opts = vim.defaulttable(function()
@@ -10,7 +12,7 @@ end)
 ---@param ft string
 ---@param opt string
 ---@diagnostic disable-next-line: duplicate-set-field
-require('ultimate-autopair.utils').ft_get_option = function(ft, opt)
+ap_utils.ft_get_option = function(ft, opt)
   local opts = ft_opts[ft]
   local opt_val = opts[opt]
   if opt_val ~= nil then
@@ -21,6 +23,12 @@ require('ultimate-autopair.utils').ft_get_option = function(ft, opt)
   opts[opt] = opt_val
   return opt_val
 end
+
+ap_utils.getsmartft = (function(cb)
+  return function(o, notree, ...)
+    return cb(o, vim.b.bigfile or notree, ...)
+  end
+end)(ap_utils.getsmartft)
 
 ---Get next two characters after cursor
 ---@return string: next two characters
