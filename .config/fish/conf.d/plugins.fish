@@ -8,6 +8,12 @@ function __bootstrap
                   or echo "$HOME/.local/share")
     set -gx fisher_path "$data_home/fish/plugin"
 
+    # Set fish state directory
+    set -l state_home (test -n "$XDG_STATE_HOME";
+                    and echo "$XDG_STATE_HOME";
+                    or echo "$HOME/.local/state")
+    set -l fish_state_dir "$state_home/fish"
+
     # Don't use `set -gx` here as lists as environment variables
     # (variable set with `-x`) will collapse to strings when exported to subshell
     if not contains "$fisher_path/functions" $fish_function_path
