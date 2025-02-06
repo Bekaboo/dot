@@ -204,7 +204,6 @@ function actions.arg_search_add()
   fzf.files({
     cwd_header = true,
     cwd_prompt = false,
-    headers = { 'actions', 'cwd' },
     prompt = 'Argadd> ',
     actions = {
       ['enter'] = function(selected, o)
