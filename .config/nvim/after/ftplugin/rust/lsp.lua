@@ -38,6 +38,6 @@ require('utils.lsp').start({
         end
         vim.notify(string.format('[%s] Cargo workspace reloaded', client.name))
       end, 0)
-    end, { description = 'Reload current cargo workspace' })
+    end, { desc = 'Reload current cargo workspace' })
   end,
 })
