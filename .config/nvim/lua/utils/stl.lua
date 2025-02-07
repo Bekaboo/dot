@@ -55,20 +55,20 @@ M.spinner = {}
 M.spinner.default_opts = {
   frame_interval = 80,
   finish_timeout = 1000,
-  icons = {
-    progress = vim.g.has_nf
-        and { '⣷', '⣯', '⣟', '⡿', '⢿', '⣻', '⣽', '⣾' }
-      or {
-        '[    ]',
-        '[=   ]',
-        '[==  ]',
-        '[=== ]',
-        '[ ===]',
-        '[  ==]',
-        '[   =]',
-      },
-    finish = vim.g.has_nf and vim.trim(require('utils.static.icons').Ok)
-      or '[done]',
+  icons = vim.g.has_nf and {
+    progress = { '⣷', '⣯', '⣟', '⡿', '⢿', '⣻', '⣽', '⣾' },
+    finish = vim.trim(require('utils.static.icons').Ok),
+  } or {
+    progress = {
+      '[    ]',
+      '[=   ]',
+      '[==  ]',
+      '[=== ]',
+      '[ ===]',
+      '[  ==]',
+      '[   =]',
+    },
+    finish = '[done]',
   },
 }
 
@@ -151,19 +151,19 @@ end
 function M.spinner:finish(on_finish)
   on_finish = on_finish or self.opts.on_finish
 
-  local now = vim.uv.now()
-  if self.icon ~= self.opts.icons.finish then
-    self.changed_tick = now
-    self.icon = self.opts.icons.finish
+  -- Can only enter `finish` state from `spinning` state
+  if self.status ~= 'spinning' then
+    return
   end
+  self.status = 'finish'
+  self.timer:stop()
 
-  -- Stop timer if spinning
-  if self.status == 'spinning' then
-    self.status = 'finish'
-    self.timer:stop()
-    if on_finish then
-      on_finish(self)
-    end
+  local now = vim.uv.now()
+  self.changed_tick = now
+  self.icon = self.opts.icons.finish
+
+  if on_finish then
+    on_finish(self)
   end
 
   self:redraw()
@@ -176,9 +176,9 @@ function M.spinner:finish(on_finish)
     if self.status ~= 'finish' or self.changed_tick ~= now then
       return
     end
+    self.status = 'idle'
     self.changed_tick = n
     self.icon = ''
-    self.status = 'idle'
     self:redraw()
   end, self.opts.finish_timeout)
 end
