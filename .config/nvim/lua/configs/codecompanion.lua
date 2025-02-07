@@ -1,4 +1,5 @@
 local icons = require('utils.static.icons')
+local stl = require('utils.stl')
 
 local adapter = (function()
   for _, backend in ipairs({
@@ -131,6 +132,52 @@ vim.api.nvim_create_autocmd('FileType', {
       end,
     })
   end),
+})
+
+local spinner_groupid = vim.api.nvim_create_augroup('CodeCompanionSpinner', {})
+vim.api.nvim_create_autocmd('User', {
+  desc = 'Show statusline spinner for codecompanion.',
+  group = spinner_groupid,
+  pattern = 'CodeCompanionRequestStarted',
+  callback = function(info)
+    local buf = info.data and info.data.bufnr
+    if not buf or not vim.api.nvim_buf_is_valid(buf) then
+      return
+    end
+
+    local b = vim.b[buf]
+    if not b.spinner_progs then
+      b.spinner_progs = { 'coecompanion' }
+    elseif not vim.tbl_contains(b.spinner_progs, 'codecompanion') then
+      local spinner_progs = b.spinner_progs
+      table.insert(spinner_progs, 'codecompanion')
+      b.spinner_progs = spinner_progs
+    end
+
+    if not stl.spinner.id_is_valid(b.spinner_id) then
+      stl.spinner:new():attach(buf)
+    end
+    local spinner = stl.spinner.get_by_id(b.spinner_id)
+    if spinner.status == 'idle' then
+      spinner:spin()
+    end
+  end,
+})
+vim.api.nvim_create_autocmd('User', {
+  desc = 'Show statusline spinner for codecompanion.',
+  group = spinner_groupid,
+  pattern = 'CodeCompanionRequestFinished',
+  callback = function(info)
+    local buf = info.data and info.data.bufnr
+    if not buf or not vim.api.nvim_buf_is_valid(buf) then
+      return
+    end
+
+    local spinner = stl.spinner.get_by_id(vim.b[buf].spinner_id)
+    if spinner then
+      spinner:finish()
+    end
+  end,
 })
 
 ---Set default highlight groups for codecompanion.nvim

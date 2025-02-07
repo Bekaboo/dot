@@ -432,7 +432,7 @@ function _G._statusline.diag()
   return str
 end
 
----Id and additional info of language servers in progress
+---Id and additional info about LSP clients
 ---@type table<integer, { name: string, bufs: integer[] }>
 local client_info = {}
 
@@ -487,30 +487,33 @@ vim.api.nvim_create_autocmd('LspProgress', {
 })
 
 ---@return string
-function _G._statusline.lsp_progress()
+function _G._statusline.spinner()
   local spinner = utils.stl.spinner.get_by_id(vim.b.spinner_id)
   if not spinner or spinner.icon == '' then
     return ''
   end
 
   local buf = vim.api.nvim_get_current_buf()
-  local buf_clients = vim.iter(vim.tbl_keys(client_info)):filter(function(id)
-    return vim.tbl_contains(client_info[id].bufs, buf)
-  end)
+  local progs = vim
+    .iter(vim.tbl_keys(client_info))
+    :filter(function(id)
+      return vim.tbl_contains(client_info[id].bufs, buf)
+    end)
+    :map(function(id)
+      return client_info[id].name
+    end)
+    :totable()
 
-  if not buf_clients:peek() then
+  -- Extra progresses requiring spinner animation
+  if vim.b.spinner_progs then
+    vim.list_extend(progs, vim.b.spinner_progs)
+  end
+
+  if vim.tbl_isempty(progs) then
     return ''
   end
 
-  return string.format(
-    '%s %s ',
-    buf_clients
-      :map(function(id)
-        return client_info[id].name
-      end)
-      :join(', '),
-    spinner.icon
-  )
+  return string.format('%s %s ', table.concat(progs, ', '), spinner.icon)
 end
 
 -- stylua: ignore start
@@ -522,7 +525,7 @@ local components = {
   diag         = [[%{%v:lua._statusline.diag()%}]],
   fname        = [[%{%v:lua._statusline.fname()%} ]],
   info         = [[%{%v:lua._statusline.info()%}]],
-  lsp_progress = [[%{%v:lua._statusline.lsp_progress()%}]],
+  spinner     = [[%{%v:lua._statusline.spinner()%}]],
   mode         = [[%{%v:lua._statusline.mode()%}]],
   padding      = [[ ]],
   pos          = [[%{%&ru?"%l:%c ":""%}]],
@@ -537,7 +540,7 @@ local stl = table.concat({
   components.info,
   components.align,
   components.truncate,
-  components.lsp_progress,
+  components.spinner,
   components.diag,
   components.pos,
 })
