@@ -30,12 +30,18 @@ function M.escape(str)
   return (str:gsub('%%', '%%%%'))
 end
 
+---@type stl_spinner_t[]
+local spinners = {}
+
 ---@class stl_spinner_t
 ---@field opts stl_spinner_opts_t
+---@field id integer
 ---@field timer uv.uv_timer_t
 ---@field icon string icon of the spinner
 ---@field changed_tick integer timestamp when the spinner icons is changed last time
 ---@field status 'spinning'|'finish'|'idle'
+---@field attached_buf? integer buffer the spinner is attached to
+---@field attached_autocmd? integer autocmd for the attach
 M.spinner = {}
 
 ---@class stl_spinner_opts_t
@@ -66,17 +72,26 @@ M.spinner.default_opts = {
   },
 }
 
+local spinner_id = -1
+
 ---Create a new spinner instance
 ---@param opts stl_spinner_opts_t?
 ---@return stl_spinner_t
 function M.spinner:new(opts)
-  return setmetatable({
-    opts = vim.tbl_deep_extend('keep', opts or {}, M.spinner.default_opts),
-    timer = vim.uv.new_timer(),
+  spinner_id = spinner_id + 1
+
+  opts = not opts and M.spinner.default_opts
+    or vim.tbl_deep_extend('keep', opts, M.spinner.default_opts)
+  spinners[spinner_id] = setmetatable({
+    opts = opts,
+    id = spinner_id,
     icon = '',
-    last_change = vim.uv.now(),
     status = 'idle',
+    timer = vim.uv.new_timer(),
+    last_change = vim.uv.now(),
   }, { __index = self })
+
+  return spinners[spinner_id]
 end
 
 ---Delete the spinner instance and clean up resources
@@ -170,10 +185,102 @@ end
 ---Redraw so that the new icon can be shown in statusline
 function M.spinner.redraw()
   vim.cmd.redrawstatus({
+    bang = true,
     mods = {
       emsg_silent = true,
     },
   })
+end
+
+---Attach spinner to buffer
+---
+---The spinner will be deleted when the buffer is wiped out or being detached
+---from the buffer
+---
+---Spinners and buffers have one-to-one correspondence:
+--- - A spinner can only be attached to at most one buffer
+--- - A buffer can only have at most one spinner attached
+---@param buf? integer
+function M.spinner:attach(buf)
+  buf = buf or vim.api.nvim_get_current_buf()
+
+  local b = vim.b[buf]
+  if b.spinner_id == self.id then
+    return -- already attached
+  end
+
+  -- Self attached to another buffer, detach first
+  if self.attached_buf and self.attached_buf ~= buf then
+    self:detach()
+  end
+
+  -- Buffer have another spinner attached, detach it first
+  if b.spinner_id then
+    local spinner = M.spinner.get_by_id(b.spinner_id)
+    if spinner then
+      spinner:detach()
+    end
+  end
+
+  b.spinner_id = self.id
+  self.attached_buf = buf
+  if not self.attached_autocmd then
+    self.attached_autocmd = vim.api.nvim_create_autocmd('BufWipeout', {
+      once = true,
+      buffer = buf,
+      callback = function(info)
+        if vim.b[info.buf].spinner ~= self then
+          return
+        end
+        self:detach()
+      end,
+    })
+  end
+end
+
+---Detach spinner from buffer
+---@param del? boolean whether to delete the spinner on detach, default true
+function M.spinner:detach(del)
+  del = del == nil or del
+
+  local buf = self.attached_buf
+  if not buf or not vim.api.nvim_buf_is_valid(buf) then
+    return
+  end
+
+  local b = vim.b[buf]
+  if b.spinner_id ~= self.id then
+    return -- already detached
+  end
+
+  b.spinner_id = nil
+  self.attached_buf = nil
+  if self.attached_autocmd then
+    pcall(vim.api.nvim_del_autocmd, self.attached_autocmd)
+    self.attached_autocmd = nil
+  end
+
+  if del then
+    self:del()
+  end
+end
+
+---@param id? integer
+---@return stl_spinner_t?
+function M.spinner.get_by_id(id)
+  if not id then
+    return
+  end
+  return spinners[id]
+end
+
+---@param id? integer
+---@return boolean
+function M.spinner.id_is_valid(id)
+  if not id then
+    return false
+  end
+  return spinners[id] ~= nil
 end
 
 return M

@@ -432,9 +432,6 @@ function _G._statusline.diag()
   return str
 end
 
----@type stl_spinner_t
-local spinner = utils.stl.spinner:new()
-
 ---Id and additional info of language servers in progress
 ---@type table<integer, { name: string, bufs: integer[] }>
 local client_info = {}
@@ -455,28 +452,44 @@ vim.api.nvim_create_autocmd('LspProgress', {
   callback = function(info)
     -- Update LSP progress data
     local id = info.data.client_id
+    local bufs = vim.lsp.get_buffers_by_client_id(id)
     client_info[id] = {
       name = vim.lsp.get_client_by_id(id).name,
-      bufs = vim.lsp.get_buffers_by_client_id(id),
+      bufs = bufs,
     }
 
-    if spinner.status == 'idle' then
-      spinner:spin()
-    end
+    vim
+      .iter(bufs)
+      :filter(function(buf)
+        -- No need to create and attach spinners to invisible bufs
+        return vim.fn.bufwinid(buf) ~= -1
+      end)
+      :each(function(buf)
+        local b = vim.b[buf]
+        if not utils.stl.spinner.id_is_valid(b.spinner_id) then
+          utils.stl.spinner:new():attach(buf)
+        end
 
-    local type = info.data
-      and info.data.params
-      and info.data.params.value
-      and info.data.params.value.kind
-    if type == 'end' then
-      spinner:finish()
-    end
+        local spinner = utils.stl.spinner.get_by_id(b.spinner_id)
+        if spinner.status == 'idle' then
+          spinner:spin()
+        end
+
+        local type = info.data
+          and info.data.params
+          and info.data.params.value
+          and info.data.params.value.kind
+        if type == 'end' then
+          spinner:finish()
+        end
+      end)
   end,
 })
 
 ---@return string
 function _G._statusline.lsp_progress()
-  if spinner.icon == '' then
+  local spinner = utils.stl.spinner.get_by_id(vim.b.spinner_id)
+  if not spinner or spinner.icon == '' then
     return ''
   end
 
@@ -489,13 +502,15 @@ function _G._statusline.lsp_progress()
     return ''
   end
 
-  local client_names = buf_clients
-    :map(function(id)
-      return client_info[id].name
-    end)
-    :join(', ')
-
-  return string.format('%s %s ', client_names, spinner.icon)
+  return string.format(
+    '%s %s ',
+    buf_clients
+      :map(function(id)
+        return client_info[id].name
+      end)
+      :join(', '),
+    spinner.icon
+  )
 end
 
 -- stylua: ignore start
