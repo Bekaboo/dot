@@ -55,7 +55,7 @@ end)(ap_core.run_run)
 
 ---Get next two characters after cursor
 ---@return string: next two characters
-local function get_next_two_chars()
+local function get_suffix()
   local col, line
   if vim.startswith(vim.fn.mode(), 'c') then
     col = vim.fn.getcmdpos()
@@ -72,6 +72,25 @@ end
 -- opening pairs: (, [, {, \(, \[, \{
 local IGNORE_REGEX = vim.regex([=[^\%(\k\|\\\?[([{]\)]=])
 
+---Record previous cmdline completion types,
+---`cmdcompltype[1]` is the current completion type,
+---`cmdcompltype[2]` is the previous completion type
+---@type string[]
+local compltype = {}
+
+vim.api.nvim_create_autocmd('CmdlineChanged', {
+  desc = 'Record cmd compltype to determine whether to autopair.',
+  group = vim.api.nvim_create_augroup('AutopairRecordCmdCompltype', {}),
+  callback = function()
+    local type = vim.fn.getcmdcompltype()
+    if compltype[1] == type then
+      return
+    end
+    compltype[2] = compltype[1]
+    compltype[1] = type
+  end,
+})
+
 require('ultimate-autopair').setup({
   extensions = {
     suround = false,
@@ -80,9 +99,16 @@ require('ultimate-autopair').setup({
     utf8 = false,
     cond = {
       cond = function(f)
+        -- Disable autopairs when inserting a regex,
+        -- e.g. `:s/{pattern}/{string}/[flags]` or
+        -- `:g/{pattern}/[cmd]`, etc.
+        if f.in_cmdline() then
+          return compltype[2] ~= 'command' or compltype[1] ~= ''
+        end
+
         return not f.in_macro()
           -- Disable autopairs if followed by a keyword or an opening pair
-          and not IGNORE_REGEX:match_str(get_next_two_chars())
+          and not IGNORE_REGEX:match_str(get_suffix())
       end,
     },
   },
