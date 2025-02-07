@@ -233,3 +233,22 @@ require('ultimate-autopair').setup({
     ft = { 'markdown', 'tex' },
   },
 })
+
+local has_cmp, cmp = pcall(require, 'cmp')
+if has_cmp then
+  local format = require('cmp.config').get().formatting.format
+  cmp.setup({
+    formatting = {
+      format = function(entry, item)
+        -- Don't complete left parenthesis when calling functions or
+        -- expressions in cmdline, e.g. `:call func(...`
+        local type = compltype[1]
+        if type == 'function' or type == 'expression' then
+          item.word = string.gsub(item.word, '%($', '')
+          item.abbr = item.word
+        end
+        return format(entry, item)
+      end,
+    },
+  })
+end
