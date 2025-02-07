@@ -96,6 +96,7 @@ end
 
 ---Delete the spinner instance and clean up resources
 function M.spinner:del()
+  spinners[self.id] = nil -- dereference self from the lookup table
   if self.status == 'spinning' then
     self:finish()
   end
