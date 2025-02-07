@@ -38,16 +38,18 @@ ap_core.run_run = (function(cb)
   local lz
 
   return function(...)
-    lz = vim.go.lz
-    vim.go.lz = true
+    if not vim.go.lz then
+      lz = vim.go.lz
+      vim.go.lz = true
 
-    vim.schedule(function()
-      if lz == nil then
-        return
-      end
-      vim.go.lz = lz
-      lz = nil
-    end)
+      vim.schedule(function()
+        if lz == nil then
+          return
+        end
+        vim.go.lz = lz
+        lz = nil
+      end)
+    end
 
     return cb(...)
   end
