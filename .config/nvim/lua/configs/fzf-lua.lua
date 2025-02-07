@@ -93,12 +93,10 @@ function actions.switch_cwd()
       .fnamemodify(opts.cwd, at_home and ':~' or ':p')
       :gsub('^~', '')
       :gsub('^/', ''),
-    -- Append current dir '././' to the result list to allow switching to home
+    -- Append current dir './' to the result list to allow switching to home
     -- or root directory
-    -- Use '././' instead of './' to ensure that './' is shown in the result
-    -- list
     cmd = string.format(
-      [[%s | sed '1i ././']],
+      [[%s | sed '1i ./']],
       (function()
         local fd_cmd = vim.fn.executable('fd') == 1 and 'fd'
           or vim.fn.executable('fdfind') == 1 and 'fdfind'
