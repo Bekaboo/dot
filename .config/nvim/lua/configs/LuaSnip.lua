@@ -28,6 +28,7 @@ end
 -- 'html_inline' (lang returned from treesitter when using
 -- `from_pos_or_filetype()` as the filetype function)
 local lang_ft_map = {
+  commonlisp = 'lisp',
   glimmer = 'handlebars',
   html = 'markdown',
   html_inline = 'html',
