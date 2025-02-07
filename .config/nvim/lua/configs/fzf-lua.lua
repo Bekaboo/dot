@@ -180,7 +180,7 @@ end
 function actions.del_autocmd(selected)
   for _, line in ipairs(selected) do
     local event, group, pattern =
-      line:match('^.+:%d+:(%w+)%s*│%s*(%S+)%s*│%s*(.-)%s*│')
+      line:match('^.+:%d+:|(%w+)%s*│%s*(%S+)%s*│%s*(.-)%s*│')
     if event and group and pattern then
       vim.cmd.autocmd({
         bang = true,
