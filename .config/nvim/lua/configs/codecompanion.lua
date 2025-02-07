@@ -19,7 +19,10 @@ end)()
 
 ---@diagnostic disable-next-line: undefined-field
 require('codecompanion').setup({
-  opts = { visible = true },
+  opts = {
+    visible = true,
+    language = '',
+  },
   strategies = {
     chat = {
       adapter = adapter,
