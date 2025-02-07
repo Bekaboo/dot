@@ -1,4 +1,5 @@
 local ap_utils = require('ultimate-autopair.utils')
+local ap_core = require('ultimate-autopair.core')
 
 ---Filetype options memoization
 ---@type table<string, table<string, string|integer|boolean|table>>
@@ -29,6 +30,28 @@ ap_utils.getsmartft = (function(cb)
     return cb(o, vim.b.bigfile or notree, ...)
   end
 end)(ap_utils.getsmartft)
+
+-- Set 'lazyredraw' on paring to prevent cursor jump caused by `<C-g>U<Left>`
+-- Source: https://github.com/windwp/nvim-autopairs/pull/403
+-- TODO: upstream
+ap_core.run_run = (function(cb)
+  local lz
+
+  return function(...)
+    lz = vim.go.lz
+    vim.go.lz = true
+
+    vim.schedule(function()
+      if lz == nil then
+        return
+      end
+      vim.go.lz = lz
+      lz = nil
+    end)
+
+    return cb(...)
+  end
+end)(ap_core.run_run)
 
 ---Get next two characters after cursor
 ---@return string: next two characters
