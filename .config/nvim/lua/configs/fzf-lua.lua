@@ -556,6 +556,8 @@ fzf.setup({
     ['prompt'] = { 'fg', 'TelescopePrefix' },
     ['pointer'] = { 'fg', 'TelescopeSelectionCaret' },
     ['marker'] = { 'fg', 'TelescopeMultiIcon' },
+    ['bg'] = '-1',
+    ['gutter'] = '-1',
   },
   keymap = {
     -- Overrides default completion completely
