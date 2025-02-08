@@ -23,14 +23,14 @@ fish_color_history_current                  --bold
 fish_color_host                      normal
 fish_color_host_remote               7daea3
 fish_color_normal                    normal
-fish_color_operator                  d4be98
-fish_color_param                     d4be98
-fish_color_quote                     928374
+fish_color_operator                  e7a84e
+fish_color_param                     7daea3
+fish_color_quote                     a9b665
 fish_color_redirection               7daea3
 fish_color_search_match                     --reverse
 fish_color_selection                 928374 --background=45403d
-fish_color_status                    282828 --background=d8a657 --bold
-fish_color_status_0                  282828 --background=928374 --bold
+fish_color_status                    282828 --background=d8a657
+fish_color_status_0                  282828 --background=928374
 fish_color_user                      d8a657
 fish_color_valid_path                d3869b
 fish_color_vcs                       928374

@@ -23,9 +23,9 @@ fish_color_history_current                  --bold
 fish_color_host                      normal
 fish_color_host_remote               dfa000
 fish_color_normal                    normal
-fish_color_operator                  35a77c
-fish_color_param                     35a77c
-fish_color_quote                     b8bea5
+fish_color_operator                  f57d26
+fish_color_param                     3a94c4
+fish_color_quote                     8da101
 fish_color_redirection               dfa000
 fish_color_search_match                     --reverse
 fish_color_selection                 fdf6e3 --background=404e54
