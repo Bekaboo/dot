@@ -58,7 +58,8 @@ function! GetMarkdownIndent() abort
   " If the code block does not have a language, we should not use
   " nvim-treesitter's indent expr because it always return 0 (no indentation)
   if s:in_codeblock()
-    return nvim_treesitter#indent() || l:default
+    let l:ts_indent = nvim_treesitter#indent()
+    return l:ts_indent ? l:ts_indent : l:default
   endif
 
   " Indent unordered list bullet points
