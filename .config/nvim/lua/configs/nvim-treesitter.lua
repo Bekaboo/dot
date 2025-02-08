@@ -21,6 +21,8 @@ require('nvim-treesitter.configs').setup({
     'rust',
     'fish',
     'make',
+    'html', -- for markdown inline highlight
+    'latex',
   },
   auto_install = false,
   sync_install = false,
