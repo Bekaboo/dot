@@ -30,6 +30,7 @@ vim.opt.ignorecase = true
 vim.opt.smartcase = true
 vim.opt.completeopt = 'menuone'
 vim.opt.jumpoptions = 'stack,view'
+vim.opt.selection = 'old'
 
 -- Defer shada reading
 local shada_read ---@boolean?

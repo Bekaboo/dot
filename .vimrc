@@ -42,6 +42,7 @@ silent! set diffopt+=algorithm:histogram,indent-heuristic
 silent! set clipboard^=unnamedplus
 silent! set formatoptions+=nor
 silent! set jumpoptions=stack
+silent! set selection=old
 
 " Enable 'exrc' only when 'secure' is working
 if exists('+secure')
