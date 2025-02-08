@@ -556,6 +556,7 @@ fzf.setup({
     ['prompt'] = { 'fg', 'TelescopePrefix' },
     ['pointer'] = { 'fg', 'TelescopeSelectionCaret' },
     ['marker'] = { 'fg', 'TelescopeMultiIcon' },
+    ['fg'] = { 'fg', 'TelescopeNormal' },
     ['bg'] = '-1',
     ['gutter'] = '-1',
   },
