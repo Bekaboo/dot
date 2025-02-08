@@ -150,7 +150,7 @@ vim.api.nvim_create_autocmd('User', {
 
     local b = vim.b[buf]
     if not b.spinner_progs then
-      b.spinner_progs = { 'coecompanion' }
+      b.spinner_progs = { 'codecompanion' }
     elseif not vim.tbl_contains(b.spinner_progs, 'codecompanion') then
       local spinner_progs = b.spinner_progs
       table.insert(spinner_progs, 'codecompanion')
