@@ -5,10 +5,11 @@ end
 function __fish_reload_theme --on-variable __fish_reload_theme \
     --description 'Switch fish theme'
     if type -q tput; and test (tput colors 2>/dev/null) -lt 256
-        fish_config theme choose 'Default Dark' 2>/dev/null
-        return
+        set -f theme 'Default Dark'
+    else
+        set -f theme Current
     end
-    fish_config theme choose Current 2>/dev/null
+    fish_config theme choose $theme 2>/dev/null
     commandline -f repaint
 end
 
