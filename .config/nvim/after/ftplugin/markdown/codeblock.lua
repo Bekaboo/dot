@@ -117,9 +117,6 @@ local function set_default_hlgroups()
   hl.set_default(0, 'Dash', { link = 'LineNr' })
   hl.set(0, 'markdownCode', { bg = 'CodeBlock' })
   hl.set(0, 'markdownCodeDelimiter', { bg = 'CodeBlock' })
-  -- Custom markdown syntax hl
-  hl.set(0, 'mkdCode', { bg = 'CodeBlock' })
-  hl.set(0, 'mkdCodeDelimiter', { bg = 'CodeBlock' })
   -- Treesitter hl
   hl.set(0, '@markup.raw.markdown_inline', { fg = 'String', bg = 'CodeBlock' })
 end

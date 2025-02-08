@@ -193,7 +193,6 @@ local function setup_lsp_overrides()
   ---@returns bufnr,winnr buffer and window number of the newly created floating preview window
   ---@diagnostic disable-next-line: duplicate-set-field
   function vim.lsp.util.open_floating_preview(contents, syntax, opts)
-    local source_ft = vim.bo[vim.api.nvim_get_current_buf()].ft
     opts = vim.tbl_deep_extend('force', opts, {
       border = 'solid',
       max_width = math.max(80, math.ceil(vim.go.columns * 0.75)),
@@ -207,13 +206,6 @@ local function setup_lsp_overrides()
         'VimResized',
       },
     })
-    -- If source filetype is markdown, use custom mkd syntax instead of
-    -- markdown syntax to avoid using treesitter highlight and get math
-    -- concealing provided by vimtex in the floating window
-    if source_ft == 'markdown' then
-      syntax = 'markdown'
-      opts.wrap = false
-    end
     local floating_bufnr, floating_winnr =
       _open_floating_preview(contents, syntax, opts)
     vim.wo[floating_winnr].concealcursor = 'nc'

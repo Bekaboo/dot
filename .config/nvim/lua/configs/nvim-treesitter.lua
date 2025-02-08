@@ -32,9 +32,6 @@ require('nvim-treesitter.configs').setup({
         or vim.fn.win_gettype() == 'command'
         or vim.b[buf].vimtex_id and lang == 'latex'
     end,
-    -- Enable additional vim regex highlighting
-    -- in markdown files to get vimtex math conceal
-    additional_vim_regex_highlighting = { 'markdown' },
   },
   incremental_selection = {
     enable = true,

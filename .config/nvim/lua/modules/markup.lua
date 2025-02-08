@@ -1,7 +1,7 @@
 return {
   {
     'lervag/vimtex',
-    ft = { 'tex', 'markdown' },
+    ft = 'tex',
     config = function()
       require('configs.vimtex')
     end,
