@@ -51,11 +51,7 @@ wk.setup({
   delay = function(ctx)
     return ctx.plugin and 0 or 640
   end,
-  win = {
-    border = 'solid',
-    width = { max = 0.4 },
-    height = { max = 0.8 },
-  },
+  win = { border = 'solid' },
   sort = {
     'local',
     'order',
