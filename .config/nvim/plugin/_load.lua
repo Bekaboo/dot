@@ -58,19 +58,6 @@ vim.api.nvim_create_autocmd({ 'CmdlineEnter', 'InsertEnter' }, {
   end,
 })
 
--- colorcolumn
-vim.api.nvim_create_autocmd('UIEnter', {
-  group = vim.api.nvim_create_augroup('ColorColumnSetup', {}),
-  desc = 'Init colorcolumn plugin.',
-  once = true,
-  callback = function()
-    vim.schedule(function()
-      require('plugin.colorcolumn').setup()
-    end)
-    return true
-  end,
-})
-
 -- winbar
 vim.api.nvim_create_autocmd('FileType', {
   once = true,
