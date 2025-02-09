@@ -509,7 +509,8 @@ endif
 if s:supportevents('SessionLoadPost')
   function! s:clear_invalid_buffers()
     for tab in gettabinfo()
-      let wins = filter(tabpagewinnr(tab.tabnr, '$')->range(), 'win_gettype(win_getid(v:val, tab.tabnr)) == ""')
+      let wins = filter(tabpagewinnr(tab.tabnr, '$')->range(),
+            \ 'win_gettype(win_getid(v:val, tab.tabnr)) == ""')
       if len(wins) <= 1
         continue
       endif
