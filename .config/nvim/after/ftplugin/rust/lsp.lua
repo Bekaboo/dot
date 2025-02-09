@@ -25,7 +25,7 @@ require('utils.lsp').start({
   -- Source: https://github.com/neovim/nvim-lspconfig/blob/master/lua/lspconfig/configs/rust_analyzer.lua
   on_attach = function(client)
     vim.api.nvim_buf_create_user_command(0, 'CargoReload', function()
-      client.request('rust-analyzer/reloadWorkspace', nil, function(err)
+      client:request('rust-analyzer/reloadWorkspace', nil, function(err)
         if err then
           vim.notify(
             string.format(

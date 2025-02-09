@@ -147,21 +147,6 @@ vim.api.nvim_create_autocmd('UIEnter', {
       map({ 'i' }, '<Down>', '<Cmd>norm! g<Down><CR>', { desc = 'Move down' })
       map({ 'i' }, '<Up>',   '<Cmd>norm! g<Up><CR>',   { desc = 'Move up' })
 
-      -- Buffer navigation
-      map('n', ']b', '<Cmd>exec v:count1 . "bn"<CR>', { desc = 'Go to next buffer' })
-      map('n', '[b', '<Cmd>exec v:count1 . "bp"<CR>', { desc = 'Go to previous buffer' })
-
-      -- Quickfix/location list navigation
-      map('n', '[q', '<Cmd>exec v:count1 . "cp"<CR>', { desc = 'Go to previous quickfix item' })
-      map('n', '[l', '<Cmd>exec v:count1 . "lp"<CR>', { desc = 'Go to previous location list item' })
-      map('n', ']q', '<Cmd>exec v:count1 . "cne"<CR>', { desc = 'Go to next quickfix item' })
-      map('n', ']l', '<Cmd>exec v:count1 . "lne"<CR>', { desc = 'Go to next location list item' })
-      map('n', '[Q', '<Cmd>exec v:count1 . "cfir"<CR>', { desc = 'Go to first quickfix item' })
-      map('n', '[L', '<Cmd>exec v:count1 . "lfir"<CR>', { desc = 'Go to first location list item' })
-      map('n', ']Q', '<Cmd>exec (v:count ? v:count : "") . "cla"<CR>', { desc = 'Go to last quickfix item' })
-      map('n', ']L', '<Cmd>exec (v:count ? v:count : "") . "lla"<CR>', { desc = 'Go to last location list item' })
-      -- stylua: ignore end
-
       -- Tabpages
       ---@param tab_action function
       ---@param default_count number?

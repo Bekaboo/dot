@@ -18,11 +18,6 @@ local ruff = lsp.start({
     { 'ruff.toml', '.ruff.toml' },
     root_patterns
   ),
-  on_attach = function(client)
-    -- Use language servers like pyright or pylsp for hover, avoid
-    -- 'No information available' message given by ruff
-    client.server_capabilities.hoverProvider = false
-  end,
 })
 
 -- Prefer ruff over pylint and black as linter and formatter
@@ -153,7 +148,7 @@ local function pyright_set_python_path(client, path)
   if client.settings then
     client.settings.python = vim.tbl_deep_extend(
       'force',
-      client.settings.python,
+      client.settings.python --[[@as table]],
       { pythonPath = path }
     )
   else
@@ -163,13 +158,13 @@ local function pyright_set_python_path(client, path)
       { python = { pythonPath = path } }
     )
   end
-  client.notify('workspace/didChangeConfiguration', { settings = nil })
+  client:notify('workspace/didChangeConfiguration', { settings = nil })
 end
 
 ---@param client vim.lsp.Client
 ---@param name string
 local function pyright_organize_imports(client, name)
-  client.request('workspace/executeCommand', {
+  client:request('workspace/executeCommand', {
     command = string.format('%s.organizeimports', name),
     arguments = { vim.uri_from_bufnr(0) },
   }, nil, 0)

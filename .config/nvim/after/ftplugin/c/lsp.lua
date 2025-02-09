@@ -4,7 +4,7 @@ local lsp = require('utils.lsp')
 local function symbol_info(client)
   local bufnr = vim.api.nvim_get_current_buf()
   local win = vim.api.nvim_get_current_win()
-  client.request(
+  client:request(
     'textDocument/symbolInfo',
     vim.lsp.util.make_position_params(win, client.offset_encoding),
     function(err, res)
@@ -29,7 +29,7 @@ end
 local function switch_source_header(client)
   local method_name = 'textDocument/switchSourceHeader'
   local buf = vim.api.nvim_get_current_buf()
-  client.request(
+  client:request(
     method_name,
     vim.lsp.util.make_text_document_params(buf),
     function(err, result)

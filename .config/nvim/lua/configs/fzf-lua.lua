@@ -406,16 +406,16 @@ function vim.lsp.buf.workspace_symbol(query, options)
   _lsp_workspace_symbol(query or '', options)
 end
 
-vim.lsp.handlers['callHierarchy/incomingCalls'] = fzf.lsp_incoming_calls
-vim.lsp.handlers['callHierarchy/outgoingCalls'] = fzf.lsp_outgoing_calls
-vim.lsp.handlers['textDocument/codeAction'] = fzf.code_actions
-vim.lsp.handlers['textDocument/declaration'] = fzf.declarations
-vim.lsp.handlers['textDocument/definition'] = fzf.lsp_definitions
-vim.lsp.handlers['textDocument/documentSymbol'] = fzf.lsp_document_symbols
-vim.lsp.handlers['textDocument/implementation'] = fzf.lsp_implementations
-vim.lsp.handlers['textDocument/references'] = fzf.lsp_references
-vim.lsp.handlers['textDocument/typeDefinition'] = fzf.lsp_typedefs
-vim.lsp.handlers['workspace/symbol'] = fzf.lsp_live_workspace_symbols
+vim.lsp.buf.incoming_calls = fzf.lsp_incoming_calls
+vim.lsp.buf.outgoing_calls = fzf.lsp_outgoing_calls
+vim.lsp.buf.code_action = fzf.code_actions
+vim.lsp.buf.declaration = fzf.declarations
+vim.lsp.buf.definition = fzf.lsp_definitions
+vim.lsp.buf.document_symbol = fzf.lsp_document_symbols
+vim.lsp.buf.implementation = fzf.lsp_implementations
+vim.lsp.buf.references = fzf.lsp_references
+vim.lsp.buf.type_definition = fzf.lsp_typedefs
+vim.lsp.buf.workspace_symbol = fzf.lsp_live_workspace_symbols
 
 vim.diagnostic.setqflist = fzf.diagnostics_workspace
 vim.diagnostic.setloclist = fzf.diagnostics_document

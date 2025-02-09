@@ -83,7 +83,7 @@ Currently only tested on Linux (X11/Wayland/TTY) and Android (Termux).
 
 ### Basic
 
-- [Neovim](https://github.com/neovim/neovim) 0.10, for exact version see [nvim-version.txt](nvim-version.txt)
+- [Neovim](https://github.com/neovim/neovim) 0.11, for exact version see [nvim-version.txt](nvim-version.txt)
 - [Git](https://git-scm.com/)
 - [GCC](https://gcc.gnu.org/) or [Clang](https://clang.llvm.org/) for building treesitter parsers and some libs
 - [Fd](https://github.com/sharkdp/fd), [Ripgrep](https://github.com/BurntSushi/ripgrep), and [Fzf](https://github.com/junegunn/fzf) for fuzzy search

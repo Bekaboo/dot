@@ -145,7 +145,7 @@ vim.api.nvim_create_autocmd('UIEnter', {
     for linenr, line in ipairs(lines) do
       local chunk_offset = line.offset
       for _, chunk in ipairs(line.chunks) do
-        vim.highlight.range(
+        vim.hl.range(
           buf,
           ns,
           chunk.hl,

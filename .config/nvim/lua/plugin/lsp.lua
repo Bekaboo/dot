@@ -120,28 +120,17 @@ local function setup_keymaps()
     )
   end, { desc = 'Yank diagnostic message on current line' })
 
-  local c = utils.key.count_wrap
-  ---@param direction 'prev'|'next'
-  ---@param level 'ERROR'|'WARN'|'INFO'|'HINT'
-  ---@return function
-  local function diag_goto(direction, level)
-    return function()
-      vim.diagnostic['goto_' .. direction]({
-        severity = vim.diagnostic.severity[level],
-      })
-    end
-  end
   -- stylua: ignore start
-  vim.keymap.set({ 'n', 'x' }, '[d', c(function() vim.diagnostic.goto_prev() end), { desc = 'Go to previous diagnostic' })
-  vim.keymap.set({ 'n', 'x' }, ']d', c(function () vim.diagnostic.goto_next() end), { desc = 'Go to next diagnostic' })
-  vim.keymap.set({ 'n', 'x' }, '[e', c(diag_goto('prev', 'ERROR')), { desc = 'Go to previous diagnostic error' })
-  vim.keymap.set({ 'n', 'x' }, ']e', c(diag_goto('next', 'ERROR')), { desc = 'Go to next diagnostic error' })
-  vim.keymap.set({ 'n', 'x' }, '[w', c(diag_goto('prev', 'WARN')), { desc = 'Go to previous diagnostic warning' })
-  vim.keymap.set({ 'n', 'x' }, ']w', c(diag_goto('next', 'WARN')), { desc = 'Go to next diagnostic warning' })
-  vim.keymap.set({ 'n', 'x' }, '[i', c(diag_goto('prev', 'INFO')), { desc = 'Go to previous diagnostic info' })
-  vim.keymap.set({ 'n', 'x' }, ']i', c(diag_goto('next', 'INFO')), { desc = 'Go to next diagnostic info' })
-  vim.keymap.set({ 'n', 'x' }, '[h', c(diag_goto('prev', 'HINT')), { desc = 'Go to previous diagnostic hint' })
-  vim.keymap.set({ 'n', 'x' }, ']h', c(diag_goto('next', 'HINT')), { desc = 'Go to next diagnostic hint' })
+  vim.keymap.set({ 'n', 'x' }, '[d', function() vim.diagnostic.jump({ count = -vim.v.count1, float = true }) end, { desc = 'Go to previous diagnostic' })
+  vim.keymap.set({ 'n', 'x' }, ']d', function() vim.diagnostic.jump({ count =  vim.v.count1, float = true }) end, { desc = 'Go to next diagnostic' })
+  vim.keymap.set({ 'n', 'x' }, '[e', function() vim.diagnostic.jump({ count = -vim.v.count1, float = true, severity = vim.diagnostic.severity.ERROR }) end, { desc = 'Go to previous diagnostic error' })
+  vim.keymap.set({ 'n', 'x' }, ']e', function() vim.diagnostic.jump({ count =  vim.v.count1, float = true, severity = vim.diagnostic.severity.ERROR }) end, { desc = 'Go to next diagnostic error' })
+  vim.keymap.set({ 'n', 'x' }, '[w', function() vim.diagnostic.jump({ count = -vim.v.count1, float = true, severity = vim.diagnostic.severity.WARN }) end, { desc = 'Go to previous diagnostic warning' })
+  vim.keymap.set({ 'n', 'x' }, ']w', function() vim.diagnostic.jump({ count =  vim.v.count1, float = true, severity = vim.diagnostic.severity.WARN }) end, { desc = 'Go to next diagnostic warning' })
+  vim.keymap.set({ 'n', 'x' }, '[i', function() vim.diagnostic.jump({ count = -vim.v.count1, float = true, severity = vim.diagnostic.severity.INFO }) end, { desc = 'Go to previous diagnostic info' })
+  vim.keymap.set({ 'n', 'x' }, ']i', function() vim.diagnostic.jump({ count =  vim.v.count1, float = true, severity = vim.diagnostic.severity.INFO }) end, { desc = 'Go to next diagnostic info' })
+  vim.keymap.set({ 'n', 'x' }, '[h', function() vim.diagnostic.jump({ count = -vim.v.count1, float = true, severity = vim.diagnostic.severity.HINT }) end, { desc = 'Go to previous diagnostic hint' })
+  vim.keymap.set({ 'n', 'x' }, ']h', function() vim.diagnostic.jump({ count =  vim.v.count1, float = true, severity = vim.diagnostic.severity.HINT }) end, { desc = 'Go to next diagnostic hint' })
   -- stylua: ignore end
 end
 
@@ -228,7 +217,7 @@ end
 ---@field async boolean|nil
 ---@field bufnr integer|nil
 ---@field context table|nil
----@field cursor_position table|nil
+---@field pos table|nil
 ---@field defaults table|nil
 ---@field diagnostics table|nil
 ---@field disable boolean|nil
@@ -262,7 +251,7 @@ end
 ---@field timeout_ms integer|nil
 ---@field title string|nil
 ---@field toggle boolean|nil
----@field win_id integer|nil
+---@field winid integer|nil
 ---@field winnr integer|nil
 ---@field wrap boolean|nil
 
@@ -949,6 +938,8 @@ local subcommands = {
         'opts.float.format',
         'opts.float.prefix',
         'opts.float.suffix',
+        'float.focus_id',
+        'float.border',
         'opts.severity_sort',
         ['opts.underline'] = subcommand_opt_vals.bool,
         ['opts.underline.severity'] = subcommand_opt_vals.severity,
@@ -1019,9 +1010,9 @@ local subcommands = {
     get_next = {
       opts = {
         'wrap',
-        'win_id',
+        'winid',
         'namespace',
-        'cursor_position',
+        'pos',
         'float.namespace',
         'float.scope',
         'float.pos',
@@ -1030,6 +1021,8 @@ local subcommands = {
         'float.format',
         'float.prefix',
         'float.suffix',
+        'float.focus_id',
+        'float.border',
         'float.severity_sort',
         ['severity'] = subcommand_opt_vals.severity,
         ['float'] = subcommand_opt_vals.bool,
@@ -1040,36 +1033,12 @@ local subcommands = {
         vim.print(vim.diagnostic.get_next(...))
       end,
     },
-    get_next_pos = {
-      opts = {
-        'wrap',
-        'win_id',
-        'namespace',
-        'cursor_position',
-        'float.namespace',
-        'float.scope',
-        'float.pos',
-        'float.header',
-        'float.source',
-        'float.format',
-        'float.prefix',
-        'float.suffix',
-        'float.severity_sort',
-        ['severity'] = subcommand_opt_vals.severity,
-        ['float'] = subcommand_opt_vals.bool,
-        ['float.bufnr'] = subcommand_opt_vals.bufs,
-        ['float.severity'] = subcommand_opt_vals.severity,
-      },
-      fn_override = function(...)
-        vim.print(vim.diagnostic.get_next_pos(...))
-      end,
-    },
     get_prev = {
       opts = {
         'wrap',
-        'win_id',
+        'winid',
         'namespace',
-        'cursor_position',
+        'pos',
         'float.namespace',
         'float.scope',
         'float.pos',
@@ -1078,6 +1047,8 @@ local subcommands = {
         'float.format',
         'float.prefix',
         'float.suffix',
+        'float.focus_id',
+        'float.border',
         'float.severity_sort',
         ['severity'] = subcommand_opt_vals.severity,
         ['float'] = subcommand_opt_vals.bool,
@@ -1088,12 +1059,12 @@ local subcommands = {
         vim.print(vim.diagnostic.get_prev(...))
       end,
     },
-    get_prev_pos = {
+    jump = {
       opts = {
         'wrap',
-        'win_id',
+        'winid',
         'namespace',
-        'cursor_position',
+        'pos',
         'float.namespace',
         'float.scope',
         'float.pos',
@@ -1102,51 +1073,8 @@ local subcommands = {
         'float.format',
         'float.prefix',
         'float.suffix',
-        'float.severity_sort',
-        ['severity'] = subcommand_opt_vals.severity,
-        ['float'] = subcommand_opt_vals.bool,
-        ['float.bufnr'] = subcommand_opt_vals.bufs,
-        ['float.severity'] = subcommand_opt_vals.severity,
-      },
-      fn_override = function(...)
-        vim.print(vim.diagnostic.get_prev_pos(...))
-      end,
-    },
-    goto_next = {
-      opts = {
-        'wrap',
-        'win_id',
-        'namespace',
-        'cursor_position',
-        'float.namespace',
-        'float.scope',
-        'float.pos',
-        'float.header',
-        'float.source',
-        'float.format',
-        'float.prefix',
-        'float.suffix',
-        'float.severity_sort',
-        ['severity'] = subcommand_opt_vals.severity,
-        ['float'] = subcommand_opt_vals.bool,
-        ['float.bufnr'] = subcommand_opt_vals.bufs,
-        ['float.severity'] = subcommand_opt_vals.severity,
-      },
-    },
-    goto_prev = {
-      opts = {
-        'wrap',
-        'win_id',
-        'namespace',
-        'cursor_position',
-        'float.namespace',
-        'float.scope',
-        'float.pos',
-        'float.header',
-        'float.source',
-        'float.format',
-        'float.prefix',
-        'float.suffix',
+        'float.focus_id',
+        'float.border',
         'float.severity_sort',
         ['severity'] = subcommand_opt_vals.severity,
         ['float'] = subcommand_opt_vals.bool,
@@ -1246,6 +1174,8 @@ local subcommands = {
         'opts.float.format',
         'opts.float.prefix',
         'opts.float.suffix',
+        'opts.float.focus_id',
+        'opts.float.border',
         'opts.severity_sort',
         ['bufnr'] = subcommand_opt_vals.bufs,
         ['opts.signs'] = subcommand_opt_vals.bool,
@@ -1301,6 +1231,8 @@ local subcommands = {
         'opts.float.format',
         'opts.float.prefix',
         'opts.float.suffix',
+        'opts.float.focus_id',
+        'opts.float.border',
         'opts.severity_sort',
         ['bufnr'] = subcommand_opt_vals.bufs,
         ['opts.signs'] = subcommand_opt_vals.bool,

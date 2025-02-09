@@ -439,13 +439,13 @@ function winbar_menu_t:make_buf()
   vim.api.nvim_buf_set_lines(self.buf, 0, -1, false, lines)
   for linenr, hl_line_info in ipairs(hl_info) do
     for _, hl_symbol_info in ipairs(hl_line_info) do
-      utils.hl.buf_add_hl(
+      vim.hl.range(
         self.buf,
-        hl_symbol_info.ns or -1,
+        hl_symbol_info.ns or vim.api.nvim_create_namespace('WinBar'),
         hl_symbol_info.hlgroup,
-        linenr - 1, -- 0-indexed
-        hl_symbol_info.start,
-        hl_symbol_info['end']
+        { linenr - 1, hl_symbol_info.start },
+        { linenr - 1, hl_symbol_info['end'] },
+        {}
       )
     end
   end

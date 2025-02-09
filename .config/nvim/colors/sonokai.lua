@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Fri Jan 24 10:07:08 PM EST 2025
+-- Last Updated: Sun Feb  9 03:10:13 PM EST 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -160,7 +160,6 @@ local hlgroups = {
   TabLineFill = { bg = c_bg1, fg = c_grey },
   TabLineSel = { bg = c_red, fg = c_bg0 },
   TermCursor = { bg = c_orange, fg = c_bg0 },
-  TermCursorNC = { bg = c_grey, fg = c_bg0 },
   Title = { bold = true, fg = c_red },
   Underlined = { underline = true },
   VertSplit = { fg = c_bg4 },

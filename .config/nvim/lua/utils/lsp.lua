@@ -128,7 +128,7 @@ function M.soft_stop(client_or_id, opts)
   opts.interval = opts.interval or 500
   opts.on_close = opts.on_close or function() end
 
-  if client.is_stopped() then
+  if client:is_stopped() then
     opts.on_close(client)
     return
   end
@@ -137,7 +137,7 @@ function M.soft_stop(client_or_id, opts)
     return
   end
 
-  client.stop(opts.retry == 0)
+  client:stop(opts.retry == 0)
   vim.defer_fn(function()
     opts.retry = opts.retry - 1
     M.soft_stop(client, opts)
