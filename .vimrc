@@ -841,10 +841,16 @@ endfor
 "     https://stackoverflow.com/questions/51129631/vim-8-1-garbage-printing-on-screen
 "     https://gentoo-user.gentoo.narkive.com/IpR4CjNN/vim-puts-command-in-when-starting-up
 "     https://github.com/neovim/neovim/issues/11393
-autocmd TextChangedI,BufReadPost,StdinReadPost * ++once
-      \ nnoremap <Esc>] <C-w>] |
-      \ xnoremap <Esc>] <C-w>] |
-      \ xnoremap  <nowait> <Esc> <Esc>
+if s:supportevents('CursorHold')
+  silent! let s:tm = &timeoutlen
+  silent! set timeoutlen=0
+  autocmd CursorHold * ++once
+        \ silent! exe 'set timeoutlen=' . s:tm |
+        \ silent! unlet s:tm |
+        \ nnoremap <Esc>] <C-w>]|
+        \ xnoremap <Esc>] <C-w>]|
+        \ xnoremap  <nowait> <Esc> <Esc>
+endif
 " }}}2
 
 " Readline keymaps {{{2
