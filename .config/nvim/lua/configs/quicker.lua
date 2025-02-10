@@ -9,7 +9,7 @@ quicker.setup({
     signcolumn = 'auto',
   },
   highlight = {
-    lsp = true,
+    lsp = false,
     treesitter = true,
     load_buffers = false,
   },
