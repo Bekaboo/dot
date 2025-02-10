@@ -19,6 +19,10 @@ trap cleanup HUP INT QUIT ABRT EXIT
 
 # $1: search root path
 main() {
+    # Set default root path to current directory if not provided
+    root_path="${1:-.}"
+    shift 2>/dev/null
+
     # Set preview command based on available tools
     if has bat; then
         preview_cmd='bat --theme base16 --paging never --style numbers,header-filename --color always {1} --highlight-line {2}'
@@ -32,9 +36,9 @@ main() {
 
     # Set grep command based on available tools
     if has rg; then
-        grep_cmd="rg --no-messages --hidden --follow --smart-case --column --line-number --no-heading --color=always "
+        grep_cmd="rg --no-messages --hidden --follow --smart-case --column --line-number --no-heading --color=always"
     elif has grep; then
-        grep_cmd="grep -i -r -n -H -I --color=always "
+        grep_cmd="grep -i -r -n -H -I --color=always"
     fi
 
     # Set editor
@@ -44,7 +48,6 @@ main() {
         editor='vim'
     fi
 
-    root_path="$1"
     initial_query="${*:-}"
     regex_search_hint=$(printf ":: <\033[33;1mctrl-g\033[0m> to \033[33;1mRegex Search\033[0m")
     fuzzy_search_hint=$(printf ":: <\033[33;1mctrl-t\033[0m> to \033[33;1mFuzzy Search\033[0m")
@@ -52,7 +55,7 @@ main() {
     fuzzy_prompt=' Fzf> '
 
     : | fzf --ansi --disabled --query "$initial_query" \
-        --bind "start:reload($grep_cmd {q} \"$root_path\")+unbind(ctrl-g)" \
+        --bind "start:reload($grep_cmd '.' \"$root_path\")+unbind(ctrl-g)" \
         --bind "change:reload:sleep 0.1; $grep_cmd {q} \"$root_path\" || true" \
         --bind "ctrl-t:unbind(change,ctrl-t)+change-prompt($fuzzy_prompt)+enable-search+rebind(ctrl-g)+transform-query(echo {q} > \"$REGEX_QUERY_FILE\"; cat \"$FUZZY_QUERY_FILE\")+change-header($regex_search_hint)" \
         --bind "ctrl-g:unbind(ctrl-g)+change-prompt($regex_prompt)+disable-search+reload($grep_cmd {q} \"$root_path\" || true)+rebind(change,ctrl-t)+transform-query(echo {q} > \"$FUZZY_QUERY_FILE\"; cat \"$REGEX_QUERY_FILE\")+change-header($fuzzy_search_hint)" \
