@@ -8,24 +8,6 @@ quicker.setup({
     -- Required for type icons to work
     signcolumn = 'auto',
   },
-  keys = {
-    {
-      'g>',
-      function()
-        quicker.expand({
-          before = 2,
-          after = 2,
-          add_to_existing = true,
-        })
-      end,
-      desc = 'Expand quickfix context',
-    },
-    {
-      'g<',
-      quicker.collapse,
-      desc = 'Collapse quickfix context',
-    },
-  },
   highlight = {
     lsp = true,
     treesitter = true,
