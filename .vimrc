@@ -1593,7 +1593,7 @@ if s:supportevents('FileType')
   augroup QfSettings
     au!
     au FileType qf if win_gettype() ==# 'quickfix' | wincmd J | endif |
-          \ silent! setlocal nobl nolist nospell nonu nornu scl=no cc=0 |
+          \ silent! setlocal nobl nolist nospell nonu nornu wfb scl=no cc=0 |
           \ silent! packadd cfilter
   augroup END
 endif
