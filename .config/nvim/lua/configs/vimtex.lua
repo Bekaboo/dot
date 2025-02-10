@@ -5,12 +5,6 @@ end
 vim.g.vimtex_format_enabled = 1
 vim.g.vimtex_imaps_enabled = 0
 vim.g.vimtex_mappings_prefix = '<LocalLeader>l'
-vim.g.vimtex_quickfix_ignore_filters = {
-  [[Warning]],
-  [[Overfull]],
-  [[Underfull]],
-  [[Font shape `.*' undefined]],
-}
 
 vim.api.nvim_create_autocmd('FileType', {
   pattern = 'tex',
