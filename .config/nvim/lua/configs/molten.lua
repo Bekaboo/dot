@@ -143,7 +143,7 @@ vim.api.nvim_create_autocmd('BufEnter', {
 
 vim.api.nvim_create_autocmd('BufEnter', {
   desc = 'Undo config changes when we go back to a markdown or quarto file.',
-  pattern = { '*.md', '*.ipynb' },
+  pattern = { '*.ipynb' },
   group = groupid,
   callback = function(info)
     if info.buf ~= vim.api.nvim_get_current_buf() then
@@ -158,7 +158,7 @@ vim.api.nvim_create_autocmd('BufEnter', {
       vim.g.molten_virt_lines_off_by_1 = true
       vim.g.molten_virt_text_output = true
     end
-    -- Do not show molten cell background in markdown/quarto files
+    -- Do not show molten cell background in ipynb files
     vim.opt_local.winhl:append('MoltenCell:')
   end,
 })
