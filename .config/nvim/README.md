@@ -657,7 +657,7 @@ Like many vim builtin plugins, these plugins can be disabled by setting the
 - Startup time with this config:
 
     ```sh
-     hyperfine -Nw10 'nvim +q'
+    hyperfine -Nw10 'nvim +q'
     ```
 
     ```
