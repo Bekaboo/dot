@@ -24,6 +24,7 @@
   "update.showReleaseNotes": false,
   "window.autoDetectColorScheme": true,
   "window.restoreWindows": "none",
+  "window.titleBarStyle": "native",
   "workbench.editor.restoreViewState": false,
   "workbench.startupEditor": "none",
   "vim.enableNeovim": true,
