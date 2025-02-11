@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Sun Feb  9 03:10:06 PM EST 2025
+-- Last Updated: Tue Feb 11 01:42:52 AM EST 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -337,7 +337,7 @@ local hlgroups = {
   -- }}}2
 
   -- LSP {{{2
-  LspReferenceText = { link = 'Identifier' },
+  LspReferenceText = { link = 'Visual' },
   LspReferenceRead = { link = 'LspReferenceText' },
   LspReferenceWrite = { link = 'LspReferenceText' },
   LspSignatureActiveParameter = { link = 'IncSearch' },
