@@ -42,7 +42,7 @@ end
 ---@param info table
 ---@return nil
 local function write_cb(info)
-  local fname = info.match
+  local fname = vim.fn.fnamemodify(info.match, ':p')
   if fname == vim.api.nvim_buf_get_name(info.buf) then
     vim.bo[info.buf].mod = false
   end
