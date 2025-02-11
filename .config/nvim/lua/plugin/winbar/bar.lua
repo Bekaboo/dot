@@ -1,6 +1,16 @@
 local configs = require('plugin.winbar.configs')
 local utils = require('plugin.winbar.utils')
 
+---Sanitize string by removing the newline character and all that follows
+---Symbols with newline in their name can cause error when creating menu
+---buffers when calling `vim.api.nvim_buf_set_lines` with lines containing
+---their names
+---@param str string?
+---@return string?
+local function str_sanitize(str)
+  return str and vim.gsplit(str, '\n')()
+end
+
 ---@alias winbar_symbol_range_t lsp_range_t
 
 ---@class winbar_symbol_t
@@ -36,6 +46,7 @@ end
 
 function winbar_symbol_t:__newindex(k, v)
   if k == 'name' or k == 'icon' then
+    v = str_sanitize(v)
     self.cache.decorated_str = nil
     self.cache.plain_str = nil
     self.cache.displaywidth = nil
@@ -85,6 +96,12 @@ end
 ---@param opts winbar_symbol_opts_t?
 ---@return winbar_symbol_t
 function winbar_symbol_t:new(opts)
+  if opts then
+    opts.name = str_sanitize(opts.name)
+    opts.icon = str_sanitize(opts.icon)
+  else
+    opts = {}
+  end
   return setmetatable({
     _ = setmetatable(
       vim.tbl_deep_extend('force', {
@@ -93,8 +110,8 @@ function winbar_symbol_t:new(opts)
         cache = {},
         opts = opts,
         on_click = opts and configs.opts.symbol.on_click,
-      }, opts or {}),
-      getmetatable(opts or {})
+      }, opts),
+      getmetatable(opts)
     ),
   }, self)
 end
