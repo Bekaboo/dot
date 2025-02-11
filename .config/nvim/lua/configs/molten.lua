@@ -20,6 +20,7 @@ vim.g.molten_wrap_output = true
 ---@return nil
 local function molten_warn(msg, level, opts)
   vim.notify('[Molten] ' .. msg, level or vim.log.levels.WARN, opts)
+  vim.cmd.redraw()
 end
 
 local essentials = {
