@@ -129,7 +129,9 @@ vim.api.nvim_create_autocmd('FileType', {
       once = true,
       buffer = info.buf,
       callback = function(i)
-        local ns = vim.api.nvim_get_namespaces()['CodeCompanion-intro_message']
+        local nss = vim.api.nvim_get_namespaces()
+        local ns = nss['CodeCompanion-virtual_text']
+          or nss['CodeCompanion-intro_message']
         if ns then
           vim.api.nvim_buf_clear_namespace(i.buf, ns, 0, -1)
         end
