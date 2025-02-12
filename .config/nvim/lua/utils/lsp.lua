@@ -206,7 +206,7 @@ function M.range_contains(range1, range2, strict)
         start_line2 == end_line1
           and (
             start_char2 < end_char1
-            or not strict and start_char2 == start_char1
+            or not strict and start_char2 == end_char1
           )
         )
       )
@@ -216,7 +216,7 @@ function M.range_contains(range1, range2, strict)
         end_line2 == start_line1
           and (
             end_char2 > start_char1
-            or not strict and end_char2 == end_char1
+            or not strict and end_char2 == start_char1
           )
         )
       )
@@ -250,7 +250,7 @@ function M.range_contains_cursor(range, cursor, strict)
     line > start_line
     or (
       line == start_line
-      and (char > start_char or not strict and char == end_char)
+      and (char > start_char or not strict and char == start_char)
     )
   )
     and (
