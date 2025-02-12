@@ -127,12 +127,8 @@ local function preview_set_lines(win, all)
         :totable()
     end
 
-    if stat.size == 0 then
-      vim.b[buf]._oil_preview_msg_shown = bufname
-      return preview_msg('Empty file', win_height, win_width)
-    end
-
-    if not vim.system({ 'file', path }):wait().stdout:match('text') then
+    local ft = vim.system({ 'file', path }):wait().stdout
+    if ft and not ft:match('text') and not ft:match('empty') then
       vim.b[buf]._oil_preview_msg_shown = bufname
       return preview_msg('Binary file', win_height, win_width)
     end
