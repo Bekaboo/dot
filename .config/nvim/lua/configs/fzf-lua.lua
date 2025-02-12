@@ -737,26 +737,18 @@ fzf.setup({
     },
   },
   lsp = {
-    jump_to_single_result = true,
-    jump_to_single_result_action = actions.file_edit,
+    jump1 = true,
     finder = {
       fzf_opts = {
         ['--info'] = 'inline-right',
       },
     },
-    definitions = {
-      sync = false,
-      jump_to_single_result = true,
-    },
     references = {
       sync = false,
       ignore_current_line = true,
-      jump_to_single_result = true,
     },
-    typedefs = {
-      sync = false,
-      jump_to_single_result = true,
-    },
+    definitions = { sync = false },
+    typedefs = { sync = false },
     symbols = {
       symbol_style = vim.g.has_nf and 1 or 3,
       symbol_icons = vim.tbl_map(vim.trim, icons.kinds),
@@ -767,7 +759,7 @@ fzf.setup({
   },
   diagnostics = {
     multiline = false,
-  }
+  },
 })
 
 -- stylua: ignore start
