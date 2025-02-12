@@ -689,6 +689,7 @@ vim.api.nvim_create_autocmd({ 'BufEnter', 'TextChanged' }, {
   desc = 'Set cwd to follow directory shown in oil buffers.',
   group = groupid,
   pattern = 'oil://*',
+  nested = true, -- fire `DirChanged` event
   callback = function(info)
     oil_cd(info.buf)
   end,
