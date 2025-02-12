@@ -43,6 +43,22 @@ local function setup()
   end
   vim.g.loaded_term_plugin = true
 
+  -- Wisely exit terminal mode with <Esc>
+  vim.keymap.set(
+    't',
+    '<Esc>',
+    [[v:lua.require'utils.term'.running_tui() ? "<Esc>" : "<Cmd>stopi<CR>"]],
+    { expr = true, replace_keycodes = false, desc = 'Exit terminal mode' }
+  )
+
+  -- Use <C-\><C-r> to insert contents of a register in terminal mode
+  vim.keymap.set(
+    't',
+    [[<C-\><C-r>]],
+    [['<C-\><C-n>"' . nr2char(getchar()) . 'pi']],
+    { expr = true, desc = 'Insert contents in a register' }
+  )
+
   vim
     .iter(vim.api.nvim_list_bufs())
     :filter(function(buf)
