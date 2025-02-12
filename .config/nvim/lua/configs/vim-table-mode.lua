@@ -15,6 +15,8 @@ local function table_mode_toggle(buf)
           emsg_silent = true,
         },
       })
+      vim.keymap.del('n', '}|', { buffer = buf })
+      vim.keymap.del('n', '{|', { buffer = buf })
       return
     end
 
