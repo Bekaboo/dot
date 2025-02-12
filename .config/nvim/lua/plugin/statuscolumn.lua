@@ -121,7 +121,7 @@ end
 
 ---@return string
 function builders.lnum()
-  return '%l'
+  return '%l '
 end
 
 ---@param data stc_shared_data_t
