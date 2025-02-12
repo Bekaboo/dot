@@ -1468,11 +1468,17 @@ local function setup_diagnostic_overrides()
     ---Diagnostics cache, indexed by buffer number and line number (0-indexed)
     ---to avoid calling `vim.diagnostic.get()` for the same buffer and line
     ---repeatedly
-    ---@type table<integer, table<integer, vim.Diagnostic[]>>
+    ---@type table<integer, table<integer, table<integer, vim.Diagnostic>>>
     local diags_cache = vim.defaulttable(function(bufnr)
-      return vim.defaulttable(function(lnum)
-        return vim.diagnostic.get(bufnr, { lnum = lnum })
-      end)
+      local ds = vim.defaulttable() -- mapping from lnum to diagnostics
+      -- Avoid using another layer of default table index by lnum using
+      -- `vim.diagnostic.get(bufnr, { lnum = lnum })` to get diagnostics
+      -- by line number since it requires traversing all diagnostics in
+      -- the buffer each time
+      for _, d in ipairs(vim.diagnostic.get(bufnr)) do
+        table.insert(ds[d.lnum], d)
+      end
+      return ds
     end)
 
     return vim
@@ -1514,6 +1520,10 @@ local function setup_diagnostic_overrides()
   end
 
   vim.diagnostic.handlers.virtual_text.show = (function(cb)
+    ---@param ns integer
+    ---@param buf integer
+    ---@param diags vim.Diagnostic[]
+    ---@param opts vim.diagnostic.OptsResolved
     return function(ns, buf, diags, opts)
       return cb(ns, buf, truncate_multiline(filter_overlapped(diags)), opts)
     end
