@@ -408,7 +408,6 @@ end
 
 vim.lsp.buf.incoming_calls = fzf.lsp_incoming_calls
 vim.lsp.buf.outgoing_calls = fzf.lsp_outgoing_calls
-vim.lsp.buf.code_action = fzf.code_actions
 vim.lsp.buf.declaration = fzf.declarations
 vim.lsp.buf.definition = fzf.lsp_definitions
 vim.lsp.buf.document_symbol = fzf.lsp_document_symbols
