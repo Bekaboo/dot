@@ -766,6 +766,9 @@ fzf.setup({
       end,
     },
   },
+  diagnostics = {
+    multiline = false,
+  }
 })
 
 -- stylua: ignore start
