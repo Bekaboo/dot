@@ -440,6 +440,12 @@ function fzf.z(opts)
   local has_z_plugin, z = pcall(require, 'plugin.z')
   if has_z_plugin then
     z.setup()
+
+    -- Register action descriptions
+    actions.z = z.z
+    core.ACTION_DEFINITIONS[actions.z] = { 'jump to dir' }
+    config._action_to_helpstr[actions.z] = 'jump-to-dir'
+
     return fzf.fzf_exec(
       z.list(),
       vim.tbl_deep_extend('keep', opts or {}, {
