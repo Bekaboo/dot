@@ -180,6 +180,18 @@ function M.setup()
     complete = cmp('ZSelect'),
     nargs = '*',
   })
+
+  vim.api.nvim_create_autocmd('DirChanged', {
+    desc = 'Record nvim path in z.',
+    group = vim.api.nvim_create_augroup('ZRecordDir', {}),
+    callback = function(info)
+      local dir = info.file
+      vim.system({ vim.env.SHELL, '-c', 'cd ' .. vim.fn.shellescape(dir) })
+      if cmp_list_cache and not vim.tbl_contains(cmp_list_cache, dir) then
+        cmp_list_cache = nil
+      end
+    end,
+  })
 end
 
 return M
