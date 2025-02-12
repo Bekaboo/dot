@@ -7,8 +7,7 @@ local function has_z()
     return true
   end
 
-  vim.fn.system('z')
-  if vim.v.shell_error == 0 then
+  if vim.system({ vim.env.SHELL, '-c', 'z' }):wait().code == 0 then
     vim.g._z_installed = true
     return true
   end
@@ -106,18 +105,27 @@ function M.z(input)
     return
   end
 
-  local output = vim.trim(vim.fn.system('z -e ' .. argesc(input)))
-  if vim.v.shell_error ~= 0 then
-    vim.notify('[z] ' .. output)
-    return
-  end
+  vim.system(
+    { vim.env.SHELL, '-c', 'z -e ' .. argesc(input) },
+    { text = true },
+    function(obj)
+      if obj.code ~= 0 then
+        vim.schedule(function()
+          vim.notify('[z] ' .. (obj.stderr or obj.stdout))
+        end)
+        return
+      end
 
-  local path_escaped = vim.fn.fnameescape(output)
-  -- Schedule to allow oil.nvim to conceal line headers correctly
-  vim.schedule(function()
-    vim.cmd.edit(path_escaped)
-    vim.cmd.lcd({ path_escaped, mods = { silent = true } })
-  end)
+      local output = vim.trim(obj.stdout)
+      local path_escaped = vim.fn.fnameescape(output)
+
+      -- Schedule to allow oil.nvim to conceal line headers correctly
+      vim.schedule(function()
+        vim.cmd.edit(path_escaped)
+        vim.cmd.lcd({ path_escaped, mods = { silent = true } })
+      end)
+    end
+  )
 end
 
 ---List matching z directories given input
@@ -128,20 +136,19 @@ function M.list(input)
     return {}
   end
 
-  local output = vim.fn.systemlist('z -l ' .. argesc(input))
-  if vim.v.shell_error ~= 0 then
-    vim.notify('[z] ' .. output)
+  local o =
+    vim.system({ vim.env.SHELL, '-c', 'z -l ' .. argesc(input) }):wait()
+  if o.code ~= 0 then
+    vim.notify('[z] ' .. o.stderr or o.stdout)
     return {}
   end
 
-  local paths = {}
-  for _, candidate in ipairs(output) do
-    local path = candidate:match('^[0-9.]+%s+(.*)') -- trim score
-    if path then
-      table.insert(paths, path)
-    end
-  end
-  return paths
+  return vim
+    .iter(vim.gsplit(o.stdout, '\n', { trimempty = true }))
+    :map(function(line)
+      return line:match('^[0-9.]+%s+(.*)')
+    end)
+    :totable()
 end
 
 ---Select and jump to z directories using `vim.ui.select()`
