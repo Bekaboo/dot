@@ -432,6 +432,7 @@ function fzf.files(opts)
 end
 
 -- Select dirs from `zoxide`, fallback to shell `z` command
+---@param opts table?
 function fzf.z(opts)
   if vim.fn.executable('zoxide') == 1 then
     return fzf.zoxide(opts)
@@ -441,7 +442,7 @@ function fzf.z(opts)
     z.setup()
     return fzf.fzf_exec(
       z.list(),
-      vim.tbl_deep_extend('force', {
+      vim.tbl_deep_extend('keep', opts or {}, {
         cwd = vim.fn.getcwd(0),
         prompt = 'Open directory: ',
         actions = {
@@ -449,7 +450,10 @@ function fzf.z(opts)
             fn = z.z,
           },
         },
-      }, opts)
+        fzf_opts = {
+          ['--no-multi'] = true,
+        },
+      })
     )
   end
 end
