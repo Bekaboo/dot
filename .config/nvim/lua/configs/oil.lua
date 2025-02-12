@@ -234,10 +234,10 @@ local function preview()
   ---Edit corresponding file in oil preview buffer
   ---@return nil
   local function preview_edit()
-    local cursor = vim.api.nvim_win_get_cursor(0)
+    local view = vim.fn.winsaveview()
     vim.cmd.edit(fpath)
     preview_finish(oil_win)
-    pcall(vim.api.nvim_win_set_cursor, 0, cursor)
+    pcall(vim.fn.winrestview, view)
   end
 
   -- Set keymap for opening the file from preview buffer
