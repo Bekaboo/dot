@@ -431,37 +431,36 @@ function fzf.files(opts)
   return _fzf_files(opts)
 end
 
--- Select dirs from `zoxide`, fallback to shell `z` command
+-- Select dirs from `z`
 ---@param opts table?
 function fzf.z(opts)
-  if vim.fn.executable('zoxide') == 1 then
-    return fzf.zoxide(opts)
-  end
   local has_z_plugin, z = pcall(require, 'plugin.z')
-  if has_z_plugin then
-    z.setup()
-
-    -- Register action descriptions
-    actions.z = z.z
-    core.ACTION_DEFINITIONS[actions.z] = { 'jump to dir' }
-    config._action_to_helpstr[actions.z] = 'jump-to-dir'
-
-    return fzf.fzf_exec(
-      z.list(),
-      vim.tbl_deep_extend('keep', opts or {}, {
-        cwd = vim.fn.getcwd(0),
-        prompt = 'Open directory: ',
-        actions = {
-          ['enter'] = {
-            fn = z.z,
-          },
-        },
-        fzf_opts = {
-          ['--no-multi'] = true,
-        },
-      })
-    )
+  if not has_z_plugin then
+    return
   end
+
+  z.setup()
+
+  -- Register action descriptions
+  actions.z = z.z
+  core.ACTION_DEFINITIONS[actions.z] = { 'jump to dir' }
+  config._action_to_helpstr[actions.z] = 'jump-to-dir'
+
+  return fzf.fzf_exec(
+    z.list(),
+    vim.tbl_deep_extend('keep', opts or {}, {
+      cwd = vim.fn.getcwd(0),
+      prompt = 'Open directory: ',
+      actions = {
+        ['enter'] = {
+          fn = z.z,
+        },
+      },
+      fzf_opts = {
+        ['--no-multi'] = true,
+      },
+    })
+  )
 end
 
 fzf.setup({
