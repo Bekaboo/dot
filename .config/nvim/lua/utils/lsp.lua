@@ -67,42 +67,29 @@ function M.start(config, opts)
   local function validate(dir)
     -- For some special buffers like `fugitive:///xxx`, `vim.fs.root()`
     -- returns '.' as result, which is NOT a valid directory
-    return dir ~= nil and dir ~= '.' and vim.fn.isdirectory(dir) == 1 and dir
+    return dir ~= nil
+        and dir ~= '.'
+        and vim.fn.isdirectory(dir) == 1
+        -- Some language servers e.g. lua-language-server, refuse
+        -- to use home dir as its root dir and prints an error message
+        and not require('utils.fs').is_home_dir(dir)
+        and not require('utils.fs').is_root_dir(dir)
+        and dir
       or nil
-  end
-
-  local root_dir = validate(
-    vim.fs.root(
-      bufname,
-      vim.list_extend(
-        config.root_patterns or {},
-        M.default_config.root_patterns or {}
-      )
-    )
-  )
-
-  -- Some language servers e.g. lua-language-server, refuse
-  -- to use home dir as its root dir and prints an error message
-  --
-  -- 99% of time we don't want have home dir or root dir as lsp root directory
-  -- anyway except when editing `~/.bashrc`, in which case we fallback to
-  -- the file's containing directory (the home directory)
-  if
-    not root_dir
-    or require('utils.fs').is_home_dir(root_dir)
-    or require('utils.fs').is_root_dir(root_dir)
-  then
-    root_dir = validate(vim.fs.dirname(bufname))
-  end
-
-  if not root_dir then
-    return
   end
 
   return vim.lsp.start(
     vim.tbl_deep_extend('keep', config or {}, {
       name = name,
-      root_dir = root_dir,
+      root_dir = validate(
+        vim.fs.root(
+          bufname,
+          vim.list_extend(
+            config.root_patterns or {},
+            M.default_config.root_patterns or {}
+          )
+        )
+      ),
     }, M.default_config),
     opts
   )
