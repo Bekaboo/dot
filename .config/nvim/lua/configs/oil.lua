@@ -1,4 +1,6 @@
 local oil = require('oil')
+local oil_config = require('oil.config')
+local oil_view = require('oil.view')
 local icons = require('utils.static').icons
 local icon_file = vim.trim(icons.File)
 local icon_dir = vim.trim(icons.Folder)
@@ -116,7 +118,16 @@ local function preview_set_lines(win, all)
 
     if stat.type == 'directory' then
       return vim
-        .iter(vim.gsplit(vim.system({ 'ls', '-lhA', path }):wait().stdout, '\n'))
+        .iter(vim.gsplit(
+          vim
+            .system({
+              'ls',
+              oil_config.view_options.show_hidden and '-lhA' or '-lh',
+              path,
+            })
+            :wait().stdout,
+          '\n'
+        ))
         :take(num_lines)
         :map(function(line)
           local result = vim.fn.match(line, '\\v^[-dpls][-rwxs]{9}') == -1
@@ -474,6 +485,21 @@ local function toggle_preview()
   pcall(vim.api.nvim_set_current_win, win)
   pcall(vim.api.nvim_win_set_cursor, win, cursor)
 end
+
+-- Wrap original toggle function to update dir preview when hidden is set/unset
+oil_view.toggle_hidden = (function(cb)
+  return function(...)
+    cb(...)
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+      local path = vim.fn
+        .bufname(vim.api.nvim_win_get_buf(win))
+        :match('oil_preview://(.*)')
+      if path and vim.fn.isdirectory(path) == 1 then
+        preview_set_lines(win)
+      end
+    end
+  end
+end)(oil_view.toggle_hidden)
 
 local preview_mapping = {
   mode = { 'n', 'x' },
