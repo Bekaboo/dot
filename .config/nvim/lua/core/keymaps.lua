@@ -119,8 +119,8 @@ vim.api.nvim_create_autocmd('UIEnter', {
       -- stylua: ignore end
 
       -- Delete selection in select mode
-      map('s', '<BS>', '<C-o>s', { desc = 'Delete selection' })
-      map('s', '<C-h>', '<C-o>s', { desc = 'Delete selection' })
+      map('s', '<BS>', '<C-o>"_s', { desc = 'Delete selection' })
+      map('s', '<C-h>', '<C-o>"_s', { desc = 'Delete selection' })
 
       -- More consistent behavior when &wrap is set
       -- stylua: ignore start

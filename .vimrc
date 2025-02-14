@@ -547,8 +547,8 @@ inoremap <C-r> <C-r><C-p>
 " }}}
 
 " Delete selection in select mode {{{2
-snoremap <BS>  <C-o>s
-snoremap <C-h> <C-o>s
+snoremap <BS>  <C-o>"_s
+snoremap <C-h> <C-o>"_s
 " }}}
 
 " Moving up & down in visual line {{{2
