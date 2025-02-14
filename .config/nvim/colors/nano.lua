@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Tue Feb 11 01:42:52 AM EST 2025
+-- Last Updated: Thu Feb 13 07:00:28 PM EST 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -687,7 +687,6 @@ local hlgroups = {
 
 -- Highlight group overrides {{{1
 if vim.go.bg == 'dark' then
-  hlgroups.String = { fg = c_popout }
   hlgroups.CmpItemAbbrMatch = { fg = c_critical }
   hlgroups.DiffText = { fg = c_background, bg = c_faded }
   hlgroups.TelescopePreviewMatch = { fg = c_critical, bold = true }
