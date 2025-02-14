@@ -1430,6 +1430,7 @@ end
 local function setup_diagnostic_configs()
   local icons = utils.static.icons
   vim.diagnostic.config({
+    severity_sort = true,
     virtual_text = {
       spacing = 4,
       prefix = vim.trim(utils.static.icons.AngleLeft),
