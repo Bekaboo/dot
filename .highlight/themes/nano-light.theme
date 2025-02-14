@@ -7,7 +7,7 @@ local palette = {
   foreground = '#495b64',
   background = '#ffffff',
   highlight  = '#f5f8fa',
-  critical   = '#ff6f00',
+  critical   = '#e0b153',
   salient    = '#673ab7',
   strong     = '#000000',
   popout     = '#f09276',
@@ -20,7 +20,6 @@ local palette = {
   pine       = '#608c88',
   lavender   = '#f4eef8',
   violet     = '#d9caf0',
-  vermillion = '#ff6f00',
   black      = '#5b6c75',
 }
 
