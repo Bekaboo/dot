@@ -121,16 +121,16 @@ local function setup_keymaps()
   end, { desc = 'Yank diagnostic message on current line' })
 
   -- stylua: ignore start
-  vim.keymap.set({ 'n', 'x' }, '[d', function() vim.diagnostic.jump({ count = -vim.v.count1, float = true }) end, { desc = 'Go to previous diagnostic' })
-  vim.keymap.set({ 'n', 'x' }, ']d', function() vim.diagnostic.jump({ count =  vim.v.count1, float = true }) end, { desc = 'Go to next diagnostic' })
-  vim.keymap.set({ 'n', 'x' }, '[e', function() vim.diagnostic.jump({ count = -vim.v.count1, float = true, severity = vim.diagnostic.severity.ERROR }) end, { desc = 'Go to previous diagnostic error' })
-  vim.keymap.set({ 'n', 'x' }, ']e', function() vim.diagnostic.jump({ count =  vim.v.count1, float = true, severity = vim.diagnostic.severity.ERROR }) end, { desc = 'Go to next diagnostic error' })
-  vim.keymap.set({ 'n', 'x' }, '[w', function() vim.diagnostic.jump({ count = -vim.v.count1, float = true, severity = vim.diagnostic.severity.WARN }) end, { desc = 'Go to previous diagnostic warning' })
-  vim.keymap.set({ 'n', 'x' }, ']w', function() vim.diagnostic.jump({ count =  vim.v.count1, float = true, severity = vim.diagnostic.severity.WARN }) end, { desc = 'Go to next diagnostic warning' })
-  vim.keymap.set({ 'n', 'x' }, '[i', function() vim.diagnostic.jump({ count = -vim.v.count1, float = true, severity = vim.diagnostic.severity.INFO }) end, { desc = 'Go to previous diagnostic info' })
-  vim.keymap.set({ 'n', 'x' }, ']i', function() vim.diagnostic.jump({ count =  vim.v.count1, float = true, severity = vim.diagnostic.severity.INFO }) end, { desc = 'Go to next diagnostic info' })
-  vim.keymap.set({ 'n', 'x' }, '[h', function() vim.diagnostic.jump({ count = -vim.v.count1, float = true, severity = vim.diagnostic.severity.HINT }) end, { desc = 'Go to previous diagnostic hint' })
-  vim.keymap.set({ 'n', 'x' }, ']h', function() vim.diagnostic.jump({ count =  vim.v.count1, float = true, severity = vim.diagnostic.severity.HINT }) end, { desc = 'Go to next diagnostic hint' })
+  vim.keymap.set({ 'n', 'x' }, '[d', function() vim.diagnostic.jump({ count = -vim.v.count1 }) end, { desc = 'Go to previous diagnostic' })
+  vim.keymap.set({ 'n', 'x' }, ']d', function() vim.diagnostic.jump({ count =  vim.v.count1 }) end, { desc = 'Go to next diagnostic' })
+  vim.keymap.set({ 'n', 'x' }, '[e', function() vim.diagnostic.jump({ count = -vim.v.count1, severity = vim.diagnostic.severity.ERROR }) end, { desc = 'Go to previous diagnostic error' })
+  vim.keymap.set({ 'n', 'x' }, ']e', function() vim.diagnostic.jump({ count =  vim.v.count1, severity = vim.diagnostic.severity.ERROR }) end, { desc = 'Go to next diagnostic error' })
+  vim.keymap.set({ 'n', 'x' }, '[w', function() vim.diagnostic.jump({ count = -vim.v.count1, severity = vim.diagnostic.severity.WARN }) end, { desc = 'Go to previous diagnostic warning' })
+  vim.keymap.set({ 'n', 'x' }, ']w', function() vim.diagnostic.jump({ count =  vim.v.count1, severity = vim.diagnostic.severity.WARN }) end, { desc = 'Go to next diagnostic warning' })
+  vim.keymap.set({ 'n', 'x' }, '[i', function() vim.diagnostic.jump({ count = -vim.v.count1, severity = vim.diagnostic.severity.INFO }) end, { desc = 'Go to previous diagnostic info' })
+  vim.keymap.set({ 'n', 'x' }, ']i', function() vim.diagnostic.jump({ count =  vim.v.count1, severity = vim.diagnostic.severity.INFO }) end, { desc = 'Go to next diagnostic info' })
+  vim.keymap.set({ 'n', 'x' }, '[h', function() vim.diagnostic.jump({ count = -vim.v.count1, severity = vim.diagnostic.severity.HINT }) end, { desc = 'Go to previous diagnostic hint' })
+  vim.keymap.set({ 'n', 'x' }, ']h', function() vim.diagnostic.jump({ count =  vim.v.count1, severity = vim.diagnostic.severity.HINT }) end, { desc = 'Go to next diagnostic hint' })
   -- stylua: ignore end
 end
 
@@ -1431,6 +1431,9 @@ local function setup_diagnostic_configs()
   local icons = utils.static.icons
   vim.diagnostic.config({
     severity_sort = true,
+    jump = {
+      float = true,
+    },
     virtual_text = {
       spacing = 4,
       prefix = vim.trim(utils.static.icons.AngleLeft),
