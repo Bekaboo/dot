@@ -367,10 +367,46 @@ M.snippets = {
       }
     )
   ),
-  us.sn(
+  us.msn(
     {
-      trig = 'with',
-      desc = 'with statement',
+      { trig = 'wi' },
+      { trig = 'with' },
+      common = { desc = 'with statement' },
+    },
+    c(1, {
+      un.fmtad(
+        [[
+          with <expr>:
+          <body>
+        ]],
+        {
+          expr = r(1, 'expr'),
+          body = un.body(2, 1, 'pass'),
+        }
+      ),
+      un.fmtad(
+        [[
+          with <expr> as <var>:
+          <body>
+        ]],
+        {
+          expr = r(1, 'expr'),
+          var = i(2),
+          body = un.body(3, 1, 'pass'),
+        }
+      ),
+    }),
+    {
+      stored = {
+        expr = i(1),
+      },
+    }
+  ),
+  us.msn(
+    {
+      { trig = 'wa' },
+      { trig = 'witha' },
+      common = { desc = 'with...as... statement' },
     },
     un.fmtad(
       [[
