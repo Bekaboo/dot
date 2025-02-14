@@ -152,7 +152,10 @@ vim.api.nvim_create_autocmd('User', {
       return
     end
 
+    -- Clear finished flag set by previous request
     local b = vim.b[buf]
+    b._cc_finished = nil
+
     if not b.spinner_progs then
       b.spinner_progs = { 'codecompanion' }
     elseif not vim.tbl_contains(b.spinner_progs, 'codecompanion') then
@@ -161,13 +164,23 @@ vim.api.nvim_create_autocmd('User', {
       b.spinner_progs = spinner_progs
     end
 
-    if not stl.spinner.id_is_valid(b.spinner_id) then
-      stl.spinner:new():attach(buf)
+    ---Keep the spinner spinning until request is finished
+    ---(`vim.b._cc_finished` is set)
+    local function spin()
+      if b._cc_finished then
+        return
+      end
+      if not stl.spinner.id_is_valid(b.spinner_id) then
+        stl.spinner:new():attach(buf)
+      end
+      local spinner = stl.spinner.get_by_id(b.spinner_id)
+      if spinner.status == 'idle' then
+        spinner:spin()
+      end
+      vim.defer_fn(spin, 1000)
     end
-    local spinner = stl.spinner.get_by_id(b.spinner_id)
-    if spinner.status == 'idle' then
-      spinner:spin()
-    end
+
+    spin()
   end,
 })
 vim.api.nvim_create_autocmd('User', {
@@ -180,7 +193,10 @@ vim.api.nvim_create_autocmd('User', {
       return
     end
 
-    local spinner = stl.spinner.get_by_id(vim.b[buf].spinner_id)
+    local b = vim.b[buf]
+    b._cc_finished = true
+
+    local spinner = stl.spinner.get_by_id(b.spinner_id)
     if spinner then
       spinner:finish()
     end
