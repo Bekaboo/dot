@@ -520,16 +520,16 @@ end
 ---Statusline components
 ---@type table<string, string>
 local components = {
-  align        = [[%=]],
-  flag         = [[%{%&bt==#''?'':(&bt==#'help'?'%h ':(&pvw?'%w ':(&bt==#'quickfix'?'%q ':'')))%}]],
-  diag         = [[%{%v:lua._statusline.diag()%}]],
-  fname        = [[%{%v:lua._statusline.fname()%} ]],
-  info         = [[%{%v:lua._statusline.info()%}]],
-  spinner     = [[%{%v:lua._statusline.spinner()%}]],
-  mode         = [[%{%v:lua._statusline.mode()%}]],
-  padding      = [[ ]],
-  pos          = [[%{%&ru?"%l:%c ":""%}]],
-  truncate     = [[%<]],
+  align    = [[%=]],
+  flag     = [[%{%&bt==#''?'':(&bt==#'help'?'%h ':(&pvw?'%w ':(&bt==#'quickfix'?'%q ':'')))%}]],
+  diag     = [[%{%v:lua._statusline.diag()%}]],
+  fname    = [[%{%v:lua._statusline.fname()%} ]],
+  info     = [[%{%v:lua._statusline.info()%}]],
+  spinner  = [[%{%v:lua._statusline.spinner()%}]],
+  mode     = [[%{%v:lua._statusline.mode()%}]],
+  padding  = [[ ]],
+  pos      = [[%{%&ru?"%l:%c ":""%}]],
+  truncate = [[%<]],
 }
 -- stylua: ignore end
 
