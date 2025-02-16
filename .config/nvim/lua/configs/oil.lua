@@ -10,6 +10,37 @@ local preview_bufs = {} ---@type table<integer, integer>
 local preview_debounce = 16 -- ms
 local preview_request_last_timestamp = 0
 
+local _is_windows ---@type boolean?
+
+---Check if nvim is running on Windows
+---@return boolean
+local function is_windows()
+  if _is_windows ~= nil then
+    return _is_windows
+  end
+  _is_windows = vim.uv.os_uname().sysname:find('Windows', 1, true) ~= nil
+  return _is_windows
+end
+
+---Get path to GNU tools shipped with git on Windows
+---@param cmd string name of the command
+---@return string? nil if cannot find path to command
+local function get_gnu_tool_path(cmd)
+  if not is_windows() then
+    return cmd
+  end
+
+  local git = vim.fn.exepath('git')
+  if git == '' then
+    return
+  end
+
+  return vim.fs.joinpath(
+    vim.fs.joinpath(vim.fs.dirname(vim.fs.dirname(git)), 'usr/bin'),
+    cmd
+  )
+end
+
 ---Change window-local directory to `dir`
 ---@param dir string
 ---@return nil
@@ -117,11 +148,20 @@ local function preview_set_lines(win, all)
     end
 
     if stat.type == 'directory' then
+      local ls_cmd = get_gnu_tool_path('ls')
+      if not ls_cmd then
+        return preview_msg(
+          '`ls` is required to previous directories',
+          win_height,
+          win_width
+        )
+      end
+
       return vim
         .iter(vim.gsplit(
           vim
             .system({
-              'ls',
+              ls_cmd,
               oil_config.view_options.show_hidden and '-lhA' or '-lh',
               path,
             })
@@ -138,7 +178,8 @@ local function preview_set_lines(win, all)
         :totable()
     end
 
-    local ft = vim.system({ 'file', path }):wait().stdout
+    local file_cmd = get_gnu_tool_path('file')
+    local ft = file_cmd and vim.system({ file_cmd, path }):wait().stdout
     if ft and not ft:match('text') and not ft:match('empty') then
       vim.b[buf]._oil_preview_msg_shown = bufname
       return preview_msg('Binary file', win_height, win_width)
