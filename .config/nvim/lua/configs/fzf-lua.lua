@@ -604,6 +604,7 @@ fzf.setup({
     },
   },
   defaults = {
+    formatter = 'path.dirname_first',
     headers = false,
     actions = {
       ['ctrl-]'] = actions.switch_provider,
