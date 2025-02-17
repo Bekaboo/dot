@@ -88,8 +88,6 @@ augroup('BigFile', {
         end
         return lsp_start(...)
       end
-
-      return true
     end,
   },
 }, {
@@ -181,7 +179,6 @@ augroup('LastPosJmp', {
               mods = { emsg_silent = true },
             })
           end
-          return true
         end,
       })
     end,

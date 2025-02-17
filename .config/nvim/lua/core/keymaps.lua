@@ -3,58 +3,57 @@ vim.g.maplocalleader = ' '
 
 vim.api.nvim_create_autocmd('UIEnter', {
   once = true,
-  callback = function()
-    vim.schedule(function()
-      local keymaps = {} ---@type table<string, table<string, true>>
-      local buf_keymaps = {} ---@type table<integer, table<string, table<string, true>>>
+  callback = vim.schedule_wrap(function()
+    local keymaps = {} ---@type table<string, table<string, true>>
+    local buf_keymaps = {} ---@type table<integer, table<string, table<string, true>>>
 
-      ---Set keymaps, don't override existing keymaps unless `opts.unique` is false
-      ---@param modes string|string[] mode short-name
-      ---@param lhs string left-hand side of the mapping
-      ---@param rhs string|function right-hand side of the mapping
-      ---@param opts? vim.keymap.set.Opts
-      ---@return nil
-      local function map(modes, lhs, rhs, opts)
-        if opts and opts.unique == false then
-          vim.keymap.set(modes, lhs, rhs, opts)
-          return
-        end
+    ---Set keymaps, don't override existing keymaps unless `opts.unique` is false
+    ---@param modes string|string[] mode short-name
+    ---@param lhs string left-hand side of the mapping
+    ---@param rhs string|function right-hand side of the mapping
+    ---@param opts? vim.keymap.set.Opts
+    ---@return nil
+    local function map(modes, lhs, rhs, opts)
+      if opts and opts.unique == false then
+        vim.keymap.set(modes, lhs, rhs, opts)
+        return
+      end
 
-        if type(modes) ~= 'table' then
-          modes = { modes }
-        end
+      if type(modes) ~= 'table' then
+        modes = { modes }
+      end
 
-        if not opts or not opts.buffer then -- global keymaps
-          for _, mode in ipairs(modes) do
-            if not keymaps[mode] then
-              keymaps[mode] = {}
-              for _, keymap in ipairs(vim.api.nvim_get_keymap(mode)) do
-                keymaps[mode][vim.keycode(keymap.lhs)] = true
-              end
-            end
-            if not keymaps[mode][vim.keycode(lhs)] then
-              vim.keymap.set(mode, lhs, rhs, opts)
+      if not opts or not opts.buffer then -- global keymaps
+        for _, mode in ipairs(modes) do
+          if not keymaps[mode] then
+            keymaps[mode] = {}
+            for _, keymap in ipairs(vim.api.nvim_get_keymap(mode)) do
+              keymaps[mode][vim.keycode(keymap.lhs)] = true
             end
           end
-        else -- buffer-local keymaps
-          local buf = type(opts.buffer) == 'number' and opts.buffer or 0 --[[@as integer]]
-          if not buf_keymaps[buf] then
-            buf_keymaps[buf] = {}
+          if not keymaps[mode][vim.keycode(lhs)] then
+            vim.keymap.set(mode, lhs, rhs, opts)
           end
-          local maps = buf_keymaps[buf]
-          for _, mode in ipairs(modes) do
-            if not maps[mode] then
-              maps[mode] = {}
-              for _, keymap in ipairs(vim.api.nvim_buf_get_keymap(0, mode)) do
-                maps[mode][vim.keycode(keymap.lhs)] = true
-              end
+        end
+      else -- buffer-local keymaps
+        local buf = type(opts.buffer) == 'number' and opts.buffer or 0 --[[@as integer]]
+        if not buf_keymaps[buf] then
+          buf_keymaps[buf] = {}
+        end
+        local maps = buf_keymaps[buf]
+        for _, mode in ipairs(modes) do
+          if not maps[mode] then
+            maps[mode] = {}
+            for _, keymap in ipairs(vim.api.nvim_buf_get_keymap(0, mode)) do
+              maps[mode][vim.keycode(keymap.lhs)] = true
             end
-            if not maps[mode][vim.keycode(lhs)] then
-              vim.keymap.set(mode, lhs, rhs, opts)
-            end
+          end
+          if not maps[mode][vim.keycode(lhs)] then
+            vim.keymap.set(mode, lhs, rhs, opts)
           end
         end
       end
+    end
 
       -- Multi-window operations
       -- stylua: ignore start
@@ -116,11 +115,11 @@ vim.api.nvim_create_autocmd('UIEnter', {
       map({ 'x', 'n' }, '<C-w>,', '(v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")', { expr = true, desc = 'Resize window left' })
       map({ 'x', 'n' }, '<C-w>+', 'v:count ? "<C-w>+" : "2<C-w>+"', { expr = true, desc = 'Increase window height' })
       map({ 'x', 'n' }, '<C-w>-', 'v:count ? "<C-w>-" : "2<C-w>-"', { expr = true, desc = 'Decrease window height' })
-      -- stylua: ignore end
+    -- stylua: ignore end
 
-      -- Delete selection in select mode
-      map('s', '<BS>', '<C-o>"_s', { desc = 'Delete selection' })
-      map('s', '<C-h>', '<C-o>"_s', { desc = 'Delete selection' })
+    -- Delete selection in select mode
+    map('s', '<BS>', '<C-o>"_s', { desc = 'Delete selection' })
+    map('s', '<C-h>', '<C-o>"_s', { desc = 'Delete selection' })
 
       -- More consistent behavior when &wrap is set
       -- stylua: ignore start
@@ -156,38 +155,38 @@ vim.api.nvim_create_autocmd('UIEnter', {
       -- Correct misspelled word / mark as correct
       map('i', '<C-g>+', '<Esc>[szg`]a', { desc = 'Correct misspelled word before cursor' })
       map('i', '<C-g>=', '<C-g>u<Esc>[s1z=`]a<C-G>u', { desc = 'Add misspelled word before cursor' })
-      -- stylua: ignore end
+    -- stylua: ignore end
 
-      -- Only clear highlights and message area and don't redraw if search
-      -- highlighting is on to avoid flickering
-      -- Use `:sil! dif` to suppress error
-      -- 'E11: Invalid in command-line window; <CR> executes, CTRL-C quits'
-      -- in command window
-      --
-      -- Don't use `map()` here because `<C-l>` is already defined as nvim's
-      -- default keymap before loading this config and we want to override it
-      vim.keymap.set(
-        { 'n', 'x' },
-        '<C-l>',
-        [['<Cmd>ec|noh|sil! dif<CR>' . (v:hlsearch ? '' : '<C-l>')]],
-        {
-          expr = true,
-          replace_keycodes = false,
-          desc = 'Clear and redraw screen',
-        }
-      )
+    -- Only clear highlights and message area and don't redraw if search
+    -- highlighting is on to avoid flickering
+    -- Use `:sil! dif` to suppress error
+    -- 'E11: Invalid in command-line window; <CR> executes, CTRL-C quits'
+    -- in command window
+    --
+    -- Don't use `map()` here because `<C-l>` is already defined as nvim's
+    -- default keymap before loading this config and we want to override it
+    vim.keymap.set(
+      { 'n', 'x' },
+      '<C-l>',
+      [['<Cmd>ec|noh|sil! dif<CR>' . (v:hlsearch ? '' : '<C-l>')]],
+      {
+        expr = true,
+        replace_keycodes = false,
+        desc = 'Clear and redraw screen',
+      }
+    )
 
-      -- Edit current file's directory
-      map(
-        { 'n', 'x' },
-        '-',
-        [[isdirectory(expand('%:p:h')) ? '<Cmd>e%:p:h<CR>' : '<Cmd>e ' . fnameescape(getcwd(0)) . '<CR>']],
-        {
-          expr = true,
-          replace_keycodes = false,
-          desc = "Edit current file's directory",
-        }
-      )
+    -- Edit current file's directory
+    map(
+      { 'n', 'x' },
+      '-',
+      [[isdirectory(expand('%:p:h')) ? '<Cmd>e%:p:h<CR>' : '<Cmd>e ' . fnameescape(getcwd(0)) . '<CR>']],
+      {
+        expr = true,
+        replace_keycodes = false,
+        desc = "Edit current file's directory",
+      }
+    )
 
       -- Don't include extra spaces around quotes
       -- stylua: ignore start
@@ -221,29 +220,26 @@ vim.api.nvim_create_autocmd('UIEnter', {
       map({ 'o' }, 'g}', '<Cmd>silent! normal Vg}<CR>', { noremap = false, desc = 'Go to the last line of paragraph' })
       map({ 'n', 'x' }, 'g{', function() require('utils.misc').goto_paragraph_firstline() end, { noremap = false, desc = 'Go to the first line of paragraph' })
       map({ 'n', 'x' }, 'g}', function() require('utils.misc').goto_paragraph_lastline() end, { noremap = false, desc = 'Go to the last line of paragraph' })
-      -- stylua: ignore end
+    -- stylua: ignore end
 
-      -- Fzf keymaps
-      map('n', '<Leader>.', '<Cmd>FZF<CR>', { desc = 'Find files' })
-      map('n', '<Leader>ff', '<Cmd>FZF<CR>', { desc = 'Find files' })
+    -- Fzf keymaps
+    map('n', '<Leader>.', '<Cmd>FZF<CR>', { desc = 'Find files' })
+    map('n', '<Leader>ff', '<Cmd>FZF<CR>', { desc = 'Find files' })
 
-      -- Abbreviations
-      map('!a', 'ture', 'true')
-      map('!a', 'Ture', 'True')
-      map('!a', 'flase', 'false')
-      map('!a', 'fasle', 'false')
-      map('!a', 'Flase', 'False')
-      map('!a', 'Fasle', 'False')
-      map('!a', 'lcaol', 'local')
-      map('!a', 'lcoal', 'local')
-      map('!a', 'locla', 'local')
-      map('!a', 'sahre', 'share')
-      map('!a', 'saher', 'share')
-      map('!a', 'balme', 'blame')
-    end)
-
-    return true
-  end,
+    -- Abbreviations
+    map('!a', 'ture', 'true')
+    map('!a', 'Ture', 'True')
+    map('!a', 'flase', 'false')
+    map('!a', 'fasle', 'false')
+    map('!a', 'Flase', 'False')
+    map('!a', 'Fasle', 'False')
+    map('!a', 'lcaol', 'local')
+    map('!a', 'lcoal', 'local')
+    map('!a', 'locla', 'local')
+    map('!a', 'sahre', 'share')
+    map('!a', 'saher', 'share')
+    map('!a', 'balme', 'blame')
+  end),
 })
 
 vim.api.nvim_create_autocmd('CmdlineEnter', {
@@ -263,6 +259,5 @@ vim.api.nvim_create_autocmd('CmdlineEnter', {
     key.command_abbrev('mkdir', '!mkdir')
     key.command_abbrev('touch', '!touch')
     key.command_abbrev('chmod', '!chmod')
-    return true
   end,
 })

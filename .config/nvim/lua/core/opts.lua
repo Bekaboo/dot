@@ -36,26 +36,21 @@ vim.opt.selection = 'old'
 local shada_read ---@boolean?
 
 ---Restore 'shada' option and read from shada once
----@return true
 local function rshada()
   if shada_read then
-    return true
+    return
   end
   shada_read = true
 
   vim.cmd.set('shada&')
   pcall(vim.cmd.rshada)
-  return true
 end
 
 vim.opt.shada = ''
 vim.api.nvim_create_autocmd('BufReadPre', { once = true, callback = rshada })
 vim.api.nvim_create_autocmd('UIEnter', {
   once = true,
-  callback = function()
-    vim.schedule(rshada)
-    return true
-  end,
+  callback = vim.schedule_wrap(rshada),
 })
 
 -- Folding
@@ -105,16 +100,12 @@ vim.api.nvim_create_autocmd('FileType', {
       vim.treesitter.start = ts_start
       return vim.treesitter.start(...)
     end
-    return true
   end,
 })
 
 vim.api.nvim_create_autocmd('UIEnter', {
   once = true,
-  callback = function()
-    vim.schedule(spellcheck)
-    return true
-  end,
+  callback = vim.schedule_wrap(spellcheck),
 })
 
 -- Cursor shape
@@ -130,18 +121,15 @@ vim.opt.gcr = {
 vim.opt.diffopt:append({
   'algorithm:histogram',
   'indent-heuristic',
-  'linematch:60'
+  'linematch:60',
 })
 
 -- Use system clipboard
 vim.api.nvim_create_autocmd('UIEnter', {
   once = true,
-  callback = function()
-    vim.schedule(function()
-      vim.opt.clipboard:append('unnamedplus')
-    end)
-    return true
-  end,
+  callback = vim.schedule_wrap(function()
+    vim.opt.clipboard:append('unnamedplus')
+  end),
 })
 
 -- Align columns in quickfix window
@@ -175,7 +163,6 @@ vim.api.nvim_create_autocmd('UIEnter', {
       vim.opt.listchars:append({ nbsp = '␣' })
       vim.opt.fillchars:append({ diff = '╱' })
     end
-    return true
   end,
 })
 
@@ -243,7 +230,6 @@ local function load(runtime, flag, events)
           vim.cmd.runtime(runtime)
         end
         vim.api.nvim_del_augroup_by_id(gid)
-        return true
       end,
     })
   end

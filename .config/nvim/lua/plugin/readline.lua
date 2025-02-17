@@ -141,15 +141,12 @@ local function small_del(text_deleted, forward)
   if in_cmdline then
     vim.api.nvim_create_autocmd('CmdlineChanged', {
       once = true,
-      callback = function()
-        vim.schedule(function()
-          vim.g._rl_cmd = fn.getcmdline()
-          vim.g._rl_cmd_pos = fn.getcmdpos()
-          vim.g._rl_cmd_type = fn.getcmdtype()
-          vim.g._rl_del_lock = nil
-        end)
-        return true
-      end,
+      callback = vim.schedule_wrap(function()
+        vim.g._rl_cmd = fn.getcmdline()
+        vim.g._rl_cmd_pos = fn.getcmdpos()
+        vim.g._rl_cmd_type = fn.getcmdtype()
+        vim.g._rl_del_lock = nil
+      end),
     })
   else
     vim.api.nvim_create_autocmd('TextChangedI', {
@@ -158,7 +155,6 @@ local function small_del(text_deleted, forward)
         vim.b._rl_del_pos = fn.getcurpos()
         vim.b._rl_changedtick = vim.b.changedtick
         vim.g._rl_del_lock = nil
-        return true
       end,
     })
   end
@@ -172,11 +168,11 @@ local function small_del(text_deleted, forward)
     vim.api.nvim_create_autocmd('TextChangedI', {
       once = true,
       callback = function()
-        if vim.g._rl_ww then
-          vim.go.ww = vim.g._rl_ww
-          vim.g._rl_ww = nil
+        if not vim.g._rl_ww then
+          return
         end
-        return true
+        vim.go.ww = vim.g._rl_ww
+        vim.g._rl_ww = nil
       end,
     })
   end

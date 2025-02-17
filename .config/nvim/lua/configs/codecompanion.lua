@@ -135,7 +135,6 @@ vim.api.nvim_create_autocmd('FileType', {
         if ns then
           vim.api.nvim_buf_clear_namespace(i.buf, ns, 0, -1)
         end
-        return true
       end,
     })
   end),

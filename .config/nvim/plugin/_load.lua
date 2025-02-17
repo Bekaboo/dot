@@ -22,7 +22,6 @@ vim.api.nvim_create_autocmd('ModeChanged', {
   group = vim.api.nvim_create_augroup('IMSetup', {}),
   callback = function()
     require('plugin.fcitx5').setup()
-    return true
   end,
 })
 
@@ -33,7 +32,6 @@ vim.api.nvim_create_autocmd('BufReadCmd', {
   group = vim.api.nvim_create_augroup('JupyTextSetup', {}),
   callback = function(info)
     require('plugin.jupytext').setup(info.buf)
-    return true
   end,
 })
 
@@ -44,7 +42,6 @@ vim.api.nvim_create_autocmd({ 'LspAttach', 'DiagnosticChanged' }, {
   group = vim.api.nvim_create_augroup('LspDiagnosticSetup', {}),
   callback = function()
     require('plugin.lsp').setup()
-    return true
   end,
 })
 
@@ -54,7 +51,6 @@ vim.api.nvim_create_autocmd({ 'CmdlineEnter', 'InsertEnter' }, {
   once = true,
   callback = function()
     require('plugin.readline').setup()
-    return true
   end,
 })
 
@@ -76,7 +72,6 @@ vim.api.nvim_create_autocmd('FileType', {
     vim.keymap.set('n', '[;', api.goto_context_start, { desc = 'Go to start of current context' })
     vim.keymap.set('n', '];', api.select_next_context, { desc = 'Select next context' })
     -- stylua: ignore end
-    return true
   end,
 })
 
@@ -109,12 +104,9 @@ if vim.g.has_ui then
     group = vim.api.nvim_create_augroup('TmuxSetup', {}),
     desc = 'Init tmux plugin.',
     once = true,
-    callback = function()
-      vim.schedule(function()
-        require('plugin.tmux').setup()
-      end)
-      return true
-    end,
+    callback = vim.schedule_wrap(function()
+      require('plugin.tmux').setup()
+    end),
   })
 end
 
@@ -125,7 +117,6 @@ vim.api.nvim_create_autocmd({ 'InsertEnter', 'CmdlineEnter' }, {
   once = true,
   callback = function()
     require('plugin.tabout').setup()
-    return true
   end,
 })
 
@@ -148,8 +139,6 @@ vim.api.nvim_create_autocmd(
           desc = 'Open a directory from z',
         })
       end)
-      return true
     end,
   }
 )
-

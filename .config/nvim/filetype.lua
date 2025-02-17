@@ -8,6 +8,5 @@ vim.api.nvim_create_autocmd({ 'BufReadPre', 'FileType' }, {
         wxml = 'html',
       },
     })
-    return true
   end,
 })

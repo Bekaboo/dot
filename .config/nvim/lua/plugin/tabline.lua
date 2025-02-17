@@ -85,7 +85,6 @@ vim.api.nvim_create_autocmd({ 'UIEnter', 'SessionLoadPost' }, {
   once = true,
   callback = function()
     vim.g._tabline_name_restored = true
-    return true
   end,
 })
 vim.api.nvim_create_autocmd('TabClosed', {
