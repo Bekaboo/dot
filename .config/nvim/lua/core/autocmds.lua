@@ -213,7 +213,9 @@ augroup('AutoCwd', {
       local file = info.file
       local buf = info.buf
 
-      if file == '' then
+      -- Don't automatically change cwd in special buffers, e.g. help buffers
+      -- or oil preview buffers
+      if file == '' or vim.bo[buf].bt ~= '' then
         return
       end
 
