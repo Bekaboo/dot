@@ -678,6 +678,23 @@ M.snippets = {
   ),
   us.sn(
     {
+      trig = 'ifa',
+      desc = 'Interface definition',
+    },
+    un.fmtad(
+      [[
+        type <name> interface {
+        <body>
+        }
+      ]],
+      {
+        name = i(1, 'Interface'),
+        body = un.body(2, 1),
+      }
+    )
+  ),
+  us.sn(
+    {
       trig = 'var',
       desc = 'Variable declaration',
     },
@@ -711,7 +728,7 @@ M.snippets = {
   ),
   us.msn(
     {
-      { trig = 'cons' },
+      { trig = 'con' },
       { trig = 'const' },
       common = { desc = 'Constant declaration' },
     },
