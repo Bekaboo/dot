@@ -263,6 +263,12 @@ function! s:supportevents(events) abort
   return 0
 endfunction
 
+" https://github.com/vim/vim/commit/eb93f3f0e2b2ae65c5c3f55be3e62d64e3066f35
+" return: 0/1
+function! s:has_autocmd_once() abort
+  return has('patch-8.1.1113')
+endfunction
+
 " Autosave on focus lost, window/buf leave, etc. {{{2
 if s:supportevents(['BufLeave', 'WinLeave', 'FocusLost'])
   function! s:auto_save(buf, file) abort
@@ -842,7 +848,7 @@ endfor
 "     https://stackoverflow.com/questions/51129631/vim-8-1-garbage-printing-on-screen
 "     https://gentoo-user.gentoo.narkive.com/IpR4CjNN/vim-puts-command-in-when-starting-up
 "     https://github.com/neovim/neovim/issues/11393
-if s:supportevents('CursorHold')
+if s:supportevents('CursorHold') && s:has_autocmd_once()
   silent! let s:tm = &timeoutlen
   silent! set timeoutlen=0
   autocmd CursorHold * ++once
@@ -1132,7 +1138,7 @@ noremap! <expr> <Esc>b <SID>ic_meta_b()
 noremap! <expr> <C-a>  <SID>ic_ctrl_a()
 noremap! <expr> <C-e>  <SID>ic_ctrl_e()
 
-if s:supportevents(['TextChangedI', 'CmdlineChanged']) && has('patch-8.1.1113')
+if s:supportevents(['TextChangedI', 'CmdlineChanged']) && s:has_autocmd_once()
   " `ic_small_del()` requires support for `TextChangedI`, `CmdlineChanged`
   " events and the `++once` argument (patch-8.1.1113)
   function! s:ic_ctrl_w() abort
