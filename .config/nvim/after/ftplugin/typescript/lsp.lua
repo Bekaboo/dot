@@ -185,7 +185,7 @@ if eslint_cmd then
         })
       end,
       before_init = function(_, config)
-        local root_dir = config.root_dir
+        local root_dir = config.root_dir or vim.fn.getcwd(0)
         -- The 'workspaceFolder' is a VSCode concept, it limits how far the
         -- server will traverse the file system when locating the ESLint config
         -- file (e.g. `.eslintrc`)
