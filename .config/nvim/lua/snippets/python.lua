@@ -344,10 +344,11 @@ M.snippets = {
       }
     )
   ),
-  us.sn(
+  us.msn(
     {
-      trig = 'cls',
-      desc = 'Class definition',
+      { trig = 'cls' },
+      { trig = 'class' },
+      common = { desc = 'Class definition' },
     },
     un.fmtad(
       [[

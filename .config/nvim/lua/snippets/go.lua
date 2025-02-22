@@ -660,8 +660,10 @@ M.snippets = {
   ),
   us.msn(
     {
-      { trig = 'cls' },
       { trig = 'st' },
+      { trig = 'struct' },
+      { trig = 'cls' },
+      { trig = 'class' },
       common = { desc = 'Struct definition' },
     },
     un.fmtad(
