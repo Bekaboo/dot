@@ -210,25 +210,26 @@ M.snippets = {
       },
     }
   ),
-  us.sn(
+  us.msn(
     {
-      trig = 'cls',
-      desc = 'Class definition',
+      { trig = 'cls' },
+      { trig = 'class' },
+      common = { desc = 'Class definition' },
     },
     un.fmtad(
       [[
         class <name> {
-          constructor(<params>) {
-          <ctor_body>
-          }
-        <body>
+        <idnt>constructor(<params>) {
+        <ctor_body>
+        <idnt>}<i>
         }
       ]],
       {
         name = i(1, 'ClassName'),
         params = i(2),
         ctor_body = un.body(3, 2),
-        body = un.body(4, 1),
+        idnt = un.idnt(1),
+        i = i(4),
       }
     )
   ),
