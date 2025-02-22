@@ -142,3 +142,13 @@ vim.api.nvim_create_autocmd(
     end,
   }
 )
+
+-- jsasync
+vim.api.nvim_create_autocmd('FileType', {
+  group = vim.api.nvim_create_augroup('JSAsyncSetup', {}),
+  desc = 'Init jsasync plugin',
+  once = true,
+  callback = function()
+    require('plugin.jsasync').setup()
+  end,
+})
