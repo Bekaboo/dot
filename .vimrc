@@ -279,7 +279,7 @@ if s:supportevents(['BufLeave', 'WinLeave', 'FocusLost'])
   augroup AutoSave
     au!
     if has('patch-8.1113')
-      au BufLeave,WinLeave,FocusLost * ++nested
+      au BufLeave,WinLeave,FocusLost * nested
             \ :call s:auto_save(expand('<abuf>'), expand('<afile>'))
     else
       au BufLeave,WinLeave,FocusLost *
@@ -333,7 +333,7 @@ if s:supportevents('WinClosed')
   augroup WinCloseJmp
     au!
     if has('patch-8.1113')
-      au WinClosed * ++nested if expand('<amatch>') == win_getid() |
+      au WinClosed * nested if expand('<amatch>') == win_getid() |
             \ wincmd p |
             \ endif
     else
@@ -416,7 +416,7 @@ if s:supportevents([
 
   augroup AutoCwd
     au!
-    autocmd BufEnter * ++nested
+    autocmd BufEnter * nested
           \ if &bt == '' && &ma | call <SID>autocwd(expand('<afile>')) | endif
   augroup END
 endif
