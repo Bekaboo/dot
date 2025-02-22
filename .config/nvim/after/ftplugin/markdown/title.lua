@@ -52,7 +52,7 @@ local function format_title()
 
   local cursor = vim.api.nvim_win_get_cursor(0)
   local line = vim.api.nvim_get_current_line()
-  if not utils.ts.in_node('heading') and not utils.syn.in_group('H%d$') then
+  if not utils.ts.find_node('heading') and not utils.syn.find_group('H%d$') then
     return
   end
 

@@ -13,8 +13,8 @@ endfunction
 
 function! s:in_codeblock() abort
   return s:ts_is_active()
-        \ ? luaeval(printf('require("utils.ts").in_node("fence")'))
-        \ : luaeval(printf('require("utils.syn").in_group("CodeBlock")'))
+        \ ? luaeval('require("utils.ts").find_node("fence") ~= nil')
+        \ : luaeval('require("utils.syn").find_group("CodeBlock") ~= nil')
 endfunction
 
 " Find the first previous non-blank line that matches the given pattern if
