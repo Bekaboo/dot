@@ -130,6 +130,7 @@ vim.api.nvim_create_autocmd('UIEnter', {
     vim.bo[buf].bufhidden = 'wipe'
     vim.bo[buf].buftype = 'nofile'
     vim.bo[buf].swapfile = false
+    vim.bo[buf].modifiable = true -- fix error when used with `nvim -M`
     vim.api.nvim_buf_set_lines(
       buf,
       0,
