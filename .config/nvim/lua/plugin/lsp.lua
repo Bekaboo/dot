@@ -1496,7 +1496,7 @@ local function setup_diagnostic_overrides()
           :any(function(d) ---@param d diagnostic_t
             return not d._hidden
               and d.namespace ~= diag.namespace
-              and d.severity >= diag.severity
+              and d.severity <= diag.severity
               and d.col == diag.col
           end)
 
