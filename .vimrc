@@ -1299,7 +1299,7 @@ function! s:fg_cmds() abort
 
   let cmds = []
   for stat_cmd_str in split(system('ps h -o stat,args -g '
-        \ . job_info(term_getjob(bufnr())).process), '\n')
+        \ . job_info(term_getjob(bufnr('%'))).process), '\n')
     if stat_cmd_str =~# '^\S\++' " check if this is a foreground process
       call add(cmds, substitute(stat_cmd_str, '^\S\+\s\+', '', ''))
     endif
