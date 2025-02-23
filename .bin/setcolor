@@ -27,7 +27,7 @@ get_cap_theme_name() {
 setcolor_alacritty() {
     # $1: name of the colorscheme
     (
-        cd "$CONFIG_HOME/alacritty/themes" || return 1
+        cd "$CONFIG_HOME/alacritty/themes" 2>/dev/null || return 1
         dark_theme_path="dark.toml"
         light_theme_path="light.toml"
         # If $1 is empty, only need to ensure symlink to color theme files exists
@@ -48,7 +48,7 @@ setcolor_alacritty() {
 setcolor_foot() {
     # $1: name of the colorscheme
     (
-        cd "$CONFIG_HOME/foot/themes" || return 1
+        cd "$CONFIG_HOME/foot/themes" 2>/dev/null || return 1
         dark_theme_path="dark.ini"
         light_theme_path="light.ini"
         if [ -z "$1" ]; then
@@ -67,7 +67,7 @@ setcolor_foot() {
 setcolor_kitty() {
     # $1: name of the colorscheme
     (
-        cd "$CONFIG_HOME/kitty/themes" || return 1
+        cd "$CONFIG_HOME/kitty/themes" 2>/dev/null || return 1
         dark_theme_path="dark.conf"
         light_theme_path="light.conf"
         if [ -z "$1" ]; then
@@ -90,7 +90,7 @@ setcolor_kitty() {
 setcolor_termux() {
     # $1: name of the colorscheme
     (
-        cd "$HOME/.termux/colors" || return 1
+        cd "$HOME/.termux/colors" 2>/dev/null || return 1
         dark_color_path="dark.properties"
         light_color_path="light.properties"
         if [ -z "$1" ]; then
@@ -109,7 +109,7 @@ setcolor_termux() {
 setcolor_wezterm() {
     # $1: name of the colorscheme
     (
-        cd "$CONFIG_HOME/wezterm/colors" || return 1
+        cd "$CONFIG_HOME/wezterm/colors" 2>/dev/null || return 1
         dark_theme_path="dark.toml"
         light_theme_path="light.toml"
         if [ -z "$1" ]; then
@@ -127,7 +127,7 @@ setcolor_wezterm() {
 setcolor_highlight() {
     # $1: name of the colorscheme
     (
-        cd "$HOME/.highlight/themes" || return 1
+        cd "$HOME/.highlight/themes" 2>/dev/null || return 1
         dark_theme_path="dark.theme"
         light_theme_path="light.theme"
         if [ -z "$1" ]; then
@@ -214,7 +214,7 @@ setcolor_konsole_yakuake() {
 setcolor_fish() {
     # $1: name of the colorscheme
     (
-        cd "$CONFIG_HOME/fish/themes" || return 1
+        cd "$CONFIG_HOME/fish/themes" 2>/dev/null || return 1
         dark_theme_path="Dark.theme"
         light_theme_path="Light.theme"
         default_theme_name=$(get_cap_theme_name "$DEFAULT_COLOR")
