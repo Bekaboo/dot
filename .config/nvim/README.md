@@ -621,6 +621,9 @@ and it should work out of the box.
     - Jump between frequently visited directories with `:Z` command using
       [z.lua](https://github.com/skywind3000/z.lua) or
       [z.fish](https://github.com/jethrokuan/z)
+- [jsasync](lua/plugin/jsasync.lua)
+    - Automatically add `async` to javascript/typescript functions containing
+      `await`
 
 Like many vim builtin plugins, these plugins can be disabled by setting the
 `g:loaded_...` flag before loading them.
