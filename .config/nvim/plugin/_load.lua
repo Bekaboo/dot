@@ -144,11 +144,13 @@ vim.api.nvim_create_autocmd(
 )
 
 -- jsasync
-vim.api.nvim_create_autocmd('FileType', {
+vim.api.nvim_create_autocmd('InsertEnter', {
   group = vim.api.nvim_create_augroup('JSAsyncSetup', {}),
-  desc = 'Init jsasync plugin',
-  once = true,
+  desc = 'Init jsasync plugin.',
   callback = function()
-    require('plugin.jsasync').setup()
+    if require('utils.ts').is_active() then
+      require('plugin.jsasync').setup()
+      return true
+    end
   end,
 })
