@@ -650,7 +650,7 @@ function! s:paragraph_first_line() abort
   " If current line is the first line of paragraph, move one line
   " upwards first to goto the first line of previous paragraph
   if linenr >= 2
-    let lines = getbufline(bufname(), linenr - 1, linenr)
+    let lines = getbufline(bufname('%'), linenr - 1, linenr)
     if lines[0] =~# '^$' && lines[1] =~# '\S'
       let linenr -= 1
     endif
@@ -658,7 +658,7 @@ function! s:paragraph_first_line() abort
 
   while linenr >= 1
     let chunk = getbufline(
-          \ bufname(),
+          \ bufname('%'),
           \ max([0, linenr - chunk_size - 1]),
           \ linenr - 1,
           \ )
@@ -691,7 +691,7 @@ function! s:paragraph_last_line() abort
   " If current line is the last line of paragraph, move one line
   " downwards first to goto the last line of next paragraph
   if buf_line_count - linenr >= 1
-    let lines = getbufline(bufname(), linenr, linenr + 1)
+    let lines = getbufline(bufname('%'), linenr, linenr + 1)
     if lines[0] =~# '\S' && lines[1] =~# '^$'
       let linenr += 1
     end
@@ -699,7 +699,7 @@ function! s:paragraph_last_line() abort
 
   while linenr <= buf_line_count
     let chunk = getbufline(
-          \ bufname(),
+          \ bufname('%'),
           \ linenr + 1,
           \ linenr + chunk_size + 1,
           \ )
