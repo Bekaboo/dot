@@ -512,7 +512,9 @@ endif
 " }}}2
 
 " Close empty windows after loading session {{{2
-if s:supportevents('SessionLoadPost') && exists('*win_gettype')
+if s:supportevents('SessionLoadPost') &&
+      \ exists('*win_gettype') &&
+      \ exists('*win_execute')
   function! s:clear_invalid_buffers()
     for tab in gettabinfo()
       let wins = filter(tabpagewinnr(tab.tabnr, '$')->range(),
