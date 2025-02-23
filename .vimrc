@@ -512,7 +512,7 @@ endif
 " }}}2
 
 " Close empty windows after loading session {{{2
-if s:supportevents('SessionLoadPost')
+if s:supportevents('SessionLoadPost') && exists('*win_gettype')
   function! s:clear_invalid_buffers()
     for tab in gettabinfo()
       let wins = filter(tabpagewinnr(tab.tabnr, '$')->range(),
@@ -1445,7 +1445,7 @@ if $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.1140')
 
   " return: 0/1
   function! s:vim_in_popup_win() abort
-    return win_gettype() ==# 'popup'
+    return exists('*win_gettype') ? 0 : win_gettype() ==# 'popup'
   endfunction
 
   function! s:vim_has_only_win() abort
@@ -1595,7 +1595,7 @@ endif
 " }}}2
 
 " Qflist / quickfix list settings {{{2
-if s:supportevents('FileType')
+if s:supportevents('FileType') && exists('*win_gettype')
   augroup QfSettings
     au!
     au FileType qf if win_gettype() ==# 'quickfix' | wincmd J | endif |
@@ -1606,7 +1606,7 @@ endif
 " }}}2
 
 " Command window settings {{{2
-if s:supportevents('FileType')
+if s:supportevents('FileType') && exists('*win_gettype')
   augroup CmdwinSettings
     au!
     au FileType vim if win_gettype() ==# 'command' |
