@@ -1290,21 +1290,44 @@ let g:markdown_fenced_languages =
       \ ['c', 'cpp', 'python', 'sh', 'bash', 'vim', 'lua', 'rust', 'go']
 
 " Terminal Settings {{{2
+" Get the command running in the foreground in current terminal
+" return: string[]: command running in the foreground
+function! s:fg_cmds() abort
+  if &buftype !~# 'terminal'
+    return []
+  endif
+
+  let cmds = []
+  for stat_cmd_str in split(system('ps h -o stat,args -g '
+        \ . job_info(term_getjob(bufnr())).process), '\n')
+    if stat_cmd_str =~# '^\S\++' " check if this is a foreground process
+      call add(cmds, substitute(stat_cmd_str, '^\S\+\s\+', '', ''))
+    endif
+  endfor
+
+  return cmds
+endfunction
+
+" Check if any of the processes in current terminal is a TUI app
+" return: 0/1
+function! s:running_tui() abort
+  for cmd in s:fg_cmds()
+    if cmd =~# '\v^(sudo(\s+--?(\w|-)+((\s+|\=)\S+)?)*\s+)?\S*
+        \(n?vim?|vimdiff|emacs(client)?|lem|nano|helix|kak|
+        \tmux|vifm|yazi|ranger|lazygit|h?top|gdb|fzf|nmtui|
+        \sudoedit|ssh|crontab|asciinema|w3m)'
+      return 1
+    endif
+  endfor
+endfunction
+
+" return: reltime() converted to ms
+function! s:reltime_ms() abort
+  let t = reltime()
+  return t[0] * 1000 + t[1] / 1000000
+endfunction
 
 if exists(':tmap') == 2
-  " Check if any of the processes in current terminal is a TUI app
-  " return: 0/1
-  function! s:running_tui() abort
-    for cmd in s:fg_cmds()
-      if cmd =~# '\v^(sudo(\s+--?(\w|-)+((\s+|\=)\S+)?)*\s+)?\S*
-          \(n?vim?|vimdiff|emacs(client)?|lem|nano|helix|kak|
-          \tmux|vifm|yazi|ranger|lazygit|h?top|gdb|fzf|nmtui|
-          \sudoedit|ssh|crontab|asciinema|w3m)'
-        return 1
-      endif
-    endfor
-  endfunction
-
   " Default <C-w> is used as 'termwinkey' (see :h 'termwinkey')
   " which conflicts with shell's keymap
   tnoremap <nowait> <C-w> <C-\><C-w>
@@ -1314,30 +1337,6 @@ if exists(':tmap') == 2
 endif
 
 if s:supportevents('TerminalWinOpen')
-  " return: reltime() converted to ms
-  function! s:reltime_ms() abort
-    let t = reltime()
-    return t[0] * 1000 + t[1] / 1000000
-  endfunction
-
-  " Get the command running in the foreground in current terminal
-  " return: string[]: command running in the foreground
-  function! s:fg_cmds() abort
-    if &buftype !~# 'terminal'
-      return []
-    endif
-
-    let cmds = []
-    for stat_cmd_str in split(system('ps h -o stat,args -g '
-          \ . job_info(term_getjob(bufnr())).process), '\n')
-      if stat_cmd_str =~# '^\S\++' " check if this is a foreground process
-        call add(cmds, substitute(stat_cmd_str, '^\S\+\s\+', '', ''))
-      endif
-    endfor
-
-    return cmds
-  endfunction
-
   augroup TermOptions
     au!
     au TerminalWinOpen * setlocal nonu nornu scl=no bh=hide so=0 siso=0 |
