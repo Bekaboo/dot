@@ -81,7 +81,7 @@ setcolor_kitty() {
             for pid in $(pgrep kitty); do
                 # Don't use `kill -SIGUSR1`, will cause error: 'kill: SIGUSR1: invalid signal specification'
                 # Source: https://unix.stackexchange.com/questions/630281/why-doesnt-kill-s-sigusr1-work-inside-script-but-works-on-command-line-re
-                kill -SIGUSR1 "$pid"
+                kill -USR1 "$pid"
             done
         fi
     )
