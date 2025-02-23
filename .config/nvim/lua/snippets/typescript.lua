@@ -44,7 +44,7 @@ M.snippets = {
       common = {
         priority = 1001,
         desc = 'Constant array/object variable declaration',
-      }
+      },
     },
     c(1, {
       un.fmtad('const <name>: <type>[] = [<value>]', {
