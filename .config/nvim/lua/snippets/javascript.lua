@@ -98,7 +98,7 @@ M.snippets = {
     }),
     {
       stored = {
-        name = i(nil, 'var'),
+        name = i(nil, 'variable'),
       },
     }
   ),
@@ -110,7 +110,7 @@ M.snippets = {
       common = { desc = 'Variable declaration' },
     },
     un.fmtad('let <name> = <value>', {
-      name = i(1, 'var'),
+      name = i(1, 'variable'),
       value = i(2, 'value'),
     })
   ),
