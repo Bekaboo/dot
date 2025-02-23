@@ -314,7 +314,7 @@ local subcommand_completions = {
         return tostring(buf)
       end
       return string.format('%d (%s)', buf, vim.fn.fnamemodify(bufname, ':~:.'))
-    end, vim.api.nvim_list_bufs())
+    end, vim.list_extend({ 0 }, vim.api.nvim_list_bufs()))
   end,
   ---Get completion for LSP clients
   ---@return string[]
