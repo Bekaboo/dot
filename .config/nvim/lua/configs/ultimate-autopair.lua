@@ -30,25 +30,6 @@ ap_utils.getsmartft = (function(cb)
   end
 end)(ap_utils.getsmartft)
 
----Get next two characters after cursor
----@return string: next two characters
-local function get_suffix()
-  local col, line
-  if vim.startswith(vim.fn.mode(), 'c') then
-    col = vim.fn.getcmdpos()
-    line = vim.fn.getcmdline()
-  else
-    col = vim.fn.col('.')
-    line = vim.api.nvim_get_current_line()
-  end
-  return line:sub(col, col + 1)
-end
-
--- Matches strings that start with:
--- keywords: \k
--- opening pairs: (, [, {, \(, \[, \{
-local IGNORE_REGEX = vim.regex([=[^\%(\k\|\\\?[([{]\)]=])
-
 ---Record previous cmdline completion types,
 ---`cmdcompltype[1]` is the current completion type,
 ---`cmdcompltype[2]` is the previous completion type
@@ -76,16 +57,13 @@ require('ultimate-autopair').setup({
     utf8 = false,
     cond = {
       cond = function(f)
-        -- Disable autopairs when inserting a regex,
-        -- e.g. `:s/{pattern}/{string}/[flags]` or
-        -- `:g/{pattern}/[cmd]`, etc.
-        if f.in_cmdline() then
-          return compltype[2] ~= 'command' or compltype[1] ~= ''
-        end
-
         return not f.in_macro()
-          -- Disable autopairs if followed by a keyword or an opening pair
-          and not IGNORE_REGEX:match_str(get_suffix())
+          and (
+            not f.in_cmdline()
+            -- Disable autopairs when inserting a regex, e.g.
+            -- `:s/{pattern}/{string}/[flags]` or `:g/{pattern}/[cmd]`, etc.
+            or (compltype[2] ~= 'command' or compltype[1] ~= '')
+          )
       end,
     },
   },
