@@ -45,15 +45,19 @@ fi
 
 [[ $- != *i* ]] && return
 
-if __has neofetch &&
-    __has script &&
-    shopt -q login_shell &&
-    [[ -z "$GREETED" ]]; then
-    export GREETED=1
-    clear -x
-    # Run in pseudo-terminal to prevent terminal state issues
-    # (tmux error: 'not a terminal', etc)
-    script -q /dev/null -c neofetch
+if shopt -q login_shell; then
+    # Show greeting message using neofetch
+    if __has neofetch && __has script && [[ -z "$GREETED" ]]; then
+        export GREETED=1
+        clear -x
+        # Run in pseudo-terminal to prevent terminal state issues
+        # (tmux error: 'not a terminal', etc)
+        script -q /dev/null -c neofetch
+    fi
+
+    # Ensure color theme files are correctly linked
+    __has setbg && setbg &
+    __has setcolors && setcolors &
 fi
 
 # Enable colors for ls, etc. Prefer ~/.dir_colors
@@ -217,10 +221,6 @@ export FZF_PREVIEW_DISABLE_UB='true' # Disable ueberzug preview
 
 [[ -r /usr/share/fzf/key-bindings.bash ]] && . /usr/share/fzf/key-bindings.bash
 [[ -r /usr/share/fzf/completion.bash ]] && . /usr/share/fzf/completion.bash
-
-# Ensure color theme files are correctly linked
-__has setbg && setbg &
-__has setcolors && setcolors &
 
 # Change the window title of X terminals
 case ${TERM} in
