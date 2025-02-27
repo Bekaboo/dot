@@ -409,9 +409,9 @@ alias ls="ls --color -h"
 alias l="ls -h"
 alias ll="ls -lhA"
 alias lc="wc -l"
-alias df="df -h"     # human-readable sizes
+alias df="df -h"      # human-readable sizes
 alias free="free -mh" # show sizes in MB
-alias tree="tree -N" # Display Chinese characters
+alias tree="tree -N"  # Display Chinese characters
 alias vs="vim-startuptime"
 alias clean-tmp="find /tmp -ctime +7 -exec rm -rf {} +"
 # Save KDE plasma session
