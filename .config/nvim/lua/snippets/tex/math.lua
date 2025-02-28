@@ -768,6 +768,11 @@ return {
   us.sam({ trig = 'Omega' }, t('\\Omega')),
 
   -- special functions and other notations
+  us.sam({ trig = 'sigmoid' }, {
+    t('\\operatorname{sigmoid}\\left('),
+    i(1),
+    t('\\right)'),
+  }),
   us.sam({ trig = 'sign' }, {
     t('\\operatorname{sign}\\left('),
     i(1),
