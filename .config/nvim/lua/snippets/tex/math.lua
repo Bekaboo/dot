@@ -647,11 +647,11 @@ return {
     c(1, {
       sn(nil, {
         t('\\prod \\limits_{'),
-        i(1, 'n=1'),
+        i(1, 'i=1'),
         t('}^{'),
         i(2, 'N'),
         t('} '),
-        r(3, 'x_n'),
+        r(3, 'term'),
       }),
       sn(nil, {
         t('\\prod \\limits_{'),
@@ -666,18 +666,18 @@ return {
     }),
   }, {
     stored = {
-      x_n = i(nil, 'x_n'),
+      term = i(nil, 'x_i'),
     },
   }),
   us.sam({ trig = 'sum' }, {
     c(1, {
       sn(nil, {
         t('\\sum \\limits_{'),
-        i(1, 'n=1'),
+        i(1, 'i=1'),
         t('}^{'),
         i(2, 'N'),
         t('} '),
-        r(3, 'x_n'),
+        r(3, 'term'),
       }),
       sn(nil, {
         t('\\sum \\limits_{'),
@@ -692,7 +692,7 @@ return {
     }),
   }, {
     stored = {
-      x_n = i(nil, 'x_n'),
+      term = i(nil, 'x_i'),
     },
   }),
   us.sam({ trig = 'lim' }, {
