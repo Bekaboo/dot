@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Sun Feb 16 12:46:01 AM EST 2025
+-- Last Updated: Fri Feb 28 11:07:36 AM PST 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -276,8 +276,8 @@ local hlgroups = {
   WarningMsg = { fg = c_roninYellow },
   Whitespace = { fg = c_macroBg4 },
   WildMenu = { link = 'Pmenu' },
-  WinBar = { bg = 'NONE', fg = c_macroFg1 },
-  WinBarNC = { link = 'WinBar' },
+  WinBar = { bg = c_macroBg0, fg = c_macroFg1 },
+  WinBarNC = { bg = c_macroBg0, fg = c_macroBg5 },
   WinSeparator = { fg = c_macroBg4 },
   lCursor = { link = 'Cursor' },
   -- }}}2
@@ -605,6 +605,8 @@ if vim.go.bg == 'light' then
   hlgroups.StatusLineHeader = { bg = c_macroFg0, fg = c_macroBg0 }
   hlgroups.StatusLineHeaderModified = { bg = c_macroRed, fg = c_macroBg0 }
   hlgroups.Visual = { bg = c_macroBg3 }
+  hlgroups.WinBar = { bg = c_macroBg0, fg = c_macroFg1 }
+  hlgroups.WinBarNC = { bg = c_macroBg2, fg = c_macroBg5 }
   hlgroups['@variable.parameter'] = { link = 'Identifier' }
 end
 -- }}}1
