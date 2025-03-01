@@ -5,7 +5,7 @@ end
 function __fish_reload_theme --on-variable __fish_reload_theme \
     --description 'Switch fish theme'
     if type -q tput; and test (tput colors 2>/dev/null) -lt 256
-        set -f theme 'Default Dark'
+        set -f theme Default
     else
         set -f theme Current
     end
