@@ -6,7 +6,7 @@ cyan = "0x7aa89f"
 green = "0x87a987"
 magenta = "0xb1b1d2"
 red = "0xe46876"
-white = "0x1b1b1b"
+white = "0xa0a0a0"
 yellow = "0xdebe97"
 
 [colors.cursor]
@@ -20,7 +20,7 @@ cyan = "0x586e62"
 green = "0x6a824f"
 magenta = "0x938aa9"
 red = "0xb23b34"
-white = "0xa0a0a0"
+white = "0x1b1b1b"
 yellow = "0xa0713c"
 
 [colors.primary]

@@ -7,7 +7,7 @@ ansi = [
     '#537788',
     '#938aa9',
     '#586e62',
-    '#a0a0a0',
+    '#1b1b1b',
 ]
 brights = [
     '#d8d8d8',
@@ -17,7 +17,7 @@ brights = [
     '#7fb4ca',
     '#b1b1d2',
     '#7aa89f',
-    '#1b1b1b',
+    '#a0a0a0',
 ]
 
 foreground    = '#1b1b1b'

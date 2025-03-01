@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Fri Feb 28 11:07:36 AM PST 2025
+-- Last Updated: Sat Mar  1 11:08:09 AM PST 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -192,7 +192,7 @@ else
   vim.g.terminal_color_4  = c_macroBlue1[1]
   vim.g.terminal_color_5  = c_springViolet[1]
   vim.g.terminal_color_6  = c_macroAqua[1]
-  vim.g.terminal_color_7  = c_macroBg5[1]
+  vim.g.terminal_color_7  = c_macroFg0[1]
   vim.g.terminal_color_8  = c_macroBg3[1]
   vim.g.terminal_color_9  = c_waveRed[1]
   vim.g.terminal_color_10 = c_macroGreen0[1]
@@ -200,7 +200,7 @@ else
   vim.g.terminal_color_12 = c_springBlue[1]
   vim.g.terminal_color_13 = c_sumiInk6[1]
   vim.g.terminal_color_14 = c_waveAqua1[1]
-  vim.g.terminal_color_15 = c_macroFg0[1]
+  vim.g.terminal_color_15 = c_macroBg5[1]
   vim.g.terminal_color_16 = c_macroOrange0[1]
   vim.g.terminal_color_17 = c_macroOrange1[1]
 end
