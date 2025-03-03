@@ -1,3 +1,6 @@
+-- For text objects to work on nvim nightly (0.11)
+vim.g._ts_force_sync_parsing = true
+
 ---@diagnostic disable-next-line: missing-fields
 require('nvim-treesitter.configs').setup({
   textobjects = {
