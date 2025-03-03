@@ -10,9 +10,10 @@ local d = ls.dynamic_node
 local r = ls.restore_node
 
 M.snippets = {
-  us.sn({
-    trig = 'pkg',
-    desc = 'package statement',
+  us.msn({
+    { trig = 'pkg' },
+    { trig = 'pack' },
+    common = { desc = 'package statement' },
   }, {
     t('package '),
     i(1, 'main'),
