@@ -53,6 +53,10 @@ local formatter = lsp.start({
   },
 })
 
+-- Suppress error 'SWIG + Go: C source files not allowed when not using cgo'
+-- https://stackoverflow.com/questions/30248259/swig-go-c-source-files-not-allowed-when-not-using-cgo
+vim.env.CGO_ENABLED = 0
+
 lsp.start({
   cmd = { 'gopls' },
   root_patterns = root_patterns,
