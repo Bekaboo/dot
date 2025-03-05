@@ -407,15 +407,16 @@ M.snippets = {
     c(1, {
       un.fmtad(
         [[
-          for <idx>, <var> := <iter> {
+          for <var> := <iter>; <cond>; <update> {
           <body>
           }
         ]],
         {
-          idx = i(1, '_'),
-          var = i(2, 'var'),
-          iter = i(3, 'iter'),
-          body = un.body(4, 1),
+          var = i(1, 'i'),
+          iter = i(2, 'iter'),
+          cond = i(3, 'cond'),
+          update = i(4, 'update'),
+          body = un.body(5, 1),
         }
       ),
       un.fmtad(
@@ -429,7 +430,43 @@ M.snippets = {
           body = un.body(2, 1),
         }
       ),
+      un.fmtad(
+        [[
+          for <idx>, <var> := range <iter> {
+          <body>
+          }
+        ]],
+        {
+          idx = i(1, '_'),
+          var = i(2, 'var'),
+          iter = i(3, 'iter'),
+          body = un.body(4, 1),
+        }
+      ),
     })
+  ),
+  us.msn(
+    {
+      { trig = 'fr' },
+      { trig = 'forr' },
+      { trig = 'frange' },
+      { trig = 'forange' },
+      { trig = 'forrange' },
+      common = { desc = 'for key, val := range ... loop' },
+    },
+    un.fmtad(
+      [[
+        for <idx>, <var> := range <iter>  {
+        <body>
+        }
+      ]],
+      {
+        idx = i(1, '_'),
+        var = i(2, 'var'),
+        iter = i(3, 'iter'),
+        body = un.body(4, 1),
+      }
+    )
   ),
   us.msn(
     {
