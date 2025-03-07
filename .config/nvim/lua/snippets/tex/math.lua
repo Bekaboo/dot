@@ -293,23 +293,23 @@ return {
     un.fmtad(
       [[
         \begin{bmatrix}
-        <idnt><el><_>{<row0><comma><col0>} & <el><_>{<row0><comma><col1>} & \ldots & <el><_>{<row0><comma><width>} \\
-        <idnt><el><_>{<row1><comma><col0>} & <el><_>{<row1><comma><col1>} & \ldots & <el><_>{<row1><comma><width>} \\
+        <idnt><el00> & <el01> & \ldots & <el0M> \\
+        <idnt><el10> & <el11> & \ldots & <el1M> \\
         <idnt>\vdots & \vdots & \ddots & \vdots \\
-        <idnt><el><_>{<height><comma>0} & <el><_>{<height><comma>1} & \ldots & <el><_>{<height><comma><width>} \\
+        <idnt><elN0> & <elN1> & \ldots & <elNM> \\
         \end{bmatrix}
       ]],
       {
         idnt = un.idnt(1),
-        el = i(1, 'a'),
-        _ = i(8, '_'),
-        height = i(2, 'N-1'),
-        width = i(3, 'M-1'),
-        row0 = i(4, '0'),
-        col0 = i(5, '0'),
-        row1 = i(6, '1'),
-        col1 = i(7, '1'),
-        comma = i(9, ','),
+        el00 = i(1, 'a_{0, 0}'),
+        el01 = i(2, 'a_{0, 1}'),
+        el0M = i(3, 'a_{0, M-1}'),
+        el10 = i(4, 'a_{1, 0}'),
+        el11 = i(5, 'a_{1, 1}'),
+        el1M = i(6, 'a_{1, M-1}'),
+        elN0 = i(7, 'a_{N-1, 0}'),
+        elN1 = i(8, 'a_{N-1, 1}'),
+        elNM = i(9, 'a_{N-1, M-1}'),
       }
     )
   ),
