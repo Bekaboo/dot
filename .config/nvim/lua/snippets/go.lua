@@ -456,7 +456,7 @@ M.snippets = {
     },
     un.fmtad(
       [[
-        for <idx>, <var> := range <iter>  {
+        for <idx>, <var> := range <iter> {
         <body>
         }
       ]],
