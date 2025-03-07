@@ -546,6 +546,27 @@ M.snippets = {
     { trig = 'cont' },
     common = { desc = 'continue statement' },
   }, t('continue')),
+  us.msn(
+    {
+      { trig = 'ifn' },
+      { trig = 'ifun' },
+      { trig = 'ifunc' },
+      common = { desc = 'Immediate function evaluation' },
+    },
+    un.fmtad(
+      [[
+        (func(<args>) <ret> {
+        <body>
+        })(<vals>)
+      ]],
+      {
+        vals = i(1),
+        args = i(2),
+        ret = i(3),
+        body = un.body(4, 1),
+      }
+    )
+  ),
   us.sn(
     {
       trig = 'gof',
