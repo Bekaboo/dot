@@ -226,8 +226,28 @@ return {
     show_condition = conds.before_pattern('}') * conds.after_pattern('%^{'),
   }, t('\\intercal')),
 
+  us.samWr(
+    { trig = '(\\?%w*_*%w*);;' },
+    d(1, function(_, snip)
+      local symbol = snip.captures[1]
+      if not symbol or not symbol:match('%S') then
+        return sn(1, {
+          c(1, { i(1, '\\mathbf'), i(1, '\\boldsymbol') }),
+          t('{'),
+          i(2),
+          t('}'),
+        })
+      end
+      return sn(1, {
+        -- `\mathbf` does not work for special symbols that starts with `\`,
+        -- e.g. Greek letters such as `\alpha`
+        vim.startswith(symbol, '\\') and t('\\boldsymbol{') or t('\\mathbf{'),
+        t(symbol),
+        t('}'),
+      })
+    end)
+  ),
   us.samWr({ trig = '(\\?%w*_*%w*)vv' }, un.sdn(1, '\\vec{', '}')),
-  us.samWr({ trig = '(\\?%w*_*%w*);;' }, un.sdn(1, '\\mathbf{', '}')),
   us.samWr({ trig = '(\\?%w*_*%w*)hat' }, un.sdn(1, '\\hat{', '}')),
   us.samWr({ trig = '(\\?%w*_*%w*)bar' }, un.sdn(1, '\\bar{', '}')),
   us.samWr({ trig = '(\\?%w*_*%w*)td' }, un.sdn(1, '\\tilde{', '}')),
