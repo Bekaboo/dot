@@ -430,17 +430,33 @@ return {
   us.sam({ trig = 'any' }, t('\\forall ')),
   us.sam({ trig = 'exists' }, t('\\exists ')),
 
-  us.sam({ trig = 'log' }, {
-    t('\\log_{'),
+  us.sam(
+    { trig = 'log' },
     c(1, {
-      i(nil, '2'),
-      i(nil, '10'),
-      i(nil, 'e'),
+      sn(1, {
+        t('\\log'),
+        t('\\left('),
+        r(1, 'param'),
+        t('\\right)'),
+      }),
+      sn(1, {
+        t('\\log_{'),
+        c(1, {
+          i(nil, '2'),
+          i(nil, '10'),
+          i(nil, 'e'),
+        }),
+        t('}\\left('),
+        r(2, 'param'),
+        t('\\right)'),
+      }),
     }),
-    t('}\\left('),
-    i(2),
-    t('\\right)'),
-  }),
+    {
+      stored = {
+        param = i(1),
+      },
+    }
+  ),
   us.sam({ trig = 'lg', priority = 999 }, {
     t('\\lg'),
     t('\\left('),
