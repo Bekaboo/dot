@@ -693,11 +693,11 @@ return {
         t('\\prod \\limits_{'),
         i(1, 'x'),
         t('} '),
-        r(2, 'x_n'),
+        r(2, 'term'),
       }),
       sn(nil, {
         t('\\prod '),
-        r(1, 'x_n'),
+        r(1, 'term'),
       }),
     }),
   }, {
@@ -719,11 +719,11 @@ return {
         t('\\sum \\limits_{'),
         i(1, 'x'),
         t('} '),
-        r(2, 'x_n'),
+        r(2, 'term'),
       }),
       sn(nil, {
         t('\\sum '),
-        r(1, 'x_n'),
+        r(1, 'term'),
       }),
     }),
   }, {
