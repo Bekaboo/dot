@@ -407,6 +407,8 @@ return {
   us.sam({ trig = 'Yy' }, t('\\mathcal{Y}')),
   us.sam({ trig = 'Zz' }, t('\\mathcal{Z}')),
 
+  us.sam({ trig = 'ell' }, t('\\ell')),
+
   us.sam({ trig = 'set' }, { t('\\{'), i(1), t('\\}') }),
   us.sam({ trig = 'void' }, t('\\emptyset')),
   us.sam({ trig = 'emptyset' }, t('\\emptyset')),
