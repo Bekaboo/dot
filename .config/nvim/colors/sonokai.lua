@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Sun Feb 16 12:52:19 PM EST 2025
+-- Last Updated: Mon Mar 10 11:42:54 AM PDT 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -188,7 +188,7 @@ local hlgroups = {
   Exception = { fg = c_red },
   Float = { link = 'Number' },
   Function = { fg = c_green },
-  Identifier = { fg = c_fg },
+  Identifier = {},
   Keyword = { fg = c_red },
   Number = { fg = c_purple },
   Operator = { fg = c_red },
