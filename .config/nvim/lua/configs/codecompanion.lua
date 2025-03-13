@@ -54,6 +54,7 @@ require('codecompanion').setup({
           modes = { n = 'g=' },
           description = 'Watch Buffer (send diffs on change)',
         },
+        auto_tool_mode = { modes = { n = 'g<C-a>' } },
       },
     },
     inline = {
