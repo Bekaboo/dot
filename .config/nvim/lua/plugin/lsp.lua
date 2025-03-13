@@ -962,6 +962,9 @@ local subcommands = {
         ['bufnr'] = subcommand_opt_vals.bufs,
         'namespace',
       },
+      fn_override = function(bufnr, namespace)
+        vim.diagnostic.enable(false, { bufnr = bufnr, ns_id = namespace })
+      end,
     },
     enable = {
       ---@param args lsp_command_parsed_arg_t
