@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Mon Mar 10 11:42:50 AM PDT 2025
+-- Last Updated: Thu Mar 13 12:38:42 AM EDT 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -607,7 +607,7 @@ local hlgroups = {
   texSymbol = { fg = c_critical },
   texTitleArg = { link = 'Title' },
   texVerbZone = { fg = c_foreground },
-  texZone = { fg = c_subtle },
+  texZone = { fg = c_popout },
   texMathArg = { fg = c_foreground },
   texMathCmd = { link = 'texCmd' },
   texMathSub = { fg = c_foreground },
