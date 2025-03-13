@@ -349,6 +349,8 @@ return {
   us.sam({ trig = 'op' }, { t('\\operatorname{'), i(1), t('}') }),
   us.sam({ trig = 'xx' }, t('\\times ')),
   us.sam({ trig = 'o*' }, t('\\circledast ')),
+  us.sam({ trig = 'ox' }, t('\\otimes ')),
+  us.sam({ trig = 'Ox' }, t('\\bigotimes ')),
   us.sam({ trig = 'dd' }, t('\\mathrm{d}')),
   us.sam({ trig = 'pp' }, t('\\partial ')),
   us.msam({ { trig = 'oo' }, { trig = '\\in f' } }, t('\\infty')),
@@ -431,6 +433,11 @@ return {
   us.sam({ trig = 'forall' }, t('\\forall ')),
   us.sam({ trig = 'any' }, t('\\forall ')),
   us.sam({ trig = 'exists' }, t('\\exists ')),
+  us.msam({ { trig = 'quad' }, { trig = '\\ \\ ' } }, t('\\quad ')),
+  us.msam(
+    { { trig = 'qquad' }, { trig = '\\ \\ \\ ' }, { trig = '\\quad \\ ' } },
+    t('\\qquad ')
+  ),
 
   us.sam(
     { trig = 'log' },
