@@ -308,7 +308,7 @@ if s:supportevents('QuickFixCmdPost') && exists('*timer_start')
 endif
 " }}} 2
 
-" Make all widnows the same height/width on vim resized {{{2
+" Make all windows the same height/width on vim resized {{{2
 if s:supportevents('VimResized')
   augroup EqualWinSize
     au!
