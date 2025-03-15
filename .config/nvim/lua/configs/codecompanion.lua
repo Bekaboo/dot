@@ -21,7 +21,7 @@ end)()
 require('codecompanion').setup({
   opts = {
     visible = true,
-    language = '',
+    language = "the same language of user's question",
   },
   strategies = {
     chat = {
