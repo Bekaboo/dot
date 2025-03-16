@@ -122,6 +122,10 @@ function actions.switch_cwd()
     },
     actions = {
       ['enter'] = function(selected)
+        if not selected[1] then
+          return
+        end
+
         opts.cwd = vim.fs.normalize(
           vim.fs.joinpath(
             at_home and '~' or '/',
