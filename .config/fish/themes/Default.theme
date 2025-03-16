@@ -1,0 +1,41 @@
+# name: 'Default'
+# preferred_background: black
+
+fish_color_autosuggestion            brwhite --italics
+fish_color_cancel                            --reverse
+fish_color_command                   white
+fish_color_comment                   white
+fish_color_cwd                       white   --background=black
+fish_color_cwd_root                  red     --background=black
+fish_color_end                       green
+fish_color_error                     brred
+fish_color_escape                    yellow
+fish_color_hg_added                  green
+fish_color_hg_clean                  green
+fish_color_hg_copied                 magenta
+fish_color_hg_deleted                red
+fish_color_hg_dirty                  red
+fish_color_hg_modified               cyan
+fish_color_hg_renamed                magenta
+fish_color_hg_unmerged               red
+fish_color_hg_untracked              white
+fish_color_history_current           --bold
+fish_color_host                      normal
+fish_color_host_remote               yellow
+fish_color_normal                    normal
+fish_color_operator                  brcyan
+fish_color_param                     cyan
+fish_color_quote                     white
+fish_color_redirection               yellow
+fish_color_search_match                      --reverse
+fish_color_selection                 white   --background=blue
+fish_color_status                    black   --background=red
+fish_color_status_0                  black   --background=white
+fish_color_user                      brgreen
+fish_color_valid_path                green
+fish_color_vcs                       white
+fish_pager_color_completion          normal
+fish_pager_color_description         white
+fish_pager_color_prefix              normal  --bold               --underline
+fish_pager_color_progress            magenta --bold
+fish_pager_color_selected_background         --reverse
