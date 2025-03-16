@@ -1,0 +1,41 @@
+# name: 'Stata Light'
+# preferred_background: ffffff
+
+fish_color_autosuggestion            008800 --italics
+fish_color_cancel                           --reverse
+fish_color_command                   111111 --bold
+fish_color_comment                   008800
+fish_color_cwd                       ffffff --background=7373ff
+fish_color_cwd_root                  bc5555 --background=7373ff
+fish_color_end                       7373ff
+fish_color_error                     bc5555
+fish_color_escape                    be646c
+fish_color_hg_added                  288828
+fish_color_hg_clean                  288828
+fish_color_hg_copied                 288828
+fish_color_hg_deleted                bc5555
+fish_color_hg_dirty                  353580
+fish_color_hg_modified               cba260
+fish_color_hg_renamed                288828
+fish_color_hg_unmerged               288c8c
+fish_color_hg_untracked              008800
+fish_color_history_current                  --bold
+fish_color_host                      normal
+fish_color_host_remote               cba260
+fish_color_normal                    111111
+fish_color_operator                  288c8c
+fish_color_param                     288c8c
+fish_color_quote                     7a2424
+fish_color_redirection               353580
+fish_color_search_match              000000 --background=f4f5f5
+fish_color_selection                 111111 --background=f4f5f5
+fish_color_status                    ffffff --background=bc5555
+fish_color_status_0                  ffffff --background=288828
+fish_color_user                      7373ff
+fish_color_valid_path                2c2cff --underline
+fish_color_vcs                       008800
+fish_pager_color_completion          111111
+fish_pager_color_description         008800
+fish_pager_color_prefix              353580 --bold --underline
+fish_pager_color_progress            7a2424 --bold
+fish_pager_color_selected_background        --reverse

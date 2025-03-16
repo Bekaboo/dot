@@ -1,0 +1,34 @@
+[colors]
+ansi = [
+    '#232629',
+    '#c85a5a',
+    '#51cc99',
+    '#e2828e',
+    '#7AB4DB',
+    '#6a6aff',
+    '#7686bb',
+    '#cccccc',
+]
+brights = [
+    '#777777',
+    '#BE646C',
+    '#51cc99',
+    '#e2828e',
+    '#7AB4DB',
+    '#6a6aff',
+    '#7686bb',
+    '#ffffff',
+]
+foreground = '#cccccc'
+background = '#232629'
+cursor_bg = '#cccccc'
+cursor_border = '#cccccc'
+cursor_fg = '#232629'
+selection_bg = '#555555'
+selection_fg = '#cccccc'
+
+[colors.indexed]
+
+[metadata]
+name = 'Stata Dark'
+author = 'Bekaboo'

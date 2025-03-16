@@ -1,0 +1,28 @@
+# Stata light theme
+[colors.bright]
+black = "#e0e2e2"
+blue = "#7373ff"
+cyan = "#288c8c"
+green = "#008800"
+magenta = "#353580"
+red = "#b5565e"
+white = "#111111"
+yellow = "#be646c"
+
+[colors.cursor]
+cursor = "#111111"
+text = "#ffffff"
+
+[colors.normal]
+black = "#ffffff"
+blue = "#7373ff"
+cyan = "#288c8c"
+green = "#008800"
+magenta = "#353580"
+red = "#bc5555"
+white = "#111111"
+yellow = "#be646c"
+
+[colors.primary]
+background = "#ffffff"
+foreground = "#111111"

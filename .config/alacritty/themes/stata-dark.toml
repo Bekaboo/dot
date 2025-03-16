@@ -1,0 +1,28 @@
+# Stata dark theme
+[colors.bright]
+black = "#777777"
+blue = "#7AB4DB"
+cyan = "#7686bb"
+green = "#51cc99"
+magenta = "#6a6aff"
+red = "#BE646C"
+white = "#ffffff"
+yellow = "#e2828e"
+
+[colors.cursor]
+cursor = "#cccccc"
+text = "#232629"
+
+[colors.normal]
+black = "#232629"
+blue = "#7AB4DB"
+cyan = "#7686bb"
+green = "#51cc99"
+magenta = "#6a6aff"
+red = "#c85a5a"
+white = "#cccccc"
+yellow = "#e2828e"
+
+[colors.primary]
+background = "#232629"
+foreground = "#cccccc"

@@ -1,0 +1,34 @@
+[colors]
+ansi = [
+    '#ffffff',
+    '#bc5555',
+    '#008800',
+    '#be646c',
+    '#7373ff',
+    '#353580',
+    '#288c8c',
+    '#111111',
+]
+brights = [
+    '#e0e2e2',
+    '#b5565e',
+    '#008800',
+    '#be646c',
+    '#7373ff',
+    '#353580',
+    '#288c8c',
+    '#111111',
+]
+foreground = '#111111'
+background = '#ffffff'
+cursor_bg = '#111111'
+cursor_border = '#111111'
+cursor_fg = '#ffffff'
+selection_bg = '#d0d0d0'
+selection_fg = '#111111'
+
+[colors.indexed]
+
+[metadata]
+name = 'Stata Light'
+author = 'Bekaboo'

@@ -1,0 +1,41 @@
+# name: 'Stata Dark'
+# preferred_background: 232629
+
+fish_color_autosuggestion            777777 --italics
+fish_color_cancel                           --reverse
+fish_color_command                   ffffff --bold
+fish_color_comment                   777777
+fish_color_cwd                       cccccc --background=6a6aff
+fish_color_cwd_root                  c85a5a --background=383c41
+fish_color_end                       6a6aff
+fish_color_error                     c85a5a
+fish_color_escape                    e2828e
+fish_color_hg_added                  51cc99
+fish_color_hg_clean                  51cc99
+fish_color_hg_copied                 51cc99
+fish_color_hg_deleted                e2828e
+fish_color_hg_dirty                  7686bb
+fish_color_hg_modified               dcb571
+fish_color_hg_renamed                51cc99
+fish_color_hg_unmerged               7AB4DB
+fish_color_hg_untracked              777777
+fish_color_history_current                  --bold
+fish_color_host                      normal
+fish_color_host_remote               dcb571
+fish_color_normal                    cccccc
+fish_color_operator                  7AB4DB
+fish_color_param                     7AB4DB
+fish_color_quote                     51cc99
+fish_color_redirection               7686bb
+fish_color_search_match              ffffff --background=383c41
+fish_color_selection                 cccccc --background=383c41
+fish_color_status                    cccccc --background=e2828e
+fish_color_status_0                  cccccc --background=3b9670
+fish_color_user                      6a6aff
+fish_color_valid_path                4FB8CC --underline
+fish_color_vcs                       777777
+fish_pager_color_completion          cccccc
+fish_pager_color_description         777777
+fish_pager_color_prefix              7686bb --bold --underline
+fish_pager_color_progress            51cc99 --bold
+fish_pager_color_selected_background        --reverse

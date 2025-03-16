@@ -1,0 +1,60 @@
+-- vim: ft=lua:et:ts=2:sts=2:sw=2:
+
+Description = 'Stata Dark Theme'
+Categories = { 'dark' }
+
+local palette = {
+  background      = '#232629',
+  foreground      = '#cccccc',
+  black           = '#777777',
+  red             = '#c85a5a',
+  green           = '#51cc99',
+  yellow          = '#dcb571',
+  blue            = '#7AB4DB',
+  magenta         = '#6a6aff',
+  cyan            = '#7686bb',
+  white           = '#ffffff',
+  orange          = '#e2828e',
+  highlight       = '#383c41',
+  comment         = '#777777',
+  number          = '#4FB8CC',
+  keyword         = '#7686bb',
+  variable        = '#7AB4DB',
+  global_variable = '#BE646C',
+}
+
+Default       = { Colour   = palette.foreground }
+Canvas        = { Colour   = palette.background }
+Number        = { Colour   = palette.number }
+Escape        = { Colour   = palette.orange }
+String        = { Colour   = palette.green }
+BlockComment  = { Colour   = palette.comment }
+PreProcessor  = { Colour   = palette.magenta }
+LineNum       = { Colour   = palette.comment }
+Operator      = { Colour   = palette.foreground }
+Keywords      = {
+  { Colour = palette.keyword },
+  { Colour = palette.blue },
+  { Colour = palette.magenta },
+  { Colour = palette.orange },
+  { Colour = palette.cyan },
+  { Colour = palette.red },
+}
+Interpolation = Operator
+StringPreProc = String
+LineComment   = BlockComment
+
+-- new LSP based elements:
+SemanticTokenTypes  = {
+  { Type = 'keyword',   Style = { Colour = palette.keyword } },
+  { Type = 'type',      Style = { Colour = palette.cyan } },
+  { Type = 'function',  Style = { Colour = palette.foreground, Bold = true } },
+  { Type = 'method',    Style = { Colour = palette.foreground, Bold = true } },
+  { Type = 'class',     Style = { Colour = palette.keyword } },
+  { Type = 'struct',    Style = { Colour = palette.keyword } },
+  { Type = 'parameter', Style = { Colour = palette.variable } },
+  { Type = 'variable',  Style = { Colour = palette.variable } },
+  { Type = 'number',    Style = Number },
+  { Type = 'regexp',    Style = String },
+  { Type = 'operator',  Style = Operator },
+}
