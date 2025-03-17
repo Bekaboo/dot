@@ -1,5 +1,4 @@
 local cmp = require('cmp')
-local cmp_core = require('cmp.core')
 local icons = require('utils.static.icons')
 
 -- Tabout structure, use plugin.tabout if available,
