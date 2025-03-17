@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      BSD
--- Last Updated: Mon 17 Mar 2025 02:29:56 AM EDT
+-- Last Updated: Mon 17 Mar 2025 01:26:03 PM EDT
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -182,7 +182,7 @@ local hlgroups = {
   Whitespace = { link = 'NonText' },
   WildMenu = { link = 'PmenuSel' },
   WinBar = { fg = c_foreground },
-  WinBarNC = { fg = c_comment },
+  WinBarNC = { link = 'WinBar' },
   WinSeparator = { link = 'VertSplit' },
   lCursor = { link = 'Cursor' },
   -- }}}2
