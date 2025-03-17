@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      BSD
--- Last Updated: Sun 16 Mar 2025 07:55:22 PM EDT
+-- Last Updated: Mon 17 Mar 2025 01:45:01 AM EDT
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -196,9 +196,9 @@ local hlgroups = {
   String = { fg = c_string },
   Character = { fg = c_string },
   Number = { fg = c_number },
-  Boolean = { fg = c_keyword },
+  Boolean = { fg = c_variable, bold = true },
   Float = { link = 'Number' },
-  Identifier = { fg = c_variable },
+  Identifier = {},
   Function = { fg = c_generic, bold = true },
   Statement = { fg = c_keyword, bold = true },
   Conditional = { fg = c_keyword, bold = true },
@@ -230,11 +230,9 @@ local hlgroups = {
 
   -- Treesitter syntax {{{2
   ['@variable'] = { link = 'Identifier' },
-  ['@variable.builtin'] = { fg = c_variable, bold = true },
-  ['@variable.parameter'] = { fg = c_variable },
-  ['@variable.member'] = { fg = c_variable },
+  ['@variable.builtin'] = { fg = c_variable, italic = true },
   ['@constant'] = { link = 'Constant' },
-  ['@constant.builtin'] = { fg = c_global_variable },
+  ['@constant.builtin'] = { fg = c_variable, bold = true },
   ['@constant.macro'] = { link = 'Define' },
   ['@module'] = { fg = c_keyword },
   ['@label'] = { link = 'Label' },
@@ -253,7 +251,7 @@ local hlgroups = {
   ['@constructor'] = {},
   ['@keyword'] = { link = 'Keyword' },
   ['@keyword.function'] = { link = 'Keyword' },
-  ['@keyword.return'] = { link = 'Keyword' },
+  ['@keyword.return'] = { fg = c_other, bold = true },
   ['@keyword.operator'] = { link = 'Operator' },
   ['@operator'] = { link = 'Operator' },
   ['@keyword.import'] = { link = 'Include' },
