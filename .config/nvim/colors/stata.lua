@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      BSD
--- Last Updated: Mon 17 Mar 2025 01:45:01 AM EDT
+-- Last Updated: Mon 17 Mar 2025 02:29:56 AM EDT
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -13,11 +13,11 @@ vim.g.colors_name = 'stata'
 -- Palette {{{
 -- stylua: ignore start
 local c_whitespace
+local c_delimiter
 local c_error
 local c_warn
 local c_string
 local c_number
-local c_operator
 local c_special
 local c_special2
 local c_other
@@ -25,7 +25,6 @@ local c_keyword
 local c_constant
 local c_comment
 local c_variable
-local c_global_variable
 local c_generic
 local c_background
 local c_foreground
@@ -40,11 +39,11 @@ if vim.go.bg == 'dark' then
   c_foreground      = { '#cccccc', 251 }
   c_highlight       = { '#383c41', 238 }
   c_whitespace      = { '#bbbbbb', 250 }
+  c_delimiter       = { '#888888', 245 }
   c_error           = { '#c85a5a', 124 }
   c_warn            = { '#dcb571', 179 }
   c_string          = { '#51cc99', 79  }
   c_number          = { '#4FB8CC', 73  }
-  c_operator        = { '#cccccc', 251 }
   c_special         = { '#6a6aff', 69  }
   c_special2        = { '#3b9670', 79  }
   c_other           = { '#e2828e', 174 }
@@ -52,7 +51,6 @@ if vim.go.bg == 'dark' then
   c_constant        = { '#cccccc', 251 }
   c_comment         = { '#777777', 243 }
   c_variable        = { '#7AB4DB', 74  }
-  c_global_variable = { '#BE646C', 131 }
   c_generic         = { '#ffffff', 231 }
   c_lightgreen      = { '#64de64', 83  }
   c_lightblue       = { '#bdc9ff', 147 }
@@ -63,11 +61,11 @@ else
   c_foreground      = { '#111111', 233 }
   c_highlight       = { '#f4f5f5', 255 }
   c_whitespace      = { '#e0e2e2', 250 }
+  c_delimiter       = { '#888888', 245 }
   c_error           = { '#bc5555', 124 }
   c_warn            = { '#cba260', 137 }
   c_string          = { '#7a2424', 88  }
   c_number          = { '#2c2cff', 27  }
-  c_operator        = { '#111111', 233 }
   c_special         = { '#7373ff', 27  }
   c_special2        = { '#288828', 28  }
   c_other           = { '#be646c', 131 }
@@ -75,7 +73,6 @@ else
   c_constant        = { '#111111', 233 }
   c_comment         = { '#008800', 28  }
   c_variable        = { '#288c8c', 73  }
-  c_global_variable = { '#b5565e', 131 }
   c_generic         = { '#000000', 0   }
   c_lightgreen      = { '#64de64', 83  }
   c_lightblue       = { '#bdc9ff', 147 }
@@ -97,7 +94,7 @@ if vim.go.bg == 'dark' then
   vim.g.terminal_color_6  = c_keyword[1]
   vim.g.terminal_color_7  = c_foreground[1]
   vim.g.terminal_color_8  = c_comment[1]
-  vim.g.terminal_color_9  = c_global_variable[1]
+  vim.g.terminal_color_9  = c_error[1]
   vim.g.terminal_color_10 = c_string[1]
   vim.g.terminal_color_11 = c_other[1]
   vim.g.terminal_color_12 = c_variable[1]
@@ -114,7 +111,7 @@ else
   vim.g.terminal_color_6  = c_variable[1]
   vim.g.terminal_color_7  = c_foreground[1]
   vim.g.terminal_color_8  = c_whitespace[1]
-  vim.g.terminal_color_9  = c_global_variable[1]
+  vim.g.terminal_color_9  = c_error[1]
   vim.g.terminal_color_10 = c_comment[1]
   vim.g.terminal_color_11 = c_other[1]
   vim.g.terminal_color_12 = c_special[1]
@@ -204,7 +201,7 @@ local hlgroups = {
   Conditional = { fg = c_keyword, bold = true },
   Repeat = { fg = c_keyword, bold = true },
   Label = { fg = c_other },
-  Operator = { fg = c_operator },
+  Operator = { fg = c_keyword },
   Keyword = { fg = c_keyword, bold = true },
   Exception = { fg = c_keyword, bold = true },
   PreProc = { fg = c_keyword },
@@ -219,7 +216,7 @@ local hlgroups = {
   Special = { fg = c_variable },
   SpecialChar = { link = 'Special' },
   Tag = { fg = c_keyword },
-  Delimiter = { fg = c_foreground },
+  Delimiter = { fg = c_delimiter },
   SpecialComment = { fg = c_comment, bold = true },
   Debug = { fg = c_other },
   Underlined = { underline = true },
@@ -260,8 +257,7 @@ local hlgroups = {
   ['@type.definition'] = { link = 'Typedef' },
   ['@type.qualifier'] = { link = 'Type' },
   ['@comment'] = { link = 'Comment' },
-  ['@punctuation.delimiter'] = { link = 'Delimiter' },
-  ['@punctuation.bracket'] = { fg = c_foreground },
+  ['@punctuation'] = { link = 'Delimiter' },
   ['@markup.heading'] = { link = 'Title' },
   ['@markup.raw'] = { link = 'String' },
   ['@markup.link'] = { fg = c_special, underline = true },
