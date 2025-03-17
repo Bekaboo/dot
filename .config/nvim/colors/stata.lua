@@ -166,7 +166,7 @@ local hlgroups = {
   Search = { bg = c_highlight },
   SignColumn = { fg = c_comment },
   SpecialKey = { fg = c_special },
-  SpellBad = { undercurl = true, sp = c_error },
+  SpellBad = { underdashed = true, sp = c_keyword },
   SpellCap = { link = 'SpellBad' },
   SpellLocal = { link = 'SpellBad' },
   SpellRare = { link = 'SpellBad' },
