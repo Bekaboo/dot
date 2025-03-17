@@ -342,11 +342,16 @@ function _G._statusline.fname()
 
   -- Terminal buffer, show terminal command and id
   if vim.bo.bt == 'terminal' then
-    local id, cmd = bname:match('^term://.*/(%d+):(.*)')
-    return id
-        and cmd
-        and string.format('[Terminal] %s (%s)', utils.stl.escape(cmd), id)
-      or '[Terminal] %F'
+    local path, pid, cmd, comment = utils.term.parse_name(bname)
+    if not path or not pid or not cmd then
+      return '[Terminal] %F'
+    end
+    return string.format(
+      '[Terminal%s] %s [%s]',
+      comment == '' and ' ' .. pid or ' ' .. comment,
+      utils.stl.escape(cmd),
+      vim.fn.fnamemodify(path, ':~'):gsub('/+$', '')
+    )
   end
 
   -- Other special buffer types

@@ -54,4 +54,41 @@ function M.fg_cmds(buf)
   return cmds
 end
 
+---@param bufname string
+---@return string path
+---@return string pid
+---@return string cmd
+---@return string name
+function M.parse_name(bufname)
+  local path, pid, cmd, name =
+    bufname:match('^term://(.*)//(%d+):([^#]*)%s*#?%s*(.*)')
+  return vim.trim(path), vim.trim(pid), vim.trim(cmd), vim.trim(name)
+end
+
+---@param bufname string original terminal buffer name
+---@param opts? { path?: string, pid?: string|integer, cmd?: string, name?: string }
+---@return string
+function M.compose_name(bufname, opts)
+  if
+    not opts
+    or not opts.path and not opts.pid and not opts.cmd and not opts.name
+  then
+    return bufname
+  end
+
+  local path, pid, cmd, name = M.parse_name(bufname)
+  return string.format(
+    'term://%s//%s:%s%s',
+    vim.fn
+      .fnamemodify(opts.path or path or vim.fn.getcwd(), ':~')
+      :gsub('/+$', ''),
+    opts.pid or pid or '',
+    opts.cmd or cmd or '',
+    (function()
+      local name_str = opts.name or name
+      return name_str == '' and '' or ' # ' .. name_str
+    end)()
+  )
+end
+
 return M

@@ -20,18 +20,79 @@ local function term_init(buf)
     vim.cmd.startinsert()
   end)
 
-  -- Rename terminal in a way that can be recovered from a session file
+  local term = require('utils.term')
+
+  -- Create commands to rename terminals
   vim.api.nvim_buf_create_user_command(buf, 'TermRename', function(args)
     vim.cmd.file(
-      string.format(
-        '%s%s',
-        vim.api.nvim_buf_get_name(0):gsub('%s*#%s.*', ''),
-        args.args == '' and '' or ' \\# ' .. vim.fn.fnameescape(args.args)
+      vim.fn.fnameescape(
+        term.compose_name(vim.api.nvim_buf_get_name(0), { name = args.args })
       )
     )
   end, {
     nargs = '?',
     desc = 'Rename current terminal',
+    complete = function()
+      local term_names = {}
+
+      for _, b in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.bo[b].bt ~= 'terminal' then
+          goto continue
+        end
+        local _, _, _, name = term.parse_name(vim.api.nvim_buf_get_name(b))
+        if name == '' then
+          goto continue
+        end
+        term_names[name] = true
+        ::continue::
+      end
+
+      local compl = {}
+      local _, _, _, curr_name = term.parse_name(vim.api.nvim_buf_get_name(0))
+      for name, _ in pairs(term_names) do
+        if name == curr_name then
+          table.insert(compl, 1, name)
+        else
+          table.insert(compl, name)
+        end
+      end
+
+      return compl
+    end,
+  })
+
+  vim.api.nvim_buf_create_user_command(buf, 'TermSetCmd', function(args)
+    local cmd = args.args
+    if cmd == '' then
+      cmd = vim.env.SHELL
+    end
+
+    vim.cmd.file(
+      vim.fn.fnameescape(
+        term.compose_name(vim.api.nvim_buf_get_name(0), { cmd = cmd })
+      )
+    )
+  end, {
+    nargs = '?',
+    desc = 'Set cmd for current terminal',
+    complete = 'shellcmdline',
+  })
+
+  vim.api.nvim_buf_create_user_command(buf, 'TermSetPath', function(args)
+    local path = args.args
+    if path == '' then
+      path = vim.fn.getcwd(0)
+    end
+
+    vim.cmd.file(
+      vim.fn.fnameescape(
+        term.compose_name(vim.api.nvim_buf_get_name(0), { path = path })
+      )
+    )
+  end, {
+    nargs = '?',
+    desc = 'Set path for current terminal',
+    complete = 'dir',
   })
 end
 
