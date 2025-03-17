@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      BSD
--- Last Updated: Mon 17 Mar 2025 04:26:49 PM EDT
+-- Last Updated: Mon 17 Mar 2025 06:12:57 PM EDT
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -52,9 +52,9 @@ if vim.go.bg == 'dark' then
   c_comment         = { '#777777', 243 }
   c_variable        = { '#7AB4DB', 74  }
   c_generic         = { '#ffffff', 231 }
-  c_lightgreen      = { '#64de64', 83  }
-  c_lightblue       = { '#bdc9ff', 147 }
-  c_lightred        = { '#ff8f96', 210 }
+  c_lightgreen      = { '#7ed07e', 46  }
+  c_lightblue       = { '#c3cdff', 153 }
+  c_lightred        = { '#ffa7ad', 210 }
   c_lightyellow     = { '#ffd283', 222 }
 else
   c_background      = { '#ffffff', 231 }
@@ -67,16 +67,16 @@ else
   c_string          = { '#7a2424', 88  }
   c_number          = { '#2c2cff', 27  }
   c_special         = { '#7373ff', 27  }
-  c_special2        = { '#288828', 28  }
+  c_special2        = { '#288828', 22  }
   c_other           = { '#be646c', 131 }
   c_keyword         = { '#353580', 60  }
   c_constant        = { '#111111', 233 }
   c_comment         = { '#008800', 28  }
-  c_variable        = { '#288c8c', 73  }
-  c_generic         = { '#000000', 0   }
-  c_lightgreen      = { '#64de64', 83  }
-  c_lightblue       = { '#bdc9ff', 147 }
-  c_lightred        = { '#ff8f96', 210 }
+  c_variable        = { '#288c8c', 32  }
+  c_generic         = { '#000000', 16  }
+  c_lightgreen      = { '#7ed07e', 46  }
+  c_lightblue       = { '#c3cdff', 153 }
+  c_lightred        = { '#ffa7ad', 210 }
   c_lightyellow     = { '#ffd283', 222 }
 end
 -- stylua: ignore end
@@ -133,8 +133,8 @@ local hlgroups = {
   CursorIM = { link = 'Cursor' },
   CursorLine = { bg = c_highlight },
   CursorLineNr = { fg = c_foreground, bold = true },
-  DebugPC = { bg = c_string },
-  DiffAdd = { bg = c_string, fg = c_background },
+  DebugPC = { bg = c_lightgreen },
+  DiffAdd = { bg = c_lightgreen, fg = c_background },
   DiffChange = { bg = c_variable, fg = c_background },
   DiffDelete = { fg = c_other },
   DiffText = { bg = c_special, fg = c_foreground },
@@ -345,7 +345,10 @@ local hlgroups = {
   -- statusline
   StatusLineHeader = { fg = c_foreground, bg = c_special2 },
   StatusLineHeaderModified = { fg = c_foreground, bg = c_other },
-  StatusLineGitChanged = { fg = c_variable },
+  StatusLineGitAdded = { fg = c_lightgreen },
+  StatusLineGitChanged = { fg = c_lightblue },
+  StatusLineGitDeleted = { fg = c_lightred },
+  StatusLineGitRemoved = { fg = c_lightred },
   StatusLineDiagnosticHint = { fg = c_lightblue },
   StatusLineDiagnosticWarn = { fg = c_lightyellow },
   StatusLineDiagnosticError = { fg = c_lightred },
@@ -368,9 +371,6 @@ if vim.go.bg == 'light' then
   hlgroups.StatusLineNC = { fg = c_foreground, bg = c_whitespace }
   hlgroups.StatusLineHeader = { fg = c_background, bg = c_special2 }
   hlgroups.StatusLineHeaderModified = { fg = c_background, bg = c_error }
-  hlgroups.StatusLineGitAdded = { fg = c_lightgreen }
-  hlgroups.StatusLineGitChanged = { fg = c_lightblue }
-  hlgroups.StatusLineGitRemoved = { fg = c_lightred }
 end
 -- }}}1
 
