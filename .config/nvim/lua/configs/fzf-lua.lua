@@ -904,10 +904,6 @@ local function set_default_hlgroups()
     ctermbg = hl_special.ctermfg,
     bold = true,
   })
-  hl.set(0, 'TelescopeNormal', {
-    fg = hl.blend('NonText', 'Normal').fg,
-    bg = hl_norm.bg,
-  })
 end
 
 set_default_hlgroups()
