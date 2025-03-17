@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      BSD
--- Last Updated: Mon 17 Mar 2025 03:55:45 PM EDT
+-- Last Updated: Mon 17 Mar 2025 04:26:49 PM EDT
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -357,7 +357,7 @@ local hlgroups = {
 if vim.go.bg == 'light' then
   hlgroups.Visual = { bg = c_whitespace }
   hlgroups.LineNr = { fg = c_foreground }
-  hlgroups.NonText = { fg = c_foreground }
+  hlgroups.NonText = { fg = c_delimiter }
   hlgroups.TabLine = { fg = c_foreground, bg = c_highlight }
   hlgroups.TabLineSel = { fg = c_background, bg = c_special }
   hlgroups.DiffAdd = { bg = c_special2, fg = c_background }
