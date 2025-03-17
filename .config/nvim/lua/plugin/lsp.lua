@@ -344,9 +344,11 @@ local subcommand_completions = {
     if arglead ~= '' and not vim.endswith(arglead, '=') then
       return {}
     end
-    return vim.tbl_map(function(client)
-      return client.name
-    end, vim.lsp.get_clients())
+    local client_names = {}
+    for _, client in ipairs(vim.lsp.get_clients()) do
+      client_names[client.name] = true
+    end
+    return vim.tbl_keys(client_names)
   end,
 }
 
