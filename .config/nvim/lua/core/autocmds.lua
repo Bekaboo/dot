@@ -224,12 +224,14 @@ augroup('AutoCwd', {
           return
         end
 
-        local root
+        local root -- longest LSP root that contains current buffer
         for dir, _ in pairs(_G._lsp_root_dirs) do
           if
             fs_utils.contains(dir, bufname)
+            and (not root or fs_utils.contains(root, dir))
             and not fs_utils.is_home_dir(dir)
             and not fs_utils.is_root_dir(dir)
+            and vim.fn.isdirectory(dir) == 1
           then
             root = dir
           end
