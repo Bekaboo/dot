@@ -62,30 +62,25 @@ vim.opt.foldtext = ''
 vim.opt.formatoptions:append('nor')
 
 -- Spell check
-local spellcheck_set
+vim.opt.spellsuggest = 'best,9'
+vim.opt.spellcapcheck = ''
+vim.opt.spelllang = 'en,cjk'
+vim.opt.spelloptions = 'camel'
+
+local spell_set
 
 ---Set spell check options
 ---@return nil
 local function spellcheck()
-  if spellcheck_set ~= nil then
+  if spell_set ~= nil then
     return
   end
-  spellcheck_set = true
-
-  local function set_spellcheck()
-    -- Don't set spell if it was already set elsewhere
-    if require('utils.opt').spell:was_locally_set({ win = 0 }) then
-      return
-    end
-    vim.opt.spell = true
-    vim.opt.spellcapcheck = ''
-    vim.opt.spelllang = 'en,cjk'
-    vim.opt.spelloptions = 'camel'
-    vim.opt.spellsuggest = 'best,9'
-  end
+  spell_set = true
 
   for _, win in ipairs(vim.api.nvim_list_wins()) do
-    vim.api.nvim_win_call(win, set_spellcheck)
+    if not require('utils.opt').spell:was_locally_set({ win = win }) then
+      vim.wo[win][0].spell = true
+    end
   end
 end
 
