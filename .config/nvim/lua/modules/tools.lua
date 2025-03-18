@@ -3,6 +3,7 @@ return {
     'ibhagwan/fzf-lua',
     cmd = 'FzfLua',
     keys = {
+      { '<C-x><C-f>', desc = 'Fuzzy complete path', mode = 'i' },
       { '<Leader>.', desc = 'Find files' },
       { "<Leader>'", desc = 'Resume last picker' },
       { '<Leader>,', desc = 'Find buffers' },

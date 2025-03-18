@@ -777,6 +777,7 @@ fzf.setup({
 })
 
 -- stylua: ignore start
+vim.keymap.set('i', '<C-x><C-f>', fzf.complete_path , { desc = 'Fuzzy complete path' })
 vim.keymap.set('n', '<Leader>.', fzf.files, { desc = 'Find files' })
 vim.keymap.set('n', "<Leader>'", fzf.resume, { desc = 'Resume last picker' })
 vim.keymap.set('n', '<Leader>,', fzf.buffers, { desc = 'Find buffers' })
