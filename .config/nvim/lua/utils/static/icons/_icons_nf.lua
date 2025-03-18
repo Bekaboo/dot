@@ -26,6 +26,7 @@ return {
   },
   kinds = {
     Array               = '󰅪 ',
+    BlockMappingPair    = '󰅩 ',
     Boolean             = ' ',
     BreakStatement      = '󰙧 ',
     Calculator          = '󰃬 ',

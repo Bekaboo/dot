@@ -4,6 +4,7 @@ local hlgroups = {
   WinBarHover                     = { link = 'Visual' },
   WinBarIconKindDefault           = { link = 'Special' },
   WinBarIconKindArray             = { link = 'Operator' },
+  WinBarIconKindBlockMappingPair  = { link = 'WinBarIconKindDefault' },
   WinBarIconKindBoolean           = { link = 'Boolean' },
   WinBarIconKindBreakStatement    = { link = 'Error' },
   WinBarIconKindCall              = { link = 'Function' },

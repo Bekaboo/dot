@@ -26,6 +26,7 @@ return {
   },
   kinds = {
     Array               = 'Arr ',
+    BlockMappingPair    = 'Blk ',
     Boolean             = 'Bool ',
     BreakStatement      = 'Brk ',
     Calculator          = 'Calc ',
