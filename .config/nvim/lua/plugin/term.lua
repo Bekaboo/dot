@@ -7,18 +7,14 @@ local function term_init(buf)
     return
   end
 
-  vim.api.nvim_buf_call(buf, function()
-    vim.opt_local.nu = false
-    vim.opt_local.rnu = false
-    vim.opt_local.spell = false
-    vim.opt_local.statuscolumn = ''
-    vim.opt_local.signcolumn = 'no'
-    if vim.fn.win_gettype() == 'popup' then
-      vim.opt_local.scrolloff = 0
-      vim.opt_local.sidescrolloff = 0
-    end
-    vim.cmd.startinsert()
-  end)
+  for _, win in ipairs(vim.fn.win_findbuf(buf)) do
+    vim.wo[win][0].nu = false
+    vim.wo[win][0].rnu = false
+    vim.wo[win][0].spell = false
+    vim.wo[win][0].statuscolumn = ''
+    vim.wo[win][0].signcolumn = 'no'
+  end
+  vim.api.nvim_buf_call(buf, vim.cmd.startinsert)
 
   local term = require('utils.term')
 
