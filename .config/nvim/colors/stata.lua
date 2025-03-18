@@ -174,7 +174,7 @@ local hlgroups = {
   TabLineFill = { fg = c_background, bg = c_whitespace },
   TabLineSel = { fg = c_foreground, bg = c_special },
   TermCursor = { fg = c_background, bg = c_keyword },
-  Title = { fg = c_special, bold = true },
+  Title = { fg = c_lightblue, bold = true },
   VertSplit = { fg = c_whitespace, bg = c_whitespace },
   Visual = { bg = c_highlight },
   VisualNOS = { link = 'Visual' },
@@ -215,7 +215,7 @@ local hlgroups = {
   Typedef = { link = 'Type' },
   Special = { fg = c_variable },
   SpecialChar = { link = 'Special' },
-  Tag = { fg = c_keyword },
+  Tag = { fg = c_other },
   Delimiter = { fg = c_delimiter },
   SpecialComment = { fg = c_comment, bold = true },
   Debug = { fg = c_other },
@@ -260,7 +260,7 @@ local hlgroups = {
   ['@punctuation'] = { link = 'Delimiter' },
   ['@markup.heading'] = { link = 'Title' },
   ['@markup.raw'] = { link = 'String' },
-  ['@markup.link'] = { fg = c_special, underline = true },
+  ['@markup.link'] = { fg = c_variable, underline = true },
   ['@markup.link.url'] = { fg = c_special, underline = true },
   ['@markup.list'] = { fg = c_keyword },
   ['@markup.strong'] = { bold = true },
@@ -309,7 +309,38 @@ local hlgroups = {
   DiagnosticUnnecessary = { fg = c_comment, undercurl = true, sp = c_comment },
   -- }}}2
 
+  -- Filetype {{{2
+  -- Markdown
+  markdownBold = { bold = true },
+  markdownBoldItalic = { bold = true, italic = true },
+  markdownCode = { fg = c_string },
+  markdownError = { link = 'None' },
+  markdownEscape = { link = 'None' },
+  markdownListMarker = { fg = c_warn },
+  markdownH1 = { link = 'htmlH1' },
+  markdownH2 = { link = 'htmlH2' },
+  markdownH3 = { link = 'htmlH3' },
+  markdownH4 = { link = 'htmlH4' },
+  markdownH5 = { link = 'htmlH5' },
+  markdownH6 = { link = 'htmlH6' },
+
+  -- Git
+  gitHash = { fg = c_comment },
+  -- }}}2
+
   -- Plugins {{{2
+  -- fugitive
+  fugitiveHash = { link = 'gitHash' },
+  fugitiveHeader = { link = 'Title' },
+  fugitiveHeading = { link = 'Title' },
+  fugitiveStagedHeading = { fg = c_lightgreen, bold = true },
+  fugitiveStagedModifier = { fg = c_lightgreen, bold = true },
+  fugitiveSymbolicRef = { fg = c_variable, bold = true },
+  fugitiveUnstagedHeading = { fg = c_warn, bold = true },
+  fugitiveUnstagedModifier = { fg = c_warn, bold = true },
+  fugitiveUntrackedHeading = { fg = c_other, bold = true },
+  fugitiveUntrackedModifier = { fg = c_other, bold = true },
+
   -- nvim-cmp
   CmpItemAbbrDeprecated = { fg = c_comment, strikethrough = true },
   CmpItemAbbrMatch = { fg = c_other, bold = true },
@@ -337,10 +368,13 @@ local hlgroups = {
   CmpItemKind = { fg = c_foreground },
   CmpItemMenu = { link = 'Pmenu' },
 
-  -- GitSigns
+  -- gitsigns
   GitSignsAdd = { fg = c_string },
   GitSignsChange = { fg = c_special },
   GitSignsDelete = { fg = c_other },
+  GitSignsDeleteInline = { link = 'DiffText' },
+  GitSignsAddInline = { link = 'DiffText' },
+  GitSignsDeletePreview = { fg = c_background, bg = c_other },
 
   -- statusline
   StatusLineHeader = { fg = c_foreground, bg = c_special2 },
