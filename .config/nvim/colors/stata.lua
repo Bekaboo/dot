@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      BSD
--- Last Updated: Mon 17 Mar 2025 06:12:57 PM EDT
+-- Last Updated: Tue 18 Mar 2025 12:54:23 AM EDT
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -163,7 +163,7 @@ local hlgroups = {
   Search = { bg = c_highlight },
   SignColumn = { fg = c_comment },
   SpecialKey = { fg = c_special },
-  SpellBad = { underdashed = true, sp = c_keyword },
+  SpellBad = { underdashed = true },
   SpellCap = { link = 'SpellBad' },
   SpellLocal = { link = 'SpellBad' },
   SpellRare = { link = 'SpellBad' },
