@@ -1,8 +1,6 @@
 local icons = require('utils.static.icons')
 local wk_win = require('which-key.win')
 local wk_trig = require('which-key.triggers')
-local wk_plugin_regs = require('which-key.plugins.registers')
-local wk_plugin_marks = require('which-key.plugins.marks')
 
 -- Hijack `which-key.win.show()` to fix gap to the right of which-key window
 -- when using helix preset
@@ -29,22 +27,6 @@ wk_trig.add = (function(add_fn)
   end
 end)(wk_trig.add)
 
----Hijack `fn` to hide descriptions in its returned items
----@param fn fun(...): wk.Plugin.item[]
----@return fun(...): wk.Plugin.item[]
-local function hide_desc(fn)
-  return function(...)
-    local items = fn(...)
-    for i, _ in ipairs(items) do
-      items[i].desc = ''
-    end
-    return items
-  end
-end
-
-wk_plugin_regs.expand = hide_desc(wk_plugin_regs.expand)
-wk_plugin_marks.expand = hide_desc(wk_plugin_marks.expand)
-
 local wk = require('which-key')
 wk.setup({
   preset = 'helix',
@@ -69,15 +51,10 @@ wk.setup({
     return ctx.mode == 'V' or ctx.mode == '<C-V>' or ctx.mode == 'v'
   end,
   plugins = {
+    marks = false,
+    registers = false,
     spelling = {
-      suggestions = (function()
-        for _, val in ipairs(vim.opt.spellsuggest:get()) do
-          local num_suggestions = tonumber(val)
-          if num_suggestions then
-            return num_suggestions
-          end
-        end
-      end)(),
+      enabled = false,
     },
   },
   icons = {
