@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      BSD
--- Last Updated: Tue 18 Mar 2025 12:54:23 AM EDT
+-- Last Updated: Tue 18 Mar 2025 04:22:02 PM EDT
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -174,7 +174,7 @@ local hlgroups = {
   TabLineFill = { fg = c_background, bg = c_whitespace },
   TabLineSel = { fg = c_foreground, bg = c_special },
   TermCursor = { fg = c_background, bg = c_keyword },
-  Title = { fg = c_lightblue, bold = true },
+  Title = { fg = c_variable, bold = true },
   VertSplit = { fg = c_whitespace, bg = c_whitespace },
   Visual = { bg = c_highlight },
   VisualNOS = { link = 'Visual' },
@@ -405,6 +405,8 @@ if vim.go.bg == 'light' then
   hlgroups.StatusLineNC = { fg = c_foreground, bg = c_whitespace }
   hlgroups.StatusLineHeader = { fg = c_background, bg = c_special2 }
   hlgroups.StatusLineHeaderModified = { fg = c_background, bg = c_error }
+  hlgroups.fugitiveStagedHeading = { fg = c_special2, bold = true }
+  hlgroups.fugitiveStagedModifier = { fg = c_special2, bold = true }
 end
 -- }}}1
 
