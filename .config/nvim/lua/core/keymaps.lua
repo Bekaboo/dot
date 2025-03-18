@@ -239,6 +239,7 @@ vim.api.nvim_create_autocmd('UIEnter', {
     map('!a', 'sahre', 'share')
     map('!a', 'saher', 'share')
     map('!a', 'balme', 'blame')
+    map('!a', 'intall', 'install')
   end),
 })
 
