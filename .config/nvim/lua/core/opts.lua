@@ -33,22 +33,24 @@ vim.opt.jumpoptions = 'stack,view'
 vim.opt.selection = 'old'
 
 -- Defer shada reading
-local shada_read ---@boolean?
+local shada_augroup = vim.api.nvim_create_augroup('OptShada', {})
 
 ---Restore 'shada' option and read from shada once
 local function rshada()
-  if shada_read then
-    return
-  end
-  shada_read = true
+  pcall(vim.api.nvim_del_augroup_by_id, shada_augroup)
 
-  vim.cmd.set('shada&')
+  vim.opt.shada = vim.api.nvim_get_option_info2('shada', {}).default
   pcall(vim.cmd.rshada)
 end
 
 vim.opt.shada = ''
-vim.api.nvim_create_autocmd('BufReadPre', { once = true, callback = rshada })
+vim.api.nvim_create_autocmd('BufReadPre', {
+  group = shada_augroup,
+  once = true,
+  callback = rshada,
+})
 vim.api.nvim_create_autocmd('UIEnter', {
+  group = shada_augroup,
   once = true,
   callback = vim.schedule_wrap(rshada),
 })
@@ -67,15 +69,12 @@ vim.opt.spellcapcheck = ''
 vim.opt.spelllang = 'en,cjk'
 vim.opt.spelloptions = 'camel'
 
-local spell_set
+local spell_augroup = vim.api.nvim_create_augroup('OptSpell', {})
 
 ---Set spell check options
 ---@return nil
 local function spellcheck()
-  if spell_set ~= nil then
-    return
-  end
-  spell_set = true
+  pcall(vim.api.nvim_del_augroup_by_id, spell_augroup)
 
   for _, win in ipairs(vim.api.nvim_list_wins()) do
     if not require('utils.opt').spell:was_locally_set({ win = win }) then
@@ -85,6 +84,7 @@ local function spellcheck()
 end
 
 vim.api.nvim_create_autocmd('FileType', {
+  group = spell_augroup,
   once = true,
   callback = function()
     local ts_start = vim.treesitter.start
@@ -99,6 +99,7 @@ vim.api.nvim_create_autocmd('FileType', {
 })
 
 vim.api.nvim_create_autocmd('UIEnter', {
+  group = spell_augroup,
   once = true,
   callback = vim.schedule_wrap(spellcheck),
 })
