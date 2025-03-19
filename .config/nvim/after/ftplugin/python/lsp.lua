@@ -9,9 +9,7 @@ local root_patterns = {
   'tox.ini',
 }
 
-local linter, formatter
-
-local ruff = lsp.start({
+local formatter = lsp.start({
   cmd = { 'ruff', 'server' },
   buf_support = false,
   root_patterns = vim.list_extend(
@@ -20,62 +18,79 @@ local ruff = lsp.start({
   ),
 })
 
--- Prefer ruff over pylint and black as linter and formatter
-if ruff then
-  linter = ruff
-  formatter = ruff
-end
-
-linter = linter -- luacheck: ignore 311
-  or (function()
-    local pylint_root_patterns = vim.list_extend({ 'pylintrc' }, root_patterns)
-    return lsp.start({
-      cmd = { 'efm-langserver' },
-      requires = { 'pylint' },
-      name = 'efm-linter-pylint',
-      root_patterns = pylint_root_patterns,
-      settings = {
-        languages = {
-          python = {
-            {
-              lintSource = 'pylint',
-              lintCommand = 'pylint --score=no --from-stdin "${INPUT}"',
-              lintFormats = { '%f:%l:%c: %t%.%#: %m' },
-              lintStdin = true,
-              lintSeverity = 2,
-              rootMarkers = pylint_root_patterns,
-            },
-          },
+local pylint_root_patterns = vim.list_extend({ 'pylintrc' }, root_patterns)
+lsp.start({
+  cmd = { 'efm-langserver' },
+  requires = { 'pylint' },
+  name = 'efm-linter-pylint',
+  root_patterns = pylint_root_patterns,
+  settings = {
+    languages = {
+      python = {
+        {
+          lintSource = 'pylint',
+          lintCommand = 'pylint --score=no --from-stdin "${INPUT}"',
+          lintFormats = { '%f:%l:%c: %t%.%#: %m' },
+          lintStdin = true,
+          lintSeverity = 2,
+          rootMarkers = pylint_root_patterns,
         },
       },
-    })
-  end)()
+    },
+  },
+})
 
-linter = linter -- luacheck: ignore 311
-  or (function()
-    local flake8_root_patterns = vim.list_extend({ '.flake8' }, root_patterns)
-    return lsp.start({
-      cmd = { 'efm-langserver' },
-      requires = { 'flake8' },
-      name = 'efm-linter-flake8',
-      root_patterns = flake8_root_patterns,
-      settings = {
-        languages = {
-          -- Source: https://github.com/creativenull/efmls-configs-nvim/blob/main/lua/efmls-configs/linters/flake8.lua
-          python = {
-            {
-              lintSource = 'flake8',
-              lintCommand = 'flake8 -',
-              lintFormats = { 'stdin:%l:%c: %t%n %m' },
-              lintIgnoreExitCode = true,
-              lintStdin = true,
-              rootMarkers = flake8_root_patterns,
-            },
-          },
+local flake8_root_patterns = vim.list_extend({ '.flake8' }, root_patterns)
+lsp.start({
+  cmd = { 'efm-langserver' },
+  requires = { 'flake8' },
+  name = 'efm-linter-flake8',
+  root_patterns = flake8_root_patterns,
+  settings = {
+    languages = {
+      -- Source: https://github.com/creativenull/efmls-configs-nvim/blob/main/lua/efmls-configs/linters/flake8.lua
+      python = {
+        {
+          lintSource = 'flake8',
+          lintCommand = 'flake8 -',
+          lintFormats = { 'stdin:%l:%c: %t%n %m' },
+          lintIgnoreExitCode = true,
+          lintStdin = true,
+          rootMarkers = flake8_root_patterns,
         },
       },
-    })
-  end)()
+    },
+  },
+})
+
+local mypy_root_patterns =
+  vim.list_extend({ 'mypy.ini', '.mypy.ini' }, root_patterns)
+lsp.start({
+  cmd = { 'efm-langserver' },
+  requires = { 'mypy' },
+  name = 'efm-linter-mypy',
+  root_patterns = mypy_root_patterns,
+  settings = {
+    languages = {
+      -- https://github.com/creativenull/efmls-configs-nvim/blob/main/lua/efmls-configs/linters/mypy.lua
+      python = {
+        {
+          lintSource = 'mypy',
+          lintCommand = 'mypy --show-column-numbers',
+          lintFormats = {
+            '%f:%l:%c: %trror: %m',
+            '%f:%l:%c: %tarning: %m',
+            '%f:%l:%c: %tote: %m',
+          },
+          -- Mypy does not support reading from stdin, see
+          -- https://github.com/python/mypy/issues/12235
+          lintStdin = false,
+          rootMarkers = mypy_root_patterns,
+        },
+      },
+    },
+  },
+})
 
 -- Use efm to attach black formatter as a language server
 formatter = formatter
