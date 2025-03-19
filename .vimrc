@@ -1325,7 +1325,7 @@ function! s:running_tui() abort
     if cmd =~# '\v^(sudo(\s+--?(\w|-)+((\s+|\=)\S+)?)*\s+)?\S*
         \(n?vim?|vimdiff|emacs(client)?|lem|nano|helix|kak|
         \tmux|vifm|yazi|ranger|lazygit|h?top|gdb|fzf|nmtui|
-        \sudoedit|ssh|crontab|asciinema|w3m)'
+        \sudoedit|crontab|asciinema|w3m)'
       return 1
     endif
   endfor
