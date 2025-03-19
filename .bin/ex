@@ -55,134 +55,162 @@ main() {
         return 1
     fi
 
-    # No local in POSIX sh
     fname=$(basename "$1")
-
-    # Extract directly if the archive contains only one file/directory,
-    # else we extract it into a separate directory
     case "$1" in
     *.tar.Z)
         froot="${fname%.tar.Z}"
-        if [ "$(tar tZf "$1" | wc -l)" -gt 1 ]; then
-            checkne "$froot" && mkdir "$froot" &&
-                tar xZf "$1" -C "$froot" || return 1
-        else
-            tar xZf "$1"
+        if ! checkne "$froot"; then
+            return 1
         fi
+        mkdir -p "$froot"
+        tar xZf "$1" -C "$froot"
         ;;
-    *.Z) uncompress "$1" ;;
+    *.Z)
+        froot="${fname%.Z}"
+        if ! checkne "$froot"; then
+            return 1
+        fi
+        uncompress -c "$1" >"$froot"
+        ;;
     *.tar.bz2 | *.tbz2)
-        froot="${fname%.*}"
-        if [ "$(tar tjf "$1" | wc -l)" -gt 1 ]; then
-            checkne "$froot" && mkdir "$froot" &&
-                tar xjf "$1" -C "$froot" || return 1
-        else
-            tar xjf "$1"
-        fi
-        ;;
-    *.bz2) bunzip2 "$1" ;;
-    *.tar.gz | *.tgz)
-        case "$fname" in
-        *.tar.gz) froot="${fname%.tar.gz}" ;;
-        *) froot="${fname%.tgz}" ;;
+        case "$1" in
+        *.tar.bz2) froot="${fname%.tar.bz2}" ;;
+        *.tbz2) froot="${fname%.tbz2}" ;;
         esac
-        if [ "$(tar tzf "$1" | wc -l)" -gt 1 ]; then
-            checkne "$froot" && mkdir "$froot" &&
-                tar xzf "$1" -C "$froot" || return 1
-        else
-            tar xzf "$1"
+        if ! checkne "$froot"; then
+            return 1
         fi
+        mkdir -p "$froot"
+        tar xjf "$1" -C "$froot"
+        ;;
+    *.bz2)
+        froot="${fname%.bz2}"
+        if ! checkne "$froot"; then
+            return 1
+        fi
+        bunzip2 -c "$1" >"$froot"
+        ;;
+    *.tar.gz | *.tgz)
+        case "$1" in
+        *.tar.gz) froot="${fname%.tar.gz}" ;;
+        *.tgz) froot="${fname%.tgz}" ;;
+        esac
+        if ! checkne "$froot"; then
+            return 1
+        fi
+        mkdir -p "$froot"
+        tar xzf "$1" -C "$froot"
         ;;
     *.gz)
         froot="${fname%.gz}"
-        checkne "$froot" && gunzip -c "$1" >"$froot" || return 1
+        if ! checkne "$froot"; then
+            return 1
+        fi
+        gunzip -c "$1" >"$froot"
         ;;
     *.tar.xz | *.txz)
-        case "$fname" in
+        case "$1" in
         *.tar.xz) froot="${fname%.tar.xz}" ;;
-        *) froot="${fname%.txz}" ;;
+        *.txz) froot="${fname%.txz}" ;;
         esac
-        if [ "$(tar tJf "$1" | wc -l)" -gt 1 ]; then
-            checkne "$froot" && mkdir "$froot" &&
-                tar xJf "$1" -C "$froot" || return 1
-        else
-            tar xJf "$1"
+        if ! checkne "$froot"; then
+            return 1
         fi
+        mkdir -p "$froot"
+        tar xJf "$1" -C "$froot"
         ;;
-    *.xz) unxz "$1" ;;
+    *.xz)
+        froot="${fname%.xz}"
+        if ! checkne "$froot"; then
+            return 1
+        fi
+        unxz -c "$1" >"$froot"
+        ;;
     *.tar.lzma)
         froot="${fname%.tar.lzma}"
-        if [ "$(tar --lzma -tf "$1" | wc -l)" -gt 1 ]; then
-            checkne "$froot" && mkdir "$froot" &&
-                tar --lzma -xf "$1" -C "$froot" || return 1
-        else
-            tar --lzma -xf "$1"
+        if ! checkne "$froot"; then
+            return 1
         fi
+        mkdir -p "$froot"
+        tar --lzma -xf "$1" -C "$froot"
         ;;
-    *.lzma) unlzma "$1" ;;
+    *.lzma)
+        froot="${fname%.lzma}"
+        if ! checkne "$froot"; then
+            return 1
+        fi
+        unlzma -c "$1" >"$froot"
+        ;;
     *.tar.zst | *.tzst)
-        case "$fname" in
+        case "$1" in
         *.tar.zst) froot="${fname%.tar.zst}" ;;
-        *) froot="${fname%.tzst}" ;;
+        *.tzst) froot="${fname%.tzst}" ;;
         esac
-        if [ "$(tar --zstd -tf "$1" | wc -l)" -gt 1 ]; then
-            checkne "$froot" && mkdir "$froot" &&
-                tar --zstd -xf "$1" -C "$froot" || return 1
-        else
-            tar --zstd -xf "$1"
+        if ! checkne "$froot"; then
+            return 1
         fi
+        mkdir -p "$froot"
+        tar --zstd -xf "$1" -C "$froot"
         ;;
-    *.zst) zstd -d "$1" ;;
+    *.zst)
+        froot="${fname%.zst}"
+        if ! checkne "$froot"; then
+            return 1
+        fi
+        zstd -d "$1" -o "$froot"
+        ;;
     *.tar.lz4)
         froot="${fname%.tar.lz4}"
-        if [ "$(tar --use-compress-program=lz4 -tf "$1" | wc -l)" -gt 1 ]; then
-            checkne "$froot" && mkdir "$froot" &&
-                tar --use-compress-program=lz4 -xf "$1" -C "$froot" || return 1
-        else
-            tar --use-compress-program=lz4 -xf "$1"
+        if ! checkne "$froot"; then
+            return 1
         fi
+        mkdir -p "$froot"
+        tar --use-compress-program=lz4 -xf "$1" -C "$froot"
         ;;
-    *.lz4) lz4 -d "$1" ;;
+    *.lz4)
+        froot="${fname%.lz4}"
+        if ! checkne "$froot"; then
+            return 1
+        fi
+        lz4 -dc "$1" >"$froot"
+        ;;
     *.rar)
         froot="${fname%.rar}"
-        if unrar l "$1" | grep -q '^.*/$'; then
-            checkne "$froot" && mkdir "$froot" &&
-                unrar x "$1" "$froot" || return 1
-        else
-            unrar x "$1"
+        if ! checkne "$froot"; then
+            return 1
         fi
+        mkdir -p "$froot"
+        unrar x "$1" "$froot"
         ;;
     *.tar)
         froot="${fname%.tar}"
-        if [ "$(tar tf "$1" | wc -l)" -gt 1 ]; then
-            checkne "$froot" && mkdir "$froot" &&
-                tar xf "$1" -C "$froot" || return 1
-        else
-            tar xf "$1"
+        if ! checkne "$froot"; then
+            return 1
         fi
+        mkdir -p "$froot"
+        tar xf "$1" -C "$froot"
         ;;
     *.zip)
         froot="${fname%.zip}"
-        if zipinfo -1 "$1" | grep -q '^.*/$'; then
-            checkne "$froot" && mkdir "$froot" &&
-                unzip "$1" -d "$froot" || return 1
-        else
-            unzip "$1"
+        if ! checkne "$froot"; then
+            return 1
         fi
+        mkdir -p "$froot"
+        unzip "$1" -d "$froot"
         ;;
     *.7z)
         froot="${fname%.7z}"
-        if 7z l "$1" | grep -q '^.*/$'; then
-            checkne "$froot" && mkdir "$froot" &&
-                7z x "$1" -o"$froot" || return 1
-        else
-            7z x "$1"
+        if ! checkne "$froot"; then
+            return 1
         fi
+        mkdir -p "$froot"
+        7z x "$1" -o"$froot"
         ;;
     *)
         echo "'$1' cannot be extracted"
         ;;
     esac
+
 }
 
 main "$1"
