@@ -515,16 +515,26 @@ endif
 if s:supportevents('SessionLoadPost') &&
       \ exists('*win_gettype') &&
       \ exists('*win_execute')
+  " Get list of normal window in a tabpage
+  " param: tabnr integer
+  " return: integer[]
+  function! s:tabpage_list_normal_wins(tabnr) abort
+    return filter(tabpagewinnr(a:tabnr, '$')->range(),
+          \ 'win_gettype(win_getid(v:val, a:tabnr)) == ""')
+  endfunction
+
   function! s:clear_invalid_buffers()
     for tab in gettabinfo()
-      let wins = filter(tabpagewinnr(tab.tabnr, '$')->range(),
-            \ 'win_gettype(win_getid(v:val, tab.tabnr)) == ""')
-      if len(wins) <= 1
-        continue
-      endif
+      for win in s:tabpage_list_normal_wins(tab.tabnr)
+        if len(s:tabpage_list_normal_wins(tab.tabnr)) <= 1
+          break
+        endif
 
-      for win in wins
         let winid = win_getid(win, tab.tabnr)
+        if winid == 0
+          continue
+        endif
+
         let buf = winbufnr(winid)
         let line_count = line('$', winid)
         if (line_count == 0 ||

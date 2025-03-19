@@ -414,24 +414,39 @@ augroup('SessionCloseEmptyWins', {
     desc = 'Close empty windows after loading session.',
     nested = true,
     callback = function()
-      for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
-        local wins = vim.tbl_filter(function(win)
-          return vim.fn.win_gettype(win) == ''
-        end, vim.api.nvim_tabpage_list_wins(tab))
-        if #wins <= 1 then
-          goto continue
-        end
+      ---Get list of normal windows in a tabpage
+      ---@param tab integer? tabpage id
+      ---@return integer[]
+      local function tabpage_list_normal_wins(tab)
+        return vim
+          .iter(vim.api.nvim_tabpage_list_wins(tab or 0))
+          :filter(function(win)
+            return vim.fn.win_gettype(win) == ''
+          end)
+          :totable()
+      end
 
-        for _, win in ipairs(wins) do
-          local buf = vim.api.nvim_win_get_buf(win)
-          if
-            require('utils.buf').is_empty(buf)
-            and not vim.uv.fs_stat(vim.api.nvim_buf_get_name(buf))
-          then
-            vim.api.nvim_win_close(win, false)
+      for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+        for _, win in ipairs(tabpage_list_normal_wins(tab)) do
+          if #tabpage_list_normal_wins(tab) <= 1 then
+            break
           end
+
+          if not vim.api.nvim_win_is_valid(win) then
+            goto continue
+          end
+
+          local buf = vim.api.nvim_win_get_buf(win)
+          if not require('utils.buf').is_empty(buf) then
+            goto continue
+          end
+          if vim.uv.fs_stat(vim.api.nvim_buf_get_name(buf)) then
+            goto continue
+          end
+
+          vim.api.nvim_win_close(win, false)
+          ::continue::
         end
-        ::continue::
       end
     end,
   },
