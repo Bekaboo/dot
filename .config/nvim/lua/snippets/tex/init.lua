@@ -93,14 +93,14 @@ M.snippets = {
           caption = i(4),
           idnt = un.idnt(1),
         }
-      )
+      ),
     }),
     {
       stored = {
         placement = i(nil, 'H'),
         size = i(nil, 'width=1.0\\textwidth'),
         img_path = i(nil, 'img/img.png'),
-      }
+      },
     }
   ),
   us.sM({ trig = 'em' }, { t('\\emph{'), i(1), t('}') }),
