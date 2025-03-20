@@ -369,7 +369,7 @@ end
 
 ---Text filetypes
 ---@type table<string, true>
-local text_fts = {
+local is_text = {
   [''] = true,
   ['tex'] = true,
   ['markdown'] = true,
@@ -382,6 +382,7 @@ function _G._statusline.info()
   if vim.bo.bt ~= '' then
     return ''
   end
+
   local info = {}
   ---@param section string
   local function add_section(section)
@@ -389,8 +390,9 @@ function _G._statusline.info()
       table.insert(info, section)
     end
   end
+
   add_section(_G._statusline.ft())
-  if text_fts[vim.bo.ft] and not vim.b.bigfile then
+  if is_text[vim.bo.ft] and not vim.b.bigfile then
     add_section(_G._statusline.wordcount())
   end
   add_section(_G._statusline.branch())
