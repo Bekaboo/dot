@@ -368,6 +368,25 @@ function _G._statusline.fname()
   return '%F'
 end
 
+---Name of python virtual environment
+---@return string
+function _G._statusline.venv()
+  local venv_name = ''
+
+  if vim.env.VIRTUAL_ENV then
+    venv_name = vim.fn.fnamemodify(vim.env.VIRTUAL_ENV, ':~:.')
+    goto ret
+  end
+
+  if vim.env.CONDA_DEFAULT_ENV then
+    venv_name = vim.env.CONDA_DEFAULT_ENV
+    goto ret
+  end
+
+  ::ret::
+  return venv_name == '' and '' or string.format('venv: %s', venv_name)
+end
+
 ---Text filetypes
 ---@type table<string, true>
 local is_text = {
@@ -376,6 +395,13 @@ local is_text = {
   ['markdown'] = true,
   ['text'] = true,
 }
+
+---Check if current buffer is a python/jupyter notebook buffer
+---@return boolean
+local function is_python()
+  return vim.startswith(vim.bo.ft, 'python')
+    or vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':e') == 'ipynb'
+end
 
 ---Additional info for the current buffer enclosed in parentheses
 ---@return string
@@ -393,9 +419,15 @@ function _G._statusline.info()
   end
 
   add_section(_G._statusline.ft())
+
   if is_text[vim.bo.ft] and not vim.b.bigfile then
     add_section(_G._statusline.wordcount())
   end
+
+  if is_python() then
+    add_section(_G._statusline.venv())
+  end
+
   add_section(_G._statusline.branch())
   add_section(_G._statusline.gitdiff())
   return vim.tbl_isempty(info) and ''
