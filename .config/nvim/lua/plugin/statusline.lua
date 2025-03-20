@@ -348,8 +348,8 @@ function _G._statusline.fname()
       return '[Terminal] %F'
     end
     return string.format(
-      '[Terminal%s] %s [%s]',
-      comment == '' and ' ' .. pid or ' ' .. comment,
+      '[Terminal %s] %s [%s]',
+      comment ~= '' and comment or pid,
       utils.stl.escape(cmd),
       vim.fn.fnamemodify(path, ':~'):gsub('/+$', '')
     )
