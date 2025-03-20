@@ -314,6 +314,7 @@ vim.api.nvim_create_autocmd('WinClosed', {
   end,
 })
 
+---@return string
 function _G._statusline.fname()
   local bname = vim.api.nvim_buf_get_name(0)
 
