@@ -40,33 +40,31 @@ local function bootstrap()
     return false
   end
 
-  local response = ''
-  vim.ui.input(
-    { prompt = '[modules] package manager not found, bootstrap? [y/N/never] ' },
-    function(r)
-      if r then
-        response = vim.trim(r)
-      end
-    end
+  local response = vim.fn.confirm(
+    '[modules] package manager not found, bootstrap?',
+    '&Yes\n&No\nN&ever',
+    2
   )
 
-  if vim.fn.match(response, '[Nn][Ee][Vv][Ee][Rr]') >= 0 then
+  -- 'No'
+  if response == 2 then
+    return false
+  end
+
+  -- 'Never'
+  if response == 3 then
     startup_data.bootstrap = false
     json.write(startup_file, startup_data)
     vim.notify(
       string.format(
-        "\n[modules] bootstrap disabled, remove '%s' to re-enable",
+        "[modules] bootstrap disabled, remove '%s' to re-enable",
         startup_file
       )
     )
     return false
   end
 
-  if vim.fn.match(response, '^[Yy]\\([Ee][Ss]\\)\\?$') < 0 then
-    return false
-  end
-
-  print('\n')
+  -- 'Yes'
   local lock_data = json.read(vim.g.package_lock)
   local commit = lock_data['lazy.nvim'] and lock_data['lazy.nvim'].commit
   local url = 'https://github.com/folke/lazy.nvim.git'
