@@ -14,7 +14,15 @@ local function term_init(buf)
     vim.wo[win][0].statuscolumn = ''
     vim.wo[win][0].signcolumn = 'no'
   end
-  vim.api.nvim_buf_call(buf, vim.cmd.startinsert)
+
+  -- Start with insert mode in new terminals
+  -- Use `vim.schedule()` to avoid ending with insert mode in a normal buffer
+  -- after loading a session with terminal buffers
+  vim.schedule(function()
+    if vim.api.nvim_get_current_buf() == buf then
+      vim.api.nvim_buf_call(buf, vim.cmd.startinsert)
+    end
+  end)
 
   local term = require('utils.term')
 
