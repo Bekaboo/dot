@@ -215,6 +215,23 @@ vim.fn.getcompletion = (function(cb)
   end
 end)(vim.fn.getcompletion)
 
+---Wrapper of `cmp.select_next_item` and `cmp.select_prev_item` to use option
+---`completeopt` as select behavior fallback
+---@param cb function
+---@return function
+local function cmp_select_wrapper(cb)
+  return function(option, ...)
+    option = option or {}
+    option.behavior = option.behavior
+      or vim.tbl_contains(vim.opt.cot:get(), 'noinsert') and cmp.SelectBehavior.Select
+      or cmp.SelectBehavior.Insert
+    return cb(option, ...)
+  end
+end
+
+cmp.select_prev_item = cmp_select_wrapper(cmp.select_prev_item)
+cmp.select_next_item = cmp_select_wrapper(cmp.select_next_item)
+
 cmp.setup({
   performance = {
     debounce = 0,
@@ -297,7 +314,9 @@ cmp.setup({
           return
         end
         cmp.complete()
-        cmp.select_prev_item()
+        if not vim.tbl_contains(vim.opt.cot:get(), 'noselect') then
+          cmp.select_prev_item()
+        end
       end,
       ['i'] = function(fallback)
         if not snip.jumpable(-1) then
@@ -330,7 +349,9 @@ cmp.setup({
           return
         end
         cmp.complete()
-        cmp.select_next_item()
+        if not vim.tbl_contains(vim.opt.cot:get(), 'noselect') then
+          cmp.select_next_item()
+        end
       end,
       ['i'] = function(fallback)
         if snip.expandable() then
@@ -395,7 +416,9 @@ cmp.setup({
           return
         end
         cmp.complete()
-        cmp.select_prev_item()
+        if not vim.tbl_contains(vim.opt.cot:get(), 'noselect') then
+          cmp.select_prev_item()
+        end
       end,
     },
     ['<C-n>'] = {
@@ -410,7 +433,9 @@ cmp.setup({
           return
         end
         cmp.complete()
-        cmp.select_next_item()
+        if not vim.tbl_contains(vim.opt.cot:get(), 'noselect') then
+          cmp.select_next_item()
+        end
       end,
     },
     ['<Up>'] = {
