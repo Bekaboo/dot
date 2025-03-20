@@ -135,7 +135,7 @@ function actions.switch_cwd()
 
         -- Adapted from fzf-lua `core.set_header()` function
         if opts.cwd_prompt then
-          opts.prompt = vim.fn.fnamemodify(opts.cwd, ':.:~')
+          opts.prompt = vim.fn.fnamemodify(opts.cwd, ':~')
           local shorten_len = tonumber(opts.cwd_prompt_shorten_len)
           if shorten_len and #opts.prompt >= shorten_len then
             opts.prompt = path.shorten(

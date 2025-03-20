@@ -37,7 +37,7 @@ setmetatable(_G._tabline, {
               or vim.fn.pathshorten(
                 vim.fn.fnamemodify(
                   vim.fn.getcwd(vim.api.nvim_tabpage_get_win(tabid), tabnr),
-                  ':.:~'
+                  ':~'
                 )
               )
           ),
