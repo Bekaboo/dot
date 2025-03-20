@@ -183,7 +183,7 @@ if !isdirectory(s:backupdir)
   call mkdir(s:backupdir)
 endif
 
-silent! set fillchars=fold:·,diff:╱
+silent! set fillchars=fold:·,foldopen:v,foldclose:>,diff:╱
 
 syntax on
 filetype plugin indent on

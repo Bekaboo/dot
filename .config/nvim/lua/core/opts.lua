@@ -150,6 +150,11 @@ if vim.g.has_nf then
     foldopen = '',
     foldclose = '',
   })
+else
+  vim.opt.fillchars:append({
+    foldopen = 'v',
+    foldclose = '>',
+  })
 end
 
 vim.api.nvim_create_autocmd('UIEnter', {
