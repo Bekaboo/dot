@@ -127,19 +127,17 @@ vim.api.nvim_create_autocmd(
     group = vim.api.nvim_create_augroup('ZSetup', {}),
     desc = 'Init z plugin.',
     once = true,
-    callback = function()
-      vim.schedule(function()
-        if vim.g.loaded_z then
-          return
-        end
+    callback = vim.schedule_wrap(function()
+      if vim.g.loaded_z then
+        return
+      end
 
-        local z = require('plugin.z')
-        z.setup()
-        vim.keymap.set('n', '<Leader>z', z.select, {
-          desc = 'Open a directory from z',
-        })
-      end)
-    end,
+      local z = require('plugin.z')
+      z.setup()
+      vim.keymap.set('n', '<Leader>z', z.select, {
+        desc = 'Open a directory from z',
+      })
+    end),
   }
 )
 
