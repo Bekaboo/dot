@@ -153,29 +153,6 @@ local function setup()
       end
     end,
   })
-
-  vim.api.nvim_create_autocmd('ModeChanged', {
-    group = groupid,
-    desc = 'Record mode in terminal buffer.',
-    callback = function(info)
-      if vim.bo[info.buf].bt == 'terminal' then
-        vim.b[info.buf].termode = vim.api.nvim_get_mode().mode
-      end
-    end,
-  })
-
-  vim.api.nvim_create_autocmd({ 'BufWinEnter', 'WinEnter' }, {
-    group = groupid,
-    desc = 'Recover inseart mode when entering terminal buffer.',
-    callback = function(info)
-      if
-        vim.bo[info.buf].bt == 'terminal'
-        and vim.b[info.buf].termode == 't'
-      then
-        vim.cmd.startinsert()
-      end
-    end,
-  })
 end
 
 return { setup = setup }
