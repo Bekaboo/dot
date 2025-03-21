@@ -371,20 +371,10 @@ end
 ---Name of python virtual environment
 ---@return string
 function _G._statusline.venv()
-  local venv_name = ''
-
-  if vim.env.VIRTUAL_ENV then
-    venv_name = vim.fn.fnamemodify(vim.env.VIRTUAL_ENV, ':~:.')
-    goto ret
-  end
-
-  if vim.env.CONDA_DEFAULT_ENV then
-    venv_name = vim.env.CONDA_DEFAULT_ENV
-    goto ret
-  end
-
-  ::ret::
-  return venv_name == '' and '' or string.format('venv: %s', venv_name)
+  local venv_name = vim.env.VIRTUAL_ENV
+      and vim.fn.fnamemodify(vim.env.VIRTUAL_ENV, ':~:.')
+    or vim.env.CONDA_DEFAULT_ENV
+  return venv_name and string.format('venv: %s', venv_name) or ''
 end
 
 ---Text filetypes
