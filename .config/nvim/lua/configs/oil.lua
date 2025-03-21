@@ -639,6 +639,8 @@ oil.setup({
     ['gs'] = 'actions.change_sort',
     ['gx'] = 'actions.open_external',
     ['gY'] = 'actions.copy_entry_filename',
+    ['<Leader>y'] = 'actions.copy_to_system_clipboard',
+    ['<Leader>p'] = 'actions.paste_from_system_clipboard',
     ['go'] = {
       mode = 'n',
       buffer = true,
