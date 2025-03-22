@@ -22,6 +22,66 @@ end
 M.snippets = {
   us.msn(
     {
+      { trig = 'fi' },
+      { trig = 'fit' },
+      { trig = 'fori' },
+      { trig = 'forit' },
+      { trig = 'fiter' },
+      { trig = 'forit' },
+      { trig = 'foriter' },
+      common = { desc = 'Iter loop' },
+    },
+    un.fmtad(
+      [[
+        for (<type> <var> : <container>) {
+        <body>
+        }
+      ]],
+      {
+        type = i(1, 'auto'),
+        var = i(2, 'var'),
+        container = i(3, 'container'),
+        body = un.body(4, 1),
+      }
+    )
+  ),
+  us.sn(
+    {
+      trig = 'for',
+      desc = 'For loop',
+      priority = 1001,
+    },
+    c(1, {
+      un.fmtad(
+        [[
+          for (<init>; <cond>; <inc>) {
+          <body>
+          }
+        ]],
+        {
+          init = i(1),
+          cond = i(2),
+          inc = i(3),
+          body = un.body(4, 1),
+        }
+      ),
+      un.fmtad(
+        [[
+          for (<type> <var> : <container>) {
+          <body>
+          }
+        ]],
+        {
+          type = i(1, 'auto'),
+          var = i(2, 'var'),
+          container = i(3, 'container'),
+          body = un.body(4, 1),
+        }
+      ),
+    })
+  ),
+  us.msn(
+    {
       { trig = 'cls' },
       { trig = 'class' },
       common = { desc = 'Class definition' },
