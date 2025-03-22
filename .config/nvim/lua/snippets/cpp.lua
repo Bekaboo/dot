@@ -138,6 +138,10 @@ M.snippets = {
           { ignore_injections = false }
         )
       then
+        local ret_type = r(1, 'ret_type', i(nil, 'void'))
+        local method_name = r(2, 'method_name', i(nil, 'methodName'))
+        local args = r(3, 'args', i(nil))
+
         return sn(
           nil,
           c(1, {
@@ -148,20 +152,25 @@ M.snippets = {
                 }
               ]],
               {
-                ret_type = r(1, 'ret_type', i(nil, 'void')),
-                method_name = r(2, 'method_name', i(nil, 'methodName')),
-                args = r(3, 'args', i(nil)),
+                ret_type = vim.deepcopy(ret_type),
+                method_name = vim.deepcopy(method_name),
+                args = vim.deepcopy(args),
                 body = un.body(4, 1),
               }
             ),
             un.fmtad('<ret_type> <method_name>(<args>);', {
-              ret_type = r(1, 'ret_type', i(nil, 'void')),
-              method_name = r(2, 'method_name', i(nil, 'methodName')),
-              args = r(3, 'args', i(nil)),
+              ret_type = vim.deepcopy(ret_type),
+              method_name = vim.deepcopy(method_name),
+              args = vim.deepcopy(args),
             }),
           })
         )
       end
+
+      local ret_type = r(1, 'ret_type', i(nil, 'void'))
+      local class_name = r(2, 'class_name', i(nil, 'ClassName'))
+      local method_name = r(3, 'method_name', i(nil, 'methodName'))
+      local args = r(4, 'args', i(nil))
 
       -- Outside class definition
       return sn(
@@ -174,18 +183,18 @@ M.snippets = {
               }
             ]],
             {
-              ret_type = r(1, 'ret_type', i(nil, 'void')),
-              class_name = r(2, 'class_name', i(nil, 'ClassName')),
-              method_name = r(3, 'method_name', i(nil, 'methodName')),
-              args = r(4, 'args', i(nil)),
+              ret_type = vim.deepcopy(ret_type),
+              class_name = vim.deepcopy(class_name),
+              method_name = vim.deepcopy(method_name),
+              args = vim.deepcopy(args),
               body = un.body(5, 1),
             }
           ),
           un.fmtad('<ret_type> <class_name>::<method_name>(<args>);', {
-            ret_type = r(1, 'ret_type', i(nil, 'void')),
-            class_name = r(2, 'class_name', i(nil, 'ClassName')),
-            method_name = r(3, 'method_name', i(nil, 'methodName')),
-            args = r(4, 'args', i(nil)),
+            ret_type = vim.deepcopy(ret_type),
+            class_name = vim.deepcopy(class_name),
+            method_name = vim.deepcopy(method_name),
+            args = vim.deepcopy(args),
           }),
         })
       )
