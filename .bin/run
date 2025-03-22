@@ -4,7 +4,7 @@
 build() {
     case "$1" in
     *.c) gcc "$1" -o "$2" ;;
-    *.cpp) g++ "$1" -o "$2" ;;
+    *.cpp|*.cc|*.cxx) g++ "$1" -o "$2" ;;
     *)
         echo >&2 "run: error: unsupported file type"
         exit 1
@@ -18,7 +18,7 @@ run_executable() {
 
 main() {
     src=$(command -v realpath >/dev/null 2>&1 && realpath "$1" || readlink -f "$1")
-    executable=$(echo "$src" | sed -E 's/\.(c|cpp)$/.run/')
+    executable=$(echo "$src" | sed -E 's/\.(c|cpp|cc|cxx)$/.run/')
     if [ "$src" = "$executable" ]; then
         echo >&2 "run: error: file name cannot be the same as the run file name"
         exit 1
