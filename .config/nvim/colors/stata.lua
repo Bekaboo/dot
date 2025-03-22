@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      BSD
--- Last Updated: Tue 18 Mar 2025 04:22:02 PM EDT
+-- Last Updated: Fri 21 Mar 2025 04:03:22 PM EDT
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -160,7 +160,7 @@ local hlgroups = {
   PmenuThumb = { bg = c_keyword },
   Question = { fg = c_string },
   QuickFixLine = { link = 'Visual' },
-  Search = { bg = c_highlight },
+  Search = { fg = c_background, bg = c_special2 },
   SignColumn = { fg = c_comment },
   SpecialKey = { fg = c_special },
   SpellBad = { underdashed = true },
