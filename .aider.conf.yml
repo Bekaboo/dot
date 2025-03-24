@@ -1,0 +1,5 @@
+show-diffs: true
+auto-commits: false
+chat-language: the same language of user's question
+
+user-input-color: "" # use default foreground color
