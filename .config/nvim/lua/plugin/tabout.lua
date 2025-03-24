@@ -345,10 +345,12 @@ local function setup()
   end
   vim.g.loaded_tabout = true
 
-  -- stylua: ignore start
-  vim.keymap.set({ 'i', 'c' }, '<Tab>', function() require('plugin.tabout').jump(1) end, { desc = 'Tab out' })
-  vim.keymap.set({ 'i', 'c' }, '<S-Tab>', function() require('plugin.tabout').jump(-1) end, { desc = 'Tab in' })
-  -- stylua: ignore off
+  vim.keymap.set({ 'i', 'c' }, '<Tab>', function()
+    jump(1)
+  end, { desc = 'Tab out' })
+  vim.keymap.set({ 'i', 'c' }, '<S-Tab>', function()
+    jump(-1)
+  end, { desc = 'Tab in' })
 end
 
 return {
