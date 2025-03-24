@@ -187,18 +187,12 @@ end
 
 ---@return boolean
 local function tmux_mapkey_resize_pane_horiz_condition()
-  return not tmux_is_zoomed()
-    and (
-      nvim_at_border('l') and (nvim_at_border('h') or not tmux_at_border('l'))
-    )
+  return not tmux_is_zoomed() and nvim_at_border('l') and nvim_at_border('h')
 end
 
 ---@return boolean
 local function tmux_mapkey_resize_pane_vert_condition()
-  return not tmux_is_zoomed()
-    and (
-      nvim_at_border('j') and (nvim_at_border('k') or not tmux_at_border('j'))
-    )
+  return not tmux_is_zoomed() and nvim_at_border('j') and nvim_at_border('k')
 end
 
 ---@return fun(): boolean

@@ -1512,16 +1512,14 @@ if $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.1140')
 
   " return: 0/1
   function! s:tmux_mapkey_resize_pane_horiz_condition() abort
-    return ! s:tmux_is_zoomed() && (s:vim_at_border('l') &&
-          \ (s:vim_at_border('h') || ! s:tmux_at_border('l')))
+    return ! s:tmux_is_zoomed() && s:vim_at_border('l') && s:vim_at_border('h')
   endfunction
   let TmuxMapkeyResizePaneHorizConditionRef = function(
         \ 's:tmux_mapkey_resize_pane_horiz_condition')
 
   " return: 0/1
   function! s:tmux_mapkey_resize_pane_vert_condition() abort
-    return ! s:tmux_is_zoomed() && (s:vim_at_border('j') &&
-          \ (s:vim_at_border('k') || ! s:tmux_at_border('j')))
+    return ! s:tmux_is_zoomed() && s:vim_at_border('j') && s:vim_at_border('k')
   endfunction
   let TmuxMapkeyResizePaneVertConditionRef = function(
         \ 's:tmux_mapkey_resize_pane_vert_condition')
