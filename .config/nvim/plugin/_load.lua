@@ -141,13 +141,13 @@ vim.api.nvim_create_autocmd(
   }
 )
 
--- jsasync
+-- addasync
 vim.api.nvim_create_autocmd('InsertEnter', {
-  group = vim.api.nvim_create_augroup('JSAsyncSetup', {}),
-  desc = 'Init jsasync plugin.',
+  group = vim.api.nvim_create_augroup('AddAsyncSetup', {}),
+  desc = 'Init addasync plugin.',
   callback = function()
     if require('utils.ts').is_active() then
-      require('plugin.jsasync').setup()
+      require('plugin.addasync').setup()
       return true
     end
   end,
