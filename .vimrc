@@ -43,6 +43,7 @@ silent! set clipboard^=unnamedplus
 silent! set formatoptions+=nor
 silent! set jumpoptions=stack
 silent! set selection=old
+silent! set tabclose=uselast
 
 " Enable 'exrc' only when 'secure' is working
 if exists('+secure')
@@ -831,25 +832,14 @@ for map in ['nnoremap', 'xnoremap']
   exe map . '<expr> <Esc>- v:count ? "<C-w>-" : "2<C-w>-"'
   exe map . '<expr> <C-w>+ v:count ? "<C-w>+" : "2<C-w>+"'
   exe map . '<expr> <C-w>- v:count ? "<C-w>-" : "2<C-w>-"'
-  if has('patch-8.1.1140')
-    exe map . '<expr> <Esc>> (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")'
-    exe map . '<expr> <Esc>< (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")'
-    exe map . '<expr> <Esc>. (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")'
-    exe map . '<expr> <Esc>, (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")'
-    exe map . '<expr> <C-w>> (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")'
-    exe map . '<expr> <C-w>< (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")'
-    exe map . '<expr> <C-w>. (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w><" : "<C-w>>")'
-    exe map . '<expr> <C-w>, (v:count ? "" : 4) . (winnr() == winnr("l") ? "<C-w>>" : "<C-w><")'
-  else
-    exe map . '<expr> <Esc>> (v:count ? "" : 4) . "<C-w>>"'
-    exe map . '<expr> <Esc>< (v:count ? "" : 4) . "<C-w><"'
-    exe map . '<expr> <Esc>. (v:count ? "" : 4) . "<C-w>>"'
-    exe map . '<expr> <Esc>, (v:count ? "" : 4) . "<C-w><"'
-    exe map . '<expr> <C-w>> (v:count ? "" : 4) . "<C-w>>"'
-    exe map . '<expr> <C-w>< (v:count ? "" : 4) . "<C-w><"'
-    exe map . '<expr> <C-w>. (v:count ? "" : 4) . "<C-w>>"'
-    exe map . '<expr> <C-w>, (v:count ? "" : 4) . "<C-w><"'
-  endif
+  exe map . '<expr> <Esc>> v:count ? "<C-w>>" : "2<C-w>>"'
+  exe map . '<expr> <Esc>< v:count ? "<C-w><" : "2<C-w><"'
+  exe map . '<expr> <Esc>. v:count ? "<C-w>>" : "2<C-w>>"'
+  exe map . '<expr> <Esc>, v:count ? "<C-w><" : "2<C-w><"'
+  exe map . '<expr> <C-w>> v:count ? "<C-w>>" : "2<C-w>>"'
+  exe map . '<expr> <C-w>< v:count ? "<C-w><" : "2<C-w><"'
+  exe map . '<expr> <C-w>. v:count ? "<C-w>>" : "2<C-w>>"'
+  exe map . '<expr> <C-w>, v:count ? "<C-w><" : "2<C-w><"'
 endfor
 
 " Workaround for strange characters '0000/0000/0000^G' or '1818/1818/1919^G' in
@@ -1569,10 +1559,10 @@ if $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.1140')
   nnoremap <expr><silent> <Esc>= <SID>tmux_mapkey_fallback("confirm 'select-layout tiled'", '<C-w>=')
   nnoremap <expr><silent> <Esc>c <SID>tmux_mapkey_fallback('confirm kill-pane', '<C-w>c', TmuxMapkeyCloseWinConditionRef)
   nnoremap <expr><silent> <Esc>q <SID>tmux_mapkey_fallback('confirm kill-pane', '<C-w>q', TmuxMapkeyCloseWinConditionRef)
-  nnoremap <expr><silent> <Esc>< <SID>tmux_mapkey_fallback('resize-pane -L 4', (v:count ? '' : 4) . (winnr() == winnr('l') ? '<C-w>>' : '<C-w><'), TmuxMapkeyResizePaneHorizConditionRef)
-  nnoremap <expr><silent> <Esc>> <SID>tmux_mapkey_fallback('resize-pane -R 4', (v:count ? '' : 4) . (winnr() == winnr('l') ? '<C-w><' : '<C-w>>'), TmuxMapkeyResizePaneHorizConditionRef)
-  nnoremap <expr><silent> <Esc>, <SID>tmux_mapkey_fallback('resize-pane -L 4', (v:count ? '' : 4) . (winnr() == winnr('l') ? '<C-w>>' : '<C-w><'), TmuxMapkeyResizePaneHorizConditionRef)
-  nnoremap <expr><silent> <Esc>. <SID>tmux_mapkey_fallback('resize-pane -R 4', (v:count ? '' : 4) . (winnr() == winnr('l') ? '<C-w><' : '<C-w>>'), TmuxMapkeyResizePaneHorizConditionRef)
+  nnoremap <expr><silent> <Esc>< <SID>tmux_mapkey_fallback("run \"tmux resize-pane -x $(($(tmux display -p '#{pane_width}') - 2))\"", v:count ? '<C-w><' : '4<C-w><', TmuxMapkeyResizePaneHorizConditionRef)
+  nnoremap <expr><silent> <Esc>, <SID>tmux_mapkey_fallback("run \"tmux resize-pane -x $(($(tmux display -p '#{pane_width}') - 2))\"", v:count ? '<C-w><' : '4<C-w><', TmuxMapkeyResizePaneHorizConditionRef)
+  nnoremap <expr><silent> <Esc>> <SID>tmux_mapkey_fallback("run \"tmux resize-pane -x $(($(tmux display -p '#{pane_width}') + 2))\"", v:count ? '<C-w>>' : '4<C-w>>', TmuxMapkeyResizePaneHorizConditionRef)
+  nnoremap <expr><silent> <Esc>. <SID>tmux_mapkey_fallback("run \"tmux resize-pane -x $(($(tmux display -p '#{pane_width}') + 2))\"", v:count ? '<C-w>>' : '4<C-w>>', TmuxMapkeyResizePaneHorizConditionRef)
   nnoremap <expr><silent> <Esc>- <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') - 2))\"", v:count ? '<C-w>-' : '2<C-w>-', TmuxMapkeyResizePaneVertConditionRef)
   nnoremap <expr><silent> <Esc>+ <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') + 2))\"", v:count ? '<C-w>+' : '2<C-w>+', TmuxMapkeyResizePaneVertConditionRef)
 
@@ -1583,10 +1573,10 @@ if $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.1140')
   xnoremap <expr><silent> <Esc>= <SID>tmux_mapkey_fallback("confirm 'select-layout tiled'", '<C-w>=')
   xnoremap <expr><silent> <Esc>c <SID>tmux_mapkey_fallback('confirm kill-pane', '<C-w>c', TmuxMapkeyCloseWinConditionRef)
   xnoremap <expr><silent> <Esc>q <SID>tmux_mapkey_fallback('confirm kill-pane', '<C-w>q', TmuxMapkeyCloseWinConditionRef)
-  xnoremap <expr><silent> <Esc>< <SID>tmux_mapkey_fallback('resize-pane -L 4', (v:count ? '' : 4) . (winnr() == winnr('l') ? '<C-w>>' : '<C-w><'), TmuxMapkeyResizePaneHorizConditionRef)
-  xnoremap <expr><silent> <Esc>> <SID>tmux_mapkey_fallback('resize-pane -R 4', (v:count ? '' : 4) . (winnr() == winnr('l') ? '<C-w><' : '<C-w>>'), TmuxMapkeyResizePaneHorizConditionRef)
-  xnoremap <expr><silent> <Esc>, <SID>tmux_mapkey_fallback('resize-pane -L 4', (v:count ? '' : 4) . (winnr() == winnr('l') ? '<C-w>>' : '<C-w><'), TmuxMapkeyResizePaneHorizConditionRef)
-  xnoremap <expr><silent> <Esc>. <SID>tmux_mapkey_fallback('resize-pane -R 4', (v:count ? '' : 4) . (winnr() == winnr('l') ? '<C-w><' : '<C-w>>'), TmuxMapkeyResizePaneHorizConditionRef)
+  xnoremap <expr><silent> <Esc>< <SID>tmux_mapkey_fallback("run \"tmux resize-pane -x $(($(tmux display -p '#{pane_width}') - 2))\"", v:count ? '<C-w><' : '4<C-w><', TmuxMapkeyResizePaneHorizConditionRef)
+  xnoremap <expr><silent> <Esc>, <SID>tmux_mapkey_fallback("run \"tmux resize-pane -x $(($(tmux display -p '#{pane_width}') - 2))\"", v:count ? '<C-w><' : '4<C-w><', TmuxMapkeyResizePaneHorizConditionRef)
+  xnoremap <expr><silent> <Esc>> <SID>tmux_mapkey_fallback("run \"tmux resize-pane -x $(($(tmux display -p '#{pane_width}') + 2))\"", v:count ? '<C-w>>' : '4<C-w>>', TmuxMapkeyResizePaneHorizConditionRef)
+  xnoremap <expr><silent> <Esc>. <SID>tmux_mapkey_fallback("run \"tmux resize-pane -x $(($(tmux display -p '#{pane_width}') + 2))\"", v:count ? '<C-w>>' : '4<C-w>>', TmuxMapkeyResizePaneHorizConditionRef)
   xnoremap <expr><silent> <Esc>- <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') - 2))\"", v:count ? '<C-w>-' : '2<C-w>-', TmuxMapkeyResizePaneVertConditionRef)
   xnoremap <expr><silent> <Esc>+ <SID>tmux_mapkey_fallback("run \"tmux resize-pane -y $(($(tmux display -p '#{pane_height}') + 2))\"", v:count ? '<C-w>+' : '2<C-w>+', TmuxMapkeyResizePaneVertConditionRef)
 

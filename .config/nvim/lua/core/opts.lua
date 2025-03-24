@@ -31,6 +31,7 @@ vim.opt.smartcase = true
 vim.opt.completeopt = 'menuone'
 vim.opt.jumpoptions = 'stack,view'
 vim.opt.selection = 'old'
+vim.opt.tabclose = 'uselast'
 
 -- Defer shada reading
 local shada_augroup = vim.api.nvim_create_augroup('OptShada', {})
