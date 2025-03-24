@@ -219,8 +219,8 @@ vim.api.nvim_create_autocmd('UIEnter', {
     map('o', 'az', '<Cmd>silent! normal Vaz<CR>', { silent = true, noremap = false, desc = 'Select around current fold' })
 
     -- Use 'g{' and 'g}' to go to the first/last line of a paragraph
-    map({ 'o' }, 'g{', '<Cmd>silent! normal Vg{<CR>', { noremap = false, desc = 'Go to the first line of paragraph' })
-    map({ 'o' }, 'g}', '<Cmd>silent! normal Vg}<CR>', { noremap = false, desc = 'Go to the last line of paragraph' })
+    map({ 'o' }, 'g{', '<Cmd>silent! exe "normal V" . v:count1 . "g{"<CR>', { noremap = false, desc = 'Go to the first line of paragraph' })
+    map({ 'o' }, 'g}', '<Cmd>silent! exe "normal V" . v:count1 . "g}"<CR>', { noremap = false, desc = 'Go to the last line of paragraph' })
     map({ 'n', 'x' }, 'g{', function() require('utils.misc').goto_paragraph_firstline() end, { noremap = false, desc = 'Go to the first line of paragraph' })
     map({ 'n', 'x' }, 'g}', function() require('utils.misc').goto_paragraph_lastline() end, { noremap = false, desc = 'Go to the last line of paragraph' })
     -- stylua: ignore end

@@ -736,8 +736,8 @@ nmap <silent><expr> g{ <SID>paragraph_first_line()
 nmap <silent><expr> g} <SID>paragraph_last_line()
 xmap <silent><expr> g{ <SID>paragraph_first_line()
 xmap <silent><expr> g} <SID>paragraph_last_line()
-omap <silent>       g{ :silent! normal Vg{<CR>
-omap <silent>       g} :silent! normal Vg}<CR>
+omap <silent>       g{ :silent! exe 'normal V' . v:count1 . 'g{'<CR>
+omap <silent>       g} :silent! exe 'normal V' . v:count1 . 'g}'<CR>
 " }}}2
 
 " Text objects {{{2
