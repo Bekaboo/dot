@@ -1,9 +1,4 @@
 local M = {}
-local api = vim.api
-local fn = vim.fn
-local map = vim.keymap.set
-local col = vim.fn.col
-local line = vim.fn.line
 
 local regex_keyword_at_beginning = vim.regex([=[^\s*[[:keyword:]]*]=])
 local regex_nonkeyword_at_beginning =
@@ -38,13 +33,14 @@ end
 ---Get current line
 ---@return string
 local function get_current_line()
-  return fn.mode() == 'c' and fn.getcmdline() or api.nvim_get_current_line()
+  return vim.fn.mode() == 'c' and vim.fn.getcmdline()
+    or vim.api.nvim_get_current_line()
 end
 
 ---Get current column number
 ---@return integer
 local function get_current_col()
-  return fn.mode() == 'c' and fn.getcmdpos() or col('.')
+  return vim.fn.mode() == 'c' and vim.fn.getcmdpos() or vim.fn.col('.')
 end
 
 ---Get word after cursor
@@ -78,13 +74,13 @@ end
 ---Check if current line is the last line
 ---@return boolean
 local function last_line()
-  return fn.mode() == 'c' or line('.') == line('$')
+  return vim.fn.mode() == 'c' or vim.fn.line('.') == vim.fn.line('$')
 end
 
 ---Check if current line is the first line
 ---@return boolean
 local function first_line()
-  return fn.mode() == 'c' or line('.') == 1
+  return vim.fn.mode() == 'c' or vim.fn.line('.') == 1
 end
 
 ---Check if cursor is at the end of the line
@@ -125,26 +121,26 @@ local function small_del(text_deleted, forward)
   -- In other cases, we reset the '-' register with the new deleted text.
   local reset = not (
     in_cmdline
-      and fn.getcmdline() == vim.g._rl_cmd
-      and fn.getcmdtype() == vim.g._rl_cmd_type
-      and vim.deep_equal(vim.g._rl_cmd_pos, fn.getcmdpos())
+      and vim.fn.getcmdline() == vim.g._rl_cmd
+      and vim.fn.getcmdtype() == vim.g._rl_cmd_type
+      and vim.deep_equal(vim.g._rl_cmd_pos, vim.fn.getcmdpos())
     or not in_cmdline
       and vim.b.changedtick == vim.b._rl_changedtick
-      and vim.deep_equal(vim.b._rl_del_pos, fn.getcurpos())
+      and vim.deep_equal(vim.b._rl_del_pos, vim.fn.getcurpos())
   )
-  local reg_contents = reset and '' or fn.getreg('-')
+  local reg_contents = reset and '' or vim.fn.getreg('-')
   local reg_new_contents = forward and reg_contents .. text_deleted
     or text_deleted .. reg_contents
-  fn.setreg('-', reg_new_contents)
+  vim.fn.setreg('-', reg_new_contents)
 
   -- Record the cursor position after deleting the text
   if in_cmdline then
     vim.api.nvim_create_autocmd('CmdlineChanged', {
       once = true,
       callback = vim.schedule_wrap(function()
-        vim.g._rl_cmd = fn.getcmdline()
-        vim.g._rl_cmd_pos = fn.getcmdpos()
-        vim.g._rl_cmd_type = fn.getcmdtype()
+        vim.g._rl_cmd = vim.fn.getcmdline()
+        vim.g._rl_cmd_pos = vim.fn.getcmdpos()
+        vim.g._rl_cmd_type = vim.fn.getcmdtype()
         vim.g._rl_del_lock = nil
       end),
     })
@@ -152,7 +148,7 @@ local function small_del(text_deleted, forward)
     vim.api.nvim_create_autocmd('TextChangedI', {
       once = true,
       callback = function()
-        vim.b._rl_del_pos = fn.getcurpos()
+        vim.b._rl_del_pos = vim.fn.getcurpos()
         vim.b._rl_changedtick = vim.b.changedtick
         vim.g._rl_del_lock = nil
       end,
@@ -200,29 +196,29 @@ function M.setup()
   end
 
   -- stylua: ignore start
-  map('!', '<C-d>', '<Del>', { desc = 'Delete character under cursor' })
-  map('c', '<C-b>', '<Left>', { desc = 'Move cursor backward' })
-  map('c', '<C-f>', '<Right>', { desc = 'Move cursor forward' })
+  vim.keymap.set('!', '<C-d>', '<Del>', { desc = 'Delete character under cursor' })
+  vim.keymap.set('c', '<C-b>', '<Left>', { desc = 'Move cursor backward' })
+  vim.keymap.set('c', '<C-f>', '<Right>', { desc = 'Move cursor forward' })
 
-  map('!', '<C-BS>', '<C-w>', { remap = true, desc = 'Delete word before cursor' })
-  map('!', '<M-BS>', '<C-w>', { remap = true, desc = 'Delete word before cursor' })
-  map('!', '<M-Del>', '<C-w>', { remap = true, desc = 'Delete word before cursor' })
+  vim.keymap.set('!', '<C-BS>', '<C-w>', { remap = true, desc = 'Delete word before cursor' })
+  vim.keymap.set('!', '<M-BS>', '<C-w>', { remap = true, desc = 'Delete word before cursor' })
+  vim.keymap.set('!', '<M-Del>', '<C-w>', { remap = true, desc = 'Delete word before cursor' })
   -- stylua: ignore end
-  map('!', '<C-w>', function()
+  vim.keymap.set('!', '<C-w>', function()
     return small_del(
       start_of_line() and not first_line() and '\n' or get_word_before(),
       false
     )
   end, { expr = true, desc = 'Delete word before cursor' })
 
-  map('!', '<M-d>', function()
+  vim.keymap.set('!', '<M-d>', function()
     return small_del(
       end_of_line() and not last_line() and '\n' or get_word_after(),
       true
     )
   end, { expr = true, desc = 'Delete word after cursor' })
 
-  map('!', '<C-k>', function()
+  vim.keymap.set('!', '<C-k>', function()
     return small_del(
       end_of_line() and not last_line() and '\n'
         or get_current_line():sub(get_current_col()),
@@ -230,7 +226,7 @@ function M.setup()
     )
   end, { expr = true, desc = 'Delete text until the end of the line' })
 
-  map('!', '<C-u>', function()
+  vim.keymap.set('!', '<C-u>', function()
     local line_before = get_current_line():sub(1, get_current_col() - 1)
     return small_del(
       start_of_line() and not first_line() and '\n'
@@ -240,30 +236,30 @@ function M.setup()
     )
   end, { expr = true, desc = 'Delete text until the beginning of the line' })
 
-  map('c', '<C-y>', [[pumvisible() ? '<C-y>' : '<C-r>-']], {
+  vim.keymap.set('c', '<C-y>', [[pumvisible() ? '<C-y>' : '<C-r>-']], {
     expr = true,
     desc = 'Confirm completion or paste from small deletion register',
   })
-  map('i', '<C-y>', function()
-    if fn.pumvisible() == 1 then
-      api.nvim_feedkeys(vim.keycode('<C-y>'), 'n', false)
+  vim.keymap.set('i', '<C-y>', function()
+    if vim.fn.pumvisible() == 1 then
+      vim.api.nvim_feedkeys(vim.keycode('<C-y>'), 'n', false)
       return
     end
 
-    local linenr = line('.')
-    local colnr = col('.')
-    local current_line = api.nvim_get_current_line()
-    local lines = vim.split(fn.getreg('-'), '\n')
+    local linenr = vim.fn.line('.')
+    local colnr = vim.fn.col('.')
+    local current_line = vim.api.nvim_get_current_line()
+    local lines = vim.split(vim.fn.getreg('-'), '\n')
     lines[1] = current_line:sub(1, colnr - 1) .. lines[1]
     local target_cursor = { linenr + #lines - 1, #lines[#lines] }
     lines[#lines] = lines[#lines] .. current_line:sub(colnr)
 
-    api.nvim_feedkeys(vim.keycode('<C-g>u'), 'n', false)
-    api.nvim_buf_set_lines(0, linenr - 1, linenr, false, lines)
-    api.nvim_win_set_cursor(0, target_cursor)
+    vim.api.nvim_feedkeys(vim.keycode('<C-g>u'), 'n', false)
+    vim.api.nvim_buf_set_lines(0, linenr - 1, linenr, false, lines)
+    vim.api.nvim_win_set_cursor(0, target_cursor)
   end, { desc = 'Confirm completion or paste from small deletion register' })
 
-  map('!', '<C-a>', function()
+  vim.keymap.set('!', '<C-a>', function()
     local current_line = get_current_line()
     return '<Home>'
       .. (
@@ -273,14 +269,14 @@ function M.setup()
       )
   end, { expr = true, desc = 'Go to the beginning of the line' })
 
-  map('!', '<C-e>', function()
-    return fn.pumvisible() == 1 and '<C-e>' or '<End>'
+  vim.keymap.set('!', '<C-e>', function()
+    return vim.fn.pumvisible() == 1 and '<C-e>' or '<End>'
   end, {
     expr = true,
     desc = 'Cancel completion or go to the end of the line',
   })
 
-  map('i', '<C-b>', function()
+  vim.keymap.set('i', '<C-b>', function()
     if first_line() and start_of_line() then
       return '<Ignore>'
     end
@@ -290,7 +286,7 @@ function M.setup()
     desc = 'Move cursor backward',
   })
 
-  map('i', '<C-f>', function()
+  vim.keymap.set('i', '<C-f>', function()
     if last_line() and end_of_line() then
       return '<Ignore>'
     end
@@ -300,16 +296,16 @@ function M.setup()
     desc = 'Move cursor forward',
   })
 
-  map('!', '<M-b>', function()
+  vim.keymap.set('!', '<M-b>', function()
     local word_before = get_word_before()
-    if not str_isempty(word_before) or fn.mode() == 'c' then
+    if not str_isempty(word_before) or vim.fn.mode() == 'c' then
       return string.rep('<Left>', #word_before)
     end
     -- No word before cursor and is in insert mode
-    local current_linenr = line('.')
-    local target_linenr = fn.prevnonblank(current_linenr - 1)
+    local current_linenr = vim.fn.line('.')
+    local target_linenr = vim.fn.prevnonblank(current_linenr - 1)
     target_linenr = target_linenr ~= 0 and target_linenr or 1
-    local line_str = fn.getline(target_linenr) --[[@as string]]
+    local line_str = vim.fn.getline(target_linenr) --[[@as string]]
     return (current_linenr == target_linenr and '' or '<End>')
       .. string.rep('<Up>', current_linenr - target_linenr)
       .. string.rep('<Left>', #get_word_before(line_str, #line_str))
@@ -318,16 +314,16 @@ function M.setup()
     desc = 'Move cursor backward by word',
   })
 
-  map('!', '<M-f>', function()
+  vim.keymap.set('!', '<M-f>', function()
     local word_after = get_word_after()
-    if not str_isempty(word_after) or fn.mode() == 'c' then
+    if not str_isempty(word_after) or vim.fn.mode() == 'c' then
       return string.rep('<Right>', #word_after)
     end
     -- No word after cursor and is in insert mode
-    local current_linenr = line('.')
-    local target_linenr = fn.nextnonblank(current_linenr + 1)
-    target_linenr = target_linenr ~= 0 and target_linenr or line('$')
-    local line_str = fn.getline(target_linenr) --[[@as string]]
+    local current_linenr = vim.fn.line('.')
+    local target_linenr = vim.fn.nextnonblank(current_linenr + 1)
+    target_linenr = target_linenr ~= 0 and target_linenr or vim.fn.line('$')
+    local line_str = vim.fn.getline(target_linenr) --[[@as string]]
     return (current_linenr == target_linenr and '' or '<Home>')
       .. string.rep('<Down>', target_linenr - current_linenr)
       .. string.rep('<Right>', #get_word_after(line_str, 1))
