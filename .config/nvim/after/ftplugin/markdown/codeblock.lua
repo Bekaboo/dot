@@ -32,15 +32,22 @@ local function refresh()
     return
   end
 
-  local bufnr = vim.api.nvim_get_current_buf()
-  local language_tree = vim.treesitter.get_parser(bufnr, ft)
-  local syntax_tree = language_tree:parse()
+  local buf = vim.api.nvim_get_current_buf()
+  local lang_tree = vim.treesitter.get_parser(buf, ft)
+  if not lang_tree then
+    return
+  end
+
+  local syntax_tree = lang_tree:parse()
+  if not syntax_tree then
+    return
+  end
+
   local root = syntax_tree[1]:root()
-  local win_view = vim.fn.winsaveview()
-  local left_offset = win_view.leftcol
+  local left_offset = vim.fn.winsaveview().leftcol
   local width = vim.api.nvim_win_get_width(0)
 
-  for _, match, metadata in query:iter_matches(root, bufnr) do
+  for _, match, metadata in query:iter_matches(root, buf) do
     for id, node in pairs(match) do
       if has_quantified_captures then
         node = node[#node]
@@ -56,7 +63,7 @@ local function refresh()
       )
 
       if capture == 'dash' and dash_string then
-        pcall(vim.api.nvim_buf_set_extmark, bufnr, ns, start_row, 0, {
+        pcall(vim.api.nvim_buf_set_extmark, buf, ns, start_row, 0, {
           virt_text = {
             { dash_string:rep(width), 'Dash' },
           },
@@ -66,7 +73,7 @@ local function refresh()
       end
 
       if capture == 'codeblock' then
-        pcall(vim.api.nvim_buf_set_extmark, bufnr, ns, start_row, 0, {
+        pcall(vim.api.nvim_buf_set_extmark, buf, ns, start_row, 0, {
           end_col = 0,
           end_row = end_row,
           hl_group = 'CodeBlock',
@@ -74,13 +81,13 @@ local function refresh()
         })
 
         local start_line =
-          vim.api.nvim_buf_get_lines(bufnr, start_row, start_row + 1, false)[1]
+          vim.api.nvim_buf_get_lines(buf, start_row, start_row + 1, false)[1]
         local _, padding = start_line:find('^ +')
         local codeblock_padding = math.max((padding or 0) - left_offset, 0)
 
         if codeblock_padding > 0 then
           for i = start_row, end_row - 1 do
-            pcall(vim.api.nvim_buf_set_extmark, bufnr, ns, i, 0, {
+            pcall(vim.api.nvim_buf_set_extmark, buf, ns, i, 0, {
               virt_text = {
                 { string.rep(' ', codeblock_padding - 2), 'Normal' },
               },
