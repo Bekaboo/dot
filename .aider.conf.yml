@@ -1,3 +1,4 @@
+architect: true
 show-diffs: true
 auto-commits: false
 chat-language: the same language of user's question
