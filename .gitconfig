@@ -66,6 +66,7 @@
 	rl   = remote -v
 	rd   = remote rm
 	rrm  = remote rm
+	rrn  = remote rename
 	rs   = reset
 	rss  = reset --soft
 	rsm  = reset --mixed
