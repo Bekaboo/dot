@@ -1402,15 +1402,15 @@ end
 local lsp_autostop_pending
 ---Automatically stop LSP servers that no longer attach to any buffers
 ---
----  Once `BufDelete` is triggered, wait for 60s before checking and
+---  Once `LspDetach` is triggered, wait for 60s before checking and
 ---  stopping servers, in this way the callback will be invoked once
 ---  every 60 seconds at most and can stop multiple clients at once
 ---  if possible, which is more efficient than checking and stopping
----  clients on every `BufDelete` events
+---  clients on every `LspDetach` events
 ---
 ---@return nil
 local function setup_lsp_stopdetached()
-  vim.api.nvim_create_autocmd('BufDelete', {
+  vim.api.nvim_create_autocmd('LspDetach', {
     group = vim.api.nvim_create_augroup('LspAutoStop', {}),
     desc = 'Automatically stop detached language servers.',
     callback = function()
