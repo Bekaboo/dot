@@ -7,7 +7,7 @@ local utils = require('utils')
 local function supports_method(method, bufnr)
   local clients = vim.lsp.get_clients({ bufnr = bufnr })
   for _, client in ipairs(clients) do
-    if client.supports_method(method) then
+    if client:supports_method(method) then
       return true
     end
   end
