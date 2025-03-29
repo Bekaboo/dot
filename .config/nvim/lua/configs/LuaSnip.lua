@@ -59,7 +59,7 @@ ls.setup({
   region_check_events = 'CursorMoved,CursorMovedI',
   delete_check_events = 'TextChanged,TextChangedI',
   enable_autosnippets = true,
-  store_selection_keys = '<Tab>',
+  cut_selection_keys = '<Tab>',
   ext_opts = {
     [ls_types.choiceNode] = {
       active = {
