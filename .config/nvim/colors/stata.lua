@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      BSD
--- Last Updated: Fri 21 Mar 2025 04:03:22 PM EDT
+-- Last Updated: Sun 30 Mar 2025 03:52:46 PM EDT
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -342,7 +342,7 @@ local hlgroups = {
   fugitiveUntrackedModifier = { fg = c_other, bold = true },
 
   -- nvim-cmp
-  CmpItemAbbrDeprecated = { fg = c_comment, strikethrough = true },
+  CmpItemAbbrDeprecated = { fg = c_delimiter, strikethrough = true },
   CmpItemAbbrMatch = { fg = c_other, bold = true },
   CmpItemAbbrMatchFuzzy = { link = 'CmpItemAbbrMatch' },
   CmpItemKindText = { link = 'String' },
