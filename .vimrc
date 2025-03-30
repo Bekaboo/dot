@@ -51,6 +51,10 @@ if exists('+secure')
   silent! set exrc
 endif
 
+" Folding
+silent! set foldlevelstart=99
+silent! set foldmethod=indent
+
 " Spell check options
 silent! set spellcapcheck=''
 silent! set spelllang=en_us
