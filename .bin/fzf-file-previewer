@@ -152,7 +152,7 @@ fzf_file_previewer() {
                     html2text -- "$1"
                     return
                 fi
-                ;& # fallthrough
+                ;;
 
             *)
                 # Use glow for markdown files
