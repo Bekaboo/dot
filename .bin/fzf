@@ -104,21 +104,41 @@ get_fzf_geometry_normalized() {
     *) total=$cols ;;
     esac
 
-    case "$geometry" in
-    [0-9]*% | [0-9]*)
-        normalize_fzf_geometry "$geometry" "$total"
+    # Count number of commas to determine format
+    commas=$(printf "%s" "$geometry" | tr -cd ',' | wc -c)
+
+    case "$commas" in
+    0) # TRBL - Single value for all sides
+        val="$geometry"
         ;;
-    [0-9]*%,[0-9]*% | [0-9]*,[0-9]*)
+    1) # TB,RL - Vertical and horizontal
         case "$2" in
-        top | bottom) val=${geometry%%,*} ;;
-        *) val=${geometry##*,} ;;
+        top | bottom) val=${geometry%%,*} ;; # First part (T/B)
+        *) val=${geometry##*,} ;;            # Second part (R/L)
         esac
-        normalize_fzf_geometry "$val" "$total"
+        ;;
+    2) # T,RL,B - Top, horizontal, bottom
+        case "$2" in
+        top) val=$(echo "$geometry" | cut -d',' -f1) ;;    # First part (T)
+        bottom) val=$(echo "$geometry" | cut -d',' -f3) ;; # Third part (B)
+        *) val=$(echo "$geometry" | cut -d',' -f2) ;;      # Second part (R/L)
+        esac
+        ;;
+    3) # T,R,B,L - Top, right, bottom, left
+        case "$2" in
+        top) val=$(echo "$geometry" | cut -d',' -f1) ;;    # First part (T)
+        right) val=$(echo "$geometry" | cut -d',' -f2) ;;  # Second part (R)
+        bottom) val=$(echo "$geometry" | cut -d',' -f3) ;; # Third part (B)
+        left) val=$(echo "$geometry" | cut -d',' -f4) ;;   # Fourth part (L)
+        esac
         ;;
     *)
         echo 0
+        return
         ;;
     esac
+
+    normalize_fzf_geometry "$val" "$total"
 }
 
 main() {
