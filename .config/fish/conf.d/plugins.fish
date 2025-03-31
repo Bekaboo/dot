@@ -104,3 +104,8 @@ set fzf_fd_opts -p -H -L -td -tf -tl -c=always
 if type -q fzf_configure_bindings
     fzf_configure_bindings --git_status=\e\cg --git_stash=\e\cs
 end
+
+# Setup zoxide if z.fish is not available
+if type -q zoxide; and not type -q __z
+    zoxide init fish | source
+end

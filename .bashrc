@@ -442,3 +442,8 @@ dot config --local status.showUntrackedFiles no
 # Source conda if it exists
 [[ -r '/opt/miniconda3/etc/profile.d/conda.sh' ]] &&
     source '/opt/miniconda3/etc/profile.d/conda.sh'
+
+# Setup zoxide
+if __has zoxide; then
+    eval "$(zoxide init bash)"
+fi
