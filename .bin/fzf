@@ -27,38 +27,52 @@ cursorpos() {
         echo '1;1'
         return
     fi
-
-    # Test reading from tty with timeout, return fake cursor position if timeout
-    read -t 0.1 -n 0 <>/dev/tty || {
-        exec 3>&-
-        echo '1;1'
-        return
-    }
     exec 3>&-
 
     # Now we can safely access /dev/tty
-    exec </dev/tty
-    oldstty=$(stty -g)
-    stty raw -echo min 0
-    printf '\033[6n' >/dev/tty
+    # Save current terminal settings
+    if has stty; then
+        oldstty=$(stty -g </dev/tty 2>/dev/null)
+        # Set raw mode
+        stty raw -echo </dev/tty 2>/dev/null
 
-    # Read cursor position response
-    pos=$(dd count=1 bs=32 2>/dev/null)
-    stty "$oldstty"
+        # Request cursor position
+        printf '\033[6n' >/dev/tty
 
-    # Parse response of format "ESC[row;colR"
-    case "$pos" in
-    *'['*';'*R*)
-        row=${pos#*[}
-        row=${row%;*}
-        col=${pos#*;}
-        col=${col%R}
-        echo "$((row - 1));$((col - 1))"
-        ;;
-    *)
-        echo '1;1'
-        ;;
-    esac
+        # Read a limited number of characters to prevent hanging
+        pos=""
+        i=0
+        while [ $i -lt 20 ]; do
+            # Read a single character
+            c=$(dd bs=1 count=1 </dev/tty 2>/dev/null)
+            [ -z "$c" ] && break
+            pos="$pos$c"
+
+            # Check if we've received the complete response
+            case "$pos" in
+            *R) break ;;
+            esac
+
+            i=$((i + 1))
+        done
+
+        # Restore terminal settings
+        stty "$oldstty" </dev/tty 2>/dev/null
+
+        # Parse response of format "ESC[row;colR"
+        case "$pos" in
+        *'['*';'*R*)
+            row=${pos#*[}
+            row=${row%;*}
+            col=${pos#*;}
+            col=${col%R}
+            echo "$((row - 1));$((col - 1))"
+            return
+            ;;
+        esac
+    fi
+
+    echo "1;1"
 }
 
 # Normalize percentage to number
