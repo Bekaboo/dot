@@ -546,7 +546,6 @@ and it should work out of the box.
     - [fzf-lua](https://github.com/ibhagwan/fzf-lua)
     - [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim)
         - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) (dependency)
-    - [nvim-colorizer.lua](https://github.com/NvChad/nvim-colorizer.lua)
     - [vim-fugitive](https://github.com/tpope/vim-fugitive)
         - [vim-rhubarb](https://github.com/tpope/vim-rhubarb) (dependency)
         - [fugitive-gitlab.vim](https://github.com/shumphrey/fugitive-gitlab.vim) (dependency)
