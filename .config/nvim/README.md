@@ -618,8 +618,9 @@ and it should work out of the box.
     - Add shadings to markdown code blocks
 - [z](lua/plugin/z.lua)
     - Jump between frequently visited directories with `:Z` command using
-      [z.lua](https://github.com/skywind3000/z.lua) or
-      [z.fish](https://github.com/jethrokuan/z)
+      [z.lua](https://github.com/skywind3000/z.lua),
+      [z.fish](https://github.com/jethrokuan/z), or
+      [zoxide](https://https://github.com/ajeetdsouza/zoxide)
 - [addasync](lua/plugin/addasync.lua)
     - Automatically add `async` to python/javascript/typescript functions
       containing `await`

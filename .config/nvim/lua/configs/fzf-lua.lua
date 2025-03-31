@@ -446,7 +446,7 @@ function fzf.z(opts)
   z.setup()
 
   -- Register action descriptions
-  actions.z = z.z
+  actions.z = z.jump
   core.ACTION_DEFINITIONS[actions.z] = { 'jump to dir' }
   config._action_to_helpstr[actions.z] = 'jump-to-dir'
 
@@ -457,7 +457,7 @@ function fzf.z(opts)
       prompt = 'Open directory: ',
       actions = {
         ['enter'] = {
-          fn = z.z,
+          fn = z.jump,
         },
       },
       fzf_opts = {
