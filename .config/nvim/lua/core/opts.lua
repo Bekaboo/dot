@@ -73,9 +73,11 @@ vim.api.nvim_create_autocmd('FileType', {
 
     for _, win in ipairs(vim.fn.win_findbuf(buf)) do
       local wo = vim.wo[win]
-      wo[0].foldexpr = 'v:lua.vim.treesitter.foldexpr()'
-      if wo.foldmethod == 'indent' or wo.foldmethod == 'manual' then
-        wo[0].foldmethod = 'expr'
+      if wo.foldexpr == '0' then
+        wo[0].foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+        if wo.foldmethod == 'indent' or wo.foldmethod == 'manual' then
+          wo[0].foldmethod = 'expr'
+        end
       end
     end
   end,
@@ -103,9 +105,11 @@ vim.api.nvim_create_autocmd({ 'LspAttach', 'LspDetach' }, {
       for buf, _ in pairs(client.attached_buffers) do
         for _, win in ipairs(vim.fn.win_findbuf(buf)) do
           local wo = vim.wo[win]
-          wo[0].foldexpr = lsp_foldexpr
-          if wo.foldmethod == 'indent' or wo.foldmethod == 'manual' then
-            wo[0].foldmethod = 'expr'
+          if wo.foldexpr == '0' or wo.foldexpr == ts_foldexpr then
+            wo[0].foldexpr = lsp_foldexpr
+            if wo.foldmethod == 'indent' or wo.foldmethod == 'manual' then
+              wo[0].foldmethod = 'expr'
+            end
           end
         end
       end
