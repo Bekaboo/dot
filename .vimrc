@@ -632,6 +632,19 @@ inoremap <C-g>+ <Esc>[szg`]a
 inoremap <C-g>= <C-g>u<Esc>[s1z=`]a<C-G>u
 " }}}
 
+" Foldng {{{2
+" Close all folds expect current
+function! s:foldother() abort
+  let lz = &lz
+  let &lz = 1
+  normal! zMzv
+  let &lz = lz
+endfunction
+
+nnoremap zV :call <SID>foldother()<CR>
+xnoremap zV :call <SID>foldother()<CR>
+" }}}
+
 " Selecting around quotes without extra spaces {{{2
 xmap a" 2i"
 xmap a' 2i'

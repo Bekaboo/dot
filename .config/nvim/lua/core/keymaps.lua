@@ -191,6 +191,14 @@ vim.api.nvim_create_autocmd('UIEnter', {
       }
     )
 
+    -- Folding
+    map({ 'n', 'x' }, 'zV', function()
+      local lz = vim.go.lz
+      vim.go.lz = true
+      vim.cmd.normal({ 'zMzv', bang = true })
+      vim.go.lz = lz
+    end, { desc = 'Close all folds except current' })
+
     -- Don't include extra spaces around quotes
     -- stylua: ignore start
     map({ 'o', 'x' }, 'a"', '2i"', { noremap = false, desc = 'Selet around double quotes' })
