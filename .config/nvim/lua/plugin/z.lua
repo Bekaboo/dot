@@ -118,7 +118,7 @@ local function cmp(cmd)
   ---@param cursorpos integer cursor position in the command line
   ---@return string[] completion completion results
   return function(_, cmdline, cursorpos)
-    -- HACK: use sting manipulation to get all args after the command instead
+    -- HACK: use string manipulation to get all args after the command instead
     -- of using `arglead` (only the last argument before cursor) to make the
     -- completion for multiple arguments just link `z` in shell
     -- e.g. if paths `/foo/bar` and `/baz/bar` are in z's database, then
