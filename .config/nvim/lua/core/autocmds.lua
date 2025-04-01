@@ -197,6 +197,10 @@ augroup('AutoCwd', {
         return
       end
 
+      -- Invalidate project root cache to update buffer cwd to consider
+      -- LSP root directories
+      vim.b[info.buf]._root_dir = nil
+
       _G._lsp_root_dirs = _G._lsp_root_dirs or {}
       _G._lsp_root_dirs[root_dir] = true
     end,
@@ -207,8 +211,44 @@ augroup('AutoCwd', {
     desc = 'Automatically change local current directory.',
     nested = true,
     callback = function(info)
+      ---Set cwd to `root_dir` for all windows for given buffer `buf`
+      ---@param buf integer
+      ---@param root_dir string
+      local function buf_lcd(buf, root_dir)
+        if not vim.api.nvim_buf_is_valid(buf) then
+          return
+        end
+
+        if vim.b[buf]._root_dir ~= root_dir then
+          vim.b[buf]._root_dir = root_dir
+        end
+
+        for _, win in ipairs(vim.fn.win_findbuf(buf)) do
+          vim.api.nvim_win_call(win, function()
+            -- Prevent unnecessary directory change, which triggers
+            -- DirChanged autocmds that may update winbar unexpectedly
+            if root_dir == vim.fn.getcwd(0) then
+              return
+            end
+            pcall(vim.cmd.lcd, {
+              root_dir,
+              mods = {
+                silent = true,
+                emsg_silent = true,
+              },
+            })
+          end)
+        end
+      end
+
       local file = info.file
       local buf = info.buf
+
+      local root_dir_cached = vim.b[buf]._root_dir
+      if root_dir_cached and vim.fn.isdirectory(root_dir_cached) == 1 then
+        buf_lcd(buf, root_dir_cached)
+        return
+      end
 
       -- Don't automatically change cwd in special buffers, e.g. help buffers
       -- or oil preview buffers
@@ -255,22 +295,7 @@ augroup('AutoCwd', {
         return
       end
 
-      for _, win in ipairs(vim.fn.win_findbuf(buf)) do
-        vim.api.nvim_win_call(win, function()
-          -- Prevent unnecessary directory change, which triggers
-          -- DirChanged autocmds that may update winbar unexpectedly
-          if root_dir == vim.fn.getcwd(0) then
-            return
-          end
-          pcall(vim.cmd.lcd, {
-            root_dir,
-            mods = {
-              silent = true,
-              emsg_silent = true,
-            },
-          })
-        end)
-      end
+      buf_lcd(buf, root_dir)
     end,
   },
 })
