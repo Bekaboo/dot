@@ -1,4 +1,6 @@
 show-diffs: true
+
+gitignore: false
 auto-commits: false
 chat-language: the same language of user's question
 
