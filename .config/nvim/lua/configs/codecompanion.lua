@@ -27,10 +27,10 @@ require('codecompanion').setup({
     chat = {
       adapter = adapter,
       slash_commands = {
-        ['symbols'] = { opts = { provider = 'fzf_lua' } },
-        ['buffer'] = { opts = { provider = 'fzf_lua' } },
-        ['file'] = { opts = { provider = 'fzf_lua' } },
-        ['help'] = { opts = { provider = 'fzf_lua' } },
+        symbols = { opts = { provider = 'fzf_lua' } },
+        buffer = { opts = { provider = 'fzf_lua' } },
+        file = { opts = { provider = 'fzf_lua' } },
+        help = { opts = { provider = 'fzf_lua' } },
       },
       keymaps = {
         options = { modes = { n = 'g?' } },
