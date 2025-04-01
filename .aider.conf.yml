@@ -1,4 +1,5 @@
 show-diffs: true
+watch-files: true
 
 gitignore: false
 auto-commits: false
