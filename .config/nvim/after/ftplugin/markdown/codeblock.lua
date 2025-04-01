@@ -2,9 +2,9 @@
 -- Ported from https://github.com/lukas-reineke/headlines.nvim
 
 local ft = vim.bo.ft
-local buf = vim.api.nvim_get_current_buf()
 local loaded_flag = 'loaded_codeblock_' .. ft
 
+-- Load plugin only once per filetype
 if vim.g[loaded_flag] ~= nil then
   return
 end
@@ -25,10 +25,19 @@ local query = vim.F.npcall(
   ]]
 )
 
-local function refresh()
-  vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
+local function refresh(buf)
+  if not vim.api.nvim_buf_is_valid(buf) then
+    return
+  end
 
-  if not query or vim.b.bigfile or vim.fn.win_gettype() ~= '' then
+  vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
+
+  if
+    not query
+    or vim.b.bigfile
+    or vim.bo[buf].ft ~= ft
+    or vim.fn.win_gettype() ~= ''
+  then
     return
   end
 
@@ -101,22 +110,29 @@ local function refresh()
 end
 
 local groupid = vim.api.nvim_create_augroup(ns_name, {})
+
 vim.api.nvim_create_autocmd({
   'FileChangedShellPost',
   'InsertLeave',
   'TextChanged',
 }, {
   group = groupid,
-  buffer = buf,
   desc = 'Refresh headlines.',
-  callback = refresh,
+  callback = function(info)
+    if vim.bo[info.buf].ft ~= ft then
+      return
+    end
+    refresh(info.buf)
+  end,
 })
 
 vim.api.nvim_create_autocmd('Syntax', {
   group = groupid,
   pattern = ft,
   desc = 'Refresh headlines.',
-  callback = refresh,
+  callback = function(info)
+    refresh(info.buf)
+  end,
 })
 
 local function set_default_hlgroups()
