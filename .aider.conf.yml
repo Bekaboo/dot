@@ -3,6 +3,8 @@ watch-files: true
 
 gitignore: false
 auto-commits: false
-chat-language: the same language of user's question
+
+cache-prompts: true
+chat-language: the same language of user's question, prefer English
 
 user-input-color: "" # use default foreground color
