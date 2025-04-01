@@ -2,6 +2,7 @@
 -- Ported from https://github.com/lukas-reineke/headlines.nvim
 
 local ft = vim.bo.ft
+local buf = vim.api.nvim_get_current_buf()
 local loaded_flag = 'loaded_codeblock_' .. ft
 
 if vim.g[loaded_flag] ~= nil then
@@ -11,7 +12,6 @@ vim.g[loaded_flag] = true
 
 local ns_name = ft .. 'CodeBlocks'
 local ns = vim.api.nvim_create_namespace(ns_name)
-local groupid = vim.api.nvim_create_augroup(ns_name, {})
 
 local has_quantified_captures = vim.fn.has('nvim-0.11.0') == 1
 
@@ -32,7 +32,6 @@ local function refresh()
     return
   end
 
-  local buf = vim.api.nvim_get_current_buf()
   local lang_tree = vim.treesitter.get_parser(buf, ft)
   if not lang_tree then
     return
@@ -101,12 +100,14 @@ local function refresh()
   end
 end
 
+local groupid = vim.api.nvim_create_augroup(ns_name, {})
 vim.api.nvim_create_autocmd({
   'FileChangedShellPost',
   'InsertLeave',
   'TextChanged',
 }, {
   group = groupid,
+  buffer = buf,
   desc = 'Refresh headlines.',
   callback = refresh,
 })
