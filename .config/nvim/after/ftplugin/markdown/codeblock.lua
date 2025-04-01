@@ -37,6 +37,7 @@ local function refresh(buf)
     or vim.b.bigfile
     or vim.bo[buf].ft ~= ft
     or vim.fn.win_gettype() ~= ''
+    or not vim.api.nvim_buf_is_loaded(buf)
   then
     return
   end
