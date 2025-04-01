@@ -11,6 +11,7 @@ return {
     cmd = {
       'TSInstall',
       'TSInstallSync',
+      'TSInstallFromGrammar',
       'TSInstallInfo',
       'TSUninstall',
       'TSUpdate',
