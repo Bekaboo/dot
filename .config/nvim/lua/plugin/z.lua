@@ -18,7 +18,7 @@ local function z_args_norm(args)
   return last_arg
       and require('utils.fs').is_full_path(last_arg)
       and { last_arg }
-      or args
+    or args
 end
 
 ---Given a list of args for `z`, return its corresponding escaped string to be
@@ -130,18 +130,18 @@ local function cmp(cmd)
 
     -- Avoid calling `z` on each keystroke when auto completion is enabled
     if
-        cmp_args_cache
-        and cmp_list_cache
-        and vim.startswith(argslead, cmp_args_cache)
+      cmp_args_cache
+      and cmp_list_cache
+      and vim.startswith(argslead, cmp_args_cache)
     then
       return vim
-          .iter(cmp_list_cache)
-          :filter(function(path)
-            return vim.iter(trigs):all(function(trig)
-              return path:find(trig, 1, true)
-            end)
+        .iter(cmp_list_cache)
+        :filter(function(path)
+          return vim.iter(trigs):all(function(trig)
+            return path:find(trig, 1, true)
           end)
-          :totable()
+        end)
+        :totable()
     end
 
     cmp_args_cache = argslead
@@ -194,11 +194,11 @@ function M.list(input)
   end
 
   return vim
-      .iter(vim.gsplit(o.stdout, '\n', { trimempty = true }))
-      :map(function(line)
-        return line:match('^[0-9.]*%s*(.*)')
-      end)
-      :totable()
+    .iter(vim.gsplit(o.stdout, '\n', { trimempty = true }))
+    :map(function(line)
+      return line:match('^[0-9.]*%s*(.*)')
+    end)
+    :totable()
 end
 
 ---Select and jump to z directories using `vim.ui.select()`
