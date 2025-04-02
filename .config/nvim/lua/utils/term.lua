@@ -62,7 +62,10 @@ end
 function M.parse_name(bufname)
   local path, pid, cmd, name =
     bufname:match('^term://(.*)//(%d+):([^#]*)%s*#?%s*(.*)')
-  return vim.trim(path), vim.trim(pid), vim.trim(cmd), vim.trim(name)
+  return vim.fn.fnamemodify(vim.trim(path), ':p'),
+    vim.trim(pid),
+    vim.trim(cmd),
+    vim.trim(name)
 end
 
 ---@param bufname string original terminal buffer name
