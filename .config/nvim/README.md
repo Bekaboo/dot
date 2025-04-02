@@ -528,8 +528,6 @@ and it should work out of the box.
     - [cmp-nvim-lsp-signature-help](https://github.com/hrsh7th/cmp-nvim-lsp-signature-help)
     - [cmp-dap](https://github.com/rcarriga/cmp-dap)
     - [LuaSnip](https://github.com/L3MON4D3/LuaSnip)
- - **LLM**
-    - [codecompanion.nvim](https://github.com/olimorris/codecompanion.nvim)
 - **Markup**
     - [vimtex](https://github.com/lervag/vimtex)
     - [markdown-preview.nvim](https://github.com/iamcco/markdown-preview.nvim)

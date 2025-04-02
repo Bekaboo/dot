@@ -152,3 +152,10 @@ vim.api.nvim_create_autocmd('InsertEnter', {
     end
   end,
 })
+
+-- aider
+if vim.g.loaded_aider == nil then
+  vim.keymap.set('n', '<Leader>@', function()
+    require('plugin.aider').toggle()
+  end, { desc = 'Aider chat panel' })
+end
