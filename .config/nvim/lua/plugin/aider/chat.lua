@@ -96,11 +96,14 @@ function aider_chat_t._new_from_path(path)
   )
   if
     vim.api.nvim_buf_call(chat.buf, function()
+      if not configs.validate(configs.opts) then
+        return 0
+      end
       return vim.fn.jobstart(configs.opts.aider_cmd, {
         term = true,
         cwd = path,
       })
-    end) < 0
+    end) <= 0
   then
     return -- failed to run `aider` command
   end
