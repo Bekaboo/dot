@@ -148,7 +148,7 @@ function aider_chat_t:open(win_configs)
   end
 
   -- Chat already visible in current tabpage, switch to it
-  local win = self:visible():next()
+  local win = self:wins():next()
   if win then
     vim.api.nvim_set_current_win(win)
     return
@@ -184,7 +184,7 @@ end
 
 ---Close aider chat window in current tabpage
 function aider_chat_t:close()
-  for win in self:visible() do
+  for win in self:wins() do
     -- Don't close the only window in current tabpage
     if #vim.api.nvim_tabpage_list_wins(0) <= 1 then
       vim.api.nvim_set_current_buf(vim.fn.bufnr('#'))
@@ -196,16 +196,17 @@ end
 
 ---Toggle aider chat
 function aider_chat_t:toggle()
-  if self:visible():peek() then
+  if self:wins():peek() then
     self:close()
   else
     self:open()
   end
 end
 
+---Get windows containing aider buffer in given `tabpage`
 ---@param tabpage? integer tabpage id, default to current tabpage
 ---@return Iter wins iterator of windows containing chat if it is visible in given tabpage, else `nil`
-function aider_chat_t:visible(tabpage)
+function aider_chat_t:wins(tabpage)
   if not vim.api.nvim_buf_is_valid(self.buf) then
     return vim.iter({})
   end
