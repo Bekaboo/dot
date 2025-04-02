@@ -189,8 +189,12 @@ end
 function aider_chat_t:close()
   for win in self:wins() do
     -- Don't close the only window in current tabpage
+    -- Try switching to alternative buffer to "close" the chat
     if #vim.api.nvim_tabpage_list_wins(0) <= 1 then
-      vim.api.nvim_set_current_buf(vim.fn.bufnr('#'))
+      local alt_buf = vim.fn.bufnr('#')
+      if alt_buf > 0 and alt_buf ~= self.buf then
+        vim.api.nvim_set_current_buf(alt_buf)
+      end
       break
     end
     vim.api.nvim_win_close(win, true)
