@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      BSD
--- Last Updated: Sun 30 Mar 2025 03:52:46 PM EDT
+-- Last Updated: Wed 02 Apr 2025 12:26:18 AM EDT
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -145,7 +145,7 @@ local hlgroups = {
   FloatTitle = { fg = c_other, bg = c_highlight, bold = true },
   FoldColumn = { fg = c_comment },
   Folded = { fg = c_comment, bg = c_highlight },
-  IncSearch = { bg = c_other, fg = c_background, bold = true },
+  IncSearch = { fg = c_background, bg = c_other, bold = true },
   LineNr = { fg = c_comment },
   MatchParen = { bg = c_highlight, bold = true },
   ModeMsg = { fg = c_foreground },
@@ -160,7 +160,7 @@ local hlgroups = {
   PmenuThumb = { bg = c_keyword },
   Question = { fg = c_string },
   QuickFixLine = { link = 'Visual' },
-  Search = { fg = c_background, bg = c_special2 },
+  Search = { fg = c_background, bg = c_warn, bold = true },
   SignColumn = { fg = c_comment },
   SpecialKey = { fg = c_special },
   SpellBad = { underdashed = true },
