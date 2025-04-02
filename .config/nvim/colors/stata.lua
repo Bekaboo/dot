@@ -28,6 +28,7 @@ local c_variable
 local c_generic
 local c_background
 local c_foreground
+local c_faded
 local c_highlight
 local c_lightgreen
 local c_lightblue
@@ -37,6 +38,7 @@ local c_lightyellow
 if vim.go.bg == 'dark' then
   c_background      = { '#232629', 235 }
   c_foreground      = { '#cccccc', 251 }
+  c_faded           = { '#2d3135', 236 }
   c_highlight       = { '#383c41', 238 }
   c_whitespace      = { '#bbbbbb', 250 }
   c_delimiter       = { '#888888', 245 }
@@ -59,6 +61,7 @@ if vim.go.bg == 'dark' then
 else
   c_background      = { '#ffffff', 231 }
   c_foreground      = { '#111111', 233 }
+  c_faded           = { '#f8fafa', 254 }
   c_highlight       = { '#f4f5f5', 255 }
   c_whitespace      = { '#e0e2e2', 250 }
   c_delimiter       = { '#888888', 245 }
@@ -131,7 +134,7 @@ local hlgroups = {
   Cursor = { fg = c_background, bg = c_foreground },
   CursorColumn = { bg = c_highlight },
   CursorIM = { link = 'Cursor' },
-  CursorLine = { bg = c_highlight },
+  CursorLine = { bg = c_faded },
   CursorLineNr = { fg = c_foreground, bold = true },
   DebugPC = { bg = c_lightgreen },
   DiffAdd = { bg = c_lightgreen, fg = c_background },
