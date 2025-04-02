@@ -184,9 +184,14 @@ end
 
 ---Close aider chat window in current tabpage
 function aider_chat_t:close()
-  self:visible():each(function(win)
+  for win in self:visible() do
+    -- Don't close the only window in current tabpage
+    if #vim.api.nvim_tabpage_list_wins(0) <= 1 then
+      vim.api.nvim_set_current_buf(vim.fn.bufnr('#'))
+      break
+    end
     vim.api.nvim_win_close(win, true)
-  end)
+  end
 end
 
 ---Toggle aider chat
