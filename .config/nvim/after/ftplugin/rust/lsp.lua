@@ -22,22 +22,4 @@ require('utils.lsp').start({
       params.initializationOptions = config.settings['rust-analyzer']
     end
   end,
-  -- Source: https://github.com/neovim/nvim-lspconfig/blob/master/lua/lspconfig/configs/rust_analyzer.lua
-  on_attach = function(client)
-    vim.api.nvim_buf_create_user_command(0, 'CargoReload', function()
-      client:request('rust-analyzer/reloadWorkspace', nil, function(err)
-        if err then
-          vim.notify(
-            string.format(
-              '[%s] Corresponding reload cargo workspace: %s',
-              client.name,
-              tostring(err)
-            )
-          )
-          return
-        end
-        vim.notify(string.format('[%s] Cargo workspace reloaded', client.name))
-      end, 0)
-    end, { desc = 'Reload current cargo workspace' })
-  end,
 })

@@ -155,35 +155,7 @@ if eslint_cmd then
           return 4 -- approved
         end,
       },
-      on_attach = function(client)
-        if formatter then
-          disable_formatting(client)
-        end
-        vim.api.nvim_buf_create_user_command(0, 'EslintFixAll', function(args)
-          local buf = vim.api.nvim_get_current_buf()
-          local request = require('utils.cmd').parse_cmdline_args(args.fargs).async
-              and function(bufnr, method, params)
-                client:request(method, params, nil, bufnr)
-              end
-            or function(bufnr, method, params)
-              client:request_sync(method, params, nil, bufnr)
-            end
-
-          request(0, 'workspace/executeCommand', {
-            command = 'eslint.applyAllFixes',
-            arguments = {
-              {
-                uri = vim.uri_from_bufnr(buf),
-                version = vim.lsp.util.buf_versions[buf],
-              },
-            },
-          })
-        end, {
-          desc = 'Fix all eslint problems for this buffer',
-          nargs = '?',
-          complete = require('utils.cmd').complete(nil, { 'async' }),
-        })
-      end,
+      on_attach = formatter and disable_formatting,
       before_init = function(_, config)
         local root_dir = config.root_dir or vim.fn.getcwd(0)
         -- The 'workspaceFolder' is a VSCode concept, it limits how far the
