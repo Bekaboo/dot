@@ -1,19 +1,19 @@
 local lsp = require('utils.lsp')
 
-local root_patterns = { 'go.work', 'go.mod' }
+local root_markers = { 'go.work', 'go.mod' }
 
-local golangci_root_patterns = vim.list_extend({
+local golangci_root_markers = vim.list_extend({
   '.goalngci.yml',
   '.golangci.yaml',
   '.golangci.toml',
   '.golangci.json',
-}, root_patterns)
+}, root_markers)
 
 lsp.start({
   cmd = { 'efm-langserver' },
   requires = { 'golangci-lint' },
   name = 'efm-linter-golangci-lint',
-  root_patterns = golangci_root_patterns,
+  root_markers = golangci_root_markers,
   settings = {
     languages = {
       go = {
@@ -25,7 +25,7 @@ lsp.start({
           lintSource = 'golangci-lint',
           lintStdin = false,
           lintSeverity = 2,
-          rootMarkers = golangci_root_patterns,
+          rootMarkers = golangci_root_markers,
         },
       },
     },
@@ -36,7 +36,7 @@ local formatter = lsp.start({
   cmd = { 'efm-langserver' },
   requires = { 'gofmt' },
   name = 'efm-formatter-gofmt',
-  root_patterns = root_patterns,
+  root_markers = root_markers,
   init_options = {
     documentFormatting = true,
   },
@@ -46,7 +46,7 @@ local formatter = lsp.start({
         {
           formatStdin = true,
           formatCommand = 'gofmt -s',
-          rootMarkers = root_patterns,
+          rootMarkers = root_markers,
         },
       },
     },
@@ -59,7 +59,7 @@ vim.env.CGO_ENABLED = 0
 
 lsp.start({
   cmd = { 'gopls' },
-  root_patterns = root_patterns,
+  root_markers = root_markers,
   on_attach = formatter and function(client)
     client.server_capabilities.documentFormattingProvider = false
   end or nil,

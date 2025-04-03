@@ -13,7 +13,7 @@ if
 then
   formatter = lsp.start({
     cmd = { 'biome', 'lsp-proxy' },
-    root_patterns = {
+    root_markers = {
       'biome.json',
       'biome.jsonc',
     },
@@ -26,7 +26,7 @@ if not formatter then
     or vim.fn.executable('prettier') == 1 and 'prettier'
 
   if prettier_cmd then
-    local prettier_root_patterns = {
+    local prettier_root_markers = {
       'prettier.config.js',
       'prettier.config.mjs',
       'prettier.config.cjs',
@@ -49,14 +49,14 @@ if not formatter then
           .. ' --stdin-filepath ${INPUT} ${--range-start=charStart} ${--range-end=charEnd} ${--tab-width=tabWidth} ${--use-tabs=!insertSpaces}',
         formatCanRange = true,
         formatStdin = true,
-        rootMarkers = prettier_root_patterns,
+        rootMarkers = prettier_root_markers,
       },
     }
 
     formatter = lsp.start({
       cmd = { 'efm-langserver' },
       name = 'efm-formatter-' .. prettier_cmd,
-      root_patterns = prettier_root_patterns,
+      root_markers = prettier_root_markers,
       init_options = {
         documentFormatting = true,
         documentRangeFormatting = true,
@@ -92,7 +92,7 @@ local eslint_cmd = vim.fn.executable('eslint-language-server') == 1
 
 if eslint_cmd then
   local eslint_client_id
-  local eslint_root_patterns = {
+  local eslint_root_markers = {
     'eslint.config.js',
     'eslint.config.mjs',
     'eslint.config.cjs',
@@ -173,7 +173,7 @@ if eslint_cmd then
         end
 
         -- Support flat config
-        if vim.iter(eslint_root_patterns):any(file_exists) then
+        if vim.iter(eslint_root_markers):any(file_exists) then
           config.settings.experimental.useFlatConfig = true
         end
 
@@ -199,7 +199,7 @@ if eslint_cmd then
         lintSource = eslint_cmd,
         lintStdin = true,
         lintIgnoreExitCode = true,
-        rootMarkers = eslint_root_patterns,
+        rootMarkers = eslint_root_markers,
       },
     }
 
@@ -215,7 +215,7 @@ if eslint_cmd then
         documentRangeFormatting = true,
       },
       on_attach = formatter and disable_formatting,
-      root_patterns = eslint_root_patterns,
+      root_markers = eslint_root_markers,
       settings = {
         languages = {
           javascript = eslint_lang_settings,
@@ -235,7 +235,7 @@ end
 if vim.bo.ft == 'typescript' or vim.bo.ft == 'javascript' then
   lsp.start({
     cmd = { 'typescript-language-server', '--stdio' },
-    root_patterns = {
+    root_markers = {
       'tsconfig.json',
       'jsconfig.json',
       'package.json',

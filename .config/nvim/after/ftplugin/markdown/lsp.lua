@@ -3,11 +3,11 @@ local lsp = require('utils.lsp')
 local server_configs = {
   {
     cmd = { 'marksman' },
-    root_patterns = { '.marksman.toml' },
+    root_markers = { '.marksman.toml' },
   },
   {
     cmd = { 'markdown-oxide' },
-    root_patterns = { '.moxide.toml' },
+    root_markers = { '.moxide.toml' },
   },
 }
 

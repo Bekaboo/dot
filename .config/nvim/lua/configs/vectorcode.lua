@@ -16,7 +16,7 @@ local function vc_activate(buf)
     if root_dir and vim.fn.isdirectory(root_dir) == 1 then
       return root_dir
     end
-    return vim.fs.root(buf, require('utils.fs').root_patterns)
+    return vim.fs.root(buf, require('utils.fs').root_markers)
   end)()
   if vim.fn.isdirectory(vim.fs.joinpath(cwd, '.vectorcode')) == 0 then
     vim.system({ 'vectorcode', 'vectorise' }, { cwd = cwd })

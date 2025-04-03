@@ -281,7 +281,7 @@ augroup('AutoCwd', {
       end)()
 
       local root_dir = lsp_root_dir
-        or vim.fs.root(file, fs_utils.root_patterns)
+        or vim.fs.root(file, fs_utils.root_markers)
 
       if
         not root_dir

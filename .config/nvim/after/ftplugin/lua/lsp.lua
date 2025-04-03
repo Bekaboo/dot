@@ -4,7 +4,7 @@ lsp.start({
   cmd = { 'efm-langserver' },
   requires = { 'luacheck' },
   name = 'efm-linter-luacheck',
-  root_patterns = { '.luacheckrc' },
+  root_markers = { '.luacheckrc' },
   settings = {
     languages = {
       lua = {
@@ -22,12 +22,12 @@ lsp.start({
 })
 
 -- Use efm to attach stylua formatter as a language server
-local stylua_root_patterns = { 'stylua.toml', '.stylua.toml' }
+local stylua_root_markers = { 'stylua.toml', '.stylua.toml' }
 local formatter = lsp.start({
   cmd = { 'efm-langserver' },
   requires = { 'stylua' },
   name = 'efm-formatter-stylua',
-  root_patterns = stylua_root_patterns,
+  root_markers = stylua_root_markers,
   init_options = {
     documentFormatting = true,
     documentRangeFormatting = true,
@@ -41,7 +41,7 @@ local formatter = lsp.start({
           -- Use `--stdin-filepath` as a workaround to make stylua respect
           -- `.stylua.toml`, see https://github.com/JohnnyMorganz/StyLua/issues/928
           formatCommand = 'stylua --stdin-filepath ./"$(tr -dc A-Za-z0-9 </dev/urandom | head -c 13)" ${--indent-width:tabSize} ${--range-start:charStart} ${--range-end:charEnd} --color Never -',
-          rootMarkers = stylua_root_patterns,
+          rootMarkers = stylua_root_markers,
         },
       },
     },
@@ -52,7 +52,7 @@ local formatter = lsp.start({
 -- if efm launched successfully
 lsp.start({
   cmd = { 'lua-language-server' },
-  root_patterns = { '.luarc.json', '.luarc.jsonc' },
+  root_markers = { '.luarc.json', '.luarc.jsonc' },
   settings = {
     Lua = {
       hint = { enable = true },

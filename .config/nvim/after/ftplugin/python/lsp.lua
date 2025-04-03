@@ -1,6 +1,6 @@
 local lsp = require('utils.lsp')
 
-local root_patterns = {
+local root_markers = {
   'Pipfile',
   'pyproject.toml',
   'requirements.txt',
@@ -12,18 +12,18 @@ local root_patterns = {
 local formatter = lsp.start({
   cmd = { 'ruff', 'server' },
   buf_support = false,
-  root_patterns = vim.list_extend(
+  root_markers = vim.list_extend(
     { 'ruff.toml', '.ruff.toml' },
-    root_patterns
+    root_markers
   ),
 })
 
-local pylint_root_patterns = vim.list_extend({ 'pylintrc' }, root_patterns)
+local pylint_root_markers = vim.list_extend({ 'pylintrc' }, root_markers)
 lsp.start({
   cmd = { 'efm-langserver' },
   requires = { 'pylint' },
   name = 'efm-linter-pylint',
-  root_patterns = pylint_root_patterns,
+  root_markers = pylint_root_markers,
   settings = {
     languages = {
       python = {
@@ -33,19 +33,19 @@ lsp.start({
           lintFormats = { '%f:%l:%c: %t%.%#: %m' },
           lintStdin = true,
           lintSeverity = 2,
-          rootMarkers = pylint_root_patterns,
+          rootMarkers = pylint_root_markers,
         },
       },
     },
   },
 })
 
-local flake8_root_patterns = vim.list_extend({ '.flake8' }, root_patterns)
+local flake8_root_markers = vim.list_extend({ '.flake8' }, root_markers)
 lsp.start({
   cmd = { 'efm-langserver' },
   requires = { 'flake8' },
   name = 'efm-linter-flake8',
-  root_patterns = flake8_root_patterns,
+  root_markers = flake8_root_markers,
   settings = {
     languages = {
       -- Source: https://github.com/creativenull/efmls-configs-nvim/blob/main/lua/efmls-configs/linters/flake8.lua
@@ -56,20 +56,20 @@ lsp.start({
           lintFormats = { 'stdin:%l:%c: %t%n %m' },
           lintIgnoreExitCode = true,
           lintStdin = true,
-          rootMarkers = flake8_root_patterns,
+          rootMarkers = flake8_root_markers,
         },
       },
     },
   },
 })
 
-local mypy_root_patterns =
-  vim.list_extend({ 'mypy.ini', '.mypy.ini' }, root_patterns)
+local mypy_root_markers =
+  vim.list_extend({ 'mypy.ini', '.mypy.ini' }, root_markers)
 lsp.start({
   cmd = { 'efm-langserver' },
   requires = { 'mypy' },
   name = 'efm-linter-mypy',
-  root_patterns = mypy_root_patterns,
+  root_markers = mypy_root_markers,
   settings = {
     languages = {
       -- https://github.com/creativenull/efmls-configs-nvim/blob/main/lua/efmls-configs/linters/mypy.lua
@@ -85,7 +85,7 @@ lsp.start({
           -- Mypy does not support reading from stdin, see
           -- https://github.com/python/mypy/issues/12235
           lintStdin = false,
-          rootMarkers = mypy_root_patterns,
+          rootMarkers = mypy_root_markers,
         },
       },
     },
@@ -97,7 +97,7 @@ formatter = formatter
   or lsp.start({
     cmd = { 'efm-langserver' },
     requires = { 'black' },
-    root_patterns = root_patterns,
+    root_markers = root_markers,
     name = 'efm-formatter-black',
     init_options = { documentFormatting = true },
     settings = {
@@ -117,11 +117,11 @@ formatter = formatter
 -- `source.organizeImports.ruff` but it is not considered as a format operation
 -- and will not run on `vim.lsp.buf.format()`, see
 -- https://github.com/astral-sh/ruff/issues/8926#issuecomment-1834048218
-local isort_root_patterns = vim.list_extend({ '.isort.cfg' }, root_patterns)
+local isort_root_markers = vim.list_extend({ '.isort.cfg' }, root_markers)
 lsp.start({
   cmd = { 'efm-langserver' },
   requires = { 'isort' },
-  root_patterns = isort_root_patterns,
+  root_markers = isort_root_markers,
   name = 'efm-formatter-isort',
   init_options = { documentFormatting = true },
   settings = {
@@ -130,7 +130,7 @@ lsp.start({
         {
           formatCommand = 'isort --quiet -',
           formatStdin = true,
-          rootMarkers = isort_root_patterns,
+          rootMarkers = isort_root_markers,
         },
       },
     },
@@ -146,8 +146,8 @@ if formatter then
   end
 end
 
-local pyright_root_patterns =
-  vim.list_extend({ 'pyrightconfig.json' }, root_patterns)
+local pyright_root_markers =
+  vim.list_extend({ 'pyrightconfig.json' }, root_markers)
 
 local pyright_settings = {
   -- Too many warnings in default 'recommended' mode from basedpyright
@@ -162,26 +162,26 @@ local pyright_settings = {
 local server_configs = {
   {
     cmd = { 'basedpyright-langserver', '--stdio' },
-    root_patterns = pyright_root_patterns,
+    root_markers = pyright_root_markers,
     settings = {
       basedpyright = pyright_settings,
     },
   },
   {
     cmd = { 'pyright-langserver', '--stdio' },
-    root_patterns = pyright_root_patterns,
+    root_markers = pyright_root_markers,
     settings = {
       python = pyright_settings,
     },
   },
   {
     cmd = { 'pylsp' },
-    root_patterns = root_patterns,
+    root_markers = root_markers,
     on_attach = disable_formatting,
   },
   {
     cmd = { 'jedi-language-server' },
-    root_patterns = root_patterns,
+    root_markers = root_markers,
     on_attach = disable_formatting,
   },
 }

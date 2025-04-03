@@ -3,7 +3,7 @@ local lsp = require('utils.lsp')
 local server_configs = {
   {
     cmd = { 'clangd' },
-    root_patterns = {
+    root_markers = {
       '.clangd',
       '.clang-tidy',
       '.clang-format',
@@ -14,7 +14,7 @@ local server_configs = {
   },
   {
     cmd = { 'ccls' },
-    root_patterns = { '.ccls', 'compile_commands.json' },
+    root_markers = { '.ccls', 'compile_commands.json' },
   },
 }
 
