@@ -2,14 +2,19 @@ local M = {}
 
 ---@class aider_opts_t
 M.opts = {
-  ---Command to launch aider
-  ---@type string[]
-  aider_cmd = { 'aider' },
-  ---Window configuration used to open the aider panel
-  ---@type vim.api.keyset.win_config
-  win_configs = {
-    split = 'right',
-    win = 0,
+  chat = {
+    ---Command to launch aider
+    ---@type string[]
+    aider_cmd = { 'aider' },
+    ---Project root markers to open aider in
+    ---@type string[]
+    root_markers = require('plugin.aider.utils').fs.root_markers,
+    ---Window configuration used to open the aider panel
+    ---@type vim.api.keyset.win_config
+    win_configs = {
+      split = 'right',
+      win = 0,
+    },
   },
   watch = {
     ---Whether to watch files for inline AI comments
@@ -50,7 +55,7 @@ M.opts = {
 ---@param opts aider_opts_t
 ---@return boolean success
 function M.validate(opts)
-  local aider_exe = opts.aider_cmd[1]
+  local aider_exe = opts.chat.aider_cmd[1]
   if not aider_exe or vim.fn.executable(aider_exe) == 0 then
     vim.notify_once(
       string.format('[aider] `%s` is not executable', tostring(aider_exe)),

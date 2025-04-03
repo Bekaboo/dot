@@ -58,7 +58,7 @@ function aider_chat_t._new_from_buf(buf)
   end
 
   local dir, _, cmd = utils.term.parse_name(vim.api.nvim_buf_get_name(buf))
-  local aider_exe = configs.opts.aider_cmd[1]
+  local aider_exe = configs.opts.chat.aider_cmd[1]
   if
     not vim.startswith(cmd, aider_exe)
     and not vim.startswith(cmd, vim.fn.exepath(aider_exe))
@@ -99,7 +99,7 @@ function aider_chat_t._new_from_dir(dir)
       if not configs.validate(configs.opts) then
         return 0
       end
-      return vim.fn.jobstart(configs.opts.aider_cmd, {
+      return vim.fn.jobstart(configs.opts.chat.aider_cmd, {
         term = true,
         cwd = dir,
       })
@@ -147,7 +147,7 @@ function aider_chat_t.get(path)
     path = vim.fn.getcwd(0)
   end
   if vim.fn.isdirectory(path) == 0 then
-    path = vim.fs.root(path, utils.fs.root_patterns) or vim.fs.dirname(path)
+    path = vim.fs.root(path, configs.opts.chat.root_markers) or vim.fs.dirname(path)
   end
   if not vim.uv.fs_stat(path) then
     return
@@ -183,7 +183,7 @@ function aider_chat_t:open(win_configs, enter)
   local new_win = vim.api.nvim_open_win(
     self.buf,
     true,
-    vim.tbl_deep_extend('force', configs.opts.win_configs, win_configs or {})
+    vim.tbl_deep_extend('force', configs.opts.chat.win_configs, win_configs or {})
   )
   if new_win > 0 and not self.entered then
     vim.api.nvim_win_call(new_win, function()
