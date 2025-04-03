@@ -16,8 +16,14 @@ function M.setup(opts)
     return
   end
   vim.g.loaded_aider = true
-  if not require('plugin.aider.configs').set(opts) then
+
+  local configs = require('plugin.aider.configs')
+  if not configs.set(opts) then
     return
+  end
+
+  if configs.opts.watch.enabled then
+    require('plugin.aider.watch').watch()
   end
 end
 

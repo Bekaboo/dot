@@ -158,4 +158,13 @@ if vim.g.loaded_aider == nil then
   vim.keymap.set('n', '<Leader>@', function()
     require('plugin.aider').toggle()
   end, { desc = 'Aider chat panel' })
+
+  vim.api.nvim_create_autocmd('BufWritePre', {
+    group = vim.api.nvim_create_augroup('AiderSetup', {}),
+    desc = 'Init aider plugin.',
+    once = true,
+    callback = function()
+      require('plugin.aider').setup()
+    end,
+  })
 end

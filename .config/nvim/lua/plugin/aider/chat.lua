@@ -3,7 +3,7 @@ local configs = require('plugin.aider.configs')
 
 ---@class aider_chat_t
 ---@field buf integer
----@field path string
+---@field dir string
 ---@field entered? true whether we have ever entered this aider terminal buffer
 local aider_chat_t = {}
 
@@ -11,7 +11,7 @@ local aider_chat_t = {}
 local chats = {}
 
 ---@class aider_chat_opts_t
----@field path? string path to a project or a project file, aider chat will be created at the project root
+---@field dir? string path to project root directory where aider chat will be created
 ---@field buf? integer existing aider terminal buffer
 
 ---Create a new aider chat
@@ -24,7 +24,7 @@ function aider_chat_t.new(opts)
     if opts.buf then
       return aider_chat_t._new_from_buf(opts.buf)
     end
-    return aider_chat_t._new_from_path(opts.path)
+    return aider_chat_t._new_from_dir(opts.dir)
   end)()
 
   if not chat then
@@ -35,11 +35,11 @@ function aider_chat_t.new(opts)
   vim.bo[chat.buf].ft = 'aider'
 
   -- Record chat to chats indexed by cwd
-  local old_chat = chats[chat.path]
-  if old_chat and vim.api.nvim_buf_is_valid(old_chat.buf) then
-    vim.api.nvim_buf_delete(old_chat.buf, { force = true })
+  local old_chat = chats[chat.dir]
+  if old_chat then
+    old_chat:del()
   end
-  chats[chat.path] = chat
+  chats[chat.dir] = chat
 
   return chat
 end
@@ -57,7 +57,7 @@ function aider_chat_t._new_from_buf(buf)
     return
   end
 
-  local path, _, cmd = utils.term.parse_name(vim.api.nvim_buf_get_name(buf))
+  local dir, _, cmd = utils.term.parse_name(vim.api.nvim_buf_get_name(buf))
   local aider_exe = configs.opts.aider_cmd[1]
   if
     not vim.startswith(cmd, aider_exe)
@@ -68,7 +68,7 @@ function aider_chat_t._new_from_buf(buf)
 
   -- Create aider instance, no need to call `jobstart` as aider is already
   -- running in `buf`
-  local chat = setmetatable({ path = path, buf = buf }, {
+  local chat = setmetatable({ dir = dir, buf = buf }, {
     __index = aider_chat_t,
   })
 
@@ -76,14 +76,14 @@ function aider_chat_t._new_from_buf(buf)
 end
 
 ---@private
----@param path? string
+---@param dir? string
 ---@return aider_chat_t?
-function aider_chat_t._new_from_path(path)
-  if not path then
-    path = vim.fn.getcwd(0)
-  elseif vim.fn.isdirectory(path) == 0 then
+function aider_chat_t._new_from_dir(dir)
+  if not dir then
+    dir = vim.fn.getcwd(0)
+  elseif vim.fn.isdirectory(dir) == 0 then
     vim.notify(
-      string.format("[aider] '%s' is not a valid directory", path),
+      string.format("[aider] '%s' is not a valid directory", dir),
       vim.log.levels.WARN
     )
     return
@@ -91,7 +91,7 @@ function aider_chat_t._new_from_path(path)
 
   -- Create an aider instance
   local chat = setmetatable(
-    { path = path, buf = vim.api.nvim_create_buf(false, true) },
+    { dir = dir, buf = vim.api.nvim_create_buf(false, true) },
     { __index = aider_chat_t }
   )
   if
@@ -101,7 +101,7 @@ function aider_chat_t._new_from_path(path)
       end
       return vim.fn.jobstart(configs.opts.aider_cmd, {
         term = true,
-        cwd = path,
+        cwd = dir,
       })
     end) <= 0
   then
@@ -124,36 +124,58 @@ function aider_chat_t:del()
   end
 
   -- Remove from chat list
-  if self.path then
-    chats[self.path] = nil
+  if self.dir then
+    chats[self.dir] = nil
   end
 end
 
+---Check if a chat is valid, if not, delete the chat
+---@return boolean
+function aider_chat_t:validate()
+  local valid = self.buf and vim.api.nvim_buf_is_valid(self.buf)
+  if not valid then
+    self:del()
+  end
+  return valid
+end
+
 ---Get a valid aider chat in `path`
----@param path? string default to cwd
+---@param path? string file or directory path, default to cwd
 ---@return aider_chat_t?
 function aider_chat_t.get(path)
   if not path then
-    path = vim.fn.fnamemodify(vim.fn.getcwd(0), ':p')
+    path = vim.fn.getcwd(0)
   end
+  if vim.fn.isdirectory(path) == 0 then
+    path = vim.fs.root(path, utils.fs.root_patterns) or vim.fs.dirname(path)
+  end
+  if not vim.uv.fs_stat(path) then
+    return
+  end
+  -- Normalized `path`, always use absoluate path and include trailing slash
+  path = vim.fn.fnamemodify(path, ':p')
+
   local chat = chats[path]
-  if chat and vim.api.nvim_buf_is_valid(chat.buf) then
+  if chat and chat:validate() then
     return chat
   end
-  return aider_chat_t.new({ path = path })
+  return aider_chat_t.new({ dir = path })
 end
 
 ---Open chat in current tabpage
 ---@param win_configs? vim.api.keyset.win_config
-function aider_chat_t:open(win_configs)
-  if not self.buf or not vim.api.nvim_buf_is_valid(self.buf) then
+---@param enter? boolean enter the chat window, default `true`
+function aider_chat_t:open(win_configs, enter)
+  if not self:validate() then
     return
   end
 
   -- Chat already visible in current tabpage, switch to it
   local win = self:wins():next()
   if win then
-    vim.api.nvim_set_current_win(win)
+    if enter or enter == nil then
+      vim.api.nvim_set_current_win(win)
+    end
     return
   end
 
@@ -165,12 +187,12 @@ function aider_chat_t:open(win_configs)
   )
   if new_win > 0 and not self.entered then
     vim.api.nvim_win_call(new_win, function()
-      -- Good to set cwd to `path` for better integration, e.g.
+      -- Good to set cwd to `dir` for better integration, e.g.
       -- we can use fuzzy finders like fzf-lua, telescope, etc. to find files
-      -- in aider's path (project root), or use `:e .` to edit project root
-      if vim.fn.getcwd(0) ~= self.path then
+      -- in aider's dir (project root), or use `:e .` to edit project root
+      if vim.fn.getcwd(0) ~= self.dir then
         vim.cmd.lcd({
-          vim.fn.fnameescape(self.path),
+          vim.fn.fnameescape(self.dir),
           mods = { silent = true, emsg_silent = true },
         })
       end
@@ -214,7 +236,7 @@ end
 ---@param tabpage? integer tabpage id, default to current tabpage
 ---@return Iter wins iterator of windows containing chat if it is visible in given tabpage, else `nil`
 function aider_chat_t:wins(tabpage)
-  if not vim.api.nvim_buf_is_valid(self.buf) then
+  if not self:validate() then
     return vim.iter({})
   end
 
@@ -228,6 +250,36 @@ function aider_chat_t:wins(tabpage)
     return vim.fn.winbufnr(win) == self.buf
   end)
 end
+
+---@param pattern string
+---@return fun(chat: aider_chat_t): boolean
+local function check_pending(pattern)
+  return function(chat)
+    if not chat:validate() then
+      return false
+    end
+
+    local linenr = vim.fn.prevnonblank(vim.api.nvim_buf_line_count(chat.buf))
+    if linenr <= 0 then
+      return true
+    end
+
+    return vim.api
+      .nvim_buf_get_lines(chat.buf, linenr - 1, linenr, false)[1]
+      :match(pattern) ~= nil
+  end
+end
+
+---Check if chat has pending confirm, e.g.
+--- - "Add file to the chat? (Y)es/(N)o/(D)on't ask again \[Yes\]:"
+--- - "No git repo found, create one to track aider's changes (recommended)? (Y)es/(N)o \[Yes\]:"
+aider_chat_t.confirm_pending = check_pending('%(Y%)es/*%(N%)o')
+
+---Check if chat is waiting for input, e.g.
+--- - ">"
+--- - "multi>"
+--- - "architect multi>"
+aider_chat_t.input_pending = check_pending('>$')
 
 ---Iterate all buffers and add aider terminal buffers to `chats`
 local function init_chats()

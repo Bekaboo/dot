@@ -1,31 +1,26 @@
 local M = {}
 
-local is_windows ---@type boolean?
-
----Check if nvim is running on Windows
----@return boolean
-function M.is_windows()
-  if is_windows ~= nil then
-    return is_windows
-  end
-  is_windows = vim.uv.os_uname().sysname:find('Windows', 1, true) ~= nil
-  return is_windows
-end
-
----Use GNU tools shipped with git on Windows
+---Normalize executable path
+---If `cmd` is executable, it is returned as is; else we try to find it under
+---git installation and return its path; return `false` if we cannot find it
 ---@type table<string, string|false>
-M.gnu_tool_paths = vim.defaulttable(function(cmd)
-  if not M.is_windows() then
+M.exepath = vim.defaulttable(function(cmd)
+  if vim.fn.executable(cmd) == 1 then
     return cmd
   end
+
+  -- Windows git intallation ships some GNU tools, so try to find tools under
+  -- git installation
   local git = vim.fn.exepath('git')
   if git == '' then
     return false
   end
-  return vim.fs.joinpath(
+
+  cmd = vim.fs.joinpath(
     vim.fs.joinpath(vim.fs.dirname(vim.fs.dirname(git)), 'usr/bin'),
     cmd
   )
+  return vim.fn.executable(cmd) == 1 and cmd or false
 end)
 
 return M

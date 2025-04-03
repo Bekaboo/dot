@@ -119,7 +119,7 @@ local function preview_set_lines(win, all)
     local os_utils = require('utils.os')
 
     if stat.type == 'directory' then
-      local ls_cmd = os_utils.gnu_tool_paths.ls
+      local ls_cmd = os_utils.exepath.ls
       if not ls_cmd then
         return preview_msg(
           '`ls` is required to previous directories',
@@ -149,7 +149,7 @@ local function preview_set_lines(win, all)
         :totable()
     end
 
-    local file_cmd = os_utils.gnu_tool_paths.file
+    local file_cmd = os_utils.exepath.file
     local ft = file_cmd and vim.system({ file_cmd, path }):wait().stdout
     if ft and not ft:match('text') and not ft:match('empty') then
       vim.b[buf]._oil_preview_msg_shown = bufname

@@ -2,11 +2,48 @@ local M = {}
 
 ---@class aider_opts_t
 M.opts = {
+  ---Command to launch aider
+  ---@type string[]
   aider_cmd = { 'aider' },
+  ---Window configuration used to open the aider panel
   ---@type vim.api.keyset.win_config
   win_configs = {
     split = 'right',
     win = 0,
+  },
+  watch = {
+    ---Whether to watch files for inline AI comments
+    ---When `true`, launch aider automatically when AI comments are detected
+    ---See: https://aider.chat/docs/usage/watch.html#ai-comments
+    ---@type boolean
+    enabled = true,
+    ---Commands to search for AI comments
+    ---@type string[][]
+    cmds = {
+      { 'rg', '-qi', [=[(--|//|#).*\<ai\>[!?]]=], '%s' },
+      { 'grep', '-qiE', [=[(--|//|#).*\<ai\>[!?]]=], '%s' },
+      {
+        vim.v.progpath, -- nvim
+        '--clean',
+        '--headless',
+        [==[+lua
+          regex = vim.regex([=[\(--\|//\|#\).*\<ai\>[?!]]=])
+          for line in io.lines('%s') do
+            if regex:match_str(line) then
+              vim.cmd.qa()
+            end
+          end
+          vim.cmd.cq()
+        ]==],
+        '+qa!', -- ensure that nvim can exit
+      },
+    },
+    ---Interval to check for file or aider buffer update
+    ---@type integer
+    check_interval = 1000,
+    ---Timeout waiting for aider to render
+    ---@type integer
+    render_timeout = 1600,
   },
 }
 
