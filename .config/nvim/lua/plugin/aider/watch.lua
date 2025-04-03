@@ -13,7 +13,7 @@ function M.watch_cmd(file)
 
   local watch_cmds = configs.opts.watch.cmds
   for _, cmd in ipairs(watch_cmds) do
-    local exe = cmd[1] and utils.os.exepath[cmd[1]]
+    local exe = cmd[1] and utils.os.exepath[cmd[1]] -- normalized grep tool execution path
     if exe then
       local result = vim.deepcopy(cmd)
       result[1] = exe
@@ -56,34 +56,24 @@ function M.act(file)
   -- Only enter the chat if there is a pending confirm
   chat:open({}, chat:confirm_pending())
 
-  local check_interval = configs.opts.watch.check_interval
-  local render_timeout = configs.opts.watch.render_timeout
-
-  ---Check if `file` has been modified by aider
-  local function checktime()
-    if chat:validate() and not chat:input_pending() then
-      vim.defer_fn(checktime, check_interval)
-      return
-    end
-    vim.cmd.checktime({ file, mods = { emsg_silent = true } })
-  end
-
-  ---Update last change time of `file` after the pending confirm is resolved
-  local function touch()
-    if chat:validate() and chat:confirm_pending() then
-      vim.defer_fn(touch, check_interval)
-      return
-    end
-    vim.uv.fs_stat(file, function(_, stat)
-      if not stat then
-        return
-      end
-      vim.uv.fs_utime(file, stat.atime.sec, stat.mtime.sec)
-      vim.defer_fn(checktime, render_timeout)
+  -- Update last change time of `file` when aider is ready for input
+  chat:wait_input_pending(function()
+    chat:wait_watcher(function()
+      vim.uv.fs_stat(file, function(_, stat)
+        if not stat then
+          return
+        end
+        vim.uv.fs_utime(file, stat.atime.sec, stat.mtime.sec)
+        vim.schedule(function()
+          chat:wait_response(function()
+            chat:wait_input_pending(function()
+              vim.cmd.checktime({ file, mods = { emsg_silent = true } })
+            end)
+          end)
+        end)
+      end)
     end)
-  end
-
-  vim.defer_fn(touch, render_timeout)
+  end)
 end
 
 ---Check inline AI comments in given `file`

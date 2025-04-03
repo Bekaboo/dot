@@ -94,4 +94,34 @@ function M.compose_name(bufname, opts)
   )
 end
 
+local bracket_paste_start = '\27[200~'
+local bracket_paste_end = '\27[201~'
+
+---Send multi-line message to terminal
+---@param msg string|string[] message
+---@param buf? integer terminal buffer, default to current buffer
+function M.send(msg, buf)
+  buf = buf or vim.api.nvim_get_current_buf()
+  if not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].bt ~= 'terminal' then
+    return
+  end
+
+  local chan = vim.b[buf].terminal_job_id
+  if not chan or vim.tbl_isempty(vim.api.nvim_get_chan_info(chan)) then
+    return
+  end
+
+  if type(msg) ~= 'table' then
+    msg = { msg }
+  end
+  if vim.tbl_isempty(msg) then
+    return
+  end
+
+  vim.api.nvim_chan_send(
+    chan,
+    bracket_paste_start .. table.concat(msg, '\n') .. bracket_paste_end
+  )
+end
+
 return M
