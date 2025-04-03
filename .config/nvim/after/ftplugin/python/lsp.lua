@@ -150,6 +150,8 @@ local pyright_root_patterns =
   vim.list_extend({ 'pyrightconfig.json' }, root_patterns)
 
 local pyright_settings = {
+  -- Too many warnings in default 'recommended' mode from basedpyright
+  typeCheckingMode = 'standard',
   analysis = {
     autoSearchPaths = true,
     useLibraryCodeForTypes = true,
