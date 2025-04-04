@@ -27,7 +27,7 @@ local chats = {}
 ---@param opts? aider_chat_opts_t
 ---@return aider_chat_t?
 function aider_chat_t.new(opts)
-  opts = opts or {}
+  opts = vim.tbl_deep_extend('force', configs.opts.chat, opts or {})
 
   local chat = (function()
     if opts.buf then
@@ -43,6 +43,24 @@ function aider_chat_t.new(opts)
   -- Check file changed by aider on input pending
   chat:on(chat.input_pending, function()
     pcall(vim.cmd.checktime)
+  end)
+
+  -- Autoscroll on update
+  chat:on(nil, function()
+    if not vim.startswith(vim.fn.mode(), 'n') then
+      return
+    end
+
+    local buf_line_count = vim.api.nvim_buf_line_count(chat.buf)
+    for _, win in ipairs(vim.fn.win_findbuf(chat.buf)) do
+      vim.api.nvim_win_call(win, function()
+        -- Autoscroll can be annoying if we are viewing chat history while aider
+        -- keeps generating, so don't scroll if last line is outside of view
+        if vim.fn.line('w$') >= vim.fn.prevnonblank(buf_line_count) then
+          vim.cmd.normal({ 'G', bang = true })
+        end
+      end)
+    end
   end)
 
   -- Indicate aider terminal buffer
@@ -337,7 +355,7 @@ aider_chat_t.confirm_pending = check_pending('%(Y%)es/*%(N%)o')
 aider_chat_t.input_pending = check_pending('>$')
 
 ---Call `cb` if `cond` is satisfied on aider buffer update
----@param cond fun(chat: aider_chat_t): boolean
+---@param cond? fun(chat: aider_chat_t): boolean
 ---@param cb fun(chat: aider_chat_t): any
 ---@param tick? integer previous update's `b:changedtick`, should be `nil` on first call
 function aider_chat_t:on(cond, cb, tick)
@@ -348,7 +366,7 @@ function aider_chat_t:on(cond, cb, tick)
   local cur_tick = vim.b[self.buf].changedtick
 
   -- Cancel following calls if callback returns a truethy value
-  if cur_tick ~= tick and cond(self) and cb(self) then
+  if cur_tick ~= tick and (cond == nil or cond(self)) and cb(self) then
     return
   end
 
