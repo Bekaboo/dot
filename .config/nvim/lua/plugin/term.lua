@@ -20,7 +20,7 @@ local function term_init(buf)
   -- after loading a session with terminal buffers
   vim.schedule(function()
     if vim.api.nvim_get_current_buf() == buf then
-      vim.api.nvim_buf_call(buf, vim.cmd.startinsert)
+      vim.cmd.startinsert()
     end
   end)
 

@@ -9,6 +9,7 @@ local configs = require('plugin.aider.configs')
 ---@field check_interval integer timeout waiting for aider to render
 ---@field watcher_timeout integer timeout waiting for aider to get ready for input and file change events after rendering
 ---@field entered? boolean whether we have ever entered this aider terminal buffer
+---@field win_configs vim.api.keyset.win_config
 local aider_chat_t = {}
 
 ---@type table<string, aider_chat_t>
@@ -20,6 +21,7 @@ local chats = {}
 ---@field cmd? string[] command to launch aider
 ---@field check_interval? integer timeout waiting for aider to render
 ---@field watcher_timeout? integer timeout waiting for aider to get ready for input and file change events after rendering
+---@field win_configs? vim.api.keyset.win_config
 
 ---Create a new aider chat
 ---@param opts? aider_chat_opts_t
@@ -90,6 +92,7 @@ function aider_chat_t._new_from_buf(opts)
     check_interval = opts.check_interval or configs.opts.chat.check_interval,
     watcher_timeout = opts.watcher_timeout
       or configs.opts.chat.watcher_timeout,
+    win_configs = opts.win_configs or configs.opts.chat.win_configs,
   }, { __index = aider_chat_t })
 
   return chat
@@ -121,6 +124,7 @@ function aider_chat_t._new_from_dir(opts)
     check_interval = opts.check_interval or configs.opts.chat.check_interval,
     watcher_timeout = opts.watcher_timeout
       or configs.opts.chat.watcher_timeout,
+    win_configs = opts.win_configs or configs.opts.chat.win_configs,
   }, { __index = aider_chat_t })
 
   -- Launch aider CLI
@@ -197,32 +201,24 @@ function aider_chat_t.get(path)
 end
 
 ---Open chat in current tabpage
----@param win_configs? vim.api.keyset.win_config
 ---@param enter? boolean enter the chat window, default `true`
-function aider_chat_t:open(win_configs, enter)
+function aider_chat_t:open(enter)
   if not self:validate() then
     return
   end
 
+  enter = enter ~= false
   -- Chat already visible in current tabpage, switch to it
   local win = self:wins():next()
   if win then
-    if enter ~= false then
+    if enter then
       vim.api.nvim_set_current_win(win)
     end
     return
   end
 
   -- Open a new window for the chat buffer in current tabpage
-  local new_win = vim.api.nvim_open_win(
-    self.buf,
-    enter ~= false,
-    vim.tbl_deep_extend(
-      'force',
-      configs.opts.chat.win_configs,
-      win_configs or {}
-    )
-  )
+  local new_win = vim.api.nvim_open_win(self.buf, enter, self.win_configs)
   if new_win > 0 and not self.entered then
     vim.api.nvim_win_call(new_win, function()
       -- Good to set cwd to `dir` for better integration, e.g.

@@ -11,12 +11,6 @@ function M.toggle(path)
   end
 end
 
----Enter insert/terminal mode
----`:startinsert` does not work in line-wise or block-wise visual mode
-local function startinsert()
-  vim.api.nvim_feedkeys(vim.keycode('<C-\\><C-n>i'), 'n', false)
-end
-
 ---Add file to aider
 ---@param path? string file path to add, default to current file
 function M.add_file(path)
@@ -33,7 +27,7 @@ function M.add_file(path)
 
   chat:send('/add ' .. chat:reduce_path(path))
   chat:open()
-  startinsert()
+  vim.cmd.startinsert()
 end
 
 ---Send selected text to aider at `path`
@@ -67,7 +61,10 @@ Here are some contents from '%s':
 
   chat:send(msg, buf)
   chat:open()
-  startinsert()
+
+  -- Enter noraml mode first because `:startinsert` don't exit visual-line or
+  -- visual-block mode
+  vim.api.nvim_feedkeys(vim.keycode('<C-\\><C-n>i'), 'n', false)
 end
 
 ---@param opts aider_opts_t
