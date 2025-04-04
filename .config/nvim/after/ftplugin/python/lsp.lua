@@ -51,7 +51,7 @@ lsp.start({
       python = {
         {
           lintSource = 'flake8',
-          lintCommand = 'flake8 -',
+          lintCommand = 'flake8 --ignore=E501 -', -- ignore line length error
           lintFormats = { 'stdin:%l:%c: %t%n %m' },
           lintIgnoreExitCode = true,
           lintStdin = true,
