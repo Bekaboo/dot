@@ -165,7 +165,7 @@ end
 
 ---Stop and delete an aider chat
 function aider_chat_t:del()
-  -- Delete the temrinal buffer, this also closes the channel associated with
+  -- Delete the terminal buffer, this also closes the channel associated with
   -- the buffer
   if self.buf and vim.api.nvim_buf_is_valid(self.buf) then
     vim.api.nvim_buf_delete(self.buf, { force = true })
