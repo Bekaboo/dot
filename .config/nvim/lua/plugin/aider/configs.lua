@@ -24,7 +24,7 @@ M.opts = {
     ---rendering input prompt ">"
     ---Not recommended to change
     ---@type integer
-    watcher_timeout = 100,
+    watcher_timeout = 500,
   },
   watch = {
     ---Whether to watch files for inline AI comments
