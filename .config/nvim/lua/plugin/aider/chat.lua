@@ -74,7 +74,7 @@ function aider_chat_t._new_from_buf(opts)
 
   local dir, _, cmd =
     utils.term.parse_name(vim.api.nvim_buf_get_name(opts.buf))
-  local aider_exe = configs.opts.chat.aider_cmd[1]
+  local aider_exe = configs.opts.chat.cmd[1]
   if
     not vim.startswith(cmd, aider_exe)
     and not vim.startswith(cmd, vim.fn.exepath(aider_exe))
@@ -84,18 +84,17 @@ function aider_chat_t._new_from_buf(opts)
 
   -- Create aider instance, no need to call `jobstart` as aider is already
   -- running in `buf`
-  local chat = setmetatable({
-    dir = dir,
-    buf = opts.buf,
-    chan = vim.b[opts.buf].terminal_job_id,
-    cmd = opts.cmd or configs.opts.chat.aider_cmd,
-    check_interval = opts.check_interval or configs.opts.chat.check_interval,
-    watcher_timeout = opts.watcher_timeout
-      or configs.opts.chat.watcher_timeout,
-    win_configs = opts.win_configs or configs.opts.chat.win_configs,
-  }, { __index = aider_chat_t })
+  local chat = setmetatable(
+    vim.tbl_deep_extend(
+      'force',
+      configs.opts.chat,
+      opts,
+      { dir = dir, chan = vim.b[opts.buf].terminal_job_id }
+    ),
+    { __index = aider_chat_t }
+  )
 
-  return chat
+  return chat --[[@as aider_chat_t]]
 end
 
 ---@private
@@ -117,15 +116,12 @@ function aider_chat_t._new_from_dir(opts)
   end
 
   -- Create an aider instance
-  local chat = setmetatable({
-    dir = opts.dir,
-    buf = vim.api.nvim_create_buf(false, true),
-    cmd = opts.cmd or configs.opts.chat.aider_cmd,
-    check_interval = opts.check_interval or configs.opts.chat.check_interval,
-    watcher_timeout = opts.watcher_timeout
-      or configs.opts.chat.watcher_timeout,
-    win_configs = opts.win_configs or configs.opts.chat.win_configs,
-  }, { __index = aider_chat_t })
+  local chat = setmetatable(
+    vim.tbl_deep_extend('force', configs.opts.chat, opts, {
+      buf = vim.api.nvim_create_buf(false, true),
+    }),
+    { __index = aider_chat_t }
+  )
 
   -- Launch aider CLI
   chat.chan = vim.api.nvim_buf_call(chat.buf, function()
@@ -137,7 +133,7 @@ function aider_chat_t._new_from_dir(opts)
       )
       return 0
     end
-    return vim.fn.jobstart(configs.opts.chat.aider_cmd, {
+    return vim.fn.jobstart(chat.cmd, {
       term = true,
       cwd = opts.dir,
     })
@@ -146,7 +142,7 @@ function aider_chat_t._new_from_dir(opts)
     return -- failed to run `aider` command
   end
 
-  return chat
+  return chat --[[@as aider_chat_t]]
 end
 
 ---Stop and delete an aider chat
@@ -184,8 +180,7 @@ function aider_chat_t.get(path)
     path = vim.fn.getcwd(0)
   end
   if vim.fn.isdirectory(path) == 0 then
-    path = vim.fs.root(path, configs.opts.chat.root_markers)
-      or vim.fs.dirname(path)
+    path = vim.fs.root(path, configs.opts.root_markers) or vim.fs.dirname(path)
   end
   if not vim.uv.fs_stat(path) then
     return
