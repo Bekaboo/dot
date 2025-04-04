@@ -171,7 +171,9 @@ if vim.g.loaded_aider == nil then
     desc = 'Init aider plugin.',
     once = true,
     callback = function()
-      require('plugin.aider').setup()
+      if vim.fn.executable('aider') == 1 then
+        require('plugin.aider').setup()
+      end
     end,
   })
 end
