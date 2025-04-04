@@ -12,10 +12,7 @@ local root_markers = {
 local formatter = lsp.start({
   cmd = { 'ruff', 'server' },
   buf_support = false,
-  root_markers = vim.list_extend(
-    { 'ruff.toml', '.ruff.toml' },
-    root_markers
-  ),
+  root_markers = vim.list_extend({ 'ruff.toml', '.ruff.toml' }, root_markers),
 })
 
 local pylint_root_markers = vim.list_extend({ 'pylintrc' }, root_markers)
@@ -29,7 +26,9 @@ lsp.start({
       python = {
         {
           lintSource = 'pylint',
-          lintCommand = 'pylint --score=no --from-stdin "${INPUT}"',
+          -- Fix pylint import path resolution in python virtual envs
+          -- Source: https://stackoverflow.com/a/4162709
+          lintCommand = 'PYTHONPATH=$(dirname %d):${PYTHONPATH} pylint --score=no --from-stdin "${INPUT}"',
           lintFormats = { '%f:%l:%c: %t%.%#: %m' },
           lintStdin = true,
           lintSeverity = 2,
