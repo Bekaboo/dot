@@ -19,7 +19,7 @@ M.opts = {
     ---Time interval (in ms) to check aider buffer updates
     ---Not recommended to change
     ---@type integer
-    check_interval = 1000,
+    check_interval = 500,
     ---Timeout (in ms) waiting for aider's ai comment watcher to be ready after
     ---rendering input prompt ">"
     ---Not recommended to change

@@ -40,13 +40,15 @@ function aider_chat_t.new(opts)
     return
   end
 
-  -- Check file changed by aider on input pending
-  chat:on(chat.input_pending, function()
-    pcall(vim.cmd.checktime)
+  -- Check file changed by aider on input or confirm pending
+  chat:on_update(function()
+    if chat:input_pending() or chat:confirm_pending() then
+      vim.schedule(vim.cmd.checktime)
+    end
   end)
 
   -- Autoscroll on update
-  chat:on(nil, function()
+  chat:on_update(function()
     if not vim.startswith(vim.fn.mode(), 'n') then
       return
     end
@@ -192,7 +194,8 @@ end
 
 ---Get a valid aider chat in `path`
 ---@param path? string file or directory path, default to cwd
----@return aider_chat_t?
+---@return aider_chat_t? aider chat object at `path`
+---@return boolean? is_new whether the chat is newly created or reused
 function aider_chat_t.get(path)
   if not path then
     path = vim.fn.getcwd(0)
@@ -208,9 +211,9 @@ function aider_chat_t.get(path)
 
   local chat = chats[path]
   if chat and chat:validate() then
-    return chat
+    return chat, false
   end
-  return aider_chat_t.new({ dir = path })
+  return aider_chat_t.new({ dir = path }), true
 end
 
 ---Open chat in current tabpage
@@ -302,7 +305,11 @@ end
 ---@param msg string|string[]
 ---@param buf integer? source of the messag, default to current buffer
 function aider_chat_t:send(msg, buf)
-  self:on(self.input_pending, function()
+  self:on_update(function()
+    if not self:input_pending() then
+      return
+    end
+
     if not buf or not vim.api.nvim_buf_is_valid(buf) then
       buf = vim.api.nvim_get_current_buf()
     end
@@ -322,43 +329,57 @@ function aider_chat_t:send(msg, buf)
   end)
 end
 
----@param pattern string
----@return fun(chat: aider_chat_t): boolean
-local function check_pending(pattern)
-  return function(chat)
-    if not chat:validate() then
-      return false
-    end
-
-    local linenr = vim.api.nvim_buf_call(chat.buf, function()
-      return vim.fn.prevnonblank(vim.api.nvim_buf_line_count(0))
-    end)
-    if linenr <= 0 then
-      return false -- buffer is empty
-    end
-
-    return vim.api
-      .nvim_buf_get_lines(chat.buf, linenr - 1, linenr, false)[1]
-      :match(pattern) ~= nil
+---Get line number of last non-blank line
+---@return integer 1-based line number, 0 if lnum is invalid or there is no non-blank line at or above it
+function aider_chat_t:last_nonblank_lnum()
+  if not self:validate() then
+    return 0
   end
+
+  return vim.api.nvim_buf_call(self.buf, function()
+    return vim.fn.prevnonblank(vim.api.nvim_buf_line_count(0))
+  end)
+end
+
+---Check if the last non-blank line in chat buffer matches `pattern`
+---@param pattern string
+---@return boolean
+function aider_chat_t:last_line_matches(pattern)
+  if not self:validate() then
+    return false
+  end
+
+  local linenr = self:last_nonblank_lnum()
+  if linenr <= 0 then
+    return false -- buffer is empty
+  end
+
+  return vim.api
+    .nvim_buf_get_lines(self.buf, linenr - 1, linenr, false)[1]
+    :match(pattern) ~= nil
 end
 
 ---Check if chat has pending confirm, e.g.
 --- - "Add file to the chat? (Y)es/(N)o/(D)on't ask again \[Yes\]:"
 --- - "No git repo found, create one to track aider's changes (recommended)? (Y)es/(N)o \[Yes\]:"
-aider_chat_t.confirm_pending = check_pending('%(Y%)es/*%(N%)o')
+---@return boolean
+function aider_chat_t:confirm_pending()
+  return self:last_line_matches('%(Y%)es/*%(N%)o')
+end
 
 ---Check if chat is waiting for input, i.e. last line in aider buffer being
 --- - ">"
 --- - "multi>"
 --- - "architect multi>"
-aider_chat_t.input_pending = check_pending('>$')
+---@return boolean
+function aider_chat_t:input_pending()
+  return self:last_line_matches('>$')
+end
 
----Call `cb` if `cond` is satisfied on aider buffer update
----@param cond? fun(chat: aider_chat_t): boolean
+---Call `cb` on aider buffer update
 ---@param cb fun(chat: aider_chat_t): any
 ---@param tick? integer previous update's `b:changedtick`, should be `nil` on first call
-function aider_chat_t:on(cond, cb, tick)
+function aider_chat_t:on_update(cb, tick)
   if not self:validate() then
     return
   end
@@ -366,13 +387,13 @@ function aider_chat_t:on(cond, cb, tick)
   local cur_tick = vim.b[self.buf].changedtick
 
   -- Cancel following calls if callback returns a truethy value
-  if cur_tick ~= tick and (cond == nil or cond(self)) and cb(self) then
+  if cur_tick ~= tick and cb(self) then
     return
   end
 
   -- Schedule for next update
   vim.defer_fn(function()
-    self:on(cond, cb, cur_tick)
+    self:on_update(cb, cur_tick)
   end, self.check_interval)
 end
 

@@ -48,16 +48,18 @@ end
 ---aider can see it
 ---@param file string
 function M.act(file)
-  local chat = require('plugin.aider.chat').get(file)
+  local chat, is_new = require('plugin.aider.chat').get(file)
   if not chat then
     return
   end
 
   -- Open chat panel, switch to it only if there is pending confirm
   chat:open(false)
-  chat:on(function()
-    return chat:confirm_pending() or chat:input_pending()
-  end, function()
+  chat:on_update(function()
+    if not chat:confirm_pending() or not chat:input_pending() then
+      return
+    end
+
     if chat:confirm_pending() then
       chat:open()
       vim.cmd.startinsert()
@@ -65,17 +67,32 @@ function M.act(file)
     return true
   end)
 
-  -- Update last change time of `file` when aider is ready for input
-  chat:on(chat.input_pending, function()
-    chat:wait_watcher(function()
-      vim.uv.fs_stat(file, function(_, stat)
-        if stat then
-          vim.uv.fs_utime(file, stat.atime.sec, stat.mtime.sec)
-        end
+  -- Update last change time of `file` to notify aider
+  -- Do this only once for each aider instance because it will automatically
+  -- watch for file changes once started
+  if is_new then
+    chat:on_update(function()
+      if not chat:input_pending() then
+        return
+      end
+
+      chat:wait_watcher(function()
+        vim.uv.fs_stat(file, function(_, stat)
+          if stat then
+            vim.uv.fs_utime(file, stat.atime.sec, stat.mtime.sec)
+            -- Prevent file change errors on write by forcing nvim to recheck
+            vim.schedule(function()
+              vim.cmd.checktime({
+                vim.fn.fnameescape(vim.fs.normalize(file)),
+                mods = { emsg_silent = true },
+              })
+            end)
+          end
+        end)
       end)
+      return true
     end)
-    return true
-  end)
+  end
 end
 
 ---Check inline AI comments in given `file`
