@@ -49,24 +49,6 @@ function aider_chat_t.new(opts)
     end
   end)
 
-  -- Autoscroll on update
-  chat:on_update(function()
-    if not vim.startswith(vim.fn.mode(), 'n') then
-      return
-    end
-
-    local buf_line_count = vim.api.nvim_buf_line_count(chat.buf)
-    for _, win in ipairs(vim.fn.win_findbuf(chat.buf)) do
-      vim.api.nvim_win_call(win, function()
-        -- Autoscroll can be annoying if we are viewing chat history while aider
-        -- keeps generating, so don't scroll if last line is outside of view
-        if vim.fn.line('w$') >= vim.fn.prevnonblank(buf_line_count) then
-          vim.cmd.normal({ 'G', bang = true })
-        end
-      end)
-    end
-  end)
-
   -- Indicate aider terminal buffer
   vim.bo[chat.buf].ft = 'aider'
 
