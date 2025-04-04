@@ -133,26 +133,6 @@ local function setup()
       term_init(info.buf)
     end,
   })
-
-  vim.api.nvim_create_autocmd('TermEnter', {
-    group = groupid,
-    desc = 'Disable mousemoveevent in terminal mode.',
-    callback = function()
-      vim.g.mousemev = vim.go.mousemev
-      vim.go.mousemev = false
-    end,
-  })
-
-  vim.api.nvim_create_autocmd('TermLeave', {
-    group = groupid,
-    desc = 'Restore mousemoveevent after leaving terminal mode.',
-    callback = function()
-      if vim.g.mousemev ~= nil then
-        vim.go.mousemev = vim.g.mousemev
-        vim.g.mousemev = nil
-      end
-    end,
-  })
 end
 
 return { setup = setup }
