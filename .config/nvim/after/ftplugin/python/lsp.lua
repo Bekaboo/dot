@@ -165,6 +165,7 @@ local server_configs = {
     settings = {
       basedpyright = pyright_settings,
     },
+    on_attach = disable_formatting,
   },
   {
     cmd = { 'pyright-langserver', '--stdio' },
@@ -172,6 +173,7 @@ local server_configs = {
     settings = {
       python = pyright_settings,
     },
+    on_attach = disable_formatting,
   },
   {
     cmd = { 'pylsp' },
