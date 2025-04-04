@@ -53,26 +53,28 @@ function M.act(file)
     return
   end
 
-  -- Only enter the chat if there is a pending confirm
-  chat:open({}, chat:confirm_pending())
+  -- Open chat panel, switch to it only if there is pending confirm
+  chat:open({}, false)
+  chat:on(function()
+    return chat:confirm_pending() or chat:input_pending()
+  end, function()
+    if chat:confirm_pending() then
+      chat:open()
+      vim.cmd.startinsert()
+    end
+    return true
+  end)
 
   -- Update last change time of `file` when aider is ready for input
-  chat:wait_input_pending(function()
+  chat:on(chat.input_pending, function()
     chat:wait_watcher(function()
       vim.uv.fs_stat(file, function(_, stat)
-        if not stat then
-          return
+        if stat then
+          vim.uv.fs_utime(file, stat.atime.sec, stat.mtime.sec)
         end
-        vim.uv.fs_utime(file, stat.atime.sec, stat.mtime.sec)
-        vim.schedule(function()
-          chat:wait_response(function()
-            chat:wait_input_pending(function()
-              vim.cmd.checktime({ file, mods = { emsg_silent = true } })
-            end)
-          end)
-        end)
       end)
     end)
+    return true
   end)
 end
 

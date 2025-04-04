@@ -6,8 +6,7 @@ local configs = require('plugin.aider.configs')
 ---@field dir string
 ---@field chan integer channel associate with terminal buffer `buf`
 ---@field cmd string[] command to launch aider
----@field render_timeout integer timeout waiting for aider to render
----@field response_timeout integer timeout waiting for aider to generate response
+---@field check_interval integer timeout waiting for aider to render
 ---@field watcher_timeout integer timeout waiting for aider to get ready for input and file change events after rendering
 ---@field entered? boolean whether we have ever entered this aider terminal buffer
 local aider_chat_t = {}
@@ -19,8 +18,7 @@ local chats = {}
 ---@field dir? string path to project root directory where aider chat will be created
 ---@field buf? integer existing aider terminal buffer
 ---@field cmd? string[] command to launch aider
----@field render_timeout? integer timeout waiting for aider to render
----@field response_timeout? integer timeout waiting for aider to generate response
+---@field check_interval? integer timeout waiting for aider to render
 ---@field watcher_timeout? integer timeout waiting for aider to get ready for input and file change events after rendering
 
 ---Create a new aider chat
@@ -39,6 +37,11 @@ function aider_chat_t.new(opts)
   if not chat then
     return
   end
+
+  -- Check file changed by aider on input pending
+  chat:on(chat.input_pending, function()
+    pcall(vim.cmd.checktime)
+  end)
 
   -- Indicate aider terminal buffer
   vim.bo[chat.buf].ft = 'aider'
@@ -84,10 +87,9 @@ function aider_chat_t._new_from_buf(opts)
     buf = opts.buf,
     chan = vim.b[opts.buf].terminal_job_id,
     cmd = opts.cmd or configs.opts.chat.aider_cmd,
-    render_timeout = opts.render_timeout or configs.opts.chat.render_timeout,
-    response_timeout = opts.response_timeout
-      or configs.opts.chat.response_timeout,
-    watcher_timeout = opts.watcher_timeout or configs.opts.chat.watcher_timeout,
+    check_interval = opts.check_interval or configs.opts.chat.check_interval,
+    watcher_timeout = opts.watcher_timeout
+      or configs.opts.chat.watcher_timeout,
   }, { __index = aider_chat_t })
 
   return chat
@@ -116,10 +118,9 @@ function aider_chat_t._new_from_dir(opts)
     dir = opts.dir,
     buf = vim.api.nvim_create_buf(false, true),
     cmd = opts.cmd or configs.opts.chat.aider_cmd,
-    render_timeout = opts.render_timeout or configs.opts.chat.render_timeout,
-    response_timeout = opts.response_timeout
-      or configs.opts.chat.response_timeout,
-    watcher_timeout = opts.watcher_timeout or configs.opts.chat.watcher_timeout,
+    check_interval = opts.check_interval or configs.opts.chat.check_interval,
+    watcher_timeout = opts.watcher_timeout
+      or configs.opts.chat.watcher_timeout,
   }, { __index = aider_chat_t })
 
   -- Launch aider CLI
@@ -292,19 +293,23 @@ end
 ---@param msg string|string[]
 ---@param buf integer? source of the messag, default to current buffer
 function aider_chat_t:send(msg, buf)
-  self:wait_input_pending(function()
+  self:on(self.input_pending, function()
     if not buf or not vim.api.nvim_buf_is_valid(buf) then
       buf = vim.api.nvim_get_current_buf()
     end
+
     if type(msg) ~= 'table' then
       msg = { msg }
     end
+
     -- Aider editor cannot render tabs correctly
     local tab_expanded = string.rep(' ', vim.bo[buf].tabstop)
     for i, line in ipairs(msg) do
       msg[i] = line:gsub('\t', tab_expanded)
     end
+
     utils.term.send(msg, self.buf)
+    return true -- send once only
   end)
 end
 
@@ -340,27 +345,26 @@ aider_chat_t.confirm_pending = check_pending('%(Y%)es/*%(N%)o')
 --- - "architect multi>"
 aider_chat_t.input_pending = check_pending('>$')
 
----Wait to call `cb` until aider chat has pending input
----@param cb function
-function aider_chat_t:wait_input_pending(cb)
+---Call `cb` if `cond` is satisfied on aider buffer update
+---@param cond fun(chat: aider_chat_t): boolean
+---@param cb fun(chat: aider_chat_t): any
+---@param tick? integer previous update's `b:changedtick`, should be `nil` on first call
+function aider_chat_t:on(cond, cb, tick)
   if not self:validate() then
     return
   end
 
-  if self:input_pending() then
-    cb()
+  local cur_tick = vim.b[self.buf].changedtick
+
+  -- Cancel following calls if callback returns a truethy value
+  if cur_tick ~= tick and cond(self) and cb(self) then
     return
   end
 
+  -- Schedule for next update
   vim.defer_fn(function()
-    self:wait_input_pending(cb)
-  end, self.render_timeout)
-end
-
----Wait a short time for aider to generate response
----@param cb function
-function aider_chat_t:wait_response(cb)
-  vim.defer_fn(cb, self.response_timeout)
+    self:on(cond, cb, cur_tick)
+  end, self.check_interval)
 end
 
 ---Wait a short time for aider's ai comment watcher to be ready after

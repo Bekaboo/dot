@@ -15,19 +15,15 @@ M.opts = {
       split = 'right',
       win = 0,
     },
-    ---Timeout (in ms) waiting for aider to render
+    ---Time interval (in ms) to check aider buffer updates
     ---Not recommended to change
     ---@type integer
-    render_timeout = 50,
+    check_interval = 1000,
     ---Timeout (in ms) waiting for aider's ai comment watcher to be ready after
     ---rendering input prompt ">"
     ---Not recommended to change
     ---@type integer
     watcher_timeout = 100,
-    ---Timeout (in ms) waiting for aider to generate response
-    ---Not recommended to change
-    ---@type integer
-    response_timeout = 2000,
   },
   watch = {
     ---Whether to watch files for inline AI comments
