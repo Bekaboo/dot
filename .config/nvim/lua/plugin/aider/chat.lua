@@ -43,7 +43,9 @@ function aider_chat_t.new(opts)
   -- Check file changed by aider on input or confirm pending
   chat:on_update(function()
     if chat:input_pending() or chat:confirm_pending() then
-      vim.schedule(vim.cmd.checktime)
+      vim.schedule(function()
+        vim.cmd.checktime({ mods = { emsg_silent = true } })
+      end)
     end
   end)
 
