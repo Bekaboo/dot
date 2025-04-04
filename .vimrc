@@ -1348,9 +1348,6 @@ if exists(':tmap') == 2
   " Default <C-w> is used as 'termwinkey' (see :h 'termwinkey')
   " which conflicts with shell's keymap
   tnoremap <nowait> <C-w> <C-\><C-w>
-
-  " Use <C-\><C-r> to insert contents of a register in terminal mode
-  tnoremap <expr> <C-\><C-r> (&twk ? &twk : '<C-w>') . '"' . nr2char(getchar())
 endif
 
 if s:supportevents('TerminalWinOpen')
