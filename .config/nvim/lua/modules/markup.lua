@@ -40,6 +40,19 @@ return {
     end,
   },
 
+  -- Python dependencies:
+  -- - pynvim
+  -- - ipykernel
+  -- - jupyter_client
+  --
+  -- Optional:
+  -- - cairosvg
+  -- - kaleido
+  -- - nbformat
+  -- - plotly
+  -- - pnglatex
+  -- - pyperclip
+  -- - pyqt6
   {
     'benlubas/molten-nvim',
     init = function()
