@@ -26,9 +26,7 @@ lsp.start({
       python = {
         {
           lintSource = 'pylint',
-          -- Fix pylint import path resolution in python virtual envs
-          -- Source: https://stackoverflow.com/a/4162709
-          lintCommand = 'PYTHONPATH=$(dirname %d):${PYTHONPATH} pylint --score=no --from-stdin "${INPUT}"',
+          lintCommand = 'pylint --disable line-too-long,import-error --score=no --from-stdin "${INPUT}"',
           lintFormats = { '%f:%l:%c: %t%.%#: %m' },
           lintStdin = true,
           lintSeverity = 2,
@@ -75,7 +73,7 @@ lsp.start({
       python = {
         {
           lintSource = 'mypy',
-          lintCommand = 'mypy --show-column-numbers',
+          lintCommand = 'mypy --disable-error-code import-untyped --show-column-numbers',
           lintFormats = {
             '%f:%l:%c: %trror: %m',
             '%f:%l:%c: %tarning: %m',
