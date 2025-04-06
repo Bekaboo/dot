@@ -444,8 +444,6 @@ function fzf.z(opts)
     return
   end
 
-  z.setup()
-
   -- Register action descriptions
   actions.z = z.jump
   core.ACTION_DEFINITIONS[actions.z] = { 'jump to dir' }
