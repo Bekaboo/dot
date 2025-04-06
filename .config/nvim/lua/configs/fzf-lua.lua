@@ -464,6 +464,60 @@ function fzf.z(opts)
   )
 end
 
+-- Select/remove sessions from the session plugin
+---@param opts table?
+function fzf.sessions(opts)
+  local has_session_plugin, session = pcall(require, 'plugin.session')
+  if not has_session_plugin then
+    vim.notify('[Fzf-lua] session plugin not found')
+    return
+  end
+
+  if not utils.os.exepath.ls then
+    vim.notify('[Fzf-lua] `ls` command not available')
+    return
+  end
+
+  ---Get keymap action
+  ---@param cb fun(path?: string) session operation function (load, remove, etc.)
+  ---@return fun(selected: string[])
+  local function action(cb)
+    return function(selected)
+      cb(vim.fs.joinpath(session.opts.dir, session.dir2session(selected[1])))
+    end
+  end
+
+  -- Register action descriptions
+  actions.load_session = action(session.load)
+  core.ACTION_DEFINITIONS[actions.load_session] = { 'load session' }
+  config._action_to_helpstr[actions.load_session] = 'load-session'
+
+  actions.remove_session = action(session.remove)
+  core.ACTION_DEFINITIONS[actions.remove_session] = { 'remove session' }
+  config._action_to_helpstr[actions.remove_session] = 'remove-session'
+
+  return fzf.fzf_exec(
+    string.format(
+      [[%s -1 %s | while read -r file; do mod="${file//%%/\/}"; echo "${mod//\/\//%%}"; done]],
+      utils.os.exepath.ls,
+      session.opts.dir
+    ),
+    vim.tbl_deep_extend('force', opts or {}, {
+      prompt = 'Sessions: ',
+      actions = {
+        ['enter'] = actions.load_session,
+        ['ctrl-x'] = {
+          fn = actions.remove_session,
+          reload = true,
+        },
+      },
+      fzf_opts = {
+        ['--no-multi'] = true,
+      },
+    })
+  )
+end
+
 fzf.setup({
   -- Default profile 'default-title' disables prompt in favor of title
   -- on nvim >= 0.9, but a fzf windows with split layout cannot have titles
@@ -827,6 +881,7 @@ vim.keymap.set('n', '<Leader>f=', fzf.lines, { desc = 'Find lines across buffers
 vim.keymap.set('n', '<Leader>fm', fzf.marks, { desc = 'Find marks' })
 vim.keymap.set('n', '<Leader>fo', fzf.oldfiles, { desc = 'Find old files' })
 vim.keymap.set('n', '<Leader>fz', fzf.z, { desc = 'Find directories from z' })
+vim.keymap.set('n', '<Leader>fw', fzf.sessions, { desc = 'Find sessions (workspaces)' })
 vim.keymap.set('n', '<Leader>fn', fzf.treesitter, { desc = 'Find treesitter nodes' })
 vim.keymap.set('n', '<Leader>fs', fzf.symbols, { desc = 'Find lsp symbols or treesitter nodes' })
 vim.keymap.set('n', '<Leader>fSa', fzf.lsp_code_actions, { desc = 'Find code actions' })

@@ -53,6 +53,7 @@ return {
       { '<Leader>fm', desc = 'Find marks' },
       { '<Leader>fo', desc = 'Find oldfiles' },
       { '<Leader>fz', desc = 'Find directories from z' },
+      { '<Leader>fw', desc = 'Find sessions (workspaces)' },
       { '<Leader>fn', desc = 'Find treesitter nodes' },
       { '<Leader>fs', desc = 'Find lsp symbols or treesitter nodes' },
       { '<Leader>fSa', desc = 'Find code actions' },
