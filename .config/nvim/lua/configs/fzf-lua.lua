@@ -451,7 +451,7 @@ function fzf.z(opts)
 
   return fzf.fzf_exec(
     z.list(),
-    vim.tbl_deep_extend('keep', opts or {}, {
+    vim.tbl_deep_extend('force', opts or {}, {
       cwd = vim.fn.getcwd(0),
       prompt = 'Open directory: ',
       actions = {
