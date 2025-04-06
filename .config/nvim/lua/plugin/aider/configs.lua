@@ -61,6 +61,13 @@ M.opts = {
 ---@param opts aider_opts_t?
 function M.set(opts)
   M.opts = vim.tbl_deep_extend('force', M.opts, opts or {})
+
+  -- Ensure aider's file watcher is enabled if `watch` is enabled in this
+  -- plugin, insert `--watch-files` as the first flag to respect potential
+  -- `--no-watch-files` flag in cmd
+  if M.opts.watch.enabled then
+    table.insert(M.opts.chat.cmd, 2, '--watch-files')
+  end
 end
 
 return M
