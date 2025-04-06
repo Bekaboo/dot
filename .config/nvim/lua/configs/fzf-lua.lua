@@ -455,9 +455,7 @@ function fzf.z(opts)
       cwd = vim.fn.getcwd(0),
       prompt = 'Open directory: ',
       actions = {
-        ['enter'] = {
-          fn = z.jump,
-        },
+        ['enter'] = actions.z,
       },
       fzf_opts = {
         ['--no-multi'] = true,
