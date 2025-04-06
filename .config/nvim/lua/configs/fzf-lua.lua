@@ -440,6 +440,7 @@ end
 function fzf.z(opts)
   local has_z_plugin, z = pcall(require, 'plugin.z')
   if not has_z_plugin then
+    vim.notify('[Fzf-lua] z plugin not found')
     return
   end
 
