@@ -161,10 +161,10 @@ if vim.g.loaded_aider == nil then
   local add_file = function() require('plugin.aider').add_file() end
   -- stylua: ignore off
 
-  vim.keymap.set('n', '<Leader>@', toggle, { desc = 'Open aider chat panel' })
-  vim.keymap.set('x', '<Leader>@', send_sel, { desc = 'Send selection to aider' })
-  vim.keymap.set('x', '<Leader>+', send_sel, { desc = 'Send selection to aider' })
-  vim.keymap.set('n', '<Leader>+', add_file, { desc = 'Add current file to aider' })
+  vim.keymap.set('n', '<Leader>@', toggle, { desc = 'Aider (AI) toggle chat panel' })
+  vim.keymap.set('x', '<Leader>@', send_sel, { desc = 'Aider (AI) send selection' })
+  vim.keymap.set('x', '<Leader>+', send_sel, { desc = 'Aider (AI) send selection' })
+  vim.keymap.set('n', '<Leader>+', add_file, { desc = 'Aider (AI) add current file' })
 
   vim.api.nvim_create_autocmd('BufWritePre', {
     group = vim.api.nvim_create_augroup('AiderSetup', {}),
