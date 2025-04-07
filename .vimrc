@@ -641,8 +641,8 @@ function! s:foldother() abort
   let &lz = lz
 endfunction
 
-nnoremap zV :call <SID>foldother()<CR>
-xnoremap zV :call <SID>foldother()<CR>
+nnoremap <silent> zV :call <SID>foldother()<CR>
+xnoremap <silent> zV :call <SID>foldother()<CR>
 " }}}
 
 " Selecting around quotes without extra spaces {{{2
