@@ -1,7 +1,5 @@
 local M = {}
 
-local configs = require('plugin.aider.configs')
-
 ---Get cmd to watch for AI comments
 ---@param file string
 ---@return string[]?
@@ -10,7 +8,7 @@ function M.watch_cmd(file)
     return
   end
 
-  local watch_cmds = configs.opts.watch.cmds
+  local watch_cmds = require('plugin.aider.configs').opts.watch.cmds
   for _, cmd in ipairs(watch_cmds) do
     if vim.fn.executable(cmd[1]) == 1 then
       return vim
