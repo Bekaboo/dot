@@ -185,7 +185,7 @@ function aider_chat_t.get(path)
     path = vim.fn.getcwd(0)
   end
   if vim.fn.isdirectory(path) == 0 then
-    path = vim.fs.root(path, configs.opts.root_markers) or vim.fs.dirname(path)
+    path = vim.fs.root(path, { '.git' }) or vim.fs.dirname(path)
   end
   if not vim.uv.fs_stat(path) then
     return
