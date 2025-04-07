@@ -54,7 +54,7 @@ function M.act(file)
   -- Open chat panel, switch to it only if there is pending confirm
   chat:open(false)
   chat:on_update(function()
-    if not chat:confirm_pending() or not chat:input_pending() then
+    if not chat:confirm_pending() and not chat:input_pending() then
       return
     end
 
