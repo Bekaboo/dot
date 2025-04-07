@@ -30,7 +30,7 @@ set -gx FZF_DEFAULT_OPTS "--reverse \
 
 # If supports 256 colors
 if not type -q tput; or test (tput colors 2>/dev/null) -lt 256
-    set -gxa FZF_DEFAULT_OPTS --no-unicode '--marker=+\ ' '--pointer=>\ '
+    set -gxa FZF_DEFAULT_OPTS --no-unicode '--marker=+\ ' '--pointer=\>\ '
 end
 
 if type -q fd
