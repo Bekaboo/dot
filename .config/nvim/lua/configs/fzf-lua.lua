@@ -473,7 +473,7 @@ function fzf.sessions(opts)
     return
   end
 
-  if not utils.os.exepath.ls then
+  if vim.fn.executable('ls') == 0 then
     vim.notify('[Fzf-lua] `ls` command not available')
     return
   end
@@ -498,8 +498,7 @@ function fzf.sessions(opts)
 
   return fzf.fzf_exec(
     string.format(
-      [[%s -1 %s | while read -r file; do mod="${file//%%/\/}"; echo "${mod//\/\//%%}"; done]],
-      utils.os.exepath.ls,
+      [[ls -1 %s | while read -r file; do mod="${file//%%/\/}"; echo "${mod//\/\//%%}"; done]],
       session.opts.dir
     ),
     vim.tbl_deep_extend('force', opts or {}, {

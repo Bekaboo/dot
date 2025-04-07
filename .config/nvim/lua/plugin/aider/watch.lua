@@ -1,6 +1,5 @@
 local M = {}
 
-local utils = require('plugin.aider.utils')
 local configs = require('plugin.aider.configs')
 
 ---Get cmd to watch for AI comments
@@ -13,14 +12,13 @@ function M.watch_cmd(file)
 
   local watch_cmds = configs.opts.watch.cmds
   for _, cmd in ipairs(watch_cmds) do
-    local exe = cmd[1] and utils.os.exepath[cmd[1]] -- normalized grep tool execution path
-    if exe then
-      local result = vim.deepcopy(cmd)
-      result[1] = exe
-      for i, arg in ipairs(result) do
-        result[i] = string.format(arg, file)
-      end
-      return result
+    if vim.fn.executable(cmd[1]) == 1 then
+      return vim
+        .iter(cmd)
+        :map(function(arg)
+          return string.format(arg, file)
+        end)
+        :totable()
     end
   end
 
