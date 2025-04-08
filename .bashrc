@@ -321,8 +321,8 @@ __ff_open_files_or_dir() {
     IFS=$'\n' read -rd '' -a targets_list <<<"$@"
 
     # If only one target and it is a directory, cd into it
-    if [[ "${#targets_list[@]}" = 1 && -d "$targets_list[0]" ]]; then
-        cd "$targets_list[0]"
+    if [[ "${#targets_list[@]}" = 1 && -d "${targets_list[0]}" ]]; then
+        cd "${targets_list[0]}"
         return $?
     fi
 
