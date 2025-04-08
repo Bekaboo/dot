@@ -525,11 +525,11 @@ augroup('ColorSchemeRestore', {
       local c = json.read(colors_file)
       c.colors_name = c.colors_name or 'macro'
 
+      if c.bg then
+        vim.go.bg = c.bg
+      end
       if c.colors_name and c.colors_name ~= vim.g.colors_name then
         load_colorscheme(c.colors_name)
-      end
-      if c.bg and vim.go.termguicolors then
-        vim.go.bg = c.bg
       end
 
       augroup('ColorSchemeSync', {
