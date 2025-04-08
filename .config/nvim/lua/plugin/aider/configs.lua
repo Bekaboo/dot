@@ -33,14 +33,14 @@ M.opts = {
     ---See: https://aider.chat/docs/usage/watch.html#comment-styles
     ---@type string[][]
     cmds = {
-      { 'rg', '-qi', [=[(--|//|#).*\<ai\>[!?]]=], '%s' },
-      { 'grep', '-qiE', [=[(--|//|#).*\<ai\>[!?]]=], '%s' },
+      { 'rg', '-qi', [=[(--|//|#|;).*\<ai\>[!?]]=], '%s' },
+      { 'grep', '-qiE', [=[(--|//|#|;).*\<ai\>[!?]]=], '%s' },
       {
         vim.v.progpath, -- nvim
         '--clean',
         '--headless',
         [==[+lua
-          regex = vim.regex([=[\(--\|//\|#\).*\<ai\>[?!]]=])
+          regex = vim.regex([=[\(--\|//\|#\|;\).*\<ai\>[?!]]=])
           for line in io.lines('%s') do
             if regex:match_str(line) then
               vim.cmd.qa()
