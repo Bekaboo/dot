@@ -498,7 +498,7 @@ augroup('ColorSchemeRestore', {
           'colors',
           colors_name .. '.lua'
         )
-        if vim.uv.fs_stat(colors_path) then
+        if vim.fn.filereadable(colors_path) == 1 then
           dofile(colors_path)
           vim.schedule(function()
             vim.api.nvim_exec_autocmds('ColorScheme', {})
