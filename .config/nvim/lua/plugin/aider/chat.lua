@@ -43,9 +43,7 @@ function aider_chat_t.new(opts)
   -- Check file changed by aider on input or confirm pending
   chat:on_update(function()
     if chat:input_pending() or chat:confirm_pending() then
-      vim.schedule(function()
-        vim.cmd.checktime({ mods = { emsg_silent = true } })
-      end)
+      chat:sync_files()
     end
   end)
 
@@ -393,6 +391,25 @@ end
 ---@return string
 function aider_chat_t:reduce_path(path)
   return vim.startswith(path, self.dir) and path:sub(#self.dir + 1) or path
+end
+
+---Synchronize buffers with files being edited by aider
+---@param file? string file to sync (defaults to all files)
+function aider_chat_t:sync_files(file)
+  vim.schedule(function()
+    vim.cmd.checktime({
+      file and vim.fn.fnameescape(vim.fs.normalize(file)),
+      mods = { emsg_silent = true },
+    })
+    -- HACK: don't know why but aider's syntax will be set to the
+    -- source buffer's syntax after time check, set it back to
+    -- empty to disable wrong syntax highlighting in aider buffers
+    vim.schedule(function()
+      if self:validate() then
+        vim.bo[self.buf].syntax = ''
+      end
+    end)
+  end)
 end
 
 ---Iterate all buffers and add aider terminal buffers to `chats`

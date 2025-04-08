@@ -77,23 +77,9 @@ function M.act(file)
           if not stat then
             return
           end
-
           vim.uv.fs_utime(file, stat.atime.sec, stat.mtime.sec)
           -- Prevent file change errors on write by forcing nvim to recheck
-          vim.schedule(function()
-            vim.cmd.checktime({
-              vim.fn.fnameescape(vim.fs.normalize(file)),
-              mods = { emsg_silent = true },
-            })
-            -- HACK: don't know why but aider's syntax will be set to the
-            -- source buffer's syntax after time check, set it back to
-            -- empty to disable wrong syntax highlighting in aider buffers
-            vim.schedule(function()
-              if vim.api.nvim_buf_is_valid(chat.buf) then
-                vim.bo[chat.buf].syntax = ''
-              end
-            end)
-          end)
+          chat:sync_files(file)
         end)
       end)
 
