@@ -370,6 +370,7 @@ ff() {
     fi
 
     local tmpfile="$(mktemp)"
+    trap 'rm -f "$tmpfile"' EXIT
 
     # On some systems, e.g. Ubuntu, fd executable is installed as 'fdfind'
     local fd_cmd=$(__has fd && echo fd || echo fdfind)
@@ -380,14 +381,14 @@ ff() {
         find "$path" -print0 -type d -o -type f -o -type l -follow |
             fzf --read0 --ansi --query="$query" >"$tmpfile"
     else
-        rm -f "$tmpfile"
         echo 'fd/find is not executable' >&2
         return 1
     fi
 
     local targets="$(cat "$tmpfile")"
-    rm -f "$tmpfile"
-    [[ -z "$targets" ]] && return 0
+    if [[ -z "$targets" ]]; then
+        return 0
+    fi
 
     __ff_open_files_or_dir "$targets"
     return

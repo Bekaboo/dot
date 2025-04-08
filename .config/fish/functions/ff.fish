@@ -48,6 +48,7 @@ function ff --description 'Use fzf to open files or cd to directories'
     end
 
     set -l tmpfile (mktemp)
+    trap 'rm -f $tmpfile' EXIT
 
     # On some systems, e.g. Ubuntu, fd executable is installed as 'fdfind'
     set -l fd_cmd (type -q fd && echo fd || echo fdfind)
@@ -58,14 +59,14 @@ function ff --description 'Use fzf to open files or cd to directories'
         find $path -print0 -type d -o -type f -o -type l -follow \
             | fzf --read0 --ansi --query=$query >$tmpfile
     else
-        rm -f $tmpfile
         echo 'fd/find is not executable' 1>&2
         return 1
     end
 
     set -l targets (cat $tmpfile | string split "\n")
-    command rm -f $tmpfile
-    test (count $targets) = 0; and return 0
+    if test (count $targets) = 0
+        return 0
+    end
 
     __ff_open_files_or_dir $targets
     return
