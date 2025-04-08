@@ -218,6 +218,10 @@ function aider_chat_t:open(enter)
   -- Open a new window for the chat buffer in current tabpage
   local new_win = vim.api.nvim_open_win(self.buf, enter, self.win_configs)
   if new_win > 0 and not self.entered then
+    -- Aider hard-wraps lines itself, prevent content shift to left when
+    -- cursor is at eol in chat window
+    vim.wo[new_win][0].sidescrolloff = 0
+
     vim.api.nvim_win_call(new_win, function()
       -- Good to set cwd to `dir` for better integration, e.g.
       -- we can use fuzzy finders like fzf-lua, telescope, etc. to find files
