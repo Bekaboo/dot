@@ -32,23 +32,36 @@ end
 
 function ff --description 'Use fzf to open files or cd to directories'
     # $argv[1]: path to start searching from
+    # $argv[2]: optional initial query
+    set -l path (test -n "$argv[1]"; and echo $argv[1]; or echo $PWD)
+    set -l query $argv[2]
+
     # If there is only one target and it is a file, open it directly
-    if test (count $argv) = 1; and test -f $argv[1]
+    if test (count $argv) = 1; and test -f "$path"
         __ff_open_files_or_dir $argv
         return
     end
 
-    # Exit if fzf or fd is not installed
-    # On some systems, e.g. Ubuntu, fd executable is installed as 'fdfind'
-    set -l fd_cmd "$(type -q fd && echo fd || echo fdfind)"
-    if not type -q fzf; or not type -q $fd_cmd
-        echo 'fzf or fd is not installed' 1>&2
+    if not type -q fzf
+        echo 'fzf is not executable' 1>&2
         return 1
     end
 
-    set -l tmpfile "$(mktemp)"
-    $fd_cmd -p -H -L -td -tf -tl -c=always --search-path=$argv[1] \
-        | fzf --ansi --query=$argv[2] >$tmpfile
+    set -l tmpfile (mktemp)
+
+    # On some systems, e.g. Ubuntu, fd executable is installed as 'fdfind'
+    set -l fd_cmd (type -q fd && echo fd || echo fdfind)
+    if type -q $fd_cmd
+        $fd_cmd -0 -p -H -L -td -tf -tl -c=always --search-path=$path \
+            | fzf --read0 --ansi --query=$query >$tmpfile
+    else if type -q find
+        find $path -print0 -type d -o -type f -o -type l -follow \
+            | fzf --read0 --ansi --query=$query >$tmpfile
+    else
+        rm -f $tmpfile
+        echo 'fd/find is not executable' 1>&2
+        return 1
+    end
 
     set -l targets (cat $tmpfile | string split "\n")
     command rm -f $tmpfile

@@ -354,24 +354,36 @@ __ff_open_files_or_dir() {
 # Use fzf to open files or cd to directories
 ff() {
     # $1: base directory
+    # $2: optional initial query
+    local path="${1:-$PWD}"
+    local query="$2"
+
     # If there is only one target and it is a file, open it directly
-    if (($# == 1)) && [[ -f "$1" ]]; then
+    if (($# == 1)) && [[ -f "$path" ]]; then
         __ff_open_files_or_dir "$@"
         return
     fi
 
-    # Exit if fzf or fd is not installed
-    # On some systems, e.g. Ubuntu, fd executable is installed as 'fdfind'
-    local fd_cmd=$(__has fd && echo fd || echo fdfind)
-    if ! __has fzf || ! __has "$fd_cmd"; then
-        echo 'fzf or fd is not installed' >&2
+    if ! __has fzf; then
+        echo 'fzf is not executable' >&2
         return 1
     fi
 
     local tmpfile="$(mktemp)"
-    local path="${1:-$PWD}"
-    "$fd_cmd" -p -H -L -td -tf -tl -c=always --search-path="$path" |
-        fzf --ansi --query="$2" >$tmpfile
+
+    # On some systems, e.g. Ubuntu, fd executable is installed as 'fdfind'
+    local fd_cmd=$(__has fd && echo fd || echo fdfind)
+    if __has "$fd_cmd"; then
+        "$fd_cmd" -0 -p -H -L -td -tf -tl -c=always --search-path="$path" |
+            fzf --read0 --ansi --query="$query" >"$tmpfile"
+    elif __has find; then
+        find "$path" -print0 -type d -o -type f -o -type l -follow |
+            fzf --read0 --ansi --query="$query" >"$tmpfile"
+    else
+        rm -f "$tmpfile"
+        echo 'fd/find is not executable' >&2
+        return 1
+    fi
 
     local targets="$(cat "$tmpfile")"
     rm -f "$tmpfile"
