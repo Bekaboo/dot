@@ -605,7 +605,7 @@ and it should work out of the box.
       and many other window operations
 - [vscode](autoload/plugin/vscode.vim)
     - Integration with [VSCode-Neovim](https://github.com/vscode-neovim/vscode-neovim)
-- [winbar](lua/plugin/winbar.lua)
+- [winbar](lua/plugin/winbar)
     - A winbar with drop-down menus and multiple backends
     - Released as [dropbar.nvim](https://github.com/Bekaboo/dropbar.nvim)
 - [markdown-title](after/ftplugin/markdown/title.lua)
@@ -622,6 +622,14 @@ and it should work out of the box.
 - [addasync](lua/plugin/addasync.lua)
     - Automatically add `async` to python/javascript/typescript functions
       containing `await`
+- [aider](lua/plugin/aider/)
+    - Integration with [aider](https://aider.chat/)
+    - Opens aider automatically when [AI comments](https://aider.chat/docs/usage/watch.html#ai-comments)
+      are detected
+    - Use keymaps to add files/selections to aider
+- [session](lua/plugin/session.lua)
+    - Automatically load (disabled), save, and remove sessions for projects
+    - Use `Session...` commands to manipulate sessions
 
 Like many vim builtin plugins, these plugins can be disabled by setting the
 `g:loaded_...` flag before loading them.
