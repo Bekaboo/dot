@@ -18,8 +18,9 @@ has() {
     command -v "$1" >/dev/null 2>&1
 }
 
-if has fd; then
-    fd -a --base-directory "$RUNTIME_DIR" -t s -g "$APPNAME.*.0" 2>/dev/null
+fd_cmd=$(has fd && echo fd || echo fdfind)
+if has "$fd_cmd"; then
+    "$fd_cmd" -a --base-directory "$RUNTIME_DIR" -t s -g "$APPNAME.*.0" 2>/dev/null
     exit $?
 fi
 
