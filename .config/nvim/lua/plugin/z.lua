@@ -58,7 +58,7 @@ local z_backends = {
         return { vim.env.SHELL, '-c', 'z -l ' .. z_args_esc(trig) }
       end,
       add = function(dir)
-        return { vim.env.SHELL, '-c', 'cd ' .. vim.fn.shellescape(dir) }
+        return { vim.env.SHELL, '-c', 'cd ' .. z_args_esc({ dir }) }
       end,
     },
   },
