@@ -1,13 +1,16 @@
 show-diffs: true
 watch-files: true
 
-model: r1
-weak-model: deepseek
-editor-model: sonnet
 gitignore: false
 auto-commits: false
 
+architect: true
 cache-prompts: true
+auto-accept-architect: false
+
+model: r1
+weak-model: deepseek
+editor-model: sonnet
 chat-language: the same language of user's question, prefer English
 
 user-input-color: "" # use default foreground color
