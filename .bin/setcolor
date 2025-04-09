@@ -142,16 +142,25 @@ setcolor_highlight() {
 
 setcolor_nvim() {
     # $1: name of the colorscheme
-    if [ -z "$1" ] || ! has nvim || ! has nvim-socks; then
+    if [ -z "$1" ] || ! has nvim; then
         return 1
     fi
+
+    if ! has nvim-socks; then
+        echo "Error: script 'nvim-socks' not found, skip setting colors for nvim" >&2
+        return 1
+    fi
+
     for sock in $(nvim-socks); do
         nvim --clean --headless --server "$sock" \
             --remote-send "<Cmd>if get(g:, 'colors_name', '') !=# '$1' | \
                 let g:script_set_colors=1 | silent! colors $1 | \
                 unlet g:script_set_colors | endif<CR>" +'qa!' 2>/dev/null
     done
-    if has jq; then
+
+    if ! has jq; then
+        echo "Warning: 'jq' not executable, skip writing to nvim's colorscheme file" >&2
+    else
         colors_json="$STATE_HOME/nvim/colors.json"
         if [ ! -e "$colors_json" ]; then
             touch "$colors_json"

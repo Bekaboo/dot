@@ -108,16 +108,25 @@ setbg_highlight() {
 
 setbg_nvim() {
     # $1: 'light' or 'dark'
-    if [ -z "$1" ] || ! has nvim || ! has nvim-socks; then
+    if [ -z "$1" ] || ! has nvim; then
         return 1
     fi
+
+    if ! has nvim-socks; then
+        echo "Error: script 'nvim-socks' not found, skip setting backgroud for nvim" >&2
+        return 1
+    fi
+
     for sock in $(nvim-socks); do
         nvim --clean --headless --server "$sock" \
             --remote-send "<Cmd>if &bg !=# '$1' && &tgc | let g:script_set_bg=1 \
                 | set bg=$1 | unlet g:script_set_bg | endif<CR>" +'qa!' \
             2>/dev/null
     done
-    if has jq; then
+
+    if ! has jq; then
+        echo "Warning: 'jq' not executable, skip writing to nvim's colorscheme file" >&2
+    else
         colors_json="$STATE_HOME/nvim/colors.json"
         if [ ! -e "$colors_json" ]; then
             touch "$colors_json"
@@ -155,6 +164,10 @@ setbg_plasma() {
 get_new_profile_name() {
     # $1: path to config file
     # $2: 'light' or 'dark'
+    if ! has kreadconfig5; then
+        return 1
+    fi
+
     current_profile=$(kreadconfig5 --file "$1" \
         --group 'Desktop Entry' --key 'DefaultProfile')
     current_profile_name=${current_profile%%.profile}
@@ -229,7 +242,12 @@ setbg_okular() {
 setbg_vscode() {
     # $1: 'light' or 'dark'
     rc="$CONFIG_HOME/Code/User/settings.json"
-    if [ -z "$1" ] || [ ! -e "$rc" ] || ! has jq; then
+    if [ -z "$1" ] || [ ! -e "$rc" ]; then
+        return 1
+    fi
+
+    if ! has jq; then
+        echo "Error: 'jq' not executable, skip writing to vscode's settings file" >&2
         return 1
     fi
 
