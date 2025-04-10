@@ -2,6 +2,9 @@ local M = {}
 
 ---@class aider_opts_t
 M.opts = {
+  ---Project root markers to open aider in
+  ---@type string[]
+  root_markers = require('plugin.aider.utils').fs.root_markers,
   ---@type aider_chat_opts_t
   chat = {
     ---Command to launch aider
