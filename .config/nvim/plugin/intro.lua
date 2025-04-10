@@ -80,6 +80,16 @@ vim.api.nvim_create_autocmd('UIEnter', {
           { text = 'Editing made simple', hl = 'NonText' },
         },
       },
+      { chunks = {} },
+      {
+        chunks = {
+          {
+            text = ':h',
+            hl = 'NonText',
+          },
+          { text = ' for help', hl = 'Normal' },
+        },
+      },
     }
 
     ---Window configuration for the intro message floating window
