@@ -91,11 +91,10 @@ return {
           return
         end
 
-        local ft = vim.bo[buf].ft
         if
-          ft ~= 'python' and ft ~= 'markdown'
-          or ft == 'markdown' -- don't load in normal markdown files
-            and vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf), ':e') ~= 'ipynb'
+          vim.bo[buf].ft ~= 'python'
+          and vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf), ':e')
+            ~= 'ipynb'
         then
           return
         end
