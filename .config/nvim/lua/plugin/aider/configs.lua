@@ -14,8 +14,15 @@ M.opts = {
   ---@type aider_chat_opts_t
   chat = {
     ---Command to launch aider
-    ---@type string[]
-    cmd = { 'aider' },
+    ---@param path string
+    ---@return string[]
+    cmd = function(path)
+      local aider_cmd = { 'aider' }
+      if not vim.fs.root(path, '.git') then
+        table.insert(aider_cmd, '--no-git')
+      end
+      return aider_cmd
+    end,
     ---Window configuration used to open the aider panel
     ---@type vim.api.keyset.win_config
     win_configs = {
@@ -72,7 +79,13 @@ function M.set(opts)
   -- plugin, insert `--watch-files` as the first flag to respect potential
   -- `--no-watch-files` flag in cmd
   if M.opts.watch.enabled then
-    table.insert(M.opts.chat.cmd, 2, '--watch-files')
+    M.opts.chat.cmd = (function(cb)
+      return function(path)
+        local aider_cmd = cb(path)
+        table.insert(aider_cmd, 2, '--watch-files')
+        return aider_cmd
+      end
+    end)(M.opts.chat.cmd)
   end
 end
 

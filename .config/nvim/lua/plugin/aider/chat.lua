@@ -18,7 +18,7 @@ local chats = {}
 ---@class aider_chat_opts_t
 ---@field dir? string path to project root directory where aider chat will be created
 ---@field buf? integer existing aider terminal buffer
----@field cmd? string[] command to launch aider
+---@field cmd? fun(path: string): string[] command to launch aider
 ---@field check_interval? integer timeout waiting for aider to render
 ---@field watcher_timeout? integer timeout waiting for aider to get ready for input and file change events after rendering
 ---@field win_configs? vim.api.keyset.win_config
@@ -76,7 +76,8 @@ function aider_chat_t._new_from_buf(opts)
 
   local dir, _, cmd =
     utils.term.parse_name(vim.api.nvim_buf_get_name(opts.buf))
-  local aider_exe = configs.opts.chat.cmd[1]
+  local aider_exe =
+    configs.opts.chat.cmd(vim.api.nvim_buf_get_name(opts.buf))[1]
   if
     not vim.startswith(cmd, aider_exe)
     and not vim.startswith(cmd, vim.fn.exepath(aider_exe))
@@ -127,7 +128,8 @@ function aider_chat_t._new_from_dir(opts)
 
   -- Launch aider CLI
   chat.chan = vim.api.nvim_buf_call(chat.buf, function()
-    local aider_exe = chat.cmd[1]
+    local aider_cmd = chat.cmd(opts.dir)
+    local aider_exe = aider_cmd[1]
     if not aider_exe or vim.fn.executable(aider_exe) == 0 then
       vim.notify_once(
         string.format('[aider] `%s` is not executable', tostring(aider_exe)),
@@ -135,7 +137,7 @@ function aider_chat_t._new_from_dir(opts)
       )
       return 0
     end
-    return vim.fn.jobstart(chat.cmd, {
+    return vim.fn.jobstart(aider_cmd, {
       term = true,
       cwd = opts.dir,
     })
