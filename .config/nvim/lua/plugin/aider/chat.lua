@@ -181,15 +181,17 @@ end
 function aider_chat_t.get(path)
   if not path then
     path = vim.fn.getcwd(0)
-  end
-  if vim.fn.isdirectory(path) == 0 then
-    path = vim.fs.root(path, configs.opts.root_markers) or vim.fs.dirname(path)
-  end
-  if not vim.uv.fs_stat(path) then
-    return
+  else
+    local stat = vim.uv.fs_stat(path)
+    if not stat then
+      return
+    end
+    if stat.type ~= 'directory' then
+      path = vim.fs.dirname(path)
+    end
   end
   -- Normalized `path`, always use absoluate path and include trailing slash
-  path = vim.fn.fnamemodify(path, ':p')
+  path = vim.fn.fnamemodify(configs.opts.root(path) or path, ':p')
 
   local chat = chats[path]
   if chat and chat:validate() then

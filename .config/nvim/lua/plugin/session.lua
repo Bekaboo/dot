@@ -40,10 +40,15 @@ end
 ---@class session_opts_t
 M.opts = {
   dir = vim.fs.joinpath(vim.fn.stdpath('data') --[[@as string]], 'session'),
-  ---Root markers used to determine the project directory, from which session
-  ---files derive their names
-  ---@type string[]
-  root_markers = require('utils.fs').root_markers,
+  ---Given path, return project root, used to determine the name of the session
+  ---file to be autosaved
+  ---@param path string
+  ---@return string?
+  root = function(path)
+    return vim.fs.root(path, require('utils.fs').root_markers)
+      or vim.fn.isdirectory(path) == 1 and path
+      or vim.fs.dirname(path)
+  end,
   autoload = {
     enabled = true,
     events = { 'UIEnter' },
@@ -105,7 +110,7 @@ function M.get(path)
       path = vim.fs.dirname(path)
     end
   end
-  path = vim.fs.root(path, M.opts.root_markers) or path
+  path = M.opts.root(path) or path
 
   local session_dir = M.opts.dir
   if vim.fn.isdirectory(session_dir) == 0 then

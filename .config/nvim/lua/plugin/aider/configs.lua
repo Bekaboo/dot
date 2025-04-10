@@ -3,8 +3,14 @@ local M = {}
 ---@class aider_opts_t
 M.opts = {
   ---Project root markers to open aider in
-  ---@type string[]
-  root_markers = require('plugin.aider.utils').fs.root_markers,
+  ---@param path string
+  ---@return string?
+  root = function(path)
+    return vim.fs.root(path, '.git')
+      or vim.fs.root(path, require('utils.fs').root_markers)
+      or vim.fn.isdirectory(path) == 1 and path
+      or vim.fs.dirname(path)
+  end,
   ---@type aider_chat_opts_t
   chat = {
     ---Command to launch aider
