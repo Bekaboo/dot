@@ -93,6 +93,7 @@ return {
     ReturnStatement     = 'Ret ',
     RuleSet             = 'Rule ',
     Scope               = 'Scope ',
+    Section             = 'Sec ',
     Snippet             = 'Snip ',
     Specifier           = 'Spec ',
     Statement           = 'Statement ',

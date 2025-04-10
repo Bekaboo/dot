@@ -93,6 +93,7 @@ return {
     ReturnStatement     = '󰌑 ',
     RuleSet             = '󰅩 ',
     Scope               = '󰅩 ',
+    Section             = '󰅩 ',
     Snippet             = '󰩫 ',
     Specifier           = '󰦪 ',
     Statement           = '󰅩 ',
