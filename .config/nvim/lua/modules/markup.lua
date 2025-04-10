@@ -9,8 +9,23 @@ return {
 
   {
     'iamcco/markdown-preview.nvim',
-    ft = 'markdown',
     build = 'cd app && npm install && cd - && git restore .',
+    lazy = true,
+    init = function()
+      vim.api.nvim_create_autocmd('FileType', {
+        desc = 'Defer loading markdown-preview in markdown files.',
+        group = vim.api.nvim_create_augroup('MarkdownPreviewDeferLoading', {}),
+        pattern = 'markdown',
+        once = true,
+        callback = vim.schedule_wrap(function()
+          require('lazy.core.loader').load(
+            'markdown-preview.nvim',
+            { ft = 'markdown' }
+          )
+          vim.api.nvim_exec_autocmds('FileType', { pattern = 'markdown' })
+        end),
+      })
+    end,
     config = function()
       require('configs.markdown-preview')
     end,
@@ -18,12 +33,21 @@ return {
 
   {
     'dhruvasagar/vim-table-mode',
-    cmd = { 'TableModeToggle', 'TableModeEnable', 'TableModeRealign' },
-    ft = 'markdown',
-    keys = {
-      { '<Leader>tm', desc = 'Table mode toggle' },
-      { '<Leader>tt', desc = 'Table mode tableize' },
-    },
+    lazy = true,
+    init = function()
+      vim.api.nvim_create_autocmd('FileType', {
+        desc = 'Defer loading vim-table-mode in markdown files.',
+        group = vim.api.nvim_create_augroup('VimTableModeDeferLoading', {}),
+        pattern = 'markdown',
+        once = true,
+        callback = vim.schedule_wrap(function()
+          require('lazy.core.loader').load(
+            'vim-table-mode',
+            { ft = 'markdown' }
+          )
+        end),
+      })
+    end,
     config = function()
       require('configs.vim-table-mode')
     end,
@@ -31,7 +55,18 @@ return {
 
   {
     'jmbuhr/otter.nvim',
-    ft = 'markdown',
+    lazy = true,
+    init = function()
+      vim.api.nvim_create_autocmd('FileType', {
+        desc = 'Defer loading otter.nvim in markdown files.',
+        group = vim.api.nvim_create_augroup('OtterDeferLoading', {}),
+        pattern = 'markdown',
+        once = true,
+        callback = vim.schedule_wrap(function()
+          require('otter')
+        end),
+      })
+    end,
     dependencies = {
       'nvim-treesitter/nvim-treesitter',
     },
@@ -145,16 +180,39 @@ return {
 
   {
     'HakonHarnes/img-clip.nvim',
-    ft = {
-      'markdown',
-      'vimwiki',
-      'html',
-      'org',
-      'rst',
-      'tex',
-      'typst',
-      'asciidoc',
-    },
+    lazy = true,
+    init = function()
+      -- Load img-clip when `vim.paste` is invoked
+      vim.paste = (function(cb)
+        return function(...)
+          vim.paste = cb
+          pcall(require, 'img-clip')
+          vim.paste(...)
+        end
+      end)(vim.paste)
+
+      -- Setup keymaps in some file types
+      vim.api.nvim_create_autocmd('FileType', {
+        desc = 'Lazy-load img-clip on keys.',
+        group = vim.api.nvim_create_augroup('ImgClipLazyLoadKeys', {}),
+        once = true,
+        pattern = {
+          'markdown',
+          'vimwiki',
+          'html',
+          'org',
+          'rst',
+          'tex',
+          'typst',
+          'asciidoc',
+        },
+        callback = function(info)
+          vim.keymap.set('n', '<Leader>p', function()
+            require('img-clip').paste_image()
+          end, { buffer = info.buf, desc = 'Paste image' })
+        end,
+      })
+    end,
     config = function()
       require('configs.img-clip')
     end,

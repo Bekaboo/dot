@@ -96,7 +96,7 @@ end
 local function setup_keymaps(buf)
   buf = buf or 0
   if filetypes[vim.bo[buf].ft] then
-    vim.keymap.set({ 'n', 'x' }, '<Leader>p', img_clip.paste_image, {
+    vim.keymap.set('n', '<Leader>p', img_clip.paste_image, {
       buffer = buf,
       desc = 'Paste image',
     })
