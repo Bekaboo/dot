@@ -7,7 +7,7 @@ local icon_dir = vim.trim(icons.Folder)
 
 local preview_wins = {} ---@type table<integer, integer>
 local preview_bufs = {} ---@type table<integer, integer>
-local preview_debounce = 16 -- ms
+local preview_debounce = 0 -- ms
 local preview_request_last_timestamp = 0
 
 ---Change window-local directory to `dir`
@@ -84,89 +84,13 @@ local function preview_msg(msg, height, width)
   return lines
 end
 
----@param win integer
----@param all boolean? load all lines from file, default false
-local function preview_set_lines(win, all)
-  local buf = vim.api.nvim_win_get_buf(win)
-  local bufname = vim.fn.bufname(buf)
-
-  local path = bufname:match('oil_preview://(.*)')
-  if not path then
+---@param buf integer
+---@return string?
+local function preview_buf_get_path(buf)
+  if not vim.api.nvim_buf_is_valid(buf) then
     return
   end
-
-  if vim.b[buf]._oil_preview_updated == bufname then
-    return
-  end
-
-  vim.b[buf]._oil_preview_updated = nil
-  if all then
-    vim.b[buf]._oil_preview_updated = bufname
-  end
-
-  local stat = vim.uv.fs_stat(path)
-  local win_height = vim.api.nvim_win_get_height(win)
-  local win_width = vim.api.nvim_win_get_width(win)
-  local num_lines = all and vim.g.bigfile_max_lines
-    or math.min(win_height, vim.g.bigfile_max_lines or math.huge)
-
-  local lines = (function()
-    if not stat then
-      vim.b[buf]._oil_preview_msg_shown = bufname
-      return preview_msg('Invalid path', win_height, win_width)
-    end
-
-    if stat.type == 'directory' then
-      if vim.fn.executable('ls') == 0 then
-        return preview_msg(
-          '`ls` is required to previous directories',
-          win_height,
-          win_width
-        )
-      end
-
-      return vim
-        .iter(vim.gsplit(
-          vim
-            .system({
-              'ls',
-              oil_config.view_options.show_hidden and '-lhA' or '-lh',
-              path,
-            })
-            :wait().stdout,
-          '\n'
-        ))
-        :take(num_lines)
-        :map(function(line)
-          local result = vim.fn.match(line, '\\v^[-dpls][-rwxs]{9}') == -1
-              and line
-            or line:sub(1, 1) .. ' ' .. line:sub(2)
-          return result
-        end)
-        :totable()
-    end
-
-    local ft = vim.fn.executable('file') == 1
-      and vim.system({ 'file', path }):wait().stdout
-    if ft and not ft:match('text') and not ft:match('empty') then
-      vim.b[buf]._oil_preview_msg_shown = bufname
-      return preview_msg('Binary file', win_height, win_width)
-    end
-
-    vim.b[buf]._oil_preview_syntax = bufname
-    return vim
-      .iter(io.lines(path))
-      :take(num_lines)
-      :map(function(line)
-        return (line:gsub('\x0d$', ''))
-      end)
-      :totable()
-  end)()
-
-  vim.bo[buf].modifiable = true
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-  vim.bo[buf].modifiable = false
+  return vim.fn.bufname(buf):match('oil_preview://(.*)')
 end
 
 ---Disable window options, e.g. spell, number, signcolumn, etc. in given window
@@ -195,6 +119,303 @@ local function preview_restore_win_opts(win)
     vim.opt_local.statuscolumn = vim.go.statuscolumn
     vim.opt_local.winbar = vim.go.winbar
   end)
+end
+
+---Colorize preview buffer with syntax highlighting, set win opts, etc.
+---@param win integer?
+local function preview_decorate(win)
+  win = win or 0
+  if not vim.api.nvim_win_is_valid(win) then
+    return
+  end
+
+  local buf = vim.fn.winbufnr(win)
+  local bufname = vim.fn.bufname(buf)
+  local path = preview_buf_get_path(buf)
+  if not path then
+    return
+  end
+
+  -- Add syntax highlighting for message fillers
+  if vim.b[buf]._oil_preview_msg_shown == bufname then
+    -- Set some window options if showing messages instead of preview
+    preview_disable_win_opts(win)
+    vim.api.nvim_buf_call(buf, function()
+      vim.treesitter.stop(buf)
+      vim.bo.syntax = ''
+      vim.cmd.syntax(
+        string.format(
+          'match NonText /\\V%s/',
+          vim.fn.escape(preview_get_filler(), '/?')
+        )
+      )
+    end)
+    return
+  end
+
+  -- Add syntax highlighting to directories or files
+  vim.uv.fs_stat(
+    path,
+    vim.schedule_wrap(function(_, stat)
+      if not stat or preview_buf_get_path(buf) ~= path then
+        return
+      end
+
+      -- Add syntax highlighting for `ls` output
+      if stat.type == 'directory' then
+        -- Disable window decorations when previewing a directory to match oil
+        -- window appearance
+        preview_disable_win_opts(win)
+        vim.api.nvim_buf_call(buf, function()
+          vim.treesitter.stop(buf)
+          vim.bo.syntax = ''
+          vim.cmd([[
+            syn match OilDirPreviewHeader /^total.*/
+            syn match OilDirPreviewTypeFile /^-/ nextgroup=OilDirPreviewFilePerms skipwhite
+            syn match OilDirPreviewTypeDir /^d/ nextgroup=OilDirPreviewDirPerms skipwhite
+            syn match OilDirPreviewTypeFifo /^p/ nextgroup=OilDirPreviewFifoPerms skipwhite
+            syn match OilDirPreviewTypeLink /^l/ nextgroup=OilDirPreviewLinkPerms skipwhite
+            syn match OilDirPreviewTypeSocket /^s/ nextgroup=OilDirPreviewSocketPerms skipwhite
+
+            for type in ['File', 'Dir', 'Fifo', 'Link', 'Socket']
+              exe substitute('syn match OilDirPreview%sPerms /\v[-rwxs]{9}\.?/ contained
+                            \ contains=OilDirPreviewPermRead,OilDirPreviewPermWrite,
+                                     \ OilDirPreviewPermExec,OilDirPreviewPermSetuid,
+                                     \ OilDirPreviewPermNone,OilDirPreviewSecurityContext
+                            \ nextgroup=OilDirPreview%sNumHardLinksNormal,
+                                      \ OilDirPreview%sNumHardLinksMulti
+                            \ skipwhite', '%s', type, 'g')
+              exe substitute('syn match OilDirPreview%sNumHardLinksNormal /1/ contained nextgroup=OilDirPreview%sUser skipwhite', '%s', type, 'g')
+              exe substitute('syn match OilDirPreview%sNumHardLinksMulti /\v[2-9]\d*|1\d+/ contained nextgroup=OilDirPreview%sUser skipwhite', '%s', type, 'g')
+              exe substitute('syn match OilDirPreview%sUser /\v\S+/ contained nextgroup=OilDirPreview%sGroup skipwhite', '%s', type, 'g')
+              exe substitute('syn match OilDirPreview%sGroup /\v\S+/ contained nextgroup=OilDirPreview%sSize skipwhite', '%s', type, 'g')
+              exe substitute('syn match OilDirPreview%sSize /\v\S+/ contained nextgroup=OilDirPreview%sTime skipwhite', '%s', type, 'g')
+              exe substitute('syn match OilDirPreview%sTime /\v(\S+\s+){3}/ contained
+                            \ nextgroup=OilDirPreview%s,OilDirPreview%sHidden
+                            \ skipwhite', '%s', type, 'g')
+
+              exe substitute('hi def link OilDirPreview%sNumHardLinksNormal Number', '%s', type, 'g')
+              exe substitute('hi def link OilDirPreview%sNumHardLinksMulti OilDirPreview%sNumHardLinksNormal', '%s', type, 'g')
+              exe substitute('hi def link OilDirPreview%sSize Number', '%s', type, 'g')
+              exe substitute('hi def link OilDirPreview%sTime String', '%s', type, 'g')
+              exe substitute('hi def link OilDirPreview%sUser Operator', '%s', type, 'g')
+              exe substitute('hi def link OilDirPreview%sGroup Structure', '%s', type, 'g')
+           endfor
+
+            syn match OilDirPreviewPermRead /r/ contained
+            syn match OilDirPreviewPermWrite /w/ contained
+            syn match OilDirPreviewPermExec /x/ contained
+            syn match OilDirPreviewPermSetuid /s/ contained
+            syn match OilDirPreviewPermNone /-/ contained
+            syn match OilDirPreviewSecurityContext /\./ contained
+
+            syn match OilDirPreviewDir /[^.].*/ contained
+            syn match OilDirPreviewFile /[^.].*/ contained
+            syn match OilDirPreviewSocket /[^.].*/ contained
+            syn match OilDirPreviewLink /[^.].*/ contained contains=OilDirPreviewLinkTarget
+            syn match OilDirPreviewLinkTarget /->.*/ contained
+
+            syn match OilDirPreviewDirHidden /\..*/ contained
+            syn match OilDirPreviewFileHidden /\..*/ contained
+            syn match OilDirPreviewSocketHidden /\..*/ contained
+            syn match OilDirPreviewLinkHidden /\..*/ contained contains=OilDirPreviewLinkTargetHidden
+            syn match OilDirPreviewLinkTargetHidden /->.*/ contained
+
+            hi def link OilDirPreviewHeader Title
+            hi def link OilDirPreviewTypeFile OilTypeFile
+            hi def link OilDirPreviewTypeDir OilTypeDir
+            hi def link OilDirPreviewTypeFifo OilTypeFifo
+            hi def link OilDirPreviewTypeLink OilTypeLink
+            hi def link OilDirPreviewTypeSocket OilTypeSocket
+
+            hi def link OilDirPreviewPermRead OilPermissionRead
+            hi def link OilDirPreviewPermWrite OilPermissionWrite
+            hi def link OilDirPreviewPermExec OilPermissionExecute
+            hi def link OilDirPreviewPermSetuid OilPermissionSetuid
+            hi def link OilDirPreviewPermNone OilPermissionNone
+            hi def link OilDirPreviewSecurityContext OilSecurityContext
+
+            hi def link OilDirPreviewDir OilDir
+            hi def link OilDirPreviewFile OilFile
+            hi def link OilDirPreviewLink OilLink
+            hi def link OilDirPreviewLinkTarget OilLinkTarget
+            hi def link OilDirPreviewSocket OilSocket
+
+            hi def link OilDirPreviewDirHidden OilDirHidden
+            hi def link OilDirPreviewFileHidden OilFileHidden
+            hi def link OilDirPreviewLinkHidden OilLinkHidden
+            hi def link OilDirPreviewLinkTargetHidden OilLinkTargetHidden
+            hi def link OilDirPreviewSocketHidden OilSocketHidden
+          ]])
+        end)
+        return
+      end
+
+      -- Add syntax/treesitter highlighting for normal files
+      if vim.b[buf]._oil_preview_syntax == bufname then
+        preview_restore_win_opts(win)
+        local ft = vim.filetype.match({
+          buf = buf,
+          filename = path,
+        })
+        if not ft then
+          return
+        end
+        vim.bo[buf].syntax = ft
+        vim.api.nvim_buf_call(buf, function()
+          if
+            stat
+            and stat.size
+            and vim.g.bigfile_max_size
+            and stat.size < vim.g.bigfile_max_size
+            and not pcall(vim.treesitter.start, buf, ft)
+          then
+            vim.treesitter.stop(buf)
+          end
+        end)
+      end
+    end)
+  )
+end
+
+---@param win integer
+---@param lines string[]
+---@param path string
+local function preview_win_set_lines(win, lines, path)
+  if not vim.api.nvim_win_is_valid(win) then
+    return
+  end
+
+  local buf = vim.fn.winbufnr(win)
+  if preview_buf_get_path(buf) ~= path then
+    return
+  end
+
+  vim.bo[buf].modifiable = true
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.bo[buf].modifiable = false
+
+  preview_decorate(win)
+end
+
+---@param win integer
+---@param all boolean? load all lines from file, default false
+local function preview_set_lines(win, all)
+  local buf = vim.api.nvim_win_get_buf(win)
+  local bufname = vim.fn.bufname(buf)
+
+  local path = preview_buf_get_path(buf)
+  if not path then
+    return
+  end
+
+  if vim.b[buf]._oil_preview_updated == bufname then
+    return
+  end
+
+  vim.b[buf]._oil_preview_updated = nil
+  if all then
+    vim.b[buf]._oil_preview_updated = bufname
+  end
+
+  local stat = vim.uv.fs_stat(path)
+  local win_height = vim.api.nvim_win_get_height(win)
+  local win_width = vim.api.nvim_win_get_width(win)
+  local num_lines = all and vim.g.bigfile_max_lines
+    or math.min(win_height, vim.g.bigfile_max_lines or math.huge)
+
+  if not stat then
+    vim.b[buf]._oil_preview_msg_shown = bufname
+    preview_win_set_lines(
+      win,
+      preview_msg('Invalid path', win_height, win_width),
+      path
+    )
+    return
+  end
+
+  -- Preview directories
+  if stat.type == 'directory' then
+    if vim.fn.executable('ls') == 0 then
+      preview_win_set_lines(
+        win,
+        preview_msg(
+          '`ls` is required to previous directories',
+          win_height,
+          win_width
+        ),
+        path
+      )
+      return
+    end
+
+    vim.system(
+      {
+        'ls',
+        oil_config.view_options.show_hidden and '-lhA' or '-lh',
+        path,
+      },
+      { text = true },
+      vim.schedule_wrap(function(obj)
+        preview_win_set_lines(
+          win,
+          vim
+            .iter(vim.gsplit(obj.stdout, '\n'))
+            :take(num_lines)
+            :map(function(line)
+              local result = vim.fn.match(line, '\\v^[-dpls][-rwxs]{9}') == -1
+                  and line
+                or line:sub(1, 1) .. ' ' .. line:sub(2)
+              return result
+            end)
+            :totable(),
+          path
+        )
+      end)
+    )
+    return
+  end
+
+  -- Preview files
+  local function preview_file()
+    vim.b[buf]._oil_preview_syntax = bufname
+    preview_win_set_lines(
+      win,
+      vim
+        .iter(io.lines(path))
+        :take(num_lines)
+        :map(function(line)
+          return (line:gsub('\x0d$', ''))
+        end)
+        :totable(),
+      path
+    )
+  end
+
+  if vim.fn.executable('file') == 0 then
+    preview_file()
+    return
+  end
+
+  -- Use `file` to check and preview text files only
+  vim.system(
+    { 'file', path },
+    { text = true },
+    vim.schedule_wrap(function(obj)
+      if obj.stdout:match('text') or obj.stdout:match('empty') then
+        preview_file()
+        return
+      end
+
+      vim.b[buf]._oil_preview_msg_shown = bufname
+      preview_win_set_lines(
+        win,
+        preview_msg('Binary file', win_height, win_width),
+        path
+      )
+    end)
+  )
 end
 
 ---Preview file under cursor in a split
@@ -236,12 +457,12 @@ local function preview()
   end
 
   -- Follow symlinks
-  local fpath = vim.F.npcall(vim.uv.fs_realpath, vim.fs.joinpath(dir, fname))
+  local path = vim.F.npcall(vim.uv.fs_realpath, vim.fs.joinpath(dir, fname))
     or ''
 
   -- Preview buffer already contains contents of file to preview
   local preview_bufname = vim.fn.bufname(preview_buf)
-  local preview_bufnewname = 'oil_preview://' .. fpath
+  local preview_bufnewname = 'oil_preview://' .. path
   if preview_bufname == preview_bufnewname then
     return
   end
@@ -251,7 +472,7 @@ local function preview()
   ---@return nil
   local function preview_edit()
     local view = vim.fn.winsaveview()
-    vim.cmd.edit(fpath)
+    vim.cmd.edit(path)
     preview_finish(oil_win)
     pcall(vim.fn.winrestview, view)
   end
@@ -268,9 +489,8 @@ local function preview()
   -- If previewing a directory, change cwd to that directory
   -- so that we can `gf` to files in the preview buffer;
   -- else change cwd to the parent directory of the file in preview
-  local stat = vim.uv.fs_stat(fpath)
   vim.api.nvim_win_call(preview_win, function()
-    local target_dir = (stat or {}).type == 'directory' and fpath or dir
+    local target_dir = vim.fn.isdirectory(path) == 1 and path or dir
     if vim.fn.getcwd(0) ~= target_dir then
       lcd(target_dir)
     end
@@ -279,135 +499,12 @@ local function preview()
     vim.cmd('0')
   end)
 
-  vim.api.nvim_buf_call(preview_buf, function()
-    vim.treesitter.stop(preview_buf)
-    vim.bo.syntax = ''
-    -- Because we are reusing the same preview buffer for different files, we
-    -- need to clear the `bigfile` flag so that we can enable treesitter
-    -- when previewing smaller files after previewing big files.
-    vim.b.bigfile = nil
-  end)
+  -- Because we are reusing the same preview buffer for different files, we
+  -- need to clear the `bigfile` flag so that we can enable treesitter
+  -- when previewing smaller files after previewing big files.
+  vim.b[preview_buf].bigfile = nil
 
   preview_set_lines(preview_win)
-  preview_restore_win_opts(preview_win)
-
-  -- Colorize preview buffer with syntax highlighting
-  if (stat or {}).type == 'directory' then
-    -- Disable window decorations when previewing a directory to match oil
-    -- window appearance
-    preview_disable_win_opts(preview_win)
-    vim.api.nvim_buf_call(preview_buf, function()
-      vim.cmd([[
-        syn match OilDirPreviewHeader /^total.*/
-        syn match OilDirPreviewTypeFile /^-/ nextgroup=OilDirPreviewFilePerms skipwhite
-        syn match OilDirPreviewTypeDir /^d/ nextgroup=OilDirPreviewDirPerms skipwhite
-        syn match OilDirPreviewTypeFifo /^p/ nextgroup=OilDirPreviewFifoPerms skipwhite
-        syn match OilDirPreviewTypeLink /^l/ nextgroup=OilDirPreviewLinkPerms skipwhite
-        syn match OilDirPreviewTypeSocket /^s/ nextgroup=OilDirPreviewSocketPerms skipwhite
-
-        for type in ['File', 'Dir', 'Fifo', 'Link', 'Socket']
-          exe substitute('syn match OilDirPreview%sPerms /\v[-rwxs]{9}\.?/ contained
-                        \ contains=OilDirPreviewPermRead,OilDirPreviewPermWrite,
-                                 \ OilDirPreviewPermExec,OilDirPreviewPermSetuid,
-                                 \ OilDirPreviewPermNone,OilDirPreviewSecurityContext
-                        \ nextgroup=OilDirPreview%sNumHardLinksNormal,
-                                  \ OilDirPreview%sNumHardLinksMulti
-                        \ skipwhite', '%s', type, 'g')
-          exe substitute('syn match OilDirPreview%sNumHardLinksNormal /1/ contained nextgroup=OilDirPreview%sUser skipwhite', '%s', type, 'g')
-          exe substitute('syn match OilDirPreview%sNumHardLinksMulti /\v[2-9]\d*|1\d+/ contained nextgroup=OilDirPreview%sUser skipwhite', '%s', type, 'g')
-          exe substitute('syn match OilDirPreview%sUser /\v\S+/ contained nextgroup=OilDirPreview%sGroup skipwhite', '%s', type, 'g')
-          exe substitute('syn match OilDirPreview%sGroup /\v\S+/ contained nextgroup=OilDirPreview%sSize skipwhite', '%s', type, 'g')
-          exe substitute('syn match OilDirPreview%sSize /\v\S+/ contained nextgroup=OilDirPreview%sTime skipwhite', '%s', type, 'g')
-          exe substitute('syn match OilDirPreview%sTime /\v(\S+\s+){3}/ contained
-                        \ nextgroup=OilDirPreview%s,OilDirPreview%sHidden
-                        \ skipwhite', '%s', type, 'g')
-
-          exe substitute('hi def link OilDirPreview%sNumHardLinksNormal Number', '%s', type, 'g')
-          exe substitute('hi def link OilDirPreview%sNumHardLinksMulti OilDirPreview%sNumHardLinksNormal', '%s', type, 'g')
-          exe substitute('hi def link OilDirPreview%sSize Number', '%s', type, 'g')
-          exe substitute('hi def link OilDirPreview%sTime String', '%s', type, 'g')
-          exe substitute('hi def link OilDirPreview%sUser Operator', '%s', type, 'g')
-          exe substitute('hi def link OilDirPreview%sGroup Structure', '%s', type, 'g')
-       endfor
-
-        syn match OilDirPreviewPermRead /r/ contained
-        syn match OilDirPreviewPermWrite /w/ contained
-        syn match OilDirPreviewPermExec /x/ contained
-        syn match OilDirPreviewPermSetuid /s/ contained
-        syn match OilDirPreviewPermNone /-/ contained
-        syn match OilDirPreviewSecurityContext /\./ contained
-
-        syn match OilDirPreviewDir /[^.].*/ contained
-        syn match OilDirPreviewFile /[^.].*/ contained
-        syn match OilDirPreviewSocket /[^.].*/ contained
-        syn match OilDirPreviewLink /[^.].*/ contained contains=OilDirPreviewLinkTarget
-        syn match OilDirPreviewLinkTarget /->.*/ contained
-
-        syn match OilDirPreviewDirHidden /\..*/ contained
-        syn match OilDirPreviewFileHidden /\..*/ contained
-        syn match OilDirPreviewSocketHidden /\..*/ contained
-        syn match OilDirPreviewLinkHidden /\..*/ contained contains=OilDirPreviewLinkTargetHidden
-        syn match OilDirPreviewLinkTargetHidden /->.*/ contained
-
-        hi def link OilDirPreviewHeader Title
-        hi def link OilDirPreviewTypeFile OilTypeFile
-        hi def link OilDirPreviewTypeDir OilTypeDir
-        hi def link OilDirPreviewTypeFifo OilTypeFifo
-        hi def link OilDirPreviewTypeLink OilTypeLink
-        hi def link OilDirPreviewTypeSocket OilTypeSocket
-
-        hi def link OilDirPreviewPermRead OilPermissionRead
-        hi def link OilDirPreviewPermWrite OilPermissionWrite
-        hi def link OilDirPreviewPermExec OilPermissionExecute
-        hi def link OilDirPreviewPermSetuid OilPermissionSetuid
-        hi def link OilDirPreviewPermNone OilPermissionNone
-        hi def link OilDirPreviewSecurityContext OilSecurityContext
-
-        hi def link OilDirPreviewDir OilDir
-        hi def link OilDirPreviewFile OilFile
-        hi def link OilDirPreviewLink OilLink
-        hi def link OilDirPreviewLinkTarget OilLinkTarget
-        hi def link OilDirPreviewSocket OilSocket
-
-        hi def link OilDirPreviewDirHidden OilDirHidden
-        hi def link OilDirPreviewFileHidden OilFileHidden
-        hi def link OilDirPreviewLinkHidden OilLinkHidden
-        hi def link OilDirPreviewLinkTargetHidden OilLinkTargetHidden
-        hi def link OilDirPreviewSocketHidden OilSocketHidden
-      ]])
-    end)
-  elseif vim.b[preview_buf]._oil_preview_syntax == preview_bufnewname then
-    local ft = vim.filetype.match({
-      buf = preview_buf,
-      filename = fpath,
-    })
-    if
-      ft
-      -- If file size is larger than the max size for treesitter, don't
-      -- start it in preview buffer to prevent highlight change after
-      -- actually loading the file
-      and (
-        stat
-          and stat.size
-          and vim.g.bigfile_max_size
-          and stat.size > vim.g.bigfile_max_size
-        or not pcall(vim.treesitter.start, preview_buf, ft)
-      )
-    then
-      vim.bo[preview_buf].syntax = ft
-    end
-  elseif vim.b[preview_buf]._oil_preview_msg_shown == preview_bufnewname then
-    -- Set some window options if showing messages instead of preview
-    preview_disable_win_opts(preview_win)
-    vim.api.nvim_win_call(preview_win, function()
-      vim.cmd.syntax(
-        string.format(
-          'match NonText /\\V%s/',
-          vim.fn.escape(preview_get_filler(), '/?')
-        )
-      )
-    end)
-  end
 end
 
 local groupid_preview = vim.api.nvim_create_augroup('OilPreview', {})
