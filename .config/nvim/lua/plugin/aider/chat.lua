@@ -177,12 +177,22 @@ function aider_chat_t:validate()
 end
 
 ---Get a valid aider chat in `path`
+---If `path` is not given, prefer current visible aider chat, if any
 ---@param path? string file or directory path, default to cwd
+---@param tab? number default to current tabpage
 ---@return aider_chat_t? aider chat object at `path`
 ---@return boolean? is_new whether the chat is newly created or reused
-function aider_chat_t.get(path)
+function aider_chat_t.get(path, tab)
   if not path then
     path = vim.fn.getcwd(0)
+    -- Check if there is any aider chat visible in given tabpage
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab or 0)) do
+      local buf = vim.fn.winbufnr(win)
+      if vim.bo[buf].ft == 'aider' then
+        path = utils.term.parse_name(vim.api.nvim_buf_get_name(buf))
+        break
+      end
+    end
   else
     local stat = vim.uv.fs_stat(path)
     if not stat then
