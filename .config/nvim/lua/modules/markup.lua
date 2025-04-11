@@ -180,39 +180,7 @@ return {
 
   {
     'HakonHarnes/img-clip.nvim',
-    lazy = true,
-    init = function()
-      -- Load img-clip when `vim.paste` is invoked
-      vim.paste = (function(cb)
-        return function(...)
-          vim.paste = cb
-          pcall(require, 'img-clip')
-          vim.paste(...)
-        end
-      end)(vim.paste)
-
-      -- Setup keymaps in some file types
-      vim.api.nvim_create_autocmd('FileType', {
-        desc = 'Lazy-load img-clip on keys.',
-        group = vim.api.nvim_create_augroup('ImgClipLazyLoadKeys', {}),
-        once = true,
-        pattern = {
-          'markdown',
-          'vimwiki',
-          'html',
-          'org',
-          'rst',
-          'tex',
-          'typst',
-          'asciidoc',
-        },
-        callback = function(info)
-          vim.keymap.set('n', '<Leader>p', function()
-            require('img-clip').paste_image()
-          end, { buffer = info.buf, desc = 'Paste image' })
-        end,
-      })
-    end,
+    event = 'VeryLazy',
     config = function()
       require('configs.img-clip')
     end,
