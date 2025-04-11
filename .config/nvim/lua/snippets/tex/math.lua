@@ -217,11 +217,11 @@ return {
   us.sambW({ trig = '\\in v' }, t('^{-1}')),
   us.msambW({
     { trig = 'tr' },
+    { trig = '^tr' },
     { trig = '.T' },
-    { trig = '^T' },
   }, t('^{\\intercal}')),
   us.sambW({
-    trig = 'T',
+    trig = 'tr',
     condition = conds.before_pattern('}') * conds.after_pattern('%^{'),
     show_condition = conds.before_pattern('}') * conds.after_pattern('%^{'),
   }, t('\\intercal')),
