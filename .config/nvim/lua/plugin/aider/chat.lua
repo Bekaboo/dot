@@ -74,10 +74,9 @@ function aider_chat_t._new_from_buf(opts)
     return
   end
 
-  local dir, _, cmd =
-    utils.term.parse_name(vim.api.nvim_buf_get_name(opts.buf))
-  local aider_exe =
-    configs.opts.chat.cmd(vim.api.nvim_buf_get_name(opts.buf))[1]
+  local bufname = vim.api.nvim_buf_get_name(opts.buf)
+  local dir, _, cmd = utils.term.parse_name(bufname)
+  local aider_exe = configs.opts.chat.cmd(bufname)[1]
   if
     not vim.startswith(cmd, aider_exe)
     and not vim.startswith(cmd, vim.fn.exepath(aider_exe))
