@@ -6,8 +6,19 @@ M.opts = {
   ---@param path string
   ---@return string?
   root = function(path)
-    return vim.fs.root(path, '.git')
-      or vim.fs.root(path, require('utils.fs').root_markers)
+    ---@param dir string?
+    ---@return string?
+    local function validate(dir)
+      return dir
+          and vim.fn.isdirectory(dir) == 1
+          -- Aider will freeze if opened in home dir
+          and not require('utils.fs').is_home_dir(dir)
+          and not require('utils.fs').is_root_dir(dir)
+          and dir
+        or nil
+    end
+    return validate(vim.fs.root(path, '.git'))
+      or validate(vim.fs.root(path, require('utils.fs').root_markers))
       or vim.fn.isdirectory(path) == 1 and path
       or vim.fs.dirname(path)
   end,
