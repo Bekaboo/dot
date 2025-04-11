@@ -48,7 +48,9 @@ end
 local z_backends = {
   z = {
     exists = function()
-      return vim.system({ vim.env.SHELL, '-c', 'type z' }):wait().code == 0
+      return vim.env.SHELL
+        and vim.fn.executable(vim.env.SHELL) == 1
+        and vim.system({ vim.env.SHELL, '-c', 'type z' }):wait().code == 0
     end,
     cmds = {
       jump = function(trig)
