@@ -46,11 +46,9 @@ img_clip.setup({
     tex = {
       template = function()
         return ([[
-\begin{figure}[h]
+\begin{figure}[H]
 $INDENT\centering
-$INDENT\includegraphics[width=0.8\textwidth]{$FILE_PATH}
-$INDENT\caption{$LABEL$CURSOR}
-$INDENT\label{fig:$LABEL}
+$INDENT\includegraphics[width=1.0\textwidth]{$FILE_PATH}
 \end{figure}
 ]]):gsub('$INDENT', indent())
       end,
