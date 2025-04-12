@@ -66,18 +66,6 @@ ls.setup({
         virt_text = { { static.icons.ArrowUpDown, 'Number' } },
       },
     },
-    [ls_types.insertNode] = {
-      unvisited = {
-        virt_text = { { static.boxes.single.vt, 'NonText' } },
-        virt_text_pos = 'inline',
-      },
-    },
-    [ls_types.exitNode] = {
-      unvisited = {
-        virt_text = { { static.boxes.single.vt, 'NonText' } },
-        virt_text_pos = 'inline',
-      },
-    },
   },
 })
 
