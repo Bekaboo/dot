@@ -64,6 +64,7 @@ return {
         once = true,
         callback = vim.schedule_wrap(function()
           require('otter')
+          vim.api.nvim_exec_autocmds('FileType', { pattern = 'markdown' })
         end),
       })
     end,
