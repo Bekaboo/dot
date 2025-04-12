@@ -27,7 +27,7 @@ end
 if not pcall(vim.fn.MoltenStatusLineInit) then
   vim.cmd.UpdateRemotePlugins()
   local manifest = vim.g.loaded_remote_plugins
-  if manifest and (vim.uv.fs_stat(manifest) or {}).type == 'file' then
+  if manifest and vim.fn.filereadable(manifest) == 1 then
     vim.cmd.source(manifest)
   end
 end
@@ -162,7 +162,7 @@ local function extract_cells(lang, code_chunks, range, partial)
   return chunks
 end
 
-local otk
+local otk = vim.F.npcall(require, 'otter.keeper')
 
 ---@type table<string, true>
 local not_runnable = {
@@ -174,6 +174,11 @@ local not_runnable = {
 ---Find valid language under cursor that can be sent to REPL
 ---@return string?
 local function get_valid_repl_lang()
+  if not otk then
+    molten_warn('otter.nvim not found')
+    return
+  end
+
   local lang = otk.get_current_language_context()
   if not lang or not_runnable[lang] then
     return
@@ -188,13 +193,18 @@ end
 ---@param range code_range_t a range, for with any overlapping code cells are run
 ---@return nil
 local function run_cell(range)
+  if not otk then
+    molten_warn('otter.nvim not found')
+    return
+  end
+
   local buf = vim.api.nvim_get_current_buf()
   local lang = get_valid_repl_lang() or 'python'
 
   otk.sync_raft(buf)
   local otk_buf_info = otk.rafts[buf]
   if not otk_buf_info then
-    molten_warn('code runner not initialized for buffer ' .. buf)
+    molten_warn('otter.nvim not initialized for buffer ' .. buf)
     return
   end
 
@@ -262,13 +272,18 @@ end
 ---@param range code_range_t
 ---@return nil
 local function run_range(range)
+  if not otk then
+    molten_warn('otter.nvim not found')
+    return
+  end
+
   local buf = vim.api.nvim_get_current_buf()
   local lang = get_valid_repl_lang() or 'python'
 
   otk.sync_raft(buf)
   local otk_buf_info = otk.rafts[buf]
   if not otk_buf_info then
-    molten_warn('code runner not initialized for buffer ' .. buf)
+    molten_warn('otter.nvim not initialized for buffer ' .. buf)
     return
   end
 
@@ -376,13 +391,11 @@ local function setup_buf_keymaps_and_commands(buf)
   vim.keymap.set('n', '<C-j>', enter_cell_output, opts)
   vim.keymap.set('n', '<C-Down>', enter_cell_output, opts)
 
-  local otk_ok
-  otk_ok, otk = pcall(require, 'otter.keeper')
   -- Use otter to recognized codeblocks in markdown files,
   -- so we can run current codeblock directly without selection
   -- using `<CR>`, and other good stuffs
   -- stylua: ignore start
-  if ft == 'markdown' and otk_ok then
+  if ft == 'markdown' and otk then
     vim.api.nvim_buf_create_user_command(buf, 'MoltenNotebookRunLine', run_line, {})
     vim.api.nvim_buf_create_user_command(buf, 'MoltenNotebookRunCellAbove', run_cell_above, {})
     vim.api.nvim_buf_create_user_command(buf, 'MoltenNotebookRunCellBelow', run_cell_below, {})

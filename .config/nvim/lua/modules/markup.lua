@@ -96,17 +96,10 @@ return {
       ---Lazy-load molten plugin on keys
       ---@param mode string in which mode to set the triggering keymap
       ---@param key string the key to trigger molten plugin
-      ---@param buf number the buffer to set the keymap
       ---@param opts vim.keymap.set.Opts? the keymap options
-      local function load_on_key(mode, key, buf, opts)
+      local function load_on_key(mode, key, opts)
         if loaded then
           return
-        end
-
-        if not opts then
-          opts = { buffer = buf }
-        else
-          opts.buffer = buf
         end
 
         vim.keymap.set(mode, key, function()
@@ -135,15 +128,15 @@ return {
         end
 
         -- For both python and notebook buffers
-        load_on_key('x', '<CR>', buf, { desc = 'Run current cell' })
+        load_on_key('x', '<CR>', { buffer = buf, desc = 'Run current cell' })
 
         -- Jupyter notebook only keymaps
         if vim.bo[buf].ft == 'markdown' then
           -- stylua: ignore start
-          load_on_key('n', '<CR>', buf, { desc = 'Run current cell' })
-          load_on_key('n', '<LocalLeader>k', buf, { desc = 'Run current cell and all above' })
-          load_on_key('n', '<LocalLeader>j', buf, { desc = 'Run current cell and all below' })
-          load_on_key('n', '<LocalLeader><CR>', buf, { desc = 'Run code selected by operator' })
+          load_on_key('n', '<CR>', { buffer = buf, desc = 'Run current cell' })
+          load_on_key('n', '<LocalLeader>k', { buffer = buf, desc = 'Run current cell and all above' })
+          load_on_key('n', '<LocalLeader>j', { buffer = buf, desc = 'Run current cell and all below' })
+          load_on_key('n', '<LocalLeader><CR>', { buffer = buf, desc = 'Run code selected by operator' })
           -- stylua: ignore end
         end
       end
