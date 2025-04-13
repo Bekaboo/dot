@@ -12,7 +12,7 @@ local f = ls.function_node
 local r = ls.restore_node
 
 return {
-  us.samWr({ trig = '(%a)(%d)' }, {
+  us.samWr({ trig = '([%a%}])(%d)' }, {
     f(function(_, parent)
       return string.format(
         '%s_%s',
