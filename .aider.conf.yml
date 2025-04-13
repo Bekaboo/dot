@@ -4,13 +4,10 @@ watch-files: true
 gitignore: false
 auto-commits: false
 
-architect: true
 cache-prompts: true
 auto-accept-architect: false
 
-model: r1
-weak-model: deepseek
-editor-model: sonnet
+model: gemini-2.5-pro
 chat-language: the same language of user's question, prefer English
 
 user-input-color: "" # use default foreground color
