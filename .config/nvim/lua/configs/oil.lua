@@ -720,6 +720,31 @@ oil.setup({
     ['gY'] = 'actions.copy_entry_filename',
     ['<Leader>y'] = 'actions.copy_to_system_clipboard',
     ['<Leader>p'] = 'actions.paste_from_system_clipboard',
+    -- Drag and drop
+    -- Source: https://github.com/ndavd/dotfiles/blob/7af6efa64007c9e28ca5461c101034c2d5d53000/.config/nvim/lua/plugins/oil.lua#L15
+    ['<Leader>d'] = {
+      mode = 'n',
+      buffer = true,
+      desc = 'Drag and drop entry under the cursor',
+      callback = function()
+        local entry = oil.get_cursor_entry()
+        local dir = oil.get_current_dir()
+        if not entry or not dir then
+          return
+        end
+        if vim.fn.executable('dragon-drop') == 0 then
+          vim.notify(
+            '[oil] `dragon-drop` is not executable',
+            vim.log.levels.WARN
+          )
+          return
+        end
+        vim.system({
+          'dragon-drop',
+          vim.fs.joinpath(dir, entry.name),
+        })
+      end,
+    },
     ['go'] = {
       mode = 'n',
       buffer = true,
