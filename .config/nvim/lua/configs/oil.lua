@@ -379,6 +379,10 @@ local function preview_set_lines(win, all)
 
   -- Preview files
   local function preview_file()
+    if vim.fn.winbufnr(win) ~= buf then
+      return
+    end
+
     vim.b[buf]._oil_preview_syntax = bufname
     preview_win_set_lines(
       win,
@@ -403,6 +407,10 @@ local function preview_set_lines(win, all)
     { 'file', path },
     { text = true },
     vim.schedule_wrap(function(obj)
+      if vim.fn.winbufnr(win) ~= buf then
+        return
+      end
+
       if obj.stdout:match('text') or obj.stdout:match('empty') then
         preview_file()
         return
