@@ -1,5 +1,6 @@
 local configs = require('plugin.winbar.configs')
 local bar = require('plugin.winbar.bar')
+local utils = require('plugin.winbar.utils')
 
 local initialized = false
 local groupid = vim.api.nvim_create_augroup('WinBarMarkdown', {})
@@ -318,6 +319,8 @@ local function get_symbols(buf, win, cursor)
       end
     end
   end
+
+  utils.bar.set_min_widths(result, configs.opts.sources.markdown.min_widths)
   return result
 end
 
