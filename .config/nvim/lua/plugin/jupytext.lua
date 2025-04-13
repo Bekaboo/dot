@@ -131,7 +131,7 @@ local function jupytext_convert(buf)
   end
 
   local md = get_md(ipynb)
-  local sha = get_sha(md)
+  local sha = get_sha(ipynb)
 
   -- Get current and previous sha256sum of the notebook file
   local sha_prev = fs.read_file(sha)
