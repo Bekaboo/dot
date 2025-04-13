@@ -32,7 +32,7 @@ fish_color_selection                 cccccc --background=383c41
 fish_color_status                    cccccc --background=e2828e
 fish_color_status_0                  cccccc --background=3b9670
 fish_color_user                      6a6aff
-fish_color_valid_path                4FB8CC --underline
+fish_color_valid_path                4FB8CC
 fish_color_vcs                       777777
 fish_pager_color_completion          cccccc
 fish_pager_color_description         777777

@@ -32,7 +32,7 @@ fish_color_selection                 111111 --background=f4f5f5
 fish_color_status                    ffffff --background=bc5555
 fish_color_status_0                  ffffff --background=288828
 fish_color_user                      7373ff
-fish_color_valid_path                2c2cff --underline
+fish_color_valid_path                2c2cff
 fish_color_vcs                       008800
 fish_pager_color_completion          111111
 fish_pager_color_description         008800
