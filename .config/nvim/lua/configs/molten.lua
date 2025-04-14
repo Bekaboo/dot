@@ -435,8 +435,9 @@ vim.api.nvim_create_autocmd('FileType', {
 local function set_default_hlgroups()
   local hl = require('utils.hl')
   hl.set(0, 'MoltenCell', { link = 'CursorLine' })
-  hl.set(0, 'MoltenOutputWin', { link = 'Comment' })
-  hl.set(0, 'MoltenOutputWinNC', { link = 'Comment' })
+  hl.set(0, 'MoltenOutputWin', { link = 'NonText' })
+  hl.set(0, 'MoltenOutputWinNC', { link = 'NonText' })
+  hl.set(0, 'MoltenVirtualText', { link = 'NonText' })
 end
 set_default_hlgroups()
 
