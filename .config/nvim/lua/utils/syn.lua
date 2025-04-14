@@ -1,8 +1,9 @@
 local M = {}
 
 ---@param names string|string[]|fun(types: string|string[]): boolean type of node, or function to check node type
+---@param depth? integer
 ---@return integer?
-function M.find_group(names)
+function M.find_group(names, depth)
   if not vim.b.current_syntax then
     return
   end
@@ -30,6 +31,7 @@ function M.find_group(names)
       )
     )
     :rev()
+    :take(depth or math.huge)
     :find(function(id)
       return check_name_match(vim.fn.synIDattr(id, 'name')) and id
     end)
