@@ -56,8 +56,41 @@ local function format_title()
 
   local cursor = vim.api.nvim_win_get_cursor(0)
   local line = vim.api.nvim_get_current_line()
-  if
-    not utils.ts.find_node('heading') and not utils.syn.find_group('H%d$')
+
+  -- Don't use treesitter/syntax to check title if current line does not start
+  -- with '#', improves performance on non-title lines
+  if not vim.startswith(line, '#') then
+    return
+  end
+
+  -- Don't capitalize if not in a heading
+  -- Also, don't capitalize if inside inline code (``) or latex equations ($$)
+  if utils.ts.is_active() then
+    local parser = vim.treesitter.get_parser()
+    -- Language tree can be invalid during editing with asynchronous parsing,
+    -- re-parse to ensure that it is valid or we cannot find the node correctly
+    if parser and not parser:is_valid() then
+      local lnum = vim.fn.line('.') -- 1-based index
+      parser:parse({ lnum - 1, lnum }) -- 0-based index
+    end
+    if
+      not utils.ts.find_node('heading')
+      or utils.ts.find_node(
+        { 'code_span', 'formula', 'equation', 'math' },
+        { ignore_injections = false }
+      )
+    then
+      return
+    end
+  elseif
+    utils.syn.is_active()
+    and (
+      not utils.syn.find_group('H%d$')
+      or utils.syn.find_group({
+        'Code',
+        'MathZone',
+      })
+    )
   then
     return
   end
