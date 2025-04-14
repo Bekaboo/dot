@@ -1,3 +1,7 @@
+if vim.g.loaded_markdown_title ~= nil then
+  return
+end
+
 local utils = require('utils')
 
 if vim.g.md_fmt_title == nil then
