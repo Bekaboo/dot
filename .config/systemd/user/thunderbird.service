@@ -1,0 +1,10 @@
+[Unit]
+Description=Thunderbird Headless Service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/thunderbird --headless
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
