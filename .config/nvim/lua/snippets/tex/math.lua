@@ -659,6 +659,11 @@ return {
     i(2),
     t('} '),
   }),
+  us.sam({ trig = 'grad' }, {
+    t('\\nabla_{'),
+    i(1, 'x'),
+    t('} '),
+  }),
   us.sam({
     trig = '\\in t',
     priority = 998,
