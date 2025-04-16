@@ -328,3 +328,27 @@ load('provider/python3.vim', 'loaded_python3_provider', {
   'BufWritePost *.py,*.ipynb',
   'BufReadPre *.py,*.ipynb',
 })
+
+-- Fix treesitter bug: when `vim.treesitter.start/stop` is called with a
+-- different `buf` from current buffer, it can affect current buffer's
+-- language tree
+-- TODO: report to upstream
+vim.api.nvim_create_autocmd('FileType', {
+  once = true,
+  callback = function()
+    local function ts_buf_call_wrap(cb)
+      return function(buf, ...)
+        if buf and not vim.api.nvim_buf_is_valid(buf) then
+          return
+        end
+        local args = { ... }
+        vim.api.nvim_buf_call(buf or 0, function()
+          cb(buf, unpack(args))
+        end)
+      end
+    end
+
+    vim.treesitter.start = ts_buf_call_wrap(vim.treesitter.start)
+    vim.treesitter.stop = ts_buf_call_wrap(vim.treesitter.stop)
+  end,
+})
