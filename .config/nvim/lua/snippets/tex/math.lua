@@ -499,10 +499,10 @@ return {
       }),
       sn(nil, {
         t('\\min_{'),
-        i(2),
+        i(1),
         t('}'),
         t('\\left('),
-        r(1, 'expr'),
+        r(2, 'expr'),
         t('\\right)'),
       }),
     })
@@ -518,10 +518,10 @@ return {
       }),
       sn(nil, {
         t('\\max_{'),
-        i(2),
+        i(1),
         t('}'),
         t('\\left('),
-        r(1, 'expr'),
+        r(2, 'expr'),
         t('\\right)'),
       }),
     })
