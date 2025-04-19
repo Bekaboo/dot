@@ -407,27 +407,16 @@ M.snippets = {
     c(1, {
       un.fmtad(
         [[
-          for <var> := <iter>; <cond>; <update> {
+          for <idx> := <iter>; <cond>; <update> {
           <body>
           }
         ]],
         {
-          var = i(1, 'i'),
-          iter = i(2, 'iter'),
-          cond = i(3, 'cond'),
+          idx = r(1, 'idx'),
+          iter = r(2, 'iter'),
+          cond = r(3, 'cond'),
           update = i(4, 'update'),
           body = un.body(5, 1),
-        }
-      ),
-      un.fmtad(
-        [[
-          for <cond> {
-          <body>
-          }
-        ]],
-        {
-          cond = i(1),
-          body = un.body(2, 1),
         }
       ),
       un.fmtad(
@@ -437,19 +426,61 @@ M.snippets = {
           }
         ]],
         {
-          idx = i(1, '_'),
+          idx = r(1, 'idx'),
           var = i(2, 'var'),
-          iter = i(3, 'iter'),
+          iter = r(3, 'iter'),
           body = un.body(4, 1),
         }
       ),
-    })
+      un.fmtad(
+        [[
+          for <cond> {
+          <body>
+          }
+        ]],
+        {
+          cond = r(1, 'cond'),
+          body = un.body(2, 1),
+        }
+      ),
+    }),
+    {
+      stored = {
+        idx = i(nil, 'i'),
+        iter = i(nil, 'iter'),
+        cond = i(nil, 'cond'),
+      },
+    }
   ),
   us.msn(
     {
+      { trig = 'fi' },
+      { trig = 'fori' },
+      common = { desc = 'for i := ... loop' },
+    },
+    un.fmtad(
+      [[
+        for <var> := <iter>; <cond>; <update> {
+        <body>
+        }
+      ]],
+      {
+        var = i(1, 'i'),
+        iter = i(2, 'iter'),
+        cond = i(3, 'cond'),
+        update = i(4, 'update'),
+        body = un.body(5, 1),
+      }
+    )
+  ),
+  us.msn(
+    {
+      { trig = 'fi' },
       { trig = 'fr' },
       { trig = 'forr' },
-      { trig = 'frange' },
+      { trig = 'fori' },
+      { trig = 'forit' },
+      { trig = 'foriter' },
       { trig = 'forange' },
       { trig = 'forrange' },
       common = { desc = 'for key, val := range ... loop' },
