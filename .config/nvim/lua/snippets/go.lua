@@ -505,19 +505,17 @@ M.snippets = {
       { trig = 'while' },
       common = { desc = 'for cond loop' },
     },
-    c(1, {
-      un.fmtad(
-        [[
-          for <cond> {
-          <body>
-          }
-        ]],
-        {
-          cond = i(1),
-          body = un.body(2, 1),
+    un.fmtad(
+      [[
+        for <cond> {
+        <body>
         }
-      ),
-    })
+      ]],
+      {
+        cond = i(1, 'true'),
+        body = un.body(2, 1),
+      }
+    )
   ),
   us.sn(
     {
