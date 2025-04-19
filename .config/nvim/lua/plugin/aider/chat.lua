@@ -363,7 +363,7 @@ end
 --- - "No git repo found, create one to track aider's changes (recommended)? (Y)es/(N)o \[Yes\]:"
 ---@return boolean
 function aider_chat_t:confirm_pending()
-  return self:last_line_matches('? %(Y%)es/%(N%)o %[.+%]:')
+  return self:last_line_matches('? %(Y%)es/%(N%)o.*%[.+%]:')
 end
 
 ---Check if chat is waiting for input, i.e. last line in aider buffer being
