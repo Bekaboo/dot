@@ -585,6 +585,30 @@ M.snippets = {
       }
     )
   ),
+  us.msn(
+    {
+      { trig = 'st' },
+      { trig = 'cls' },
+      { trig = 'class' },
+      { trig = 'struct' },
+      common = { desc = 'Class definition' },
+    },
+    un.fmtad(
+      [[
+        ---@class <class_name>
+        local <class_name> = {}
+
+        function <class_name>.new(<opts>)
+        <body>
+        end
+      ]],
+      {
+        class_name = i(1, 'class_name'),
+        opts = i(2),
+        body = un.body(2, 1),
+      }
+    )
+  ),
 }
 
 return M
