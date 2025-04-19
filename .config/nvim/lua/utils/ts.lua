@@ -84,8 +84,22 @@ end
 ---@param opts ts_find_node_opts_t?
 ---@return TSNode?
 function M.find_node(types, opts)
-  if not M.is_active(opts and opts.bufnr) then
+  local buf = opts and opts.bufnr
+
+  if not M.is_active(buf) then
     return
+  end
+
+  local parser = vim.treesitter.get_parser(buf)
+  if not parser then
+    return
+  end
+
+  -- Re-parse to ensure that we have correct language tree when using
+  -- async parsing
+  if not parser:is_valid() then
+    local lnum = vim.fn.line('.')
+    parser:parse({ lnum - 1, lnum })
   end
 
   ---Check if given node type matches any of the types given in `types`

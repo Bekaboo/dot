@@ -222,23 +222,9 @@ M.snippets = {
       common = { desc = 'C++ constructor definition' },
     },
     d(1, function()
-      local class_node = (function()
-        if not require('utils.ts').is_active() then
-          return
-        end
-        local parser = vim.treesitter.get_parser()
-        if not parser then
-          return
-        end
-        -- Re-parse to ensure that we have correct language tree, else
-        -- we cannot find node `class_specifier` inside a class definition
-        if not parser:is_valid() then
-          parser:parse()
-        end
-        return require('utils.ts').find_node('class_specifier', {
-          ignore_injections = false,
-        })
-      end)()
+      local class_node = require('utils.ts').find_node('class_specifier', {
+        ignore_injections = false,
+      })
 
       -- Outside class definition
       if not class_node then
@@ -311,23 +297,9 @@ M.snippets = {
       common = { desc = 'C++ destructor definition' },
     },
     d(1, function()
-      local class_node = (function()
-        if not require('utils.ts').is_active() then
-          return
-        end
-        local parser = vim.treesitter.get_parser()
-        if not parser then
-          return
-        end
-        -- Re-parse to ensure that we have correct language tree, else
-        -- we cannot find node `class_specifier` inside a class definition
-        if not parser:is_valid() then
-          parser:parse()
-        end
-        return require('utils.ts').find_node('class_specifier', {
-          ignore_injections = false,
-        })
-      end)()
+      local class_node = require('utils.ts').find_node('class_specifier', {
+        ignore_injections = false,
+      })
 
       -- Outside class definition
       if not class_node then
