@@ -90,7 +90,7 @@ local function preview_buf_get_path(buf)
   if not vim.api.nvim_buf_is_valid(buf) then
     return
   end
-  return vim.fn.bufname(buf):match('oil_preview://(.*)')
+  return vim.fn.bufname(buf):match('oil_preview_%d+://(.*)')
 end
 
 ---Disable window options, e.g. spell, number, signcolumn, etc. in given window
@@ -462,7 +462,7 @@ local function preview()
 
   -- Preview buffer already contains contents of file to preview
   local preview_bufname = vim.fn.bufname(preview_buf)
-  local preview_bufnewname = 'oil_preview://' .. path
+  local preview_bufnewname = ('oil_preview_%d://%s'):format(preview_buf, path)
   if preview_bufname == preview_bufnewname then
     return
   end
@@ -573,7 +573,7 @@ vim.api.nvim_create_autocmd({ 'WinResized', 'WinScrolled' }, {
 vim.api.nvim_create_autocmd('BufEnter', {
   desc = 'Update invisible lines in preview buffer.',
   group = groupid_preview,
-  pattern = '*/oil_preview://*',
+  pattern = '*/oil_preview_\\d\\+://*',
   callback = function(info)
     preview_set_lines(vim.fn.bufwinid(info.buf), true)
   end,
@@ -602,7 +602,7 @@ oil_view.toggle_hidden = (function(cb)
     for _, win in ipairs(vim.api.nvim_list_wins()) do
       local path = vim.fn
         .bufname(vim.api.nvim_win_get_buf(win))
-        :match('oil_preview://(.*)')
+        :match('oil_preview_%d+://(.*)')
       if path and vim.fn.isdirectory(path) == 1 then
         preview_set_lines(win)
       end
