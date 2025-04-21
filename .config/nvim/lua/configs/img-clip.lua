@@ -30,9 +30,13 @@ img_clip.setup({
         }))
       )
 
-      return vim.fs.joinpath(
-        img_basedir and vim.fn.fnamemodify(img_basedir, ':~:.') or 'img',
-        vim.fn.fnamemodify(bufname, ':t:r')
+      if img_basedir and require('utils.fs').is_home_dir(img_basedir) then
+        img_basedir = vim.fs.joinpath(vim.fn.getcwd(0), 'img')
+      end
+
+      return vim.fn.fnamemodify(
+        vim.fs.joinpath(img_basedir, vim.fn.fnamemodify(bufname, ':t:r')),
+        ':.'
       )
     end,
   },
