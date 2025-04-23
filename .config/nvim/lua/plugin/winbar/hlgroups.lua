@@ -69,7 +69,7 @@ local hlgroups = {
   WinBarIconKindWhileStatement    = { link = 'Repeat' },
   WinBarIconUIIndicator           = { link = 'SpecialChar' },
   WinBarIconUIPickPivot           = { link = 'Error' },
-  WinBarIconUISeparator           = { link = 'Comment' },
+  WinBarIconUISeparator           = { link = 'NonText' },
   WinBarIconUISeparatorMenu       = { link = 'WinBarIconUISeparator' },
   WinBarMenuCurrentContext        = { link = 'PmenuSel' },
   WinBarMenuFloatBorder           = { link = 'FloatBorder' },
