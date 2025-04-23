@@ -17,12 +17,16 @@ return {
         group = vim.api.nvim_create_augroup('MarkdownPreviewDeferLoading', {}),
         pattern = 'markdown',
         once = true,
-        callback = vim.schedule_wrap(function()
+        callback = vim.schedule_wrap(function(info)
           require('lazy.core.loader').load(
             'markdown-preview.nvim',
             { ft = 'markdown' }
           )
-          vim.api.nvim_exec_autocmds('FileType', { pattern = 'markdown' })
+          if vim.api.nvim_buf_is_valid(info.buf) then
+            vim.api.nvim_buf_call(info.buf, function()
+              vim.api.nvim_exec_autocmds('FileType', { pattern = 'markdown' })
+            end)
+          end
         end),
       })
     end,
@@ -62,9 +66,13 @@ return {
         group = vim.api.nvim_create_augroup('OtterDeferLoading', {}),
         pattern = 'markdown',
         once = true,
-        callback = vim.schedule_wrap(function()
+        callback = vim.schedule_wrap(function(info)
           require('otter')
-          vim.api.nvim_exec_autocmds('FileType', { pattern = 'markdown' })
+          if vim.api.nvim_buf_is_valid(info.buf) then
+            vim.api.nvim_buf_call(info.buf, function()
+              vim.api.nvim_exec_autocmds('FileType', { pattern = 'markdown' })
+            end)
+          end
         end),
       })
     end,
