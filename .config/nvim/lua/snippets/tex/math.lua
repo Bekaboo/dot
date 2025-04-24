@@ -215,16 +215,7 @@ return {
   us.sambW({ trig = 'cm' }, t('^{C}')),
   us.sambW({ trig = 'inv' }, t('^{-1}')),
   us.sambW({ trig = '\\in v' }, t('^{-1}')),
-  us.msambW({
-    { trig = 'tr' },
-    { trig = '^tr' },
-    { trig = '.T' },
-  }, t('^{\\intercal}')),
-  us.sambW({
-    trig = 'tr',
-    condition = conds.before_pattern('}') * conds.after_pattern('%^{'),
-    show_condition = conds.before_pattern('}') * conds.after_pattern('%^{'),
-  }, t('\\intercal')),
+  us.sambW({ trig = '.T' }, t('^{\\intercal}')),
 
   us.samWr(
     { trig = '(\\?%w*_*%w*);;' },
