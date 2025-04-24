@@ -8,7 +8,9 @@ local icon_dir = vim.trim(icons.Folder)
 local preview_wins = {} ---@type table<integer, integer>
 local preview_bufs = {} ---@type table<integer, integer>
 local preview_debounce = 0 -- ms
+local preview_decorate_debounce = 16 -- ms
 local preview_request_last_timestamp = 0
+local preview_decorate_last_timestamp = 0
 
 ---Change window-local directory to `dir`
 ---@param dir string
@@ -285,12 +287,22 @@ local function preview_win_set_lines(win, lines, path)
     return
   end
 
+  -- Disable syntax when scrolling through files to improve speed
+  vim.treesitter.stop(buf)
+  vim.bo[buf].syntax = ''
+
   vim.bo[buf].modifiable = true
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   vim.bo[buf].modifiable = false
 
-  preview_decorate(win)
+  preview_decorate_last_timestamp = preview_decorate_last_timestamp + 1
+  local current_decorate_timestamp = preview_decorate_last_timestamp
+  vim.defer_fn(function()
+    if preview_decorate_last_timestamp == current_decorate_timestamp then
+      preview_decorate(win)
+    end
+  end, preview_decorate_debounce)
 end
 
 ---@param win integer
@@ -521,8 +533,8 @@ vim.api.nvim_create_autocmd({ 'CursorMoved', 'WinScrolled' }, {
       preview_finish()
       return
     end
-    local current_request_timestamp = vim.uv.now()
-    preview_request_last_timestamp = current_request_timestamp
+    preview_request_last_timestamp = preview_request_last_timestamp + 1
+    local current_request_timestamp = preview_request_last_timestamp
     vim.defer_fn(function()
       if preview_request_last_timestamp == current_request_timestamp then
         preview()
