@@ -1,5 +1,6 @@
 [ActivityManager]
 _k_friendly_name=Activity Manager
+switch-to-activity-1972ceb5-128f-447a-b72e-e91fb992716c=none,none,Switch to activity "Main"
 switch-to-activity-36552850-489c-400a-8b9c-60dd3c323b76=none,none,Switch to activity "Main"
 switch-to-activity-5c6e1fa6-a15b-4389-acc0-57382e031b69=none,none,
 
@@ -131,6 +132,7 @@ KrohnkiteTileLayout=Meta+Alt+Shift+T,none,Krohnkite: Tile Layout
 KrohnkiteToggleFloat=Meta+F,none,Krohnkite: Toggle Float
 KrohnkiteTreeColumnLayout=Meta+Alt+Shift+3,none,Krohnkite: Tree Column Layout
 KrohnkitegrowWidth=Meta+Alt+>\tMeta+Alt+Right\tMeta+Alt+L\tMeta+Alt+.,none,Krohnkite: Grow Width
+KrohnkitetoggleDock=none,none,Krohnkite: Toggle Dock
 MinimizeAll=none,none,MinimizeAll
 Move Tablet to Next Output=none,none,Move the tablet to the next output
 MoveMouseToCenter=Meta+F6,Meta+F6,Move Mouse to Center
