@@ -1,0 +1,6 @@
+[Desktop Entry]
+Exec=__yakuake_tmux
+Icon=application-x-shellscript
+Name=__yakuake_tmux
+Type=Application
+X-KDE-AutostartScript=true

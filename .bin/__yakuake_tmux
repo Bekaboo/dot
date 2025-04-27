@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+
+yakuake &
+
+# Launch tmux on startup, preferably attach the 'YAKUAKE' session
+# Ref:
+# https://forums.gentoo.org/viewtopic-t-873915-start-0.html
+# https://koston.pl/blog/sublime-text-3-cheatsheet-modules-web-develpment/
+# https://wiki.archlinux.org/title/Yakuake#Yakuake_scripting
+qdbus org.kde.yakuake /yakuake/sessions runCommandInTerminal 0 \
+    "sh -c 'if tmux has-session -t YAKUAKE 2>/dev/null; then tmux attach -t YAKUAKE; \
+            elif tmux ls 2>/dev/null | grep -vq attached && [ \"\$PWD\" = \"\$HOME\" ]; then tmux attach; \
+            else tmux; fi'"
+
+# Hide yakuake window after running the command above
+# This prevents the window from staying open after the command is sent
+qdbus org.kde.yakuake /yakuake/window org.kde.yakuake.toggleWindowState
