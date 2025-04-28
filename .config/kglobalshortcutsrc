@@ -376,9 +376,6 @@ switch to next activity=none,,Switch to Next Activity
 switch to previous activity=none,,Switch to Previous Activity
 toggle do not disturb=none,,Toggle do not disturb
 
-[services][Tmux.desktop]
-_launch=Ctrl+Alt+T
-
 [services][firefox.desktop]
 _launch=Browser\tMeta+B
 new-private-window=Meta+Shift+B\tMeta+Shift+P
@@ -396,6 +393,9 @@ _launch=Print
 
 [services][org.mozilla.Thunderbird.desktop]
 _launch=Meta+M\tLaunch Mail
+
+[services][tmux.desktop]
+_launch=Ctrl+Alt+T
 
 [wacomtablet]
 Map to fullscreen=Meta+Ctrl+F,Meta+Ctrl+F,Map to fullscreen
