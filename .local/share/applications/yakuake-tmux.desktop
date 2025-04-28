@@ -1,0 +1,16 @@
+[Desktop Entry]
+Categories=Qt;KDE;System;TerminalEmulator;
+Comment=A drop-down terminal emulator based on KDE Konsole technology.
+DBusActivatable=true
+# Start yakuake with tmux
+Exec=sh -c "if pgrep yakuake &>/dev/null; then yakuake & else yakuake & qdbus org.kde.yakuake /yakuake/sessions runCommandInTerminal 0 \\"sh -c 'if tmux ls 2>/dev/null | grep -vq attached && [ \\\\\\"\\$PWD\\\\\\" = \\\\\\"\\$HOME\\\\\\" ]; then tmux at; else tmux; fi'\\"; fi"
+GenericName=Drop-down Terminal
+Icon=yakuake
+Name=Yakuake Tmux
+NoDisplay=false
+StartupNotify=false
+Terminal=false
+TerminalOptions=
+Type=Application
+X-KDE-SubstituteUID=false
+X-KDE-Username=

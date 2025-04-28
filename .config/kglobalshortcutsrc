@@ -397,6 +397,9 @@ _launch=Meta+M\tLaunch Mail
 [services][tmux.desktop]
 _launch=Ctrl+Alt+T
 
+[services][yakuake-tmux.desktop]
+_launch=Ctrl+Alt+Shift+T
+
 [wacomtablet]
 Map to fullscreen=Meta+Ctrl+F,Meta+Ctrl+F,Map to fullscreen
 Map to screen 1=Meta+Ctrl+1,Meta+Ctrl+1,Map to screen 1
@@ -410,4 +413,4 @@ _k_friendly_name=Wacom Tablet
 
 [yakuake]
 _k_friendly_name=Yakuake
-toggle-window-state=Ctrl+Alt+Shift+T,F12,Open/Retract Yakuake
+toggle-window-state=none,F12,Open/Retract Yakuake
