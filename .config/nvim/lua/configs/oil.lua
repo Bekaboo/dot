@@ -729,13 +729,18 @@ oil.setup({
     -- Drag and drop
     -- Source: https://github.com/ndavd/dotfiles/blob/7af6efa64007c9e28ca5461c101034c2d5d53000/.config/nvim/lua/plugins/oil.lua#L15
     ['<Leader>d'] = {
-      mode = 'n',
+      mode = { 'x', 'n' },
       buffer = true,
       desc = 'Drag and drop entry under the cursor',
       callback = function()
-        local entry = oil.get_cursor_entry()
+        local lnum_cur = vim.fn.line('.')
+        local lnum_other = vim.fn.line('v')
+        local entries = {}
+        for lnum = math.min(lnum_cur, lnum_other), math.max(lnum_cur, lnum_other) do
+          table.insert(entries, oil.get_entry_on_line(0, lnum))
+        end
         local dir = oil.get_current_dir()
-        if not entry or not dir then
+        if vim.tbl_isempty(entries) or not dir then
           return
         end
         if vim.fn.executable('dragon-drop') == 0 then
@@ -747,7 +752,12 @@ oil.setup({
         end
         vim.system({
           'dragon-drop',
-          vim.fs.joinpath(dir, entry.name),
+          unpack(vim
+            .iter(entries)
+            :map(function(entry)
+              return vim.fs.joinpath(dir, entry.name)
+            end)
+            :totable()),
         })
       end,
     },
