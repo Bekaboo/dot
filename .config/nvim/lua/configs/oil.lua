@@ -939,11 +939,9 @@ vim.api.nvim_create_autocmd('BufEnter', {
     local bufname_alt = vim.api.nvim_buf_get_name(alt_file)
     local parent_url, basename = oil.get_buffer_parent_url(bufname_alt, true)
     if basename then
-      local config = require('oil.config')
-      local view = require('oil.view')
       if
-        not config.view_options.show_hidden
-        and config.view_options.is_hidden_file(
+        not oil_config.view_options.show_hidden
+        and oil_config.view_options.is_hidden_file(
           basename,
           (function()
             for _, buf in ipairs(vim.api.nvim_list_bufs()) do
@@ -954,10 +952,10 @@ vim.api.nvim_create_autocmd('BufEnter', {
           end)()
         )
       then
-        view.toggle_hidden()
+        oil_view.toggle_hidden()
       end
-      view.set_last_cursor(parent_url, basename)
-      view.maybe_set_cursor()
+      oil_view.set_last_cursor(parent_url, basename)
+      oil_view.maybe_set_cursor()
     end
   end,
 })
