@@ -245,6 +245,9 @@ return {
         end),
       })
     end,
+    -- Ensure that img-clip is loaded before oil to prevent its `vim.paste`
+    -- handler from overriding oil's (see `lua/configs/oil.lua`)
+    dependencies = { 'HakonHarnes/img-clip.nvim', optional = true },
     config = function()
       require('configs.oil')
     end,

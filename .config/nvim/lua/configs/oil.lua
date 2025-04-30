@@ -994,3 +994,95 @@ vim.api.nvim_create_autocmd('ColorScheme', {
   group = vim.api.nvim_create_augroup('OilSetDefaultHlgroups', {}),
   callback = oil_sethl,
 })
+
+---Drag & drop files into oil buffer
+---Source: https://github.com/HakonHarnes/img-clip.nvim/blob/main/plugin/img-clip.lua
+vim.paste = (function(cb)
+  return function(lines, phase)
+    if vim.bo.ft ~= 'oil' then
+      cb(lines, phase)
+      return
+    end
+
+    -- Don't handle streamed and multi-line paste
+    if phase ~= -1 or #lines ~= 1 then
+      cb(lines, phase)
+      return
+    end
+
+    local uri = lines[1]
+    local fname = vim.fs.basename(uri)
+    vim.ui.input(
+      { prompt = 'File name: ', completion = 'file', default = fname },
+      function(input)
+        fname = input
+      end
+    )
+    if not fname then
+      return
+    end
+
+    local buf = vim.api.nvim_get_current_buf()
+    local current_dir = oil.get_current_dir()
+    local dest = vim.fs.joinpath(current_dir, fname)
+
+    ---Refresh oil buffer
+    local function oil_refresh_place_cursor()
+      if not vim.api.nvim_buf_is_valid(buf) then
+        return
+      end
+      oil_view.render_buffer_async(buf, {}, function()
+        if not vim.api.nvim_buf_is_valid(buf) then
+          return
+        end
+        vim.api.nvim_buf_call(buf, function()
+          oil_view.set_last_cursor(vim.api.nvim_buf_get_name(buf), fname)
+          oil_view.maybe_set_cursor()
+        end)
+      end)
+    end
+
+    -- Paste file from web url
+    if string.match(uri, '^https?://[^/]+/[^.]+') then
+      require('utils.web').get(
+        uri,
+        dest,
+        vim.schedule_wrap(function(o)
+          if o.code ~= 0 then
+            vim.notify(
+              string.format(
+                "[oil.nvim] failed to fetch from '%s': %s",
+                uri,
+                o.stderr
+              ),
+              vim.log.levels.WARN
+            )
+            return
+          end
+          oil_refresh_place_cursor()
+        end)
+      )
+      return
+    end
+
+    -- Paste file from path
+    vim.uv.fs_copyfile(
+      uri,
+      dest,
+      vim.schedule_wrap(function(errmsg, success)
+        if not success then
+          vim.notify(
+            string.format(
+              "[oil.nvim] failed to copy from '%s': %s",
+              uri,
+              errmsg
+            ),
+            vim.log.levels.WARN
+          )
+          return
+        end
+        oil_refresh_place_cursor()
+      end)
+    )
+  end
+end)(vim.paste)
