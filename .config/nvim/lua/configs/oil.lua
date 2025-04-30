@@ -125,8 +125,11 @@ end
 
 ---Colorize preview buffer with syntax highlighting, set win opts, etc.
 ---@param win integer?
-local function preview_decorate(win)
+---@param hl boolean? whether to set syntax highlighting in preivew buffer, default `true`
+local function preview_decorate(win, hl)
   win = win or 0
+  hl = hl ~= false
+
   if not vim.api.nvim_win_is_valid(win) then
     return
   end
@@ -142,16 +145,18 @@ local function preview_decorate(win)
   if vim.b[buf]._oil_preview_msg_shown == bufname then
     -- Set some window options if showing messages instead of preview
     preview_disable_win_opts(win)
-    vim.api.nvim_buf_call(buf, function()
-      vim.treesitter.stop(buf)
-      vim.bo.syntax = ''
-      vim.cmd.syntax(
-        string.format(
-          'match NonText /\\V%s/',
-          vim.fn.escape(preview_get_filler(), '/?')
+    if hl then
+      vim.api.nvim_buf_call(buf, function()
+        vim.treesitter.stop(buf)
+        vim.bo.syntax = ''
+        vim.cmd.syntax(
+          string.format(
+            'match NonText /\\V%s/',
+            vim.fn.escape(preview_get_filler(), '/?')
+          )
         )
-      )
-    end)
+      end)
+    end
     return
   end
 
@@ -168,106 +173,110 @@ local function preview_decorate(win)
         -- Disable window decorations when previewing a directory to match oil
         -- window appearance
         preview_disable_win_opts(win)
-        vim.api.nvim_buf_call(buf, function()
-          vim.treesitter.stop(buf)
-          vim.bo.syntax = ''
-          vim.cmd([[
-            syn match OilDirPreviewHeader /^total.*/
-            syn match OilDirPreviewTypeFile /^-/ nextgroup=OilDirPreviewFilePerms skipwhite
-            syn match OilDirPreviewTypeDir /^d/ nextgroup=OilDirPreviewDirPerms skipwhite
-            syn match OilDirPreviewTypeFifo /^p/ nextgroup=OilDirPreviewFifoPerms skipwhite
-            syn match OilDirPreviewTypeLink /^l/ nextgroup=OilDirPreviewLinkPerms skipwhite
-            syn match OilDirPreviewTypeSocket /^s/ nextgroup=OilDirPreviewSocketPerms skipwhite
+        if hl then
+          vim.api.nvim_buf_call(buf, function()
+            vim.treesitter.stop(buf)
+            vim.bo.syntax = ''
+            vim.cmd([[
+              syn match OilDirPreviewHeader /^total.*/
+              syn match OilDirPreviewTypeFile /^-/ nextgroup=OilDirPreviewFilePerms skipwhite
+              syn match OilDirPreviewTypeDir /^d/ nextgroup=OilDirPreviewDirPerms skipwhite
+              syn match OilDirPreviewTypeFifo /^p/ nextgroup=OilDirPreviewFifoPerms skipwhite
+              syn match OilDirPreviewTypeLink /^l/ nextgroup=OilDirPreviewLinkPerms skipwhite
+              syn match OilDirPreviewTypeSocket /^s/ nextgroup=OilDirPreviewSocketPerms skipwhite
 
-            for type in ['File', 'Dir', 'Fifo', 'Link', 'Socket']
-              exe substitute('syn match OilDirPreview%sPerms /\v[-rwxs]{9}\.?/ contained
-                            \ contains=OilDirPreviewPermRead,OilDirPreviewPermWrite,
-                                     \ OilDirPreviewPermExec,OilDirPreviewPermSetuid,
-                                     \ OilDirPreviewPermNone,OilDirPreviewSecurityContext
-                            \ nextgroup=OilDirPreview%sNumHardLinksNormal,
-                                      \ OilDirPreview%sNumHardLinksMulti
-                            \ skipwhite', '%s', type, 'g')
-              exe substitute('syn match OilDirPreview%sNumHardLinksNormal /1/ contained nextgroup=OilDirPreview%sUser skipwhite', '%s', type, 'g')
-              exe substitute('syn match OilDirPreview%sNumHardLinksMulti /\v[2-9]\d*|1\d+/ contained nextgroup=OilDirPreview%sUser skipwhite', '%s', type, 'g')
-              exe substitute('syn match OilDirPreview%sUser /\v\S+/ contained nextgroup=OilDirPreview%sGroup skipwhite', '%s', type, 'g')
-              exe substitute('syn match OilDirPreview%sGroup /\v\S+/ contained nextgroup=OilDirPreview%sSize skipwhite', '%s', type, 'g')
-              exe substitute('syn match OilDirPreview%sSize /\v\S+/ contained nextgroup=OilDirPreview%sTime skipwhite', '%s', type, 'g')
-              exe substitute('syn match OilDirPreview%sTime /\v(\S+\s+){3}/ contained
-                            \ nextgroup=OilDirPreview%s,OilDirPreview%sHidden
-                            \ skipwhite', '%s', type, 'g')
+              for type in ['File', 'Dir', 'Fifo', 'Link', 'Socket']
+                exe substitute('syn match OilDirPreview%sPerms /\v[-rwxs]{9}\.?/ contained
+                              \ contains=OilDirPreviewPermRead,OilDirPreviewPermWrite,
+                                       \ OilDirPreviewPermExec,OilDirPreviewPermSetuid,
+                                       \ OilDirPreviewPermNone,OilDirPreviewSecurityContext
+                              \ nextgroup=OilDirPreview%sNumHardLinksNormal,
+                                        \ OilDirPreview%sNumHardLinksMulti
+                              \ skipwhite', '%s', type, 'g')
+                exe substitute('syn match OilDirPreview%sNumHardLinksNormal /1/ contained nextgroup=OilDirPreview%sUser skipwhite', '%s', type, 'g')
+                exe substitute('syn match OilDirPreview%sNumHardLinksMulti /\v[2-9]\d*|1\d+/ contained nextgroup=OilDirPreview%sUser skipwhite', '%s', type, 'g')
+                exe substitute('syn match OilDirPreview%sUser /\v\S+/ contained nextgroup=OilDirPreview%sGroup skipwhite', '%s', type, 'g')
+                exe substitute('syn match OilDirPreview%sGroup /\v\S+/ contained nextgroup=OilDirPreview%sSize skipwhite', '%s', type, 'g')
+                exe substitute('syn match OilDirPreview%sSize /\v\S+/ contained nextgroup=OilDirPreview%sTime skipwhite', '%s', type, 'g')
+                exe substitute('syn match OilDirPreview%sTime /\v(\S+\s+){3}/ contained
+                              \ nextgroup=OilDirPreview%s,OilDirPreview%sHidden
+                              \ skipwhite', '%s', type, 'g')
 
-              exe substitute('hi def link OilDirPreview%sNumHardLinksNormal Number', '%s', type, 'g')
-              exe substitute('hi def link OilDirPreview%sNumHardLinksMulti OilDirPreview%sNumHardLinksNormal', '%s', type, 'g')
-              exe substitute('hi def link OilDirPreview%sSize Number', '%s', type, 'g')
-              exe substitute('hi def link OilDirPreview%sTime String', '%s', type, 'g')
-              exe substitute('hi def link OilDirPreview%sUser Operator', '%s', type, 'g')
-              exe substitute('hi def link OilDirPreview%sGroup Structure', '%s', type, 'g')
-           endfor
+                exe substitute('hi def link OilDirPreview%sNumHardLinksNormal Number', '%s', type, 'g')
+                exe substitute('hi def link OilDirPreview%sNumHardLinksMulti OilDirPreview%sNumHardLinksNormal', '%s', type, 'g')
+                exe substitute('hi def link OilDirPreview%sSize Number', '%s', type, 'g')
+                exe substitute('hi def link OilDirPreview%sTime String', '%s', type, 'g')
+                exe substitute('hi def link OilDirPreview%sUser Operator', '%s', type, 'g')
+                exe substitute('hi def link OilDirPreview%sGroup Structure', '%s', type, 'g')
+             endfor
 
-            syn match OilDirPreviewPermRead /r/ contained
-            syn match OilDirPreviewPermWrite /w/ contained
-            syn match OilDirPreviewPermExec /x/ contained
-            syn match OilDirPreviewPermSetuid /s/ contained
-            syn match OilDirPreviewPermNone /-/ contained
-            syn match OilDirPreviewSecurityContext /\./ contained
+              syn match OilDirPreviewPermRead /r/ contained
+              syn match OilDirPreviewPermWrite /w/ contained
+              syn match OilDirPreviewPermExec /x/ contained
+              syn match OilDirPreviewPermSetuid /s/ contained
+              syn match OilDirPreviewPermNone /-/ contained
+              syn match OilDirPreviewSecurityContext /\./ contained
 
-            syn match OilDirPreviewDir /[^.].*/ contained
-            syn match OilDirPreviewFile /[^.].*/ contained
-            syn match OilDirPreviewSocket /[^.].*/ contained
-            syn match OilDirPreviewLink /[^.].*/ contained contains=OilDirPreviewLinkTarget
-            syn match OilDirPreviewLinkTarget /->.*/ contained
+              syn match OilDirPreviewDir /[^.].*/ contained
+              syn match OilDirPreviewFile /[^.].*/ contained
+              syn match OilDirPreviewSocket /[^.].*/ contained
+              syn match OilDirPreviewLink /[^.].*/ contained contains=OilDirPreviewLinkTarget
+              syn match OilDirPreviewLinkTarget /->.*/ contained
 
-            syn match OilDirPreviewDirHidden /\..*/ contained
-            syn match OilDirPreviewFileHidden /\..*/ contained
-            syn match OilDirPreviewSocketHidden /\..*/ contained
-            syn match OilDirPreviewLinkHidden /\..*/ contained contains=OilDirPreviewLinkTargetHidden
-            syn match OilDirPreviewLinkTargetHidden /->.*/ contained
+              syn match OilDirPreviewDirHidden /\..*/ contained
+              syn match OilDirPreviewFileHidden /\..*/ contained
+              syn match OilDirPreviewSocketHidden /\..*/ contained
+              syn match OilDirPreviewLinkHidden /\..*/ contained contains=OilDirPreviewLinkTargetHidden
+              syn match OilDirPreviewLinkTargetHidden /->.*/ contained
 
-            hi def link OilDirPreviewHeader Title
-            hi def link OilDirPreviewTypeFile OilTypeFile
-            hi def link OilDirPreviewTypeDir OilTypeDir
-            hi def link OilDirPreviewTypeFifo OilTypeFifo
-            hi def link OilDirPreviewTypeLink OilTypeLink
-            hi def link OilDirPreviewTypeSocket OilTypeSocket
+              hi def link OilDirPreviewHeader Title
+              hi def link OilDirPreviewTypeFile OilTypeFile
+              hi def link OilDirPreviewTypeDir OilTypeDir
+              hi def link OilDirPreviewTypeFifo OilTypeFifo
+              hi def link OilDirPreviewTypeLink OilTypeLink
+              hi def link OilDirPreviewTypeSocket OilTypeSocket
 
-            hi def link OilDirPreviewPermRead OilPermissionRead
-            hi def link OilDirPreviewPermWrite OilPermissionWrite
-            hi def link OilDirPreviewPermExec OilPermissionExecute
-            hi def link OilDirPreviewPermSetuid OilPermissionSetuid
-            hi def link OilDirPreviewPermNone OilPermissionNone
-            hi def link OilDirPreviewSecurityContext OilSecurityContext
+              hi def link OilDirPreviewPermRead OilPermissionRead
+              hi def link OilDirPreviewPermWrite OilPermissionWrite
+              hi def link OilDirPreviewPermExec OilPermissionExecute
+              hi def link OilDirPreviewPermSetuid OilPermissionSetuid
+              hi def link OilDirPreviewPermNone OilPermissionNone
+              hi def link OilDirPreviewSecurityContext OilSecurityContext
 
-            hi def link OilDirPreviewDir OilDir
-            hi def link OilDirPreviewFile OilFile
-            hi def link OilDirPreviewLink OilLink
-            hi def link OilDirPreviewLinkTarget OilLinkTarget
-            hi def link OilDirPreviewSocket OilSocket
+              hi def link OilDirPreviewDir OilDir
+              hi def link OilDirPreviewFile OilFile
+              hi def link OilDirPreviewLink OilLink
+              hi def link OilDirPreviewLinkTarget OilLinkTarget
+              hi def link OilDirPreviewSocket OilSocket
 
-            hi def link OilDirPreviewDirHidden OilDirHidden
-            hi def link OilDirPreviewFileHidden OilFileHidden
-            hi def link OilDirPreviewLinkHidden OilLinkHidden
-            hi def link OilDirPreviewLinkTargetHidden OilLinkTargetHidden
-            hi def link OilDirPreviewSocketHidden OilSocketHidden
-          ]])
-        end)
+              hi def link OilDirPreviewDirHidden OilDirHidden
+              hi def link OilDirPreviewFileHidden OilFileHidden
+              hi def link OilDirPreviewLinkHidden OilLinkHidden
+              hi def link OilDirPreviewLinkTargetHidden OilLinkTargetHidden
+              hi def link OilDirPreviewSocketHidden OilSocketHidden
+            ]])
+          end)
+        end
         return
       end
 
       -- Add syntax/treesitter highlighting for normal files
       if vim.b[buf]._oil_preview_syntax == bufname then
         preview_restore_win_opts(win)
-        local ft = vim.filetype.match({
-          buf = buf,
-          filename = path,
-        })
-        if not ft then
-          vim.treesitter.stop(buf)
-          vim.bo[buf].syntax = ''
-          return
-        end
-        if not pcall(vim.treesitter.start, buf, ft) then
-          vim.treesitter.stop(buf)
-          vim.bo[buf].syntax = ft
+        if hl then
+          local ft = vim.filetype.match({
+            buf = buf,
+            filename = path,
+          })
+          if not ft then
+            vim.treesitter.stop(buf)
+            vim.bo[buf].syntax = ''
+            return
+          end
+          if not pcall(vim.treesitter.start, buf, ft) then
+            vim.treesitter.stop(buf)
+            vim.bo[buf].syntax = ft
+          end
         end
       end
     end)
@@ -295,6 +304,8 @@ local function preview_win_set_lines(win, lines, path)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   vim.bo[buf].modifiable = false
+
+  preview_decorate(win, false)
 
   preview_decorate_last_timestamp = preview_decorate_last_timestamp + 1
   local current_decorate_timestamp = preview_decorate_last_timestamp
