@@ -127,17 +127,25 @@ vim.api.nvim_create_autocmd(
     group = vim.api.nvim_create_augroup('ZSetup', {}),
     desc = 'Init z plugin.',
     once = true,
-    callback = vim.schedule_wrap(function()
-      if vim.g.loaded_z then
-        return
+    callback = function(info)
+      local function load()
+        if vim.g.loaded_z then
+          return
+        end
+
+        local z = require('plugin.z')
+        z.setup()
+        vim.keymap.set('n', '<Leader>z', z.select, {
+          desc = 'Open a directory from z',
+        })
       end
 
-      local z = require('plugin.z')
-      z.setup()
-      vim.keymap.set('n', '<Leader>z', z.select, {
-        desc = 'Open a directory from z',
-      })
-    end),
+      if info.event == 'UIEnter' then
+        vim.schedule(load)
+      else
+        load()
+      end
+    end,
   }
 )
 
@@ -183,29 +191,37 @@ vim.api.nvim_create_autocmd({ 'UIEnter', 'CmdlineEnter', 'CmdUndefined' }, {
   desc = 'Init session plugin.',
   group = vim.api.nvim_create_augroup('SessionSetup', {}),
   once = true,
-  callback = vim.schedule_wrap(function()
-    if vim.g.loaded_session ~= nil then
-      return
+  callback = function(info)
+    local function load()
+      if vim.g.loaded_session ~= nil then
+        return
+      end
+
+      local session = require('plugin.session')
+      ---@diagnostic disable-next-line: missing-fields
+      session.setup({
+        autoload = { enabled = false },
+        autoremove = { enabled = false },
+      })
+
+      vim.keymap.set(
+        'n',
+        '<Leader>w',
+        session.select,
+        { desc = 'Load session (workspace) interactively' }
+      )
+      vim.keymap.set(
+        'n',
+        '<Leader>W',
+        session.load,
+        { desc = 'Load session (workspace) for cwd' }
+      )
     end
 
-    local session = require('plugin.session')
-    ---@diagnostic disable-next-line: missing-fields
-    session.setup({
-      autoload = { enabled = false },
-      autoremove = { enabled = false },
-    })
-
-    vim.keymap.set(
-      'n',
-      '<Leader>w',
-      session.select,
-      { desc = 'Load session (workspace) interactively' }
-    )
-    vim.keymap.set(
-      'n',
-      '<Leader>W',
-      session.load,
-      { desc = 'Load session (workspace) for cwd' }
-    )
-  end),
+    if info.event == 'UIEnter' then
+      vim.schedule(load)
+    else
+      load()
+    end
+  end,
 })

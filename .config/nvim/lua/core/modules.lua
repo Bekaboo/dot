@@ -168,9 +168,7 @@ local function enable_modules(module_names)
           callback = function(info)
             vim.api.nvim_del_augroup_by_id(groupid)
             setup()
-            vim.schedule(function()
-              vim.api.nvim_exec_autocmds(info.event, {})
-            end)
+            vim.api.nvim_exec_autocmds(info.event, {})
           end,
         }
       )
