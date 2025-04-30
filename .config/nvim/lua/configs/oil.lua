@@ -1019,7 +1019,7 @@ vim.paste = (function(cb)
     end
 
     local uri = lines[1]
-    local fname = vim.fs.basename(uri)
+    local fname = vim.fs.basename(uri:gsub('/+$', ''))
     vim.ui.input(
       { prompt = 'File name: ', completion = 'file', default = fname },
       function(input)
@@ -1074,23 +1074,35 @@ vim.paste = (function(cb)
     end
 
     -- Paste file from path
-    vim.uv.fs_copyfile(
-      uri,
-      dest,
-      vim.schedule_wrap(function(errmsg, success)
-        if not success then
-          vim.notify(
-            string.format(
-              "[oil.nvim] failed to copy from '%s': %s",
-              uri,
-              errmsg
-            ),
-            vim.log.levels.WARN
-          )
-          return
-        end
-        oil_refresh_place_cursor()
-      end)
-    )
+    local path = uri:gsub('^file://', '')
+    vim.uv.fs_stat(path, function(_, stat)
+      if not stat then
+        vim.notify(
+          string.format("[oil.nvim] invalid path: '%s'", path),
+          vim.log.levels.WARN
+        )
+        return
+      end
+
+      require('oil.fs').recursive_copy(
+        stat.type,
+        path,
+        dest,
+        vim.schedule_wrap(function(err)
+          if err then
+            vim.notify(
+              string.format(
+                "[oil.nvim] failed to copy from '%s': %s",
+                path,
+                err
+              ),
+              vim.log.levels.WARN
+            )
+            return
+          end
+          oil_refresh_place_cursor()
+        end)
+      )
+    end)
   end
 end)(vim.paste)
