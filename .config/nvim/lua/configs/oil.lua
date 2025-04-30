@@ -755,7 +755,7 @@ oil.setup({
         end
         if vim.fn.executable('dragon-drop') == 0 then
           vim.notify(
-            '[oil] `dragon-drop` is not executable',
+            '[oil.nvim] `dragon-drop` is not executable',
             vim.log.levels.WARN
           )
           return
@@ -812,7 +812,7 @@ oil.setup({
         vim.fn.setreg(vim.v.register, entry_path)
         vim.notify(
           string.format(
-            "[oil] yanked '%s' to register '%s'",
+            "[oil.nvim] yanked '%s' to register '%s'",
             entry_path,
             vim.v.register
           )
