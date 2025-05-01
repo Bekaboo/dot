@@ -82,11 +82,14 @@ vim.api.nvim_create_autocmd('UIEnter', {
       },
       { chunks = {} },
       {
-        chunks = {
+        chunks = not math.randomseed() and math.random() < 0.5 and {
           {
-            text = ':h',
+            text = vim.fn.keytrans(vim.g.mapleader or '\\'),
             hl = 'NonText',
           },
+          { text = ' to start', hl = 'Normal' },
+        } or {
+          { text = ':h', hl = 'NonText' },
           { text = ' for help', hl = 'Normal' },
         },
       },
