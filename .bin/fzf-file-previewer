@@ -56,137 +56,137 @@ fzf_file_previewer() {
     # Preview regular files
     if [ -f "$1" ]; then
         case "$(file -b --mime -- "$1")" in
-            image/*)
-                # ueberzugpp is up and fzf is called from wrapper
-                if [ -S "$UB_SOCK" ] && has ueberzugpp; then
-                    if [ "$((FZF_MARGIN_RIGHT + FZF_MARGIN_LEFT + \
-                        FZF_PADDING_RIGHT + FZF_PADDING_LEFT))" -lt \
-                        "$FZF_TERM_COLUMNS" ]; then
-                        if [ "$FZF_PREVIEW_ORIENTATION" = 'right' ]; then
-                            ub_x=$((FZF_TERM_COLUMNS - FZF_PREVIEW_COLUMNS - \
-                                FZF_MARGIN_RIGHT - FZF_PADDING_RIGHT - 2))
-                        else
-                            ub_x=$((FZF_MARGIN_LEFT + FZF_PADDING_LEFT + 2))
-                        fi
-                    fi
-                    if [ "$((FZF_MARGIN_UP + FZF_MARGIN_BOTTOM + \
-                        FZF_PADDING_UP + FZF_PADDING_BOTTOM))" -lt \
-                        "$FZF_TERM_LINES" ]; then
-                        if [ "$FZF_PREVIEW_ORIENTATION" = 'up' ]; then
-                            ub_y=$((FZF_TERM_LINES - FZF_HEIGHT + \
-                                FZF_MARGIN_TOP + FZF_PADDING_TOP + 1))
-                        else
-                            ub_y=$((FZF_TERM_LINES - FZF_MARGIN_BOTTOM - \
-                                FZF_PADDING_BOTTOM - FZF_PREVIEW_LINES - 1))
-                        fi
-                    fi
-                    if [ -n "$ub_x" ] && [ -n "$ub_y" ]; then
-                        ueberzugpp cmd \
-                            -s "$UB_SOCK" \
-                            -i fzf-file-preview-ub \
-                            -a add \
-                            -x "$ub_x" \
-                            -y "$ub_y" \
-                            --max-width "$FZF_PREVIEW_COLUMNS" \
-                            --max-height "$((FZF_PREVIEW_LINES - 1))" \
-                            -f "$1" 2>/dev/null
-                        return
-                    fi
-                fi
-
-                # Use ASCII image previewers if ueberzugpp not available
-                case "$(which_exe chafa imgcat tiv)" in
-                    chafa)
-                        if [ -n "$TMUX" ]; then
-                            chafa -f symbols \
-                                -s "$FZF_PREVIEW_COLUMNS"x"$FZF_PREVIEW_LINES" "$fpath"
-                        else
-                            chafa -s "$FZF_PREVIEW_COLUMNS"x"$FZF_PREVIEW_LINES" "$fpath"
-                        fi
-                        ;;
-                    imgcat)
-                        imgcat -H -w "$FZF_PREVIEW_COLUMNS" \
-                            -r "$FZF_PREVIEW_LINES" "$fpath"
-                        ;;
-                    tiv)
-                        tiv -w "$FZF_PREVIEW_COLUMNS" -h "$FZF_PREVIEW_LINES" "$fpath"
-                        ;;
-                    *)
-                        echo "No ascii image previewer found, install chafa, imgcat or tiv" >&2
-                        ;;
-                esac
-                ;;
-
-            application/pdf*)
-                if has pdftotext; then
-                    pdftotext -l 10 -nopgbrk -nodiag -q "$1" -
-                    return
-                else
-                    echo 'pdftotext not found' >&2
-                fi
-                ;;
-
-            application/zip*)
-                if has unzip; then
-                    unzip -l "$fpath"
-                elif has zip; then
-                    zip -sf -- "$1"
-                else
-                    echo 'unzip and zip not found' >&2
-                fi
-                ;;
-
-            application/x-tar* | application/gzip*)
-                if has tar; then
-                    tar --ignore-command-error -tf "$1" 2>/dev/null
-                else
-                    echo 'tar not found' >&2
-                fi
-                ;;
-
-            text/html*)
-                if has w3m; then
-                    w3m -dump "$fpath"
-                    return
-                elif has html2text; then
-                    html2text -- "$1"
-                    return
-                fi
-                ;;
-
-            *)
-                # Use glow for markdown files
-                case "$1" in
-                    *.md)
-                        if has glow; then
-                            glow_config="${XDG_CONFIG_HOME-$HOME/.config}/glow/glow.yml"
-                            if [ -e "$glow_config" ]; then
-                                style=$(grep -Po '(?<=style: ")[^"]+' "$glow_config")
-                            else
-                                style='auto'
-                            fi
-                            glow -s="$style" -w="$FZF_PREVIEW_COLUMNS" -- "$1"
-                            return
-                        fi
-                        ;;
-                esac
-
-                # Use highlight or cat for remaining files
-                if has highlight; then
-                    highlight_config="$HOME/.highlight/themes/highlight.theme"
-                    if [ ! -e "$highlight_config" ]; then
-                        highlight -O ansi --force -- "$1"
+        image/*)
+            # ueberzugpp is up and fzf is called from wrapper
+            if [ -S "$UB_SOCK" ] && has ueberzugpp; then
+                if [ "$((FZF_MARGIN_RIGHT + FZF_MARGIN_LEFT + \
+                FZF_PADDING_RIGHT + FZF_PADDING_LEFT))" -lt \
+                    "$FZF_TERM_COLUMNS" ]; then
+                    if [ "$FZF_PREVIEW_ORIENTATION" = 'right' ]; then
+                        ub_x=$((FZF_TERM_COLUMNS - FZF_PREVIEW_COLUMNS - \
+                            FZF_MARGIN_RIGHT - FZF_PADDING_RIGHT - 2))
                     else
-                        highlight -O ansi --force --config-file "$highlight_config" -- "$1"
+                        ub_x=$((FZF_MARGIN_LEFT + FZF_PADDING_LEFT + 2))
                     fi
+                fi
+                if [ "$((FZF_MARGIN_UP + FZF_MARGIN_BOTTOM + \
+                FZF_PADDING_UP + FZF_PADDING_BOTTOM))" -lt \
+                    "$FZF_TERM_LINES" ]; then
+                    if [ "$FZF_PREVIEW_ORIENTATION" = 'up' ]; then
+                        ub_y=$((FZF_TERM_LINES - FZF_HEIGHT + \
+                            FZF_MARGIN_TOP + FZF_PADDING_TOP + 1))
+                    else
+                        ub_y=$((FZF_TERM_LINES - FZF_MARGIN_BOTTOM - \
+                            FZF_PADDING_BOTTOM - FZF_PREVIEW_LINES - 1))
+                    fi
+                fi
+                if [ -n "$ub_x" ] && [ -n "$ub_y" ]; then
+                    ueberzugpp cmd \
+                        -s "$UB_SOCK" \
+                        -i fzf-file-preview-ub \
+                        -a add \
+                        -x "$ub_x" \
+                        -y "$ub_y" \
+                        --max-width "$FZF_PREVIEW_COLUMNS" \
+                        --max-height "$((FZF_PREVIEW_LINES - 1))" \
+                        -f "$1" 2>/dev/null
                     return
                 fi
+            fi
 
-                if has cat; then
-                    cat "$1"
+            # Use ASCII image previewers if ueberzugpp not available
+            case "$(which_exe chafa imgcat tiv)" in
+            chafa)
+                if [ -n "$TMUX" ]; then
+                    chafa -f symbols \
+                        -s "$FZF_PREVIEW_COLUMNS"x"$FZF_PREVIEW_LINES" "$fpath"
+                else
+                    chafa -s "$FZF_PREVIEW_COLUMNS"x"$FZF_PREVIEW_LINES" "$fpath"
+                fi
+                ;;
+            imgcat)
+                imgcat -H -w "$FZF_PREVIEW_COLUMNS" \
+                    -r "$FZF_PREVIEW_LINES" "$fpath"
+                ;;
+            tiv)
+                tiv -w "$FZF_PREVIEW_COLUMNS" -h "$FZF_PREVIEW_LINES" "$fpath"
+                ;;
+            *)
+                echo "No ascii image previewer found, install chafa, imgcat or tiv" >&2
+                ;;
+            esac
+            ;;
+
+        application/pdf*)
+            if has pdftotext; then
+                pdftotext -l 10 -nopgbrk -nodiag -q "$1" -
+                return
+            else
+                echo 'pdftotext not found' >&2
+            fi
+            ;;
+
+        application/zip*)
+            if has unzip; then
+                unzip -l "$fpath"
+            elif has zip; then
+                zip -sf -- "$1"
+            else
+                echo 'unzip and zip not found' >&2
+            fi
+            ;;
+
+        application/x-tar* | application/gzip*)
+            if has tar; then
+                tar --ignore-command-error -tf "$1" 2>/dev/null
+            else
+                echo 'tar not found' >&2
+            fi
+            ;;
+
+        text/html*)
+            if has w3m; then
+                w3m -dump "$fpath"
+                return
+            elif has html2text; then
+                html2text -- "$1"
+                return
+            fi
+            ;;
+
+        *)
+            # Use glow for markdown files
+            case "$1" in
+            *.md)
+                if has glow; then
+                    glow_config="${XDG_CONFIG_HOME-$HOME/.config}/glow/glow.yml"
+                    if [ -e "$glow_config" ]; then
+                        style=$(grep -Po '(?<=style: ")[^"]+' "$glow_config")
+                    else
+                        style='auto'
+                    fi
+                    glow -s="$style" -w="$FZF_PREVIEW_COLUMNS" -- "$1"
                     return
                 fi
                 ;;
+            esac
+
+            # Use highlight or cat for remaining files
+            if has highlight; then
+                highlight_config="$HOME/.highlight/themes/highlight.theme"
+                if [ ! -e "$highlight_config" ]; then
+                    highlight -O ansi --force -- "$1"
+                else
+                    highlight -O ansi --force --config-file "$highlight_config" -- "$1"
+                fi
+                return
+            fi
+
+            if has cat; then
+                cat "$1"
+                return
+            fi
+            ;;
         esac
     fi
 }

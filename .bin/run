@@ -4,7 +4,7 @@
 build() {
     case "$1" in
     *.c) gcc "$1" -o "$2" ;;
-    *.cpp|*.cc|*.cxx) g++ "$1" -o "$2" ;;
+    *.cpp | *.cc | *.cxx) g++ "$1" -o "$2" ;;
     *)
         echo >&2 "run: error: unsupported file type"
         exit 1
