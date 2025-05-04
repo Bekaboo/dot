@@ -348,6 +348,32 @@ setbg_libreoffice() {
     sed -i -E "s/(<item oor:path=\"\/org.openoffice.Office.Common\/Misc\"><prop oor:name=\"SymbolStyle\" oor:op=\"fuse\"><value>)([a-zA-Z0-9_-]+)(<\/value><\/prop><\/item>)/\1$new_theme\3/" "$config"
 }
 
+# Record the last timestamp when this script is called with 'conflict' bg
+# (different bg from suggested bg, see `suggestbg`) so that we can check the log
+# and avoid automatically setting the background if the user has already
+# manually set the background, see `__checkbg_watch_awake` and
+# `~/.config/autostart/__checkbg_watch_awake.desktop`
+#
+# $1: bg, 'light' or 'dark'
+write_conflict_log() {
+    timestamp_dir="$STATE_HOME/setbg"
+    timestamp_file="$timestamp_dir/timestamp"
+    if [ ! -d "$timestamp_dir" ]; then
+        mkdir -p "$timestamp_dir" || return 1
+    fi
+
+    # Non-conflict bg
+    if [ -z "$1" ] || [ "$1" = "$(suggestbg)" ]; then
+        if [ -e "$timestamp_file" ]; then
+            rm "$timestamp_file" || return 1
+        fi
+        return
+    fi
+
+    # Conflict bg
+    date +%s >"$timestamp_file" # seconds since the epoch (1970-01-01 00:00 UTC)
+}
+
 usage() {
     echo "Usage: $(basename "$0") [light|dark]"
     exit 0
@@ -380,6 +406,7 @@ main() {
     setbg_fish "$bg" &
     setbg_glow "$bg" &
     setbg_libreoffice "$bg" &
+    write_conflict_log "$bg" &
 }
 
 main "$@"

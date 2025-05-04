@@ -2,17 +2,26 @@
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 # Watch for sleep signal to check & set bg on awake from sleep
 
-if ! command -v checkbg >/dev/null 2>&1; then
-    echo "Error: checkbg not found"
-    exit 1
-fi
+has_recent_conflict_bg() {
+    timestamp_file="${XDG_STATE_HOME:-$HOME/.local/state}/setbg/timestamp"
+    if [ ! -e "$timestamp_file" ]; then
+        return 1
+    fi
+
+    prev_time=$(cat "$timestamp_file") # seconds since the epoch (1970-01-01 00:00 UTC)
+    if [ -z "$prev_time" ] || [ $(($(date +%s) - prev_time)) -gt $((12 * 60 * 60)) ]; then
+        return 1
+    fi
+}
 
 dbus-monitor --system "type='signal', \
         interface='org.freedesktop.login1.Manager', \
         member=PrepareForSleep" | while read x; do
     case "$x" in
-        *"boolean false"*)
+    *"boolean false"*)
+        if ! has_recent_conflict_bg; then
             checkbg
-            ;;
+        fi
+        ;;
     esac
 done

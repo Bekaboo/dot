@@ -1,0 +1,56 @@
+#!/usr/bin/env sh
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+
+# Check sunrise/sunset and echo suggested background accordingly
+
+has() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# If `sunwait` is installed, use it to determine if it's day or night
+if has sunwait; then
+    # Get latitude and longitude from ip address using `curl` or `wget`
+    # coords format is "latitude,longitude"
+    if has curl; then
+        coords=$(curl -s ipinfo.io/loc)
+    elif has wget; then
+        coords=$(wget -qO- ipinfo.io/loc)
+    fi
+
+    if [ -n "$coords" ]; then
+        # Extract latitude and longitude from coords
+        latitude=${coords%,*}
+        longitude=${coords#*,}
+
+        # Convert latitude and longitude format from [+-]0.0000 to
+        # 0.0000[NS] (latitude) or 0.0000[EW] (longitude)
+        case "$latitude" in
+        -*) latitude="${latitude#-}S" ;;
+        *) latitude="${latitude}N" ;;
+        esac
+
+        case "$longitude" in
+        -*) longitude="${longitude#-}W" ;;
+        *) longitude="${longitude}E" ;;
+        esac
+
+        [ "$(sunwait poll "$latitude" "$longitude")" = "DAY" ] &&
+            echo light ||
+            echo dark
+        exit
+    fi
+
+    # Let `sunwait` detect the location itself if we cannot get the coordinates
+    # from ipinfo.io
+    [ "$(sunwait poll)" = "DAY" ] &&
+        echo light ||
+        echo dark
+    exit
+fi
+
+# Else use current time to determine if it's day or night
+current_hour=$(date +%H)
+current_hour="${current_hour#0}"
+[ "$current_hour" -gt 6 ] && [ "$current_hour" -lt 18 ] &&
+    echo light ||
+    echo dark
