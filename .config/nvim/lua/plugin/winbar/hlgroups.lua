@@ -243,27 +243,6 @@ local function init()
     callback = set_hlgroups,
   })
 
-  -- See https://github.com/Bekaboo/dropbar.nvim/issues/118
-  --     https://github.com/neovim/neovim/issues/26037#issuecomment-1838548013
-  --     https://github.com/Bekaboo/dropbar.nvim/pull/195
-  if vim.fn.has('nvim-0.11.0') == 0 then
-    clear_winbar_bg()
-    vim.api.nvim_create_autocmd('UIEnter', {
-      once = true,
-      group = groupid,
-      callback = clear_winbar_bg,
-    })
-    vim.api.nvim_create_autocmd('ColorScheme', {
-      group = groupid,
-      callback = clear_winbar_bg,
-    })
-    vim.api.nvim_create_autocmd('OptionSet', {
-      group = groupid,
-      pattern = 'background',
-      callback = clear_winbar_bg,
-    })
-  end
-
   -- Dim winbar highlights in non-current windows
   dim_nc_wins()
   vim.api.nvim_create_autocmd('ColorScheme', {
