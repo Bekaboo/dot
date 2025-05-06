@@ -712,6 +712,7 @@ oil.setup({
     foldcolumn = '0',
     winbar = '',
   },
+  watch_for_changes = true,
   cleanup_delay_ms = false,
   delete_to_trash = true,
   skip_confirm_for_simple_edits = true,
