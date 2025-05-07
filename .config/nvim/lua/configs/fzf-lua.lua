@@ -762,6 +762,44 @@ fzf.setup({
   oldfiles = {
     prompt = 'Oldfiles> ',
   },
+  git = {
+    commits = {
+      actions = {
+        ['enter'] = actions.git_buf_edit,
+        ['alt-s'] = actions.git_buf_split,
+        ['alt-v'] = actions.git_buf_vsplit,
+        ['alt-t'] = actions.git_buf_tabedit,
+        ['ctrl-y'] = { fn = actions.git_yank_commit, exec_silent = true },
+      },
+    },
+    bcommits = {
+      actions = {
+        ['enter'] = actions.git_buf_edit,
+        ['alt-s'] = actions.git_buf_split,
+        ['alt-v'] = actions.git_buf_vsplit,
+        ['alt-t'] = actions.git_buf_tabedit,
+        ['ctrl-y'] = { fn = actions.git_yank_commit, exec_silent = true },
+      },
+    },
+    blame = {
+      actions = {
+        ['enter'] = actions.git_goto_line,
+        ['alt-s'] = actions.git_buf_split,
+        ['alt-v'] = actions.git_buf_vsplit,
+        ['alt-t'] = actions.git_buf_tabedit,
+        ['ctrl-y'] = { fn = actions.git_yank_commit, exec_silent = true },
+      },
+    },
+    branches = {
+      actions = {
+        ['ctrl-s'] = {
+          fn = actions.git_branch_add,
+          field_index = '{q}',
+          reload = true,
+        },
+      },
+    },
+  },
   fzf_opts = {
     ['--no-scrollbar'] = '',
     ['--no-separator'] = '',
