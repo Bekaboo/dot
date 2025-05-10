@@ -186,27 +186,7 @@ augroup('LastPosJmp', {
 })
 
 augroup('AutoCwd', {
-  'LspAttach',
-  {
-    desc = 'Record LSP root directories in `_G._lsp_root_dirs`.',
-    nested = true,
-    callback = function(info)
-      local client = vim.lsp.get_client_by_id(info.data.client_id)
-      local root_dir = client and client.config and client.config.root_dir
-      if not root_dir then
-        return
-      end
-
-      -- Invalidate project root cache to update buffer cwd to consider
-      -- LSP root directories
-      vim.b[info.buf]._root_dir = nil
-
-      _G._lsp_root_dirs = _G._lsp_root_dirs or {}
-      _G._lsp_root_dirs[root_dir] = true
-    end,
-  },
-}, {
-  { 'BufEnter', 'LspAttach' },
+  'BufEnter',
   {
     desc = 'Automatically change local current directory.',
     nested = true,
@@ -257,30 +237,7 @@ augroup('AutoCwd', {
       end
 
       local fs_utils = require('utils.fs')
-      local bufname = vim.api.nvim_buf_get_name(buf)
-
-      local lsp_root_dir = (function()
-        if not _G._lsp_root_dirs then
-          return
-        end
-
-        local root -- longest LSP root that contains current buffer
-        for dir, _ in pairs(_G._lsp_root_dirs) do
-          if
-            fs_utils.contains(dir, bufname)
-            and (not root or fs_utils.contains(root, dir))
-            and not fs_utils.is_home_dir(dir)
-            and not fs_utils.is_root_dir(dir)
-            and vim.fn.isdirectory(dir) == 1
-          then
-            root = dir
-          end
-        end
-
-        return root
-      end)()
-
-      local root_dir = lsp_root_dir or vim.fs.root(file, fs_utils.root_markers)
+      local root_dir = vim.fs.root(file, fs_utils.root_markers)
 
       if
         not root_dir
