@@ -121,33 +121,36 @@ vim.api.nvim_create_autocmd({ 'InsertEnter', 'CmdlineEnter' }, {
 })
 
 -- z
-vim.api.nvim_create_autocmd(
-  { 'UIEnter', 'CmdlineEnter', 'CmdUndefined', 'DirChanged' },
-  {
+do
+  local opts = {
     group = vim.api.nvim_create_augroup('ZSetup', {}),
     desc = 'Init z plugin.',
     once = true,
-    callback = function(info)
-      local function load()
-        if vim.g.loaded_z then
-          return
-        end
-
-        local z = require('plugin.z')
-        z.setup()
-        vim.keymap.set('n', '<Leader>z', z.select, {
-          desc = 'Open a directory from z',
-        })
+    callback = function()
+      if vim.g.loaded_z then
+        return
       end
 
-      if info.event == 'UIEnter' then
-        vim.schedule(load)
-      else
-        load()
-      end
+      local z = require('plugin.z')
+      z.setup()
+      vim.keymap.set('n', '<Leader>z', z.select, {
+        desc = 'Open a directory from z',
+      })
     end,
   }
-)
+
+  vim.api.nvim_create_autocmd({ 'CmdlineEnter', 'DirChanged' }, opts)
+  vim.api.nvim_create_autocmd(
+    'UIEnter',
+    vim.tbl_deep_extend('force', opts, {
+      callback = vim.schedule_wrap(opts.callback),
+    })
+  )
+  vim.api.nvim_create_autocmd(
+    'CmdUndefined',
+    vim.tbl_deep_extend('force', opts, { pattern = 'Z*' })
+  )
+end
 
 -- addasync
 vim.api.nvim_create_autocmd('InsertEnter', {
@@ -187,12 +190,12 @@ if vim.g.loaded_aider == nil then
 end
 
 -- session
-vim.api.nvim_create_autocmd({ 'UIEnter', 'CmdlineEnter', 'CmdUndefined' }, {
-  desc = 'Init session plugin.',
-  group = vim.api.nvim_create_augroup('SessionSetup', {}),
-  once = true,
-  callback = function(info)
-    local function load()
+do
+  local opts = {
+    desc = 'Init session plugin.',
+    group = vim.api.nvim_create_augroup('SessionSetup', {}),
+    once = true,
+    callback = function()
       if vim.g.loaded_session ~= nil then
         return
       end
@@ -216,12 +219,20 @@ vim.api.nvim_create_autocmd({ 'UIEnter', 'CmdlineEnter', 'CmdUndefined' }, {
         session.load,
         { desc = 'Load session (workspace) for cwd' }
       )
-    end
+    end,
+  }
 
-    if info.event == 'UIEnter' then
-      vim.schedule(load)
-    else
-      load()
-    end
-  end,
-})
+  vim.api.nvim_create_autocmd('CmdlineEnter', opts)
+  vim.api.nvim_create_autocmd(
+    'UIEnter',
+    vim.tbl_deep_extend('force', opts, {
+      callback = vim.schedule_wrap(opts.callback),
+    })
+  )
+  vim.api.nvim_create_autocmd(
+    'CmdUndefined',
+    vim.tbl_deep_extend('force', opts, {
+      pattern = { 'Session*', 'Mksession' },
+    })
+  )
+end
