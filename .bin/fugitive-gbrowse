@@ -6,6 +6,6 @@ ARGS="$*"
 
 [ -z "$ARGS" ] &&
     $VIM_COMMAND +'GBrowse' +'qa!' ||
-    $VIM_COMMAND +"exe escape('GBrowse -p $ARGS', \"\\'\")" +'qa!'
+    $VIM_COMMAND +"exe escape('GBrowse $ARGS', \"\\'\")" +'qa!'
 
 echo
