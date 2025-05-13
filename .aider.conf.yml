@@ -7,7 +7,7 @@ auto-commits: false
 cache-prompts: true
 auto-accept-architect: false
 
-model: gemini-2.5-pro
+model: flash
 chat-language: the same language of user's question, prefer English
 
 user-input-color: "" # use default foreground color
