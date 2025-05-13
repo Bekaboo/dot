@@ -274,7 +274,10 @@ function actions.file_edit_or_qf(selected, opts)
     vim.cmd.cfirst()
     vim.cmd.copen()
   else
-    actions.file_edit(selected, opts)
+    -- Fix oil buffer concealing issue when opening some dirs
+    vim.schedule(function()
+      actions.file_edit(selected, opts)
+    end)
   end
 end
 
