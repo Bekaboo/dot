@@ -8,6 +8,6 @@ cache-prompts: true
 auto-accept-architect: false
 
 model: flash
-chat-language: the same language of user's question, prefer English
+chat-language: the same language of user's question, prefer English and Chinese
 
 user-input-color: "" # use default foreground color
