@@ -61,7 +61,7 @@ if shopt -q login_shell; then
 fi
 
 # Enable colors for ls, etc. Prefer ~/.dir_colors
-if type -P dircolors >/dev/null; then
+if __has dircolors >/dev/null; then
     if [[ -f ~/.dir_colors ]]; then
         eval $(dircolors -b ~/.dir_colors)
     elif [[ -f /etc/DIR_COLORS ]]; then
@@ -241,7 +241,7 @@ safe_term=${TERM//[^[:alnum:]]/?} # sanitize TERM
 match_lhs=""
 [[ -f ~/.dir_colors ]] && match_lhs="${match_lhs}$(<~/.dir_colors)"
 [[ -f /etc/DIR_COLORS ]] && match_lhs="${match_lhs}$(</etc/DIR_COLORS)"
-[[ -z ${match_lhs} ]] && type -P dircolors >/dev/null &&
+[[ -z ${match_lhs} ]] && __has dircolors >/dev/null &&
     match_lhs=$(dircolors --print-database)
 [[ $'\n'${match_lhs} == *$'\n'"TERM "${safe_term}* ]]
 if [[ "$EUID" == 0 ]]; then
