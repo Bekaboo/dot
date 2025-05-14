@@ -4,10 +4,13 @@ watch-files: true
 gitignore: false
 auto-commits: false
 
+architect: true
 cache-prompts: true
 auto-accept-architect: false
 
-model: flash
+model: r1
+weak-model: deepseek
+editor-model: sonnet
 chat-language: the same language of user's question, prefer English and Chinese
 
 user-input-color: "" # use default foreground color
