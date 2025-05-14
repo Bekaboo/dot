@@ -27,6 +27,7 @@ history = 0
 [window]
 dynamic_padding = true
 opacity = 1
+option_as_alt = 'Both'
 
 [window.dimensions]
 columns = 112
