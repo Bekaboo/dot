@@ -2,3 +2,5 @@
 .gnupg
 .envvars
 .bash_envvars
+
+.DS_Store
