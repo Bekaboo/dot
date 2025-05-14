@@ -11,13 +11,12 @@ function __auto_ls \
     end
 
     set -l lines (tput lines)
-    set -l cols (tput cols)
     set -l max_lines (math ceil $lines / 4)
-    set -l num_lines (count (ls -C --width=$cols))
+    set -l num_lines (count (ls -C))
     if test $num_lines -le $max_lines
         ls --color
     else
-        ls -C --color --width=$cols | head -n $max_lines
+        ls -C --color | head -n $max_lines
         echo
         echo ... $num_lines lines total
     end
