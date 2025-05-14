@@ -271,6 +271,7 @@ setbg_vscode() {
     fi
     if [ "$theme" != "$new_theme" ]; then
         tmp=$(mktemp)
+        trap 'rm -f "$tmp"' EXIT
         jq ".\"workbench.colorTheme\" = \"$new_theme\"" "$rc" >"$tmp" &&
             mv "$tmp" "$rc"
     fi
@@ -293,26 +294,8 @@ setbg_fish() {
             esac
         fi
         has fish &&
-            fish -c 'set -U __fish_reload_theme (head -c 16 /dev/urandom | base32)'
+            fish -c 'set -U __fish_reload_theme (head -c 16 /dev/urandom)'
     )
-}
-
-setbg_glow() {
-    # $1: 'light' or 'dark'
-    config="$CONFIG_HOME/glow/glow.toml"
-    if [ -z "$1" ]; then
-        return 1
-    fi
-    if [ ! -e "$config" ]; then
-        mkdir -p "$(dirname "$config")"
-        echo 'style: "dark"' >"$config"
-    fi
-    # style: "<style_name>"
-    theme=$(grep -Po '(?<=style: ")[^"]+' "$config")
-    new_theme=$(get_theme_variant "$theme" "$1")
-    if [ "$theme" != "$new_theme" ]; then
-        sed -i "s/style: \"$theme\"/style: \"$new_theme\"/" "$config"
-    fi
 }
 
 setbg_libreoffice() {
@@ -335,17 +318,33 @@ setbg_libreoffice() {
         dark) theme="breeze_dark" ;;
         light) theme="breeze" ;;
         esac
-        sed -i "/<\/oor:items>/i <item oor:path=\"/org.openoffice.Office.Common/Misc\"><prop oor:name=\"SymbolStyle\" oor:op=\"fuse\"><value>$theme</value></prop></item>" "$config"
+        # Different from GNU sed, BSD sed (on macOS)
+        # - Requires a non-empty extension following `-i` flag without spaces
+        # - Does not have GNU `i`/`a` command extension
+        # See: https://stackoverflow.com/a/14813278
+        #      https://www.gnu.org/software/sed/manual/html_node/Other-Commands.html#Other-Commands
+        sed -i'.bak' "/<\/oor:items>/i\\
+<item oor:path=\"/org.openoffice.Office.Common/Misc\"><prop oor:name=\"SymbolStyle\" oor:op=\"fuse\"><value>$theme</value></prop></item>
+" "$config"
     fi
 
-    theme=$(grep -Po '(?<=\<item oor:path="/org.openoffice.Office.Common/Misc">\<prop oor:name="SymbolStyle" oor:op="fuse">\<value>)[a-zA-Z0-9_-]+' "$config")
+    theme=$(awk '/SymbolStyle.*<value>/ { sub(/.*<value>/, ""); sub(/<\/value>.*/, ""); print; exit }' "$config")
     theme_no_suffix=$(echo "$theme" | sed -E 's/(_dark)+//')
     case "$1" in
-    dark) new_theme="${theme_no_suffix}_dark" ;;
-    light) new_theme="$theme_no_suffix" ;;
+        dark) new_theme="${theme_no_suffix}_dark" ;;
+        light) new_theme="$theme_no_suffix" ;;
     esac
 
-    sed -i -E "s/(<item oor:path=\"\/org.openoffice.Office.Common\/Misc\"><prop oor:name=\"SymbolStyle\" oor:op=\"fuse\"><value>)([a-zA-Z0-9_-]+)(<\/value><\/prop><\/item>)/\1$new_theme\3/" "$config"
+    tmp=$(mktemp)
+    trap 'rm -f "$tmp"' EXIT
+    awk -v new_theme="$new_theme" '
+        /<item oor:path="\/org.openoffice.Office.Common\/Misc"><prop oor:name="SymbolStyle" oor:op="fuse"><value>[a-zA-Z0-9_-]+<\/value><\/prop><\/item>/ {
+            sub(/<value>[a-zA-Z0-9_-]+<\/value>/, "<value>" new_theme "</value>");
+            print;
+            next;
+        }
+        { print }
+    ' "$config" > "$tmp" && mv "$tmp" "$config"
 }
 
 # Record the last timestamp when this script is called with 'conflict' bg
@@ -404,7 +403,6 @@ main() {
     setbg_okular "$bg" &
     setbg_vscode "$bg" &
     setbg_fish "$bg" &
-    setbg_glow "$bg" &
     setbg_libreoffice "$bg" &
     write_conflict_log "$bg" &
 }

@@ -159,13 +159,7 @@ fzf_file_previewer() {
             case "$1" in
             *.md)
                 if has glow; then
-                    glow_config="${XDG_CONFIG_HOME-$HOME/.config}/glow/glow.yml"
-                    if [ -e "$glow_config" ]; then
-                        style=$(grep -Po '(?<=style: ")[^"]+' "$glow_config")
-                    else
-                        style='auto'
-                    fi
-                    glow -s="$style" -w="$FZF_PREVIEW_COLUMNS" -- "$1"
+                    glow -w="$FZF_PREVIEW_COLUMNS" -- "$1"
                     return
                 fi
                 ;;

@@ -263,10 +263,10 @@ PROMPT_COMMAND=${PROMPT_COMMAND:+$PROMPT_COMMAND; }__cmd_done
 # Enable checkwinsize so that bash will check the terminal size when
 # it regains control.  #65623
 # http://cnswww.cns.cwru.edu/~chet/bash/FAQ (E11)
-shopt -s checkwinsize
-shopt -s expand_aliases
-shopt -s histappend
-shopt -s globstar
+shopt -s checkwinsize &>/dev/null
+shopt -s expand_aliases &>/dev/null
+shopt -s histappend &>/dev/null
+shopt -s globstar &>/dev/null  # not supported by bash on macOS
 
 # Automatically activate or deactivate python virtualenvs
 __python_venv() {
