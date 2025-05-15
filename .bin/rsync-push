@@ -2,6 +2,12 @@
 # vim:ft=sh:ts=4:sw=4:sts=4:et:
 # Automatically push files from <src> to <dest> on local file change
 
+push() {
+    src="$1"
+    dst="$2"
+    rsync -auzvP --filter=":- $src/.gitignore" "$src" "$dst"
+}
+
 main() {
     if ! command -v rsync >/dev/null 2>&1 ||
         ! command -v inotifywait >/dev/null 2>&1; then
@@ -16,9 +22,11 @@ main() {
         exit 1
     fi
 
+    echo "Initial push from $src to $dst..."
+    push "$src" "$dst"
     while inotifywait -r -e modify,create,delete,move "$src" >/dev/null 2>&1; do
-        echo "Detected changes, syncing $src to $dst..."
-        rsync -auzvP --filter=":- $src/.gitignore" "$src" "$dst"
+        echo "Changes detected, pushing $src to $dst..."
+        push "$src" "$dst"
     done
 }
 
