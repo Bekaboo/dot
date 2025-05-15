@@ -1329,7 +1329,7 @@ endfunction
 " return: 0/1
 function! s:running_tui() abort
   for cmd in s:fg_cmds()
-    if cmd =~# '\v^(sudo(\s+--?(\w|-)+((\s+|\=)\S+)?)*\s+)?\S*
+    if cmd =~# '\v(sudo(\s+--?(\w|-)+((\s+|\=)\S+)?)*\s+)?(.*sh\s+-c\s+)?\S*
         \(n?vim?|vimdiff|emacs(client)?|lem|nano|h(eli)?x|kak|
         \tmux|vifm|yazi|ranger|lazygit|h?top|gdb|fzf|nmtui|
         \sudoedit|crontab|asciinema|w3m)'
