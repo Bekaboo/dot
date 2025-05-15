@@ -320,7 +320,7 @@ load('plugin/rplugin.vim', 'loaded_remote_plugins', {
   'BufNew',
   'BufWritePost',
   'BufReadPre',
-  'CmdUndefined UpdateRemotePlugins'
+  'CmdUndefined UpdateRemotePlugins',
 })
 load('provider/python3.vim', 'loaded_python3_provider', {
   'FileType python',
