@@ -7,15 +7,25 @@ __has() {
 
 pathadd() {
     if [[ ":$PATH:" != *":$1:"* ]]; then
-        PATH="$1${PATH:+":$PATH"}"
+        export PATH="$1${PATH:+":$PATH"}"
     fi
 }
 
+# Setup for macOS homebrew
+if [[ "$OSTYPE" == 'darwin*' ]]; then
+    pathadd "/usr/local/bin"
+    pathadd "/opt/homebrew/bin"
+
+    if __has brew; then
+        eval "$(brew shellenv)"
+    fi
+fi
+
+# Other install paths
 pathadd "${HOME}/go/bin"
 pathadd "${HOME}/.cargo/bin"
 pathadd "${HOME}/.local/bin"
 pathadd "${HOME}/.bin"
-export PATH
 
 [[ -r "${HOME}/.envvars" ]] && source "${HOME}/.envvars"
 [[ -r "${HOME}/.bash_envvars" ]] && source "${HOME}/.bash_envvars"

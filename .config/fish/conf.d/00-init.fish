@@ -1,4 +1,15 @@
 # Initialize fish shell, including settings global variables etc.
+
+# Setup for macOS homebrew
+if test (uname) = Darwin
+    fish_add_path -p /opt/homebrew/bin /usr/local/bin
+
+    if type -q brew
+        eval (brew shellenv)
+    end
+end
+
+# Other install paths
 fish_add_path -p \
     $HOME/.bin \
     $HOME/.local/bin \
