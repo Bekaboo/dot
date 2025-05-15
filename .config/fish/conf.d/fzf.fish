@@ -23,7 +23,7 @@ set -gx FZF_DEFAULT_OPTS "--reverse \
     --color=gutter:-1,info:bold:red,spinner:cyan,header:white \
     --bind=ctrl-k:kill-line \
     --bind=alt-a:toggle-all \
-    --bind=alt-{:first,alt-}:last \
+    --bind=alt-up:first,alt-down:last \
     --bind=shift-up:preview-up,shift-down:preview-down \
     --bind=alt-v:preview-half-page-up,ctrl-v:preview-half-page-down"
 
