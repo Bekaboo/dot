@@ -40,7 +40,7 @@ local formatter = lsp.start({
           formatCanRange = true,
           -- Use `--stdin-filepath` as a workaround to make stylua respect
           -- `.stylua.toml`, see https://github.com/JohnnyMorganz/StyLua/issues/928
-          formatCommand = 'stylua --stdin-filepath ./"$(tr -dc A-Za-z0-9 </dev/urandom | head -c 13)" ${--indent-width:tabSize} ${--range-start:charStart} ${--range-end:charEnd} --color Never -',
+          formatCommand = 'stylua --stdin-filepath ./"$(cat /dev/urandom | head -c 13)" ${--indent-width:tabSize} ${--range-start:charStart} ${--range-end:charEnd} --color Never -',
           rootMarkers = stylua_root_markers,
         },
       },
