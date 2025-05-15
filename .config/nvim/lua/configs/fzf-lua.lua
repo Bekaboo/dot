@@ -71,9 +71,9 @@ function actions.switch_provider()
   })
 end
 
----Switch cwd while preserving the last query
+---Change cwd while preserving the last query
 ---@return nil
-function actions.switch_cwd()
+function actions.change_cwd()
   local resume_data = vim.deepcopy(fzf.config.__resume_data)
   resume_data.opts = resume_data.opts or {}
 
@@ -96,7 +96,7 @@ function actions.switch_cwd()
     -- Append current dir './' to the result list to allow switching to home
     -- or root directory
     cmd = string.format(
-      [[%s | sed '1i ./']],
+      "%s | sed '1i\\\n ./\n'",
       (function()
         local fd_cmd = vim.fn.executable('fd') == 1 and 'fd'
           or vim.fn.executable('fdfind') == 1 and 'fdfind'
@@ -337,7 +337,7 @@ core.ACTION_DEFINITIONS[actions.toggle_dir] = {
       or 'Include dirs'
   end,
 }
-core.ACTION_DEFINITIONS[actions.switch_cwd] = { 'Change cwd', pos = 1 }
+core.ACTION_DEFINITIONS[actions.change_cwd] = { 'Change cwd', pos = 1 }
 core.ACTION_DEFINITIONS[actions.arg_del] = { 'delete' }
 core.ACTION_DEFINITIONS[actions.del_autocmd] = { 'delete autocmd' }
 core.ACTION_DEFINITIONS[actions.arg_search_add] = { 'add new file' }
@@ -346,7 +346,7 @@ core.ACTION_DEFINITIONS[actions.ex_run] = { 'edit' }
 
 config._action_to_helpstr[actions.toggle_dir] = 'toggle-dir'
 config._action_to_helpstr[actions.switch_provider] = 'switch-provider'
-config._action_to_helpstr[actions.switch_cwd] = 'change-cwd'
+config._action_to_helpstr[actions.change_cwd] = 'change-cwd'
 config._action_to_helpstr[actions.arg_del] = 'delete'
 config._action_to_helpstr[actions.del_autocmd] = 'delete-autocmd'
 config._action_to_helpstr[actions.arg_search_add] = 'search-and-add-new-file'
@@ -749,7 +749,7 @@ fzf.setup({
   },
   files = {
     actions = {
-      ['alt-c'] = actions.switch_cwd,
+      ['alt-c'] = actions.change_cwd,
       ['alt-h'] = actions.toggle_hidden,
       ['alt-i'] = actions.toggle_ignore,
       ['alt-/'] = actions.toggle_dir,
@@ -820,7 +820,7 @@ fzf.setup({
   grep = {
     rg_glob = true,
     actions = {
-      ['alt-c'] = actions.switch_cwd,
+      ['alt-c'] = actions.change_cwd,
       ['alt-h'] = actions.toggle_hidden,
       ['alt-i'] = actions.toggle_ignore,
     },
