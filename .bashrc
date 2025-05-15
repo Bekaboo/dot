@@ -466,6 +466,14 @@ dot config --local status.showUntrackedFiles no
 [[ -r '/opt/miniconda3/etc/profile.d/conda.sh' ]] &&
     source '/opt/miniconda3/etc/profile.d/conda.sh'
 
+# Setup pyenv, see:
+# https://github.com/pyenv/pyenv?tab=readme-ov-file#bash
+export PYENV_ROOT=${HOME}/.pyenv
+pathadd "$PYENV_ROOT/bin"
+if __has pyenv; then
+    eval "$(pyenv init - bash)"
+fi
+
 # Setup zoxide
 if __has zoxide; then
     eval "$(zoxide init bash)"
