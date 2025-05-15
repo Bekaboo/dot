@@ -208,6 +208,19 @@ function aider_chat_t.get(path, tab)
   if chat and chat:validate() then
     return chat, false
   end
+
+  -- Aider chat not exist in `chats` table, add existing manually created chat
+  -- buffer (via `:terminal aider ...`) as chat or create new chat buffer
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.bo[buf].bt ~= 'terminal' then
+      goto continue
+    end
+    local p, _, cmd = utils.term.parse_name(vim.api.nvim_buf_get_name(buf))
+    if p == path and cmd:match('aider') then
+      return aider_chat_t.new({ buf = buf })
+    end
+    ::continue::
+  end
   return aider_chat_t.new({ dir = path }), true
 end
 
