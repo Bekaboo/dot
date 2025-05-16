@@ -57,16 +57,23 @@ fi
 
 if shopt -q login_shell; then
     # Show greeting message using neofetch
-    if __has neofetch && __has script && [[ -z "$GREETED" ]]; then
-        export GREETED=1
-        clear -x
-        # Run in pseudo-terminal to prevent terminal state issues
-        # (tmux error: 'not a terminal', etc)
-        # macOS `script` does not accept `-c` flag
-        if script -c exit &>/dev/null; then
-            script -q /dev/null -c neofetch
-        else
-            script -q /dev/null neofetch
+    if [[ -z "$GREETED" ]]; then
+        if __has fastfetch; then
+            fetch=fastfetch
+        elif __has neofetch; then
+            fetch=neofetch
+        fi
+        if [[ -n "$fetch" ]]; then
+            export GREETED=1
+            clear -x
+            # Run in pseudo-terminal to prevent terminal state issues
+            # (tmux error: 'not a terminal', etc)
+            # macOS `script` does not accept `-c` flag
+            if script -c exit &>/dev/null; then
+                script -q /dev/null -c "$fetch"
+            else
+                script -q /dev/null "$fetch"
+            fi
         fi
     fi
 
