@@ -323,14 +323,14 @@ cd() {
     local lines="$(tput lines)"
     local cols="$(tput cols)"
     local max_lines="$(($lines / 4))"
-    local num_lines="$(ls -C --width="$cols" | wc -l)"
+    local num_lines="$(ls -C | wc -l)"
     if [[ "$num_lines" -le "$max_lines" ]]; then
         ls -C --color
         __python_venv
         return
     fi
 
-    ls -C --color --width="$cols" | head -n "$max_lines"
+    ls -C --color | head -n "$max_lines"
     __python_venv
     echo
     echo "... $num_lines lines total"
