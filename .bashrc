@@ -62,7 +62,12 @@ if shopt -q login_shell; then
         clear -x
         # Run in pseudo-terminal to prevent terminal state issues
         # (tmux error: 'not a terminal', etc)
-        script -q /dev/null -c neofetch
+        # macOS `script` does not accept `-c` flag
+        if script -c exit &>/dev/null; then
+            script -q /dev/null -c neofetch
+        else
+            script -q /dev/null neofetch
+        fi
     fi
 
     # Ensure color theme files are correctly linked
