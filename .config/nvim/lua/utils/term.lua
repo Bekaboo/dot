@@ -35,17 +35,29 @@ function M.fg_cmds(buf)
     return {}
   end
 
+  local tty = (function()
+    local obj = vim.system({ 'ps', '-o', 'tty=', '-p', tostring(pid) }):wait()
+    if obj.code == 0 then
+      return vim.trim(obj.stdout)
+    end
+  end)()
+  if not tty or tty == '' then
+    return {}
+  end
+
+  local stat_cmds_str = (function()
+    local obj = vim.system({ 'ps', '-o', 'stat=,args=', '-t', tty }):wait()
+    if obj.code == 0 then
+      return obj.stdout
+    end
+  end)()
+  if not stat_cmds_str then
+    return {}
+  end
+
   local cmds = {}
-  for stat_cmd_str in
-    vim.gsplit(
-      vim
-        .system({ 'ps', 'h', '-o', 'stat,args', '-g', tostring(pid) })
-        :wait().stdout,
-      '\n',
-      { trimempty = true }
-    )
-  do
-    local stat, cmd = stat_cmd_str:match('(%S+)%s+(.*)')
+  for line in vim.gsplit(stat_cmds_str, '\n', { trimempty = true }) do
+    local stat, cmd = line:match('(%S+)%s+(.*)')
     if stat and stat:find('^%S+%+') then
       table.insert(cmds, cmd)
     end

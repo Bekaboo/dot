@@ -1314,11 +1314,15 @@ function! s:fg_cmds() abort
     return []
   endif
 
+  let tty = job_info(term_getjob(bufnr('%'))).tty_in
+  if tty == ''
+    return []
+  endif
+
   let cmds = []
-  for stat_cmd_str in split(system('ps h -o stat,args -g '
-        \ . job_info(term_getjob(bufnr('%'))).process), '\n')
-    if stat_cmd_str =~# '^\S\++' " check if this is a foreground process
-      call add(cmds, substitute(stat_cmd_str, '^\S\+\s\+', '', ''))
+  for line in split(system('ps -o stat=,args= -t ' . tty), '\n')
+    if line =~# '^\S\++' " check if this is a foreground process
+      call add(cmds, substitute(line, '^\S\+\s\+', '', ''))
     endif
   endfor
 
