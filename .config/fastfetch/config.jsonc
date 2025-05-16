@@ -18,27 +18,27 @@
     },
     {
       "type": "cpu",
-      "key": "  \u2588\u2588 CPU",
+      "key": "\u2588\u2588 CPU",
       "keyColor": "bold_red"
     },
     {
       "type": "gpu",
-      "key": "  \u2588\u2588 GPU",
+      "key": "\u2588\u2588 GPU",
       "keyColor": "bold_green"
     },
     {
       "type": "os",
-      "key": "  \u2588\u2588 OS",
+      "key": "\u2588\u2588 OS",
       "keyColor": "bold_yellow"
     },
     {
       "type": "shell",
-      "key": "  \u2588\u2588 Shell",
+      "key": "\u2588\u2588 Shell",
       "keyColor": "bold_cyan"
     },
     {
       "type": "packages",
-      "key": "  \u2588\u2588 Packages",
+      "key": "\u2588\u2588 Packages",
       "keyColor": "bold_magenta"
     }
   ]
