@@ -18,9 +18,6 @@ M.root_markers = {
   '.env',
   '.gitignore',
   '.editorconfig',
-  'README.md',
-  'README.txt',
-  'README.org',
 }
 
 ---Read file contents
