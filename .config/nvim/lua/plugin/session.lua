@@ -141,11 +141,16 @@ function M.save(session)
   vim.cmd.mksession({
     vim.fn.fnameescape(session),
     bang = true,
-    mods = {
-      silent = true,
-      emsg_silent = true,
-    },
+    mods = { silent = true, emsg_silent = true },
   })
+
+  if vim.g._session_loaded and vim.g._session_loaded ~= session then
+    vim.cmd.mksession({
+      vim.fn.fnameescape(vim.g._session_loaded),
+      bang = true,
+      mods = { silent = true, emsg_silent = true },
+    })
+  end
 end
 
 ---Remove given session file
