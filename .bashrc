@@ -276,7 +276,7 @@ PROMPT_COMMAND=${PROMPT_COMMAND:+$PROMPT_COMMAND; }__cmd_done
 shopt -s checkwinsize &>/dev/null
 shopt -s expand_aliases &>/dev/null
 shopt -s histappend &>/dev/null
-shopt -s globstar &>/dev/null  # not supported by bash on macOS
+shopt -s globstar &>/dev/null # not supported by bash on macOS
 
 # Automatically activate or deactivate python virtualenvs
 __python_venv() {
