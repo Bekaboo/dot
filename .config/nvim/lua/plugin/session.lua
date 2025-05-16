@@ -99,28 +99,36 @@ end
 ---@param path? string default to cwd
 ---@return string
 function M.get(path)
+  -- Normalize `path` to a valid directory
   if not path then
     path = vim.fn.getcwd(0)
   else
-    local stat = vim.uv.fs_stat(path)
-    if not stat then
-      return ''
-    end
-    if stat.type ~= 'directory' then
+    while vim.fn.isdirectory(path) == 0 do
       path = vim.fs.dirname(path)
     end
   end
-  path = M.opts.root(path) or path
+  path = vim.fn.fnamemodify(path, ':p')
 
   local session_dir = M.opts.dir
   if vim.fn.isdirectory(session_dir) == 0 then
     vim.fn.mkdir(session_dir, 'p')
   end
 
-  return vim.fs.joinpath(
-    session_dir,
-    M.dir2session(vim.fn.fnamemodify(path, ':p'))
-  )
+  -- Find an existing session file that matches the prefix of `path`, e.g.
+  -- if `path` is `/foo/bar/baz`, then valid sessions are:
+  -- - `%foo%bar%baz`
+  -- - `%foo%bar`
+  -- - `%foo`
+  while not require('utils.fs').is_root_dir(path) do
+    local session = vim.fs.joinpath(session_dir, M.dir2session(path))
+    if vim.fn.filereadable(session) == 1 then
+      return session
+    end
+    path = vim.fs.dirname(path)
+  end
+
+  -- If no existing session file is found, use project root as the new session
+  return vim.fs.joinpath(session_dir, M.dir2session(M.opts.root(path) or path))
 end
 
 ---Save current session
@@ -155,6 +163,7 @@ function M.load(session)
   if not session then
     session = M.get()
   end
+
   if not vim.uv.fs_stat(session) then
     vim.notify(
       string.format("[session] session '%s' does not exist", session),
