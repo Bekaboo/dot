@@ -1,6 +1,5 @@
 function __python_venv \
     --on-variable PWD \
-    --on-event fish_postexec \
     --description 'Automatically activate or deactivate python virtualenvs'
     if not status is-interactive; or not type -q python3
         return
