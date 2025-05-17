@@ -147,18 +147,27 @@ setbg_nvim() {
 
 setbg_macos() {
     # $1: 'light' or 'dark'
-    if [ -z "$1" ] || ! has osascript; then
+    if [ -z "$1" ]; then
         return 1
     fi
 
+    # Make sure apps' background sync with system background, see:
+    # - https://www.reddit.com/r/MacOS/comments/atty3g/dark_mode_is_broken_on_my_mac/
+    # - https://medium.com/@n1kk/how-to-tweak-macos-mojave-dark-mode-per-app-a5fab0574691
+    if has defaults; then
+        defaults delete -g NSRequiresAquaSystemAppearance 2>/dev/null
+    fi
+
     # Ref: https://brettterpstra.com/2018/09/26/shell-tricks-toggling-dark-mode-from-terminal/
-    osascript <<EOF
-        tell application "System Events"
-            tell appearance preferences
-                set dark mode to $([ "$1" = dark ] && echo true || echo false)
-            end tell
-        end tell
+    if has osascript; then
+        osascript <<EOF
+                tell application "System Events"
+                    tell appearance preferences
+                        set dark mode to $([ "$1" = dark ] && echo true || echo false)
+                    end tell
+                end tell
 EOF
+    fi
 }
 
 # see here for reference, ai
