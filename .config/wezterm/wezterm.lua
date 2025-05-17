@@ -2,7 +2,6 @@ local wezterm = require('wezterm')
 local config = wezterm.config_builder and wezterm.config_builder() or {}
 local config_dir = wezterm.config_dir
 
-config.term = 'wezterm'
 config.automatically_reload_config = true
 config.animation_fps = 1 -- Disable cursor blinking easing animation
 config.color_scheme_dirs = { config_dir .. '/colors' }
