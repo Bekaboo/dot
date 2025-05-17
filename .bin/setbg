@@ -145,6 +145,23 @@ setbg_nvim() {
     fi
 }
 
+setbg_macos() {
+    # $1: 'light' or 'dark'
+    if [ -z "$1" ] || ! has osascript; then
+        return 1
+    fi
+
+    # Ref: https://brettterpstra.com/2018/09/26/shell-tricks-toggling-dark-mode-from-terminal/
+    osascript <<EOF
+        tell application "System Events"
+            tell appearance preferences
+                set dark mode to $([ "$1" = dark ] && echo true || echo false)
+            end tell
+        end tell
+EOF
+}
+
+# see here for reference, ai
 setbg_plasma() {
     # $1: 'light' or 'dark'
     if [ -z "$1" ]; then
@@ -164,6 +181,25 @@ setbg_plasma() {
             plasma-apply-colorscheme "$new_scheme" >/dev/null 2>&1
         fi
     fi
+}
+
+setbg_gnome() {
+    # $1: 'light' or 'dark'
+    if [ -z "$1" ] || ! has gsettings; then
+        return 1
+    fi
+
+    current_theme=$(gsettings get org.gnome.desktop.interface gtk-theme | tr -d "'")
+    new_theme=$(get_theme_variant "$current_theme" "$1")
+
+    # Set global theme
+    gsettings set org.gnome.desktop.interface gtk-theme "$new_theme"
+
+    # Set preference for apps that support dark mode
+    case "$1" in
+    dark) gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' ;;
+    light) gsettings set org.gnome.desktop.interface color-scheme 'default' ;;
+    esac
 }
 
 get_new_profile_name() {
@@ -402,6 +438,8 @@ main() {
     setbg_wezterm "$bg" &
     setbg_highlight "$bg" &
     setbg_nvim "$bg" &
+    setbg_macos "$bg" &
+    setbg_gnome "$bg" &
     setbg_plasma "$bg" &
     setbg_konsole_yakuake "$bg" &
     setbg_termux "$bg" &
