@@ -1,14 +1,14 @@
 [general]
 import = [
-    "~/.config/alacritty/themes/macro-dark.toml",
-    "~/.config/alacritty/themes/dark.toml",
-    "~/.config/alacritty/theme.toml",
-    "~/.config/alacritty/local.toml",
+    '~/.config/alacritty/themes/macro-dark.toml',
+    '~/.config/alacritty/themes/dark.toml',
+    '~/.config/alacritty/theme.toml',
+    '~/.config/alacritty/local.toml',
 
-    "$XDG_CONFIG_HOME/.config/alacritty/themes/macro-dark.toml",
-    "$XDG_CONFIG_HOME/.config/alacritty/themes/dark.toml",
-    "$XDG_CONFIG_HOME/.config/alacritty/theme.toml",
-    "$XDG_CONFIG_HOME/.config/alacritty/local.toml",
+    '$XDG_CONFIG_HOME/.config/alacritty/themes/macro-dark.toml',
+    '$XDG_CONFIG_HOME/.config/alacritty/themes/dark.toml',
+    '$XDG_CONFIG_HOME/.config/alacritty/theme.toml',
+    '$XDG_CONFIG_HOME/.config/alacritty/local.toml',
 ]
 
 [colors]
@@ -16,13 +16,13 @@ draw_bold_text_with_bright_colors = true
 transparent_background_colors = true
 
 [env]
-TERM = "alacritty"
+TERM = 'alacritty'
 
 [font]
 size = 12
 
 [font.normal]
-family = "Iosevka"
+family = 'Iosevka'
 
 [scrolling]
 history = 0
