@@ -12,6 +12,8 @@
 --glob=!.*Cache*/
 --glob=!.*cache*/
 --glob=!.*wine/
+--glob=!.aider*.cache*
+--glob=!.aider*.history*
 --glob=!.cargo/
 --glob=!.conda/
 --glob=!.dot/

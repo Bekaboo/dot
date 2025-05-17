@@ -10,6 +10,8 @@
 .conda/
 .dot/
 .fonts/
+.aider*.cache*
+.aider*.history*
 .ipython/
 .java/
 .jupyter/
