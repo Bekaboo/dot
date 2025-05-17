@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 # vim: ft=sh ts=4 sw=4 sts=4 et :
-# Watch for sleep signal to check & set bg on awake from sleep
+# Watch for sleep signal to check current time and set bg accordingly on awake from sleep
 
 has_recent_conflict_bg() {
     timestamp_file="${XDG_STATE_HOME:-$HOME/.local/state}/setbg/timestamp"
