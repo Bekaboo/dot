@@ -3,5 +3,3 @@
 /.envvars
 /.bash_envvars
 /.gitconfig.local
-
-.DS_Store
