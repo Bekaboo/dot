@@ -45,4 +45,8 @@ getbg_kde() {
 case "$OSTYPE" in
 darwin*) getbg_macos ;;
 linux*) getbg_linux ;;
+*)
+    echo "Unsupported system: $OSTYPE" >&2
+    return 1
+    ;;
 esac
