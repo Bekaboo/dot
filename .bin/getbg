@@ -1,0 +1,48 @@
+#!/usr/bin/env sh
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+# Get system background
+
+getbg_macos() {
+    # Key `AppleInterfaceStyle` does not exist in light mode, suppress error
+    # See: https://snazzyham.com/writing/building-an-app-to-switch-themes-on-mac-os/
+    if [ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" = Dark ]; then
+        echo dark
+    else
+        echo light
+    fi
+}
+
+getbg_linux() {
+    case "$XDG_CURRENT_DESKTOP" in
+    *kde*) getbg_kde ;;
+    *gnome*) getbg_gnome ;;
+    *)
+        echo "Unsupported desktop environment: $XDG_CURRENT_DESKTOP" >&2
+        return 1
+        ;;
+    esac
+}
+
+getbg_gnome() {
+    # See https://wiki.archlinux.org/title/Dark_mode_switching#gsettings
+    if gsettings get org.gnome.desktop.interface color-scheme | grep -q 'prefer-dark' ||
+        gsettings get org.gnome.desktop.interface gtk-theme | grep -qi 'dark'; then
+        echo dark
+    else
+        echo light
+    fi
+}
+
+getbg_kde() {
+    if plasma-get-current-colorscheme | grep -qi 'dark' ||
+        plasma-get-current-desktoptheme | grep -qi 'dark'; then
+        echo dark
+    else
+        echo light
+    fi
+}
+
+case "$OSTYPE" in
+darwin*) getbg_macos ;;
+linux*) getbg_linux ;;
+esac
