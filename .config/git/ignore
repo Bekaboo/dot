@@ -1,1 +1,4 @@
 .DS_Store
+
+.aider*.history*
+.aider*.cache*
