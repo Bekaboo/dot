@@ -1,7 +1,7 @@
-.ssh
-.gnupg
-.envvars
-.bash_envvars
-.gitconfig.local
+/.ssh
+/.gnupg
+/.envvars
+/.bash_envvars
+/.gitconfig.local
 
 .DS_Store
