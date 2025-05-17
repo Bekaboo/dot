@@ -160,6 +160,13 @@ setbg_macos() {
 
     # Ref: https://brettterpstra.com/2018/09/26/shell-tricks-toggling-dark-mode-from-terminal/
     if has osascript; then
+        # Key does not exist if auto-switch is disabled and is 1 if auto-switch
+        # is enabled, saved for later restoration to keep auto-switch behavior
+        # after setting bg, see https://apple.stackexchange.com/a/391814
+        if has defaults; then
+            auto_switch=$(defaults read -g AppleInterfaceStyleSwitchesAutomatically 2>/dev/null)
+        fi
+
         osascript <<EOF
                 tell application "System Events"
                     tell appearance preferences
@@ -167,6 +174,12 @@ setbg_macos() {
                     end tell
                 end tell
 EOF
+
+        # Restore auto-switch behavior
+        if [ -n "$auto_switch" ]; then
+            defaults write -g AppleInterfaceStyleSwitchesAutomatically \
+                "$auto_switch"
+        fi
     fi
 }
 
