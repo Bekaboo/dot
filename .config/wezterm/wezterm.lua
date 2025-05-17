@@ -59,4 +59,10 @@ load_theme_file('theme')
 -- Load theme based on system background
 load_theme_file('colors/' .. get_bg())
 
+-- macOS-specific overrides, see:
+-- https://wezterm.org/config/lua/wezterm/target_triple.html
+if wezterm.target_triple:match('darwin') then
+  config.font_size = 14
+end
+
 return config
