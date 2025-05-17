@@ -13,7 +13,7 @@ config.send_composed_key_when_right_alt_is_pressed = false
 
 config.font_size = 12
 config.font = wezterm.font_with_fallback({
-  { family = 'Iosevka NerdFont' },
+  { family = 'Iosevka' },
   { family = 'Microsoft YaHei' },
 })
 
