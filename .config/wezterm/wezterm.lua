@@ -4,8 +4,6 @@ local config_dir = wezterm.config_dir
 
 config.automatically_reload_config = true
 config.animation_fps = 1 -- Disable cursor blinking easing animation
-config.color_scheme_dirs = { config_dir .. '/colors' }
-config.color_scheme = 'Dragon Dark' -- Default colorscheme
 config.check_for_updates = false
 config.enable_tab_bar = false
 
@@ -28,11 +26,37 @@ config.window_padding = {
   bottom = '0.5cell',
 }
 
--- theme.toml links to colors/light.toml or colors/dark.toml, which
--- further links to colors/<theme_name>-[light|dark].toml
--- so that we can change the symlinks in a bash script to reload the
--- colorschemes without modifying the config files
-local _, metadata = wezterm.color.load_scheme(config_dir .. '/theme.toml')
-config.color_scheme = metadata.name
+config.color_scheme_dirs = { config_dir .. '/colors' }
+
+---`theme.toml` links to `colors/light.toml` or `colors/dark.toml`, which
+---further links to `colors/<theme_name>-[light|dark].toml`
+---so that we can change the symlinks in a bash script to reload the
+---colorschemes without modifying the config files
+---@param theme string
+local function load_theme_file(theme)
+  local _, metadata =
+    wezterm.color.load_scheme(('%s/%s.toml'):format(config_dir, theme))
+  if metadata and metadata.name then
+    config.color_scheme = metadata.name
+  end
+end
+
+---Get current system background
+---See: https://wezterm.org/config/lua/wezterm.gui/get_appearance.html
+---@return 'light'|'dark'
+local function get_bg()
+  if wezterm.gui then
+    return wezterm.gui.get_appearance():lower()
+  end
+  return 'dark'
+end
+
+-- Default themes
+load_theme_file('colors/macro-dark')
+load_theme_file('colors/dark')
+load_theme_file('theme')
+
+-- Load theme based on system background
+load_theme_file('colors/' .. get_bg())
 
 return config
