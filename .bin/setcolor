@@ -67,15 +67,19 @@ setcolor_foot() {
 setcolor_kitty() {
     # $1: name of the colorscheme
     (
-        cd "$CONFIG_HOME/kitty/themes" 2>/dev/null || return 1
-        dark_theme_path="dark.conf"
-        light_theme_path="light.conf"
+        cd "$CONFIG_HOME/kitty" 2>/dev/null || return 1
+        # Kitty changes its theme automatically w.r.t.
+        # `{dark,light,no-preference}-theme.auto.conf` when OS switches to
+        # dark/light mode, see: https://sw.kovidgoyal.net/kitty/kittens/themes/#change-color-themes-automatically-when-the-os-switches-between-light-and-dark
+        no_preference_theme_path="no-preference-theme.auto.conf"
+        dark_theme_path="dark-theme.auto.conf"
+        light_theme_path="light-theme.auto.conf"
         if [ -z "$1" ]; then
-            ln -s "$DEFAULT_COLOR-dark.conf" "$dark_theme_path" 2>/dev/null
-            ln -s "$DEFAULT_COLOR-light.conf" "$light_theme_path" 2>/dev/null
+            ln -s "themes/$DEFAULT_COLOR-dark.conf" "$dark_theme_path" 2>/dev/null
+            ln -s "themes/$DEFAULT_COLOR-light.conf" "$light_theme_path" 2>/dev/null
         else
-            ln -sf "$1-dark.conf" "$dark_theme_path"
-            ln -sf "$1-light.conf" "$light_theme_path"
+            ln -sf "themes/$1-dark.conf" "$dark_theme_path"
+            ln -sf "themes/$1-light.conf" "$light_theme_path"
         fi
         if has kitty; then
             for pid in $(pgrep kitty); do

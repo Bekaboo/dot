@@ -1,4 +1,11 @@
+# Current theme, see:
+# https://sw.kovidgoyal.net/kitty/kittens/themes/#how-it-works
 current-theme.conf
-themes/dark.conf
-themes/light.conf
+
+# Themes used when OS in dark/light mode, see:
+# https://sw.kovidgoyal.net/kitty/kittens/themes/#change-color-themes-automatically-when-the-os-switches-between-light-and-dark
+dark-theme.auto.conf
+light-theme.auto.conf
+no-preference-theme.auto.conf
+
 local.conf

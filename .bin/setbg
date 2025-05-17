@@ -61,12 +61,17 @@ setbg_kitty() {
     # $1: 'light' or 'dark'
     (
         cd "$CONFIG_HOME/kitty" 2>/dev/null || return 1
-        theme_path="current-theme.conf"
-        themes_dir="themes"
+        no_preference_theme_path="no-preference-theme.auto.conf"
+        current_theme_path="current-theme.conf"
+        # Kitty changes its theme automatically w.r.t.
+        # `{dark,light,no-preference}-theme.auto.conf` when OS switches to
+        # dark/light mode, see: https://sw.kovidgoyal.net/kitty/kittens/themes/#change-color-themes-automatically-when-the-os-switches-between-light-and-dark
         if [ -z "$1" ]; then
-            ln -s "$themes_dir/$DEFAULT_BG.conf" "$theme_path" 2>/dev/null
+            ln -s "$DEFAULT_BG-theme.auto.conf" "$no_preference_theme_path" 2>/dev/null
+            ln -s "$DEFAULT_BG-theme.auto.conf" "$current_theme_path" 2>/dev/null
         else
-            ln -sf "$themes_dir/$1.conf" "$theme_path"
+            ln -sf "$1-theme.auto.conf" "$no_preference_theme_path"
+            ln -sf "$1-theme.auto.conf" "$current_theme_path"
         fi
         if has kitty; then
             for pid in $(pgrep kitty); do
@@ -331,8 +336,8 @@ setbg_libreoffice() {
     theme=$(awk '/SymbolStyle.*<value>/ { sub(/.*<value>/, ""); sub(/<\/value>.*/, ""); print; exit }' "$config")
     theme_no_suffix=$(echo "$theme" | sed -E 's/(_dark)+//')
     case "$1" in
-        dark) new_theme="${theme_no_suffix}_dark" ;;
-        light) new_theme="$theme_no_suffix" ;;
+    dark) new_theme="${theme_no_suffix}_dark" ;;
+    light) new_theme="$theme_no_suffix" ;;
     esac
 
     tmp=$(mktemp)
@@ -344,7 +349,7 @@ setbg_libreoffice() {
             next;
         }
         { print }
-    ' "$config" > "$tmp" && mv "$tmp" "$config"
+    ' "$config" >"$tmp" && mv "$tmp" "$config"
 }
 
 # Record the last timestamp when this script is called with 'conflict' bg
