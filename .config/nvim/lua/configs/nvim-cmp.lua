@@ -232,6 +232,13 @@ end
 cmp.select_prev_item = cmp_select_wrapper(cmp.select_prev_item)
 cmp.select_next_item = cmp_select_wrapper(cmp.select_next_item)
 
+---Check if currently in command line/window
+---@return boolean
+local function in_cmd()
+  return vim.startswith(vim.fn.mode(), 'c')
+    or vim.fn.win_gettype() == 'command'
+end
+
 cmp.setup({
   performance = {
     debounce = 0,
@@ -303,8 +310,9 @@ cmp.setup({
     end,
   },
   mapping = {
-    ['<S-Tab>'] = {
-      ['c'] = function()
+    ['<S-Tab>'] = cmp.mapping(function(fallback)
+      -- In cmdline/cmdwin
+      if in_cmd() then
         if cmp.visible() then
           cmp.select_prev_item()
           return
@@ -317,29 +325,31 @@ cmp.setup({
         if not vim.tbl_contains(vim.opt.cot:get(), 'noselect') then
           cmp.select_prev_item()
         end
-      end,
-      ['i'] = function(fallback)
-        if not snip.jumpable(-1) then
-          fallback()
+        return
+      end
+
+      -- In insert mode in normal buffers
+      if not snip.jumpable(-1) then
+        fallback()
+        return
+      end
+      local tabout_dest = tabout.get_jump_pos(-1)
+      local snip_dest = (function()
+        local prev = snip.jump_destination(-1)
+        if not prev then
           return
         end
-        local tabout_dest = tabout.get_jump_pos(-1)
-        local snip_dest = (function()
-          local prev = snip.jump_destination(-1)
-          if not prev then
-            return
-          end
-          local _, dest = prev:get_buf_position()
-          dest[1] = dest[1] + 1 -- (1, 0) indexed
-          return dest
-        end)()
-        if not jump_to_closer(snip_dest, tabout_dest, -1) then
-          fallback()
-        end
-      end,
-    },
-    ['<Tab>'] = {
-      ['c'] = function()
+        local _, dest = prev:get_buf_position()
+        dest[1] = dest[1] + 1 -- (1, 0) indexed
+        return dest
+      end)()
+      if not jump_to_closer(snip_dest, tabout_dest, -1) then
+        fallback()
+      end
+    end, { 'i', 'c' }),
+    ['<Tab>'] = cmp.mapping(function(fallback)
+      -- In cmdline/cmdwin
+      if in_cmd() then
         if cmp.visible() then
           cmp.select_next_item()
           return
@@ -352,58 +362,59 @@ cmp.setup({
         if not vim.tbl_contains(vim.opt.cot:get(), 'noselect') then
           cmp.select_next_item()
         end
-      end,
-      ['i'] = function(fallback)
-        if snip.expandable() then
-          snip.expand()
+        return
+      end
+
+      -- In insert mode in normal buffers
+      if snip.expandable() then
+        snip.expand()
+        return
+      end
+      if not snip.jumpable(1) then
+        fallback()
+        return
+      end
+
+      local tabout_dest = tabout.get_jump_pos(1)
+      local snip_range = (function()
+        local buf = vim.api.nvim_get_current_buf()
+        local node = snip.session
+          and snip.session.current_nodes
+          and snip.session.current_nodes[buf]
+        if not node then
           return
         end
-        if not snip.jumpable(1) then
-          fallback()
-          return
-        end
+        local parent = snip_node_find_parent(node)
+        return snip_node_has_length(node) and { node:get_buf_position() }
+          or parent and { parent:get_buf_position() }
+      end)()
 
-        local tabout_dest = tabout.get_jump_pos(1)
-        local snip_range = (function()
-          local buf = vim.api.nvim_get_current_buf()
-          local node = snip.session
-            and snip.session.current_nodes
-            and snip.session.current_nodes[buf]
-          if not node then
-            return
-          end
-          local parent = snip_node_find_parent(node)
-          return snip_node_has_length(node) and { node:get_buf_position() }
-            or parent and { parent:get_buf_position() }
-        end)()
+      -- Don't tabout if it jumps out current snippet range
+      if
+        not tabout_dest
+        or not snip_range
+        or not in_range(snip_range, tabout_dest)
+      then
+        snip.jump(1)
+        return
+      end
 
-        -- Don't tabout if it jumps out current snippet range
-        if
-          not tabout_dest
-          or not snip_range
-          or not in_range(snip_range, tabout_dest)
-        then
-          snip.jump(1)
-          return
-        end
+      -- If tabout destination is inside current snippet node, use `tabout.jump()`
+      -- to jump inside current node without leaving it
+      -- We can use `snip.jump()` once we reach the boundary of current
+      -- snippet node
+      -- |<------ current node range ----->|
+      -- |.... ) .... ] ............ } ....|
+      --        1      2              3      (tabout jump positions)
+      local snip_dest = (function()
+        local dest = snip.jump_destination(1):get_buf_position()
+        return { dest[1] + 1, dest[2] } -- convert to (1,0) index
+      end)()
 
-        -- If tabout destination is inside current snippet node, use `tabout.jump()`
-        -- to jump inside current node without leaving it
-        -- We can use `snip.jump()` once we reach the boundary of current
-        -- snippet node
-        -- |<------ current node range ----->|
-        -- |.... ) .... ] ............ } ....|
-        --        1      2              3      (tabout jump positions)
-        local snip_dest = (function()
-          local dest = snip.jump_destination(1):get_buf_position()
-          return { dest[1] + 1, dest[2] } -- convert to (1,0) index
-        end)()
-
-        -- Jump to tabout or snippet destination depending on their distance
-        -- from cursor, prefer snippet jump to break ties
-        jump_to_closer(snip_dest, tabout_dest, 1)
-      end,
-    },
+      -- Jump to tabout or snippet destination depending on their distance
+      -- from cursor, prefer snippet jump to break ties
+      jump_to_closer(snip_dest, tabout_dest, 1)
+    end, { 'i', 'c' }),
     ['<C-p>'] = {
       ['c'] = cmp.mapping.select_prev_item(),
       ['i'] = function()
