@@ -1,7 +1,7 @@
 # ~/.bashrc
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
-__has() {
+has() {
     command -v "$1" >/dev/null 2>&1
 }
 
@@ -16,7 +16,7 @@ if [[ "$OSTYPE" == 'darwin*' ]]; then
     pathadd "/usr/local/bin"
     pathadd "/opt/homebrew/bin"
 
-    if __has brew; then
+    if has brew; then
         eval "$(brew shellenv)"
     fi
 fi
@@ -30,19 +30,19 @@ pathadd "${HOME}/.bin"
 [[ -r "${HOME}/.envvars" ]] && source "${HOME}/.envvars"
 [[ -r "${HOME}/.bash_envvars" ]] && source "${HOME}/.bash_envvars"
 
-if __has nvim; then
+if has nvim; then
     export EDITOR=nvim
     export MANPAGER=nvim\ +'Man!'
-elif __has vim; then
+elif has vim; then
     export EDITOR=vim
-elif __has vi; then
+elif has vi; then
     export EDITOR=vi
 fi
 
 # Set rg config path
 export RIPGREP_CONFIG_PATH=${HOME}/.ripgreprc
 
-if __has proot-distro &&
+if has proot-distro &&
     [[ -n "$TERMUX_VERSION" ]] &&
     [[ -n "$PROOT_DISTRO" ]] &&
     [[ -n "$PROOT_USER" ]]; then
@@ -54,9 +54,9 @@ fi
 if shopt -q login_shell; then
     # Show greeting message using neofetch
     if [[ -z "$GREETED" ]]; then
-        if __has fastfetch; then
+        if has fastfetch; then
             fetch=fastfetch
-        elif __has neofetch; then
+        elif has neofetch; then
             fetch=neofetch
         fi
         if [[ -n "$fetch" ]]; then
@@ -74,12 +74,12 @@ if shopt -q login_shell; then
     fi
 
     # Ensure color theme files are correctly linked
-    __has setbg && setbg &
-    __has setcolors && setcolors &
+    has setbg && setbg &
+    has setcolors && setcolors &
 fi
 
 # Enable colors for ls, etc. Prefer ~/.dir_colors
-if __has dircolors >/dev/null; then
+if has dircolors >/dev/null; then
     if [[ -f ~/.dir_colors ]]; then
         eval $(dircolors -b ~/.dir_colors)
     elif [[ -f /etc/DIR_COLORS ]]; then
@@ -149,10 +149,10 @@ if [[ "$(tput colors)" -lt 256 ]]; then
         '--pointer=\>\ ')
 fi
 
-if __has fd; then
+if has fd; then
     export FZF_DEFAULT_COMMAND='fd -p -H -L -td -tf -tl -c=always'
     export FZF_ALT_C_COMMAND='fd -p -H -L -td -c=always'
-elif __has fdfind; then
+elif has fdfind; then
     export FZF_DEFAULT_COMMAND='fdfind -p -H -L -td -tf -tl -c=always'
     export FZF_ALT_C_COMMAND='fdfind -p -H -L -td -c=always'
 else
@@ -259,7 +259,7 @@ safe_term=${TERM//[^[:alnum:]]/?} # sanitize TERM
 match_lhs=""
 [[ -f ~/.dir_colors ]] && match_lhs="${match_lhs}$(<~/.dir_colors)"
 [[ -f /etc/DIR_COLORS ]] && match_lhs="${match_lhs}$(</etc/DIR_COLORS)"
-[[ -z ${match_lhs} ]] && __has dircolors >/dev/null &&
+[[ -z ${match_lhs} ]] && has dircolors >/dev/null &&
     match_lhs=$(dircolors --print-database)
 [[ $'\n'${match_lhs} == *$'\n'"TERM "${safe_term}* ]]
 if [[ "$EUID" == 0 ]]; then
@@ -300,7 +300,7 @@ __python_venv() {
         path="$(dirname "$path")"
     done
 
-    if [[ -n "$VIRTUAL_ENV" ]] && __has deactivate; then
+    if [[ -n "$VIRTUAL_ENV" ]] && has deactivate; then
         deactivate
     fi
 }
@@ -310,7 +310,7 @@ __python_venv
 # python virtualenvs
 cd() {
     builtin cd "$@"
-    if ! __has tput || ! __has wc; then
+    if ! has tput || ! has wc; then
         ls -C --color
         __python_venv
         return
@@ -356,7 +356,7 @@ __ff_open_files_or_dir() {
         fi
     done
 
-    if __has xdg-open; then
+    if has xdg-open; then
         for target in "${others[@]}"; do
             xdg-open "$target" >/dev/null 2>&1
         done
@@ -364,7 +364,7 @@ __ff_open_files_or_dir() {
         echo "xdg-open not found, omit opening files ${targets_list[@]}" >&2
     fi
     if (("${#text_or_dirs[@]}" > 0)); then
-        __has "$EDITOR" && "$EDITOR" "${text_or_dirs[@]}" ||
+        has "$EDITOR" && "$EDITOR" "${text_or_dirs[@]}" ||
             echo "\$EDITOR not found, omit opening files ${text_or_dirs[@]}" >&2
     fi
 }
@@ -382,7 +382,7 @@ ff() {
         return
     fi
 
-    if ! __has fzf; then
+    if ! has fzf; then
         echo 'fzf is not executable' >&2
         return 1
     fi
@@ -391,11 +391,11 @@ ff() {
     trap 'rm -f "$tmpfile"' EXIT
 
     # On some systems, e.g. Ubuntu, fd executable is installed as 'fdfind'
-    local fd_cmd=$(__has fd && echo fd || echo fdfind)
-    if __has "$fd_cmd"; then
+    local fd_cmd=$(has fd && echo fd || echo fdfind)
+    if has "$fd_cmd"; then
         "$fd_cmd" -0 -p -H -L -td -tf -tl -c=always --search-path="$path" |
             fzf --read0 --ansi --query="$query" >"$tmpfile"
-    elif __has find; then
+    elif has find; then
         find "$path" -print0 -type d -o -type f -o -type l -follow |
             fzf --read0 --ansi --query="$query" >"$tmpfile"
     else
@@ -414,11 +414,11 @@ ff() {
 
 # Open nvim/vim/vi
 v() {
-    if __has nvim; then
+    if has nvim; then
         nvim "$@"
-    elif __has vim; then
+    elif has vim; then
         vim "$@"
-    elif __has vi; then
+    elif has vi; then
         vi "$@"
     else
         echo 'nvim/vim/vi not found' >&2
@@ -478,11 +478,11 @@ dot config --local status.showUntrackedFiles no
 # https://github.com/pyenv/pyenv?tab=readme-ov-file#bash
 export PYENV_ROOT=${HOME}/.pyenv
 pathadd "$PYENV_ROOT/bin"
-if __has pyenv; then
+if has pyenv; then
     eval "$(pyenv init - bash)"
 fi
 
 # Setup zoxide
-if __has zoxide; then
+if has zoxide; then
     eval "$(zoxide init bash)"
 fi
