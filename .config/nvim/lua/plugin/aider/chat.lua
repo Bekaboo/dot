@@ -1,6 +1,17 @@
 local utils = require('plugin.aider.utils')
 local configs = require('plugin.aider.configs')
 
+local aider_cmd_regex = vim.regex(
+  [[\v(sudo(\s+--?(\w|-)+((\s+|\=)\S+)?)*\s+)?(.*(sh\s+-c|python)\s+)?.*aider($|\s\+)]]
+)
+
+---Check whether a terminal buffer is running aider
+---@param buf? integer
+---@return boolean
+local function running_aider(buf)
+  return utils.term.running(aider_cmd_regex, buf)
+end
+
 ---@class aider_chat_t
 ---@field buf integer
 ---@field dir string
@@ -74,25 +85,17 @@ function aider_chat_t._new_from_buf(opts)
     return
   end
 
-  local bufname = vim.api.nvim_buf_get_name(opts.buf)
-  local dir, _, cmd = utils.term.parse_name(bufname)
-  local aider_exe = configs.opts.chat.cmd(bufname)[1]
-  if
-    not vim.startswith(cmd, aider_exe)
-    and not vim.startswith(cmd, vim.fn.exepath(aider_exe))
-  then
+  if not running_aider(opts.buf) then
     return
   end
 
   -- Create aider instance, no need to call `jobstart` as aider is already
   -- running in `buf`
   local chat = setmetatable(
-    vim.tbl_deep_extend(
-      'force',
-      configs.opts.chat,
-      opts,
-      { dir = dir, chan = vim.b[opts.buf].terminal_job_id }
-    ),
+    vim.tbl_deep_extend('force', configs.opts.chat, opts, {
+      dir = utils.term.parse_name(vim.api.nvim_buf_get_name(opts.buf)),
+      chan = vim.b[opts.buf].terminal_job_id,
+    }),
     { __index = aider_chat_t }
   )
 
@@ -212,14 +215,9 @@ function aider_chat_t.get(path, tab)
   -- Aider chat not exist in `chats` table, add existing manually created chat
   -- buffer (via `:terminal aider ...`) as chat or create new chat buffer
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-    if vim.bo[buf].bt ~= 'terminal' then
-      goto continue
+    if running_aider(buf) then
+      return aider_chat_t.new({ buf = buf }), true
     end
-    local p, _, cmd = utils.term.parse_name(vim.api.nvim_buf_get_name(buf))
-    if p == path and cmd:match('aider') then
-      return aider_chat_t.new({ buf = buf })
-    end
-    ::continue::
   end
   return aider_chat_t.new({ dir = path }), true
 end

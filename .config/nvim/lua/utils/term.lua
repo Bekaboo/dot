@@ -12,9 +12,17 @@ M.TUI_REGEX = vim.regex(
 ---@param buf integer? buffer handler
 ---@return boolean?
 function M.running_tui(buf)
+  return M.running(M.TUI_REGEX, buf)
+end
+
+---Check if terminal buffer is running a specific command
+---@param regex vim.regex regex of command
+---@param buf? integer buffer handler
+---@return boolean
+function M.running(regex, buf)
   local cmds = M.fg_cmds(buf)
   for _, cmd in ipairs(cmds) do
-    if M.TUI_REGEX:match_str(cmd) then
+    if regex:match_str(cmd) then
       return true
     end
   end
