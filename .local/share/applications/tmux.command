@@ -3,7 +3,9 @@
 # Launch tmux with default terminal on macOS
 
 # Append brew install path in case tmux is installed with it
-export PATH=/opt/homebrew/bin:/usr/local/bin:$PATH
+if command -v brew >/dev/null 2>&1; then
+    export PATH=$(brew --prefix)/bin:$PATH
+fi
 
 if (tmux ls 2>/dev/null | grep -vq attached) && [ "$PWD" = "$HOME" ]; then
 	tmux at
