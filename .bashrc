@@ -39,10 +39,6 @@ elif __has vi; then
     export EDITOR=vi
 fi
 
-if __has xhost; then
-    xhost +local:root >/dev/null 2>&1
-fi
-
 # Set rg config path
 export RIPGREP_CONFIG_PATH=${HOME}/.ripgreprc
 
