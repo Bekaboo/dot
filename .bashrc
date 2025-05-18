@@ -11,48 +11,49 @@ pathadd() {
     fi
 }
 
-# Setup for macOS homebrew
-if [[ "$OSTYPE" == 'darwin*' ]]; then
-    pathadd "/usr/local/bin"
-    pathadd "/opt/homebrew/bin"
+# macOS homebrew install paths
+if has brew; then
+    pathadd "$(brew --prefix)/bin"
+    eval "$(brew shellenv)"
+fi
 
-    if has brew; then
-        eval "$(brew shellenv)"
+# Local executables
+pathadd "$HOME/go/bin"
+pathadd "$HOME/.cargo/bin"
+pathadd "$HOME/.local/bin"
+pathadd "$HOME/.bin"
+
+[[ -r "$HOME/.envvars" ]] && source "$HOME/.envvars"
+[[ -r "$HOME/.bash_envvars" ]] && source "$HOME/.bash_envvars"
+
+# Setup default editor
+for editor in nvim vim vi; do
+    if has "$editor"; then
+        export EDITOR="$editor"
+        [[ "$editor" == nvim ]] && export MANPAGER='nvim +Man!'
+        break
     fi
-fi
-
-# Other install paths
-pathadd "${HOME}/go/bin"
-pathadd "${HOME}/.cargo/bin"
-pathadd "${HOME}/.local/bin"
-pathadd "${HOME}/.bin"
-
-[[ -r "${HOME}/.envvars" ]] && source "${HOME}/.envvars"
-[[ -r "${HOME}/.bash_envvars" ]] && source "${HOME}/.bash_envvars"
-
-if has nvim; then
-    export EDITOR=nvim
-    export MANPAGER=nvim\ +'Man!'
-elif has vim; then
-    export EDITOR=vim
-elif has vi; then
-    export EDITOR=vi
-fi
+done
 
 # Set rg config path
-export RIPGREP_CONFIG_PATH=${HOME}/.ripgreprc
-
-if has proot-distro &&
-    [[ -n "$TERMUX_VERSION" ]] &&
-    [[ -n "$PROOT_DISTRO" ]] &&
-    [[ -n "$PROOT_USER" ]]; then
-    exec proot-distro login "$PROOT_DISTRO" --user "$PROOT_USER" --termux-home
-fi
+export RIPGREP_CONFIG_PATH=$HOME/.ripgreprc
 
 [[ $- != *i* ]] && return
 
 if shopt -q login_shell; then
-    # Show greeting message using neofetch
+    # Ensure color theme files are correctly linked
+    has setbg && setbg &
+    has setcolors && setcolors &
+
+    # Automatically login to proot distro on termux
+    if has proot-distro &&
+        [[ -n "$TERMUX_VERSION" ]] &&
+        [[ -n "$PROOT_DISTRO" ]] &&
+        [[ -n "$PROOT_USER" ]]; then
+        exec proot-distro login "$PROOT_DISTRO" --user "$PROOT_USER" --termux-home
+    fi
+
+    # Greeting message
     if [[ -z "$GREETED" ]]; then
         if has fastfetch; then
             fetch=fastfetch
@@ -72,22 +73,50 @@ if shopt -q login_shell; then
             fi
         fi
     fi
-
-    # Ensure color theme files are correctly linked
-    has setbg && setbg &
-    has setcolors && setcolors &
 fi
 
-# Enable colors for ls, etc. Prefer ~/.dir_colors
-if has dircolors >/dev/null; then
-    if [[ -f ~/.dir_colors ]]; then
-        eval $(dircolors -b ~/.dir_colors)
-    elif [[ -f /etc/DIR_COLORS ]]; then
-        eval $(dircolors -b /etc/DIR_COLORS)
-    fi
-fi
+# Prompt configuration
+PS1='\[\033[01;3'$( (($EUID)) && echo 5 || echo 1)'m\][\u@\h\[\033[01;37m\] \W\[\033[01;3'$( (($EUID)) && echo 5 || echo 1)'m\]]\$\[\033[00m\] '
 
-# TTY Terminal Colors
+# OSC133 support
+# Source: https://codeberg.org/dnkl/foot/wiki#bash-2
+__cmd_done() {
+    printf '\e]133;D\e\\'
+}
+PS0+='\e]133;C\e\\'
+PROMPT_COMMAND=${PROMPT_COMMAND:+$PROMPT_COMMAND; }__cmd_done
+
+# Bash won't get SIGWINCH if another process is in the foreground.
+# Enable checkwinsize so that bash will check the terminal size when
+# it regains control.  #65623
+# http://cnswww.cns.cwru.edu/~chet/bash/FAQ (E11)
+shopt -s checkwinsize &>/dev/null
+shopt -s expand_aliases &>/dev/null
+shopt -s histappend &>/dev/null
+shopt -s globstar &>/dev/null # not supported by bash on macOS
+
+# Prevent Vim <Esc> lagging
+bind 'set keyseq-timeout 1'
+
+# Common aliases
+alias cl='clear'
+alias cp='cp -i'
+alias x='trash'
+alias g='git'
+alias d='dot'
+alias grep='grep --color=auto'
+alias ls='ls --color=auto -h'
+alias ll='ls -lhA'
+alias lc='wc -l'
+alias df='df -h'
+alias free='free -mh'
+alias tree='tree -N'
+alias vs='vim-startuptime'
+alias sudoe='sudo -E'
+alias plasma-save-session="qdbus org.kde.ksmserver /KSMServer saveCurrentSession"
+alias clean-tmp="find /tmp -ctime +7 -exec rm -rf {} +"
+
+# TTY Terminal Colors (base16)
 if [[ "$TERM" == "linux" ]]; then
     echo -en "\e]P00D0C0C" #black
     echo -en "\e]P1C4746E" #darkred
@@ -117,7 +146,7 @@ export LESS_TERMCAP_so=$'\e[01;33m'
 export LESS_TERMCAP_ue=$'\e[0m'
 export LESS_TERMCAP_us=$'\e[1;4;34m'
 
-# fzf config variables
+# fzf configuration
 export FZF_DEFAULT_OPTS="--reverse \
     --preview='fzf-file-previewer {}' \
     --preview-window=right,55%,border-sharp,nocycle \
@@ -240,98 +269,6 @@ export FZF_PREVIEW_DISABLE_UB='true' # Disable ueberzug preview
 [[ -r /usr/share/fzf/key-bindings.bash ]] && . /usr/share/fzf/key-bindings.bash
 [[ -r /usr/share/fzf/completion.bash ]] && . /usr/share/fzf/completion.bash
 
-# Change the window title of X terminals
-case ${TERM} in
-xterm* | rxvt* | Eterm* | aterm | kterm | gnome* | interix | konsole*)
-    PROMPT_COMMAND='echo -ne "\033]0;${USER}@${HOSTNAME%%.*}:${PWD/#$HOME/\~}\007"'
-    ;;
-screen*)
-    PROMPT_COMMAND='echo -ne "\033_${USER}@${HOSTNAME%%.*}:${PWD/#$HOME/\~}\033\\"'
-    ;;
-esac
-
-# Set colorful PS1 only on colorful terminals.
-# dircolors --print-database uses its own built-in database
-# instead of using /etc/DIR_COLORS.  Try to use the external file
-# first to take advantage of user additions.  Use internal bash
-# globbing instead of external grep binary.
-safe_term=${TERM//[^[:alnum:]]/?} # sanitize TERM
-match_lhs=""
-[[ -f ~/.dir_colors ]] && match_lhs="${match_lhs}$(<~/.dir_colors)"
-[[ -f /etc/DIR_COLORS ]] && match_lhs="${match_lhs}$(</etc/DIR_COLORS)"
-[[ -z ${match_lhs} ]] && has dircolors >/dev/null &&
-    match_lhs=$(dircolors --print-database)
-[[ $'\n'${match_lhs} == *$'\n'"TERM "${safe_term}* ]]
-if [[ "$EUID" == 0 ]]; then
-    PS1='\[\033[01;31m\][\h\[\033[01;36m\] \W\[\033[01;31m\]]\$\[\033[00m\] '
-else
-    PS1='\[\033[01;35m\][\u@\h\[\033[01;37m\] \W\[\033[01;35m\]]\$\[\033[00m\] '
-fi
-unset safe_term match_lhs
-
-# OSC133 support
-# Source: https://codeberg.org/dnkl/foot/wiki#bash-2
-__cmd_done() {
-    printf '\e]133;D\e\\'
-}
-PS0+='\e]133;C\e\\'
-PROMPT_COMMAND=${PROMPT_COMMAND:+$PROMPT_COMMAND; }__cmd_done
-
-# Bash won't get SIGWINCH if another process is in the foreground.
-# Enable checkwinsize so that bash will check the terminal size when
-# it regains control.  #65623
-# http://cnswww.cns.cwru.edu/~chet/bash/FAQ (E11)
-shopt -s checkwinsize &>/dev/null
-shopt -s expand_aliases &>/dev/null
-shopt -s histappend &>/dev/null
-shopt -s globstar &>/dev/null # not supported by bash on macOS
-
-# Automatically activate or deactivate python virtualenvs
-__python_venv() {
-    local path="$PWD"
-    while [[ "$path" != "$(dirname "$path")" ]]; do
-        for venv_dir in 'venv' 'env' '.venv' '.env'; do
-            local activation_file="$path/$venv_dir/bin/activate"
-            if [[ -f "$activation_file" ]]; then
-                source "$activation_file"
-                return
-            fi
-        done
-        path="$(dirname "$path")"
-    done
-
-    if [[ -n "$VIRTUAL_ENV" ]] && has deactivate; then
-        deactivate
-    fi
-}
-__python_venv
-
-# Improved 'cd', automatically list directory contents and activate
-# python virtualenvs
-cd() {
-    builtin cd "$@"
-    if ! has tput || ! has wc; then
-        ls -C --color
-        __python_venv
-        return
-    fi
-
-    local lines="$(tput lines)"
-    local cols="$(tput cols)"
-    local max_lines="$(($lines / 4))"
-    local num_lines="$(ls -C | wc -l)"
-    if [[ "$num_lines" -le "$max_lines" ]]; then
-        ls -C --color
-        __python_venv
-        return
-    fi
-
-    ls -C --color | head -n "$max_lines"
-    __python_venv
-    echo
-    echo "... $num_lines lines total"
-}
-
 __ff_open_files_or_dir() {
     # $@: files to open
     # Split targets into a list at newline
@@ -412,75 +349,99 @@ ff() {
     return
 }
 
-# Open nvim/vim/vi
-v() {
-    if has nvim; then
-        nvim "$@"
-    elif has vim; then
-        vim "$@"
-    elif has vi; then
-        vi "$@"
-    else
-        echo 'nvim/vim/vi not found' >&2
-        return 1
+# Automatically activate or deactivate python virtualenvs
+__python_venv() {
+    local path="$PWD"
+    while [[ "$path" != "$(dirname "$path")" ]]; do
+        for venv_dir in 'venv' 'env' '.venv' '.env'; do
+            local activation_file="$path/$venv_dir/bin/activate"
+            if [[ -f "$activation_file" ]]; then
+                source "$activation_file"
+                return
+            fi
+        done
+        path="$(dirname "$path")"
+    done
+
+    if [[ -n "$VIRTUAL_ENV" ]] && has deactivate; then
+        deactivate
     fi
 }
+__python_venv
 
-# Aliases
-alias sudoe="sudo -E "
-alias cl="clear"
-alias cp="cp -i" # confirm before overwriting something
-alias x="trash"
-alias g="git"
-alias d="dot"
-alias grep="grep --color"
-alias egrep="egrep --color"
-alias fgrep="fgrep --color"
-alias ls="ls --color -h"
-alias l="ls -h"
-alias ll="ls -lhA"
-alias lc="wc -l"
-alias df="df -h"      # human-readable sizes
-alias free="free -mh" # show sizes in MB
-alias tree="tree -N"  # Display Chinese characters
-alias vs="vim-startuptime"
-alias clean-tmp="find /tmp -ctime +7 -exec rm -rf {} +"
-# Save KDE plasma session
-alias plasma-save-session="qdbus org.kde.ksmserver /KSMServer saveCurrentSession"
+# Setup pyenv, see:
+# https://github.com/pyenv/pyenv?tab=readme-ov-file#bash
+export PYENV_ROOT=$HOME/.pyenv
+pathadd "$PYENV_ROOT/bin"
+if has pyenv; then
+    eval "$(pyenv init - bash)"
+fi
 
-# Prevent Vim <Esc> lagging
-bind 'set keyseq-timeout 1'
+# Improved 'cd', automatically list directory contents and activate
+# python virtualenvs
+cd() {
+    builtin cd "$@"
+    if ! has tput || ! has wc; then
+        ls -C --color
+        __python_venv
+        return
+    fi
+
+    local lines="$(tput lines)"
+    local cols="$(tput cols)"
+    local max_lines="$(($lines / 4))"
+    local num_lines="$(ls -C | wc -l)"
+    if [[ "$num_lines" -le "$max_lines" ]]; then
+        ls -C --color
+        __python_venv
+        return
+    fi
+
+    ls -C --color | head -n "$max_lines"
+    __python_venv
+    echo
+    echo "... $num_lines lines total"
+}
+
+# Open nvim/vim/vi
+v() {
+    for editor in nvim vim vi; do
+        if has "$editor"; then
+            "$editor" "$@"
+            return
+        fi
+    done
+    echo 'nvim/vim/vi not found' >&2
+    return 1
+}
 
 # Manage dotfiles
 dot() {
     git --git-dir="$HOME/.dot" --work-tree="$HOME" "$@"
 }
+
 # Create remote branches (e.g. origin/master) on git fetch like normal repos
 # See https://stackoverflow.com/questions/36410044/fetch-from-origin-in-bare-repository-in-git-does-not-create-remote-branch
 dot config --local remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+
 # Set the path to the root of the working tree, make vim-fugitive's
 # `:Gdiffsplit` work
 dot config --local core.worktree "$HOME"
 dot config --local status.showUntrackedFiles no
 
-[[ -r '/usr/share/bash-completion/completions/git' ]] &&
-    source '/usr/share/bash-completion/completions/git' &&
-    __git_complete dot __git_main
+# Complete `dot` command with `git` subcommands, also fix git completion on macOS
+for git_cmp in \
+    /usr/share/bash-completion/completions/git \
+    /Applications/Xcode.app/Contents/Developer/usr/share/git-core/git-completion.bash; do
+    if [[ -r "$git_cmp" ]]; then
+        source "$git_cmp" && __git_complete dot __git_main
+        break
+    fi
+done
 
-[[ -r '/usr/share/bash-completion/bash_completion' ]] &&
-    source '/usr/share/bash-completion/bash_completion'
-
-# Source conda if it exists
-[[ -r '/opt/miniconda3/etc/profile.d/conda.sh' ]] &&
-    source '/opt/miniconda3/etc/profile.d/conda.sh'
-
-# Setup pyenv, see:
-# https://github.com/pyenv/pyenv?tab=readme-ov-file#bash
-export PYENV_ROOT=${HOME}/.pyenv
-pathadd "$PYENV_ROOT/bin"
-if has pyenv; then
-    eval "$(pyenv init - bash)"
-fi
+# Setup miniconda
+[[ -r /opt/miniconda3/etc/profile.d/conda.sh ]] &&
+    source /opt/miniconda3/etc/profile.d/conda.sh
 
 # Setup zoxide
 if has zoxide; then
