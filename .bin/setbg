@@ -123,9 +123,16 @@ setbg_nvim() {
     fi
 
     for sock in $(nvim-socks); do
+        # Notice: Don't use `--remote-send "<Cmd>...<CR>"` to send the command
+        # here because of nvim's bug where the string following `<Cmd>` will be
+        # interpreted as normal keys (not as part of a command) if nvim is in
+        # operator-pending/replace mode. This makes nvim unexpectedly insert
+        # the command string "f &bg ..." to the buffer, see:
+        # https://github.com/neovim/neovim/issues/31238
         nvim --clean --headless --server "$sock" \
-            --remote-send "<Cmd>if &bg !=# '$1' && &tgc | let g:script_set_bg=1 \
-                | set bg=$1 | unlet g:script_set_bg | endif<CR>" \
+            --remote-expr "execute(\"if &bg !=# '$1' && &tgc \
+                | let g:script_set_bg=1 | set bg=$1 | unlet g:script_set_bg \
+                | endif\")" \
             +qa! 2>/dev/null & # prevent long-running nvim from blocking the script
     done
 
