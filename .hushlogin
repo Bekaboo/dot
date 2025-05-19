@@ -1,0 +1,4 @@
+# vim: ft=sh
+# To view tmux welcome message, either remove this file then re-login, or:
+
+cat "$PREFIX/etc/motd"
