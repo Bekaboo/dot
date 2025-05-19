@@ -183,7 +183,6 @@ EOF
     fi
 }
 
-# see here for reference, ai
 setbg_plasma() {
     # $1: 'light' or 'dark'
     if [ -z "$1" ]; then
