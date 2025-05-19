@@ -25,6 +25,7 @@
 	bss  = bisect start
 	c    = commit
 	ca   = commit --amend
+	ce   = commit --amend --no-edit
 	cl   = clone
 	cl1  = clone --depth=1
 	cln  = clone --filter=blob:none
