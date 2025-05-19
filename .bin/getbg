@@ -14,8 +14,10 @@ getbg_macos() {
 
 getbg_linux() {
     case "$XDG_CURRENT_DESKTOP" in
-    *kde*) getbg_kde ;;
-    *gnome*) getbg_gnome ;;
+    # For possible values, see:
+    # https://wiki.archlinux.org/title/Environment_variables#Examples
+    KDE) getbg_kde ;;
+    GNOME) getbg_gnome ;;
     *)
         echo "Unsupported desktop environment: $XDG_CURRENT_DESKTOP" >&2
         return 1
