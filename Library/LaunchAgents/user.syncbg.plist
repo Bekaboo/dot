@@ -12,14 +12,12 @@
 	<array>
 		<string>/bin/sh</string>
 		<string>-c</string>
-		<string>$SHELL -c syncbg</string>
+		<string>$SHELL -c __syncbg</string>
 	</array>
 	<key>RunAtLoad</key>
 	<true/>
-	<key>StartInterval</key>
-	<integer>1</integer>
-	<key>ThrottleInterval</key>
-	<integer>0</integer>
+	<key>KeepAlive</key>
+	<true/>
 	<key>AbandonProcessGroup</key>
 	<true/>
 </dict>
