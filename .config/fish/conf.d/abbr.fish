@@ -38,7 +38,6 @@ function __command_abbr --description 'Add an command abbreviation'
     abbr --add $argv[1] --position command $argv[2..-1]
 end
 
-__command_abbr cmd command
 __command_abbr cl clear
 __command_abbr cp 'cp -i'
 __command_abbr df 'df -h'
