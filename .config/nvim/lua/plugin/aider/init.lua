@@ -5,7 +5,7 @@ local M = {}
 ---Toggle aider at `path`
 ---@param path? string path to a project or a project file
 function M.toggle(path)
-  local chat = require('plugin.aider.chat').get(path)
+  local chat = require('plugin.aider.chat'):get(path)
   if chat then
     chat:toggle()
   end
@@ -20,7 +20,7 @@ function M.add_file(path)
     return
   end
 
-  local chat = require('plugin.aider.chat').get(path)
+  local chat = require('plugin.aider.chat'):get(path)
   if not chat then
     return
   end
@@ -34,7 +34,7 @@ end
 ---Supposed to be called in visual mode
 ---@param path? string path to a project or a project file
 function M.send_sel(path)
-  local chat = require('plugin.aider.chat').get(path)
+  local chat = require('plugin.aider.chat'):get(path)
   if not chat then
     return
   end

@@ -44,7 +44,7 @@ end
 ---aider can see it
 ---@param file string
 function M.act(file)
-  local chat, is_new = require('plugin.aider.chat').get(file)
+  local chat, is_new = require('plugin.aider.chat'):get(file)
   if not chat then
     return
   end
