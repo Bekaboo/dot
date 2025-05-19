@@ -457,6 +457,12 @@ main() {
         setbg_macos "$bg" &
         setbg_gnome "$bg" &
         setbg_plasma "$bg" &
+        # Make sure system bg is set before setting apps' bg to avoid `__syncbg`
+        # daemon setting apps' bg back to old system bg, see:
+        # - `__syncbg`
+        # - `~/.config/autostart/__syncbg`
+        # - `~/Library/LaunchAgents/user.syncbg.plist`
+        wait
     fi
     setbg_alacritty "$bg" &
     setbg_foot "$bg" &
