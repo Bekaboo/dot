@@ -10,7 +10,6 @@ function fish_greeting
     end
 
     if test -n "$fetch"
-        clear -x
         # Run in pseudo-terminal to prevent terminal state issues
         # (tmux error: 'not a terminal', etc)
         # macOS `script` does not accept `-c` flag

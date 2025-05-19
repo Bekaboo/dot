@@ -62,7 +62,6 @@ if shopt -q login_shell; then
         fi
         if [[ -n "$fetch" ]]; then
             export GREETED=1
-            clear -x
             # Run in pseudo-terminal to prevent terminal state issues
             # (tmux error: 'not a terminal', etc)
             # macOS `script` does not accept `-c` flag
