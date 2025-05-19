@@ -2,7 +2,7 @@ local utils = require('plugin.aider.utils')
 local configs = require('plugin.aider.configs')
 
 local aider_cmd_regex = vim.regex(
-  [[\v(sudo(\s+--?(\w|-)+((\s+|\=)\S+)?)*\s+)?(.*(sh\s+-c|python)\s+)?.*aider($|\s\+)]]
+  [[\v(sudo(\s+--?(\w|-)+((\s+|\=)\S+)?)*\s+)?(.*(sh\s+-c|python)\s+)?.*aider($|\s+)]]
 )
 
 ---Check whether a terminal buffer is running aider
