@@ -2,4 +2,4 @@
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 # Sync with system background
 
-setbg "$(getbg)"
+SETBG_SKIP_SYSTEM=1 setbg "$(getbg)"

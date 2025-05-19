@@ -454,15 +454,17 @@ main() {
             ;;
         esac
     done
+    if [ -z "$SETBG_SKIP_SYSTEM" ]; then
+        setbg_macos "$bg" &
+        setbg_gnome "$bg" &
+        setbg_plasma "$bg" &
+    fi
     setbg_alacritty "$bg" &
     setbg_foot "$bg" &
     setbg_kitty "$bg" &
     setbg_wezterm "$bg" &
     setbg_highlight "$bg" &
     setbg_nvim "$bg" &
-    setbg_macos "$bg" &
-    setbg_gnome "$bg" &
-    setbg_plasma "$bg" &
     setbg_konsole_yakuake "$bg" &
     setbg_termux "$bg" &
     setbg_okular "$bg" &
