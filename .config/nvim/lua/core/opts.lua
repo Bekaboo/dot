@@ -162,7 +162,9 @@ local function spellcheck()
 
   for _, win in ipairs(vim.api.nvim_list_wins()) do
     if not require('utils.opt').spell:was_locally_set({ win = win }) then
-      vim.wo[win][0].spell = true
+      vim.api.nvim_win_call(win, function()
+        vim.opt.spell = true
+      end)
     end
   end
 end
