@@ -1,0 +1,6 @@
+[Desktop Entry]
+Exec=__syncbg
+Icon=application-x-shellscript
+Name=__syncbg
+Type=Application
+X-KDE-AutostartScript=true
