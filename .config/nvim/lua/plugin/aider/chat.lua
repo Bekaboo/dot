@@ -24,22 +24,17 @@ local aider_chat_t = setmetatable({ type = 'aider' }, { __index = term_t })
 function aider_chat_t:new(opts)
   opts = vim.tbl_deep_extend('force', configs.opts.chat, opts or {})
 
-  ---@type term_opts_t
-  local term_opts = {
-    dir = opts.dir,
-    buf = opts.buf,
+  local term_opts = vim.tbl_deep_extend('force', self, configs.opts.chat, opts or {}, {
     cmd = opts.cmd(opts.dir or vim.fn.getcwd(0)),
-    win_configs = opts.win_configs,
-    check_interval = opts.check_interval,
-    watcher_timeout = opts.watcher_timeout,
-  }
+  })
 
-  local chat = term_t:new(term_opts) --[[@as aider_chat_t]]
+  local chat = term_t:new(term_opts --[[@as term_opts_t]])
   if not chat then
     return
   end
 
   -- Convert to aider_chat_t
+  ---@cast chat aider_chat_t
   setmetatable(chat, { __index = self })
   if not chat:validate() then
     return
