@@ -21,24 +21,9 @@ local function setup_keymaps()
   vim.keymap.set({ 'n' }, 'gq;', function() vim.lsp.buf.format() end, { desc = 'Format buffer' })
   vim.keymap.set({ 'n', 'x' }, 'g/', function() vim.lsp.buf.references() end, { desc = 'Go to references' })
   vim.keymap.set({ 'n', 'x' }, 'g.', function() vim.lsp.buf.implementation() end, { desc = 'Go to implementation' })
-  -- stylua: ignore end
-  vim.keymap.set({ 'n', 'x' }, 'gd', function()
-    return supports_method('textDocument/definition', 0)
-        and '<Cmd>lua vim.lsp.buf.definition()<CR>'
-      or 'gd'
-  end, { expr = true, desc = 'Go to definition' })
-  vim.keymap.set({ 'n', 'x' }, 'gD', function()
-    return supports_method('textDocument/declaration', 0)
-        and '<Cmd>lua vim.lsp.buf.declaration()<CR>'
-      or 'gD'
-  end, { expr = true, desc = 'Go to declaration' })
-  vim.keymap.set(
-    { 'n', 'x' },
-    'g<C-d>',
-    '<Cmd>lua vim.lsp.buf.type_definition()<CR>',
-    { desc = 'Go to type definition' }
-  )
-  -- stylua: ignore start
+  vim.keymap.set({ 'n', 'x' }, 'gb', function() vim.lsp.buf.type_definition() end, { desc = 'Go to type definition' })
+  vim.keymap.set({ 'n', 'x' }, 'gd', function() return supports_method('textDocument/definition', 0) and '<Cmd>lua vim.lsp.buf.definition()<CR>' or 'gd' end, { expr = true, desc = 'Go to definition' })
+  vim.keymap.set({ 'n', 'x' }, 'gD', function() return supports_method('textDocument/declaration', 0) and '<Cmd>lua vim.lsp.buf.declaration()<CR>' or 'gD' end, { expr = true, desc = 'Go to declaration' })
   vim.keymap.set({ 'n', 'x' }, '<Leader>r', function() vim.lsp.buf.rename() end, { desc = 'Rename symbol' })
   vim.keymap.set({ 'n', 'x' }, '<Leader>a', function() vim.lsp.buf.code_action() end, { desc = 'Show code actions' })
   vim.keymap.set({ 'n', 'x' }, '<Leader><', function() vim.lsp.buf.incoming_calls() end, { desc = 'Show incoming calls' })
