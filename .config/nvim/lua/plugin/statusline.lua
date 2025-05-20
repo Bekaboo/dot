@@ -15,6 +15,44 @@ local diag_severity_map = {
   HINT = 4,
 }
 
+-- Maximum widths
+local gitbranch_max_width = 0.3 -- maximum width of git branch name
+local fname_max_width = 0.4 -- maximum width of buf/filename (without extension)
+local fname_special_max_width = 0.8 -- maximum width of special buf/filename
+local fname_ext_max_width = 0.2 -- maximum width of filename extension
+local fname_prefix_suffix_max_width = 0.2 -- maximum width of filename prefix/suffix (extra info)
+
+---Shorten string to a percentage of statusline width
+---@param str string
+---@param percent number
+local function str_shorten(str, percent)
+  str = tostring(str)
+
+  local stl_width = vim.go.laststatus == 3 and vim.go.columns
+    or vim.api.nvim_win_get_width(0)
+  local max_width = math.ceil(stl_width * percent)
+  local str_width = vim.fn.strdisplaywidth(str)
+  if str_width <= max_width then
+    return str
+  end
+
+  local ellipsis = vim.trim(utils.static.icons.Ellipsis)
+  local ellipsis_width = vim.fn.strdisplaywidth(ellipsis)
+  local max_substr_width = max_width - ellipsis_width
+
+  -- Ellipsis itself is wider than allowed substring width
+  if max_substr_width <= 0 then
+    return str:sub(1, 1)
+  end
+
+  -- Since a character can have length >= 1, we can only truncate more not less
+  -- than desired
+  local width_diff = str_width - max_substr_width
+  local substr_nchars = math.max(1, vim.fn.strcharlen(str) - width_diff)
+
+  return vim.fn.strcharpart(str, 0, substr_nchars) .. ellipsis
+end
+
 ---@param severity integer|string
 ---@return string
 local function get_diag_sign_text(severity)
@@ -107,7 +145,8 @@ function _G._statusline.gitbranch()
   ---@diagnostic disable-next-line: undefined-field
   local branch = vim.b.gitsigns_status_dict and vim.b.gitsigns_status_dict.head
     or utils.git.branch()
-  return branch == '' and '' or '#' .. utils.stl.escape(branch)
+  return branch == '' and ''
+    or '#' .. utils.stl.escape(str_shorten(branch, gitbranch_max_width))
 end
 
 ---Get current filetype
@@ -316,56 +355,83 @@ vim.api.nvim_create_autocmd('WinClosed', {
 
 ---@return string
 function _G._statusline.fname()
-  local bname = vim.api.nvim_buf_get_name(0)
+  local bufname = vim.api.nvim_buf_get_name(0)
+  local fname_root = vim.fn.fnamemodify(bufname, ':t:r')
+  local fname_ext = vim.fn.fnamemodify(bufname, ':e')
+  local fname_shortened = string.format(
+    '%s.%s',
+    str_shorten(fname_root, fname_max_width),
+    str_shorten(fname_ext, fname_ext_max_width)
+  )
 
   -- Normal buffer
   if vim.bo.bt == '' then
     -- Unnamed normal buffer
-    if bname == '' then
+    if bufname == '' then
       return '[Buffer %n]'
     end
     -- Named normal buffer, show file name, if the file name is not unique,
     -- show local cwd (often project root) after the file name
-    local fname = vim.fs.basename(bname)
-    if vim.b._stl_pdiff then
+    local pdiff_shortened = vim.b._stl_pdiff
+      and str_shorten(vim.b._stl_pdiff, fname_prefix_suffix_max_width)
+    if pdiff_shortened then
       return string.format(
         '%s [%s]',
-        utils.stl.escape(fname),
-        utils.stl.escape(vim.b._stl_pdiff)
+        utils.stl.escape(fname_shortened),
+        utils.stl.escape(pdiff_shortened)
       )
     end
-    return utils.stl.escape(fname)
+    return utils.stl.escape(fname_shortened)
   end
 
   if vim.bo.bt == 'quickfix' then
-    return vim.w.quickfix_title or ''
+    return utils.stl.escape(str_shorten(vim.w.quickfix_title, fname_max_width))
+      or ''
   end
 
   -- Terminal buffer, show terminal command and id
   if vim.bo.bt == 'terminal' then
-    local path, pid, cmd, comment = utils.term.parse_name(bname)
+    local path, pid, cmd, comment = utils.term.parse_name(bufname)
     if not path or not pid or not cmd then
-      return '[Terminal] %F'
+      return string.format(
+        '[Terminal] %s',
+        str_shorten(bufname, fname_max_width)
+      )
     end
     return string.format(
       '[Terminal %s] %s [%s]',
-      utils.stl.escape(comment ~= '' and comment or pid),
-      utils.stl.escape(cmd),
-      utils.stl.escape(vim.fn.fnamemodify(path, ':~'):gsub('/+$', ''))
+      utils.stl.escape(
+        str_shorten(
+          comment ~= '' and comment or pid,
+          fname_prefix_suffix_max_width
+        )
+      ),
+      utils.stl.escape(str_shorten(cmd, fname_max_width)),
+      utils.stl.escape(
+        str_shorten(
+          vim.fn.fnamemodify(path, ':~'):gsub('/+$', ''),
+          fname_prefix_suffix_max_width
+        )
+      )
     )
   end
 
   -- Other special buffer types
-  local prefix, suffix = bname:match('^%s*(%S+)://(.*)')
-  if prefix and suffix then
-    return string.format(
-      '[%s] %s',
-      utils.stl.escape(utils.str.snake_to_camel(prefix)),
-      utils.stl.escape(suffix)
+  local prefix, main = bufname:match('^%s*(%S+)://(.*)')
+  if prefix and main then
+    return utils.stl.escape(
+      string.format(
+        '[%s] %s',
+        str_shorten(
+          utils.str.snake_to_camel(vim.fs.basename(prefix)),
+          fname_prefix_suffix_max_width
+        ),
+        str_shorten(main, fname_special_max_width)
+      )
     )
   end
 
-  return '%F'
+  return utils.stl.escape(fname_shortened)
 end
 
 ---Name of python virtual environment
