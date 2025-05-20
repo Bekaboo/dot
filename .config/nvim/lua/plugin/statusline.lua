@@ -558,7 +558,7 @@ local components = {
   spinner  = [[%{%v:lua._statusline.spinner()%}]],
   mode     = [[%{%v:lua._statusline.mode()%}]],
   padding  = [[ ]],
-  pos      = [[%{%&ru?"%l:%c ":""%}]],
+  pos      = [[%{%&ru?"%l:%c %P ":""%}]],
   truncate = [[%<]],
 }
 -- stylua: ignore end
