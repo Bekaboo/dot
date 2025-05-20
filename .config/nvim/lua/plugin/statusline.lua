@@ -103,7 +103,7 @@ end
 
 ---Get string representation of current git branch
 ---@return string
-function _G._statusline.branch()
+function _G._statusline.gitbranch()
   ---@diagnostic disable-next-line: undefined-field
   local branch = vim.b.gitsigns_status_dict and vim.b.gitsigns_status_dict.head
     or utils.git.branch()
@@ -418,7 +418,7 @@ function _G._statusline.info()
     add_section(_G._statusline.venv())
   end
 
-  add_section(_G._statusline.branch())
+  add_section(_G._statusline.gitbranch())
   add_section(_G._statusline.gitdiff())
   return vim.tbl_isempty(info) and ''
     or string.format('(%s) ', table.concat(info, ', '))
