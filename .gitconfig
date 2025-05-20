@@ -52,6 +52,7 @@
 	ls   = ls-files
 	m    = merge
 	ma   = merge --abort
+	mc   = merge --continue
 	mt   = mergetool
 	p    = push
 	pf   = push --force
