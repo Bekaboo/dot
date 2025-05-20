@@ -1,4 +1,5 @@
 local utils = require('utils')
+local icons = require('utils.static.icons')
 local groupid = vim.api.nvim_create_augroup('StatusLine', {})
 
 _G._statusline = {}
@@ -36,7 +37,7 @@ local function str_shorten(str, percent)
     return str
   end
 
-  local ellipsis = vim.trim(utils.static.icons.Ellipsis)
+  local ellipsis = vim.trim(icons.Ellipsis)
   local ellipsis_width = vim.fn.strdisplaywidth(ellipsis)
   local max_substr_width = max_width - ellipsis_width
 
@@ -131,12 +132,24 @@ function _G._statusline.gitdiff()
   if added == 0 and removed == 0 and changed == 0 then
     return ''
   end
-  return string.format(
-    '+%s~%s-%s',
-    utils.stl.hl(tostring(added), 'StatusLineGitAdded'),
-    utils.stl.hl(tostring(changed), 'StatusLineGitChanged'),
-    utils.stl.hl(tostring(removed), 'StatusLineGitRemoved')
-  )
+
+  local icon_added = utils.stl.escape(vim.trim(icons.GitIconAdd))
+  local icon_changed = utils.stl.escape(vim.trim(icons.GitIconChange))
+  local icon_removed = utils.stl.escape(vim.trim(icons.GitIconDelete))
+
+  return vim.g.has_nf
+      and string.format(
+        '%s%s%s',
+        utils.stl.hl(icon_added, 'StatusLineGitAdded') .. added,
+        utils.stl.hl(icon_changed, 'StatusLineGitChanged') .. changed,
+        utils.stl.hl(icon_removed, 'StatusLineGitRemoved') .. removed
+      )
+    or string.format(
+      '%s%s%s',
+      icon_added .. utils.stl.hl(added, 'StatusLineGitAdded'),
+      icon_changed .. utils.stl.hl(changed, 'StatusLineGitChanged'),
+      icon_removed .. utils.stl.hl(removed, 'StatusLineGitRemoved')
+    )
 end
 
 ---Get string representation of current git branch
@@ -145,8 +158,20 @@ function _G._statusline.gitbranch()
   ---@diagnostic disable-next-line: undefined-field
   local branch = vim.b.gitsigns_status_dict and vim.b.gitsigns_status_dict.head
     or utils.git.branch()
-  return branch == '' and ''
-    or '#' .. utils.stl.escape(str_shorten(branch, gitbranch_max_width))
+  if branch == '' then
+    return ''
+  end
+
+  local sign_gitbranch = utils.stl.hl(
+    utils.stl.escape(vim.trim(icons.GitBranch)),
+    'StatusLineGitBranch'
+  )
+  if vim.g.has_nf then
+    sign_gitbranch = sign_gitbranch .. ' '
+  end
+
+  return sign_gitbranch
+    .. utils.stl.escape(str_shorten(branch, gitbranch_max_width))
 end
 
 ---Get current filetype
@@ -679,15 +704,16 @@ local function set_default_hlgroups()
     utils.hl.set_default(0, hlgroup_name, merged_attr)
   end
   -- stylua: ignore start
-  sethl('StatusLineGitAdded', { fg = 'GitSignsAdd',  ctermfg = 'GitSignsAdd' })
-  sethl('StatusLineGitChanged', {  fg = 'GitSignsChange', ctermfg = 'GitSignsChange' })
-  sethl('StatusLineGitRemoved', {  fg = 'GitSignsDelete', ctermfg = 'GitSignsDelete' })
-  sethl('StatusLineDiagnosticHint', {  fg = 'DiagnosticSignHint', ctermfg = 'DiagnosticSignHint' })
-  sethl('StatusLineDiagnosticInfo', {  fg = 'DiagnosticSignInfo', ctermfg = 'DiagnosticSignInfo' })
-  sethl('StatusLineDiagnosticWarn', {  fg = 'DiagnosticSignWarn', ctermfg = 'DiagnosticSignWarn' })
-  sethl('StatusLineDiagnosticError', {  fg = 'DiagnosticSignError', ctermfg = 'DiagnosticSignError' })
-  sethl('StatusLineHeader', { fg = 'TabLine', bg = 'fg', ctermfg = 'TabLine', ctermbg = 'fg', reverse = true })
-  sethl('StatusLineHeaderModified', { fg = 'Special', bg = 'fg', ctermfg = 'Special', ctermbg = 'fg', reverse = true })
+  sethl('StatusLineGitAdded',        { fg = 'GitSignsAdd',  ctermfg = 'GitSignsAdd' })
+  sethl('StatusLineGitChanged',      { fg = 'GitSignsChange', ctermfg = 'GitSignsChange' })
+  sethl('StatusLineGitRemoved',      { fg = 'GitSignsDelete', ctermfg = 'GitSignsDelete' })
+  sethl('StatusLineGitBranch',       { fg = 'StatusLineGitChanged' })
+  sethl('StatusLineDiagnosticHint',  { fg = 'DiagnosticSignHint', ctermfg = 'DiagnosticSignHint' })
+  sethl('StatusLineDiagnosticInfo',  { fg = 'DiagnosticSignInfo', ctermfg = 'DiagnosticSignInfo' })
+  sethl('StatusLineDiagnosticWarn',  { fg = 'DiagnosticSignWarn', ctermfg = 'DiagnosticSignWarn' })
+  sethl('StatusLineDiagnosticError', { fg = 'DiagnosticSignError', ctermfg = 'DiagnosticSignError' })
+  sethl('StatusLineHeader',          { fg = 'TabLine', bg = 'fg', ctermfg = 'TabLine', ctermbg = 'fg', reverse = true })
+  sethl('StatusLineHeaderModified',  { fg = 'Special', bg = 'fg', ctermfg = 'Special', ctermbg = 'fg', reverse = true })
   -- stylua: ignore off
 end
 
