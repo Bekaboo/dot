@@ -34,11 +34,8 @@ setmetatable(_G._tabline, {
             '%%%dT %s %%X',
             tabnr,
             vim.t[tabid]._tabname
-              or vim.fn.pathshorten(
-                vim.fn.fnamemodify(
-                  vim.fn.getcwd(vim.api.nvim_tabpage_get_win(tabid), tabnr),
-                  ':~'
-                )
+              or vim.fs.basename(
+                vim.fn.getcwd(vim.api.nvim_tabpage_get_win(tabid), tabnr)
               )
           ),
           tabid == tabidcur and 'TabLineSel' or 'TabLine'
