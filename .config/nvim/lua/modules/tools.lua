@@ -303,4 +303,12 @@ return {
       require('configs.vim-test')
     end,
   },
+
+  {
+    'tpope/vim-projectionist',
+    event = 'BufReadPre',
+    config = function()
+      require('configs.vim-projectionist')
+    end,
+  },
 }
