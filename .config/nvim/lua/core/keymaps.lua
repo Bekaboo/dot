@@ -258,7 +258,7 @@ vim.api.nvim_create_autocmd('CmdlineEnter', {
   once = true,
   callback = function()
     local key = require('utils.key')
-    key.command_map(':', 'lua ')
+    key.command_map(':', 'lua =')
     key.command_abbrev('man', 'Man')
     key.command_abbrev('tt', 'tab te')
     key.command_abbrev('bt', 'bot te')
