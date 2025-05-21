@@ -34,15 +34,8 @@ ts_configs.setup({
     'vimdoc',
     'markdown',
     'markdown_inline',
-    -- Additional parsers
-    'go',
-    'cpp',
-    'rust',
-    'fish',
-    'make',
-    'html', -- for markdown inline highlight
   },
-  auto_install = false,
+  auto_install = true,
   sync_install = false,
   ignore_install = {},
   highlight = {
