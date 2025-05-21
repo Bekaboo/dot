@@ -103,10 +103,10 @@ wk.add({
   { '<Leader>gf', group = 'Find' },
   { '<Leader>fS', group = 'LSP' },
   { '<Leader>G', group = 'Debug' },
-  { '<Leader>t', group = 'Table mode' },
-  { '<Leader>td', group = 'Delete' },
-  { '<Leader>ti', group = 'Insert' },
-  { '<Leader>tf', group = 'Formula' },
+  { '<Leader><Tab>', group = 'Table mode' },
+  { '<Leader><Tab>d', group = 'Delete' },
+  { '<Leader><Tab>i', group = 'Insert' },
+  { '<Leader><Tab>f', group = 'Formula' },
   { '<LocalLeader>l', group = 'TeX' },
 })
 
