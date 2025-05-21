@@ -18,6 +18,7 @@ local diag_severity_map = {
 
 -- Maximum widths
 local gitbranch_max_width = 0.3 -- maximum width of git branch name
+local wordcount_max_width = 0.2 -- maximum width of word count info
 local fname_max_width = 0.4 -- maximum width of buf/filename (without extension)
 local fname_special_max_width = 0.8 -- maximum width of special buf/filename
 local fname_ext_max_width = 0.2 -- maximum width of filename extension
@@ -26,7 +27,8 @@ local fname_prefix_suffix_max_width = 0.2 -- maximum width of filename prefix/su
 ---Shorten string to a percentage of statusline width
 ---@param str string
 ---@param percent number
-local function str_shorten(str, percent)
+---@param str_alt? string alternate string to use when `str` exceeds max width
+local function str_shorten(str, percent, str_alt)
   str = tostring(str)
 
   local stl_width = vim.go.laststatus == 3 and vim.go.columns
@@ -35,6 +37,10 @@ local function str_shorten(str, percent)
   local str_width = vim.fn.strdisplaywidth(str)
   if str_width <= max_width then
     return str
+  end
+
+  if str_alt then
+    return str_alt
   end
 
   local ellipsis = vim.trim(icons.Ellipsis)
@@ -211,14 +217,29 @@ function _G._statusline.wordcount()
     return ''
   end
 
-  return string.format(
-    '%s%d word%s, %s%d char%s',
-    vwords > 0 and vwords .. '/' or '',
-    nwords,
-    nwords > 1 and 's' or '',
-    vchars > 0 and vchars .. '/' or '',
-    nchars,
-    nchars > 1 and 's' or ''
+  local vwords_count_str = vwords > 0 and vwords .. '/' or ''
+  local vchars_count_str = vchars > 0 and vchars .. '/' or ''
+  local words_s_str = nwords > 1 and 's' or ''
+  local chars_s_str = nchars > 1 and 's' or ''
+
+  return str_shorten(
+    string.format(
+      '%s%d word%s, %s%d char%s',
+      vwords_count_str,
+      nwords,
+      words_s_str,
+      vchars_count_str,
+      nchars,
+      chars_s_str
+    ),
+    wordcount_max_width,
+    string.format(
+      '%s%dW, %s%dC',
+      vwords_count_str,
+      nwords,
+      vchars_count_str,
+      nchars
+    )
   )
 end
 
