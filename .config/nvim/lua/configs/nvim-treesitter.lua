@@ -41,7 +41,6 @@ ts_configs.setup({
     'fish',
     'make',
     'html', -- for markdown inline highlight
-    'latex',
   },
   auto_install = false,
   sync_install = false,
