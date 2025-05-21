@@ -384,8 +384,9 @@ function _G._statusline.fname()
   local fname_root = vim.fn.fnamemodify(bufname, ':t:r')
   local fname_ext = vim.fn.fnamemodify(bufname, ':e')
   local fname_shortened = string.format(
-    '%s.%s',
+    '%s%s%s',
     str_shorten(fname_root, fname_max_width),
+    fname_root ~= '' and fname_ext ~= '' and '.' or '',
     str_shorten(fname_ext, fname_ext_max_width)
   )
 
