@@ -410,6 +410,7 @@ for git_cmp in \
     fi
 done
 
+# Python setup
 # Automatically activate or deactivate python virtualenvs
 __python_venv() {
     local path="$PWD"
