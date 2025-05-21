@@ -383,7 +383,7 @@ function _G._statusline.fname()
   local bufname = vim.api.nvim_buf_get_name(0)
   local fname_root = vim.fn.fnamemodify(bufname, ':t:r')
   local fname_ext = vim.fn.fnamemodify(bufname, ':e')
-  local fname_shortened = string.format(
+  local fname_short = string.format(
     '%s%s%s',
     str_shorten(fname_root, fname_max_width),
     fname_root ~= '' and fname_ext ~= '' and '.' or '',
@@ -398,16 +398,16 @@ function _G._statusline.fname()
     end
     -- Named normal buffer, show file name, if the file name is not unique,
     -- show local cwd (often project root) after the file name
-    local pdiff_shortened = vim.b._stl_pdiff
+    local pdiff_short = vim.b._stl_pdiff
       and str_shorten(vim.b._stl_pdiff, fname_prefix_suffix_max_width)
-    if pdiff_shortened then
+    if pdiff_short then
       return string.format(
         '%s [%s]',
-        utils.stl.escape(fname_shortened),
-        utils.stl.escape(pdiff_shortened)
+        utils.stl.escape(fname_short),
+        utils.stl.escape(pdiff_short)
       )
     end
-    return utils.stl.escape(fname_shortened)
+    return utils.stl.escape(fname_short)
   end
 
   if vim.bo.bt == 'quickfix' then
@@ -457,7 +457,7 @@ function _G._statusline.fname()
     )
   end
 
-  return utils.stl.escape(fname_shortened)
+  return utils.stl.escape(fname_short)
 end
 
 ---Name of python virtual environment
