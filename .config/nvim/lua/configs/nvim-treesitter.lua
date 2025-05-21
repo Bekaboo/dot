@@ -37,7 +37,12 @@ ts_configs.setup({
   },
   auto_install = true,
   sync_install = false,
-  ignore_install = {},
+  ignore_install = {
+    -- Buggy, comments highlighted as code, see:
+    -- - https://github.com/Freed-Wu/tree-sitter-tmux/issues/26
+    -- - https://github.com/Freed-Wu/tree-sitter-tmux/issues/25
+    'tmux'
+  },
   highlight = {
     enable = not vim.g.vscode,
     disable = function(lang, buf)
