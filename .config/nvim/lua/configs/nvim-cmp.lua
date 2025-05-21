@@ -197,11 +197,9 @@ local function clamp(item, field, min_width, max_width)
   if field_width > max_width then
     local former_width = math.floor(max_width * 0.6)
     local latter_width = math.max(0, max_width - former_width - 1)
-    item[field] = string.format(
-      '%s…%s',
-      field_str:sub(1, former_width),
-      field_str:sub(-latter_width)
-    )
+    item[field] = field_str:sub(1, former_width)
+      .. vim.trim(icons.Ellipsis)
+      .. field_str:sub(-latter_width)
   elseif field_width < min_width then
     item[field] = string.format('%-' .. min_width .. 's', field_str)
   end
