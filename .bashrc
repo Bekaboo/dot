@@ -348,34 +348,6 @@ ff() {
     return
 }
 
-# Automatically activate or deactivate python virtualenvs
-__python_venv() {
-    local path="$PWD"
-    while [[ "$path" != "$(dirname "$path")" ]]; do
-        for venv_dir in 'venv' 'env' '.venv' '.env'; do
-            local activation_file="$path/$venv_dir/bin/activate"
-            if [[ -f "$activation_file" ]]; then
-                source "$activation_file"
-                return
-            fi
-        done
-        path="$(dirname "$path")"
-    done
-
-    if [[ -n "$VIRTUAL_ENV" ]] && has deactivate; then
-        deactivate
-    fi
-}
-__python_venv
-
-# Setup pyenv, see:
-# https://github.com/pyenv/pyenv?tab=readme-ov-file#bash
-export PYENV_ROOT=$HOME/.pyenv
-pathadd "$PYENV_ROOT/bin"
-if has pyenv; then
-    eval "$(pyenv init - bash)"
-fi
-
 # Improved 'cd', automatically list directory contents and activate
 # python virtualenvs
 cd() {
@@ -437,6 +409,34 @@ for git_cmp in \
         break
     fi
 done
+
+# Automatically activate or deactivate python virtualenvs
+__python_venv() {
+    local path="$PWD"
+    while [[ "$path" != "$(dirname "$path")" ]]; do
+        for venv_dir in 'venv' 'env' '.venv' '.env'; do
+            local activation_file="$path/$venv_dir/bin/activate"
+            if [[ -f "$activation_file" ]]; then
+                source "$activation_file"
+                return
+            fi
+        done
+        path="$(dirname "$path")"
+    done
+
+    if [[ -n "$VIRTUAL_ENV" ]] && has deactivate; then
+        deactivate
+    fi
+}
+__python_venv
+
+# Setup pyenv, see:
+# https://github.com/pyenv/pyenv?tab=readme-ov-file#bash
+export PYENV_ROOT=$HOME/.pyenv
+pathadd "$PYENV_ROOT/bin"
+if has pyenv; then
+    eval "$(pyenv init - bash)"
+fi
 
 # Setup miniconda
 [[ -r /opt/miniconda3/etc/profile.d/conda.sh ]] &&
