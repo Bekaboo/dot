@@ -24,9 +24,10 @@ local aider_chat_t = setmetatable({ type = 'aider' }, { __index = term_t })
 function aider_chat_t:new(opts)
   opts = vim.tbl_deep_extend('force', configs.opts.chat, opts or {})
 
-  local term_opts = vim.tbl_deep_extend('force', self, configs.opts.chat, opts or {}, {
-    cmd = opts.cmd(opts.dir or vim.fn.getcwd(0)),
-  })
+  local term_opts =
+    vim.tbl_deep_extend('force', self, configs.opts.chat, opts or {}, {
+      cmd = opts.cmd(opts.dir or vim.fn.getcwd(0)),
+    })
 
   local chat = term_t:new(term_opts --[[@as term_opts_t]])
   if not chat then
