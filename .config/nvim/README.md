@@ -550,6 +550,7 @@ and it should work out of the box.
     - [oil.nvim](https://github.com/stevearc/oil.nvim)
     - [quicker.nvim](https://github.com/stevearc/quicker.nvim)
     - [which-key.nvim](https://github.com/folke/which-key.nvim)
+    - [vim-test](https://github.com/vim-test/vim-test)
 - **LSP**
     - [clangd_extensions.nvim](https://github.com/p00f/clangd_extensions.nvim)
 - **Treesitter**
