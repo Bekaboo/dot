@@ -88,10 +88,19 @@ vim.api.nvim_create_autocmd('ModeChanged', {
 })
 
 -- stylua: ignore start
-vim.keymap.set('s', '<Tab>',   function() ls.jump(1) end, { desc = 'Jump to previous place in snippet' })
-vim.keymap.set('s', '<S-Tab>', function() ls.jump(-1) end, { desc = 'Jump to next place in snippet' })
-vim.keymap.set('s', '<C-n>',   function() return ls.choice_active() and '<Plug>luasnip-next-choice' or '<C-n>' end, { expr = true, desc = 'Select next choice node in snippet' })
-vim.keymap.set('s', '<C-p>',   function() return ls.choice_active() and '<Plug>luasnip-prev-choice' or '<C-p>' end, { expr = true, desc = 'Select next choice node in snippet' })
-vim.keymap.set('s', '<Down>',  function() return ls.choice_active() and '<Plug>luasnip-next-choice' or '<Down>' end, { expr = true, desc = 'Select next choice node in snippet' })
-vim.keymap.set('s', '<Up>',    function() return ls.choice_active() and '<Plug>luasnip-prev-choice' or '<Up>' end, { expr = true, desc = 'Select next choice node in snippet' })
+vim.keymap.set('s', '<Tab>',   function() ls.jump(1) end,  { desc = 'Jump to next place in snippet' })
+vim.keymap.set('s', '<S-Tab>', function() ls.jump(-1) end, { desc = 'Jump to previous place in snippet' })
+
+-- `<Tab>`/`<S-Tab>` in insert mode can conflict with snippet-expansion
+-- keymaps, use these keymaps to to explicitly jump without expanding
+-- snippets
+vim.keymap.set({ 'i', 's' }, '<M-l>',     function() ls.jump(1) end,  { desc = 'Jump to next place in snippet' })
+vim.keymap.set({ 'i', 's' }, '<M-h>',     function() ls.jump(-1) end, { desc = 'Jump to previous place in snippet' })
+vim.keymap.set({ 'i', 's' }, '<M-Right>', function() ls.jump(1) end,  { desc = 'Jump to next place in snippet' })
+vim.keymap.set({ 'i', 's' }, '<M-Left>',  function() ls.jump(-1) end, { desc = 'Jump to previous place in snippet' })
+
+vim.keymap.set('s', '<C-n>',  function() return ls.choice_active() and '<Plug>luasnip-next-choice' or '<C-n>' end,  { expr = true, desc = 'Select next choice node in snippet' })
+vim.keymap.set('s', '<C-p>',  function() return ls.choice_active() and '<Plug>luasnip-prev-choice' or '<C-p>' end,  { expr = true, desc = 'Select next choice node in snippet' })
+vim.keymap.set('s', '<Down>', function() return ls.choice_active() and '<Plug>luasnip-next-choice' or '<Down>' end, { expr = true, desc = 'Select next choice node in snippet' })
+vim.keymap.set('s', '<Up>',   function() return ls.choice_active() and '<Plug>luasnip-prev-choice' or '<Up>' end,   { expr = true, desc = 'Select next choice node in snippet' })
 -- stylua: ignore end
