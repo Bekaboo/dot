@@ -3,6 +3,9 @@ return {
     'ibhagwan/fzf-lua',
     cmd = 'FzfLua',
     keys = {
+      { '<C-r>?', desc = 'Fuzzy complete from registers', mode = 'i' },
+      { '<C-r><C-_>', desc = 'Fuzzy complete from registers', mode = 'i' },
+      { '<C-r><C-r>', desc = 'Fuzzy complete from registers', mode = 'i' },
       { '<C-x><C-f>', desc = 'Fuzzy complete path', mode = 'i' },
       { '<Leader>.', desc = 'Find files' },
       { "<Leader>'", desc = 'Resume last picker' },

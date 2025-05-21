@@ -326,6 +326,11 @@ function actions.buf_tabedit(...)
   end
 end
 
+function actions.insert_register(...)
+  actions.paste_register(...)
+  vim.api.nvim_feedkeys('a', 'n', true)
+end
+
 core.ACTION_DEFINITIONS[actions.toggle_dir] = {
   function(o)
     -- When using `fd` the flag is '--type d', but for `find` the flag is
@@ -343,6 +348,7 @@ core.ACTION_DEFINITIONS[actions.del_autocmd] = { 'delete autocmd' }
 core.ACTION_DEFINITIONS[actions.arg_search_add] = { 'add new file' }
 core.ACTION_DEFINITIONS[actions.search] = { 'edit' }
 core.ACTION_DEFINITIONS[actions.ex_run] = { 'edit' }
+core.ACTION_DEFINITIONS[actions.insert_register] = { 'insert register' }
 
 config._action_to_helpstr[actions.toggle_dir] = 'toggle-dir'
 config._action_to_helpstr[actions.switch_provider] = 'switch-provider'
@@ -362,6 +368,7 @@ config._action_to_helpstr[actions.buf_tabedit] = 'buffer-tabedit'
 config._action_to_helpstr[actions.buf_edit_or_qf] = 'buffer-edit-or-qf'
 config._action_to_helpstr[actions.buf_sel_to_qf] = 'buffer-select-to-quickfix'
 config._action_to_helpstr[actions.buf_sel_to_ll] = 'buffer-select-to-loclist'
+config._action_to_helpstr[actions.insert_register] = 'insert-register'
 
 -- Use different prompts for document and workspace diagnostics
 -- by overriding `fzf.diagnostics_workspace()` and `fzf.diagnostics_document()`
@@ -518,6 +525,17 @@ function fzf.sessions(opts)
       },
     })
   )
+end
+
+-- Fuzzy complete from registers in insert mode
+---@param opts table?
+function fzf.complete_from_registers(opts)
+  fzf.registers(vim.tbl_deep_extend('force', opts or {}, {
+    actions = {
+      ['enter'] = actions.insert_register
+    }
+  }
+  ))
 end
 
 fzf.setup({
@@ -866,6 +884,9 @@ fzf.setup({
 })
 
 -- stylua: ignore start
+vim.keymap.set('i', '<C-r>?', fzf.complete_from_registers, { desc = 'Fuzzy complete from registers' })
+vim.keymap.set('i', '<C-r><C-_>', fzf.complete_from_registers, { desc = 'Fuzzy complete from registers' })
+vim.keymap.set('i', '<C-r><C-r>', fzf.complete_from_registers, { desc = 'Fuzzy complete from registers' })
 vim.keymap.set('i', '<C-x><C-f>', fzf.complete_path , { desc = 'Fuzzy complete path' })
 vim.keymap.set('n', '<Leader>.', fzf.files, { desc = 'Find files' })
 vim.keymap.set('n', "<Leader>'", fzf.resume, { desc = 'Resume last picker' })
