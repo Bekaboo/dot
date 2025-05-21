@@ -232,7 +232,12 @@ local function init()
   vim.api.nvim_create_autocmd('WinEnter', {
     group = groupid,
     callback = function()
-      if not winbar_hl_nc_equal() then
+      -- Only dim icon if current window's winbar color is the same as
+      -- non-current windows'
+      -- Also, don't dim for windows that does not have a winbar, this avoids
+      -- extra overhead and most importantly, avoid dimming icons in drop-down
+      -- menus
+      if not winbar_hl_nc_equal() and vim.wo.winbar ~= '' then
         dim(0, false)
       end
     end,
@@ -241,7 +246,7 @@ local function init()
   vim.api.nvim_create_autocmd('WinLeave', {
     group = groupid,
     callback = function()
-      if not winbar_hl_nc_equal() then
+      if not winbar_hl_nc_equal() and vim.wo.winbar ~= '' then
         dim()
       end
     end,
