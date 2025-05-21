@@ -3,39 +3,12 @@ import = [
     '~/.config/alacritty/themes/macro-dark.toml',
     '~/.config/alacritty/themes/dark.toml',
     '~/.config/alacritty/theme.toml',
+    '~/.config/alacritty/main.toml',
     '~/.config/alacritty/local.toml',
 
     '$XDG_CONFIG_HOME/.config/alacritty/themes/macro-dark.toml',
     '$XDG_CONFIG_HOME/.config/alacritty/themes/dark.toml',
     '$XDG_CONFIG_HOME/.config/alacritty/theme.toml',
+    '$XDG_CONFIG_HOME/.config/alacritty/main.toml',
     '$XDG_CONFIG_HOME/.config/alacritty/local.toml',
 ]
-
-[colors]
-draw_bold_text_with_bright_colors = true
-transparent_background_colors = true
-
-[env]
-TERM = 'alacritty'
-
-[font]
-size = 12
-
-[font.normal]
-family = 'Iosevka'
-
-[scrolling]
-history = 0
-
-[window]
-dynamic_padding = true
-opacity = 1
-option_as_alt = 'Both'
-
-[window.dimensions]
-columns = 112
-lines = 24
-
-[window.padding]
-x = 8
-y = 8
