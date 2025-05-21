@@ -39,10 +39,6 @@ setcolor_alacritty() {
             ln -sf "$1-light.toml" "$light_theme_path"
         fi
     )
-
-    # Reload config
-    config_path="$CONFIG_HOME/alacritty/alacritty.toml"
-    [ -e "$config_path" ] && touch "$config_path"
 }
 
 setcolor_foot() {
@@ -123,8 +119,6 @@ setcolor_wezterm() {
             ln -sf "$1-dark.toml" "$dark_theme_path"
             ln -sf "$1-light.toml" "$light_theme_path"
         fi
-        config="$CONFIG_HOME/wezterm/wezterm.lua"
-        [ -e "$config" ] && touch "$config" # Reload config
     )
 }
 
