@@ -13,10 +13,7 @@ function fish_greeting
         # Run in pseudo-terminal to prevent terminal state issues
         # (tmux error: 'not a terminal', etc)
         # macOS `script` does not accept `-c` flag
-        if script -c exit &>/dev/null
-            script -q /dev/null -c $fetch
-        else
-            script -q /dev/null $fetch
-        end
+        script -q /dev/null -c "$fetch" 2>/dev/null
+            or script -q /dev/null "$fetch"
     end
 end
