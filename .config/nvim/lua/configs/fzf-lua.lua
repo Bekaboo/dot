@@ -532,10 +532,9 @@ end
 function fzf.complete_from_registers(opts)
   fzf.registers(vim.tbl_deep_extend('force', opts or {}, {
     actions = {
-      ['enter'] = actions.insert_register
-    }
-  }
-  ))
+      ['enter'] = actions.insert_register,
+    },
+  }))
 end
 
 fzf.setup({
