@@ -661,7 +661,6 @@ fzf.setup({
     },
   },
   defaults = {
-    formatter = 'path.dirname_first',
     actions = {
       ['ctrl-]'] = actions.switch_provider,
     },
@@ -996,6 +995,7 @@ local function set_default_hlgroups()
   hl.set(0, 'FzfLuaTabMarker', { link = 'Keyword' })
   hl.set(0, 'FzfLuaTabTitle', { link = 'Title' })
   hl.set(0, 'FzfLuaDirPart', { link = 'Nontext' })
+  hl.set_default(0, 'TelescopeNormal', { link = 'CursorLineNr' })
   hl.set_default(0, 'TelescopeSelection', { link = 'Visual' })
   hl.set_default(0, 'TelescopePrefix', { link = 'Operator' })
   hl.set_default(0, 'TelescopeCounter', { link = 'LineNr' })
