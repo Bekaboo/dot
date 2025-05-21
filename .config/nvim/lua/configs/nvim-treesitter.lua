@@ -37,18 +37,17 @@ ts_configs.setup({
   },
   auto_install = true,
   sync_install = false,
-  ignore_install = {
-    -- Buggy, comments highlighted as code, see:
-    -- - https://github.com/Freed-Wu/tree-sitter-tmux/issues/26
-    -- - https://github.com/Freed-Wu/tree-sitter-tmux/issues/25
-    'tmux'
-  },
+  ignore_install = {},
   highlight = {
     enable = not vim.g.vscode,
     disable = function(lang, buf)
       return vim.b[buf].bigfile
         or vim.fn.win_gettype() == 'command'
         or vim.b[buf].vimtex_id and lang == 'latex'
+        -- Tmux ts is buggy, comments highlighted as code, see:
+        -- - https://github.com/Freed-Wu/tree-sitter-tmux/issues/26
+        -- - https://github.com/Freed-Wu/tree-sitter-tmux/issues/25
+        or lang == 'tmux'
     end,
   },
   incremental_selection = {
