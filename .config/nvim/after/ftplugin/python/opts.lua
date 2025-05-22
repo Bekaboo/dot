@@ -1,22 +1,23 @@
-local tsu = require('utils.ts')
+local utils = require('utils')
 
-if tsu.is_active() then
-  ---@param trig string
-  ---@param expansion string
-  ---@return nil
-  local function iabbr_normalzone(trig, expansion)
-    vim.keymap.set('ia', trig, function()
-      return tsu.is_active()
-          and not tsu.find_node({ 'comment', 'string' })
-          and expansion
-        or trig
-    end, {
-      buffer = true,
-      expr = true,
-    })
-  end
-  iabbr_normalzone('true', 'True')
-  iabbr_normalzone('ture', 'True')
-  iabbr_normalzone('false', 'False')
-  iabbr_normalzone('flase', 'False')
+---Autocorrect `orig` to `correction` in normal zone
+---@param orig string
+---@param correction string
+local function autocorrect_normalzone(orig, correction)
+  vim.keymap.set('ia', orig, function()
+    if utils.ts.is_active() then
+      return utils.ts.find_node({ 'comment', 'string' }) and orig or correction
+    end
+    if utils.syn.is_active() then
+      return utils.syn.find_group({ 'Comment', 'String' }) and orig
+        or correction
+    end
+    return orig
+  end, { buffer = true, expr = true })
 end
+
+-- Autocorrect lower-cased and misspelled booleans
+autocorrect_normalzone('true', 'True')
+autocorrect_normalzone('ture', 'True')
+autocorrect_normalzone('false', 'False')
+autocorrect_normalzone('flase', 'False')
