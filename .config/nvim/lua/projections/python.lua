@@ -11,8 +11,6 @@ return {
         -- Source: <mod>/<submod>/*.py
         -- Tests:  <mod>/test_<submod>.py
         --         tests/<mod>/test_<submod>.py
-        -- In this case we cannot switch back to the source because
-        -- one test file corresponds to multiple source files
         'tests/{dirname|dirname}/test_{dirname|basename}.py',
         'tests/{dirname|tail|dirname}/test_{dirname|basename}.py',
       },
@@ -21,7 +19,7 @@ return {
     ['tests/**/test_*.py'] = {
       alternate = {
         '{}.py', -- source file in parent dir
-        '{}',
+        '{}/__init__.py', -- module test
         -- Source file in parallel dir
         -- Guess source file containing dir (project dir)
         -- using base of project fullpath, not always correct.
@@ -30,7 +28,7 @@ return {
         -- Tests:  [PROJECT]/tests/<mod>/<submod>/test_*.py
         -- where [PROJECT] ends with <proj_name>
         '{project|basename}/{}.py',
-        '{project|basename}/{}',
+        '{project|basename}/{}/__init__.py',
       },
       type = 'test',
     },
