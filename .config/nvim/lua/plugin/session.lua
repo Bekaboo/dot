@@ -183,7 +183,7 @@ function M.load(session)
       '&Yes\n&No',
       2
     )
-    if response == 2 then -- 'No'
+    if response == 0 or response == 2 then
       return
     end
   end

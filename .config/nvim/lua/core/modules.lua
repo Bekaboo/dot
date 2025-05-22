@@ -47,7 +47,7 @@ local function bootstrap()
   )
 
   -- 'No'
-  if response == 2 then
+  if response == 0 or response == 2 then
     return false
   end
 
