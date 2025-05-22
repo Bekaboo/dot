@@ -35,10 +35,15 @@ M.opts = {
       return aider_cmd
     end,
     ---Window configuration used to open the aider panel
-    ---@type vim.api.keyset.win_config
+    ---@see vim.api.nvim_open_win
     win_configs = {
-      split = 'right',
       win = 0,
+      split = function()
+        return vim.api.nvim_win_get_width(0)
+              > 3 * vim.api.nvim_win_get_height(0)
+            and 'right'
+          or 'below'
+      end,
     },
     ---Time interval (in ms) to check aider buffer updates
     ---Not recommended to change

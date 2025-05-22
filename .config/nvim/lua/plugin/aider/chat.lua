@@ -16,7 +16,7 @@ local aider_chat_t = setmetatable({ type = 'aider' }, { __index = term_t })
 ---@field cmd? fun(path: string): string[] command to launch aider
 ---@field check_interval? integer timeout waiting for aider to render
 ---@field watcher_timeout? integer timeout waiting for aider to get ready for input and file change events after rendering
----@field win_configs? vim.api.keyset.win_config
+---@field win_configs? table
 
 ---Create a new aider chat
 ---@param opts? aider_chat_opts_t

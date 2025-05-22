@@ -22,7 +22,7 @@ local term_t = {}
 ---@field type? string type of the terminal, useful to flag dedicated terminal running TUI apps, e.g. aider
 ---@field cmd? string[] command to launch terminal
 ---@field check_interval? integer timeout in ms waiting for aider to render
----@field win_configs? vim.api.keyset.win_config
+---@field win_configs? table window configs, see `vim.api.nvim_open_win`
 
 ---@type term_opts_t
 local default_opts = {
@@ -224,7 +224,14 @@ function term_t:open(enter)
   end
 
   -- Open a new window for the terminal buffer in current tabpage
-  local new_win = vim.api.nvim_open_win(self.buf, enter, self.win_configs)
+  local win_configs_normalized = {}
+  for k, v in pairs(self.win_configs) do
+    if vim.is_callable(v) then
+      win_configs_normalized[k] = v()
+    end
+  end
+  local new_win =
+    vim.api.nvim_open_win(self.buf, enter, win_configs_normalized)
 
   -- Default terminal settings does not apply if terminal is launched using
   -- `jobstart()` and opened using `nvim_open_win()`, so manually trigger
