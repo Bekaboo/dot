@@ -1,5 +1,5 @@
 return {
-  ['Pipfile|pyproject.toml|requirements.txt|setup.cfg|setup.py|tox.ini|*.py'] = {
+  ['pytest.ini|Pipfile|pyproject.toml|requirements.txt|setup.cfg|setup.py|tox.ini|*.py'] = {
     ['*.py'] = {
       alternate = {
         '{dirname}/test_{basename}.py', -- test file in the same dir
