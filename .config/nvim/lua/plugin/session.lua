@@ -177,7 +177,16 @@ function M.load(session)
     return
   end
 
-  vim.g._session_loaded = session
+  if vim.iter(vim.api.nvim_list_bufs()):any(buf_valid) then
+    local response = vim.fn.confirm(
+      '[session] current session has non-empty buffers, confirm load session?',
+      '&Yes\n&No',
+      2
+    )
+    if response == 2 then -- 'No'
+      return
+    end
+  end
 
   -- Avoid intro message flickering before loading session,
   -- see `plugin/intro.lua` and `:h :intro`
@@ -196,6 +205,7 @@ function M.load(session)
         emsg_silent = true,
       },
     })
+    vim.g._session_loaded = session
   end)
 end
 
