@@ -96,29 +96,11 @@ vim.fn.sign_define('DapStopped',             { text = vim.trim(icons.debug.Stack
 dap.adapters = {}
 dap.configurations = {}
 
----Load debug adapter specs for given filetype
----@param ft string
-local function load_spec(ft)
-  if dap.configurations[ft] then
-    return
+require('utils.ft').auto_load_once('dapconfigs', function(ft, spec)
+  if not spec then
+    return false
   end
-
-  local ok, spec = pcall(require, 'dap.' .. ft)
-  if not ok then
-    return
-  end
-
   dap.adapters[spec.config[1].type] = spec.adapter
   dap.configurations[ft] = spec.config
-end
-
-for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-  load_spec(vim.bo[buf].ft)
-end
-
-vim.api.nvim_create_autocmd('FileType', {
-  group = vim.api.nvim_create_augroup('DapLoadSpecs', {}),
-  callback = function(info)
-    load_spec(info.match)
-  end,
-})
+  return true
+end)
