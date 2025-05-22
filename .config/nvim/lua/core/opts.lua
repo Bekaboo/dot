@@ -6,6 +6,7 @@ vim.g.has_nf = vim.env.TERM ~= 'linux' and vim.env.NVIM_NF and true or false
 vim.opt.exrc = true
 vim.opt.confirm = true
 vim.opt.timeout = false
+vim.opt.textwidth = 79
 vim.opt.colorcolumn = '+1'
 vim.opt.cursorlineopt = 'number'
 vim.opt.cursorline = true

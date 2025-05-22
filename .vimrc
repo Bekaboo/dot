@@ -3,6 +3,7 @@ silent! set confirm
 silent! set notimeout
 silent! set hidden
 silent! set foldlevelstart=99
+silent! set textwidth=79
 silent! set colorcolumn=+1
 silent! set helpheight=10
 silent! set laststatus=2
