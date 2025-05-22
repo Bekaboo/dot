@@ -3,20 +3,20 @@ local ls_types = require('luasnip.util.types')
 local ls_ft = require('luasnip.extras.filetype_functions')
 local static = require('utils.static')
 
----Filetypes for which snippets have been loaded
----@type table<string, boolean>
-local loaded_fts = {}
-
 ---Load snippets for a given filetype
 ---@param ft string?
 ---@return nil
 local function load_snippets(ft)
-  if not ft or loaded_fts[ft] then
+  if not ft then
     return
   end
-  loaded_fts[ft] = true
 
-  local ok, snip_groups = pcall(require, 'snippets.' .. ft)
+  local snippets_file = 'snippets.' .. ft
+  if package.loaded[snippets_file] then
+    return
+  end
+
+  local ok, snip_groups = pcall(require, snippets_file)
   if ok then
     for _, snip_group in pairs(snip_groups) do
       ls.add_snippets(ft, snip_group.snip or snip_group, snip_group.opts or {})
