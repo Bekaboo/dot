@@ -1,3 +1,20 @@
+-- Lazy-load test configs for each filetype
+require('utils.ft').auto_load_once('testconfigs', function(ft, configs)
+  if not configs then
+    return false
+  end
+  -- Vim-test use autoload vim variables, e.g. `g:test#go#gotest#options...`
+  -- so we have to first unnest lua table using '#' as delimiter then set
+  -- the test global variable.
+  -- Also see: https://www.reddit.com/r/neovim/comments/jwd0qx/how_do_i_define_vim_variable_in_lua/
+  vim
+    .iter(require('utils.lua').unnest({ test = { [ft] = configs } }, '#'))
+    :each(function(name, val)
+      vim.g[name] = val
+    end)
+  return true
+end)
+
 -- stylua: ignore start
 vim.keymap.set('n', '<Leader>tk', '<Cmd>TestClass<CR>',   { desc = 'Run the first test class in current file' })
 vim.keymap.set('n', '<Leader>ta', '<Cmd>TestFile<CR>',    { desc = 'Run all tests in current file' })
