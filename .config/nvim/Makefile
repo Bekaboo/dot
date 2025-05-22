@@ -1,5 +1,5 @@
 .PHONY: all
-all: format lint
+all: format-check lint
 
 .PHONY: format-check
 format-check:
