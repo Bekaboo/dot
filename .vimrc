@@ -1303,10 +1303,6 @@ nnoremap <silent> <Leader>.  :FZF<CR>
 " " }}}1
 
 """ Filetype settings {{{1
-" Syntax highlighting in markdown code blocks
-let g:markdown_fenced_languages =
-      \ ['c', 'cpp', 'python', 'sh', 'bash', 'vim', 'lua', 'rust', 'go']
-
 " Qflist / quickfix list settings {{{2
 if s:supportevents('FileType') && exists('*win_gettype')
   augroup QfSettings
@@ -1327,6 +1323,12 @@ if s:supportevents('FileType') && exists('*win_gettype')
           \ endif
   augroup END
 endif
+" }}}2
+
+" Markdown {{{2
+" Syntax highlighting in markdown code blocks
+let g:markdown_fenced_languages =
+      \ ['c', 'cpp', 'python', 'sh', 'bash', 'vim', 'lua', 'rust', 'go']
 " }}}2
 " }}}1
 
