@@ -135,6 +135,26 @@ M.snippets = {
   ),
   us.sn(
     {
+      trig = 'l',
+      desc = 'testing.T.Log()',
+    },
+    un.fmtad('t.Log("<str>"<args>)', {
+      str = r(1, 'str'),
+      args = r(2, 'args'),
+    })
+  ),
+  us.sn(
+    {
+      trig = 'lf',
+      desc = 'testing.T.Logf()',
+    },
+    un.fmtad('t.Logf("<str>"<args>)', {
+      str = r(1, 'str'),
+      args = r(2, 'args'),
+    })
+  ),
+  us.sn(
+    {
       trig = 'ck',
       desc = 'Check a value of a variable',
     },
@@ -151,6 +171,19 @@ M.snippets = {
       desc = 'Check a value of a variable through fmt.Println()',
     },
     un.fmtad('fmt.Println("<expr_escaped>:", <expr>)', {
+      expr = i(1),
+      expr_escaped = d(2, function(texts)
+        local str = vim.fn.escape(texts[1][1], '\\"')
+        return sn(nil, i(1, str))
+      end, { 1 }),
+    })
+  ),
+  us.sn(
+    {
+      trig = 'lck',
+      desc = 'Check a value of a variable through testing.T.Log()',
+    },
+    un.fmtad('t.Log("<expr_escaped>:", <expr>)', {
       expr = i(1),
       expr_escaped = d(2, function(texts)
         local str = vim.fn.escape(texts[1][1], '\\"')
@@ -188,6 +221,26 @@ M.snippets = {
         i(nil, 'os.Stderr'),
         i(nil, 'os.Stdout'),
       }),
+      line = c(1, {
+        i(nil, '----------------------------------------'),
+        i(nil, '========================================'),
+        i(nil, '........................................'),
+        i(nil, '++++++++++++++++++++++++++++++++++++++++'),
+        i(nil, '****************************************'),
+        i(nil, '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'),
+        i(nil, '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'),
+        i(nil, '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^'),
+        i(nil, '########################################'),
+        i(nil, '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'),
+      }),
+    })
+  ),
+  us.sn(
+    {
+      trig = 'll',
+      desc = 'Log a line',
+    },
+    un.fmtad('t.Log("<line>")', {
       line = c(1, {
         i(nil, '----------------------------------------'),
         i(nil, '========================================'),
