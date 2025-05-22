@@ -20,7 +20,9 @@ return {
       alternate = {
         '{}.py', -- source file in parent dir
         '{}/__init__.py', -- module test
-        -- Source file in parallel dir
+        -- Source file in parallel `src` dir
+        'src/{}.py',
+        'src/{}/__init__.py',
         -- Guess source file containing dir (project dir)
         -- using base of project fullpath, not always correct.
         -- Required struct:
