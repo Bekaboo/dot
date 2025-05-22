@@ -14,7 +14,7 @@ vim.cmd([=[
 
   " Remove all but first slash separated component
   function! g:projectionist_transformations.head(input, o) abort
-    return matchstr(a:input, '\(\/\)*[^/]\+', '\1', '')
+    return matchstr(a:input, '\(\/\)*[^/]\+')
   endfunction
 
   " Remove last extension
