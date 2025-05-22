@@ -1,6 +1,23 @@
 -- Keymaps
 vim.keymap.set('n', '<C-_>', '<Cmd>A<CR>', { desc = 'Edit alternate file' })
 
+-- Extra transformers
+vim.cmd([=[
+  if !exists('g:projectionist_transformations')
+    let g:projectionist_transformations = {}
+  endif
+
+  " Remove first slash separated component
+  function! g:projectionist_transformations.tail(input, o) abort
+    return substitute(a:input, '\(\/\)*[^/]\+\/*', '\1', '')
+  endfunction
+
+  " Remove all but first slash separated component
+  function! g:projectionist_transformations.head(input, o) abort
+    return matchstr(a:input, '\(\/\)*[^/]\+', '\1', '')
+  endfunction
+]=])
+
 ---Load projections for given filetype
 ---@param ft? string filetype to load, default to current buffer's filetype
 ---@return boolean new projection rules loaded
