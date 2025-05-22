@@ -1,54 +1,30 @@
 local ls = require('luasnip')
 local ls_types = require('luasnip.util.types')
 local ls_ft = require('luasnip.extras.filetype_functions')
-local static = require('utils.static')
+local utils = require('utils')
 
 ---Load snippets for a given filetype
 ---@param ft string?
----@return nil
 local function load_snippets(ft)
-  if not ft then
-    return
-  end
+  ft = ft or vim.bo.ft
 
-  local snippets_file = 'snippets.' .. ft
-  if package.loaded[snippets_file] then
-    return
-  end
-
-  local ok, snip_groups = pcall(require, snippets_file)
-  if ok then
-    for _, snip_group in pairs(snip_groups) do
-      ls.add_snippets(ft, snip_group.snip or snip_group, snip_group.opts or {})
+  utils.ft.load_once('snippets', ft, function(_, snips)
+    if not snips or vim.tbl_isempty(snips) then
+      return false
     end
-  end
-end
-
--- Trigger markdown snippets when filetype is 'markdown_inline' or 'html' or
--- 'html_inline' (lang returned from treesitter when using
--- `from_pos_or_filetype()` as the filetype function)
-local lang_ft_map = {
-  commonlisp = 'lisp',
-  glimmer = 'handlebars',
-  html = 'markdown',
-  html_inline = 'html',
-  latex = 'tex',
-  markdown_inline = 'markdown',
-  tsx = 'typescriptreact',
-}
-
-for lang, ft in pairs(lang_ft_map) do
-  ls.filetype_extend(lang, { ft })
+    for _, group in pairs(snips) do
+      ls.add_snippets(ft, group.snip or group, group.opts or {})
+    end
+    return true
+  end)
 end
 
 ls.setup({
   ft_func = function()
     load_snippets('all')
-
     local langs = ls_ft.from_pos_or_filetype()
     for _, lang in ipairs(langs) do
       load_snippets(lang)
-      load_snippets(lang_ft_map[lang])
     end
     return langs
   end,
@@ -63,7 +39,12 @@ ls.setup({
   ext_opts = {
     [ls_types.choiceNode] = {
       active = {
-        virt_text = { { static.icons.ArrowUpDown, 'Number' } },
+        virt_text = {
+          {
+            utils.static.icons.ArrowUpDown,
+            'Number',
+          },
+        },
       },
     },
   },
