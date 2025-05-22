@@ -1301,12 +1301,35 @@ nnoremap <silent> <Leader>.  :FZF<CR>
 " " }}}2
 " " }}}1
 
-""" Misc {{{1
+""" Filetype settings {{{1
 " Syntax highlighting in markdown code blocks
 let g:markdown_fenced_languages =
       \ ['c', 'cpp', 'python', 'sh', 'bash', 'vim', 'lua', 'rust', 'go']
 
-" Terminal Settings {{{2
+" Qflist / quickfix list settings {{{2
+if s:supportevents('FileType') && exists('*win_gettype')
+  augroup QfSettings
+    au!
+    au FileType qf if win_gettype() ==# 'quickfix' | wincmd J | endif |
+          \ silent! setlocal nobl nolist nospell nonu nornu wfb scl=no cc=0 |
+          \ silent! packadd cfilter
+  augroup END
+endif
+" }}}2
+
+" Command window settings {{{2
+if s:supportevents('FileType') && exists('*win_gettype')
+  augroup CmdwinSettings
+    au!
+    au FileType vim if win_gettype() ==# 'command' |
+          \ silent! setlocal nobl nonu nornu scl=no cc=0 |
+          \ endif
+  augroup END
+endif
+" }}}2
+" }}}1
+
+""" Terminal Settings {{{1
 " Get the command running in the foreground in current terminal
 " return: string[]: command running in the foreground
 function! s:fg_cmds() abort
@@ -1363,9 +1386,9 @@ if s:supportevents('TerminalWinOpen')
           \ startinsert
   augroup END
 endif
-" }}}2
+" }}}1
 
-" Navigate tmux panes using vim-style motions {{{2
+""" Navigate tmux panes using vim-style motions {{{1
 if $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.1140')
   " return: string tmux socket path
   function! s:tmux_get_socket() abort
@@ -1609,38 +1632,15 @@ if $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.1140')
     endif
   endif
 endif
-" }}}2
+" }}}1
 
-" Qflist / quickfix list settings {{{2
-if s:supportevents('FileType') && exists('*win_gettype')
-  augroup QfSettings
-    au!
-    au FileType qf if win_gettype() ==# 'quickfix' | wincmd J | endif |
-          \ silent! setlocal nobl nolist nospell nonu nornu wfb scl=no cc=0 |
-          \ silent! packadd cfilter
-  augroup END
-endif
-" }}}2
-
-" Command window settings {{{2
-if s:supportevents('FileType') && exists('*win_gettype')
-  augroup CmdwinSettings
-    au!
-    au FileType vim if win_gettype() ==# 'command' |
-          \ silent! setlocal nobl nonu nornu scl=no cc=0 |
-          \ endif
-  augroup END
-endif
-" }}}2
-
-" Workaround to prevent <Esc> lag cause by Meta keymaps {{{2
+""" Workaround to prevent <Esc> lag cause by Meta keymaps {{{1
 noremap  <nowait> <Esc> <Esc>
 noremap! <nowait> <Esc> <C-\><C-n>
 if exists(':tmap') == 2
   tnoremap       <nowait> <Esc> <Esc>
   tnoremap <expr><nowait> <Esc> <SID>running_tui() ? '<Esc>' : '<C-\><C-n>'
 endif
-" }}}2
 " }}}1
 
 " vim:tw=79:ts=2:sts=2:sw=2:et:fdm=marker:ft=vim:norl:
