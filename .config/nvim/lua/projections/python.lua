@@ -2,7 +2,6 @@ return {
   ['pytest.ini|Pipfile|pyproject.toml|requirements.txt|setup.cfg|setup.py|tox.ini|*.py'] = {
     ['*.py'] = {
       alternate = {
-        '{dirname}/test_{basename}.py', -- test file in the same dir
         'tests/{dirname}/test_{basename}.py', -- test file in `tests` subdir
         -- Test file in parallel `test` dir, e.g.
         -- Source: <proj_name>/<mod>/<submod>/*.py
@@ -14,19 +13,10 @@ return {
         --         tests/<mod>/test_<submod>.py
         -- In this case we cannot switch back to the source because
         -- one test file corresponds to multiple source files
-        '{dirname|dirname}/test_{dirname|basename}.py',
-        '{dirname|tail|dirname}/test_{dirname|basename}.py',
         'tests/{dirname|dirname}/test_{dirname|basename}.py',
         'tests/{dirname|tail|dirname}/test_{dirname|basename}.py',
       },
       type = 'source',
-    },
-    ['**/test_*.py'] = {
-      alternate = {
-        '{}.py', -- source file in the same dir
-        '{}', -- test is a module test
-      },
-      type = 'test',
     },
     ['tests/**/test_*.py'] = {
       alternate = {
