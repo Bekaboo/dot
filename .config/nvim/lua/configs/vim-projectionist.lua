@@ -16,6 +16,16 @@ vim.cmd([=[
   function! g:projectionist_transformations.head(input, o) abort
     return matchstr(a:input, '\(\/\)*[^/]\+', '\1', '')
   endfunction
+
+  " Remove last extension
+  function! g:projectionist_transformations.root(input, o) abort
+    return fnamemodify(a:input, ':r')
+  endfunction
+
+  " Get last extension
+  function! g:projectionist_transformations.extension(input, o) abort
+    return fnamemodify(a:input, ':e')
+  endfunction
 ]=])
 
 ---Load projections for given filetype
