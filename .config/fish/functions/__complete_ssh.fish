@@ -19,11 +19,25 @@ function __complete_ssh_paths \
 
     set -l user_server $input_list[1]
     set -l path_part $input_list[2]
-    set -l path_glob (string match -arq '^[^/]' -- $path_part
-        and echo "*$path_part*"
-        or echo "$path_part*")
+    set -l path_glob "$path_part*" # glob to list files matching given path
+
+    # If path does not start with '/', i.e. not root dir, prepend an extra '*'
+    # to list paths that does not match given path at the beginning, e.g. if
+    # given path is 'notes', we would want to list 'school_notes',
+    # 'personal_notes', etc. using glob '*notes*'.
+    #
+    # For hidden files things become tricky -- we cannot simply prepend '*' on
+    # the given path, instead we have to insert it after the fist '.' for `ls`
+    # to list hidden paths, e.g. for '.rc' we would want to list '.bashrc',
+    # '.zshrc', '.vimrc' using glob '.*rc*'.
+    if string match -qr '^\.' -- $path_part
+        set path_glob ".*$(string sub -s 2 -- $path_glob)"
+    else if string match -qvr '^/' -- $path_part
+        set path_glob "*$path_glob"
+    end
+
     set -l compl_prefix (string replace -r "$path_part\$" '' $input)
-    set -l paths (command ssh $user_server "ls -dp $path_glob" 2>/dev/null)
+    set -l paths (command ssh $user_server "ls -Adp $path_glob" 2>/dev/null)
     for path in $paths
         echo "$compl_prefix$path"
     end
