@@ -889,6 +889,7 @@ vim.keymap.set('i', '<C-r><C-r>', fzf.complete_from_registers, { desc = 'Fuzzy c
 vim.keymap.set('i', '<C-x><C-f>', fzf.complete_path, { desc = 'Fuzzy complete path' })
 vim.keymap.set('n', '<Leader>.', fzf.files, { desc = 'Find files' })
 vim.keymap.set('n', "<Leader>'", fzf.resume, { desc = 'Resume last picker' })
+vim.keymap.set('n', "<Leader>`", fzf.marks, { desc = 'Find marks' })
 vim.keymap.set('n', '<Leader>,', fzf.buffers, { desc = 'Find buffers' })
 vim.keymap.set('n', '<Leader>/', fzf.live_grep, { desc = 'Grep' })
 vim.keymap.set('n', '<Leader>?', fzf.help_tags, { desc = 'Find help tags' })

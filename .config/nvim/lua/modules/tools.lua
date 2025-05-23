@@ -9,6 +9,7 @@ return {
       { '<C-x><C-f>', desc = 'Fuzzy complete path', mode = 'i' },
       { '<Leader>.', desc = 'Find files' },
       { "<Leader>'", desc = 'Resume last picker' },
+      { '<Leader>`', desc = 'Find marks' },
       { '<Leader>,', desc = 'Find buffers' },
       { '<Leader>/', desc = 'Grep' },
       { '<Leader>?', desc = 'Find help files' },
