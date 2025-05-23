@@ -1,4 +1,4 @@
-function __rsync_watch_complete_ssh_servers \
+function __complete_ssh_servers \
     --description 'Complete <server> part in ssh addresses with format <username>@<server>:<path>'
     set -l input $argv[1]
     set -l servers (cat ~/.ssh/known_hosts | awk '{print $1}' | cut -d '@' -f 1 | sort -u)
@@ -9,7 +9,7 @@ function __rsync_watch_complete_ssh_servers \
     end
 end
 
-function __rsync_watch_complete_ssh_paths \
+function __complete_ssh_paths \
     --description 'Complete <path> part in ssh addresses with format <username>@<server>:<path>'
     set -l input $argv[1]
     set -l input_list (string split ":" $input)
@@ -29,7 +29,7 @@ function __rsync_watch_complete_ssh_paths \
     end
 end
 
-function __rsync_watch_complete_ssh \
+function __complete_ssh \
     --description 'Complete ssh addresses in the format of <username>@<server>:<path>'
     set -l input (commandline -ct)
 
@@ -37,11 +37,9 @@ function __rsync_watch_complete_ssh \
     # otherwise, complete with local paths
     if string match -q "*@*" -- $input
         string match -q "*@*:*" -- $input
-        and __rsync_watch_complete_ssh_paths $input
-        or __rsync_watch_complete_ssh_servers $input
+        and __complete_ssh_paths $input
+        or __complete_ssh_servers $input
     else
         __fish_complete_path $input
     end
 end
-
-complete -c rsync-watch -fa '(__rsync_watch_complete_ssh)'
