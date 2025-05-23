@@ -117,6 +117,13 @@ vim.api.nvim_create_autocmd('UIEnter', {
     map({ 'x', 'n' }, '<C-w>-', 'v:count ? "<C-w>-" : "2<C-w>-"', { expr = true, desc = 'Decrease window height' })
     -- stylua: ignore end
 
+    -- Search within visual selection, see:
+    -- https://stackoverflow.com/a/3264324/16371328
+    -- stylua: ignore start
+    map('x', 'z/', '<C-\\><C-n>`</\\%V', { desc = 'Search forward within visual selection' })
+    map('x', 'z?', '<C-\\><C-n>`>?\\%V', { desc = 'Search backward within visual selection' })
+    -- stylua: ignore off
+
     -- Delete selection in select mode
     map('s', '<BS>', '<C-o>"_s', { desc = 'Delete selection' })
     map('s', '<C-h>', '<C-o>"_s', { desc = 'Delete selection' })

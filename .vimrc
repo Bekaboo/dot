@@ -570,6 +570,12 @@ let g:maplocalleader = ' '
 inoremap <C-r> <C-r><C-p>
 " }}}
 
+" Search within visual selection, see:
+" https://stackoverflow.com/a/3264324/16371328 {{{2
+xnoremap z/ <C-\><C-n>`</\%V
+xnoremap z? <C-\><C-n>`>?\%V
+" }}}2
+
 " Delete selection in select mode {{{2
 snoremap <BS>  <C-o>"_s
 snoremap <C-h> <C-o>"_s
