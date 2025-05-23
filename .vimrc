@@ -1330,6 +1330,26 @@ endif
 let g:markdown_fenced_languages =
       \ ['c', 'cpp', 'python', 'sh', 'bash', 'vim', 'lua', 'rust', 'go']
 " }}}2
+
+" Help/man pages {{{2
+if s:supportevents('FileType')
+  function! s:setup_help() abort
+    if &ma
+      return
+    endif
+    setlocal nobl nolist nonu nornu nospell so=999 scl=no
+    nnoremap <buffer> d <C-d>
+    nnoremap <buffer> u <C-u>
+    xnoremap <buffer> d <C-d>
+    xnoremap <buffer> u <C-u>
+  endfunction
+
+  augroup HelpSettings
+    au!
+    au FileType help,man call s:setup_help()
+  augroup END
+endif
+" }}}2
 " }}}1
 
 """ Terminal Settings {{{1
