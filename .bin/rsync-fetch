@@ -5,18 +5,18 @@
 main() {
     if ! command -v rsync >/dev/null 2>&1; then
         echo 'rsync not found, exit'
-        exit 1
+        return 1
     fi
 
     src="$1"
     dst="$2"
     if [ -z "$1" ] || [ -z "$2" ]; then
         echo "Usage: $(basename "$0") <src> <dst>"
-        exit 1
+        return 1
     fi
 
     while true; do
-        rsync -auzvP "$src" "$dst" && sleep 1
+        rsync -auzvP "$src" "$dst" && sleep 1 || return
     done
 }
 
