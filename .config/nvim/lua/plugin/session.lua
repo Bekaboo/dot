@@ -180,7 +180,7 @@ function M.load(session)
   if has_valid_buf() then
     local response = vim.fn.confirm(
       string.format(
-        "[session] non-empty buffers exist, confirm loading a new session from '%s'?",
+        "[session] non-empty buffers exist, confirm loading new session from '%s'?",
         vim.fn.fnamemodify(session, ':~:.')
       ),
       '&Yes\n&No',
