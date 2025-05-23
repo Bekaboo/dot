@@ -177,7 +177,7 @@ function M.load(session)
     return
   end
 
-  if vim.iter(vim.api.nvim_list_bufs()):any(buf_valid) then
+  if has_valid_buf() then
     local response = vim.fn.confirm(
       string.format(
         "[session] non-empty buffers exist, confirm loading a new session from '%s'?",
