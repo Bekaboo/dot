@@ -43,6 +43,8 @@
 	f    = fetch
 	ia   = merge-base --is-ancestor
 	l    = log --oneline --graph
+	lg   = log
+	ll   = reflog
 	; `$GIT_PREFIX` contains the relative path from repo root to current working
 	; directory with trailing slash
 	; When no argument is given to `git lc`, use repo root as base path
