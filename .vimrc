@@ -1361,7 +1361,7 @@ endif
 if s:supportevents('FileType')
   augroup FormatOptionsSettings
     au!
-    au FileType desktop,fish silent! setlocal formatoptions-=t
+    au FileType desktop,fish,tmux silent! setlocal formatoptions-=t
   augroup END
 endif
 " }}}2
