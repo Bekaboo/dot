@@ -456,10 +456,20 @@ main() {
             ;;
         esac
     done
+
+    # Called by `syncbg` to sync apps' background with system/desktop
+    # background, don't set system background
     if [ -z "$SETBG_SKIP_SYSTEM" ]; then
         setbg_macos "$bg" &
         setbg_gnome "$bg" &
         setbg_plasma "$bg" &
+
+        # Kitty and wezterm have their own mechanism to detect and sync with
+        # system background
+        # Fix kitty memory leak on KDE when `__syncbg` is running in the ground
+        setbg_kitty "$bg" &
+        setbg_wezterm "$bg" &
+
         # Make sure system bg is set before setting apps' bg to avoid `__syncbg`
         # daemon setting apps' bg back to old system bg, see:
         # - `__syncbg`
@@ -469,8 +479,6 @@ main() {
     fi
     setbg_alacritty "$bg" &
     setbg_foot "$bg" &
-    setbg_kitty "$bg" &
-    setbg_wezterm "$bg" &
     setbg_highlight "$bg" &
     setbg_nvim "$bg" &
     setbg_konsole_yakuake "$bg" &
