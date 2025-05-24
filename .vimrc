@@ -1356,6 +1356,15 @@ if s:supportevents('FileType')
   augroup END
 endif
 " }}}2
+
+" Disable auto-wrapping source code in some filetypes {{{2
+if s:supportevents('FileType')
+  augroup FormatOptionsSettings
+    au!
+    au FileType desktop,fish silent! setlocal formatoptions-=t
+  augroup END
+endif
+" }}}2
 " }}}1
 
 """ Terminal Settings {{{1
