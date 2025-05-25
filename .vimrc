@@ -577,6 +577,9 @@ xnoremap z/ <C-\><C-n>`</\%V
 xnoremap z? <C-\><C-n>`>?\%V
 nnoremap z/ /\%><C-r>=line('w0')-1<CR>l\%<<C-r>=line('w$')+1<CR>l
 nnoremap z? ?\%><C-r>=line('w0')-1<CR>l\%<<C-r>=line('w$')+1<CR>l
+
+" Select previously changed/yanked text, useful for selecting pasted text
+nnoremap gz `[v`]
 " }}}2
 
 " Delete selection in select mode {{{2

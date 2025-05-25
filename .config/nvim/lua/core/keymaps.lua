@@ -127,6 +127,9 @@ vim.api.nvim_create_autocmd('UIEnter', {
     map('n', 'z?', '?\\%><C-r>=line("w0")-1<CR>l\\%<<C-r>=line("w$")+1<CR>l', { desc = 'Search forward in viewport' })
     -- stylua: ignore off
 
+    -- Select previously changed/yanked text, useful for selecting pasted text
+    map('n', 'gz', '`[v`]', { desc = 'Select previously changed/yanked text' })
+
     -- Delete selection in select mode
     map('s', '<BS>', '<C-o>"_s', { desc = 'Delete selection' })
     map('s', '<C-h>', '<C-o>"_s', { desc = 'Delete selection' })
