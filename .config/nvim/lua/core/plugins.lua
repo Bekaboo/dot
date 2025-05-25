@@ -201,7 +201,7 @@ local function enable_plugins(module_names)
           config = icons.Config,
           event = icons.Event,
           debug = '',
-          favorite = icons.star,
+          favorite = icons.Star,
           ft = icons.File,
           init = icons.Config,
           import = icons.ArrowLeft,
