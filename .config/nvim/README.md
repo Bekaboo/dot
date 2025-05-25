@@ -38,7 +38,7 @@ Currently only tested on Linux (X11/Wayland/TTY) and Android (Termux).
 - [Uninstallation](#uninstallation)
 - [Config Structure](#config-structure)
 - [Tweaking this Configuration](#tweaking-this-configuration)
-  - [Managing Plugins with Modules](#managing-plugins-with-modules)
+  - [Managing Plugins with Groups](#managing-plugins-with-groups)
   - [Installing Packages to an Existing Module](#installing-packages-to-an-existing-module)
   - [Installing Packages to a New Module](#installing-packages-to-a-new-module)
   - [General Settings and Options](#general-settings-and-options)
@@ -52,7 +52,7 @@ Currently only tested on Linux (X11/Wayland/TTY) and Android (Termux).
   - [Enabling VSCode Integration](#enabling-vscode-integration)
 - [Appendix](#appendix)
   - [Showcases](#showcases)
-  - [Default Modules and Plugins of Choice](#default-modules-and-plugins-of-choice)
+  - [Default Plugins of Choice](#default-plugins-of-choice)
     - [Third Party Plugins](#third-party-plugins)
     - [Builtin Plugins](#builtin-plugins)
   - [Startuptime](#startuptime)
@@ -260,7 +260,7 @@ For more information on DAP installation, see [Debug Adapter Installation](https
     2. If the building process failed, go to corresponding project directory
        under `g:package_path` and manually run the build command from there.
        The build commands are declared in module specification files under
-       [lua/modules](lua/modules)
+       [lua/plugins](lua/plugins)
     3. Ensure you are on the same version of nvim as specified in
        [nvim-version.txt](nvim-version.txt) if you encounter any issue related to treesitter
 
@@ -333,8 +333,8 @@ paths:
 │   │   ├── autocmds.lua
 │   │   ├── opts.lua            # options and general settings
 │   │   ├── keymaps.lua
-│   │   └── modules.lua         # bootstraps plugin manager and specifies which modules to include
-│   ├── modules                 # all plugin specifications and configs go here
+│   │   └── plugins.lua         # bootstraps plugin manager and specifies which plugins to include
+│   ├── plugins                 # all plugin specifications and configs go here
 │   │   ├── ui.lua              # ui elements, e.g. icons
 │   │   ├── completion.lua      # auto-completion
 │   │   ├── debug.lua           # debug adapter (DAP) support
@@ -354,13 +354,13 @@ paths:
 
 ## Tweaking this Configuration
 
-### Managing Plugins with Modules
+### Managing Plugins with Groups
 
 In order to enable or disable a module, one need to change the table in
-[lua/core/modules.lua](lua/core/modules.lua) passed to `enable_modules()`, for example
+[lua/core/groups.lua](lua/core/plugins.lua) passed to `enable_plugins()`, for example
 
 ```lua
-enable_modules({
+enable_plugins({
   'treesitter',
   'edit',
   -- ...
@@ -370,9 +370,9 @@ enable_modules({
 ### Installing Packages to an Existing Module
 
 To install plugin `foo` under module `bar`, just insert the corresponding
-specification to the big table `lua/modules/bar.lua` returns, for instance,
+specification to the big table `lua/plugins/bar.lua` returns, for instance,
 
-`lua/modules/bar.lua`:
+`lua/plugins/bar.lua`:
 
 ```lua
 return {
@@ -387,12 +387,12 @@ return {
 ### Installing Packages to a New Module
 
 To install plugin `foo` under module `bar`, one should first
-create module `bar` under [lua/modules](lua/modules):
+create module `bar` under [lua/plugins](lua/plugins):
 
 ```
 .
 └── lua
-    └── modules
+    └── plugins
         └── bar.lua
 ```
 
@@ -418,10 +418,11 @@ return {
 }
 ```
 
-After creating the new module `bar`, enable it in [lua/core/modules.lua](lua/core/modules.lua):
+After creating the new module `bar`, enable it in
+[lua/core/plugins.lua](lua/core/plugins.lua):
 
 ```lua
-enable_modules({
+enable_plugins({
   -- ...
   'bar',
   -- ...
@@ -477,8 +478,9 @@ are defined under [lua/snippets](lua/snippets).
 ### Enabling VSCode Integration
 
 VSCode integration takes advantages of the modular design, allowing to use
-a different set of modules when neovim is launched by VSCode, relevant code is
-in [autoload/plugin/vscode.vim](autoload/plugin/vscode.vim) and [lua/core/modules.lua](lua/core/modules.lua).
+a different set of plugins when neovim is launched by VSCode, relevant code is
+in [autoload/plugin/vscode.vim](autoload/plugin/vscode.vim) and
+[lua/core/plugins.lua](lua/core/plugins.lua).
 
 To make VSCode integration work, please install [VSCode-Neovim](https://github.com/vscode-neovim/vscode-neovim) in VSCode
 and configure it correctly.
@@ -510,7 +512,7 @@ and it should work out of the box.
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/a5e0a41d-4e85-4bfc-a39d-cc7b76abedcf" width=75%>
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/73da4ee1-8f6c-440a-9eb9-0bcf3bc8e3ea" width=75%>
 
-### Default Modules and Plugins of Choice
+### Default Plugins of Choice
 
 #### Third Party Plugins
 

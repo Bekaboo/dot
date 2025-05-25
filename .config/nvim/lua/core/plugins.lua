@@ -18,7 +18,7 @@ vim.g.startup_file = vim.fs.joinpath(state_path, 'startup.json')
 local function system_sync(cmd, opts, loglev)
   local obj = vim.system(cmd, opts):wait()
   if obj.code ~= 0 then
-    vim.notify('[modules] ' .. obj.stderr, loglev or vim.log.levels.WARN)
+    vim.notify('[plugins] ' .. obj.stderr, loglev or vim.log.levels.WARN)
     return false
   end
   return true
@@ -41,7 +41,7 @@ local function bootstrap()
   end
 
   local response = vim.fn.confirm(
-    '[modules] package manager not found, bootstrap?',
+    '[plugins] package manager not found, bootstrap?',
     '&Yes\n&No\nN&ever',
     2
   )
@@ -57,7 +57,7 @@ local function bootstrap()
     json.write(startup_file, startup_data)
     vim.notify(
       string.format(
-        "[modules] bootstrap disabled, remove '%s' to re-enable",
+        "[plugins] bootstrap disabled, remove '%s' to re-enable",
         startup_file
       )
     )
@@ -68,7 +68,7 @@ local function bootstrap()
   local lock_data = json.read(vim.g.package_lock)
   local commit = lock_data['lazy.nvim'] and lock_data['lazy.nvim'].commit
   local url = 'https://github.com/folke/lazy.nvim.git'
-  vim.notify('[modules] installing lazy.nvim...')
+  vim.notify('[plugins] installing lazy.nvim...')
   vim.fn.mkdir(vim.g.package_path, 'p')
   if
     not system_sync({ 'git', 'clone', '--filter=blob:none', url, lazy_path })
@@ -83,19 +83,20 @@ local function bootstrap()
       vim.log.INFO
     )
   end
-  vim.notify(string.format("[modules] lazy.nvim cloned to '%s'", lazy_path))
+  vim.notify(string.format("[plugins] lazy.nvim cloned to '%s'", lazy_path))
   vim.opt.rtp:prepend(lazy_path)
   return true
 end
 
----Enable modules
----@param module_names string[]? when omitted, enable all modules under `lua/modules`
-local function enable_modules(module_names)
-  local modules_path = vim.fs.joinpath(conf_path, 'lua/modules')
+---Enable plugins
+---@param module_names string[]? when omitted, enable all plugins under
+---`lua/plugins`
+local function enable_plugins(module_names)
+  local plugins_path = vim.fs.joinpath(conf_path, 'lua/plugins')
 
   if not module_names then
     module_names = {}
-    for item in vim.fs.dir(modules_path) do
+    for item in vim.fs.dir(plugins_path) do
       table.insert(module_names, vim.fn.fnamemodify(item, ':r'))
     end
   end
@@ -104,7 +105,7 @@ local function enable_modules(module_names)
   for _, module_name in ipairs(module_names) do
     vim.list_extend(
       specs,
-      dofile(vim.fs.joinpath(modules_path, module_name .. '.lua'))
+      dofile(vim.fs.joinpath(plugins_path, module_name .. '.lua'))
     )
   end
 
@@ -249,5 +250,5 @@ if not bootstrap() then
   return
 end
 
--- If launched in vscode, only enable basic modules
-enable_modules(vim.g.vscode and { 'edit', 'treesitter' })
+-- If launched in vscode, only enable basic plugins
+enable_plugins(vim.g.vscode and { 'edit', 'treesitter' })
