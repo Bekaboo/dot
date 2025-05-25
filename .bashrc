@@ -65,8 +65,11 @@ if shopt -q login_shell; then
             # Run in pseudo-terminal to prevent terminal state issues
             # (tmux error: 'not a terminal', etc)
             # macOS `script` does not accept `-c` flag
-            script -q /dev/null -c "$fetch" 2>/dev/null ||
+            if script -q /dev/null -c exit &>/dev/null; then
+                script -q /dev/null -c "$fetch"
+            else
                 script -q /dev/null "$fetch"
+            fi
         fi
     fi
 fi
