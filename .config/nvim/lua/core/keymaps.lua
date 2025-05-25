@@ -118,10 +118,13 @@ vim.api.nvim_create_autocmd('UIEnter', {
     -- stylua: ignore end
 
     -- Search within visual selection, see:
-    -- https://stackoverflow.com/a/3264324/16371328
+    -- - https://stackoverflow.com/a/3264324/16371328
+    -- - https://www.reddit.com/r/neovim/comments/1kv7som/comment/mu7lo52/
     -- stylua: ignore start
     map('x', 'z/', '<C-\\><C-n>`</\\%V', { desc = 'Search forward within visual selection' })
     map('x', 'z?', '<C-\\><C-n>`>?\\%V', { desc = 'Search backward within visual selection' })
+    map('n', 'z/', '/\\%><C-r>=line("w0")-1<CR>l\\%<<C-r>=line("w$")+1<CR>l', { desc = 'Search forward in viewport' })
+    map('n', 'z?', '?\\%><C-r>=line("w0")-1<CR>l\\%<<C-r>=line("w$")+1<CR>l', { desc = 'Search forward in viewport' })
     -- stylua: ignore off
 
     -- Delete selection in select mode
