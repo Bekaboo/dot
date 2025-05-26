@@ -619,12 +619,21 @@ fzf.setup({
       _restore_global_opt('cmdheight')
       _restore_global_opt('laststatus')
 
+      -- Reopen quickfix/location list after closing fzf if we previous closed
+      -- it to make space for fzf
+      local win = vim.api.nvim_get_current_win()
       if vim.g._fzf_qfclosed == 'loclist' then
         vim.cmd.lopen()
       elseif vim.g._fzf_qfclosed == 'quickfix' then
         vim.cmd.copen()
       end
       vim.g._fzf_qfclosed = nil
+      if
+        win ~= vim.api.nvim_get_current_win()
+        and vim.api.nvim_win_is_valid(win)
+      then
+        vim.api.nvim_set_current_win(win)
+      end
 
       if
         vim.g._fzf_leave_win
