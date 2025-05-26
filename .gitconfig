@@ -140,6 +140,19 @@
 [filter "vscode-theme"]
 	smudge = cat
 	clean = sed '/[cC]olorTheme/d'
+[filter "kglobalshortcutsrc"]
+	smudge = cat
+	clean = sed '/switch-to-activity-/d'
+[filter "kwinrc"]
+	smudge = cat
+	; Filter out lines containing UUID or changing values
+	clean = sed \
+		-e '/Latitude.*=/d' \
+		-e '/Longitude.*=/d' \
+		-e '/Id_[[:digit:]]\\+=/d' \
+		-e '/^\\[Activities\\]/,/^$/d' \
+		-e '/^\\[SubSession:.*\\]/,/^$/d' \
+		-e '/^\\[Tiling\\]\\[[[:alnum:]-]\\+\\]/,/^$/d'
 [filter "lfs"]
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
