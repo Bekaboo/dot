@@ -493,7 +493,9 @@ function fzf.sessions(opts)
   ---@return fun(selected: string[])
   local function action(cb)
     return function(selected)
-      cb(vim.fs.joinpath(session.opts.dir, session.dir2session(selected[1])))
+      vim.iter(selected):each(function(dir)
+        cb(vim.fs.joinpath(session.opts.dir, session.dir2session(dir)))
+      end)
     end
   end
 
@@ -519,9 +521,6 @@ function fzf.sessions(opts)
           fn = actions.remove_session,
           reload = true,
         },
-      },
-      fzf_opts = {
-        ['--no-multi'] = true,
       },
     })
   )
