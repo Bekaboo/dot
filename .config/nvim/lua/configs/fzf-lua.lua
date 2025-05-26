@@ -566,6 +566,8 @@ fzf.setup({
   dir_icon = vim.trim(icons.Folder),
   winopts = {
     backdrop = 100,
+    -- Split at bottom, save information for restoration in
+    -- `winopts.on_close()` callback
     split = [[
         let tabpage_win_list = nvim_tabpage_list_wins(0) |
         \ call v:lua.require'utils.win'.saveheights(tabpage_win_list) |
@@ -576,6 +578,13 @@ fzf.setup({
         \ let g:_fzf_splitkeep = &splitkeep | let &splitkeep = "topline" |
         \ let g:_fzf_cmdheight = &cmdheight | let &cmdheight = 0 |
         \ let g:_fzf_laststatus = &laststatus | let &laststatus = 0 |
+        \ let g:_fzf_qfclosed = win_gettype(winnr('$')) |
+        \ if g:_fzf_qfclosed ==# 'loclist' || g:_fzf_qfclosed ==# 'quickfix' |
+        \   cclose |
+        \   lclose |
+        \ else |
+        \   unlet g:_fzf_qfclosed |
+        \ endif |
         \ botright 10new |
         \ exe 'resize' .
           \ (10 + g:_fzf_cmdheight + (g:_fzf_laststatus ? 1 : 0)) |
@@ -609,6 +618,13 @@ fzf.setup({
       _restore_global_opt('splitkeep')
       _restore_global_opt('cmdheight')
       _restore_global_opt('laststatus')
+
+      if vim.g._fzf_qfclosed == 'loclist' then
+        vim.cmd.lopen()
+      elseif vim.g._fzf_qfclosed == 'quickfix' then
+        vim.cmd.copen()
+      end
+      vim.g._fzf_qfclosed = nil
 
       if
         vim.g._fzf_leave_win
