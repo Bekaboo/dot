@@ -67,9 +67,6 @@ require('ultimate-autopair').setup({
       end,
     },
   },
-  { '\\(', '\\)', newline = true },
-  { '\\[', '\\]', newline = true },
-  { '\\{', '\\}', newline = true },
   { '[=[', ']=]', ft = { 'lua' } },
   { '<<<', '>>>', ft = { 'cuda' } },
   {
