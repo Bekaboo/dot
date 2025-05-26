@@ -527,6 +527,25 @@ function fzf.sessions(opts)
   )
 end
 
+---Fuzzy complete cmdline command/search history
+---@param opts table?
+function fzf.complete_cmdline(opts)
+  opts = opts or {}
+  opts.query = vim.fn.getcmdline()
+  vim.api.nvim_feedkeys(vim.keycode('<C-\\><C-n>'), 'n', true)
+
+  local type = vim.fn.getcmdtype()
+  if type == ':' then
+    fzf.command_history(opts)
+    return
+  end
+  if type == '/' or type == '?' then
+    opts.reverse_search = type == '?'
+    fzf.search_history(opts)
+    return
+  end
+end
+
 ---Fuzzy complete from registers in insert mode
 ---@param opts table?
 function fzf.complete_from_registers(opts)
@@ -883,6 +902,8 @@ fzf.setup({
 })
 
 -- stylua: ignore start
+vim.keymap.set('c', '<C-_>', fzf.complete_cmdline, { desc = 'Fuzzy complete command/search history' })
+vim.keymap.set('c', '<C-x><C-l>', fzf.complete_cmdline, { desc = 'Fuzzy complete command/search history' })
 vim.keymap.set('i', '<C-r>?', fzf.complete_from_registers, { desc = 'Fuzzy complete from registers' })
 vim.keymap.set('i', '<C-r><C-_>', fzf.complete_from_registers, { desc = 'Fuzzy complete from registers' })
 vim.keymap.set('i', '<C-r><C-r>', fzf.complete_from_registers, { desc = 'Fuzzy complete from registers' })
