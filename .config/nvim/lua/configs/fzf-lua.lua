@@ -25,20 +25,20 @@ local _mt_cmd_wrapper = core.mt_cmd_wrapper
 ---to ignore `opts.cwd` when generating the command string because once the
 ---cwd is hard-coded in the command string, `opts.cwd` will be ignored.
 ---
----This fixes the bug where `switch_cwd()` does not work if it is used after
+---This fixes the bug where `change_cwd()` does not work if it is used after
 ---`switch_provider()`:
 ---
 ---In `switch_provider()`, `opts.cwd` will be passed the corresponding fzf
 ---provider (file or grep) where it will be compiled in the command string,
 ---which will then be stored in `fzf.config.__resume_data.contents`.
 ---
----`switch_cwd()` internally calls the resume action to resume the last
+---`change_cwd()` internally calls the resume action to resume the last
 ---provider and reuse other info in previous fzf session (e.g. last query, etc)
 ---except `opts.cwd`, `opts.fn_selected`, etc. that needs to be changed to
 ---reflect the new cwd.
 ---
 ---Thus if `__resume_data.contents` contains information about the previous
----cwd, the new cwd in `opts.cwd` will be ignored and `switch_cwd()` will not
+---cwd, the new cwd in `opts.cwd` will be ignored and `change_cwd()` will not
 ---take effect.
 ---@param opts table?
 ---@diagnostic disable-next-line: duplicate-set-field
@@ -527,7 +527,7 @@ function fzf.sessions(opts)
   )
 end
 
--- Fuzzy complete from registers in insert mode
+---Fuzzy complete from registers in insert mode
 ---@param opts table?
 function fzf.complete_from_registers(opts)
   fzf.registers(vim.tbl_deep_extend('force', opts or {}, {
