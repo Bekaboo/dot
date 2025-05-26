@@ -1,0 +1,99 @@
+# Skhd shortcut manager on macOS
+
+cmd - b        : open https://       # web browser
+cmd - m        : open -a thunderbird # email client
+cmd + alt - t  : open -a tmux        # terminal
+ctrl + alt - t : open -a tmux
+
+# Yabai shortcuts, see `../yabai/yabairc`
+# Switch windows
+cmd - h     : yabai -m window --focus west  || yabai -m window --focus stack.prev || yabai -m window --focus stack.next
+cmd - j     : yabai -m window --focus south || yabai -m window --focus stack.next || yabai -m window --focus stack.prev
+cmd - k     : yabai -m window --focus north || yabai -m window --focus stack.prev || yabai -m window --focus stack.next
+cmd - l     : yabai -m window --focus east  || yabai -m window --focus stack.next || yabai -m window --focus stack.prev
+cmd - left  : yabai -m window --focus west  || yabai -m window --focus stack.prev || yabai -m window --focus stack.next
+cmd - down  : yabai -m window --focus south || yabai -m window --focus stack.next || yabai -m window --focus stack.prev
+cmd - up    : yabai -m window --focus north || yabai -m window --focus stack.prev || yabai -m window --focus stack.next
+cmd - right : yabai -m window --focus east  || yabai -m window --focus stack.next || yabai -m window --focus stack.prev
+
+# Swap (move) windows
+cmd + shift - h     : yabai -m window --swap west
+cmd + shift - j     : yabai -m window --swap south
+cmd + shift - k     : yabai -m window --swap north
+cmd + shift - l     : yabai -m window --swap east
+cmd + shift - left  : yabai -m window --swap west
+cmd + shift - down  : yabai -m window --swap south
+cmd + shift - up    : yabai -m window --swap north
+cmd + shift - right : yabai -m window --swap east
+cmd - return        : yabai -m window --swap east
+
+# Resize windows
+cmd + alt - h     : yabai -m window --resize left:-40:0;  yabai -m window --resize right:-40:0
+cmd + alt - j     : yabai -m window --resize bottom:0:40; yabai -m window --resize top:0:40
+cmd + alt - k     : yabai -m window --resize top:0:-40;   yabai -m window --resize bottom:0:-40
+cmd + alt - l     : yabai -m window --resize right:40:0;  yabai -m window --resize left:40:0
+cmd + alt - left  : yabai -m window --resize left:-40:0;  yabai -m window --resize right:-40:0
+cmd + alt - down  : yabai -m window --resize bottom:0:40; yabai -m window --resize top:0:40
+cmd + alt - up    : yabai -m window --resize top:0:-40;   yabai -m window --resize bottom:0:-40
+cmd + alt - right : yabai -m window --resize right:40:0;  yabai -m window --resize left:40:0
+
+# Move window to another space (virtual desktop)
+cmd + ctrl + shift - h     : yabai -m window --space prev; yabai -m space --focus prev
+cmd + ctrl + shift - l     : yabai -m window --space next; yabai -m space --focus next
+cmd + ctrl + shift - left  : yabai -m window --space prev; yabai -m space --focus prev
+cmd + ctrl + shift - right : yabai -m window --space next; yabai -m space --focus next
+
+# Switch space (virtual desktop)
+cmd + ctrl - h     : yabai -m space --focus prev
+cmd + ctrl - l     : yabai -m space --focus next
+cmd + ctrl - left  : yabai -m space --focus prev
+cmd + ctrl - right : yabai -m space --focus next
+
+# Override default shortcut to disable desktop-switching animation
+ctrl - left        : yabai -m space --focus prev
+ctrl - right       : yabai -m space --focus next
+
+# Maximize/minimize
+cmd + alt - f   : yabai -m window --toggle float --grid 4:4:1:1:2:2
+cmd - pageup    : yabai -m window --toggle zoom-fullscreen; yabai -m window --raise
+cmd - pagedown  : yabai -m window --minimize
+cmd - backspace : yabai -m window --minimize
+
+# Close current window
+# Source: https://github.com/koekeishiya/yabai/issues/84#issuecomment-507762282
+cmd - delete    : osascript -e 'tell application "System Events" to perform action "AXPress" of (first button whose subrole is "AXCloseButton") of (first window whose subrole is "AXStandardWindow") of (first process whose frontmost is true)'
+
+# Toggle space layout
+cmd + shift + alt - b : yabai -m space --layout bsp
+cmd + shift + alt - f : yabai -m space --layout float
+cmd + shift + alt - m : yabai -m space --layout stack # memo: monocle layout
+cmd - r               : yabai -m space --rotate 270
+
+# Set alternatives to default shortcuts
+# https://github.com/koekeishiya/skhd/issues/204#issuecomment-1137446716
+:: default
+:: tabmode
+
+hyper - 0x80; tabmode
+tabmode < hyper - 0x80; default
+
+cmd + ctrl + alt - b         : skhd -k 'hyper - 0x80'; skhd -k 'cmd -b';         skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - m         : skhd -k 'hyper - 0x80'; skhd -k 'cmd -m';         skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - r         : skhd -k 'hyper - 0x80'; skhd -k 'cmd -r';         skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - h         : skhd -k 'hyper - 0x80'; skhd -k 'cmd -h';         skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - j         : skhd -k 'hyper - 0x80'; skhd -k 'cmd -j';         skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - k         : skhd -k 'hyper - 0x80'; skhd -k 'cmd -k';         skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - l         : skhd -k 'hyper - 0x80'; skhd -k 'cmd -l';         skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - right     : skhd -k 'hyper - 0x80'; skhd -k 'cmd -right';     skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - left      : skhd -k 'hyper - 0x80'; skhd -k 'cmd -left';      skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - up        : skhd -k 'hyper - 0x80'; skhd -k 'cmd -up';        skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - down      : skhd -k 'hyper - 0x80'; skhd -k 'cmd -down';      skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - delete    : skhd -k 'hyper - 0x80'; skhd -k 'cmd -delete';    skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - backspace : skhd -k 'hyper - 0x80'; skhd -k 'cmd -backspace'; skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - pageup    : skhd -k 'hyper - 0x80'; skhd -k 'cmd -pageup';    skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - pagedown  : skhd -k 'hyper - 0x80'; skhd -k 'cmd -pagedown';  skhd -k 'hyper - 0x80'
+
+# Make shortcuts more coherent across Windows/Linux/macOS
+alt - tab        : skhd -k 'hyper - 0x80'; skhd -k 'cmd -tab';       skhd -k 'hyper - 0x80'
+alt - space      : skhd -k 'hyper - 0x80'; skhd -k 'cmd -space';     skhd -k 'hyper - 0x80'
+ctrl - backspace : skhd -k 'hyper - 0x80'; skhd -k 'alt -backspace'; skhd -k 'hyper - 0x80'

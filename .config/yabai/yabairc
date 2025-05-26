@@ -1,0 +1,59 @@
+# vim:ft=sh:
+# Yabai macOS window manager config file
+
+# System settings
+# Disable macOS 'automatically rearrange Spaces based on most recent use' and
+# dock auto show/hide animation
+# https://apple.stackexchange.com/a/34097
+defaults write com.apple.dock workspaces-auto-swoosh -bool NO &&
+	defaults write com.apple.dock autohide-time-modifier -int 0 &&
+	killall Dock
+
+# Yabai settings
+# First disable SIP following:
+# https://github.com/koekeishiya/yabai/wiki/Disabling-System-Integrity-Protection
+#
+# TL;DR:
+# csrutil disable                     # run as root in recover mode terminal
+# nvram boot-args=-arm64e_preview_abi # needs sudo privilege
+#
+# Then reboot.
+
+# Load scripting addition, need sudo privilege
+# https://github.com/koekeishiya/yabai/wiki/Installing-yabai-(latest-release)#configure-scripting-addition
+if [ -s /private/etc/sudoers.d/yabai ]; then
+	yabai -m signal --add event=dock_did_restart action='sudo yabai --load-sa'
+	sudo yabai --load-sa
+fi
+
+# Layout
+yabai -m config layout bsp                   # use tiled layout
+yabai -m config window_placement first_child # new window at left
+
+# Set all padding and gaps to 8pt (default: 0)
+yabai -m config top_padding 8
+yabai -m config bottom_padding 8
+yabai -m config left_padding 8
+yabai -m config right_padding 8
+yabai -m config window_gap 8
+
+# Mouse settings
+yabai -m config mouse_modifier cmd   # set modifier to win/cmd key
+yabai -m config mouse_action1 move   # modifier + left-click to move window
+yabai -m config mouse_action2 resize # resize window
+
+# Make focus follow mouse (default: off, options: off, autoraise, autofocus)
+yabai -m config focus_follows_mouse autofocus # focus follows mouse
+yabai -m config mouse_drop_action swap        # swap windows when one dropped on another
+
+# Ignore the following apps (should always open in floating windows)
+yabai -m rule --add app='^Calculator' manage=off
+yabai -m rule --add app='^Mail' manage=off
+yabai -m rule --add app='^System' manage=off
+yabai -m rule --add app='^Thunderbird' manage=off
+yabai -m rule --add app='^Zoom' manage=off
+
+# Auto focus the window under cursor after current window is closed
+# https://github.com/koekeishiya/yabai/issues/692#issuecomment-710810388
+yabai -m signal --add event=window_destroyed action="yabai -m query --windows --window &> /dev/null || yabai -m window --focus mouse"
+yabai -m signal --add event=application_terminated action="yabai -m query --windows --window &> /dev/null || yabai -m window --focus mouse"
