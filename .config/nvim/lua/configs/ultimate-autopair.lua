@@ -191,6 +191,9 @@ if has_cmp then
   cmp.setup({
     formatting = {
       format = (function(cb) ---@param cb function?
+        ---@param entry cmp.Entry
+        ---@param item vim.CompletedItem
+        ---@return vim.CompletedItem
         return function(entry, item)
           -- Don't complete left parenthesis when calling functions or
           -- expressions in cmdline, e.g. `:call func(...`
@@ -199,7 +202,7 @@ if has_cmp then
             item.word = string.gsub(item.word, '%($', '')
             item.abbr = item.word
           end
-          return cb and cb(entry, item)
+          return cb and cb(entry, item) or item
         end
       end)(require('cmp.config').get().formatting.format),
     },

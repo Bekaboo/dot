@@ -257,6 +257,9 @@ cmp.setup({
   },
   formatting = {
     fields = vim.g.has_nf and { 'kind', 'abbr', 'menu' } or nil,
+    ---@param entry cmp.Entry
+    ---@param item vim.CompletedItem
+    ---@return vim.CompletedItem
     format = function(entry, item)
       local cmdcompltype = vim.fn.getcmdcompltype()
       local cmdcomplpath = compltype_path[cmdcompltype]
