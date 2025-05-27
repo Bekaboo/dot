@@ -4,7 +4,11 @@ return {
     cmd = 'FzfLua',
     keys = {
       { '<C-_>', desc = 'Fuzzy complete command/search history', mode = 'c' },
-      { '<C-x><C-l>', desc = 'Fuzzy complete command/search history', mode = 'c' },
+      {
+        '<C-x><C-l>',
+        desc = 'Fuzzy complete command/search history',
+        mode = 'c',
+      },
       { '<C-r>?', desc = 'Fuzzy complete from registers', mode = 'i' },
       { '<C-r><C-_>', desc = 'Fuzzy complete from registers', mode = 'i' },
       { '<C-r><C-r>', desc = 'Fuzzy complete from registers', mode = 'i' },
