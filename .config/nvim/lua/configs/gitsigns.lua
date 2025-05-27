@@ -54,3 +54,33 @@ vim.keymap.set('x', '<Leader>g<Esc>', '<Nop>')
 vim.keymap.set({ 'o', 'x' }, 'ig', ':<C-u>Gitsigns select_hunk<CR>', { silent = true, desc = 'Select git hunk' })
 vim.keymap.set({ 'o', 'x' }, 'ag', ':<C-u>Gitsigns select_hunk<CR>', { silent = true, desc = 'Select git hunk' })
 -- stylua: ignore end
+
+-- Auto-refresh fugitive buffers on staging/unstaging hunks
+vim.api.nvim_create_autocmd('User', {
+  pattern = 'GitSignsChanged',
+  desc = 'Automatically refresh fugitive buffers on staging/unstaging hunks.',
+  group = vim.api.nvim_create_augroup('GitsignsFugitiveIntegration', {}),
+  callback = function(info)
+    local file = info.data.file ---@type string
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      -- Only update fugitive buffers that matches the updated file
+      if
+        vim.bo[buf].ft == 'fugitive'
+        and require('utils.fs').contains(
+          vim.fn.fnamemodify(
+            vim.api.nvim_buf_get_name(buf):match('fugitive://(.*)'),
+            ':h:h'
+          ),
+          file
+        )
+      then
+        vim.schedule(function()
+          if vim.api.nvim_buf_is_valid(buf) then
+            vim.api.nvim_buf_call(buf, vim.cmd.edit)
+          end
+        end)
+        break
+      end
+    end
+  end,
+})
