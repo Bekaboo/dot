@@ -14,7 +14,11 @@ function M.load_once(from, ft, action)
   if not ok or not action(ft, val) then
     return false
   end
-  vim.api.nvim_exec_autocmds('FileType', { pattern = ft })
+  -- Only trigger FileType event when ft matches curent buffer's ft, else
+  -- it will mess up current buffer's hl and conceal
+  if ft == vim.bo.ft then
+    vim.api.nvim_exec_autocmds('FileType', { pattern = ft })
+  end
   return true
 end
 
