@@ -357,7 +357,7 @@ paths:
 ### Managing Plugins with Groups
 
 In order to enable or disable a module, one need to change the table in
-[lua/core/groups.lua](lua/core/plugins.lua) passed to `enable_plugins()`, for example
+[lua/core/plugins.lua](lua/core/plugins.lua) passed to `enable_plugins()`, for example
 
 ```lua
 enable_plugins({
