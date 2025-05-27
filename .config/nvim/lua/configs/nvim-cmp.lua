@@ -252,9 +252,6 @@ cmp.setup({
     disallow_prefix_unmatching = false,
     disallow_symbol_nonprefix_matching = false,
   },
-  confirmation = {
-    default_behavior = cmp.ConfirmBehavior.Replace,
-  },
   formatting = {
     fields = vim.g.has_nf and { 'kind', 'abbr', 'menu' } or nil,
     ---@param entry cmp.Entry
