@@ -578,8 +578,6 @@ and it should work out of the box.
 - [expandtab](lua/plugin/expandtab.lua)
     - Always use spaces for alignment, even if `'expandtab'` is not set, see
       `:h 'tabstop'` point 5
-- [fcitx5](lua/plugin/fcitx5.lua)
-    - Switches and restores fcitx5 state in each buffer asynchronously
 - [jupytext](lua/plugin/jupytext.lua)
     - Edits jupyter notebook like markdown files
     - Writes into jupyter notebook asynchronously, which gives a smoother

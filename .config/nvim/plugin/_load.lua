@@ -15,16 +15,6 @@ vim.api.nvim_create_autocmd('InsertEnter', {
   end,
 })
 
--- fcitx5
-vim.api.nvim_create_autocmd('ModeChanged', {
-  once = true,
-  pattern = '*:[ictRss\x13]*',
-  group = vim.api.nvim_create_augroup('IMSetup', {}),
-  callback = function()
-    require('plugin.fcitx5').setup()
-  end,
-})
-
 -- jupytext
 vim.api.nvim_create_autocmd('BufReadCmd', {
   once = true,
