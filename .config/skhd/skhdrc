@@ -25,7 +25,7 @@ cmd + shift - left  : yabai -m window --swap west
 cmd + shift - down  : yabai -m window --swap south
 cmd + shift - up    : yabai -m window --swap north
 cmd + shift - right : yabai -m window --swap east
-cmd - return        : yabai -m window --swap east
+cmd - return        : yabai -m window --swap last
 
 # Resize windows
 cmd + alt - h     : yabai -m window --resize left:-40:0;  yabai -m window --resize right:-40:0
