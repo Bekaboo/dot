@@ -172,11 +172,6 @@ main() {
     # Update PATH
     PATH=$(printf '%s' "$PATH" | tr ':' '\n' | sed "s|^$script_dir\$|$tmp_dir|" | tr '\n' ':' | sed 's/:$//')
 
-    if ! has fzf; then
-        echo 'fzf not found' >&2
-        return 1
-    fi
-
     # Calculate adaptive height
     cursor=$(cursorpos)
     cursor_row=${cursor%;*}
