@@ -580,6 +580,10 @@ nnoremap z? ?\%><C-r>=line('w0')-1<CR>l\%<<C-r>=line('w$')+1<CR>l
 
 " Select previously changed/yanked text, useful for selecting pasted text
 nnoremap gz `[v`]
+
+" Go to file under cursor, with line number
+nnoremap gf gF
+nnoremap ]f gF
 " }}}2
 
 " Delete selection in select mode {{{2

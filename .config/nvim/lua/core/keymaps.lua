@@ -130,6 +130,10 @@ vim.api.nvim_create_autocmd('UIEnter', {
     -- Select previously changed/yanked text, useful for selecting pasted text
     map('n', 'gz', '`[v`]', { desc = 'Select previously changed/yanked text' })
 
+    -- Go to file under cursor, with line number
+    map('n', 'gf', 'gF', { desc = 'Go to file under cursor' })
+    map('n', ']f', 'gF', { desc = 'Go to file under cursor' })
+
     -- Delete selection in select mode
     map('s', '<BS>', '<C-o>"_s', { desc = 'Delete selection' })
     map('s', '<C-h>', '<C-o>"_s', { desc = 'Delete selection' })
