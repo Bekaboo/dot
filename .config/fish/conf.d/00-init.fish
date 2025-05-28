@@ -14,7 +14,10 @@ if type -q brew
 end
 
 # Other install paths
-fish_add_path \
+# Homebrew `brew shellenv` uses `--move` to prepend its paths, overriding our
+# custom wrappers in `~/.bin` (e.g., `~/.bin/fzf`). We use `--move` again here
+# to ensure these paths take priority over homebrew's
+fish_add_path --move \
     $HOME/.bin \
     $HOME/.local/bin \
     $HOME/.cargo/bin \
