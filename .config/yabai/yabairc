@@ -51,7 +51,7 @@ yabai -m rule --add app='^Calculator' manage=off
 yabai -m rule --add app='^Mail' manage=off
 yabai -m rule --add app='^System' manage=off
 yabai -m rule --add app='^Thunderbird' manage=off
-yabai -m rule --add app='^Zoom' manage=off
+yabai -m rule --add app='^zoom.us' manage=off
 
 # Auto focus the window under cursor after current window is closed or space
 # changed
