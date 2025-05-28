@@ -5,8 +5,6 @@
 # Append brew install path in case tmux is installed with it
 export PATH=$PATH:/opt/homebrew/bin:/usr/local/bin
 
-if (tmux ls 2>/dev/null | grep -vq attached) && [ "$PWD" = "$HOME" ]; then
-	tmux at
-else
+(tmux ls 2>/dev/null | grep -vq attached) && [ "$PWD" = "$HOME" ] &&
+	tmux at ||
 	tmux
-fi
