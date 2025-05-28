@@ -52,6 +52,7 @@ yabai -m rule --add app='^Mail' manage=off
 yabai -m rule --add app='^System' manage=off
 yabai -m rule --add app='^Thunderbird' manage=off
 yabai -m rule --add app='^zoom.us' manage=off
+yabai -m rule --add title='^Extension:' manage=off # web browser extension
 
 # Auto focus the window under cursor after current window is closed or space
 # changed
