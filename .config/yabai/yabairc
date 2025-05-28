@@ -53,7 +53,9 @@ yabai -m rule --add app='^System' manage=off
 yabai -m rule --add app='^Thunderbird' manage=off
 yabai -m rule --add app='^Zoom' manage=off
 
-# Auto focus the window under cursor after current window is closed
+# Auto focus the window under cursor after current window is closed or space
+# changed
 # https://github.com/koekeishiya/yabai/issues/692#issuecomment-710810388
+yabai -m signal --add event=space_changed action="yabai -m query --windows --window &> /dev/null || yabai -m window --focus mouse"
 yabai -m signal --add event=window_destroyed action="yabai -m query --windows --window &> /dev/null || yabai -m window --focus mouse"
 yabai -m signal --add event=application_terminated action="yabai -m query --windows --window &> /dev/null || yabai -m window --focus mouse"
