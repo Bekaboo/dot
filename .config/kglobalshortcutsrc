@@ -191,8 +191,8 @@ Toggle Night Color=none,none,Suspend/Resume Night Light
 Toggle Window Raise/Lower=none,,Toggle Window Raise/Lower
 ToggleMouseClick=Meta+*,Meta+*,Toggle Mouse Click Effect
 TrackMouse=none,none,Track mouse
-Walk Through Windows=Alt+Tab,Alt+Tab,Walk Through Windows
-Walk Through Windows (Reverse)=Alt+Shift+Backtab,Alt+Shift+Tab,Walk Through Windows (Reverse)
+Walk Through Windows=Meta+Tab\tAlt+Tab,Alt+Tab,Walk Through Windows
+Walk Through Windows (Reverse)=Alt+Shift+Backtab\tMeta+Shift+Tab,Alt+Shift+Tab,Walk Through Windows (Reverse)
 Walk Through Windows Alternative=none,,Walk Through Windows Alternative
 Walk Through Windows Alternative (Reverse)=none,,Walk Through Windows Alternative (Reverse)
 Walk Through Windows of Current Application=Alt+`,Alt+`,Walk Through Windows of Current Application
@@ -215,7 +215,7 @@ Window Maximize Horizontal=none,,Maximize Window Horizontally
 Window Maximize Vertical=none,,Maximize Window Vertically
 Window Minimize=Meta+Backspace,Meta+PgDown,Minimize Window
 Window Move=none,,Move Window
-Window Move Center=Meta+Space\tMeta+Shift+Space,,Move Window to the Center
+Window Move Center=Meta+Shift+Space,,Move Window to the Center
 Window No Border=none,,Toggle Window Titlebar and Frame
 Window On All Desktops=none,,Keep Window on All Desktops
 Window One Desktop Down=Meta+Ctrl+Shift+J\tMeta+Ctrl+Shift+Down,Meta+Ctrl+Shift+Down,Window One Desktop Down
@@ -381,7 +381,7 @@ new-private-window=Meta+Shift+B\tMeta+Shift+P
 _launch=none
 
 [services][org.kde.krunner.desktop]
-_launch=Search\tAlt+Space\tAlt+F2
+_launch=Alt+F2\tSearch\tAlt+Space\tMeta+Space
 
 [services][org.kde.spectacle.desktop]
 RecordRegion=none
