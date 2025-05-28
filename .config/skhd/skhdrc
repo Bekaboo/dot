@@ -1,6 +1,7 @@
 # Skhd shortcut manager on macOS
 
 cmd - b        : open https://       # web browser
+cmd - e        : open "$HOME"        # file manager
 cmd - m        : open -a thunderbird # email client
 cmd + alt - t  : open -a tmux        # terminal
 ctrl + alt - t : open -a tmux
