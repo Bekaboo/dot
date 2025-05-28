@@ -1,13 +1,20 @@
 # Initialize fish shell, including settings global variables etc.
 
+if status is-login
+    and type -q proot-distro
+    and test -n "$PROOT_DISTRO"
+    and test -n "$PROOT_USER"
+    exec proot-distro login $PROOT_DISTRO --user $PROOT_USER --termux-home
+end
+
 # Setup for macOS homebrew
+fish_add_path /opt/homebrew/bin /usr/local/bin
 if type -q brew
-    fish_add_path -p (brew --prefix)/bin
     eval (brew shellenv)
 end
 
 # Other install paths
-fish_add_path -p \
+fish_add_path \
     $HOME/.bin \
     $HOME/.local/bin \
     $HOME/.cargo/bin \
@@ -33,11 +40,3 @@ end
 
 # Set rg config path
 set -gx RIPGREP_CONFIG_PATH $HOME/.ripgreprc
-
-if status is-login
-    and type -q proot-distro
-    and test -n "$TERMUX_VERSION"
-    and test -n "$PROOT_DISTRO"
-    and test -n "$PROOT_USER"
-    exec proot-distro login $PROOT_DISTRO --user $PROOT_USER --termux-home
-end
