@@ -1,4 +1,8 @@
 # Plugin settings
+# Don't bootstrap in non-interactive shells
+if not status is-interactive
+    exit
+end
 
 # Automatically fetch fisher plugin manager, setup paths and sync plugins
 function __bootstrap
@@ -31,29 +35,32 @@ function __bootstrap
     end
 
     # Return if fisher already installed
+    if type -q fisher
+        return
+    end
     for path in $fish_function_path
         if test -f "$path/fisher.fish"
             return
         end
     end
 
-    # Don't bootstrap in non-interactive shells
-    if not status is-interactive
+    # User has declared not to bootstrap plugins on startup
+    if test -f "$fish_state_dir/no-bootstrap"
         return 1
     end
 
-    set -l choice (string trim (read -P 'Install fisher plugin manager? [y]es/[n]o/[never] ' -l))
+    set -l choice (string trim (read -P \
+        'Install fisher plugin manager? [y]es/[n]o/[never] ' -l))
     switch $choice
         case Y y YES Yes yes
             curl -sL 'https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish' | source
             set -l plugins_file "$__fish_config_dir/fish_plugins"
-            if test -f "$plugins_file"
+            if test -s "$plugins_file"
                 cat "$plugins_file" | fisher install
             else
                 fisher install jorgebucaran/fisher
             end
-
-            # reload shell after update for e.g. patches to take effect
+            # Reload shell after update for plugins to take effect
             exec fish -l
         case NEVER Never never
             if not test -d "$fish_state_dir"
@@ -65,24 +72,6 @@ function __bootstrap
     end
 
     return 1
-end
-
-# Patch plugins after installing or upgrading plugins
-function __setup_patch_hook
-    set -l plugin_name $argv[1]
-    eval "function __patch_$plugin_name --on-event "$plugin_name"_install --on-event "$plugin_name"_update
-            set -l patch_dir \$__fish_config_dir/patches
-            set -l patch_file \$patch_dir/$plugin_name.patch
-            if not test -d \$patch_dir; or not test -f \$patch_file
-                return
-            end
-            patch -Rsfd \$fisher_path -p1 -i \$patch_file &>/dev/null
-            patch -fd \$fisher_path -p1 -i \$patch_file
-        end"
-end
-
-for patch in $__fish_config_dir/patches/*.patch
-    __setup_patch_hook (basename $patch .patch)
 end
 
 if not __bootstrap
