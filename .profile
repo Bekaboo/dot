@@ -82,7 +82,7 @@ export FZF_DEFAULT_OPTS="--reverse \
     --no-scrollbar \
     --border=none \
     --margin=1,0,0 \
-    --height=~45% \
+    --height=~75% \
     --min-height=16 \
     --scroll-off=999 \
     --multi \
