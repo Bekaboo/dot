@@ -196,9 +196,9 @@ function term_t:get(path, tab)
   -- Terminal recorded, add existing terminal buffer at `path` or create new
   -- terminal buffer
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-    local chat = self:new({ buf = buf })
-    if chat then
-      return chat, true
+    local new_term = self:new({ buf = buf })
+    if new_term and new_term.dir == path then
+      return new_term, true
     end
   end
 
