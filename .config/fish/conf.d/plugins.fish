@@ -6,28 +6,30 @@ end
 
 # Automatically fetch fisher plugin manager, setup paths and sync plugins
 function __bootstrap
-    # Add custom `$fisher_path` to fish paths
-    set -gx fisher_path \
-        (test -n "$XDG_DATA_HOME"; and echo $XDG_DATA_HOME/fish
-                                    or echo $HOME/.local/share/fish)
+    # Add custom `$fisher_path` to fish paths once
+    if set -q fisher_path
+        set -Ux fisher_path (test -n "$XDG_DATA_HOME"
+        and echo $XDG_DATA_HOME/fish
+        or echo $HOME/.local/share/fish)
+        mkdir -p $fisher_path
+    end
 
-    # Set fish state directory
-    set -gx fish_state_dir \
-        (test -n "$XDG_STATE_HOME"; and echo $XDG_STATE_HOME/fish
-                                    or echo $HOME/.local/state/fish)
+    # Set fish state directory once
+    if set -q fish_state_dir
+        set -Ux fish_state_dir (test -n "$XDG_STATE_HOME"
+            and echo $XDG_STATE_HOME/fish
+            or echo $HOME/.local/state/fish)
+        mkdir -p $fish_state_dir
+    end
 
     # Don't use `set -x` here as array-type environment variables will collapse
     # to strings when exported to subshell
     if not contains $fisher_path/functions $fish_function_path
-        set -g fish_function_path $fish_function_path[1] \
-            $fisher_path/functions \
-            $fish_function_path[2..-1]
+        set -Ua fish_function_path $fisher_path/functions
     end
 
     if not contains $fisher_path/completions $fish_complete_path
-        set -g fish_complete_path $fish_complete_path[1] \
-            $fisher_path/completions \
-            $fish_complete_path[2..-1]
+        set -Ua fish_complete_path $fisher_path/completions
     end
 
     for file in $fisher_path/conf.d/*.fish
