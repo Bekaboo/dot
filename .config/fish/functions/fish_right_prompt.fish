@@ -4,14 +4,24 @@ function __fish_venv_prompt
     end
 end
 
+function __fish_async_vcs_prompt
+    # Get cached version control info at `$__fish_vcs_info_<cwd>`
+    set -l safe_pwd (string replace -ra '[^a-zA-Z0-9_]' '_' -- $PWD)
+    set -l vcs_info_name __fish_vcs_info_$safe_pwd
+
+    # Launch async process to update vcs info
+    fish -c "set -U $vcs_info_name (fish_vcs_prompt)" & disown
+    echo $$vcs_info_name
+end
+
 function fish_right_prompt --description 'Write out the right prompt'
-    set -l vcs_info (string match -r '[^() ]+' (fish_vcs_prompt))
-    set -l venv_info (test -n "$VIRTUAL_ENV"
-        and echo (basename $VIRTUAL_ENV)
-        or echo '')
+    set -l vcs_info (string match -r '[^() ]+' (__fish_async_vcs_prompt))
+    set -l venv_info (__fish_venv_prompt)
 
     set -l info (string join ', ' (string match -v '' $venv_info $vcs_info))
-    if test -n "$info"
-        echo -n -s (set_color $fish_color_vcs) '(' $info ')'
+    if test -z "$info"
+        return
     end
+
+    echo -n -s (set_color $fish_color_vcs) '(' $info ')'
 end
