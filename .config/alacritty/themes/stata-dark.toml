@@ -6,7 +6,7 @@ cyan = "#7686bb"
 green = "#51cc99"
 magenta = "#6a6aff"
 red = "#BE646C"
-white = "#ffffff"
+white = "#dddddd"
 yellow = "#e2828e"
 
 [colors.cursor]

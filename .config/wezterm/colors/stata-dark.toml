@@ -17,7 +17,7 @@ brights = [
     '#7AB4DB',
     '#6a6aff',
     '#7686bb',
-    '#ffffff',
+    '#dddddd',
 ]
 foreground = '#cccccc'
 background = '#232629'

@@ -3,7 +3,7 @@
 
 fish_color_autosuggestion            777777 --italics
 fish_color_cancel                           --reverse
-fish_color_command                   ffffff --bold
+fish_color_command                   cccccc --bold
 fish_color_comment                   777777
 fish_color_cwd                       cccccc --background=6a6aff
 fish_color_cwd_root                  c85a5a --background=383c41
@@ -27,7 +27,7 @@ fish_color_operator                  7AB4DB
 fish_color_param                     7AB4DB
 fish_color_quote                     51cc99
 fish_color_redirection               7686bb
-fish_color_search_match              ffffff --background=383c41
+fish_color_search_match              dddddd --background=383c41
 fish_color_selection                 cccccc --background=383c41
 fish_color_status                    cccccc --background=e2828e
 fish_color_status_0                  cccccc --background=3b9670

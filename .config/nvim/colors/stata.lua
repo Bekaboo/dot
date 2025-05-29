@@ -53,7 +53,7 @@ if vim.go.bg == 'dark' then
   c_constant        = { '#cccccc', 251 }
   c_comment         = { '#777777', 243 }
   c_variable        = { '#7AB4DB', 74  }
-  c_generic         = { '#ffffff', 231 }
+  c_generic         = { '#dddddd', 231 }
   c_lightgreen      = { '#7ed07e', 46  }
   c_lightblue       = { '#c3cdff', 153 }
   c_lightred        = { '#ffa7ad', 210 }
