@@ -78,24 +78,25 @@ cmd + shift + alt - r : yabai -m space --rotate 270
 hyper - 0x80; tabmode
 tabmode < hyper - 0x80; default
 
-cmd + ctrl + alt - b         : skhd -k 'hyper - 0x80'; skhd -k 'cmd -b';         skhd -k 'hyper - 0x80'
-cmd + ctrl + alt - m         : skhd -k 'hyper - 0x80'; skhd -k 'cmd -m';         skhd -k 'hyper - 0x80'
-cmd + ctrl + alt - h         : skhd -k 'hyper - 0x80'; skhd -k 'cmd -h';         skhd -k 'hyper - 0x80'
-cmd + ctrl + alt - j         : skhd -k 'hyper - 0x80'; skhd -k 'cmd -j';         skhd -k 'hyper - 0x80'
-cmd + ctrl + alt - k         : skhd -k 'hyper - 0x80'; skhd -k 'cmd -k';         skhd -k 'hyper - 0x80'
-cmd + ctrl + alt - l         : skhd -k 'hyper - 0x80'; skhd -k 'cmd -l';         skhd -k 'hyper - 0x80'
-cmd + ctrl + alt - right     : skhd -k 'hyper - 0x80'; skhd -k 'cmd -right';     skhd -k 'hyper - 0x80'
-cmd + ctrl + alt - left      : skhd -k 'hyper - 0x80'; skhd -k 'cmd -left';      skhd -k 'hyper - 0x80'
-cmd + ctrl + alt - up        : skhd -k 'hyper - 0x80'; skhd -k 'cmd -up';        skhd -k 'hyper - 0x80'
-cmd + ctrl + alt - down      : skhd -k 'hyper - 0x80'; skhd -k 'cmd -down';      skhd -k 'hyper - 0x80'
-cmd + ctrl + alt - delete    : skhd -k 'hyper - 0x80'; skhd -k 'cmd -delete';    skhd -k 'hyper - 0x80'
-cmd + ctrl + alt - backspace : skhd -k 'hyper - 0x80'; skhd -k 'cmd -backspace'; skhd -k 'hyper - 0x80'
-cmd + ctrl + alt - pageup    : skhd -k 'hyper - 0x80'; skhd -k 'cmd -pageup';    skhd -k 'hyper - 0x80'
-cmd + ctrl + alt - pagedown  : skhd -k 'hyper - 0x80'; skhd -k 'cmd -pagedown';  skhd -k 'hyper - 0x80'
+# Hyper = cmd + ctrl + alt + shift
+hyper - h : skhd -k 'hyper - 0x80'; skhd -k 'cmd + shift - h'; skhd -k 'hyper - 0x80'
 
-cmd + ctrl + shift + alt - h : skhd -k 'hyper - 0x80'; skhd -k 'cmd +shift -h'; skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - b         : skhd -k 'hyper - 0x80'; skhd -k 'cmd - b';         skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - m         : skhd -k 'hyper - 0x80'; skhd -k 'cmd - m';         skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - h         : skhd -k 'hyper - 0x80'; skhd -k 'cmd - h';         skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - j         : skhd -k 'hyper - 0x80'; skhd -k 'cmd - j';         skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - k         : skhd -k 'hyper - 0x80'; skhd -k 'cmd - k';         skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - l         : skhd -k 'hyper - 0x80'; skhd -k 'cmd - l';         skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - right     : skhd -k 'hyper - 0x80'; skhd -k 'cmd - right';     skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - left      : skhd -k 'hyper - 0x80'; skhd -k 'cmd - left';      skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - up        : skhd -k 'hyper - 0x80'; skhd -k 'cmd - up';        skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - down      : skhd -k 'hyper - 0x80'; skhd -k 'cmd - down';      skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - delete    : skhd -k 'hyper - 0x80'; skhd -k 'cmd - delete';    skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - backspace : skhd -k 'hyper - 0x80'; skhd -k 'cmd - backspace'; skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - pageup    : skhd -k 'hyper - 0x80'; skhd -k 'cmd - pageup';    skhd -k 'hyper - 0x80'
+cmd + ctrl + alt - pagedown  : skhd -k 'hyper - 0x80'; skhd -k 'cmd - pagedown';  skhd -k 'hyper - 0x80'
 
 # Make shortcuts more coherent across Windows/Linux/macOS
-alt - tab        : skhd -k 'hyper - 0x80'; skhd -k 'cmd -tab';       skhd -k 'hyper - 0x80'
-alt - space      : skhd -k 'hyper - 0x80'; skhd -k 'cmd -space';     skhd -k 'hyper - 0x80'
-ctrl - backspace : skhd -k 'hyper - 0x80'; skhd -k 'alt -backspace'; skhd -k 'hyper - 0x80'
+alt - tab        : skhd -k 'hyper - 0x80'; skhd -k 'cmd - tab';       skhd -k 'hyper - 0x80'
+alt - space      : skhd -k 'hyper - 0x80'; skhd -k 'cmd - space';     skhd -k 'hyper - 0x80'
+ctrl - backspace : skhd -k 'hyper - 0x80'; skhd -k 'alt - backspace'; skhd -k 'hyper - 0x80'
