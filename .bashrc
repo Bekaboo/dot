@@ -140,23 +140,24 @@ ff() {
 # python virtualenvs
 cd() {
     builtin cd "$@"
-    if ! has tput || ! has wc; then
-        ls -C --color
-        __python_venv
-        return
+
+    local output=$(ls -C --color)
+
+    local max_lines=4
+    local num_lines=4
+    if has tput && has wc; then
+        local lines=$(tput lines)
+        local max_lines=$(($lines / 4))
+        local num_lines=$(printf '%s\n' "$output" | wc -l)
     fi
 
-    local lines="$(tput lines)"
-    local cols="$(tput cols)"
-    local max_lines="$(($lines / 4))"
-    local num_lines="$(ls -C | wc -l)"
     if [[ "$num_lines" -le "$max_lines" ]]; then
-        ls -C --color
+        printf '%s\n' "$output"
         __python_venv
         return
     fi
 
-    ls -C --color | head -n "$max_lines"
+    printf '%s\n' "$output" | head -n "$max_lines"
     __python_venv
     echo
     echo "... $num_lines lines total"
