@@ -136,33 +136,6 @@ ff() {
     return
 }
 
-# Improved 'cd', automatically list directory contents and activate
-# python virtualenvs
-cd() {
-    builtin cd "$@"
-
-    local output=$(ls -C --color)
-
-    local max_lines=4
-    local num_lines=4
-    if has tput && has wc; then
-        local lines=$(tput lines)
-        local max_lines=$(($lines / 4))
-        local num_lines=$(printf '%s\n' "$output" | wc -l)
-    fi
-
-    if [[ "$num_lines" -le "$max_lines" ]]; then
-        printf '%s\n' "$output"
-        __python_venv
-        return
-    fi
-
-    printf '%s\n' "$output" | head -n "$max_lines"
-    __python_venv
-    echo
-    echo "... $num_lines lines total"
-}
-
 # Open nvim/vim/vi
 v() {
     for editor in nvim vim vi; do
@@ -199,6 +172,27 @@ for git_cmp in \
     fi
 done
 
+# List current directory on directory change, see `__post_cd` below
+__autols() {
+    local output=$(ls -C --color)
+    local max_lines=4
+    local num_lines=4
+
+    if has tput && has wc; then
+        local lines=$(tput lines)
+        local max_lines=$(($lines / 4))
+        local num_lines=$(printf '%s\n' "$output" | wc -l | xargs) # trim whitespaces
+    fi
+
+    if [[ "$num_lines" -le "$max_lines" ]]; then
+        printf '%s\n' "$output"
+    else
+        printf '%s\n' "$output" | head -n "$max_lines"
+        echo
+        echo "... $num_lines lines total"
+    fi
+}
+
 # Python setup
 # Automatically activate or deactivate python virtualenvs
 __python_venv() {
@@ -219,6 +213,20 @@ __python_venv() {
     fi
 }
 __python_venv
+
+# Track directory changes and run post-cd actions
+__prev_dir=$PWD
+__post_cd() {
+    if [[ "$PWD" == "$__prev_dir" ]]; then
+        return
+    fi
+    __prev_dir=$PWD
+
+    __autols
+    __python_venv
+}
+
+PROMPT_COMMAND=${PROMPT_COMMAND:+$PROMPT_COMMAND; }__post_cd
 
 # Setup pyenv, see:
 # - `~/.profile`
