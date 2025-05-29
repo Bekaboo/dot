@@ -1,8 +1,7 @@
-function __ff_open_files_or_dir --description 'Use xdg to open files'
-    # $argv: files to open
-    if test (count $argv) = 1; and test -d $argv[1]
-        cd $argv
-        return $status
+function __ff_open_files_or_dir --description 'Use xdg to open files' -a path
+    if test (count $argv) = 1; and test -d "$path"
+        cd $path
+        return
     end
 
     # Copy text files and directories to a separate array and
@@ -30,14 +29,12 @@ function __ff_open_files_or_dir --description 'Use xdg to open files'
     end
 end
 
-function ff --description 'Use fzf to open files or cd to directories'
-    # $argv[1]: path to start searching from
-    # $argv[2]: optional initial query
-    set -l path (test -n "$argv[1]"; and echo $argv[1]; or echo $PWD)
-    set -l query $argv[2]
+function ff --description 'Use fzf to open files or cd to directories' \
+    --argument-names base query
+    set -l base (test -n "$base"; and echo $base; or echo $PWD)
 
     # If there is only one target and it is a file, open it directly
-    if test (count $argv) = 1; and test -f "$path"
+    if test (count $argv) = 1; and test -f "$base"
         __ff_open_files_or_dir $argv
         return
     end
@@ -53,10 +50,10 @@ function ff --description 'Use fzf to open files or cd to directories'
     # On some systems, e.g. Ubuntu, fd executable is installed as 'fdfind'
     set -l fd_cmd (type -q fd && echo fd || echo fdfind)
     if type -q $fd_cmd
-        $fd_cmd -0 -p -H -L -td -tf -tl -c=always --search-path=$path \
+        $fd_cmd -0 -p -H -L -td -tf -tl -c=always --search-path=$base \
             | fzf --read0 --ansi --query=$query >$tmpfile
     else if type -q find
-        find $path -print0 -type d -o -type f -o -type l -follow \
+        find $base -print0 -type d -o -type f -o -type l -follow \
             | fzf --read0 --ansi --query=$query >$tmpfile
     else
         echo 'fd/find is not executable' 1>&2

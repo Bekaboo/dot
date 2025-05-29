@@ -1,6 +1,6 @@
 function __complete_ssh_servers \
-    --description 'Complete <server> part in ssh addresses with format <username>@<server>:<path>'
-    set -l input $argv[1]
+    --description 'Complete <server> part in ssh addresses with format <username>@<server>:<path>' \
+    --argument-names input
     set -l servers (cat ~/.ssh/known_hosts | awk '{print $1}' | cut -d '@' -f 1 | sort -u)
     set -l server_part (string replace -r '^([^@]*)@([^:]*)' '$2' $input)
     set -l compl_prefix (string replace -r "$server_part\$" '' $input)
@@ -10,8 +10,8 @@ function __complete_ssh_servers \
 end
 
 function __complete_ssh_paths \
-    --description 'Complete <path> part in ssh addresses with format <username>@<server>:<path>'
-    set -l input $argv[1]
+    --description 'Complete <path> part in ssh addresses with format <username>@<server>:<path>' \
+    --argument-names input
     set -l input_list (string split ":" $input)
     if test (count $input_list) -ne 2
         return

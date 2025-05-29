@@ -33,9 +33,8 @@ abbr --add spellfix --position anywhere \
     --regex '\S*' --function __spellfix_abbr_fn
 
 # Command abbreviations
-function __command_abbr --description 'Add an command abbreviation'
-    # $argv[1]: trigger
-    abbr --add $argv[1] --position command $argv[2..-1]
+function __command_abbr --description 'Add an command abbreviation' -a trigger
+    abbr --add $trigger --position command $argv[2..-1]
 end
 
 __command_abbr cl clear
