@@ -389,44 +389,91 @@ augroup('SpecialBufHl', {
   },
 })
 
-augroup('SessionCloseEmptyWins', {
+augroup('SessionWipeEmptyBufs', {
   'SessionLoadPost',
   {
-    desc = 'Close empty windows after loading session.',
+    desc = 'Wipe empty buffers after loading session.',
     nested = true,
     callback = function()
-      ---Get list of normal windows in a tabpage
-      ---@param tab integer? tabpage id
+      ---Check if a buffer is valid, a valid buffer:
+      --- - has non-empty contents, or
+      --- - has corresponding file on disk, or
+      --- - filename contains '://' (special/remote files)
+      ---@param buf integer
+      ---@return boolean
+      local function buf_is_valid(buf)
+        if not require('utils.buf').is_empty(buf) then
+          return true
+        end
+        local bufname = vim.api.nvim_buf_get_name(buf)
+        if bufname:match('://') or vim.uv.fs_stat(bufname) then
+          return true
+        end
+        return false
+      end
+
+      ---Check if a window is normal (has empty win type)
+      ---@param win integer
+      ---@return boolean
+      local function win_is_normal(win)
+        return vim.fn.win_gettype(win) == ''
+      end
+
+      ---Get list of normal windows in given tabpage
+      ---@param tab integer tabpage id
       ---@return integer[]
       local function tabpage_list_normal_wins(tab)
         return vim
-          .iter(vim.api.nvim_tabpage_list_wins(tab or 0))
-          :filter(function(win)
-            return vim.fn.win_gettype(win) == ''
-          end)
+          .iter(vim.api.nvim_tabpage_list_wins(tab))
+          :filter(win_is_normal)
           :totable()
       end
 
+      local blacklist = {} ---@type table<integer, true>
+      local whitelist = {} ---@type table<integer, true>
+
+      -- Clean up windows and add invalid buffers to blacklist
       for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
         for _, win in ipairs(tabpage_list_normal_wins(tab)) do
+          -- Closing the last normal window will close that tab or break
+          -- tabpage layout, skip
           if #tabpage_list_normal_wins(tab) <= 1 then
             break
           end
-
           if not vim.api.nvim_win_is_valid(win) then
             goto continue
           end
 
+          -- Don't close window if containing buffer is valid
           local buf = vim.api.nvim_win_get_buf(win)
-          if not require('utils.buf').is_empty(buf) then
+          if buf_is_valid(buf) then
             goto continue
           end
-          if vim.uv.fs_stat(vim.api.nvim_buf_get_name(buf)) then
-            goto continue
-          end
+          blacklist[buf] = true
 
           vim.api.nvim_win_close(win, false)
           ::continue::
+        end
+      end
+
+      -- Find out invalid buffers that cannot be wiped out due to constraints
+      for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+        if #tabpage_list_normal_wins(tab) > 1 then
+          goto continue
+        end
+        -- Tabpage has <= 1 normal windows -- cannot wipe any buffer shown
+        -- in this tabpage else the tabpage will be closed or the layout will
+        -- change
+        for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
+          whitelist[vim.api.nvim_win_get_buf(win)] = true
+        end
+        ::continue::
+      end
+
+      -- Wipe out invalid buffers
+      for buf, _ in pairs(blacklist) do
+        if not whitelist[buf] and vim.api.nvim_buf_is_valid(buf) then
+          vim.api.nvim_buf_delete(buf, {})
         end
       end
     end,
