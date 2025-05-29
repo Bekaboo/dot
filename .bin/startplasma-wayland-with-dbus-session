@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+
+# Start KDE plasma wayland session, spawn dbus-run-session if needed, see:
+# - https://wiki.archlinux.org/title/KDE#From_the_console
+# - https://invent.kde.org/plasma/plasma-workspace/-/merge_requests/128
+
+drs=$([ -z "$DBUS_SESSION_BUS_ADDRESS" ] && echo dbus-run-session)
+exec $drs startplasma-wayland
