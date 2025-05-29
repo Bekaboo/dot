@@ -68,7 +68,7 @@ cmd - delete    : osascript -e 'tell application "System Events" to perform acti
 cmd + shift + alt - b : yabai -m space --layout bsp
 cmd + shift + alt - f : yabai -m space --layout float
 cmd + shift + alt - m : yabai -m space --layout stack # memo: monocle layout
-cmd - r               : yabai -m space --rotate 270
+cmd + shift + alt - r : yabai -m space --rotate 270
 
 # Set alternatives to default shortcuts
 # https://github.com/koekeishiya/skhd/issues/204#issuecomment-1137446716
@@ -80,7 +80,6 @@ tabmode < hyper - 0x80; default
 
 cmd + ctrl + alt - b         : skhd -k 'hyper - 0x80'; skhd -k 'cmd -b';         skhd -k 'hyper - 0x80'
 cmd + ctrl + alt - m         : skhd -k 'hyper - 0x80'; skhd -k 'cmd -m';         skhd -k 'hyper - 0x80'
-cmd + ctrl + alt - r         : skhd -k 'hyper - 0x80'; skhd -k 'cmd -r';         skhd -k 'hyper - 0x80'
 cmd + ctrl + alt - h         : skhd -k 'hyper - 0x80'; skhd -k 'cmd -h';         skhd -k 'hyper - 0x80'
 cmd + ctrl + alt - j         : skhd -k 'hyper - 0x80'; skhd -k 'cmd -j';         skhd -k 'hyper - 0x80'
 cmd + ctrl + alt - k         : skhd -k 'hyper - 0x80'; skhd -k 'cmd -k';         skhd -k 'hyper - 0x80'
