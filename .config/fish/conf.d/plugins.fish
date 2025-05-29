@@ -56,9 +56,9 @@ function __bootstrap
     switch $choice
         case Y y YES Yes yes
             curl -sL 'https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish' | source
-            set -l plugins_file "$__fish_config_dir/fish_plugins"
+            set -l plugins_file $__fish_config_dir/fish_plugins
             if test -s "$plugins_file"
-                cat "$plugins_file" | fisher install
+                cat $plugins_file | fisher install
             else
                 fisher install jorgebucaran/fisher
             end
@@ -66,10 +66,10 @@ function __bootstrap
             exec fish -l
         case NEVER Never never
             if not test -d "$fish_state_dir"
-                mkdir -p "$fish_state_dir"
+                mkdir -p $fish_state_dir
             end
-            touch "$fish_state_dir/no-bootstrap"
-            echo "Fisher bootstrap disabled"
+            touch $fish_state_dir/no-bootstrap
+            echo 'Fisher bootstrap disabled'
             echo "Remove '$fish_state_dir/no-bootstrap' to re-enable bootstrap"
     end
 
