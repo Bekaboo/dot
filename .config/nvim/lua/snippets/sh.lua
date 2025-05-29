@@ -237,21 +237,14 @@ M.snippets = {
     { trig = 'e' },
     { trig = 'ech' },
     { trig = 'echo' },
-  }, {
-    t('echo '),
-    c(1, {
-      i(nil, '"$1"'),
-      i(nil, "'$1'"),
-      i(nil, '$1'),
-    }),
-  }),
+  }, t('echo ')),
   us.msn(
     {
       { trig = 'pl' },
       { trig = 'el' },
       common = { desc = 'Print a line' },
     },
-    un.fmtad('echo "<line>"', {
+    un.fmtad("echo '<line>'", {
       line = c(1, {
         -- stylua: ignore start
         i(nil, '----------------------------------------'),
@@ -304,7 +297,7 @@ M.snippets = {
     t('read '),
     c(1, {
       i(nil, '-r var'),
-      i(nil, '-p "Prompt: " var'),
+      i(nil, "-p 'Prompt: ' var"),
       i(nil, '-n 1 var'),
     }),
   }),

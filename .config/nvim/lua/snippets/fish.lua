@@ -188,21 +188,14 @@ M.snippets = {
     { trig = 'p' },
     { trig = 'e' },
     common = { desc = 'echo command' },
-  }, {
-    t('echo '),
-    c(1, {
-      i(nil, '"$argv[1]"'),
-      i(nil, "'$argv[1]'"),
-      i(nil, '$argv[1]'),
-    }),
-  }),
+  }, t('echo ')),
   us.msn(
     {
       { trig = 'pl' },
       { trig = 'el' },
       common = { desc = 'Print a line' },
     },
-    un.fmtad('echo "<line>"', {
+    un.fmtad("echo '<line>'", {
       line = c(1, {
         -- stylua: ignore start
         i(nil, '----------------------------------------'),
@@ -226,7 +219,7 @@ M.snippets = {
       common = { desc = 'Debug check expression value' },
     },
     un.fmtad([[echo '<v_esc>:' <v>]], {
-      v = i(1, '"$var"'),
+      v = i(1, '$var'),
       v_esc = d(2, function(texts)
         local str = vim.fn.escape(texts[1][1], '\\'):gsub([[']], [['"'"']])
         return sn(nil, i(1, str))
@@ -240,7 +233,7 @@ M.snippets = {
       desc = 'Debug check expression value (cont.)',
     },
     un.fmtad([['<v_esc>:' <v>]], {
-      v = i(1, '"$var"'),
+      v = i(1, '$var'),
       v_esc = d(2, function(texts)
         local str = vim.fn.escape(texts[1][1], '\\'):gsub([[']], [['"'"']])
         return sn(nil, i(1, str))
@@ -253,7 +246,7 @@ M.snippets = {
   }, {
     t('read '),
     c(1, {
-      i(nil, '-P "Prompt: " var'),
+      i(nil, "-P 'Prompt: ' var"),
       i(nil, '-n 1 var'),
       i(nil, 'var'),
     }),
