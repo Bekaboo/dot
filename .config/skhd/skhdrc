@@ -93,6 +93,8 @@ cmd + ctrl + alt - backspace : skhd -k 'hyper - 0x80'; skhd -k 'cmd -backspace';
 cmd + ctrl + alt - pageup    : skhd -k 'hyper - 0x80'; skhd -k 'cmd -pageup';    skhd -k 'hyper - 0x80'
 cmd + ctrl + alt - pagedown  : skhd -k 'hyper - 0x80'; skhd -k 'cmd -pagedown';  skhd -k 'hyper - 0x80'
 
+cmd + ctrl + shift + alt - h : skhd -k 'hyper - 0x80'; skhd -k 'cmd +shift -h'; skhd -k 'hyper - 0x80'
+
 # Make shortcuts more coherent across Windows/Linux/macOS
 alt - tab        : skhd -k 'hyper - 0x80'; skhd -k 'cmd -tab';       skhd -k 'hyper - 0x80'
 alt - space      : skhd -k 'hyper - 0x80'; skhd -k 'cmd -space';     skhd -k 'hyper - 0x80'
