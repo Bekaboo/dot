@@ -209,6 +209,7 @@ function M.load(session)
       },
     })
     vim.g._session_loaded = session
+    vim.api.nvim_exec_autocmds('SessionLoadPost', {})
   end)
 end
 
