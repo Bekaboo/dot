@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      BSD
--- Last Updated: Mon 28 Apr 2025 05:36:28 PM EDT
+-- Last Updated: Thu May 29 10:10:48 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -329,6 +329,8 @@ local hlgroups = {
 
   -- Git
   gitHash = { fg = c_comment },
+  diffAdded = { fg = c_lightgreen },
+  diffRemoved = { fg = c_other },
   -- }}}2
 
   -- Plugins {{{2
@@ -408,6 +410,7 @@ if vim.go.bg == 'light' then
   hlgroups.StatusLineNC = { fg = c_foreground, bg = c_whitespace }
   hlgroups.StatusLineHeader = { fg = c_background, bg = c_special2 }
   hlgroups.StatusLineHeaderModified = { fg = c_background, bg = c_error }
+  hlgroups.diffAdded = { fg = c_special2 }
   hlgroups.fugitiveStagedHeading = { fg = c_special2, bold = true }
   hlgroups.fugitiveStagedModifier = { fg = c_special2, bold = true }
 end
