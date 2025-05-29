@@ -54,6 +54,11 @@ yabai -m rule --add app='^Thunderbird' manage=off
 yabai -m rule --add app='^zoom.us' manage=off
 yabai -m rule --add title='^Extension:' manage=off # web browser extension
 
+# Don't make floating windows always above tiled windows
+# https://github.com/koekeishiya/yabai/issues/2170
+yabai -m rule --add app='.*' sub-layer=normal
+yabai -m rule --apply
+
 # Auto focus the window under cursor after current window is closed or space
 # changed
 # https://github.com/koekeishiya/yabai/issues/692#issuecomment-710810388
