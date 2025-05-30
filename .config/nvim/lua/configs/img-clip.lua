@@ -86,11 +86,8 @@ $INDENTcaption: [$LABEL$CURSOR],
   },
 })
 
----@type table<string, true>
-local filetypes = {}
-for ft, _ in pairs(require('img-clip.config').opts.filetypes) do
-  filetypes[ft] = true
-end
+---@type table<string, any>
+local filetypes = require('img-clip.config').opts.filetypes
 
 ---Setup keymaps for img-clip
 ---@param buf integer?
