@@ -10,7 +10,7 @@ function __fish_async_vcs_prompt
     set -l vcs_info_name __fish_vcs_info_$safe_pwd
 
     # Launch async process to update vcs info
-    fish -c "set -U $vcs_info_name (fish_vcs_prompt)" & disown
+    fish -c "set -U $vcs_info_name (fish_vcs_prompt)" & disown 2>/dev/null
     echo $$vcs_info_name
 end
 
