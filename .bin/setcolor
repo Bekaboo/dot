@@ -252,7 +252,7 @@ get_plasma_wallpaper() {
     macro) echo "$DATA_HOME/wallpapers/Clouds" ;;
     everforest | gruvbox-material) echo "$DATA_HOME/wallpapers/Foggy Forest" ;;
     sonokai) echo "$DATA_HOME/wallpapers/Lofoten Sunset" ;;
-    stata) echo "$DATA_HOME/wallpapers/ThinkPad" ;;
+    stata) echo "$DATA_HOME/wallpapers/Binary Heart" ;;
     *) echo "" ;;
     esac
 }
