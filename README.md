@@ -4,9 +4,14 @@
 
 <img src="https://github.com/Bekaboo/dot/assets/76579810/de5ea335-0b0d-43e6-a49c-edde82ca45f1">
 
-Dotfiles for
+My dotfiles on Linux (KDE Wayland) and macOS, with configs for:
 
-- [KDE Plasma wallpapers](.local/share/wallpapers/) & [splash screens](.local/share/plasma/look-and-feel)
+- KDE Plasma
+    - [Wallpapers](.local/share/wallpapers/)
+    - [Splash screens](.local/share/plasma/look-and-feel)
+    - [Shortcuts](.config/kglobalshortcutsrc)
+    - [Klassy](.config/klassy/klassyrc)
+- [Yabai](.config/yabai)
 - [Vim](.vimrc)
 - [Neovim](.config/nvim)
 - [Tmux](.config/tmux/)
