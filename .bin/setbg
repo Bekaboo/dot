@@ -171,11 +171,11 @@ setbg_macos() {
         fi
 
         osascript <<EOF
-                tell application "System Events"
-                    tell appearance preferences
-                        set dark mode to $([ "$1" = dark ] && echo true || echo false)
-                    end tell
+            tell application "System Events"
+                tell appearance preferences
+                    set dark mode to $([ "$1" = dark ] && echo true || echo false)
                 end tell
+            end tell
 EOF
 
         # Restore auto-switch behavior
