@@ -22,6 +22,14 @@ vim.api.nvim_create_autocmd('User', {
   callback = function(info)
     vim.keymap.set({ 'n', 'x' }, 'S', 's', { buffer = info.buf, remap = true })
     vim.keymap.set({ 'n', 'x' }, 'x', 'X', { buffer = info.buf, remap = true })
+    vim.keymap.set({ 'n', 'x' }, '[g', '[c', {
+      buffer = info.buf,
+      remap = true,
+    })
+    vim.keymap.set({ 'n', 'x' }, ']g', ']c', {
+      buffer = info.buf,
+      remap = true,
+    })
   end,
 })
 
