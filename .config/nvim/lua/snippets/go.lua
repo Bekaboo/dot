@@ -369,7 +369,6 @@ M.snippets = {
   ),
   us.msn(
     {
-      { trig = 'err' },
       { trig = 'ifer' },
       { trig = 'iferr' },
       common = { desc = 'Catch error' },
