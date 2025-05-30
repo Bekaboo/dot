@@ -542,6 +542,7 @@ and it should work out of the box.
     - [vim-sleuth](https://github.com/tpope/vim-sleuth)
     - [ultimate-autopairs.nvim](https://github.com/altermo/ultimate-autopair.nvim)
     - [vim-easy-align](https://github.com/junegunn/vim-easy-align)
+    - [vim-conjoin](https://github.com/flwyd/vim-conjoin)
 - **Tools**
     - [fzf-lua](https://github.com/ibhagwan/fzf-lua)
     - [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim)

@@ -39,4 +39,16 @@ return {
       require('configs.vim-easy-align')
     end,
   },
+
+  {
+    'flwyd/vim-conjoin',
+    keys = {
+      { 'J', mode = { 'n', 'x' }, desc = 'Join lines' },
+      {
+        'gJ',
+        mode = { 'n', 'x' },
+        desc = 'Join lines without inserting/removing spaces',
+      },
+    },
+  },
 }
