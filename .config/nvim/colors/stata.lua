@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      BSD
--- Last Updated: Thu May 29 10:10:48 2025
+-- Last Updated: Fri May 30 15:30:53 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -406,6 +406,7 @@ if vim.go.bg == 'light' then
   hlgroups.DiffChange = { bg = c_keyword, fg = c_background }
   hlgroups.DiffText = { bg = c_special, fg = c_background }
   hlgroups.GitSignsAdd = { fg = c_special2 }
+  hlgroups.QuickFixLine = { bg = c_lightblue }
   hlgroups.StatusLine = { fg = c_background, bg = c_special }
   hlgroups.StatusLineNC = { fg = c_foreground, bg = c_whitespace }
   hlgroups.StatusLineHeader = { fg = c_background, bg = c_special2 }
