@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Remap macOS builtin keyboard automatically when device is ready -->
+<!-- See `~/.bin/macos-keymap` -->
+
+<!-- `launchd` doc: https://www.launchd.info/ -->
+
+<!-- More tips: -->
+<!-- https://technologeeks.com/docs/launchd.pdf -->
+<!-- https://www.digihunch.com/2022/11/key-mapping-on-external-pc-keyboard-on-macbook/ -->
+
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>user.keymap</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/sh</string>
+		<string>-c</string>
+		<!-- Use user default shell to ensure that envvars
+		     are loaded properly -->
+		<string>$SHELL -c macos-keymap</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+</dict>
+</plist>

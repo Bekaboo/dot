@@ -1,0 +1,121 @@
+#!/usr/bin/env sh
+# vim: ft=sh ts=4 sw=4 sts=4 et :
+#
+# Remap keys on macOS:
+# - capslock as control
+# - swap option and command
+#
+# This is a software level remap, i.e. instead of directly change the keycode
+# sent by pressing capslock, the system will treat capslock's keycode as
+# control
+
+# To set keymaps manually, go to
+# System Settings > Keyboard > Keyboard Shortcuts
+#
+# To see current mapping: `defaults -currentHost read -g`
+#
+# If not working, it is probably due to macOS's new security settings, see:
+# https://discussions.apple.com/thread/255794244?answerId=260826407022&sortBy=rank#260826407022
+#
+# Also see Apple's doc about the key values:
+# https://developer.apple.com/library/archive/technotes/tn2450/_index.html
+#
+# And these blogs/notes/websites:
+# - https://rakhesh.com/mac/using-hidutil-to-map-macos-keyboard-keys
+# - https://gist.github.com/paultheman/808be117d447c490a29d6405975d41bd
+# - https://hidutil-generator.netlify.app
+#
+# To restore, just set key mapping to empty list:
+# `hidutil property --set '{"UserKeyMapping":[]}'`
+
+usage() {
+    cat <<EOF
+Usage: $(basename $0) [vendor_id product_id]
+
+Remap keys on macOS:
+  - capslock as control
+  - swap option and command
+
+Arguments:
+  vendor_id    The vendor ID of the keyboard
+  product_id   The product ID of the keyboard
+
+If no arguments are provided, the built-in keyboard is used.
+
+Options:
+  -h, --help    Show this help message and exit
+  -r, --reset   Reset the keyboard mapping to default
+EOF
+}
+
+# Get the vendor and product id of the builtin keyboard in the format of
+# '<vendor_id> <product_id>' (separated by a space)
+get_builtin_keyboard_vendor_product_id() {
+    hidutil list |
+        grep 'HIDDevice Apple Internal Keyboard' |
+        head -n1 |
+        awk '{print (NF>=2 ? $1 " " $2 : $1)}'
+}
+
+# Remap keys for keyboard given keyboard vendor id and product id,
+# default to builtin keyboard
+# params: <vendor_id> <product_id> [mapping]
+keymap() {
+    vendor_id=$1
+    product_id=$2
+
+    # Use provided mapping or default mapping
+    mapping=${3:-'[
+                {
+                    "HIDKeyboardModifierMappingDst": 30064771302,
+                    "HIDKeyboardModifierMappingSrc": 30064771303
+                },
+                {
+                    "HIDKeyboardModifierMappingDst": 30064771299,
+                    "HIDKeyboardModifierMappingSrc": 30064771298
+                },
+                {
+                    "HIDKeyboardModifierMappingDst": 30064771303,
+                    "HIDKeyboardModifierMappingSrc": 30064771302
+                },
+                {
+                    "HIDKeyboardModifierMappingDst": 30064771300,
+                    "HIDKeyboardModifierMappingSrc": 30064771129
+                },
+                {
+                    "HIDKeyboardModifierMappingDst": 30064771298,
+                    "HIDKeyboardModifierMappingSrc": 30064771299
+                }
+            ]'}
+
+    if [ -z "$vendor_id" ] || [ -z "$product_id" ]; then
+        vendor_product_id=$(get_builtin_keyboard_vendor_product_id)
+        if [ -z "$vendor_product_id" ]; then
+            echo "Failed to get builtin keyboard vendor and product id" 1>&2
+            return 1
+        fi
+        vendor_id="${vendor_product_id%% *}"
+        product_id="${vendor_product_id##* }"
+    fi
+
+    hidutil property \
+        --match "{\"VendorID\":$vendor_id,\"ProductID\":$product_id}" \
+        --set "{\"UserKeyMapping\": $mapping}"
+}
+
+main() {
+    case "$1" in
+    -h | --help)
+        usage
+        return
+        ;;
+    -r | --reset)
+        keymap "$2" "$3" '[]'
+        return
+        ;;
+    esac
+
+    keymap "$@"
+}
+
+main "$@"
