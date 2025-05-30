@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "kankefengjing@gmail.com",
+                "Name": "Bekaboo"
+            }
+        ],
+        "Id": "Binary Heart",
+        "License": "LGPLv3",
+        "Name": "Binary Heart"
+    }
+}
