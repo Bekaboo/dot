@@ -1,4 +1,5 @@
 local M = {}
+local u = require('utils')
 local un = require('utils.snippets.nodes')
 local us = require('utils.snippets.snips')
 local ls = require('luasnip')
@@ -707,47 +708,67 @@ M.snippets = {
       { trig = 'func' },
       common = { desc = 'Function definition' },
     },
-    c(1, {
-      un.fmtad(
-        [[
-          func <name>(<args>) <ret> {
-          <body>
-          }
-        ]],
-        {
-          name = r(1, 'name'),
-          args = r(2, 'args'),
-          ret = r(3, 'ret'),
-          body = un.body(4, 1),
-        }
-      ),
-      un.fmtad(
-        [[
-          func (<args>) <ret> {
-          <body>
-          }
-        ]],
-        {
-          args = r(1, 'args'),
-          ret = r(2, 'ret'),
-          body = un.body(3, 1),
-        }
-      ),
-      un.fmtad(
-        [[
-          func (<struct>) <name>(<args>) <ret> {
-          <body>
-          }
-        ]],
-        {
-          name = r(1, 'name'),
-          args = r(2, 'args'),
-          ret = r(3, 'ret'),
-          struct = r(4, 'struct'),
-          body = un.body(5, 1),
-        }
-      ),
-    }),
+    d(1, function()
+      if
+        u.ts.find_node({
+          'expression_list', --- []func(T) U{ func() { ... }, ... }
+          'argument_list', -- foo(func() { ... }, ...)
+          'assignment', -- val = function() ... end
+          'short_var_declaration', -- val := func() { ... }
+          'return_statement', -- return func() { ... }
+          'binary_expression', -- <expression> and func() { ... }
+          'parenthesized_expression', -- (func() { ... })()
+        }, { ignore_injections = false })
+      then
+        -- Unnamed function
+        return sn(
+          nil,
+          un.fmtad(
+            [[
+              func(<args>) <ret> {
+              <body>
+              }
+            ]],
+            {
+              args = i(1),
+              ret = i(2),
+              body = un.body(3, 1),
+            }
+          )
+        )
+      end
+      -- Named function
+      return sn(
+        nil,
+        c(1, {
+          un.fmtad(
+            [[
+              func <name>(<args>) <ret> {
+              <body>
+              }
+            ]],
+            {
+              name = r(1, 'name', i(nil, 'funcName')),
+              args = r(2, 'args', i()),
+              ret = r(3, 'ret', i()),
+              body = un.body(4, 1),
+            }
+          ),
+          un.fmtad(
+            [[
+              func (<args>) <ret> {
+              <body>
+              }
+            ]],
+            {
+              args = r(1, 'args', i()),
+              ret = r(2, 'ret', i()),
+              body = un.body(3, 1),
+            }
+          ),
+        })
+      )
+    end),
     {
       common_opts = {
         stored = {
