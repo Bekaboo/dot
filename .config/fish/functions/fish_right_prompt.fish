@@ -10,8 +10,23 @@ function __fish_async_vcs_prompt
     set -l vcs_info_name __fish_vcs_info_$safe_pwd
 
     # Launch async process to update vcs info
-    fish -c "set -U $vcs_info_name (fish_vcs_prompt)" & disown 2>/dev/null
-    echo $$vcs_info_name
+    # Don't update if this is invoked by a repaint to avoid endless recursive
+    # calls
+    if not set -q __fish_async_vcs_update
+        fish -c "
+            set -U $vcs_info_name (fish_vcs_prompt)
+            and kill -USR1 $fish_pid
+        " & disown 2>/dev/null
+    end
+
+   echo $$vcs_info_name
+end
+
+function __fish_async_repaint_prompt --on-signal USR1
+    # Set flag `__fish_async_vcs_update` to indicate that the prompt is
+    # repainted to update vcs info
+    set -g __fish_async_vcs_update true; and commandline -f repaint
+    set -e __fish_async_vcs_update
 end
 
 function fish_right_prompt --description 'Write out the right prompt'
