@@ -705,7 +705,6 @@ M.snippets = {
       { trig = 'fn' },
       { trig = 'fun' },
       { trig = 'func' },
-      { trig = 'def' },
       common = { desc = 'Function definition' },
     },
     c(1, {
