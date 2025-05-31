@@ -1,3 +1,7 @@
+if not status is-interactive
+    exit
+end
+
 function __fish_venv_prompt
     if test -n "$VIRTUAL_ENV"
         echo basename $VIRTUAL_ENV
@@ -10,8 +14,15 @@ function __fish_async_vcs_prompt
     set -l vcs_info_name __fish_vcs_info_$safe_pwd
 
     # Launch async process to update vcs info
-    fish -c "set -U $vcs_info_name (fish_vcs_prompt)" & disown 2>/dev/null
+    fish -c "
+        set -U $vcs_info_name (fish_vcs_prompt)
+        and kill -USR1 $fish_pid
+    " & disown 2>/dev/null
     echo $$vcs_info_name
+end
+
+function __fish_async_repaint_prompt --on-signal USR1
+    commandline -f repaint
 end
 
 function fish_right_prompt --description 'Write out the right prompt'
