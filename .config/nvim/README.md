@@ -21,8 +21,6 @@ Currently only tested on Linux (X11/Wayland/TTY) and Android (Termux).
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/9e546e33-7678-47e2-8a80-368d7c59534a" width=46%>
 </center>
 
-## Table of Contents
-
 <!--toc:start-->
 - [Features](#features)
 - [Requirements and Dependencies](#requirements-and-dependencies)
