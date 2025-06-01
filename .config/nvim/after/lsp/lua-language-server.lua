@@ -7,9 +7,8 @@ return {
   },
   settings = {
     Lua = {
-      hint = {
-        enable = true,
-      },
+      hint = { enable = true },
+      format = { enable = false }, -- use stylua for formatting
     },
   },
 }
