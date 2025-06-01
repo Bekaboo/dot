@@ -4,14 +4,14 @@
 function pyenv --wraps pyenv --description 'Lazy init pyenv'
     set -l pyenv (which pyenv)
     if test -z "$pyenv"
-        command pyenv; or return $status # should have 'unkown command' error
+        command pyenv; or return # should have 'unkown command' error
     end
 
     # Not yet initialized
     if test -z "$PYENV_SHELL"
         set -gx PYENV_ROOT $HOME/.pyenv
         fish_add_path -p $PYENV_ROOT/bin
-        $pyenv init - fish | source; or return $status
+        $pyenv init - fish | source; or return
     end
 
     $pyenv $argv

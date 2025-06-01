@@ -15,7 +15,7 @@ function __pyenv \
     while test $path != (dirname $path)
         if test -f "$path/.python-version"
             pyenv init - fish | source
-            return $status
+            return
         end
         set path (dirname $path)
     end
