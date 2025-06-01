@@ -4,7 +4,7 @@ function __fish_venv_prompt
     end
 end
 
-function __fish_async_get_vcs_info_name -a path
+function __fish_async_prompt_get_vcs_info_name -a path
     set -l safe_path (string replace -ra '[^a-zA-Z0-9_]' '_' -- $path)
     echo __fish_vcs_info_$safe_path
 end
@@ -12,20 +12,21 @@ end
 function __fish_async_vcs_prompt
     # Get cached version control info at `$__fish_vcs_info_<cwd>`
     set -l path $PWD
-    set -l vcs_info_name (__fish_async_get_vcs_info_name $path)
+    set -l vcs_info_name (__fish_async_prompt_get_vcs_info_name $path)
 
     # Launch async process to update vcs info
     # Don't update if this is invoked by a repaint to avoid endless recursive
     # calls
-    if not set -q __fish_async_vcs_update
+    if not set -q __fish_async_prompt_vcs_update
         fish -c "
             set -U $vcs_info_name (fish_vcs_prompt)
-            and kill -USR1 $fish_pid
+            kill -USR1 $fish_pid
         " & disown 2>/dev/null
+    else
     end
 
     # Find cache with matching path prefix, e.g. for vcs info at `/foo/bar/baz`
-    # try cache for `/foo/bar/bar`, `/foo/bar`, `/foo` in order until the first
+    # try cache for `/foo/bar/baz`, `/foo/bar`, `/foo` in order until the first
     # found
     while test (dirname $path) != $path
         if set -q $vcs_info_name
@@ -33,15 +34,21 @@ function __fish_async_vcs_prompt
             return
         end
         set path (dirname $path)
-        set vcs_info_name (__fish_async_get_vcs_info_name $path)
+        set vcs_info_name (__fish_async_prompt_get_vcs_info_name $path)
     end
 end
 
-function __fish_async_repaint_prompt --on-signal USR1
-    # Set flag `__fish_async_vcs_update` to indicate that the prompt is
+function __fish_async_prompt_repaint --on-signal USR1
+    # Set flag `__fish_async_prompt_vcs_update` to indicate that the prompt is
     # repainted to update vcs info
-    set -g __fish_async_vcs_update true; and commandline -f repaint
-    set -e __fish_async_vcs_update
+    set -g __fish_async_prompt_vcs_update true
+    # Async call, prompt not updated yet when request exists, so use a function
+    # to unset the update flag on prompt repaint
+    commandline -f repaint
+    function __fish_async_prompt_undset_update --on-event fish_prompt
+        set -e __fish_async_prompt_vcs_update
+        functions -e __fish_async_prompt_undset_flag # ensure execute once
+    end
 end
 
 function fish_right_prompt --description 'Write out the right prompt'
