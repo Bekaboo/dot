@@ -7,15 +7,15 @@ end
 # Automatically fetch fisher plugin manager, setup paths and sync plugins
 function __bootstrap
     # Add custom `$fisher_path` to fish paths once
-    if set -q fisher_path
+    if not set -q fisher_path
         set -Ux fisher_path (test -n "$XDG_DATA_HOME"
-        and echo $XDG_DATA_HOME/fish
-        or echo $HOME/.local/share/fish)
+            and echo $XDG_DATA_HOME/fish
+            or echo $HOME/.local/share/fish)
         mkdir -p $fisher_path
     end
 
     # Set fish state directory once
-    if set -q fish_state_dir
+    if not set -q fish_state_dir
         set -Ux fish_state_dir (test -n "$XDG_STATE_HOME"
             and echo $XDG_STATE_HOME/fish
             or echo $HOME/.local/state/fish)
