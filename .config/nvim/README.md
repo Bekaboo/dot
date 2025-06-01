@@ -33,6 +33,9 @@ Currently only tested on Linux (X11/Wayland/TTY) and Android (Termux).
     - [LSP Configuration](#lsp-configuration)
     - [LSP Activation](#lsp-activation)
   - [DAP](#dap)
+    - [DAP Installation](#dap-installation)
+    - [DAP Configuration](#dap-configuration)
+    - [DAP Activation](#dap-activation)
   - [Formatter](#formatter)
 - [Installation](#installation)
 - [Troubleshooting](#troubleshooting)
@@ -189,6 +192,19 @@ automatically launch clangd in C files.
 
 ### DAP
 
+Like LSP, debug adapters are installed manually or via system package manager.
+
+1. [Installation](#dap-installation): install the debug adapter
+2. [Configuration](#dap-configuration): configs for each language so that
+   [lua/configs/nvim-dap.lua](lua/configs/nvim-dap.lua) knows how to launch
+   a debug session for each filetype
+3. [Activation](#dap-activation): use debug adapter to debug source files
+
+For more information about DAP installation and configuration, see
+[nvim-dap wiki](https://codeberg.org/mfussenegger/nvim-dap/wiki/Debug-Adapter-installation).
+
+#### DAP Installation
+
 Install the following debug adapters manually:
 
 - Bash:
@@ -231,7 +247,14 @@ Install the following debug adapters manually:
 
 - Go: install [Delve](https://github.com/go-delve/delve)
 
-For more information on DAP installation, see [Debug Adapter Installation](https://github.com/mfussenegger/nvim-dap/wiki/Debug-Adapter-installation).
+#### DAP Configuration
+
+Configuration for each filetypes: [lua/dapconfigs](lua/dapconfigs).
+
+#### DAP Activation
+
+Press `<Leader>Gb`/`<F9>` to set a breakpoint and `<Leader>Gc`/`<F5>` to start
+or continue a debug session.
 
 ### Formatter
 
@@ -499,7 +522,10 @@ See
 
 ### DAP Configurations
 
-See [lua/configs/dap-configs](lua/configs/dap-configs), [lua/configs/nvim-dap.lua](lua/configs/nvim-dap.lua), and [lua/configs/nvim-dap-ui.lua](lua/configs/nvim-dap-ui.lua).
+See
+- [lua/configs/dap-configs](lua/configs/dap-configs)
+- [lua/configs/nvim-dap.lua](lua/configs/nvim-dap.lua)
+- [lua/configs/nvim-dap-ui.lua](lua/configs/nvim-dap-ui.lua).
 
 ### Snippets
 
