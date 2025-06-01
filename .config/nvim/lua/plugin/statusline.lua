@@ -478,7 +478,12 @@ function _G._statusline.fname()
     )
   end
 
-  return utils.stl.escape(fname_short)
+  return utils.stl.escape(
+    str_shorten(
+      vim.api.nvim_eval_statusline('%F', {}).str,
+      fname_special_max_width
+    )
+  )
 end
 
 ---Name of python virtual environment
