@@ -97,7 +97,7 @@ end
 
 ---Send `lines` from `buf` to chat when aider is ready for input
 ---@param msg string|string[]
----@param buf integer? source of the messag, default to current buffer
+---@param buf integer? source of the message, default to current buffer
 function aider_chat_t:send(msg, buf)
   self:on_update(function()
     if not self:input_pending() then
