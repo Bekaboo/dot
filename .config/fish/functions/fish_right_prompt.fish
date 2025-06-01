@@ -4,15 +4,10 @@ function __fish_venv_prompt
     end
 end
 
-function __fish_async_prompt_get_vcs_info_name -a path
-    set -l safe_path (string replace -ra '[^a-zA-Z0-9_]' '_' -- $path)
-    echo __fish_vcs_info_$safe_path
-end
-
 function __fish_async_vcs_prompt
     # Get cached version control info at `$__fish_vcs_info_<cwd>`
-    set -l path $PWD
-    set -l vcs_info_name (__fish_async_prompt_get_vcs_info_name $path)
+    set -l safe_pwd (string replace -ra '[^a-zA-Z0-9_]' '_' -- $PWD)
+    set -l vcs_info_name __fish_vcs_info_$safe_pwd
 
     # Launch async process to update vcs info
     # Don't update if this is invoked by a repaint to avoid endless recursive
@@ -22,20 +17,9 @@ function __fish_async_vcs_prompt
             set -U $vcs_info_name (fish_vcs_prompt)
             kill -USR1 $fish_pid
         " & disown 2>/dev/null
-    else
     end
 
-    # Find cache with matching path prefix, e.g. for vcs info at `/foo/bar/baz`
-    # try cache for `/foo/bar/baz`, `/foo/bar`, `/foo` in order until the first
-    # found
-    while test (dirname $path) != $path
-        if set -q $vcs_info_name
-            echo $$vcs_info_name
-            return
-        end
-        set path (dirname $path)
-        set vcs_info_name (__fish_async_prompt_get_vcs_info_name $path)
-    end
+   echo $$vcs_info_name
 end
 
 function __fish_async_prompt_repaint --on-signal USR1
