@@ -123,6 +123,9 @@ end
 ---Setup LSP handlers overrides
 ---@return nil
 local function setup_lsp_overrides()
+  vim.lsp.config('*', utils.lsp.default_config)
+  vim.lsp.start = utils.lsp.start -- override for additional checks
+
   -- Show notification if no references, definition, declaration,
   -- implementation or type definition is found
   local methods = {
@@ -1545,6 +1548,4 @@ local function setup()
   setup_commands('Diagnostic', subcommands.diagnostic, vim.diagnostic)
 end
 
-return {
-  setup = setup,
-}
+return { setup = setup }

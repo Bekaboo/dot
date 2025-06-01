@@ -1,0 +1,32 @@
+local root_markers = {
+  '.flake8',
+  'Pipfile',
+  'pyproject.toml',
+  'requirements.txt',
+  'setup.cfg',
+  'setup.py',
+  'tox.ini',
+}
+
+return {
+  filetypes = { 'python' },
+  cmd = { 'efm-langserver' },
+  requires = { 'flake8' },
+  name = 'flake8',
+  root_markers = root_markers,
+  settings = {
+    languages = {
+      -- Source: https://github.com/creativenull/efmls-configs-nvim/blob/main/lua/efmls-configs/linters/flake8.lua
+      python = {
+        {
+          lintSource = 'flake8',
+          lintCommand = 'flake8 --ignore=E501 -', -- ignore line length error
+          lintFormats = { 'stdin:%l:%c: %t%n %m' },
+          lintIgnoreExitCode = true,
+          lintStdin = true,
+          rootMarkers = root_markers,
+        },
+      },
+    },
+  },
+}

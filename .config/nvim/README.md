@@ -29,6 +29,9 @@ Currently only tested on Linux (X11/Wayland/TTY) and Android (Termux).
   - [Basic](#basic)
   - [Tree-sitter](#tree-sitter)
   - [LSP](#lsp)
+    - [LSP Installation](#lsp-installation)
+    - [LSP Configuration](#lsp-configuration)
+    - [LSP Activation](#lsp-activation)
   - [DAP](#dap)
   - [Formatter](#formatter)
 - [Installation](#installation)
@@ -111,15 +114,30 @@ see [lua/configs/nvim-treesitter.lua](lua/configs/nvim-treesitter.lua).
 
 ### LSP
 
+There are three steps to enable a LSP:
+
+1. [Installation](#lsp-installation): install the language server on your
+   system
+2. [Configuration](#lsp-configuration): add the language server config to
+   [after/lsp](after/lsp) so that neovim knows how to launch the language
+   server
+3. [Activation](#lsp-activation): call `vim.lsp.enable('<language-server>') `
+   to let neovim automatically launch the language server based on filetypes or
+   root markers/directories.
+
+#### LSP Installation
+
+This config does not use an LSP installer, e.g. [mason.nvim](https://github.com/mason-org/mason.nvim)
+because I believe it is the system package manager's responsibility to manage
+external dependencies, e.g. language servers.
+
 For LSP support, install the following language servers manually using your
 favorite package manager:
 
 - Bash: [BashLS](https://github.com/bash-lsp/bash-language-server)
 
-    Example for ArchLinux users:
-
     ```sh
-    sudo pacman -S bash-language-server
+    sudo pacman -S bash-language-server # example for Arch Linux
     ```
 
 - C/C++: [Clang](https://clang.llvm.org/)
@@ -146,18 +164,28 @@ favorite package manager:
         - [Eslint](https://eslint.org/) (linter)
         - ...
 
-To add support for other languages, install corresponding language servers
-manually then add `lsp.lua` files under [after/ftplugin](after/ftplugin) to automatically launch
-them for different filetypes.
+#### LSP Configuration
 
-Some examples of `lsp.lua` files:
+Configs for each language server are defined under [after/lsp](after/lsp). They
+can be retrieved with `vim.lsp.config['<language-server>']`
 
-- [after/ftplugin/lua/lsp.lua](after/ftplugin/lua/lsp.lua)
-- [after/ftplugin/python/lsp.lua](after/ftplugin/python/lsp.lua)
-- [after/ftplugin/rust/lsp.lua](after/ftplugin/rust/lsp.lua)
-- [after/ftplugin/sh/lsp.lua](after/ftplugin/sh/lsp.lua)
-- [after/ftplugin/go/lsp.lua](after/ftplugin/go/lsp.lua)
-- [after/ftplugin/typescript/lsp.lua](after/ftplugin/typescript/lsp.lua)
+e.g. to print out the config for clangd, use:
+
+```vim
+:lua =vim.lsp.config['clangd']
+```
+
+#### LSP Activation
+
+Neovim does not automatically start language servers by default. To make this
+happen, you have to call `vim.lsp.enable('<language-server>')`, e.g. for clangd:
+
+```lua
+vim.lsp.enable('clangd') -- requires `after/lsp/clangd.lua`
+```
+
+you can put this in [after/ftplugin/c/lsp.lua](after/ftplugin/c/lsp.lua) to
+automatically launch clangd in C files.
 
 ### DAP
 
@@ -463,7 +491,11 @@ See [lua/core/autocmds.lua](lua/core/autocmds.lua).
 
 ### LSP Server Configurations
 
-See [lua/utils/lsp.lua](lua/utils/lsp.lua) and `lsp.lua` files under [after/ftplugin](after/ftplugin).
+See
+- [lua/plugin/lsp.lua](lua/plugin/lsp.lua) for custom lsp setups
+- [after/lsp](after/lsp) for configs for each language server
+- `lsp.lua` files under [after/ftplugin](after/ftplugin) for language servers
+  enabled for each filetype
 
 ### DAP Configurations
 

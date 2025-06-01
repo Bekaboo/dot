@@ -26,7 +26,12 @@ vim.api.nvim_create_autocmd('BufReadCmd', {
 })
 
 -- lsp & diagnostic settings
-vim.api.nvim_create_autocmd({ 'LspAttach', 'DiagnosticChanged' }, {
+vim.api.nvim_create_autocmd({
+  'Syntax',
+  'FileType',
+  'LspAttach',
+  'DiagnosticChanged',
+}, {
   once = true,
   desc = 'Apply lsp and diagnostic settings.',
   group = vim.api.nvim_create_augroup('LspDiagnosticSetup', {}),
