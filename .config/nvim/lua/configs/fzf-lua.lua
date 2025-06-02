@@ -565,11 +565,8 @@ end
 local _win_generate_layout = fzf_win.generate_layout
 local _win_redraw_preview = fzf_win.redraw_preview
 local _win_close_preview = fzf_win.close_preview
-local _win_close = fzf_win.close
 local _builtin_previewer_preview_window =
   fzf_builtin_previewer.base.preview_window
-local _builtin_previewer_backup_winopts =
-  fzf_builtin_previewer.base.backup_winopts
 
 ---Hide but don't disable fzf native preview when using split layout, so that
 ---we can sync builtin previewer with fzf
@@ -578,10 +575,24 @@ function fzf_builtin_previewer.base:preview_window(...)
     or _builtin_previewer_preview_window(self, ...)
 end
 
-function fzf_builtin_previewer.base:backup_winopts(...)
-  self.winopts_orig = self.winopts_orig or {}
-  ---@diagnostic disable-next-line: redundant-parameter
-  return _builtin_previewer_backup_winopts(self, ...)
+---@diagnostic disable-next-line: inject-field
+function fzf_builtin_previewer.base:backup_winhl()
+  self.winopts_orig = self.winopts_orig or {} -- fix nil error
+  ---@diagnostic disable-next-line: inject-field
+  if self.win.src_winid and vim.api.nvim_win_is_valid(self.win.src_winid) then
+    self.winhl_orig = vim.wo[self.win.src_winid].winhl
+  end
+end
+
+---@diagnostic disable-next-line: inject-field
+function fzf_builtin_previewer.base:restore_winhl()
+  if
+    self.winhl_orig
+    and self.win.src_winid
+    and vim.api.nvim_win_is_valid(self.win.src_winid)
+  then
+    vim.wo[self.win.src_winid].winhl = self.winhl_orig
+  end
 end
 
 function fzf_win:generate_layout(...)
@@ -639,6 +650,8 @@ function fzf_win:redraw_preview(...)
     end
 
     if self._previewer then
+      ---@diagnostic disable-next-line: undefined-field
+      self._previewer:backup_winhl()
       self._previewer:backup_winopts()
       ---@diagnostic disable-next-line: inject-field
       self._previewer_winopts_orig = self._previewer.winopts_orig
@@ -671,15 +684,14 @@ function fzf_win:close_preview(...)
 
   -- Restore preview window id, `self._previewer:restore_winopts()` needs this
   self.preview_winid = self.src_winid
-end
-
-function fzf_win:close(...)
-  _win_close(self, ...)
 
   -- Restore source window appearance
   vim.schedule(vim.schedule_wrap(function()
-    if self._previewer and self._previewer_winopts_orig then
-      self._previewer.winopts_orig = self._previewer_winopts_orig
+    if self._previewer then
+      ---@diagnostic disable-next-line: undefined-field
+      self._previewer:restore_winhl()
+
+      self._previewer.winopts_orig = self._previewer_winopts_orig or {}
       self._previewer:restore_winopts()
     end
   end))
