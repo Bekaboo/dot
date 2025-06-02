@@ -1,8 +1,4 @@
 # Plugin settings
-# Don't bootstrap in non-interactive shells
-if not status is-interactive
-    exit
-end
 
 # Automatically fetch fisher plugin manager, setup paths and sync plugins
 function __bootstrap
