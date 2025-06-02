@@ -176,13 +176,17 @@ function M.jump(input)
       return
     end
 
-    local output = vim.trim(vim.gsplit(obj.stdout, '\n')() or '')
-    local path_escaped = vim.fn.fnameescape(output)
-
-    -- Schedule to allow oil.nvim to conceal line headers correctly
-    vim.schedule(function()
-      vim.cmd.edit(path_escaped)
-      vim.cmd.lcd({ path_escaped, mods = { silent = true } })
+    local path = vim.trim(vim.gsplit(obj.stdout, '\n')() or '')
+    vim.uv.fs_stat(path, function(_, stat)
+      if not stat then
+        return
+      end
+      -- Schedule to allow oil.nvim to conceal line headers correctly
+      local path_escaped = vim.fn.fnameescape(path)
+      vim.schedule(function()
+        vim.cmd.edit(path_escaped)
+        vim.cmd.lcd({ path_escaped, mods = { silent = true } })
+      end)
     end)
   end)
 end
