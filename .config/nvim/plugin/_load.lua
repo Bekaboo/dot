@@ -165,7 +165,7 @@ if vim.g.loaded_aider == nil then
   local toggle = function() require('plugin.aider').toggle() end
   local send = function() require('plugin.aider').send() end
   local add = function() require('plugin.aider').add() end
-  -- stylua: ignore off
+  -- stylua: ignore end
 
   vim.keymap.set('n', '<Leader>@', toggle, { desc = 'Aider (AI) toggle chat panel' })
   vim.keymap.set('x', '<Leader>@', send, { desc = 'Aider (AI) send selection' })

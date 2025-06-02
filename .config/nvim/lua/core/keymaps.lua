@@ -123,7 +123,7 @@ vim.api.nvim_create_autocmd('UIEnter', {
     -- stylua: ignore start
     map('x', '/',  '<C-\\><C-n>`</\\%V', { desc = 'Search forward within visual selection' })
     map('x', '?',  '<C-\\><C-n>`>?\\%V', { desc = 'Search backward within visual selection' })
-    -- stylua: ignore off
+    -- stylua: ignore end
 
     -- Select previously changed/yanked text, useful for selecting pasted text
     map('n', 'gz', '`[v`]', { desc = 'Select previously changed/yanked text' })

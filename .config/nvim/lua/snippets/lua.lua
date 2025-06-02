@@ -560,7 +560,7 @@ M.snippets = {
       [[
         -- stylua: ignore start
         <body>
-        -- stylua: ignore off
+        -- stylua: ignore end
       ]],
       { body = un.body(1, 0) }
     )

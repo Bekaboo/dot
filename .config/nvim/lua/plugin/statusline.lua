@@ -741,7 +741,7 @@ local function set_default_hlgroups()
   sethl('StatusLineDiagnosticError', { fg = 'DiagnosticSignError', ctermfg = 'DiagnosticSignError' })
   sethl('StatusLineHeader',          { fg = 'TabLine', bg = 'fg', ctermfg = 'TabLine', ctermbg = 'fg', reverse = true })
   sethl('StatusLineHeaderModified',  { fg = 'Special', bg = 'fg', ctermfg = 'Special', ctermbg = 'fg', reverse = true })
-  -- stylua: ignore off
+  -- stylua: ignore end
 end
 
 set_default_hlgroups()

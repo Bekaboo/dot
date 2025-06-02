@@ -22,4 +22,4 @@ vim.keymap.set('n', '<Leader>tt', '<Cmd>TestNearest<CR>', { desc = 'Run the test
 vim.keymap.set('n', '<Leader>t$', '<Cmd>TestLast<CR>',    { desc = 'Run the last test' })
 vim.keymap.set('n', '<Leader>ts', '<Cmd>TestSuite<CR>',   { desc = 'Run the whole test suite' })
 vim.keymap.set('n', '<Leader>to', '<Cmd>TestVisit<CR>',   { desc = 'Go to last visited test file' })
--- stylua: ignore off
+-- stylua: ignore end
