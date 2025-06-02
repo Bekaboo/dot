@@ -23,10 +23,13 @@ end
 
 ---Given a list of args for `z`, return its corresponding escaped string to be
 ---used as a shell command argument
----@param args string[]?
+---@param args? string|string[]
 ---@return string
 local function z_args_esc(args)
-  if not args then
+  if type(args) ~= 'table' then
+    args = { args }
+  end
+  if vim.tbl_isempty(args) then
     return ''
   end
 
@@ -60,7 +63,7 @@ local z_backends = {
         return { vim.env.SHELL, '-c', 'z -l ' .. z_args_esc(trig) }
       end,
       add = function(dir)
-        return { vim.env.SHELL, '-c', 'cd ' .. z_args_esc({ dir }) }
+        return { vim.env.SHELL, '-c', 'cd ' .. z_args_esc(dir) }
       end,
     },
   },
