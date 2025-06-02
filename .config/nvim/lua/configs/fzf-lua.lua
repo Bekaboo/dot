@@ -4,7 +4,6 @@ local fzf_core = require('fzf-lua.core')
 local fzf_path = require('fzf-lua.path')
 local fzf_config = require('fzf-lua.config')
 local fzf_win = require('fzf-lua.win')
-local fzf_utils = require('fzf-lua.utils')
 local fzf_builtin_previewer = require('fzf-lua.previewer.builtin')
 local utils = require('utils')
 local icons = require('utils.static.icons')
@@ -569,12 +568,20 @@ local _win_close_preview = fzf_win.close_preview
 local _win_close = fzf_win.close
 local _builtin_previewer_preview_window =
   fzf_builtin_previewer.base.preview_window
+local _builtin_previewer_backup_winopts =
+  fzf_builtin_previewer.base.backup_winopts
 
 ---Hide but don't disable fzf native preview when using split layout, so that
 ---we can sync builtin previewer with fzf
-function fzf_builtin_previewer.base.preview_window(self, ...)
+function fzf_builtin_previewer.base:preview_window(...)
   return self.win and self.win.winopts.split and 'nohidden:right:0'
     or _builtin_previewer_preview_window(self, ...)
+end
+
+function fzf_builtin_previewer.base:backup_winopts(...)
+  self.winopts_orig = self.winopts_orig or {}
+  ---@diagnostic disable-next-line: redundant-parameter
+  return _builtin_previewer_backup_winopts(self, ...)
 end
 
 function fzf_win:generate_layout(...)
@@ -607,28 +614,34 @@ end
 function fzf_win:redraw_preview(...)
   -- Reuse source win or create a new split window for preview
   if self.winopts.split and not self:validate_preview() then
-    local wo = vim.wo[self.src_winid]
-    ---@diagnostic disable-next-line: inject-field
-    self.src_winopts = {
-      number = wo.number,
-      relativenumber = wo.relativenumber,
-      cursorline = wo.cursorline,
-      cursorcolumn = wo.cursorcolumn,
-      spell = wo.spell,
-      list = wo.list,
-      signcolumn = wo.signcolumn,
-      foldcolumn = wo.foldcolumn,
-      colorcolumn = wo.colorcolumn,
-    }
-    self.preview_winid = self.src_winid
-        and vim.api.nvim_win_is_valid(self.src_winid)
-        and self.src_winid
-      or vim.api.nvim_open_win(0, false, {
-        split = 'above',
-        win = 0,
-      })
+    if self.src_winid and vim.fn.win_gettype(self.src_winid) == '' then
+      self.preview_winid = self.src_winid
+    else
+      -- Use first 'normal' window as source & preview window
+      for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+        if vim.fn.win_gettype(win) == '' then
+          self.preview_winid = win
+          self.src_winid = win
+          self.src_bufnr = vim.api.nvim_win_get_buf(win)
+          break
+        end
+      end
+      -- No existing normal window, create a new window for the previewer
+      if not self.preview_winid then
+        self.preview_winid = vim.api.nvim_open_win(0, false, {
+          split = 'above',
+          win = 0,
+        })
+      end
+    end
     if not self.preview_winid then
       return
+    end
+
+    if self._previewer then
+      self._previewer:backup_winopts()
+      ---@diagnostic disable-next-line: inject-field
+      self._previewer_winopts_orig = self._previewer.winopts_orig
     end
   end
   ---@diagnostic disable-next-line: redundant-parameter
@@ -636,40 +649,40 @@ function fzf_win:redraw_preview(...)
 end
 
 function fzf_win:close_preview(...)
+  if self.preview_winid ~= self.src_winid then
+    return _win_close_preview(self, ...)
+  end
+
   -- For split preview windows that reuse source window, set buffer back to source
   -- buffer instead of closing the window
-  if self.preview_winid == self.src_winid then
-    if
-      self.src_winid
-      and self.src_bufnr
-      and vim.api.nvim_win_is_valid(self.src_winid)
-      and vim.api.nvim_buf_is_valid(self.src_bufnr)
-    then
-      vim.api.nvim_win_set_buf(self.src_winid, self.src_bufnr)
-    end
-    self.preview_winid = nil
+  if
+    self.src_winid
+    and self.src_bufnr
+    and vim.api.nvim_win_is_valid(self.src_winid)
+    and vim.api.nvim_buf_is_valid(self.src_bufnr)
+  then
+    vim.api.nvim_win_set_buf(self.src_winid, self.src_bufnr)
   end
-  return _win_close_preview(self, ...)
+
+  -- Prevent original `_win_close_preview` from closing the preview & source
+  -- window
+  self.preview_winid = nil
+  _win_close_preview(self, ...)
+
+  -- Restore preview window id, `self._previewer:restore_winopts()` needs this
+  self.preview_winid = self.src_winid
 end
 
 function fzf_win:close(...)
   _win_close(self, ...)
 
   -- Restore source window appearance
-  if
-    self.src_winopts
-    and self.src_winid
-    and vim.api.nvim_win_is_valid(self.src_winid)
-  then
-    vim.defer_fn(function()
-      local wo = vim.wo[self.src_winid]
-      for opt, val in pairs(self.src_winopts) do
-        wo[opt] = val
-      end
-      ---@diagnostic disable-next-line: inject-field
-      self.src_winopts = nil
-    end, 0)
-  end
+  vim.schedule(vim.schedule_wrap(function()
+    if self._previewer and self._previewer_winopts_orig then
+      self._previewer.winopts_orig = self._previewer_winopts_orig
+      self._previewer:restore_winopts()
+    end
+  end))
 end
 
 fzf.setup({
