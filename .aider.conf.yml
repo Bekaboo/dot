@@ -1,3 +1,4 @@
+multiline: true
 show-diffs: true
 watch-files: true
 
