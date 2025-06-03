@@ -29,11 +29,11 @@ M.snippets = {
       desc = 'print statement',
     },
     c(1, {
-      un.fmtad('fmt.Printf("<str>\\n"<args>);', {
+      un.fmtad('fmt.Printf("<str>\\n"<args>)', {
         str = r(1, 'str'),
         args = r(2, 'args'),
       }),
-      un.fmtad('fmt.Printf("<str>"<args>);', {
+      un.fmtad('fmt.Printf("<str>"<args>)', {
         str = r(1, 'str'),
         args = r(2, 'args'),
       }),
@@ -48,11 +48,11 @@ M.snippets = {
       desc = 'fmt.Printf()',
     },
     c(1, {
-      un.fmtad('fmt.Printf("<str>\\n"<args>);', {
+      un.fmtad('fmt.Printf("<str>\\n"<args>)', {
         str = r(1, 'str'),
         args = r(2, 'args'),
       }),
-      un.fmtad('fmt.Printf("<str>"<args>);', {
+      un.fmtad('fmt.Printf("<str>"<args>)', {
         str = r(1, 'str'),
         args = r(2, 'args'),
       }),
@@ -73,7 +73,7 @@ M.snippets = {
       desc = 'fprint statement',
     },
     c(1, {
-      un.fmtad('fmt.Fprintf(<w>, "<str>\\n"<args>);', {
+      un.fmtad('fmt.Fprintf(<w>, "<str>\\n"<args>)', {
         w = c(3, {
           i(nil, 'os.Stderr'),
           i(nil, 'os.Stdout'),
@@ -81,7 +81,7 @@ M.snippets = {
         str = r(1, 'str'),
         args = r(2, 'args'),
       }),
-      un.fmtad('fmt.Fprintf(<w>, "<str>"<args>);', {
+      un.fmtad('fmt.Fprintf(<w>, "<str>"<args>)', {
         w = c(3, {
           i(nil, 'os.Stderr'),
           i(nil, 'os.Stdout'),
@@ -104,7 +104,7 @@ M.snippets = {
       desc = 'fmt.Fprintf()',
     },
     c(1, {
-      un.fmtad('fmt.Fprintf(<w>, "<str>"<args>);', {
+      un.fmtad('fmt.Fprintf(<w>, "<str>"<args>)', {
         w = c(3, {
           i(nil, 'os.Stderr'),
           i(nil, 'os.Stdout'),
