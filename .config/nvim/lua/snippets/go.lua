@@ -11,7 +11,7 @@ local d = ls.dynamic_node
 local r = ls.restore_node
 
 M.snippets = {
-  us.msn({
+  us.mssn({
     { trig = 'pkg' },
     { trig = 'pack' },
     common = { desc = 'package statement' },
@@ -199,16 +199,10 @@ M.snippets = {
     },
     un.fmtad('fmt.Println("<line>")', {
       line = c(1, {
+        i(nil, '........................................'),
         i(nil, '----------------------------------------'),
         i(nil, '========================================'),
-        i(nil, '........................................'),
-        i(nil, '++++++++++++++++++++++++++++++++++++++++'),
-        i(nil, '****************************************'),
-        i(nil, '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'),
-        i(nil, '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'),
-        i(nil, '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^'),
         i(nil, '########################################'),
-        i(nil, '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'),
       }),
     })
   ),
@@ -737,6 +731,29 @@ M.snippets = {
           )
         )
       end
+
+      -- Nested functions must be anonymous
+      if
+        u.ts.find_node('function_declaration', { ignore_injections = false })
+      then
+        return sn(
+          nil,
+          un.fmtad(
+            [[
+              <name> := func(<args>) <ret> {
+              <body>
+              }
+            ]],
+            {
+              name = i(1, 'funcName'),
+              args = i(2),
+              ret = i(3),
+              body = un.body(4, 1),
+            }
+          )
+        )
+      end
+
       -- Named function
       return sn(
         nil,
@@ -778,7 +795,7 @@ M.snippets = {
       },
     }
   ),
-  us.msn(
+  us.mssn(
     {
       { trig = 'mn' },
       { trig = 'main' },
