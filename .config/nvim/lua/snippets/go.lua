@@ -11,7 +11,7 @@ local d = ls.dynamic_node
 local r = ls.restore_node
 
 M.snippets = {
-  us.msn({
+  us.mssn({
     { trig = 'pkg' },
     { trig = 'pack' },
     common = { desc = 'package statement' },
@@ -801,7 +801,7 @@ M.snippets = {
       },
     }
   ),
-  us.msn(
+  us.mssn(
     {
       { trig = 'mn' },
       { trig = 'main' },

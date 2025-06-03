@@ -550,7 +550,7 @@ M.snippets = {
       },
     }
   ),
-  us.msn(
+  us.mssn(
     {
       { trig = 'mn' },
       { trig = 'main' },
