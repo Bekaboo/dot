@@ -159,11 +159,22 @@ M.snippets = {
       trig = 'ck',
       desc = 'Check a value of a variable',
     },
-    un.fmtad('"<expr_escaped>:", <expr>', {
-      expr = i(1),
-      expr_escaped = d(2, function(texts)
-        return sn(nil, i(1, vim.fn.escape(texts[1][1], '\\"')))
-      end, { 1 }),
+    c(1, {
+      un.fmtad('"<expr_escaped>:", <expr>', {
+        expr = r(1, 'expr'),
+        expr_escaped = d(2, function(texts)
+          return sn(nil, i(1, vim.fn.escape(texts[1][1], '\\"')))
+        end, { 1 }),
+      }),
+      un.fmtad(
+        '"<expr_escaped>:", func(x any) string { b, _ := json.MarshalIndent(x, "", "\\t"); return string(b) }(<expr>)',
+        {
+          expr = r(1, 'expr'),
+          expr_escaped = d(2, function(texts)
+            return sn(nil, i(1, vim.fn.escape(texts[1][1], '\\"')))
+          end, { 1 }),
+        }
+      ),
     })
   ),
   us.sn(
@@ -171,12 +182,24 @@ M.snippets = {
       trig = 'pck',
       desc = 'Check a value of a variable through fmt.Println()',
     },
-    un.fmtad('fmt.Println("<expr_escaped>:", <expr>)', {
-      expr = i(1),
-      expr_escaped = d(2, function(texts)
-        local str = vim.fn.escape(texts[1][1], '\\"')
-        return sn(nil, i(1, str))
-      end, { 1 }),
+    c(1, {
+      un.fmtad('fmt.Println("<expr_escaped>:", <expr>)', {
+        expr = r(1, 'expr'),
+        expr_escaped = d(2, function(texts)
+          local str = vim.fn.escape(texts[1][1], '\\"')
+          return sn(nil, i(1, str))
+        end, { 1 }),
+      }),
+      un.fmtad(
+        'fmt.Println("<expr_escaped>:", func(x any) string { b, _ := json.MarshalIndent(x, "", "\\t"); return string(b) }(<expr>))',
+        {
+          expr = r(1, 'expr'),
+          expr_escaped = d(2, function(texts)
+            local str = vim.fn.escape(texts[1][1], '\\"')
+            return sn(nil, i(1, str))
+          end, { 1 }),
+        }
+      ),
     })
   ),
   us.sn(
@@ -184,12 +207,24 @@ M.snippets = {
       trig = 'lck',
       desc = 'Check a value of a variable through testing.T.Log()',
     },
-    un.fmtad('t.Log("<expr_escaped>:", <expr>)', {
-      expr = i(1),
-      expr_escaped = d(2, function(texts)
-        local str = vim.fn.escape(texts[1][1], '\\"')
-        return sn(nil, i(1, str))
-      end, { 1 }),
+    c(1, {
+      un.fmtad('t.Log("<expr_escaped>:", <expr>)', {
+        expr = r(1, 'expr'),
+        expr_escaped = d(2, function(texts)
+          local str = vim.fn.escape(texts[1][1], '\\"')
+          return sn(nil, i(1, str))
+        end, { 1 }),
+      }),
+      un.fmtad(
+        't.Log("<expr_escaped>:", func(x any) string { b, _ := json.MarshalIndent(x, "", "\\t"); return string(b) }(<expr>))',
+        {
+          expr = r(1, 'expr'),
+          expr_escaped = d(2, function(texts)
+            local str = vim.fn.escape(texts[1][1], '\\"')
+            return sn(nil, i(1, str))
+          end, { 1 }),
+        }
+      ),
     })
   ),
   us.sn(
