@@ -737,6 +737,29 @@ M.snippets = {
           )
         )
       end
+
+      -- Nested functions must be anonymous
+      if
+        u.ts.find_node('function_declaration', { ignore_injections = false })
+      then
+        return sn(
+          nil,
+          un.fmtad(
+            [[
+              <name> := func(<args>) <ret> {
+              <body>
+              }
+            ]],
+            {
+              name = i(1, 'funcName'),
+              args = i(2),
+              ret = i(3),
+              body = un.body(4, 1),
+            }
+          )
+        )
+      end
+
       -- Named function
       return sn(
         nil,
