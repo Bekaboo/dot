@@ -691,6 +691,11 @@ M.snippets = {
       common = { desc = 'Function definition' },
     },
     d(1, function()
+      local name = r(1, 'name', i(nil, 'funcName'))
+      local args = r(2, 'args', i())
+      local ret = r(3, 'ret', i())
+      local body = un.body(4, 1)
+
       if
         u.ts.find_node({
           'expression_list', --- []func(T) U{ func() { ... }, ... }
@@ -712,9 +717,9 @@ M.snippets = {
               }
             ]],
             {
-              args = i(1),
-              ret = i(2),
-              body = un.body(3, 1),
+              args = vim.deepcopy(args),
+              ret = vim.deepcopy(ret),
+              body = vim.deepcopy(body),
             }
           )
         )
@@ -726,19 +731,37 @@ M.snippets = {
       then
         return sn(
           nil,
-          un.fmtad(
-            [[
-              <name> := func(<args>) <ret> {
-              <body>
+          c(1, {
+            un.fmtad(
+              [[
+                <name> := func(<args>) <ret> {
+                <body>
+                }
+              ]],
+              {
+                name = vim.deepcopy(name),
+                args = vim.deepcopy(args),
+                ret = vim.deepcopy(ret),
+                body = vim.deepcopy(body),
               }
-            ]],
-            {
-              name = i(1, 'funcName'),
-              args = i(2),
-              ret = i(3),
-              body = un.body(4, 1),
-            }
-          )
+            ),
+            -- Anonymous functions must be declared beforehand to support
+            -- recursion
+            un.fmtad(
+              [[
+                var <name> = func(<args>) <ret>
+                <name> = func(<args>) <ret> {
+                <body>
+                }
+              ]],
+              {
+                name = vim.deepcopy(name),
+                args = vim.deepcopy(args),
+                ret = vim.deepcopy(ret),
+                body = vim.deepcopy(body),
+              }
+            ),
+          })
         )
       end
 
@@ -753,10 +776,10 @@ M.snippets = {
               }
             ]],
             {
-              name = r(1, 'name', i(nil, 'funcName')),
-              args = r(2, 'args', i()),
-              ret = r(3, 'ret', i()),
-              body = un.body(4, 1),
+              name = vim.deepcopy(name),
+              args = vim.deepcopy(args),
+              ret = vim.deepcopy(ret),
+              body = vim.deepcopy(body),
             }
           ),
           un.fmtad(
@@ -766,9 +789,9 @@ M.snippets = {
               }
             ]],
             {
-              args = r(1, 'args', i()),
-              ret = r(2, 'ret', i()),
-              body = un.body(3, 1),
+              args = vim.deepcopy(args),
+              ret = vim.deepcopy(ret),
+              body = vim.deepcopy(body),
             }
           ),
         })
