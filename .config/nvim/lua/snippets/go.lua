@@ -140,8 +140,8 @@ M.snippets = {
       desc = 'testing.T.Log()',
     },
     un.fmtad('t.Log("<str>"<args>)', {
-      str = r(1, 'str'),
-      args = r(2, 'args'),
+      str = i(1),
+      args = i(2),
     })
   ),
   us.sn(
@@ -150,8 +150,8 @@ M.snippets = {
       desc = 'testing.T.Logf()',
     },
     un.fmtad('t.Logf("<str>"<args>)', {
-      str = r(1, 'str'),
-      args = r(2, 'args'),
+      str = i(1),
+      args = i(2),
     })
   ),
   us.sn(
