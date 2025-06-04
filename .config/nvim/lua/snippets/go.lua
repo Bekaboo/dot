@@ -477,6 +477,18 @@ M.snippets = {
     c(1, {
       un.fmtad(
         [[
+          for <idx> := range <length> {
+            <body>
+          }
+        ]],
+        {
+          idx = r(1, 'idx'),
+          length = i(2, 'length'),
+          body = un.body(3, 1),
+        }
+      ),
+      un.fmtad(
+        [[
           for <idx> := <iter>; <cond>; <update> {
           <body>
           }
@@ -528,20 +540,39 @@ M.snippets = {
       { trig = 'fori' },
       common = { desc = 'for i := ... loop' },
     },
-    un.fmtad(
-      [[
-        for <var> := <iter>; <cond>; <update> {
-        <body>
+    c(1, {
+      un.fmtad(
+        [[
+          for <idx> := range <length> {
+            <body>
+          }
+        ]],
+        {
+          idx = r(1, 'idx'),
+          length = i(2, 'length'),
+          body = un.body(3, 1),
         }
-      ]],
-      {
-        var = i(1, 'i'),
-        iter = i(2, 'iter'),
-        cond = i(3, 'cond'),
-        update = i(4, 'update'),
-        body = un.body(5, 1),
-      }
-    )
+      ),
+      un.fmtad(
+        [[
+          for <idx> := <iter>; <cond>; <update> {
+            <body>
+          }
+        ]],
+        {
+          idx = r(1, 'idx'),
+          iter = i(2, 'iter'),
+          cond = i(3, 'cond'),
+          update = i(4, 'update'),
+          body = un.body(5, 1),
+        }
+      ),
+    }),
+    {
+      stored = {
+        idx = i(nil, 'i'),
+      },
+    }
   ),
   us.msn(
     {
