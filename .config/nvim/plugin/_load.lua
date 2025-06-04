@@ -90,7 +90,6 @@ vim.api.nvim_create_autocmd('TermOpen', {
   group = vim.api.nvim_create_augroup('TermSetup', {}),
   callback = function(info)
     local term = require('plugin.term')
-
     term.setup()
     vim.keymap.set('n', '.', term.rerun, {
       buffer = info.buf,
@@ -173,10 +172,12 @@ if vim.g.loaded_aider == nil then
   local add = function() require('plugin.aider').add() end
   -- stylua: ignore end
 
+  -- stylua: ignore start
   vim.keymap.set('n', '<Leader>@', toggle, { desc = 'Aider (AI) toggle chat panel' })
   vim.keymap.set('x', '<Leader>@', send, { desc = 'Aider (AI) send selection' })
   vim.keymap.set('x', '<Leader>+', send, { desc = 'Aider (AI) send selection' })
   vim.keymap.set('n', '<Leader>+', add, { desc = 'Aider (AI) add current file' })
+  -- stylua: ignore end
 
   local opts = {
     group = vim.api.nvim_create_augroup('AiderSetup', {}),
@@ -190,7 +191,12 @@ if vim.g.loaded_aider == nil then
   }
 
   vim.api.nvim_create_autocmd({ 'BufWritePre', 'CmdlineEnter' }, opts)
-  vim.api.nvim_create_autocmd('CmdUndefined', vim.tbl_deep_extend('force', opts, { pattern = 'Aider*' }))
+  vim.api.nvim_create_autocmd(
+    'CmdUndefined',
+    vim.tbl_deep_extend('force', opts, {
+      pattern = 'Aider*',
+    })
+  )
 end
 
 -- session
