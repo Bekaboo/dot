@@ -1,3 +1,6 @@
+-- Open the test terminal in split
+vim.g['test#strategy'] = 'neovim'
+
 -- Lazy-load test configs for each filetype
 require('utils.ft').auto_load_once('testconfigs', function(ft, configs)
   if not configs then
