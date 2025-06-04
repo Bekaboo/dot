@@ -55,6 +55,7 @@ endif
 " Folding
 silent! set foldlevelstart=99
 silent! set foldmethod=indent
+silent! set foldopen-=block " make `{`/`}` skip over folds
 
 " Spell check options
 silent! set spellcapcheck=''

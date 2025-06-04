@@ -61,6 +61,7 @@ vim.api.nvim_create_autocmd('UIEnter', {
 vim.opt.foldlevelstart = 99
 vim.opt.foldtext = ''
 vim.opt.foldmethod = 'indent'
+vim.opt.foldopen:remove('block') -- make `{`/`}` skip over folds
 
 -- Enable treesitter folding
 vim.api.nvim_create_autocmd('FileType', {
