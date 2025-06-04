@@ -101,11 +101,14 @@ function M.compose_name(bufname, opts)
 
   local path, pid, cmd, name = M.parse_name(bufname)
   return string.format(
-    'term://%s//%s:%s%s',
+    'term://%s//%s%s%s',
     vim.fn
       .fnamemodify(opts.path or path or vim.fn.getcwd(), ':~')
       :gsub('/+$', ''),
-    opts.pid or pid or '',
+    (function()
+      local term_pid = opts.pid or pid or ''
+      return tonumber(term_pid) and term_pid .. ':' or ''
+    end)(),
     opts.cmd or cmd or '',
     (function()
       local name_str = opts.name or name

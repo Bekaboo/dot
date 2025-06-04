@@ -88,8 +88,14 @@ load_ui('statuscolumn')
 -- term
 vim.api.nvim_create_autocmd('TermOpen', {
   group = vim.api.nvim_create_augroup('TermSetup', {}),
-  callback = function()
-    require('plugin.term').setup()
+  callback = function(info)
+    local term = require('plugin.term')
+
+    term.setup()
+    vim.keymap.set('n', '.', term.rerun, {
+      buffer = info.buf,
+      desc = 'Re-run terminal job',
+    })
   end,
 })
 
