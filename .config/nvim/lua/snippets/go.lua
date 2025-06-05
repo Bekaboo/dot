@@ -618,9 +618,11 @@ M.snippets = {
       }
     )
   ),
-  us.sn(
+  us.msn(
     {
-      trig = 'sw',
+      { trig = 'sw' },
+      { trig = 'swi' },
+      { trig = 'switch' },
       desc = 'switch statement',
     },
     un.fmtad(
