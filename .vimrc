@@ -12,7 +12,7 @@ silent! set number
 silent! set pumheight=16
 silent! set ruler
 silent! set showcmd
-silent! set scrolloff=4
+silent! set scrolloff=2
 silent! set sidescrolloff=8
 silent! set sidescroll=1
 silent! set showtabline=1
