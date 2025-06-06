@@ -796,13 +796,13 @@ fzf.setup({
   },
   command_history = {
     actions = {
-      ['alt-e'] = actions.ex_run,
+      ['enter'] = actions.ex_run,
       ['ctrl-e'] = false,
     },
   },
   search_history = {
     actions = {
-      ['alt-e'] = actions.search,
+      ['enter'] = actions.search,
       ['ctrl-e'] = false,
     },
   },
