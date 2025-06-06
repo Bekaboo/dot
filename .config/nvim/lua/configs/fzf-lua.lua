@@ -826,6 +826,7 @@ fzf.setup({
   },
   git = {
     commits = {
+      prompt = 'GitLogs>',
       actions = {
         ['enter'] = actions.git_buf_edit,
         ['alt-s'] = actions.git_buf_split,
@@ -835,6 +836,7 @@ fzf.setup({
       },
     },
     bcommits = {
+      prompt = 'GitBLogs>',
       actions = {
         ['enter'] = actions.git_buf_edit,
         ['alt-s'] = actions.git_buf_split,
@@ -977,15 +979,15 @@ vim.keymap.set('n', '<Leader>fQ', fzf.quickfix_stack, { desc = 'Find quickfix st
 vim.keymap.set('n', '<Leader>fgt', fzf.git_tags, { desc = 'Find git tags' })
 vim.keymap.set('n', '<Leader>fgs', fzf.git_stash, { desc = 'Find git stash' })
 vim.keymap.set('n', '<Leader>fgg', fzf.git_status, { desc = 'Find git status' })
-vim.keymap.set('n', '<Leader>fgc', fzf.git_commits, { desc = 'Find git commits' })
-vim.keymap.set('n', '<Leader>fgl', fzf.git_bcommits, { desc = 'Find git buffer commits' })
+vim.keymap.set('n', '<Leader>fgL', fzf.git_commits, { desc = 'Find git logs' })
+vim.keymap.set('n', '<Leader>fgl', fzf.git_bcommits, { desc = 'Find git buffer logs' })
 vim.keymap.set('n', '<Leader>fgb', fzf.git_branches, { desc = 'Find git branches' })
 vim.keymap.set('n', '<Leader>fgB', fzf.git_branches, { desc = 'Find git blame' })
 vim.keymap.set('n', '<Leader>gft', fzf.git_tags, { desc = 'Find git tags' })
 vim.keymap.set('n', '<Leader>gfs', fzf.git_stash, { desc = 'Find git stash' })
 vim.keymap.set('n', '<Leader>gfg', fzf.git_status, { desc = 'Find git status' })
-vim.keymap.set('n', '<Leader>gfc', fzf.git_commits, { desc = 'Find git commits' })
-vim.keymap.set('n', '<Leader>gfl', fzf.git_bcommits, { desc = 'Find git buffer commits' })
+vim.keymap.set('n', '<Leader>gfL', fzf.git_commits, { desc = 'Find git logs' })
+vim.keymap.set('n', '<Leader>gfl', fzf.git_bcommits, { desc = 'Find git buffer logs' })
 vim.keymap.set('n', '<Leader>gfb', fzf.git_branches, { desc = 'Find git branches' })
 vim.keymap.set('n', '<Leader>gfB', fzf.git_branches, { desc = 'Find git blame' })
 vim.keymap.set('n', '<Leader>fh', fzf.help_tags, { desc = 'Find help tags' })
