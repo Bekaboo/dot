@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Fri Jun  6 09:48:33 2025
+-- Last Updated: Fri Jun  6 16:26:46 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -575,6 +575,7 @@ local hlgroups = {
   StatusLineGitAdded = { bg = c_macroBg3, fg = c_macroGreen1 },
   StatusLineGitChanged = { bg = c_macroBg3, fg = c_carpYellow },
   StatusLineGitRemoved = { bg = c_macroBg3, fg = c_macroRed },
+  StatusLineGitBranch = { bg = c_macroBg3, fg = c_macroAsh },
   StatusLineHeader = { bg = c_macroBg5, fg = c_macroFg1 },
   StatusLineHeaderModified = { bg = c_macroRed, fg = c_macroBg1 },
 
