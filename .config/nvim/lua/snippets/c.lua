@@ -620,6 +620,37 @@ M.snippets = {
   ),
   us.msn(
     {
+      { trig = 'en' },
+      { trig = 'enu' },
+      { trig = 'enum' },
+      common = { desc = 'Enum definition/declaration' },
+    },
+    c(1, {
+      un.fmtad(
+        [[
+          enum <name> {
+          <body>
+          };
+        ]],
+        {
+          name = r(1, 'name'),
+          body = un.body(2, 1),
+        }
+      ),
+      un.fmtad('enum <name>;', {
+        name = r(1, 'name'),
+      }),
+    }),
+    {
+      common_opts = {
+        stored = {
+          name = i(nil, 'enum_name'),
+        },
+      },
+    }
+  ),
+  us.msn(
+    {
       { trig = 'tp' },
       { trig = 'type' },
       { trig = 'typedef' },
@@ -708,6 +739,45 @@ M.snippets = {
         }
       ),
       un.fmtad('typedef union <name> <alias>;', {
+        name = r(1, 'name'),
+        alias = r(2, 'alias'),
+      }),
+    }),
+    {
+      common_opts = {
+        stored = {
+          name = i(1, 'name'),
+          alias = i(2, 'alias'),
+        },
+      },
+    }
+  ),
+  us.msn(
+    {
+      { trig = 'tpe' },
+      { trig = 'tpen' },
+      { trig = 'tpenu' },
+      { trig = 'tpenum' },
+      { trig = 'typedefe' },
+      { trig = 'typedefen' },
+      { trig = 'typedefenu' },
+      { trig = 'typedefenum' },
+      common = { desc = 'typedef enum definition/declaration statement' },
+    },
+    c(1, {
+      un.fmtad(
+        [[
+          typedef enum <name> {
+          <body>
+          } <alias>;
+        ]],
+        {
+          name = r(1, 'name'),
+          body = un.body(3, 1),
+          alias = r(2, 'alias'),
+        }
+      ),
+      un.fmtad('typedef enum <name> <alias>;', {
         name = r(1, 'name'),
         alias = r(2, 'alias'),
       }),

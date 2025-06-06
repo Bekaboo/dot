@@ -1020,6 +1020,57 @@ M.snippets = {
       },
     }
   ),
+  us.msn(
+    {
+      { trig = 'en' },
+      { trig = 'enu' },
+      { trig = 'enum' },
+      { trig = 'iota' },
+      common = { desc = 'Enum with iota (const block)' },
+    },
+    c(1, {
+      un.fmtad(
+        [[
+          type <typeName> <baseType>
+
+          const (
+          <idnt><value1> <typeName> = iota
+          <idnt><value2><i>
+          )
+        ]],
+        {
+          idnt = un.idnt(1),
+          typeName = i(1, 'typeName'),
+          baseType = i(2, 'baseType'),
+          value1 = r(3, 'value1'),
+          value2 = r(4, 'value2'),
+          i = i(5),
+        }
+      ),
+      un.fmtad(
+        [[
+          const (
+          <idnt><value1> = iota
+          <idnt><value2><i>
+          )
+        ]],
+        {
+          idnt = un.idnt(1),
+          value1 = r(1, 'value1'),
+          value2 = r(2, 'value2'),
+          i = i(3),
+        }
+      ),
+    }),
+    {
+      common_opts = {
+        stored = {
+          value1 = i(nil, 'Value1'),
+          value2 = i(nil, 'Value2'),
+        },
+      },
+    }
+  ),
 }
 
 return M
