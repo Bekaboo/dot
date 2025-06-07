@@ -508,11 +508,11 @@ if s:supportevents(['CmdlineEnter', 'CmdlineLeave'])
     au CmdlineEnter [:>/?=@] let g:_isk_lisp_buf = str2nr(expand('<abuf>')) |
           \ let g:_isk_save = getbufvar(g:_isk_lisp_buf, '&isk', '') |
           \ let g:_lisp_save = getbufvar(g:_isk_lisp_buf, '&lisp', 0) |
-          \ setlocal isk& lisp&
+          \ silent! setlocal isk& lisp&
     au CmdlineLeave [:>/?=@] if
             \ exists('g:_isk_lisp_buf') && bufexists(g:_isk_lisp_buf) |
-          \ call setbufvar(g:_isk_lisp_buf, '&isk', g:_isk_save) |
-          \ call setbufvar(g:_isk_lisp_buf, '&lisp', g:_lisp_save) |
+          \ silent! call setbufvar(g:_isk_lisp_buf, '&isk', g:_isk_save) |
+          \ silent! call setbufvar(g:_isk_lisp_buf, '&lisp', g:_lisp_save) |
           \ unlet g:_isk_save g:_lisp_save g:_isk_lisp_buf |
           \ endif
 endif
@@ -1238,7 +1238,7 @@ let g:netrw_localcopydircmd = 'cp -r'
 if s:supportevents('FileType')
   augroup NetrwSettings
     au!
-    au FileType netrw setlocal
+    au FileType netrw silent! setlocal
           \ bufhidden=hide
           \ buftype=nofile
           \ nobuflisted
@@ -1352,7 +1352,7 @@ if s:supportevents('FileType')
     if &ma
       return
     endif
-    setlocal nobl nolist nonu nornu nospell so=999 scl=no
+    silent! setlocal nobl nolist nonu nornu nospell so=999 scl=no
     nnoremap <buffer> d <C-d>
     nnoremap <buffer> u <C-u>
     xnoremap <buffer> d <C-d>
@@ -1427,7 +1427,7 @@ endif
 if s:supportevents('TerminalWinOpen')
   augroup TermOptions
     au!
-    au TerminalWinOpen * setlocal nonu nornu scl=no bh=hide so=0 siso=0 |
+    au TerminalWinOpen * silent! setl nonu nornu scl=no bh=hide so=0 siso=0 |
           \ nnoremap <expr><buffer> p 'i' . (&twk ? &twk : '<C-w>') . '"' . v:register . '<C-\><C-n>'|
           \ nnoremap <expr><buffer> P 'i' . (&twk ? &twk : '<C-w>') . '"' . v:register . '<C-\><C-n>'|
           \ startinsert
