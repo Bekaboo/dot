@@ -1,4 +1,5 @@
 local M = {}
+local uf = require('utils.snippets.funcs')
 local un = require('utils.snippets.nodes')
 local us = require('utils.snippets.snips')
 local ls = require('luasnip')
@@ -151,37 +152,40 @@ M.snippets = {
     un.fmtad(
       [[
         switch <expr>
-        <idnt>case <pattern>
+        <idnt>case <match1>
         <body>
+        <idnt>case <match2>
+        <idnt><idnt><i>
         end
       ]],
       {
-        expr = i(1, '$argv[1]'),
-        pattern = i(2, '*'),
-        body = un.body(3, 2),
         idnt = un.idnt(1),
+        expr = i(1, '$argv[1]'),
+        match1 = i(2, "'*'"),
+        body = un.body(3, 2),
+        match2 = i(4, "'*'"),
+        i = i(5),
       }
     )
   ),
-  us.msn(
+  us.msnr(
     {
-      { trig = 'cs' },
-      { trig = 'ca' },
-      { trig = 'case' },
-      common = { desc = 'switch statement' },
+      { trig = '^(%s*)ca' },
+      { trig = '^(%s*)cas' },
+      { trig = '^(%s*)case' },
+      common = { desc = 'case statement' },
     },
     un.fmtad(
       [[
-        switch <expr>
-        <idnt>case <pattern>
+        <ddnt>case <match>
         <body>
-        end
       ]],
       {
-        expr = i(1, '$argv[1]'),
-        pattern = i(2, '*'),
-        body = un.body(3, 2),
-        idnt = un.idnt(1),
+        ddnt = un.ddnt(1),
+        match = i(1, "'*'"),
+        body = un.body(2, function(_, parent)
+          return math.max(0, uf.get_indent_depth(parent.snippet.captures[1]))
+        end),
       }
     )
   ),

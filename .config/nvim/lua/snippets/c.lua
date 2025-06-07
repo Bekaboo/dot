@@ -1,4 +1,5 @@
 local M = {}
+local uf = require('utils.snippets.funcs')
 local un = require('utils.snippets.nodes')
 local us = require('utils.snippets.snips')
 local ls = require('luasnip')
@@ -7,6 +8,7 @@ local t = ls.text_node
 local i = ls.insert_node
 local c = ls.choice_node
 local d = ls.dynamic_node
+local f = ls.function_node
 local r = ls.restore_node
 
 M.snippets = {
@@ -463,38 +465,53 @@ M.snippets = {
       { trig = 'sw' },
       { trig = 'swi' },
       { trig = 'switch' },
-      common = { desc = 'switch statement' },
+      desc = 'switch statement',
     },
     un.fmtad(
       [[
-        switch (<var>) {
-        <idnt>case <val>:
+        switch (<expr>) {
+        case <match1>:
         <body>
+        <idnt>break;
+        case <match2>:
+        <idnt><i>
+        <idnt>break;<e>
+        default:
+        <idnt><d>
         }
       ]],
       {
-        var = i(1),
-        val = i(2),
         idnt = un.idnt(1),
-        body = un.body(3, 2),
+        expr = i(1, 'expr'),
+        match1 = i(2, 'match1'),
+        body = un.body(3, 1),
+        match2 = i(4, 'match2'),
+        i = i(5),
+        e = i(6),
+        d = i(7),
       }
     )
   ),
-  us.msn(
+  us.msnr(
     {
-      { trig = 'cs' },
-      { trig = 'ca' },
-      { trig = 'case' },
+      { trig = '^(%s*)ca' },
+      { trig = '^(%s*)cas' },
+      { trig = '^(%s*)case' },
       common = { desc = 'case statement' },
     },
     un.fmtad(
       [[
-        case <val>:
+        <ddnt>case <match>:
         <body>
+        <ddnt><idnt>break;
       ]],
       {
-        val = i(1),
-        body = un.body(2, 1),
+        ddnt = un.ddnt(1),
+        idnt = un.idnt(1),
+        match = i(1, 'match'),
+        body = un.body(2, function(_, parent)
+          return math.max(0, uf.get_indent_depth(parent.snippet.captures[1]))
+        end),
       }
     )
   ),
