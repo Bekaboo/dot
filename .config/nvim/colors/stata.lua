@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      BSD
--- Last Updated: Fri May 30 15:30:53 2025
+-- Last Updated: Wed Jun  4 20:49:01 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -61,9 +61,9 @@ if vim.go.bg == 'dark' then
 else
   c_background      = { '#ffffff', 231 }
   c_foreground      = { '#111111', 233 }
-  c_faded           = { '#f8fafa', 254 }
-  c_highlight       = { '#f4f5f5', 255 }
-  c_whitespace      = { '#e0e2e2', 250 }
+  c_faded           = { '#f6f6f6', 254 }
+  c_highlight       = { '#efefef', 255 }
+  c_whitespace      = { '#dedede', 250 }
   c_delimiter       = { '#888888', 245 }
   c_error           = { '#bc5555', 124 }
   c_warn            = { '#cba260', 137 }
@@ -147,7 +147,7 @@ local hlgroups = {
   FloatBorder = { fg = c_foreground, bg = c_highlight },
   FloatTitle = { fg = c_other, bg = c_highlight, bold = true },
   FoldColumn = { fg = c_comment },
-  Folded = { fg = c_comment, bg = c_highlight },
+  Folded = { fg = c_foreground, bg = c_highlight },
   IncSearch = { fg = c_background, bg = c_other, bold = true },
   LineNr = { fg = c_comment },
   MatchParen = { bg = c_highlight, bold = true },
@@ -281,6 +281,7 @@ local hlgroups = {
   LspReferenceWrite = { link = 'LspReferenceText' },
   LspSignatureActiveParameter = { link = 'Search' },
   LspInfoBorder = { link = 'FloatBorder' },
+  LspInlayHint = { bg = c_faded, fg = c_delimiter },
   -- }}}2
 
   -- Diagnostic {{{2

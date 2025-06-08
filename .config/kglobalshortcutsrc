@@ -394,6 +394,9 @@ _launch=Launch Mail\tMeta+M
 [services][tmux.desktop]
 _launch=Ctrl+Alt+T
 
+[services][wechat-universal.desktop]
+_launch=Meta+Shift+M
+
 [services][yakuake-tmux.desktop]
 _launch=Ctrl+Alt+Shift+T
 

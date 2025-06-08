@@ -938,13 +938,13 @@ fzf.setup({
   },
   command_history = {
     actions = {
-      ['alt-e'] = fzf_actions.ex_run,
+      ['enter'] = fzf_actions.ex_run,
       ['ctrl-e'] = false,
     },
   },
   search_history = {
     actions = {
-      ['alt-e'] = fzf_actions.search,
+      ['enter'] = fzf_actions.search,
       ['ctrl-e'] = false,
     },
   },
@@ -968,6 +968,7 @@ fzf.setup({
   },
   git = {
     commits = {
+      prompt = 'GitLogs>',
       actions = {
         ['enter'] = fzf_actions.git_buf_edit,
         ['alt-s'] = fzf_actions.git_buf_split,
@@ -977,6 +978,7 @@ fzf.setup({
       },
     },
     bcommits = {
+      prompt = 'GitBLogs>',
       actions = {
         ['enter'] = fzf_actions.git_buf_edit,
         ['alt-s'] = fzf_actions.git_buf_split,
@@ -1117,17 +1119,17 @@ vim.keymap.set('n', '<Leader>fQ', fzf.quickfix_stack, { desc = 'Find quickfix st
 vim.keymap.set('n', '<Leader>fgt', fzf.git_tags, { desc = 'Find git tags' })
 vim.keymap.set('n', '<Leader>fgs', fzf.git_stash, { desc = 'Find git stash' })
 vim.keymap.set('n', '<Leader>fgg', fzf.git_status, { desc = 'Find git status' })
-vim.keymap.set('n', '<Leader>fgc', fzf.git_commits, { desc = 'Find git commits' })
-vim.keymap.set('n', '<Leader>fgl', fzf.git_bcommits, { desc = 'Find git buffer commits' })
+vim.keymap.set('n', '<Leader>fgL', fzf.git_commits, { desc = 'Find git logs' })
+vim.keymap.set('n', '<Leader>fgl', fzf.git_bcommits, { desc = 'Find git buffer logs' })
 vim.keymap.set('n', '<Leader>fgb', fzf.git_branches, { desc = 'Find git branches' })
-vim.keymap.set('n', '<Leader>fgB', fzf.git_branches, { desc = 'Find git blame' })
+vim.keymap.set('n', '<Leader>fgB', fzf.git_blame, { desc = 'Find git blame' })
 vim.keymap.set('n', '<Leader>gft', fzf.git_tags, { desc = 'Find git tags' })
 vim.keymap.set('n', '<Leader>gfs', fzf.git_stash, { desc = 'Find git stash' })
 vim.keymap.set('n', '<Leader>gfg', fzf.git_status, { desc = 'Find git status' })
-vim.keymap.set('n', '<Leader>gfc', fzf.git_commits, { desc = 'Find git commits' })
-vim.keymap.set('n', '<Leader>gfl', fzf.git_bcommits, { desc = 'Find git buffer commits' })
+vim.keymap.set('n', '<Leader>gfL', fzf.git_commits, { desc = 'Find git logs' })
+vim.keymap.set('n', '<Leader>gfl', fzf.git_bcommits, { desc = 'Find git buffer logs' })
 vim.keymap.set('n', '<Leader>gfb', fzf.git_branches, { desc = 'Find git branches' })
-vim.keymap.set('n', '<Leader>gfB', fzf.git_branches, { desc = 'Find git blame' })
+vim.keymap.set('n', '<Leader>gfB', fzf.git_blame, { desc = 'Find git blame' })
 vim.keymap.set('n', '<Leader>fh', fzf.help_tags, { desc = 'Find help tags' })
 vim.keymap.set('n', '<Leader>fk', fzf.keymaps, { desc = 'Find keymaps' })
 vim.keymap.set('n', '<Leader>f-', fzf.blines, { desc = 'Find lines in buffer' })

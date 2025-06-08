@@ -609,6 +609,12 @@ and it should work out of the box.
     - [oil.nvim](https://github.com/stevearc/oil.nvim)
     - [quicker.nvim](https://github.com/stevearc/quicker.nvim)
     - [which-key.nvim](https://github.com/folke/which-key.nvim)
+- **Debug**
+    - [nvim-dap](https://github.com/mfussenegger/nvim-dap)
+    - [nvim-dap-ui](https://github.com/rcarriga/nvim-dap-ui)
+        - [nvim-nio](https://github.com/nvim-neotest/nvim-nio) (dependency)
+    - [one-small-step-for-vimkind](https://github.com/jbyuki/one-small-step-for-vimkind)
+- **Build**
     - [vim-test](https://github.com/vim-test/vim-test)
     - [vim-projectionist](https://github.com/tpope/vim-projectionist)
 - **Treesitter**
@@ -618,11 +624,6 @@ and it should work out of the box.
     - [ts-autotag.nvim](https://github.com/tronikelis/ts-autotag.nvim)
     - [treesj](https://github.com/Wansmer/treesj)
     - [cellular-automaton.nvim](https://github.com/Eandrju/cellular-automaton.nvim)
-- **Debug**
-    - [nvim-dap](https://github.com/mfussenegger/nvim-dap)
-    - [nvim-dap-ui](https://github.com/rcarriga/nvim-dap-ui)
-        - [nvim-nio](https://github.com/nvim-neotest/nvim-nio) (dependency)
-    - [one-small-step-for-vimkind](https://github.com/jbyuki/one-small-step-for-vimkind)
 - **Colorschemes**
     - [everforest](https://github.com/sainnhe/everforest)
     - [gruvbox-material](https://github.com/sainnhe/gruvbox-material)

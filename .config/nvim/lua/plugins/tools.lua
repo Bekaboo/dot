@@ -54,15 +54,15 @@ return {
       { '<Leader>fgt', desc = 'Find git tags' },
       { '<Leader>fgs', desc = 'Find git stash' },
       { '<Leader>fgg', desc = 'Find git status' },
-      { '<Leader>fgc', desc = 'Find git commits' },
-      { '<Leader>fgl', desc = 'Find git buffer commits' },
+      { '<Leader>fgL', desc = 'Find git logs' },
+      { '<Leader>fgl', desc = 'Find git buffer logs' },
       { '<Leader>fgb', desc = 'Find git branches' },
       { '<Leader>fgB', desc = 'Find git blame' },
       { '<Leader>gft', desc = 'Find git tags' },
       { '<Leader>gfs', desc = 'Find git stash' },
       { '<Leader>gfg', desc = 'Find git status' },
-      { '<Leader>gfc', desc = 'Find git commits' },
-      { '<Leader>gfl', desc = 'Find git buffer commits' },
+      { '<Leader>gfL', desc = 'Find git logs' },
+      { '<Leader>gfl', desc = 'Find git buffer logs' },
       { '<Leader>gfb', desc = 'Find git branches' },
       { '<Leader>gfB', desc = 'Find git blame' },
       { '<Leader>fh', desc = 'Find help files' },
@@ -286,37 +286,6 @@ return {
     event = 'VeryLazy',
     config = function()
       require('configs.which-key')
-    end,
-  },
-
-  {
-    'vim-test/vim-test',
-    keys = {
-      { '<Leader>tk', desc = 'Run the first test class in current file' },
-      { '<Leader>ta', desc = 'Run all tests in current file' },
-      { '<Leader>tt', desc = 'Run the test neartest to cursor' },
-      { '<Leader>t$', desc = 'Run the last test' },
-      { '<Leader>ts', desc = 'Run the whole test suite' },
-      { '<Leader>to', desc = 'Go to last visited test file' },
-    },
-    cmd = {
-      'TestClass',
-      'TestVisit',
-      'TestNearest',
-      'TestSuite',
-      'TestFile',
-      'TestLast',
-    },
-    config = function()
-      require('configs.vim-test')
-    end,
-  },
-
-  {
-    'tpope/vim-projectionist',
-    event = 'BufReadPre',
-    config = function()
-      require('configs.vim-projectionist')
     end,
   },
 }

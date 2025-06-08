@@ -16,7 +16,7 @@ vim.opt.mousemoveevent = true
 vim.opt.number = true
 vim.opt.ruler = true
 vim.opt.pumheight = 16
-vim.opt.scrolloff = 4
+vim.opt.scrolloff = 2
 vim.opt.sidescrolloff = 8
 vim.opt.signcolumn = 'yes:1'
 vim.opt.splitright = true
@@ -61,6 +61,7 @@ vim.api.nvim_create_autocmd('UIEnter', {
 vim.opt.foldlevelstart = 99
 vim.opt.foldtext = ''
 vim.opt.foldmethod = 'indent'
+vim.opt.foldopen:remove('block') -- make `{`/`}` skip over folds
 
 -- Enable treesitter folding
 vim.api.nvim_create_autocmd('FileType', {
@@ -83,65 +84,6 @@ vim.api.nvim_create_autocmd('FileType', {
       end
     end
   end),
-})
-
--- Enable LSP folding
-vim.api.nvim_create_autocmd({ 'LspAttach', 'LspDetach' }, {
-  desc = 'Set LSP folding.',
-  group = vim.api.nvim_create_augroup('LSPFolding', {}),
-  callback = function(info)
-    local id = info.data and info.data.client_id
-    if not id then
-      return
-    end
-
-    local lsp_foldmethod = 'textDocument/foldingRange'
-    local client = vim.lsp.get_client_by_id(id)
-    if not client or not client:supports_method(lsp_foldmethod) then
-      return
-    end
-
-    local lsp_foldexpr = 'v:lua.vim.lsp.foldexpr()'
-    local ts_foldexpr = 'v:lua.vim.treesitter.foldexpr()'
-    if info.event == 'LspAttach' then
-      for buf, _ in pairs(client.attached_buffers) do
-        for _, win in ipairs(vim.fn.win_findbuf(buf)) do
-          local wo = vim.wo[win]
-          if wo.foldexpr == '0' or wo.foldexpr == ts_foldexpr then
-            wo[0].foldexpr = lsp_foldexpr
-            if wo.foldmethod == 'indent' or wo.foldmethod == 'manual' then
-              wo[0].foldmethod = 'expr'
-            end
-          end
-        end
-      end
-    else -- event == 'LspDetach'
-      local buf = info.buf
-      -- Clients attached to `buf` that supports folding method
-      local clients = vim
-        .iter(vim.lsp.get_clients({ bufnr = buf }))
-        :filter(function(c)
-          return c:supports_method(lsp_foldmethod)
-        end)
-      -- `buf` still has clients that supports folding methods attached to it,
-      -- don't fallback to treesitter folding
-      -- Skip 1 client because current client has not been detached from `buf`
-      -- yet
-      if clients:skip(1):peek() then
-        return
-      end
-      for _, win in ipairs(vim.fn.win_findbuf(buf)) do
-        local wo = vim.wo[win]
-        if wo.foldexpr == lsp_foldexpr then
-          if require('utils.ts').is_active(buf) then
-            wo[0].foldexpr = ts_foldexpr
-          else
-            wo[0].foldmethod = 'indent'
-          end
-        end
-      end
-    end
-  end,
 })
 
 -- Recognize numbered lists when formatting text and

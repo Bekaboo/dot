@@ -1,4 +1,5 @@
 local M = {}
+local uf = require('utils.snippets.funcs')
 local un = require('utils.snippets.nodes')
 local us = require('utils.snippets.snips')
 local ls = require('luasnip')
@@ -159,9 +160,12 @@ M.snippets = {
   ),
   us.msn(
     {
-      { trig = 'cs' },
       { trig = 'ca' },
+      { trig = 'cas' },
       { trig = 'case' },
+      { trig = 'sw' },
+      { trig = 'swi' },
+      { trig = 'switch' },
       common = { desc = 'case statement' },
     },
     un.fmtad(
@@ -169,31 +173,36 @@ M.snippets = {
         case <expr> in
         <idnt><pattern>)
         <body>
-        <idnt>;;
+        <idnt><idnt>;;<i>
         esac
       ]],
       {
+        idnt = un.idnt(1),
         expr = i(1, '$1'),
         pattern = i(2, '*'),
         body = un.body(3, 2, ':'),
-        idnt = un.idnt(1),
+        i = i(4),
       }
     )
   ),
-  us.sn(
+  us.snr(
     {
-      trig = 'pat',
+      trig = '^(%s*)pat',
       desc = 'case pattern',
     },
     un.fmtad(
       [[
-        <pattern>)
+        <ddnt><pattern>)
         <body>
-        ;;
+        <ddnt><idnt>;;
       ]],
       {
+        idnt = un.idnt(1),
+        ddnt = un.ddnt(1),
         pattern = i(1, '*'),
-        body = un.body(2, 1, ':'),
+        body = un.body(2, function(_, parent)
+          return math.max(0, uf.get_indent_depth(parent.snippet.captures[1]))
+        end, ':'),
       }
     )
   ),

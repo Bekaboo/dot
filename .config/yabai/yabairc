@@ -43,6 +43,9 @@ yabai -m config mouse_action1 move   # modifier + left-click to move window
 yabai -m config mouse_action2 resize # resize window
 
 # Make focus follow mouse (default: off, options: off, autoraise, autofocus)
+# Zoom meeting (zoom.us) menus close immediately if `focus_follows_mouse` is
+# enabled. Holding mouse modifier can disable `focus_follows_mouse` temporally,
+# see: https://github.com/koekeishiya/yabai/issues/1706#issuecomment-1528513392
 yabai -m config focus_follows_mouse autofocus # focus follows mouse
 yabai -m config mouse_drop_action swap        # swap windows when one dropped on another
 
