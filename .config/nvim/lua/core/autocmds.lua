@@ -349,8 +349,10 @@ augroup('SpecialBufHl', {
   { 'BufEnter', 'BufNew', 'FileType', 'TermOpen' },
   {
     desc = 'Set background color for special buffers.',
-    callback = function(info)
-      if vim.bo[info.buf].bt == '' then
+    -- Schedule for window to open for the newly created special buffer
+    callback = vim.schedule_wrap(function(info)
+      local buf = info.buf
+      if not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].bt == '' then
         return
       end
       -- Current window isn't necessarily the window of the buffer that
@@ -358,7 +360,7 @@ augroup('SpecialBufHl', {
       -- the triggering buffer. We can also use `win_findbuf()` to get all
       -- windows that display the triggering buffer, but it is slower and using
       -- `bufwinid()` is enough for our purpose.
-      local winid = vim.fn.bufwinid(info.buf)
+      local winid = vim.fn.bufwinid(buf)
       if winid == -1 then
         return
       end
@@ -367,12 +369,12 @@ augroup('SpecialBufHl', {
         return
       end
       vim.api.nvim_win_call(winid, function()
-        vim.opt_local.winhl:append({
+        vim.opt_local.winhighlight:append({
           Normal = 'NormalSpecial',
           EndOfBuffer = 'NormalSpecial',
         })
       end)
-    end,
+    end),
   },
 }, {
   { 'ColorScheme', 'OptionSet' },
