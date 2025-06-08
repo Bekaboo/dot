@@ -626,7 +626,7 @@ function fzf_win:redraw_preview(...)
   -- Reuse source win or create a new split window for preview
   if self.winopts.split and not self:validate_preview() then
     if self.src_winid and vim.fn.win_gettype(self.src_winid) == '' then
-      self.preview_winid = self.src_winid
+      self.preview_winid = self.src_winid -- reuse source win for preview
     else
       -- Use first 'normal' window as source & preview window
       for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
