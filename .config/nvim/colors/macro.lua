@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Fri Jun  6 16:26:46 2025
+-- Last Updated: Sat 07 Jun 2025 09:02:51 PM PDT
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -603,6 +603,7 @@ if vim.go.bg == 'light' then
   hlgroups.StatusLineGitAdded = { bg = c_macroBg0, fg = c_macroGreen1 }
   hlgroups.StatusLineGitChanged = { bg = c_macroBg0, fg = c_autumnYellow }
   hlgroups.StatusLineGitRemoved = { bg = c_macroBg0, fg = c_macroRed }
+  hlgroups.StatusLineGitBranch = { bg = c_macroBg0, fg = c_macroAsh }
   hlgroups.StatusLineHeader = { bg = c_macroFg0, fg = c_macroBg0 }
   hlgroups.StatusLineHeaderModified = { bg = c_macroRed, fg = c_macroBg0 }
   hlgroups.Visual = { bg = c_macroBg3 }
