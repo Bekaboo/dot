@@ -115,11 +115,6 @@ function actions.change_cwd()
       end)()
     ),
     fzf_opts = { ['--no-multi'] = true },
-    winopts = {
-      preview = {
-        hidden = 'hidden',
-      },
-    },
     actions = {
       ['enter'] = function(selected)
         if not selected[1] then
@@ -652,8 +647,10 @@ fzf.setup({
       utils.win.clearviews()
     end,
     preview = {
+      border = 'none',
       hidden = 'hidden',
       layout = 'horizontal',
+      scrollbar = false,
     },
   },
   -- Open help window at top of screen with single border
@@ -875,8 +872,6 @@ fzf.setup({
     ['--border'] = 'none',
     ['--padding'] = '0,1',
     ['--margin'] = '0',
-    ['--no-preview'] = '',
-    ['--preview-window'] = 'hidden',
   },
   grep = {
     rg_glob = true,
