@@ -431,51 +431,31 @@ augroup('SessionWipeEmptyBufs', {
           :totable()
       end
 
-      local blacklist = {} ---@type table<integer, true>
       local whitelist = {} ---@type table<integer, true>
 
-      -- Clean up windows and add invalid buffers to blacklist
+      -- Don't wipe out buffers in tabpages that shows <= 1 valid buffers, else
+      -- the tabpage will be closed or the layout will change
       for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+        local buf = nil ---@type integer?
+
         for _, win in ipairs(tabpage_list_normal_wins(tab)) do
-          -- Closing the last normal window will close that tab or break
-          -- tabpage layout, skip
-          if #tabpage_list_normal_wins(tab) <= 1 then
-            break
-          end
-          if not vim.api.nvim_win_is_valid(win) then
+          local win_buf = vim.api.nvim_win_get_buf(win)
+          buf = buf or win_buf
+          if buf ~= win_buf then -- second buf in tabpage found
             goto continue
           end
-
-          -- Don't close window if containing buffer is valid
-          local buf = vim.api.nvim_win_get_buf(win)
-          if buf_is_valid(buf) then
-            goto continue
-          end
-          blacklist[buf] = true
-
-          vim.api.nvim_win_close(win, false)
-          ::continue::
         end
-      end
 
-      -- Find out invalid buffers that cannot be wiped out due to constraints
-      for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
-        if #tabpage_list_normal_wins(tab) > 1 then
-          goto continue
-        end
-        -- Tabpage has <= 1 normal windows -- cannot wipe any buffer shown
-        -- in this tabpage else the tabpage will be closed or the layout will
-        -- change
-        for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
-          whitelist[vim.api.nvim_win_get_buf(win)] = true
+        if buf then
+          whitelist[buf] = true
         end
         ::continue::
       end
 
       -- Wipe out invalid buffers
-      for buf, _ in pairs(blacklist) do
-        if not whitelist[buf] and vim.api.nvim_buf_is_valid(buf) then
-          vim.api.nvim_buf_delete(buf, {})
+      for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        if not whitelist[buf] and not buf_is_valid(buf) then
+          pcall(vim.api.nvim_buf_delete, buf, {})
         end
       end
     end,
