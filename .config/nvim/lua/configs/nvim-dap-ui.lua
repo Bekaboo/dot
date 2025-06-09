@@ -13,6 +13,7 @@ vim.keymap.set({ 'n', 'x' }, '<Leader>GK', dapui.eval, { desc = 'Inspect element
 -- stylua: ignore end
 
 dapui.setup({
+  expand_lines = false, -- don't overflow text in debug info wins
   layouts = {
     {
       elements = {
