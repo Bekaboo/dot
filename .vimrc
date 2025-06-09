@@ -42,7 +42,6 @@ silent! set viminfo=!,'100,<50,s10,h
 silent! set diffopt+=algorithm:histogram,indent-heuristic
 silent! set clipboard^=unnamedplus
 silent! set formatoptions+=normj
-silent! set jumpoptions=stack
 silent! set selection=old
 silent! set tabclose=uselast
 

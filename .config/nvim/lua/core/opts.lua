@@ -30,7 +30,6 @@ vim.opt.smoothscroll = true
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
 vim.opt.completeopt = 'menuone'
-vim.opt.jumpoptions = 'stack,view'
 vim.opt.selection = 'old'
 vim.opt.tabclose = 'uselast'
 
