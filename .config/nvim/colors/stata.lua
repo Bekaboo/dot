@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      BSD
--- Last Updated: Wed Jun  4 20:49:01 2025
+-- Last Updated: Mon Jun  9 10:52:18 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -146,7 +146,7 @@ local hlgroups = {
   ErrorMsg = { fg = c_error },
   FloatBorder = { fg = c_foreground, bg = c_highlight },
   FloatTitle = { fg = c_other, bg = c_highlight, bold = true },
-  FoldColumn = { fg = c_comment },
+  FoldColumn = { fg = c_delimiter },
   Folded = { fg = c_foreground, bg = c_highlight },
   IncSearch = { fg = c_background, bg = c_other, bold = true },
   LineNr = { fg = c_comment },
