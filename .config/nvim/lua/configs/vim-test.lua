@@ -1,6 +1,5 @@
--- Open the test terminal in split
-vim.g['test#strategy'] = 'neovim'
-vim.g['test#neovim#term_position'] = 'belowright'
+-- Use vim-dispatch to run test and populate qflist
+vim.g['test#strategy'] = 'dispatch'
 
 -- Lazy-load test configs for each filetype
 require('utils.ft').auto_load_once('testconfigs', function(ft, configs)

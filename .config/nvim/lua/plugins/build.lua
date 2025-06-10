@@ -8,7 +8,18 @@ return {
   },
 
   {
+    'tpope/vim-dispatch',
+    cmd = {
+      'Dispatch',
+      'Start',
+      'Focus',
+      'Make',
+    }
+  },
+
+  {
     'vim-test/vim-test',
+    dependencies = 'vim-dispatch',
     keys = {
       { '<Leader>tk', desc = 'Run the first test class in current file' },
       { '<Leader>ta', desc = 'Run all tests in current file' },
