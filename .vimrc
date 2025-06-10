@@ -570,11 +570,11 @@ let g:maplocalleader = ' '
 inoremap <C-r> <C-r><C-p>
 " }}}
 
-" Search within visual selection, see:
+" Search within visual selection with `<M-/>` or `<M-?>`, see:
 " - https://stackoverflow.com/a/3264324/16371328
 " - https://www.reddit.com/r/neovim/comments/1kv7som/comment/mu7lo52/ {{{2
-xnoremap /  <C-\><C-n>`</\%V
-xnoremap ?  <C-\><C-n>`>?\%V
+xnoremap <Esc>/  <C-\><C-n>`</\%V
+xnoremap <Esc>?  <C-\><C-n>`>?\%V
 
 " Select previously changed/yanked text, useful for selecting pasted text
 nnoremap gz `[v`]
