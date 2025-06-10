@@ -34,8 +34,11 @@ vim.keymap.set({ 'n', 'x' }, ']G', function() gs.nav_hunk('last') end, { desc = 
 
 -- Actions
 -- stylua: ignore start
+---@diagnostic disable-next-line: deprecated
+vim.keymap.set('n', '<Leader>gu', gs.undo_stage_hunk, { desc = 'Git unstage current hunk' })
 vim.keymap.set('n', '<Leader>gs', gs.stage_hunk, { desc = 'Git stage current hunk' })
 vim.keymap.set('n', '<Leader>gr', gs.reset_hunk, { desc = 'Git reset current hunk' })
+vim.keymap.set('n', '<Leader>gU', gs.reset_buffer_index, { desc = 'Git unstage current buffer' })
 vim.keymap.set('n', '<Leader>gS', gs.stage_buffer, { desc = 'Git stage current buffer' })
 vim.keymap.set('n', '<Leader>gR', gs.reset_buffer, { desc = 'Git reset current buffer' })
 vim.keymap.set('n', '<Leader>gp', gs.preview_hunk, { desc = 'Git preview current hunk' })
