@@ -6,8 +6,7 @@ end
 function __pyenv \
     --on-variable PWD \
     --description 'Automatically init pyenv'
-    if not type -q pyenv;
-        or test -n "$PYENV_SHELL" # already initialized
+    if not type -q pyenv
         return
     end
 
