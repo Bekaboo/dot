@@ -10,6 +10,13 @@ function __pyenv \
         return
     end
 
+    # Global version file
+    if test -r "$PYENV_ROOT/version"
+        pyenv init - fish | source
+        return
+    end
+
+    # Local version file
     set -l path $PWD
     while test $path != (dirname $path)
         if test -f "$path/.python-version"
