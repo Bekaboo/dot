@@ -3,7 +3,6 @@
 " Maintainer:       Bekaboo <kankefengjing@gmail.com>
 " Latest Revision:  Mon Jun  9 20:03:28 2025
 
-
 if exists("g:current_compiler")
   finish
 endif
@@ -18,8 +17,18 @@ else
   CompilerSet makeprg=go\ test\ $*
 endif
 
-" TODO
-" CompilerSet errorformat=
+CompilerSet errorformat=
+CompilerSet errorformat+=%-G%\\s%#===\ RUN\ %.%#            " Ignore === RUN TestXXX
+CompilerSet errorformat+=%-G%\\s%#---\ PASS:\ %.%#          " Ignore --- PASS: TestXXX
+CompilerSet errorformat+=%-G%\\s%#---\ FAIL:\ %.%#          " Ignore --- FAIL: TestXXX
+CompilerSet errorformat+=%-GFAIL%.%#                        " Ignore FAIL github.com/usr/pkg...
+CompilerSet errorformat+=%-Gok\ %m                          " Ignore ok github.com/usr/pkg...
+
+CompilerSet errorformat+=%E%\\s%#Error\ Trace:%\\s%\\+%f:%l " Start of multi-line error: Error Trace: some_test.go:123
+CompilerSet errorformat+=%Z%\\s%#Messages:%\\s%\\+%m        " End of multi-line error: Messages: msg...
+CompilerSet errorformat+=%C%\\s%#%m                         " Multi-line error message continuation
+CompilerSet errorformat+=%C                                 " Multi-line error message continuation
+CompilerSet errorformat+=%-G%.%#                            " Ignore lines that does not match any of the patterns above
 
 " Example go test error output:
 "
@@ -61,5 +70,3 @@ endif
 
 let &cpo = s:cpo_save
 unlet s:cpo_save
-
-" vim: sw=2 ts=2 et
