@@ -1,7 +1,3 @@
-if not status is-interactive
-    exit
-end
-
 # Auto init pyenv when detected `.python-version`
 function __pyenv \
     --on-variable PWD \
