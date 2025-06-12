@@ -17,7 +17,8 @@ else
   CompilerSet makeprg=go\ test\ $*
 endif
 
-CompilerSet errorformat =%E%\\s%#Error\ Trace:%\\s%\\+%f:%l                    " Start of multi-line error: Error Trace: some_test.go:123
+CompilerSet errorformat =%-G#%.%#                                              " Ignore lines starting with '#', e.g. # github.com/pkg [github.com/pkg.test]
+CompilerSet errorformat+=%E%\\s%#Error\ Trace:%\\s%\\+%f:%l                    " Start of multi-line error: Error Trace: some_test.go:123
 CompilerSet errorformat+=%Z%\\s%#Error:%\\s%\\+%m                              " End of multi-line error: Error: ...
 
 CompilerSet errorformat+=%E%.%#:\ test\ panicked:\ %m                          " Start of multi-line panic: test panicked: ...
