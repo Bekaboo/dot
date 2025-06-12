@@ -9,12 +9,10 @@ return {
 
   {
     'tpope/vim-dispatch',
-    cmd = {
-      'Dispatch',
-      'Start',
-      'Focus',
-      'Make',
-    }
+    cmd = { 'Dispatch', 'Start', 'Focus', 'Make' },
+    config = function()
+      require('configs.vim-dispatch')
+    end,
   },
 
   {
