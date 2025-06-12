@@ -7,7 +7,7 @@ function __pyenv \
     end
 
     # Global version file
-    if test -r "$PYENV_ROOT/version"
+    if test -f "$PYENV_ROOT/version"
         pyenv init - fish | source
         return
     end
