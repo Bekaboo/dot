@@ -8,7 +8,7 @@ for i, handler in ipairs(handlers) do
   end
 end
 
--- Prefer job handler over other handlers, e.g. tmux
+-- Prefer job handler (continuously update command output in quickfix)
 if job_handler then
   table.insert(handlers, 1, job_handler)
 end
