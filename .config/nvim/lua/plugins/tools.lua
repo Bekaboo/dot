@@ -164,6 +164,14 @@ return {
   },
 
   {
+    'akinsho/git-conflict.nvim',
+    event = 'BufReadPre',
+    config = function()
+      require('configs.git-conflict')
+    end,
+  },
+
+  {
     'tpope/vim-fugitive',
     cmd = {
       'G',
