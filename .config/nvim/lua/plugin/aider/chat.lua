@@ -66,7 +66,7 @@ end
 ---@return boolean? is_new whether the chat is newly created or reused
 function aider_chat_t:get(path, tab)
   ---@diagnostic disable-next-line: return-type-mismatch
-  return term_t.get(self, path and configs.opts.root(path) or path, tab)
+  return term_t.get(self, configs.opts.root(path or vim.fn.getcwd(0)), tab)
 end
 
 ---Open chat in current tabpage
