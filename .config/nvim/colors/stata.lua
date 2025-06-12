@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      BSD
--- Last Updated: Mon Jun  9 10:52:18 2025
+-- Last Updated: Thu Jun 12 16:50:24 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -389,6 +389,7 @@ local hlgroups = {
   StatusLineGitChanged = { fg = c_lightblue },
   StatusLineGitDeleted = { fg = c_lightred },
   StatusLineGitRemoved = { fg = c_lightred },
+  StatusLineDiagnosticInfo = { fg = c_lightblue },
   StatusLineDiagnosticHint = { fg = c_lightblue },
   StatusLineDiagnosticWarn = { fg = c_lightyellow },
   StatusLineDiagnosticError = { fg = c_lightred },
