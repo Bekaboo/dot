@@ -14,8 +14,7 @@ vim.g['test#custom_strategies'] = {
 }
 
 vim.g['test#strategy'] = 'confirm'
-vim.g['test#confirm#strategy'] = 'neovim'
-vim.g['test#neovim#term_position'] = 'belowright'
+vim.g['test#confirm#strategy'] = 'dispatch'
 
 -- Lazy-load test configs for each filetype
 require('utils.ft').auto_load_once('testconfigs', function(ft, configs)
