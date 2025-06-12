@@ -28,6 +28,8 @@ CompilerSet errorformat+=%+A%\\s%\\+%.%#(%.%#0x%\\x%\\+%.%#)                   "
 CompilerSet errorformat+=%+A%\\s%\\+%.%#()                                     " ...
 CompilerSet errorformat+=%+A%\\s%\\+created\ by\ %.%#\ in\ goroutine\ %\\d%\\+ " Following stack trace message: created by testing.(*T).Run in goroutine 50
 CompilerSet errorformat+=%C%.%#                                                " Stack trace continuation
+
+CompilerSet errorformat+=%f:%l:%c:\ %m                                         " Single-line error message: pkg/some_test.go:123:45: ...
 CompilerSet errorformat+=%-G%.%#                                               " Ignore lines that does not match any of the patterns above
 
 let &cpo = s:cpo_save
