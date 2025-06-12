@@ -17,56 +17,18 @@ else
   CompilerSet makeprg=go\ test\ $*
 endif
 
-CompilerSet errorformat=
-CompilerSet errorformat+=%-G%\\s%#===\ RUN\ %.%#            " Ignore === RUN TestXXX
-CompilerSet errorformat+=%-G%\\s%#---\ PASS:\ %.%#          " Ignore --- PASS: TestXXX
-CompilerSet errorformat+=%-G%\\s%#---\ FAIL:\ %.%#          " Ignore --- FAIL: TestXXX
-CompilerSet errorformat+=%-GFAIL%.%#                        " Ignore FAIL github.com/usr/pkg...
-CompilerSet errorformat+=%-Gok\ %m                          " Ignore ok github.com/usr/pkg...
+CompilerSet errorformat =%E%\\s%#Error\ Trace:%\\s%\\+%f:%l                    " Start of multi-line error: Error Trace: some_test.go:123
+CompilerSet errorformat+=%Z%\\s%#Error:%\\s%\\+%m                              " End of multi-line error: Error: ...
 
-CompilerSet errorformat+=%E%\\s%#Error\ Trace:%\\s%\\+%f:%l " Start of multi-line error: Error Trace: some_test.go:123
-CompilerSet errorformat+=%Z%\\s%#Messages:%\\s%\\+%m        " End of multi-line error: Messages: msg...
-CompilerSet errorformat+=%C%\\s%#%m                         " Multi-line error message continuation
-CompilerSet errorformat+=%C                                 " Multi-line error message continuation
-CompilerSet errorformat+=%-G%.%#                            " Ignore lines that does not match any of the patterns above
-
-" Example go test error output:
-"
-" --- FAIL: TestValidateTestSuite (4.98s)
-"     --- FAIL: TestValidateTestSuite/TestExtractReferencedResourceIDs (0.00s)
-"         --- FAIL: TestValidateTestSuite/TestExtractReferencedResourceIDs/extract_kb_id_single (0.00s)
-"             validate_test.go:531:
-"                         Error Trace:    /Users/bekaboo/code/inc/go-servers/bot-server/internal/virtualagent/validate_test.go:531
-"                                                                 /Users/bekaboo/go/pkg/mod/github.com/stretchr/testify@v1.10.0/suite/suite.go:115
-"                         Error:          elements differ
-"
-"                                         extra elements in list A:
-"                                         ([]interface {}) (len=1) {
-"                                          (string) (len=6) "kb-123"
-"                                         }
-"
-"
-"                                         extra elements in list B:
-"                                         ([]interface {}) (len=1) {
-"                                          (string) (len=5) "kb123"
-"                                         }
-"
-"
-"                                         listA:
-"                                         ([]string) (len=1) {
-"                                          (string) (len=6) "kb-123"
-"                                         }
-"
-"
-"                                         listB:
-"                                         ([]string) (len=1) {
-"                                          (string) (len=5) "kb123"
-"                                         }
-"                         Test:           TestValidateTestSuite/TestExtractReferencedResourceIDs/extract_kb_id_single
-"                         Messages:       extracted knowledge base IDs mismatch
-" FAIL
-" FAIL    github.com/inc/go-servers/bot-server/internal/virtualagent   5.260s
-" FAIL
+CompilerSet errorformat+=%E%.%#:\ test\ panicked:\ %m                          " Start of multi-line panic: test panicked: ...
+CompilerSet errorformat+=%C%\\s%\\+%.%#(%.%#0x%\\x%\\+%.%#)                    " Ignore first panic stack trace message, use message following 'test panicked:'
+CompilerSet errorformat+=%C%\\s%\\+%.%#()                                      " ...
+CompilerSet errorformat+=%Z%\\s%\\+%f:%l\ +0x%\\x%\\+                          " End multi-line panic with the first panic stack trace: /xxx/stack.go:123 +0x64
+CompilerSet errorformat+=%+A%\\s%\\+%.%#(%.%#0x%\\x%\\+%.%#)                   " Following stack trace message: github.com/xxx/suite.failOnPanic(0x14000583880, {0x1053ba500, 0x14001570690})
+CompilerSet errorformat+=%+A%\\s%\\+%.%#()                                     " ...
+CompilerSet errorformat+=%+A%\\s%\\+created\ by\ %.%#\ in\ goroutine\ %\\d%\\+ " Following stack trace message: created by testing.(*T).Run in goroutine 50
+CompilerSet errorformat+=%C%.%#                                                " Stack trace continuation
+CompilerSet errorformat+=%-G%.%#                                               " Ignore lines that does not match any of the patterns above
 
 let &cpo = s:cpo_save
 unlet s:cpo_save
