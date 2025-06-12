@@ -432,8 +432,9 @@ function _G._statusline.fname()
   end
 
   if vim.bo.bt == 'quickfix' then
-    return utils.stl.escape(str_shorten(vim.w.quickfix_title, fname_max_width))
-      or ''
+    return utils.stl.escape(
+      str_shorten(vim.w.quickfix_title, fname_special_max_width)
+    ) or ''
   end
 
   -- Terminal buffer, show terminal command and id
