@@ -121,29 +121,7 @@ return {
               and vim.fn.substitute(opts.prompt, ':\\?\\s*$', ':\xc2\xa0', '')
             _ui_select(items, opts, on_choice)
           end
-
-          -- Use the register function provided by fzf-lua. We are using this
-          -- wrapper instead of directly replacing `vim.ui.selct()` with fzf
-          -- select function because in this way we can pass a callback to this
-          -- `register()` function to generate fzf opts in different contexts,
-          -- see https://github.com/ibhagwan/fzf-lua/issues/755
-          -- Here we use the callback to achieve adaptive height depending on
-          -- the number of items, with a max height of 10, the `split` option
-          -- is basically the same as that used in fzf config file:
-          -- lua/configs/fzf-lua.lua
-          fzf_ui.register(function(_, items)
-            local height = #items + 1
-            return {
-              winopts = {
-                split = string.format(
-                  '%s | if %d < winheight(0) | resize %d | endif',
-                  vim.trim(require('fzf-lua.config').setup_opts.winopts.split),
-                  height,
-                  height
-                ),
-              },
-            }
-          end)
+          fzf_ui.register()
         end
         vim.ui.select(...)
       end

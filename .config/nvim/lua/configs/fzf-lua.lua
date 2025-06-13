@@ -551,40 +551,11 @@ function fzf.complete_from_registers(opts)
 end
 
 fzf.setup({
-  -- Default profile 'default-title' disables prompt in favor of title
-  -- on nvim >= 0.9, but a fzf windows with split layout cannot have titles
-  -- See https://github.com/ibhagwan/fzf-lua/issues/1739
-  'default-prompt',
+  'borderless-full',
   -- Use nbsp in tty to avoid showing box chars
   nbsp = not vim.go.termguicolors and '\xc2\xa0' or nil,
   dir_icon = vim.trim(icons.Folder),
   winopts = {
-    backdrop = 100,
-    -- Split at bottom, save information for restoration in
-    -- `winopts.on_close()` callback
-    split = [[
-        let tabpage_win_list = nvim_tabpage_list_wins(0) |
-        \ call v:lua.require'utils.win'.saveheights(tabpage_win_list) |
-        \ call v:lua.require'utils.win'.saveviews(tabpage_win_list) |
-        \ unlet tabpage_win_list |
-        \ let g:_fzf_vim_lines = &lines |
-        \ let g:_fzf_leave_win = win_getid(winnr()) |
-        \ let g:_fzf_splitkeep = &splitkeep | let &splitkeep = "topline" |
-        \ let g:_fzf_cmdheight = &cmdheight | let &cmdheight = 0 |
-        \ let g:_fzf_laststatus = &laststatus | let &laststatus = 0 |
-        \ let g:_fzf_qfclosed = win_gettype(winnr('$')) |
-        \ if g:_fzf_qfclosed ==# 'loclist' || g:_fzf_qfclosed ==# 'quickfix' |
-        \   cclose |
-        \   lclose |
-        \ else |
-        \   unlet g:_fzf_qfclosed |
-        \ endif |
-        \ botright 10new |
-        \ exe 'resize' .
-          \ (10 + g:_fzf_cmdheight + (g:_fzf_laststatus ? 1 : 0)) |
-        \ let w:winbar_no_attach = v:true |
-        \ setlocal bt=nofile bh=wipe nobl noswf wfh
-    ]],
     on_create = function()
       vim.keymap.set(
         't',
@@ -597,59 +568,7 @@ fzf.setup({
         }
       )
     end,
-    on_close = function()
-      ---@param name string
-      ---@return nil
-      local function _restore_global_opt(name)
-        local backup_name = '_fzf_' .. name
-        local backup = vim.g[backup_name]
-        if backup ~= nil and vim.go[name] ~= backup then
-          vim.go[name] = backup
-          vim.g[backup_name] = nil
-        end
-      end
-
-      _restore_global_opt('splitkeep')
-      _restore_global_opt('cmdheight')
-      _restore_global_opt('laststatus')
-
-      -- Reopen quickfix/location list after closing fzf if we previous closed
-      -- it to make space for fzf
-      local win = vim.api.nvim_get_current_win()
-      if vim.g._fzf_qfclosed == 'loclist' then
-        vim.cmd.lopen()
-      elseif vim.g._fzf_qfclosed == 'quickfix' then
-        vim.cmd.copen()
-      end
-      vim.g._fzf_qfclosed = nil
-      if
-        win ~= vim.api.nvim_get_current_win()
-        and vim.api.nvim_win_is_valid(win)
-      then
-        vim.api.nvim_set_current_win(win)
-      end
-
-      if
-        vim.g._fzf_leave_win
-        and vim.api.nvim_win_is_valid(vim.g._fzf_leave_win)
-        and vim.api.nvim_get_current_win() ~= vim.g._fzf_leave_win
-      then
-        vim.api.nvim_set_current_win(vim.g._fzf_leave_win)
-      end
-      vim.g._fzf_leave_win = nil
-
-      if vim.go.lines == vim.g._fzf_vim_lines then
-        utils.win.restheights()
-      end
-      vim.g._fzf_vim_lines = nil
-      utils.win.clearheights()
-      utils.win.restviews()
-      utils.win.clearviews()
-    end,
     preview = {
-      border = 'none',
-      hidden = 'hidden',
-      layout = 'horizontal',
       scrollbar = false,
     },
   },
@@ -679,26 +598,27 @@ fzf.setup({
     ['pointer'] = { 'fg', 'TelescopeSelectionCaret' },
     ['marker'] = { 'fg', 'TelescopeMultiIcon' },
     ['fg'] = { 'fg', 'TelescopeNormal' },
-    ['bg'] = '-1',
-    ['gutter'] = '-1',
   },
   keymap = {
-    -- Overrides default completion completely
     builtin = {
+      true, -- inherit default keymaps provided by fzf-lua
       ['<C-_>'] = 'toggle-help',
       ['<F1>'] = 'toggle-help',
       ['<F2>'] = 'toggle-fullscreen',
     },
     fzf = {
       -- fzf '--bind=' options
+      true,
       ['ctrl-z'] = 'abort',
       ['ctrl-k'] = 'kill-line',
       ['ctrl-u'] = 'unix-line-discard',
       ['ctrl-a'] = 'beginning-of-line',
       ['ctrl-e'] = 'end-of-line',
       ['alt-a'] = 'toggle-all',
-      ['alt-}'] = 'last',
       ['alt-{'] = 'first',
+      ['alt-}'] = 'last',
+      ['shift-up'] = 'preview-up',
+      ['shift-down'] = 'preview-down',
     },
   },
   actions = {
@@ -870,8 +790,6 @@ fzf.setup({
     ['--marker'] = not vim.g.has_nf and icons.GitSignAdd or nil,
     ['--pointer'] = not vim.g.has_nf and icons.AngleRight or nil,
     ['--border'] = 'none',
-    ['--padding'] = '0,1',
-    ['--margin'] = '0',
   },
   grep = {
     rg_glob = true,
