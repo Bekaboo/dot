@@ -19,7 +19,7 @@ function __fish_async_vcs_prompt
         " & disown 2>/dev/null
     end
 
-   echo $$vcs_info_name
+    echo $$vcs_info_name
 end
 
 function __fish_async_prompt_repaint --on-signal USR1
