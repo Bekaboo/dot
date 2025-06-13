@@ -206,5 +206,15 @@
     {
         "key": "ctrl+n",
         "command": "-workbench.action.files.newUntitledFile"
+    },
+    {
+        "key": "alt+enter",
+        "command": "workbench.action.chat.submit",
+        "when": "chatInputHasText && inChatInput && !chatSessionRequestInProgress && chatLocation != 'editing-session'"
+    },
+    {
+        "key": "enter",
+        "command": "-workbench.action.chat.submit",
+        "when": "chatInputHasText && inChatInput && !chatSessionRequestInProgress && chatLocation != 'editing-session'"
     }
 ]
