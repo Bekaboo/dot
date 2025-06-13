@@ -115,6 +115,7 @@
 	td   = tag -d
 	tl   = tag -l
 	tm   = tag -m
+	tc   = tag --contains
 	w    = show --stat
 	wa   = log --diff-filter=A
 	wc   = log --diff-filter=C
