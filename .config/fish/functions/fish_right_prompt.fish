@@ -29,9 +29,9 @@ function __fish_async_prompt_repaint --on-signal USR1
     # Async call, prompt not updated yet when request exists, so use a function
     # to unset the update flag on prompt repaint
     commandline -f repaint
-    function __fish_async_prompt_undset_update --on-event fish_prompt
+    function __fish_async_prompt_unset_update --on-event fish_prompt
         set -e __fish_async_prompt_vcs_update
-        functions -e __fish_async_prompt_undset_flag # ensure execute once
+        functions -e __fish_async_prompt_unset_update # ensure execute once
     end
 end
 
