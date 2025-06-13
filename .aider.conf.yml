@@ -9,7 +9,7 @@ architect: true
 cache-prompts: true
 auto-accept-architect: false
 
-model: r1
+model: opus
 weak-model: deepseek
 editor-model: sonnet
 chat-language: >
