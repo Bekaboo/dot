@@ -193,9 +193,8 @@ local function enable_plugins(module_names)
       root = vim.g.package_path,
       lockfile = vim.g.package_lock,
       ui = {
-        backdrop = 100,
         border = 'solid',
-        size = { width = 0.7, height = 0.74 },
+        size = { width = 0.7, height = 0.7 },
         icons = {
           cmd = icons.Cmd,
           config = icons.Config,
