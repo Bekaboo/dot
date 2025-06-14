@@ -10,8 +10,7 @@ function __fish_async_vcs_prompt
     set -l vcs_info_name __fish_vcs_info_$safe_pwd
 
     # Launch async process to update vcs info
-    # Don't update if this is invoked by a repaint to avoid endless recursive
-    # calls
+    # Don't update if this is invoked by a repaint to avoid endless recursion
     if not set -q __fish_async_prompt_vcs_update
         fish -c "
             set -U $vcs_info_name (fish_vcs_prompt)
