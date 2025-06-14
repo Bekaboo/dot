@@ -13,7 +13,7 @@ function __fish_async_vcs_prompt
     # Don't update if this is invoked by a repaint to avoid endless recursive
     # calls
     if not set -q __fish_async_prompt_vcs_update
-        fish --no-config -c "
+        fish -c "
             set -U $vcs_info_name (fish_vcs_prompt)
             kill -USR1 $fish_pid
         " & disown 2>/dev/null
