@@ -26,13 +26,14 @@ function __fish_async_prompt_repaint --on-signal USR1
     # Set flag `__fish_async_prompt_vcs_update` to indicate that the prompt is
     # repainted to update vcs info
     set -g __fish_async_prompt_vcs_update true
-    # Async call, prompt not updated yet when request exists, so use a function
-    # to unset the update flag on prompt repaint
+    # Async call, prompt not updated yet when request exists
     commandline -f repaint
-    function __fish_async_prompt_unset_update --on-event fish_prompt
-        set -e __fish_async_prompt_vcs_update
-        functions -e __fish_async_prompt_unset_update # ensure execute once
-    end
+end
+
+function __fish_async_prompt_unset_update \
+    --description 'Unset flag on async prompt repaint to re-enaled vcs info update' \
+    --on-event fish_prompt
+    set -e __fish_async_prompt_vcs_update
 end
 
 function fish_right_prompt --description 'Write out the right prompt'
