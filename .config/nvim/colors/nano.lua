@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Tue 06 May 2025 10:06:31 AM PDT
+-- Last Updated: Sun 15 Jun 2025 10:36:32 PM PDT
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -208,7 +208,7 @@ local hlgroups = {
   PreCondit = { link = 'PreProc' },
   Include = { link = 'PreProc' },
   Define = { link = 'PreProc' },
-  Macro = { fg = c_foreground },
+  Macro = { fg = c_faded },
   Type = { fg = c_salient },
   StorageClass = { link = 'Keyword' },
   Structure = { link = 'Type' },
