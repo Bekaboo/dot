@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      BSD
--- Last Updated: Thu Jun 12 16:50:24 2025
+-- Last Updated: Mon Jun 16 09:34:16 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -310,7 +310,7 @@ local hlgroups = {
   DiagnosticSignWarn = { link = 'DiagnosticWarn' },
   DiagnosticSignInfo = { link = 'DiagnosticInfo' },
   DiagnosticSignHint = { link = 'DiagnosticHint' },
-  DiagnosticUnnecessary = { fg = c_comment, undercurl = true, sp = c_comment },
+  DiagnosticUnnecessary = { undercurl = true, sp = c_special },
   -- }}}2
 
   -- Filetype {{{2
