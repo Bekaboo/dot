@@ -31,7 +31,6 @@ CompilerSet errorformat+=%+A%\\s%\\+created\ by\ %.%#\ in\ goroutine\ %\\d%\\+ "
 CompilerSet errorformat+=%C%.%#                                                " Stack trace continuation
 
 CompilerSet errorformat+=%f:%l:%c:\ %m                                         " Single-line error message: pkg/some_test.go:123:45: ...
-CompilerSet errorformat+=%-G%.%#                                               " Ignore lines that does not match any of the patterns above
 
 let &cpo = s:cpo_save
 unlet s:cpo_save
