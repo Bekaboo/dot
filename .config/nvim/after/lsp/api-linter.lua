@@ -16,7 +16,7 @@ return {
           lintCommand = 'api-linter --config apilint.yaml "${INPUT}" || api-lint "${INPUT}"',
           lintFormats = { '%[0-9/]\\+ %[0-9:]\\+ %f:%l:%c: %m' },
           lintStdin = false,
-          lintSeverity = 2,
+          lintSeverity = vim.log.levels.INFO,
           rootMarkers = root_markers,
         },
       },

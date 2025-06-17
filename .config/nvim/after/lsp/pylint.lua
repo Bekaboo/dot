@@ -22,7 +22,7 @@ return {
           lintCommand = 'pylint --disable line-too-long,import-error --score=no --from-stdin "${INPUT}"',
           lintFormats = { '%f:%l:%c: %t%.%#: %m' },
           lintStdin = true,
-          lintSeverity = 2,
+          lintSeverity = vim.log.levels.INFO,
           rootMarkers = root_markers,
         },
       },

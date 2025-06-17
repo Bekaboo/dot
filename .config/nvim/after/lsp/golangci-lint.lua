@@ -25,7 +25,7 @@ return {
           lintFormats = { '%f:%l:%c%*\\s%*\\S%*\\s%m' },
           lintSource = 'golangci-lint',
           lintStdin = false,
-          lintSeverity = 2,
+          lintSeverity = vim.log.levels.INFO,
           rootMarkers = root_markers,
         },
       },
