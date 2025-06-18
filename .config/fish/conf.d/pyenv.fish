@@ -6,8 +6,11 @@ function __pyenv \
         return
     end
 
-    # Global version file
-    if test -f "$PYENV_ROOT/version"
+    # Getting version from environment variable or the global version config
+    # file
+    if test -n "$PYENV_VERSION"
+        or test -f "$PYENV_ROOT/version"
+        or test -f "$HOME/.pyenv/version"
         pyenv init - fish | source
         return
     end
