@@ -22,6 +22,12 @@ M.root_markers = {
     '.gitignore',
     '.editorconfig',
   },
+  {
+    'README',
+    'README.md',
+    'README.txt',
+    'README.org',
+  }
 }
 
 local fs_root = vim.fs.root
