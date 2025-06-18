@@ -10,6 +10,7 @@
     "asvetliakov.vscode-neovim": 1
   },
   "files.autoSave": "onFocusChange",
+  "git.openRepositoryInParentFolders": "always",
   "security.workspace.trust.enabled": false,
   "security.workspace.trust.untrustedFiles": "open",
   "terminal.integrated.allowChords": false,
