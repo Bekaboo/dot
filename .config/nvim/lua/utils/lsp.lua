@@ -82,20 +82,20 @@ function M.start(config, opts)
       or nil
   end
 
-  local root_dir = vim.fs.root(
-    bufname,
-    vim.list_extend(
-      config.root_markers or {},
-      M.default_config.root_markers or {}
+  local root_dir = validate(
+    require('utils.fs').root(
+      bufname,
+      vim.list_extend(
+        config.root_markers or {},
+        M.default_config.root_markers or {}
+      )
     )
-  )
+  ) or validate(vim.fs.dirname(bufname)) or vim.fn.getcwd(0)
 
   return lsp_start(
     vim.tbl_deep_extend('keep', config or {}, {
       name = name,
-      root_dir = validate(root_dir)
-        or validate(vim.fs.dirname(bufname))
-        or vim.fn.getcwd(0),
+      root_dir = root_dir,
     }, M.default_config),
     opts
   )

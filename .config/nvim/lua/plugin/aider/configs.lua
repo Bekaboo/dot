@@ -1,4 +1,5 @@
 local M = {}
+local utils = require('utils')
 
 ---@class aider_opts_t
 M.opts = {
@@ -12,13 +13,13 @@ M.opts = {
       return dir
           and vim.fn.isdirectory(dir) == 1
           -- Aider will freeze if opened in home dir
-          and not require('utils.fs').is_home_dir(dir)
-          and not require('utils.fs').is_root_dir(dir)
+          and not utils.fs.is_home_dir(dir)
+          and not utils.fs.is_root_dir(dir)
           and dir
         or nil
     end
-    return validate(vim.fs.root(path, '.git'))
-      or validate(vim.fs.root(path, require('utils.fs').root_markers))
+    return validate(require('utils.fs').root(path, '.git'))
+      or validate(require('utils.fs').root(path))
       or vim.fn.isdirectory(path) == 1 and path
       or vim.fs.dirname(path)
   end,
@@ -29,7 +30,7 @@ M.opts = {
     ---@return string[]
     cmd = function(path)
       local aider_cmd = { 'aider' }
-      if not vim.fs.root(path, '.git') then
+      if not utils.fs.root(path, '.git') then
         table.insert(aider_cmd, '--no-git')
       end
       return aider_cmd

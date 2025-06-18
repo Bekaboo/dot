@@ -1,11 +1,14 @@
 local root_markers = {
-  'pylintrc',
-  'Pipfile',
-  'pyproject.toml',
-  'requirements.txt',
-  'setup.cfg',
-  'setup.py',
-  'tox.ini',
+  { 'pylintrc' },
+  {
+    'Pipfile',
+    'pyproject.toml',
+    'requirements.txt',
+    'setup.cfg',
+    'setup.py',
+    'tox.ini',
+  },
+  { 'venv', 'env', '.venv', '.env' },
 }
 
 return {
@@ -23,7 +26,7 @@ return {
           lintFormats = { '%f:%l:%c: %t%.%#: %m' },
           lintStdin = true,
           lintSeverity = vim.log.levels.INFO,
-          rootMarkers = root_markers,
+          rootMarkers = vim.iter(root_markers):flatten():totable(),
         },
       },
     },

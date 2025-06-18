@@ -2,14 +2,17 @@ return {
   filetypes = { 'python' },
   cmd = { 'pyre', 'persistent' },
   root_markers = {
-    '.pyre_configuration',
-    '.watchmanconfig',
-    'Pipfile',
-    'pyproject.toml',
-    'requirements.txt',
-    'setup.cfg',
-    'setup.py',
-    'tox.ini',
+    { '.pyre_configuration' },
+    { '.watchmanconfig' },
+    { 'pyproject.toml' },
+    {
+      'Pipfile',
+      'requirements.txt',
+      'setup.cfg',
+      'setup.py',
+      'tox.ini',
+    },
+    { 'venv', 'env', '.venv', '.env' },
   },
   before_init = function(params)
     if not params.rootPath or vim.fn.isdirectory(params.rootPath) == 0 then

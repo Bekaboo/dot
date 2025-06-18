@@ -15,7 +15,7 @@ return {
         {
           formatStdin = true,
           formatCommand = 'gofmt -s',
-          rootMarkers = root_markers,
+          rootMarkers = vim.iter(root_markers):flatten():totable(),
         },
       },
     },

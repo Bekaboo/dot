@@ -133,7 +133,7 @@ local eslint_lang_settings = {
     lintSource = cmd,
     lintStdin = true,
     lintIgnoreExitCode = true,
-    rootMarkers = root_markers,
+    rootMarkers = vim.iter(root_markers):flatten():totable(),
   },
 }
 
