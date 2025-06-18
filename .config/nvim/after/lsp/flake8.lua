@@ -11,6 +11,7 @@ local root_markers = {
     'setup.py',
   },
   { 'venv', 'env', '.venv', '.env' },
+  { '.python-version' },
 }
 
 return {

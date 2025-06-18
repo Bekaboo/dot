@@ -9,6 +9,7 @@ local root_markers = {
     'tox.ini',
   },
   { 'venv', 'env', '.venv', '.env' },
+  { '.python-version' },
 }
 
 local settings = {

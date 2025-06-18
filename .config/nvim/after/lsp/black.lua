@@ -12,6 +12,7 @@ return {
       'tox.ini',
     },
     { 'venv', 'env', '.venv', '.env' },
+    { '.python-version' },
   },
   name = 'black',
   init_options = { documentFormatting = true },

@@ -13,6 +13,7 @@ return {
       'tox.ini',
     },
     { 'venv', 'env', '.venv', '.env' },
+    { '.python-version' },
   },
   before_init = function(params)
     if not params.rootPath or vim.fn.isdirectory(params.rootPath) == 0 then
