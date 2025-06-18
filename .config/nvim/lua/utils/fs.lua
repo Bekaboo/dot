@@ -1,6 +1,12 @@
 local M = {}
 
 M.root_markers = {
+  -- Must include python environment root markers here so that we can set cwd
+  -- inside a python project and have correct python version in nvim.
+  -- This is crucial for running pytest from within nvim using vim-test or
+  -- other jobs that requires a python virtual environment.
+  { 'venv', 'env', '.venv', '.env' },
+  { '.python-version' },
   {
     '.git',
     '.svn',
@@ -27,7 +33,7 @@ M.root_markers = {
     'README.md',
     'README.txt',
     'README.org',
-  }
+  },
 }
 
 local fs_root = vim.fs.root
