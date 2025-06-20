@@ -42,10 +42,13 @@ end
 ---@param save_method fun(win: integer): any?
 ---@return fun(store: table<integer, any>, wins: integer[]?)
 function M.save(save_method)
-  ---@param store table<integer, any>
+  ---@param store string|table<integer, any>
   ---@param wins? integer[] list of wins to restore, default to all windows in
   ---current tabpage
   return function(store, wins)
+    if type(store) == 'string' then
+      store = _G[store]
+    end
     if not store then
       return
     end
@@ -64,10 +67,13 @@ end
 ---@param restore_method fun(win: integer, data: any): any?
 ---@return fun(store: table<integer, any>, wins: integer[]?)
 function M.rest(restore_method)
-  ---@param store table<integer, any>
+  ---@param store string|table<integer, any>
   ---@param wins? integer[] list of wins to restore, default to all windows in
   ---current tabpage
   return function(store, wins)
+    if type(store) == 'string' then
+      store = _G[store]
+    end
     if not store then
       return
     end
