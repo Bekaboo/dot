@@ -4,11 +4,32 @@ local dap_utils = require('utils.dap')
 ---@type dapcache_t
 local cache = dap_utils.new_cache()
 
-M.adapter = {
-  type = 'executable',
-  command = 'python',
-  args = { '-m', 'debugpy.adapter' },
-}
+M.adapter = function(cb, config)
+  if config.request == 'attach' then
+    local port = (config.connect or config).port
+    local host = (config.connect or config).host or '127.0.0.1'
+    cb({
+      type = 'server',
+      port = assert(
+        port,
+        '`connect.port` is required for a python `attach` configuration'
+      ),
+      host = host,
+      options = {
+        source_filetype = 'python',
+      },
+    })
+  else
+    cb({
+      type = 'executable',
+      command = 'python3',
+      args = { '-m', 'debugpy.adapter' },
+      options = {
+        source_filetype = 'python',
+      },
+    })
+  end
+end
 
 M.config = {
   {
@@ -18,19 +39,12 @@ M.config = {
     program = '${file}',
     args = dap_utils.get_args(cache),
     pythonPath = function()
-      ---@type string[]
-      local venvs = vim.fs.find({ 'venv', 'env', '.venv', '.env' }, {
-        path = vim.fn.expand('%:p:h'),
-        limit = math.huge,
-        upward = true,
-      })
-      for _, venv in ipairs(venvs) do
-        local python_path = vim.fs.joinpath(venv, 'bin/python')
-        if vim.fn.executable(python_path) == 1 then
-          return python_path
-        end
-      end
-      return vim.fn.exepath('python')
+      return vim.fn.exepath('python3')
+    end,
+    -- Fix debugpy cannot find local python modules, assuming cwd has been
+    -- set to project root, see https://stackoverflow.com/a/63271966
+    env = function()
+      return { PYTHONPATH = vim.fn.getcwd(0) }
     end,
   },
 }
