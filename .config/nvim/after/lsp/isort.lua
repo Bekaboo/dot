@@ -1,11 +1,18 @@
 local root_markers = {
-  '.isort.cfg',
-  'Pipfile',
-  'pyproject.toml',
-  'requirements.txt',
-  'setup.cfg',
-  'setup.py',
-  'tox.ini',
+  { '.isort.cfg' },
+  {
+    'pyproject.toml',
+    'setup.cfg',
+    'tox.ini',
+  },
+  { '.editorconfig' },
+  {
+    'Pipfile',
+    'requirements.txt',
+    'setup.py',
+  },
+  { 'venv', 'env', '.venv', '.env' },
+  { '.python-version' },
 }
 
 return {
@@ -21,7 +28,7 @@ return {
         {
           formatCommand = 'isort --quiet -',
           formatStdin = true,
-          rootMarkers = root_markers,
+          rootMarkers = vim.iter(root_markers):flatten():totable(),
         },
       },
     },

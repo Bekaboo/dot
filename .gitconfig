@@ -39,6 +39,7 @@
 	; pointer, aka "soft checkout"
 	cos  = "!__git_cos() { git checkout --detach && git reset --soft $1 && git checkout $1; }; __git_cos"
 	d    = diff
+	dt   = difftool
 	ds   = diff --cached
 	f    = fetch
 	ia   = merge-base --is-ancestor
@@ -115,6 +116,7 @@
 	td   = tag -d
 	tl   = tag -l
 	tm   = tag -m
+	tc   = tag --contains
 	w    = show --stat
 	wa   = log --diff-filter=A
 	wc   = log --diff-filter=C

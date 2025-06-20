@@ -8,7 +8,7 @@ return {
   },
   cmd = { 'ccls' },
   root_markers = {
-    '.ccls',
-    'compile_commands.json',
+    { '.ccls' },
+    { 'compile_commands.json' },
   },
 }

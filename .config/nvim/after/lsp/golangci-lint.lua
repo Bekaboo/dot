@@ -1,10 +1,14 @@
 local root_markers = {
-  '.goalngci.yml',
-  '.golangci.yaml',
-  '.golangci.toml',
-  '.golangci.json',
-  'go.work',
-  'go.mod',
+  {
+    '.goalngci.yml',
+    '.golangci.yaml',
+    '.golangci.toml',
+    '.golangci.json',
+  },
+  {
+    'go.work',
+    'go.mod',
+  },
 }
 
 return {
@@ -25,8 +29,8 @@ return {
           lintFormats = { '%f:%l:%c%*\\s%*\\S%*\\s%m' },
           lintSource = 'golangci-lint',
           lintStdin = false,
-          lintSeverity = 2,
-          rootMarkers = root_markers,
+          lintSeverity = vim.log.levels.INFO,
+          rootMarkers = vim.iter(root_markers):flatten():totable(),
         },
       },
     },

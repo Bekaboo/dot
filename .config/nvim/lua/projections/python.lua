@@ -2,7 +2,9 @@ return {
   ['pytest.ini|Pipfile|pyproject.toml|requirements.txt|setup.cfg|setup.py|tox.ini|*.py'] = {
     ['*.py'] = {
       alternate = {
-        'tests/{dirname}/test_{basename}.py', -- test file in `tests` subdir
+        -- Test file in `tests` subdir
+        'tests/test_{basename}.py',
+        'tests/{dirname}/test_{basename}.py',
         -- Test file in parallel `test` dir, e.g.
         -- Source: <proj_name>/<mod>/<submod>/*.py
         -- Tests:  tests/<mod>/<submod>/test_*.py

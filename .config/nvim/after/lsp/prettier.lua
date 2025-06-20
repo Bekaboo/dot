@@ -14,20 +14,22 @@ for _, c in ipairs(cmds) do
 end
 
 local root_markers = {
-  'prettier.config.js',
-  'prettier.config.mjs',
-  'prettier.config.cjs',
-  '.prettierrc',
-  '.prettierrc.js',
-  '.prettierrc.mjs',
-  '.prettierrc.cjs',
-  '.prettierrc.json',
-  '.prettierrc.hjson',
-  '.prettierrc.json5',
-  '.prettierrc.toml',
-  '.prettierrc.yaml',
-  '.prettierrc.yml',
-  'package.json',
+  {
+    'prettier.config.js',
+    'prettier.config.mjs',
+    'prettier.config.cjs',
+    '.prettierrc',
+    '.prettierrc.js',
+    '.prettierrc.mjs',
+    '.prettierrc.cjs',
+    '.prettierrc.json',
+    '.prettierrc.hjson',
+    '.prettierrc.json5',
+    '.prettierrc.toml',
+    '.prettierrc.yaml',
+    '.prettierrc.yml',
+  },
+  { 'package.json' },
 }
 
 local prettier_lang_settings = {
@@ -36,7 +38,7 @@ local prettier_lang_settings = {
       .. ' --stdin-filepath ${INPUT} ${--range-start=charStart} ${--range-end=charEnd} ${--tab-width=tabWidth} ${--use-tabs=!insertSpaces}',
     formatCanRange = true,
     formatStdin = true,
-    rootMarkers = root_markers,
+    rootMarkers = vim.iter(root_markers):flatten():totable(),
   },
 }
 

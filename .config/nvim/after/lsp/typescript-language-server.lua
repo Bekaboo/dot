@@ -8,9 +8,11 @@ return {
     '--stdio',
   },
   root_markers = {
-    'tsconfig.json',
-    'jsconfig.json',
-    'package.json',
+    {
+      'tsconfig.json',
+      'jsconfig.json',
+    },
+    { 'package.json' },
   },
   init_options = {
     hostInfo = 'neovim',

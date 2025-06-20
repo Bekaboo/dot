@@ -40,12 +40,19 @@ end
 
 ---Returns a function to save some attributes over a list of windows
 ---@param save_method fun(win: integer): any?
----@param store table<integer, any>
----@return fun(wins: integer[]?): nil
-function M.save(save_method, store)
-  ---@param wins? integer[] list of wins to restore, default to all windows
-  return function(wins)
-    for _, win in ipairs(wins or vim.api.nvim_list_wins()) do
+---@return fun(store: table<integer, any>, wins: integer[]?)
+function M.save(save_method)
+  ---@param store string|table<integer, any>
+  ---@param wins? integer[] list of wins to restore, default to all windows in
+  ---current tabpage
+  return function(store, wins)
+    if type(store) == 'string' then
+      store = _G[store]
+    end
+    if not store then
+      return
+    end
+    for _, win in ipairs(wins or vim.api.nvim_tabpage_list_wins(0)) do
       local ok, result = pcall(vim.api.nvim_win_call, win, function()
         return save_method(win)
       end)
@@ -58,15 +65,19 @@ end
 
 ---Returns a function to restore the attributes of windows from `store`
 ---@param restore_method fun(win: integer, data: any): any?
----@param store table<integer, any>
----@return fun(wins: integer[]?): nil
-function M.rest(restore_method, store)
-  ---@param wins? integer[] list of wins to restore, default to all windows
-  return function(wins)
+---@return fun(store: table<integer, any>, wins: integer[]?)
+function M.restore(restore_method)
+  ---@param store string|table<integer, any>
+  ---@param wins? integer[] list of wins to restore, default to all windows in
+  ---current tabpage
+  return function(store, wins)
+    if type(store) == 'string' then
+      store = _G[store]
+    end
     if not store then
       return
     end
-    for _, win in pairs(wins or vim.api.nvim_list_wins()) do
+    for _, win in pairs(wins or vim.api.nvim_tabpage_list_wins(0)) do
       if store[win] then
         if not vim.api.nvim_win_is_valid(win) then
           store[win] = nil
@@ -80,47 +91,19 @@ function M.rest(restore_method, store)
   end
 end
 
----Returns a function to clear the attributes of all windows in `store`
----@param store table<integer, any>
----@return fun(): nil
-function M.clear(store)
-  return function()
-    for win, _ in pairs(store) do
-      store[win] = nil
-    end
-  end
-end
+M.save_views = M.save(function(_)
+  return vim.fn.winsaveview()
+end)
 
-local views = {}
-local ratios = {}
-local heights = {}
+M.restore_views = M.restore(function(_, view)
+  vim.fn.winrestview(view)
+end)
 
-vim.api.nvim_create_autocmd('WinClosed', {
-  desc = 'Clear window data when window is closed.',
-  group = vim.api.nvim_create_augroup('WinUtilsClearData', {}),
-  callback = function(info)
-    local win = tonumber(info.match)
-    if win then
-      views[win] = nil
-      ratios[win] = nil
-      heights[win] = nil
-    end
-  end,
-})
-
-M.clearviews = M.clear(views)
-M.clearratio = M.clear(ratios)
-M.clearheights = M.clear(heights)
-
--- stylua: ignore start
-M.saveviews = M.save(function(_) return vim.fn.winsaveview() end, views)
-M.restviews = M.rest(function(_, view) vim.fn.winrestview(view) end, views)
-M.saveheights = M.save(vim.api.nvim_win_get_height, heights)
-M.restheights = M.rest(M.win_safe_set_height, heights)
--- stylua: ignore end
+M.save_heights = M.save(vim.api.nvim_win_get_height)
+M.restore_heights = M.restore(M.win_safe_set_height)
 
 ---Save window ratios as { height_ratio, width_ratio } tuple
-M.saveratio = M.save(function(win)
+M.save_ratio = M.save(function(win)
   local h = vim.api.nvim_win_get_height(win)
   local w = vim.api.nvim_win_get_width(win)
   return {
@@ -129,11 +112,11 @@ M.saveratio = M.save(function(win)
     h = h,
     w = w,
   }
-end, ratios)
+end)
 
 ---Restore window ratios, respect &winfixheight and &winfixwidth and keep
 ---command window height untouched
-M.restratio = M.rest(function(win, ratio)
+M.restore_ratio = M.restore(function(win, ratio)
   local hr = type(ratio.hr) == 'table' and ratio.hr[vim.val_idx] or ratio.hr
   local wr = type(ratio.wr) == 'table' and ratio.wr[vim.val_idx] or ratio.wr
   local h = ratio.h
@@ -154,7 +137,7 @@ M.restratio = M.rest(function(win, ratio)
       vim.api.nvim_win_set_width(win, w)
     end)
   end
-end, ratios)
+end)
 
 ---Check if a window is empty
 ---A window is considered 'empty' if its containing buffer is empty

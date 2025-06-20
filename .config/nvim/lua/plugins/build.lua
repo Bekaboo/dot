@@ -20,7 +20,7 @@ return {
     dependencies = 'vim-dispatch',
     keys = {
       { '<Leader>tk', desc = 'Run the first test class in current file' },
-      { '<Leader>ta', desc = 'Run all tests in current file' },
+      { '<Leader>tf', desc = 'Run all tests in current file' },
       { '<Leader>tt', desc = 'Run the test neartest to cursor' },
       { '<Leader>tr', desc = 'Run the last test' },
       { '<Leader>ts', desc = 'Run the whole test suite' },

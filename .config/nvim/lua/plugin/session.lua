@@ -45,7 +45,7 @@ M.opts = {
   ---@param path string
   ---@return string?
   root = function(path)
-    return vim.fs.root(path, require('utils.fs').root_markers)
+    return require('utils.fs').root(path)
       or vim.fn.isdirectory(path) == 1 and path
       or vim.fs.dirname(path)
   end,

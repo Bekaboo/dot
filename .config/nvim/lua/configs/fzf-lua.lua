@@ -550,6 +550,9 @@ function fzf.complete_from_registers(opts)
   }))
 end
 
+_G._fzf_lua_win_views = {}
+_G._fzf_lua_win_heights = {}
+
 fzf.setup({
   'borderless-full',
   -- Use nbsp in tty to avoid showing box chars

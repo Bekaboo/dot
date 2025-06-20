@@ -1,11 +1,15 @@
 local root_markers = {
-  'pyrightconfig.json',
-  'Pipfile',
-  'pyproject.toml',
-  'requirements.txt',
-  'setup.cfg',
-  'setup.py',
-  'tox.ini',
+  { 'pyrightconfig.json' },
+  { 'pyproject.toml' },
+  {
+    'Pipfile',
+    'requirements.txt',
+    'setup.cfg',
+    'setup.py',
+    'tox.ini',
+  },
+  { 'venv', 'env', '.venv', '.env' },
+  { '.python-version' },
 }
 
 local settings = {

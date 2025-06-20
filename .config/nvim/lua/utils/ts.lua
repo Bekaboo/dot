@@ -31,6 +31,8 @@ function M.is_active(buf)
   return false
 end
 
+local ts_get_node = vim.treesitter.get_node
+
 ---Wrapper of `vim.treesitter.get_node()` that fixes the cursor pos in
 ---insert mode
 ---@param opts vim.treesitter.get_node.Opts?
@@ -48,7 +50,7 @@ function M.get_node(opts)
       and opts.bufnr ~= 0
       and opts.bufnr ~= vim.api.nvim_get_current_buf()
   then
-    return vim.treesitter.get_node(opts)
+    return ts_get_node(opts)
   end
 
   -- Fix cursor position in insert mode -- if currently in insert mode,
@@ -73,7 +75,7 @@ function M.get_node(opts)
     }
   end)()
 
-  return vim.treesitter.get_node(opts)
+  return ts_get_node(opts)
 end
 
 ---@class ts_find_node_opts_t : vim.treesitter.get_node.Opts

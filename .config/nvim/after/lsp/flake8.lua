@@ -1,11 +1,17 @@
 local root_markers = {
-  '.flake8',
-  'Pipfile',
-  'pyproject.toml',
-  'requirements.txt',
-  'setup.cfg',
-  'setup.py',
-  'tox.ini',
+  { '.flake8' },
+  {
+    'setup.cfg',
+    'tox.ini',
+  },
+  {
+    'Pipfile',
+    'pyproject.toml',
+    'requirements.txt',
+    'setup.py',
+  },
+  { 'venv', 'env', '.venv', '.env' },
+  { '.python-version' },
 }
 
 return {
@@ -24,7 +30,7 @@ return {
           lintFormats = { 'stdin:%l:%c: %t%n %m' },
           lintIgnoreExitCode = true,
           lintStdin = true,
-          rootMarkers = root_markers,
+          rootMarkers = vim.iter(root_markers):flatten():totable(),
         },
       },
     },

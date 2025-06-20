@@ -14,7 +14,7 @@ ot.setup({
   buffers = { set_filetype = true },
   lsp = {
     root_dir = function()
-      return vim.fs.root(0, utils.fs.root_markers) or vim.fn.getcwd(0)
+      return utils.fs.root() or vim.fn.getcwd(0)
     end,
   },
 })

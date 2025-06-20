@@ -1,12 +1,20 @@
 local root_markers = {
-  'mypy.ini',
-  '.mypy.ini',
-  'Pipfile',
-  'pyproject.toml',
-  'requirements.txt',
-  'setup.cfg',
-  'setup.py',
-  'tox.ini',
+  {
+    'mypy.ini',
+    '.mypy.ini',
+  },
+  {
+    'pyproject.toml',
+    'setup.cfg',
+  },
+  {
+    'Pipfile',
+    'requirements.txt',
+    'setup.py',
+    'tox.ini',
+  },
+  { 'venv', 'env', '.venv', '.env' },
+  { '.python-version' },
 }
 
 return {
@@ -30,7 +38,7 @@ return {
           -- Mypy does not support reading from stdin, see
           -- https://github.com/python/mypy/issues/12235
           lintStdin = false,
-          rootMarkers = root_markers,
+          rootMarkers = vim.iter(root_markers):flatten():totable(),
         },
       },
     },
