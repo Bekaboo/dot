@@ -21,3 +21,6 @@ autocorrect_normalzone('true', 'True')
 autocorrect_normalzone('ture', 'True')
 autocorrect_normalzone('false', 'False')
 autocorrect_normalzone('flase', 'False')
+
+-- Don't auto-wrap in source code
+vim.opt_local.formatoptions:remove('t')
