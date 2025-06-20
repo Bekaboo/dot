@@ -615,14 +615,11 @@ do
     {
       desc = 'Restore heights for windows with a fixed height.',
       callback = function()
-        -- Don't restore if it is a manual resizing or no window with fixed
-        -- height is resized
-        if
-          not vim.g._win_list_changed
-          or not vim.iter(vim.v.event.windows):any(function(win)
-            return vim.wo[win].winfixheight
-          end)
-        then
+        -- Update window height instead of restoring it on manual resizing,
+        -- else the fixed-height window will be restored to height before the
+        -- manual resizing after win open/close
+        if not vim.g._win_list_changed then
+          win_save_fixed_heights()
           return
         end
 
