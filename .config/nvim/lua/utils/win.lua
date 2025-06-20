@@ -46,6 +46,9 @@ function M.save(save_method)
   ---@param wins? integer[] list of wins to restore, default to all windows in
   ---current tabpage
   return function(store, wins)
+    if not store then
+      return
+    end
     for _, win in ipairs(wins or vim.api.nvim_tabpage_list_wins(0)) do
       local ok, result = pcall(vim.api.nvim_win_call, win, function()
         return save_method(win)
