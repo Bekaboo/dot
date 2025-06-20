@@ -550,6 +550,9 @@ function fzf.complete_from_registers(opts)
   }))
 end
 
+_G._fzf_lua_win_views = {} -- to store/restore win views before opening/after closing the fzf window
+_G._fzf_lua_win_heights = {} -- to store/restore win heights before opening/after closing the fzf window
+
 fzf.setup({
   -- Default profile 'default-title' disables prompt in favor of title
   -- on nvim >= 0.9, but a fzf windows with split layout cannot have titles
@@ -563,10 +566,8 @@ fzf.setup({
     -- Split at bottom, save information for restoration in
     -- `winopts.on_close()` callback
     split = [[
-        let tabpage_win_list = nvim_tabpage_list_wins(0) |
-        \ call v:lua.require'utils.win'.saveheights(tabpage_win_list) |
-        \ call v:lua.require'utils.win'.saveviews(tabpage_win_list) |
-        \ unlet tabpage_win_list |
+        \ call v:lua.require'utils.win'.saveheights(v:lua._fzf_lua_win_heights) |
+        \ call v:lua.require'utils.win'.saveviews(v:lua._fzf_lua_win_views) |
         \ let g:_fzf_vim_lines = &lines |
         \ let g:_fzf_leave_win = win_getid(winnr()) |
         \ let g:_fzf_splitkeep = &splitkeep | let &splitkeep = "topline" |
@@ -639,12 +640,13 @@ fzf.setup({
       vim.g._fzf_leave_win = nil
 
       if vim.go.lines == vim.g._fzf_vim_lines then
-        utils.win.restheights()
+        utils.win.restheights(_G._fzf_lua_win_heights)
       end
       vim.g._fzf_vim_lines = nil
-      utils.win.clearheights()
-      utils.win.restviews()
-      utils.win.clearviews()
+      _G._fzf_lua_win_heights = {}
+
+      utils.win.restviews(_G._fzf_lua_win_views)
+      _G._fzf_lua_win_views = {}
     end,
     preview = {
       border = 'none',

@@ -286,7 +286,8 @@ augroup('KeepWinRatio', {
     desc = 'Keep window ratio after resizing nvim.',
     callback = function()
       vim.cmd.wincmd('=')
-      require('utils.win').restratio(vim.api.nvim_tabpage_list_wins(0))
+      require('utils.win').restratio(_G._win_ratios)
+      _G._win_ratios = {}
     end,
   },
 }, {
@@ -303,7 +304,10 @@ augroup('KeepWinRatio', {
         vim.g._columns = columns
         return
       end
-      require('utils.win').saveratio(vim.v.event.windows)
+      if not _G._win_ratios then
+        _G._win_ratios = {}
+      end
+      require('utils.win').saveratio(_G._win_ratios, vim.v.event.windows)
     end,
   },
 })
