@@ -550,8 +550,20 @@ function fzf.complete_from_registers(opts)
   }))
 end
 
-_G._fzf_lua_win_views = {} -- to store/restore win views before opening/after closing the fzf window
-_G._fzf_lua_win_heights = {} -- to store/restore win heights before opening/after closing the fzf window
+local win_views = {}
+local win_heights = {}
+
+---Get table to win views before opening/after closing the fzf window
+---@return table
+function _G._fzf_lua_get_win_views()
+  return win_views
+end
+
+---Get table to win heights before opening/after closing the fzf window
+---@return table
+function _G._fzf_lua_get_win_heights()
+  return win_heights
+end
 
 fzf.setup({
   -- Default profile 'default-title' disables prompt in favor of title
@@ -566,8 +578,8 @@ fzf.setup({
     -- Split at bottom, save information for restoration in
     -- `winopts.on_close()` callback
     split = [[
-        \ call v:lua.require'utils.win'.saveheights(v:lua._fzf_lua_win_heights) |
-        \ call v:lua.require'utils.win'.saveviews(v:lua._fzf_lua_win_views) |
+      call v:lua.require'utils.win'.saveheights(v:lua._fzf_lua_get_win_heights()) |
+        \ call v:lua.require'utils.win'.saveviews(v:lua._fzf_lua_get_win_views()) |
         \ let g:_fzf_vim_lines = &lines |
         \ let g:_fzf_leave_win = win_getid(winnr()) |
         \ let g:_fzf_splitkeep = &splitkeep | let &splitkeep = "topline" |
@@ -640,13 +652,13 @@ fzf.setup({
       vim.g._fzf_leave_win = nil
 
       if vim.go.lines == vim.g._fzf_vim_lines then
-        utils.win.restheights(_G._fzf_lua_win_heights)
+        utils.win.restheights(win_heights)
       end
       vim.g._fzf_vim_lines = nil
-      _G._fzf_lua_win_heights = {}
+      win_heights = {}
 
-      utils.win.restviews(_G._fzf_lua_win_views)
-      _G._fzf_lua_win_views = {}
+      utils.win.restviews(win_views)
+      win_views = {}
     end,
     preview = {
       border = 'none',
