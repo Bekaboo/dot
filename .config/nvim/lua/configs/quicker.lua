@@ -36,6 +36,6 @@ quicker.setup({
     vim.bo[buf].syntax = ''
   end,
   max_filename_width = function()
-    return math.max(16, math.ceil(vim.go.columns / 4))
+    return math.max(32, math.ceil(vim.go.columns / 4))
   end,
 })
