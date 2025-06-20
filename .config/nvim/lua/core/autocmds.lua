@@ -555,3 +555,68 @@ augroup('ColorSchemeRestore', {
     end,
   },
 })
+
+-- Fix bug where windows with fixed height are resized after opening/closing
+-- windows with winbar attached, see https://github.com/neovim/neovim/issues/30955
+--
+-- This does not fix windows with fixed height being resized on `<C-w>=` if
+-- multiple horizontal splits are opened/closed after the creation of the
+-- fixed-height window
+augroup('FixWinFixHeightWithWinBar', {
+  { 'WinNew', 'WinClosed', 'OptionSet' },
+  {
+    desc = 'Save heights for windows with a fixed height.',
+    callback = function(info)
+      if info.event == 'OptionSet' and info.match ~= 'winfixheight' then
+        return
+      end
+
+      -- Set flag to indicate that a new window is created or an existing
+      -- window is closed, so that we can distinguish between manual resizing
+      -- and resizing due to window creation/deletion
+      if vim.startswith(info.event, 'Win') then
+        vim.g._win_list_changed = true
+        vim.schedule(function()
+          vim.g._win_list_changed = nil
+        end)
+      end
+
+      -- Schedule to wait for `winfixheight` to be set after opening a new
+      -- window
+      vim.schedule(function()
+        if not _G._win_heights then
+          _G._win_heights = {}
+        end
+        require('utils.win').save_heights(
+          _G._win_heights,
+          vim
+            .iter(vim.api.nvim_tabpage_list_wins(0))
+            :filter(function(win)
+              return vim.wo[win].winfixheight
+            end)
+            :totable()
+        )
+      end)
+    end,
+  },
+}, {
+  'WinResized',
+  {
+    desc = 'Restore heights for windows with a fixed height.',
+    callback = function()
+      -- Don't restore if it is a manual resizing or no window with fixed
+      -- height is resized
+      if
+        not vim.g._win_list_changed
+        or not vim.iter(vim.v.event.windows):any(function(win)
+          return vim.wo[win].winfixheight
+        end)
+      then
+        return
+      end
+
+      require('utils.win').restore_heights(_G._win_heights)
+      _G._win_heights = {}
+    end,
+  },
+})
