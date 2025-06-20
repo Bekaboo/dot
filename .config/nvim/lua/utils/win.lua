@@ -66,7 +66,7 @@ end
 ---Returns a function to restore the attributes of windows from `store`
 ---@param restore_method fun(win: integer, data: any): any?
 ---@return fun(store: table<integer, any>, wins: integer[]?)
-function M.rest(restore_method)
+function M.restore(restore_method)
   ---@param store string|table<integer, any>
   ---@param wins? integer[] list of wins to restore, default to all windows in
   ---current tabpage
@@ -91,19 +91,19 @@ function M.rest(restore_method)
   end
 end
 
-M.saveviews = M.save(function(_)
+M.save_views = M.save(function(_)
   return vim.fn.winsaveview()
 end)
 
-M.restviews = M.rest(function(_, view)
+M.restore_views = M.restore(function(_, view)
   vim.fn.winrestview(view)
 end)
 
-M.saveheights = M.save(vim.api.nvim_win_get_height)
-M.restheights = M.rest(M.win_safe_set_height)
+M.save_heights = M.save(vim.api.nvim_win_get_height)
+M.restore_heights = M.restore(M.win_safe_set_height)
 
 ---Save window ratios as { height_ratio, width_ratio } tuple
-M.saveratio = M.save(function(win)
+M.save_ratio = M.save(function(win)
   local h = vim.api.nvim_win_get_height(win)
   local w = vim.api.nvim_win_get_width(win)
   return {
@@ -116,7 +116,7 @@ end)
 
 ---Restore window ratios, respect &winfixheight and &winfixwidth and keep
 ---command window height untouched
-M.restratio = M.rest(function(win, ratio)
+M.restore_ratio = M.restore(function(win, ratio)
   local hr = type(ratio.hr) == 'table' and ratio.hr[vim.val_idx] or ratio.hr
   local wr = type(ratio.wr) == 'table' and ratio.wr[vim.val_idx] or ratio.wr
   local h = ratio.h

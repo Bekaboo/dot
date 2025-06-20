@@ -566,8 +566,8 @@ fzf.setup({
     -- Split at bottom, save information for restoration in
     -- `winopts.on_close()` callback
     split = [[
-      call v:lua.require'utils.win'.saveheights('_fzf_lua_win_heights') |
-        \ call v:lua.require'utils.win'.saveviews('_fzf_lua_win_views') |
+      call v:lua.require'utils.win'.save_heights('_fzf_lua_win_heights') |
+        \ call v:lua.require'utils.win'.save_views('_fzf_lua_win_views') |
         \ let g:_fzf_vim_lines = &lines |
         \ let g:_fzf_leave_win = win_getid(winnr()) |
         \ let g:_fzf_splitkeep = &splitkeep | let &splitkeep = "topline" |
@@ -640,12 +640,12 @@ fzf.setup({
       vim.g._fzf_leave_win = nil
 
       if vim.go.lines == vim.g._fzf_vim_lines then
-        utils.win.restheights(_G._fzf_lua_win_heights)
+        utils.win.restore_heights(_G._fzf_lua_win_heights)
       end
       vim.g._fzf_vim_lines = nil
       _G._fzf_lua_win_heights = {}
 
-      utils.win.restviews(_G._fzf_lua_win_views)
+      utils.win.restore_views(_G._fzf_lua_win_views)
       _G._fzf_lua_win_views = {}
     end,
     preview = {
