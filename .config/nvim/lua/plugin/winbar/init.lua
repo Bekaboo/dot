@@ -36,7 +36,7 @@ _G._winbar.bars = setmetatable({}, {
     self[buf] = setmetatable({}, {
       __index = function(this, win)
         this[win] = bar.winbar_t:new({
-          sources = configs.eval(configs.opts.bar.sources, buf, win),
+          sources = configs.eval(configs.opts.bar.sources, buf, win) --[=[@as winbar_source_t[]]=],
         })
         return this[win]
       end,
