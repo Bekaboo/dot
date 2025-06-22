@@ -1,5 +1,6 @@
--- Modify & confirm test command before running
 local strategies = vim.g['test#custom_strategies'] or {}
+
+-- Modify & confirm test command before running
 strategies.confirm = function(cmd)
   vim.ui.input({ prompt = 'Test command: ', default = cmd }, function(input)
     cmd = input
@@ -11,9 +12,10 @@ strategies.confirm = function(cmd)
     cmd
   )
 end
+
 vim.g['test#custom_strategies'] = strategies
 
-vim.g['test#strategy'] = 'confirm'
+vim.g['test#strategy'] = 'dispatch'
 vim.g['test#confirm#strategy'] = 'dispatch'
 
 -- Lazy-load test configs for each filetype
