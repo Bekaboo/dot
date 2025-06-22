@@ -33,9 +33,9 @@ end
 
 M.config = {
   {
-    type = 'python',
-    request = 'launch',
+    type = 'debugpy',
     name = 'Launch file',
+    request = 'launch',
     program = '${file}',
     args = dap_utils.get_args(cache),
     pythonPath = function()
@@ -43,6 +43,34 @@ M.config = {
     end,
     -- Fix debugpy cannot find local python modules, assuming cwd has been
     -- set to project root, see https://stackoverflow.com/a/63271966
+    env = function()
+      return { PYTHONPATH = vim.fn.getcwd(0) }
+    end,
+  },
+  {
+    type = 'debugpy',
+    name = 'Debug test',
+    request = 'launch',
+    module = function()
+      -- Example test command: python3 -m pytest -s tests/test_xxx.py::test_xxx
+      local test_cmd = require('utils.test').get_test_cmd()
+      if not test_cmd then
+        return
+      end
+      -- Extract 'pytest'
+      return test_cmd:match('.*python3?.*%s+-m%s+(%S+)')
+    end,
+    args = function()
+      local test_cmd = require('utils.test').get_test_cmd()
+      if not test_cmd then
+        return
+      end
+      -- HACK: cannot handle escaped string in args, e.g.
+      -- 'test_file\ with_spaces' will be split incorrectly
+      return vim.split(test_cmd:gsub('.*python3?.*%s+-m%s+%S+%s+', ''), ' ', {
+        trimempty = true,
+      })
+    end,
     env = function()
       return { PYTHONPATH = vim.fn.getcwd(0) }
     end,
