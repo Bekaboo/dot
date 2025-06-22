@@ -141,7 +141,9 @@
 	indentHeuristic = true
 [filter "vscode-theme"]
 	smudge = cat
-	clean = sed '/[cC]olorTheme/d'
+	clean = sed \
+		-e '/[cC]olorTheme/d' \
+		-e '/defaultInterpreterPath/d'
 [filter "kglobalshortcutsrc"]
 	smudge = cat
 	clean = sed '/switch-to-activity-/d'
