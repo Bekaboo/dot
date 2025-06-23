@@ -290,9 +290,14 @@ do
     {
       desc = 'Keep window ratio after resizing nvim.',
       callback = function()
-        vim.cmd.wincmd('=')
+        vim.g._vim_resized = true
+        vim.api.nvim_create_autocmd('WinResized', {
+          once = true,
+          callback = function()
+            vim.g._vim_resized = nil
+          end,
+        })
         require('utils.win').restore_ratio(win_ratio)
-        win_ratio = {}
       end,
     },
   }, {
@@ -301,12 +306,7 @@ do
       desc = 'Record window ratio.',
       callback = function()
         -- Don't record ratio if window resizing is caused by vim resizing
-        -- (changes in &lines or &columns)
-        local lines, columns = vim.go.lines, vim.go.columns
-        local _lines, _columns = vim.g._lines, vim.g._columns
-        if _lines and lines ~= _lines or _columns and columns ~= _columns then
-          vim.g._lines = lines
-          vim.g._columns = columns
+        if vim.g._vim_resized then
           return
         end
         require('utils.win').save_ratio(win_ratio, vim.v.event.windows)

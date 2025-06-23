@@ -8,34 +8,20 @@ function M.win_safe_set_height(win, height)
   if not vim.api.nvim_win_is_valid(win) then
     return
   end
-  local winnr = vim.fn.winnr()
-  if vim.fn.winnr('j') ~= winnr or vim.fn.winnr('k') ~= winnr then
-    local cmdheight = vim.go.cmdheight
-    vim.api.nvim_win_set_height(win, height)
-    vim.go.cmdheight = cmdheight
-  end
-end
 
----Get current 'effective' lines (lines can be used by normal windows)
----@return integer
-function M.effective_lines()
-  local lines = vim.go.lines
-  local ch = vim.go.ch
-  local ls = vim.go.ls
-  return lines
-    - ch
-    - (
-      ls == 0 and 0
-      or (ls == 2 or ls == 3) and 1
-      or (
-        #vim.tbl_filter(function(win)
-              return vim.fn.win_gettype(win) ~= 'popup'
-            end, vim.api.nvim_tabpage_list_wins(0))
-            > 1
-          and 1
-        or 0
-      )
-    )
+  local win_above = vim.api.nvim_win_call(win, function()
+    return vim.fn.win_getid(vim.fn.winnr('j'))
+  end)
+  local win_below = vim.api.nvim_win_call(win, function()
+    return vim.fn.win_getid(vim.fn.winnr('k'))
+  end)
+  if win_above == win and win_below == win then
+    return
+  end
+
+  local ch = vim.go.cmdheight
+  vim.api.nvim_win_set_height(win, height)
+  vim.go.cmdheight = ch
 end
 
 ---Returns a function to save some attributes over a list of windows
@@ -77,16 +63,20 @@ function M.restore(restore_method)
     if not store then
       return
     end
+
     for _, win in pairs(wins or vim.api.nvim_tabpage_list_wins(0)) do
-      if store[win] then
-        if not vim.api.nvim_win_is_valid(win) then
-          store[win] = nil
-        else
-          pcall(vim.api.nvim_win_call, win, function()
-            restore_method(win, store[win])
-          end)
-        end
+      if not store[win] then
+        goto continue
       end
+      if not vim.api.nvim_win_is_valid(win) then
+        store[win] = nil
+        goto continue
+      end
+
+      pcall(vim.api.nvim_win_call, win, function()
+        restore_method(win, store[win])
+      end)
+      ::continue::
     end
   end
 end
@@ -102,41 +92,34 @@ end)
 M.save_heights = M.save(vim.api.nvim_win_get_height)
 M.restore_heights = M.restore(M.win_safe_set_height)
 
+M.save_widths = M.save(vim.api.nvim_win_get_width)
+M.restore_widths = M.restore(vim.api.nvim_win_set_width)
+
 ---Save window ratios as { height_ratio, width_ratio } tuple
 M.save_ratio = M.save(function(win)
-  local h = vim.api.nvim_win_get_height(win)
-  local w = vim.api.nvim_win_get_width(win)
   return {
-    hr = h / M.effective_lines(),
-    wr = w / vim.go.columns,
-    h = h,
-    w = w,
+    h = { vim.api.nvim_win_get_height(win), vim.go.lines }, -- window height, vim height
+    w = { vim.api.nvim_win_get_width(win), vim.go.columns }, -- window width, vim width
   }
 end)
 
 ---Restore window ratios, respect &winfixheight and &winfixwidth and keep
 ---command window height untouched
 M.restore_ratio = M.restore(function(win, ratio)
-  local hr = type(ratio.hr) == 'table' and ratio.hr[vim.val_idx] or ratio.hr
-  local wr = type(ratio.wr) == 'table' and ratio.wr[vim.val_idx] or ratio.wr
-  local h = ratio.h
-  local w = ratio.w
-  local cmdwin = vim.fn.win_gettype() == 'command'
+  local h, vim_h = ratio.h[1], ratio.h[2]
+  local w, vim_w = ratio.w[1], ratio.w[2]
 
-  if not vim.wo.wfh and not cmdwin then
-    M.win_safe_set_height(win, vim.fn.round(M.effective_lines() * hr))
-  else
-    vim.schedule(function()
-      M.win_safe_set_height(win, h)
-    end)
+  if vim.fn.win_gettype() == '' then
+    M.win_safe_set_height(win, vim.fn.round(vim.go.lines * h / vim_h))
+    vim.api.nvim_win_set_width(win, vim.fn.round(vim.go.columns * w / vim_w))
+    return
   end
-  if not vim.wo.wfw and not cmdwin then
-    vim.api.nvim_win_set_width(win, vim.fn.round(vim.go.columns * wr))
-  else
-    vim.schedule(function()
-      vim.api.nvim_win_set_width(win, w)
-    end)
-  end
+
+  -- Special window, set to original height & width instead of ratio
+  vim.schedule(function()
+    M.win_safe_set_height(win, h)
+    vim.api.nvim_win_set_width(win, w)
+  end)
 end)
 
 ---Check if a window is empty
