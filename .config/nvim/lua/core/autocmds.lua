@@ -1,14 +1,11 @@
-local autocmd = vim.api.nvim_create_autocmd
-local groupid = vim.api.nvim_create_augroup
-
 ---@param group string
 ---@vararg { [1]: string|string[], [2]: vim.api.keyset.create_autocmd }
 ---@return nil
 local function augroup(group, ...)
-  local id = groupid(group, {})
+  local id = vim.api.nvim_create_augroup(group, {})
   for _, a in ipairs({ ... }) do
     a[2].group = id
-    autocmd(unpack(a))
+    vim.api.nvim_create_autocmd(unpack(a))
   end
 end
 
@@ -168,7 +165,7 @@ augroup('LastPosJmp', {
   {
     desc = 'Last position jump.',
     callback = function(info)
-      autocmd('FileType', {
+      vim.api.nvim_create_autocmd('FileType', {
         once = true,
         buffer = info.buf,
         callback = function(i)
@@ -387,8 +384,8 @@ do
         -- than 10 (the default value) if there's vertical splits with winbar
         -- attached above the quickfix window
         vim.api.nvim_win_set_height(vim.fn.bufwinid(info.buf), 10)
-      end
-    }
+      end,
+    },
   })
 end
 
