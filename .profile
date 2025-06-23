@@ -5,11 +5,6 @@ has() {
     command -v "$1" >/dev/null 2>&1
 }
 
-# Automatically login to proot distro on termux
-if has proot-distro && [ -n "$PROOT_DISTRO" ] && [ -n "$PROOT_USER" ]; then
-    exec proot-distro login "$PROOT_DISTRO" --user "$PROOT_USER" --termux-home
-fi
-
 # macOS homebrew install paths
 export PATH=/opt/homebrew/bin:/usr/local/bin:$PATH
 if has brew; then
@@ -196,6 +191,11 @@ export FZF_PREVIEW_DISABLE_UB=true # Disable ueberzug preview
 # Ensure color theme files are correctly linked
 has setbg && ( setbg & ) 2>/dev/null
 has setcolors && ( setcolors & ) 2>/dev/null
+
+# Automatically login to proot distro on termux
+if has proot-distro && [ -n "$PROOT_DISTRO" ] && [ -n "$PROOT_USER" ]; then
+    exec proot-distro login "$PROOT_DISTRO" --user "$PROOT_USER" --termux-home
+fi
 
 # Greeting message
 if [ -z "$GREETED" ]; then
