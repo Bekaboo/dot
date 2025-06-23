@@ -887,6 +887,17 @@ local subcommands = {
         ['client_id'] = subcommand_opt_vals.lsp_clients,
       },
     },
+    fold_close = {
+      fn_override = function(args)
+        vim.lsp.foldclose(args[1], args.winid)
+      end,
+      params = { 'comment', 'imports', 'region' },
+      opts = {
+        ['winid'] = function()
+          return vim.api.nvim_list_wins()
+        end,
+      },
+    },
   },
 
   ---Diagnostic subcommands
