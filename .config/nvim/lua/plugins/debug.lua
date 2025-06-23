@@ -16,6 +16,7 @@ return {
       { '<F21>', desc = 'Set conditional breakpoint' },
       { '<F45>', desc = 'Set logpoint' },
       { '<Leader>Gc', desc = 'Continue program execution' },
+      { '<Leader>Gg', desc = 'Continue program execution' },
       { '<Leader>GG', desc = 'Continue program execution' },
       { '<Leader>Ge', desc = 'Open debug REPL' },
       { '<Leader>Gb', desc = 'Toggle breakpoint' },
