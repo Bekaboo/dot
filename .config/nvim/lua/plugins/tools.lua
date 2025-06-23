@@ -208,6 +208,21 @@ return {
   },
 
   {
+    'NvChad/nvim-colorizer.lua',
+    event = {
+      'BufNew',
+      'BufRead',
+      'BufWritePost',
+      'TextChanged',
+      'TextChangedI',
+      'StdinReadPre',
+    },
+    config = function()
+      require('configs.nvim-colorizer')
+    end,
+  },
+
+  {
     'stevearc/oil.nvim',
     cmd = 'Oil',
     init = function() -- Load oil on startup only when editing a directory
