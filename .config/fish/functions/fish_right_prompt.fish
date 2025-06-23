@@ -1,6 +1,6 @@
 function __fish_venv_prompt
     if test -n "$VIRTUAL_ENV"
-        echo basename $VIRTUAL_ENV
+        echo (basename $VIRTUAL_ENV)
     end
 end
 
