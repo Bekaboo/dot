@@ -58,7 +58,7 @@ M.config = {
         return
       end
       -- Extract 'pytest'
-      return test_cmd:match('.*python3?.*%s+-m%s+(%S+)')
+      return test_cmd:match('.*python3?.*%s+%-m%s+(%S+)')
     end,
     args = function()
       local test_cmd = require('utils.test').get_test_cmd()
@@ -67,7 +67,7 @@ M.config = {
       end
       -- HACK: cannot handle escaped string in args, e.g.
       -- 'test_file\ with_spaces' will be split incorrectly
-      return vim.split(test_cmd:gsub('.*python3?.*%s+-m%s+%S+%s+', ''), ' ', {
+      return vim.split(test_cmd:gsub('.*python3?.*%s+%-m%s+%S+%s+', ''), ' ', {
         trimempty = true,
       })
     end,
