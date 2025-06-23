@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      BSD
--- Last Updated: Mon Jun 16 09:34:16 2025
+-- Last Updated: Mon Jun 23 09:33:52 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -136,7 +136,7 @@ local hlgroups = {
   CursorIM = { link = 'Cursor' },
   CursorLine = { bg = c_faded },
   CursorLineNr = { fg = c_foreground, bold = true },
-  DebugPC = { bg = c_lightgreen },
+  DebugPC = { bg = c_lightgreen, fg = c_background },
   DiffAdd = { bg = c_lightgreen, fg = c_background },
   DiffChange = { bg = c_variable, fg = c_background },
   DiffDelete = { fg = c_other },
@@ -399,6 +399,7 @@ local hlgroups = {
 
 -- Highlight group overrides {{{1
 if vim.go.bg == 'light' then
+  hlgroups.DebugPC = { bg = c_lightgreen }
   hlgroups.Visual = { bg = c_whitespace }
   hlgroups.LineNr = { fg = c_foreground }
   hlgroups.NonText = { fg = c_delimiter }
