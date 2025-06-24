@@ -15,3 +15,6 @@ endfor
 " Ignore lines with timestamps in json, e.g. "2025-06-14 22:29:59" which can be
 " confused with the `filename:line:column` pattern
 CompilerSet errorformat^=%-G%.%#\"%\\d%\\{4}-%\\d%\\{2}-%\\d%\\{2}\ %\\d%\\{2}:%\\d%\\{2}%.%#
+
+" Traceback: File "xxx.py", line 123, in some_func
+CompilerSet errorformat+=%\\s%\\+File\ \"%f\"\\,\ line\ %l\\,\ %m
