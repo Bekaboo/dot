@@ -584,7 +584,7 @@ fzf.setup({
         \ exe 'resize' .
           \ (10 + g:_fzf_cmdheight + (g:_fzf_laststatus ? 1 : 0)) |
         \ let w:winbar_no_attach = v:true |
-        \ setlocal bt=nofile bh=wipe nobl noswf wfh
+        \ setlocal bt=nofile bh=wipe nobl noswf
     ]],
     on_create = function()
       vim.keymap.set(
