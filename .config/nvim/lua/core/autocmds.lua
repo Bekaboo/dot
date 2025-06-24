@@ -555,7 +555,6 @@ do
 end
 
 do
-  local json = require('utils.json')
   local colors_file =
     vim.fs.joinpath(vim.fn.stdpath('state') --[[@as string]], 'colors.json')
 
@@ -583,7 +582,7 @@ do
   ---Restore dark/light background and colorscheme from json so that nvim
   ---'remembers' the background and colorscheme when it is restarted.
   local function restore_colorscheme()
-    local c = json.read(colors_file)
+    local c = require('utils.json').read(colors_file)
     c.colors_name = c.colors_name or 'macro'
     if c.bg then
       vim.go.bg = c.bg
@@ -617,7 +616,9 @@ do
         end
 
         vim.schedule(function()
-          local d = json.read(colors_file)
+          local json_utils = require('utils.json')
+
+          local d = json_utils.read(colors_file)
           if d.colors_name == vim.g.colors_name and d.bg == vim.go.bg then
             return
           end
@@ -631,7 +632,7 @@ do
             pcall(vim.system, { 'setbg', vim.go.bg })
           end
 
-          json.write(colors_file, d)
+          json_utils.write(colors_file, d)
         end)
       end,
     },
