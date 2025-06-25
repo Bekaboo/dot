@@ -96,7 +96,7 @@ function actions.change_cwd()
     -- Append current dir './' to the result list to allow switching to home
     -- or root directory
     cmd = string.format(
-      "%s | sed '1i\\\n ./\n'",
+      "%s | sed '1i\\\n./\n'",
       (function()
         local fd_cmd = vim.fn.executable('fd') == 1 and 'fd'
           or vim.fn.executable('fdfind') == 1 and 'fdfind'
