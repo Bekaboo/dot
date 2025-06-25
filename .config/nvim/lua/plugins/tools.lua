@@ -136,7 +136,9 @@ return {
             return {
               winopts = {
                 split = string.format(
-                  '%s | if %d < winheight(0) | resize %d | endif',
+                  -- Don't shrink size if a quickfix list is closed for fzf
+                  -- window to avoid window resizing and content shifting
+                  '%s | if get(g:, "_fzf_qfclosed", "") == "" && %d < winheight(0) | resize %d | endif',
                   vim.trim(require('fzf-lua.config').setup_opts.winopts.split),
                   height,
                   height
