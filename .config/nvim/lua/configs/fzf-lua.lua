@@ -598,6 +598,12 @@ fzf.setup({
           desc = 'Insert contents in a register',
         }
       )
+      -- Sometimes windows will shift/change size after closing quickfix window
+      -- and reopening fzf, maybe related to https://github.com/neovim/neovim/issues/30955
+      if vim.g._fzf_qfclosed then
+        utils.win.restore_heights(_G._fzf_lua_win_heights)
+        utils.win.restore_views(_G._fzf_lua_win_views)
+      end
     end,
     on_close = function()
       ---@param name string
