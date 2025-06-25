@@ -573,16 +573,17 @@ fzf.setup({
         \ let g:_fzf_splitkeep = &splitkeep | let &splitkeep = "topline" |
         \ let g:_fzf_cmdheight = &cmdheight | let &cmdheight = 0 |
         \ let g:_fzf_laststatus = &laststatus | let &laststatus = 0 |
+        \ let g:_fzf_height = 10 |
         \ let g:_fzf_qfclosed = win_gettype(winnr('$')) |
         \ if g:_fzf_qfclosed ==# 'loclist' || g:_fzf_qfclosed ==# 'quickfix' |
+        \   let g:_fzf_height = nvim_win_get_height(win_getid(winnr('$'))) - 1 |
         \   cclose |
         \   lclose |
         \ else |
         \   unlet g:_fzf_qfclosed |
         \ endif |
-        \ botright 10new |
-        \ exe 'resize' .
-          \ (10 + g:_fzf_cmdheight + (g:_fzf_laststatus ? 1 : 0)) |
+        \ exe printf('botright %dnew', g:_fzf_height) |
+        \ exe 'resize' . (g:_fzf_height + g:_fzf_cmdheight + (g:_fzf_laststatus ? 1 : 0)) |
         \ let w:winbar_no_attach = v:true |
         \ setlocal bt=nofile bh=wipe nobl noswf
     ]],
