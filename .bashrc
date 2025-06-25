@@ -37,6 +37,7 @@ bind 'set keyseq-timeout 1'
 # Common aliases
 alias cl='clear'
 alias cp='cp -i'
+alias mv='mv -i'
 alias x='trash'
 alias g='git'
 alias d='dot'
