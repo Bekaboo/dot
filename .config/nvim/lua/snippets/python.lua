@@ -537,6 +537,46 @@ M.snippets = {
   ),
   us.msn(
     {
+      { trig = 'en' },
+      { trig = 'enu' },
+      { trig = 'enum' },
+      common = { desc = 'Enum classes' },
+    },
+    c(1, {
+      un.fmtad(
+        [[
+          class <class_name>(Enum):
+              <value1> = 1
+              <value2> = 2
+        ]],
+        {
+          class_name = r(1, 'class_name'),
+          value1 = r(2, 'value1'),
+          value2 = r(3, 'value2'),
+        }
+      ),
+      un.fmtad('<class_name> = Enum(<q><class_name><q>, [(<q><value1><q>, 1), (<q><value2><q>, 2)<i>])',
+        {
+          class_name = r(1, 'class_name'),
+          value1 = r(2, 'value1'),
+          value2 = r(3, 'value2'),
+          i = i(4),
+          q = un.qt(),
+        }
+      ),
+    }),
+    {
+      common_opts = {
+        stored = {
+          class_name = i(nil, 'EnumClassName'),
+          value1 = i(nil, 'ENUM_VALUE_1'),
+          value2 = i(nil, 'ENUM_VALUE_2'),
+        },
+      },
+    }
+  ),
+  us.msn(
+    {
       { trig = 'tr' },
       { trig = 'try' },
       common = { desc = 'try...except statement' },
