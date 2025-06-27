@@ -117,6 +117,9 @@ M.restore_ratio = M.restore(function(win, ratio)
 
   -- Special window, set to original height & width instead of ratio
   vim.schedule(function()
+    if not vim.api.nvim_win_is_valid(win) then
+      return
+    end
     M.win_safe_set_height(win, h)
     vim.api.nvim_win_set_width(win, w)
   end)
