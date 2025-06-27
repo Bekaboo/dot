@@ -6,6 +6,7 @@ vim.lsp.enable('flake8')
 vim.lsp.enable('pylint')
 vim.lsp.enable('mypy')
 vim.lsp.enable('pyre')
+vim.lsp.enable('pyrefly')
 
 vim.lsp.enable('ruff')
 vim.lsp.enable('black')
