@@ -109,7 +109,7 @@ M.restore_ratio = M.restore(function(win, ratio)
   local h, vim_h = ratio.h[1], ratio.h[2]
   local w, vim_w = ratio.w[1], ratio.w[2]
 
-  if vim.fn.win_gettype() == '' then
+  if vim.fn.win_gettype(win) == '' then
     M.win_safe_set_height(win, vim.fn.round(vim.go.lines * h / vim_h))
     vim.api.nvim_win_set_width(win, vim.fn.round(vim.go.columns * w / vim_w))
     return
