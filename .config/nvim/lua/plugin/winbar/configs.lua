@@ -150,7 +150,10 @@ M.opts = {
         and ft ~= 'query'
         and ft ~= 'help'
         and ft ~= 'diff'
-        and not vim.startswith(ft, 'git')
+        and ft ~= 'gitattributes'
+        and ft ~= 'gitignore'
+        and ft ~= 'gitcommit'
+        and ft ~= 'gitrebase'
         and not utils.opt.winbar:was_locally_set({ win = 0 })
         and (
           ft == 'markdown'
