@@ -555,7 +555,8 @@ M.snippets = {
           value2 = r(3, 'value2'),
         }
       ),
-      un.fmtad('<class_name> = Enum(<q><class_name><q>, [(<q><value1><q>, 1), (<q><value2><q>, 2)<i>])',
+      un.fmtad(
+        '<class_name> = Enum(<q><class_name><q>, [(<q><value1><q>, 1), (<q><value2><q>, 2)<i>])',
         {
           class_name = r(1, 'class_name'),
           value1 = r(2, 'value1'),
