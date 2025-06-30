@@ -26,7 +26,7 @@ return {
           -- `--output-format` is removed in golangci-lint v2, see:
           -- https://github.com/golangci/golangci-lint/discussions/5612#discussioncomment-12607774
           lintCommand = 'golangci-lint run --color never --output.tab.path stdout --enable exhaustruct "$(dirname "${INPUT}")"',
-          lintFormats = { '%f:%l:%c%*\\s%*\\S%*\\s%m' },
+          lintFormats = { '%f:%l:%c%*%\\s%*%\\S%*%\\s%m' },
           lintSource = 'golangci-lint',
           lintStdin = false,
           lintSeverity = vim.log.levels.INFO,
