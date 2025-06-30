@@ -13,7 +13,7 @@ return {
       proto = {
         {
           lintSource = 'api-linter',
-          lintCommand = 'api-linter --config apilint.yaml "${INPUT}" || api-lint "${INPUT}"',
+          lintCommand = 'if [ -f apilint.yaml ]; then api-linter --config apilint.yaml "${INPUT}"; else api-linter "${INPUT}"; fi',
           lintFormats = { '%[0-9/]\\+ %[0-9:]\\+ %f:%l:%c: %m' },
           lintStdin = false,
           lintSeverity = vim.log.levels.INFO,
