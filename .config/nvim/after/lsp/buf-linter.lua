@@ -15,7 +15,10 @@ return {
         {
           lintSource = 'buf-linter',
           lintCommand = 'buf lint',
-          lintFormats = { '%f:%l:%c:%m' },
+          lintFormats = {
+            '%E%f:%l:%c:syntax error: %m',
+            '%f:%l:%c:%m',
+          },
           lintStdin = false,
           lintWorkSpace = true,
           lintSeverity = 2,
