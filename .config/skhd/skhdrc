@@ -56,10 +56,10 @@ ctrl - left        : yabai -m space --focus prev
 ctrl - right       : yabai -m space --focus next
 
 # Maximize/minimize
-cmd + alt - f   : yabai -m window --toggle float --grid 4:4:1:1:2:2
-cmd - pageup    : yabai -m window --toggle zoom-fullscreen; yabai -m window --raise
-cmd - pagedown  : yabai -m window --minimize
-cmd - backspace : yabai -m window --minimize
+cmd + alt - f           : yabai -m window --toggle float --grid 4:4:1:1:2:2
+cmd - pageup            : yabai -m window --toggle zoom-fullscreen; yabai -m window --raise
+cmd - pagedown          : yabai -m window --minimize
+cmd + shift - backspace : yabai -m window --minimize
 
 # Close current window
 # Source: https://github.com/koekeishiya/yabai/issues/84#issuecomment-507762282
