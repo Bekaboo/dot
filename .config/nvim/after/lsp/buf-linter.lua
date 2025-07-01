@@ -18,7 +18,7 @@ return {
           lintFormats = { '%f:%l:%c:%m' },
           lintStdin = false,
           lintWorkSpace = true,
-          lintSeverity = vim.log.levels.WARN,
+          lintSeverity = 2,
           rootMarkers = vim.iter(root_markers):flatten():totable(),
         }
       }

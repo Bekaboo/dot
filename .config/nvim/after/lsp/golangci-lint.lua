@@ -29,7 +29,7 @@ return {
           lintFormats = { '%f:%l:%c: %m' },
           lintSource = 'golangci-lint',
           lintStdin = false,
-          lintSeverity = vim.log.levels.INFO,
+          lintSeverity = 3,
           rootMarkers = vim.iter(root_markers):flatten():totable(),
         },
       },
