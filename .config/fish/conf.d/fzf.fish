@@ -3,7 +3,7 @@ if status is-login
     # Fzf envrionment variables
     set -Ux FZF_DEFAULT_OPTS "--reverse \
         --preview='fzf-file-previewer {}' \
-        --preview-window=right,55%,border-sharp,nocycle \
+        --preview-window=right,55%,border-none,nocycle \
         --info=inline-right \
         --no-separator \
         --no-scrollbar \
