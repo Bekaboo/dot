@@ -1,9 +1,5 @@
 return {
   filetypes = { 'proto' },
-  cmd = {
-    'buf',
-    'beta',
-    'lsp',
-  },
-  name = 'buf-lsp',
+  cmd = { 'buf', 'beta', 'lsp' },
+  root_markers = { 'buf.yaml' },
 }
