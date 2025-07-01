@@ -4,7 +4,8 @@ cmd - b        : open https://       # web browser
 cmd - e        : open "$HOME"        # file manager
 cmd - m        : open -a thunderbird # email client
 cmd + alt - t  : open -a tmux        # terminal
-ctrl + alt - t : open -a tmux
+cmd + ctrl - t : open -a tmux        # external keyboard has cmd + ctrl in the lower right corner in macos mode
+ctrl + alt - t : open -a tmux        # external keyboard has alt + ctrl in the lower right corner in windows/linux mode
 
 # Yabai shortcuts, see `../yabai/yabairc`
 # Switch windows
