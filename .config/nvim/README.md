@@ -644,9 +644,8 @@ and it should work out of the box.
       experience than [jupytext.vim](https://github.com/goerz/jupytext)
 - [intro](plugin/intro.lua)
     - Shows a custom intro message on startup
-- [lsp](lua/plugin/lsp.lua)
-    - Sets up LSP and diagnostic options and commands on `LspAttach` or
-      `DiagnosticChanged`
+- [lsp-commands](lua/plugin/lsp-commands.lua)
+    - Sets up LSP and diagnostic commands `:LspXXX` and `:DiagnosticXXX`
 - [readline](lua/plugin/readline.lua)
     - Readline-like keybindings in insert and command mode
 - [statuscolumn](lua/plugin/statuscolumn.lua)
