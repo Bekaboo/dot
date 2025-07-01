@@ -98,7 +98,7 @@ vim.fn.sign_define('DapStopped',             { text = vim.trim(icons.debug.Stack
 dap.adapters = {}
 dap.configurations = {}
 
-require('utils.ft').auto_load_once('dapconfigs', function(ft, spec)
+require('utils.ft').auto_load_once('dap-configs', function(ft, spec)
   if not spec then
     return false
   end

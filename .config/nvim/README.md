@@ -247,7 +247,7 @@ Install the following debug adapters manually:
 
 #### DAP Configuration
 
-Configuration for each filetypes: [lua/dapconfigs](lua/dapconfigs).
+Configuration for each filetypes: [lua/dap-configs](lua/dap-configs).
 
 #### DAP Activation
 
