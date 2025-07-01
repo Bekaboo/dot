@@ -30,21 +30,25 @@
 
 usage() {
     cat <<EOF
-Usage: $(basename $0) [vendor_id product_id]
+Usage: $(basename $0) [vendor_id] [product_id] [mapping]
 
-Remap keys on macOS:
-  - capslock as control
-  - swap option and command
+Remap keys on macOS
 
 Arguments:
-  vendor_id    The vendor ID of the keyboard
-  product_id   The product ID of the keyboard
+    vendor_id    Vendor ID of the keyboard
+    product_id   Product ID of the keyboard
+    mapping      Keymap to set for the maching keyboard
 
-If no arguments are provided, the built-in keyboard is used.
+    If no vendor id or product are provided, the built-in keyboard is used.
+
+    If no mapping is provided, remap:
+        - capslock to control
+        - command  to option
+        - option   to command
 
 Options:
-  -h, --help    Show this help message and exit
-  -r, --reset   Reset the keyboard mapping to default
+    -h, --help    Show this help message and exit
+    -r, --reset   Reset the keyboard mapping to default
 EOF
 }
 
