@@ -13,8 +13,22 @@ return {
       proto = {
         {
           lintSource = 'api-linter',
-          lintCommand = 'if [ -f apilint.yaml ]; then api-linter --config apilint.yaml "${INPUT}"; else api-linter "${INPUT}"; fi',
-          lintFormats = { '%[0-9/]%\\+ %[0-9:]%\\+ %f:%l:%c: %m' },
+          lintCommand = [[
+            if [ -f apilint.yaml ]; then
+              api-linter --config apilint.yaml --output-format github "${INPUT}";
+            else
+              api-linter --output-format github "${INPUT}";
+            fi
+          ]],
+          lintFormats = {
+            '::error file=%f,endLine=%\\d\\+,col=%c,line=%l,title=%m',
+            '::error file=%f,title=%m',
+          },
+          -- Github format uses 0-based line and column numbers, use offset to
+          -- convert them to 1-based for efm to mark error regions correctly
+          lintOffset = -1,
+          lintOffsetColumns = 1,
+          lintIgnoreExitCode = true,
           lintStdin = false,
           lintSeverity = 3,
           rootMarkers = vim.iter(root_markers):flatten():totable(),
