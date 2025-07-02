@@ -15,10 +15,9 @@ return {
           lintSource = 'api-linter',
           lintCommand = [[
             if [ -f apilint.yaml ]; then
-              api-linter --config apilint.yaml --output-format github "${INPUT}";
-            else
-              api-linter --output-format github "${INPUT}";
+              config=--config apilint.yaml
             fi
+            api-linter $config --output-format github "${INPUT}" | sed 's/\\n\\n/ /';
           ]],
           lintFormats = {
             '::error file=%f,endLine=%\\d\\+,col=%c,line=%l,title=%m',
