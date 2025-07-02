@@ -28,6 +28,7 @@ return {
           lintOffset = -1,
           lintOffsetColumns = 1,
           lintIgnoreExitCode = true,
+          lintAfterOpen = true,
           lintStdin = false,
           lintSeverity = 3,
           rootMarkers = vim.iter(root_markers):flatten():totable(),

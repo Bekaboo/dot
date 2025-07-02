@@ -28,6 +28,7 @@ return {
           lintCommand = 'golangci-lint run --color never --show-stats=false --output.text.path stdout --output.text.print-issued-lines=false --enable exhaustruct "$(dirname "${INPUT}")"',
           lintFormats = { '%f:%l:%c: %m' },
           lintSource = 'golangci-lint',
+          lintAfterOpen = true,
           lintStdin = false,
           lintSeverity = 3,
           rootMarkers = vim.iter(root_markers):flatten():totable(),

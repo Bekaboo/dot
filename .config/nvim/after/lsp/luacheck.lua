@@ -11,6 +11,7 @@ return {
           lintSource = 'luacheck',
           lintCommand = 'luacheck --codes --no-color --quiet -',
           lintFormats = { '%.%#:%l:%c: (%t%n) %m' },
+          lintAfterOpen = true,
           lintStdin = true,
           lintIgnoreExitCode = true,
           rootMarkers = { '.luacheckrc' },

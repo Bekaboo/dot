@@ -19,6 +19,7 @@ return {
             '%E%f:%l:%c:syntax error: %m',
             '%f:%l:%c:%m',
           },
+          lintAfterOpen = true,
           lintStdin = false,
           lintWorkSpace = true,
           lintSeverity = 2,

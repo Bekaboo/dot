@@ -35,6 +35,7 @@ return {
             '%f:%l:%c: %tarning: %m',
             '%f:%l:%c: %tote: %m',
           },
+          lintAfterOpen = true,
           -- Mypy does not support reading from stdin, see
           -- https://github.com/python/mypy/issues/12235
           lintStdin = false,
