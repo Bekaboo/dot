@@ -5,7 +5,7 @@ local root_markers = { 'apilint.yaml' }
 return {
   filetypes = { 'proto' },
   cmd = { 'efm-langserver' },
-  requires = { 'api-linter' },
+  requires = { 'api-linter', 'sed' },
   name = 'api-linter',
   root_markers = root_markers,
   settings = {

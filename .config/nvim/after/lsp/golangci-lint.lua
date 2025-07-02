@@ -14,7 +14,7 @@ local root_markers = {
 return {
   filetypes = { 'go' },
   cmd = { 'efm-langserver' },
-  requires = { 'golangci-lint' },
+  requires = { 'golangci-lint', 'dirname' },
   name = 'golangci-lint',
   root_markers = root_markers,
   settings = {

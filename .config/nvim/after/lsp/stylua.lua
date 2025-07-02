@@ -3,7 +3,7 @@ local root_markers = { 'stylua.toml', '.stylua.toml' }
 return {
   filetypes = { 'lua' },
   cmd = { 'efm-langserver' },
-  requires = { 'stylua' },
+  requires = { 'stylua', 'cat', 'head' },
   name = 'stylua',
   root_markers = root_markers,
   init_options = {

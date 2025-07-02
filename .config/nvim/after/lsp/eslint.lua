@@ -141,6 +141,7 @@ local eslint_lang_settings = {
 return {
   filetypes = fts,
   cmd = { 'efm-langserver' },
+  requires = { cmd },
   name = cmd,
   init_options = {
     documentFormatting = true,

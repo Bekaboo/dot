@@ -52,6 +52,7 @@ return {
     'css',
   },
   cmd = { 'efm-langserver' },
+  requires = { cmd },
   name = cmd,
   root_markers = root_markers,
   init_options = {
