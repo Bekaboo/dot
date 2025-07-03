@@ -17,7 +17,9 @@ return {
             if [ -f apilint.yaml ]; then
               config=--config apilint.yaml
             fi
-            api-linter $config --output-format github "${INPUT}" | sed 's/\\n\\n/ /';
+            api-linter $config --output-format github "${INPUT}" | \
+              sed 's/\\n/ /g' | \
+              sed -E 's/ +/ /g';
           ]],
           lintFormats = {
             '::error file=%f,endLine=%\\d\\+,col=%c,line=%l,title=%m',
