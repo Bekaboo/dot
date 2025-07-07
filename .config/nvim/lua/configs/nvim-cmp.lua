@@ -262,7 +262,24 @@ cmp.setup({
       local cmdcomplpath = compltype_path[cmdcompltype]
       -- Use special icons for file / directory completions
       if item.kind == 'File' or item.kind == 'Folder' or cmdcomplpath then
-        local stat = vim.uv.fs_stat(vim.fs.normalize(item.word))
+        -- Remove env vars and wildcards e.g.
+        -- $VIMRUNTIME//usr/share/nvim -> /usr/share/nvim
+        -- $VIMRUNTIME/**/usr/share/nvim -> /usr/share/nvim
+        -- $VIMRUNTIME/**/ftplugin//usr/share/nvim/runtime/ftplugin/go.vim -> /usr/share/nvim/runtime/ftplugin/go.vim
+        -- $PWD/./Users/user/.bashrc -> /Users/user/.bashrc
+        -- **foo/bar -> foo/bar
+        -- **/foo/bar -> foo/bar
+        -- foo/**/foo/bar -> foo/bar
+        -- ./**/./foo/bar -> ./foo/bar
+        item.word = item.word
+          :gsub('^%$[A-Za-z_]+.*//+', '/')
+          :gsub('^%$[A-Za-z_]+.*%*+', '')
+          :gsub('^%$[A-Za-z_]+/+%.?', '')
+          :gsub('.*%*/*%.?/*', '')
+          :gsub('/+', '/')
+        item.abbr = item.word
+
+        local stat = vim.uv.fs_stat(item.word)
 
         -- Escape special characters (e.g. '%', '$', '\') in file paths
         -- if in cmdline
