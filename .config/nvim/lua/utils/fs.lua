@@ -201,8 +201,9 @@ local home
 function M.is_home_dir(dir)
   if not home then
     home = vim.uv.os_homedir()
+    home = home and vim.fs.normalize(home)
   end
-  return dir == home
+  return vim.fs.normalize(dir) == home
 end
 
 ---Check if a path is full path
