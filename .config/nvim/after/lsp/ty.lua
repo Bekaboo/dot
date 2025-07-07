@@ -16,5 +16,5 @@ return {
     },
     { 'venv', 'env', '.venv', '.env' },
     { '.python-version' },
-  }
+  },
 }

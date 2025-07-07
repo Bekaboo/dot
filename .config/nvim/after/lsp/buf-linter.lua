@@ -24,8 +24,8 @@ return {
           lintWorkSpace = true,
           lintSeverity = 2,
           rootMarkers = vim.iter(root_markers):flatten():totable(),
-        }
-      }
-    }
-  }
+        },
+      },
+    },
+  },
 }
