@@ -1,9 +1,10 @@
 local img_clip = require('img-clip')
+local utils = require('utils')
 
 ---Get indentation string
 ---@return string
 local function indent()
-  return require('utils.snippets.funcs').get_indent_str(1)
+  return utils.snippets.funcs.get_indent_str(1)
 end
 
 img_clip.setup({
@@ -12,7 +13,7 @@ img_clip.setup({
     use_cursor_in_template = false,
     dir_path = function()
       local bufname = vim.api.nvim_buf_get_name(0)
-      local img_basedir = (
+      local img_dir = (
         unpack(vim.fs.find({
           'img',
           'imgs',
@@ -30,12 +31,13 @@ img_clip.setup({
         }))
       )
 
-      if img_basedir and require('utils.fs').is_home_dir(img_basedir) then
-        img_basedir = vim.fs.joinpath(vim.fn.getcwd(0), 'img')
+      -- Don't save images to `~/pictures` under home directory
+      if not img_dir or utils.fs.is_home_dir(vim.fs.dirname(img_dir)) then
+        img_dir = vim.fs.joinpath(vim.fs.dirname(bufname), 'img')
       end
 
       return vim.fn.fnamemodify(
-        vim.fs.joinpath(img_basedir, vim.fn.fnamemodify(bufname, ':t:r')),
+        vim.fs.joinpath(img_dir, vim.fn.fnamemodify(bufname, ':t:r')),
         ':.'
       )
     end,
