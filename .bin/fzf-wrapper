@@ -58,11 +58,11 @@ cursorpos() {
         # Parse response of format "ESC[row;colR"
         case "$pos" in
         *'['*';'*R*)
-            row=${pos#*[}
-            row=${row%;*}
-            col=${pos#*;}
-            col=${col%R}
-            echo "$((row - 1));$((col - 1))"
+            rest=${pos#*[}
+            row=${rest%%[!0-9]*}
+            rest=${rest#*[0-9]?}
+            col=${rest%%[!0-9]*}
+            echo "$((${row:-1} - 1));$((${col:-1} - 1))"
             return
             ;;
         esac
