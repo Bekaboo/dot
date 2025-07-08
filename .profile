@@ -23,7 +23,7 @@ export PATH=$HOME/.local/bin:$PATH
 export PATH=$HOME/.bin:$PATH
 
 if [ -r "$HOME/.envvars" ]; then
-    source "$HOME/.envvars"
+    . "$HOME/.envvars"
 fi
 
 # Setup default editor
