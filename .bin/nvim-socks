@@ -4,10 +4,6 @@
 RUN_DIR=$(dirname "$(nvim --clean --headless +"lua io.write(vim.fn.stdpath('run'))" +qa!)")
 APPNAME=${NVIM_APPNAME:-nvim}
 
-has() {
-    command -v "$1" >/dev/null 2>&1
-}
-
 fd_cmd=$(has fd && echo fd || echo fdfind)
 if has "$fd_cmd"; then
     "$fd_cmd" -a --base-directory "$RUN_DIR" -t s -g "$APPNAME.*.0"

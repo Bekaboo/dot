@@ -1,11 +1,6 @@
 #!/usr/bin/env sh
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
-# Check if a command exists
-has() {
-    command -v "$1" >/dev/null 2>&1
-}
-
 # Find available qdbus command
 if has qdbus; then
     qdbus_cmd="qdbus"

@@ -1,11 +1,6 @@
 #!/usr/bin/env sh
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
-has() {
-    # $1: command to test
-    command -v "$1" >/dev/null 2>&1
-}
-
 which_exe() {
     # $@: list of commands to test
     for cmd in "$@"; do

@@ -2,10 +2,6 @@
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 # Find a regex pattern using rg and fzf
 
-has() {
-    command -v "$1" >/dev/null 2>&1
-}
-
 # Temporary files used by the script
 REGEX_QUERY_FILE="/tmp/rg-fzf-r-$$"
 FUZZY_QUERY_FILE="/tmp/rg-fzf-f-$$"

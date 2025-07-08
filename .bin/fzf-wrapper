@@ -4,10 +4,6 @@
 # Hijack fzf command for extra functionality, including adaptive height,
 # flexible preview window layout, and image preview with ueberzugpp
 
-has() {
-    command -v "$1" >/dev/null 2>&1
-}
-
 # Get terminal size
 lines=$(has tput && tput lines || echo "${LINES:-24}")
 cols=$(has tput && tput cols || echo "${COLUMNS:-80}")

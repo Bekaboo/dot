@@ -7,10 +7,6 @@ STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 DEFAULT_COLOR='macro'
 DEFAULT_BG='dark'
 
-has() {
-    command -v "$1" >/dev/null 2>&1
-}
-
 get_theme_variant() {
     # $1: name of the old theme
     # $2: 'light' or 'dark'
