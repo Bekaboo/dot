@@ -141,6 +141,9 @@ favorite package manager:
     sudo pacman -S bash-language-server # example for Arch Linux
     ```
 
+    Also install [ShellCheck](https://www.shellcheck.net/) for extra
+    linting.
+
 - C/C++: [Clang](https://clang.llvm.org/)
 - Lua: [LuaLS](https://github.com/LuaLS/lua-language-server)
 - Python: one of
