@@ -12,7 +12,7 @@ fi
 [[ $- != *i* ]] && return
 
 # Prompt configuration
-PS1='\[\033[01;3'$( (($EUID)) && echo 5 || echo 1)'m\][\u@\h\[\033[01;37m\] \W\[\033[01;3'$( (($EUID)) && echo 5 || echo 1)'m\]]\$\[\033[00m\] '
+PS1='\[\033[01;3'$( ((EUID)) && echo 5 || echo 1)'m\][\u@\h\[\033[01;37m\] \W\[\033[01;3'$( ((EUID)) && echo 5 || echo 1)'m\]]\$\[\033[00m\] '
 
 # OSC133 support
 # Source: https://codeberg.org/dnkl/foot/wiki#bash-2
@@ -65,8 +65,7 @@ __ff_open_files_or_dir() {
 
     # If only one target and it is a directory, cd into it
     if [[ "${#targets_list[@]}" = 1 && -d "${targets_list[0]}" ]]; then
-        cd "${targets_list[0]}"
-        return $?
+        cd "${targets_list[0]}" || return
     fi
 
     # Copy text files and directories to a separate array and
@@ -85,12 +84,11 @@ __ff_open_files_or_dir() {
         for target in "${others[@]}"; do
             xdg-open "$target" >/dev/null 2>&1
         done
-    elif [[ "${#others[@]}" > 0 ]]; then
-        echo "xdg-open not found, omit opening files ${targets_list[@]}" >&2
+    elif (("${#others[@]}" > 0)); then
+        echo "xdg-open not found, omit opening files:" "${targets_list[@]}" >&2
     fi
     if (("${#text_or_dirs[@]}" > 0)); then
-        has "$EDITOR" && "$EDITOR" "${text_or_dirs[@]}" ||
-            echo "\$EDITOR not found, omit opening files ${text_or_dirs[@]}" >&2
+        "$EDITOR" "${text_or_dirs[@]}"
     fi
 }
 
@@ -98,8 +96,8 @@ __ff_open_files_or_dir() {
 ff() {
     # $1: base directory
     # $2: optional initial query
-    local path="${1:-$PWD}"
-    local query="$2"
+    local -r path=${1:-$PWD}
+    local -r query=$2
 
     # If there is only one target and it is a file, open it directly
     if (($# == 1)) && [[ -f "$path" ]]; then
@@ -112,11 +110,11 @@ ff() {
         return 1
     fi
 
-    local tmpfile="$(mktemp)"
+    local -r tmpfile=$(mktemp)
     trap 'rm -f "$tmpfile"' EXIT
 
     # On some systems, e.g. Ubuntu, fd executable is installed as 'fdfind'
-    local fd_cmd=$(has fd && echo fd || echo fdfind)
+    local -r fd_cmd=$(has fd && echo fd || echo fdfind)
     if has "$fd_cmd"; then
         "$fd_cmd" -0 -p -H -L -td -tf -tl -c=always --search-path="$path" |
             fzf --read0 --ansi --query="$query" >"$tmpfile"
@@ -128,7 +126,7 @@ ff() {
         return 1
     fi
 
-    local targets="$(cat "$tmpfile")"
+    local -r targets=$(cat "$tmpfile")
     if [[ -z "$targets" ]]; then
         return 0
     fi
@@ -139,9 +137,9 @@ ff() {
 
 # Open nvim/vim/vi
 v() {
-    for editor in nvim vim vi; do
-        if has "$editor"; then
-            "$editor" "$@"
+    for vim_cmd in nvim vim vi; do
+        if has "$vim_cmd"; then
+            "$vim_cmd" "$@"
             return
         fi
     done
@@ -175,14 +173,14 @@ done
 
 # List current directory on directory change, see `__post_cd` below
 __autols() {
-    local output=$(ls -C --color)
+    local -r output=$(ls -C --color)
     local max_lines=4
     local num_lines=4
 
     if has tput && has wc; then
-        local lines=$(tput lines)
-        local max_lines=$(($lines / 4))
-        local num_lines=$(printf '%s\n' "$output" | wc -l | xargs) # trim whitespaces
+        local -r lines=$(tput lines)
+        local -r max_lines=$((lines / 4))
+        local -r num_lines=$(printf '%s\n' "$output" | wc -l | xargs) # trim whitespaces
     fi
 
     if [[ "$num_lines" -le "$max_lines" ]]; then
@@ -197,10 +195,10 @@ __autols() {
 # Python setup
 # Automatically activate or deactivate python virtualenvs
 __python_venv() {
-    local path="$PWD"
+    local path=$PWD
     while [[ "$path" != "$(dirname "$path")" ]]; do
         for venv_dir in 'venv' 'env' '.venv' '.env'; do
-            local activation_file="$path/$venv_dir/bin/activate"
+            local activation_file=$path/$venv_dir/bin/activate
             if [[ -f "$activation_file" ]]; then
                 source "$activation_file"
                 return
