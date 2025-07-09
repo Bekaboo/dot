@@ -4,7 +4,7 @@
 # Open a file using $EDITOR or xdg-open
 gx() {
     # $@: files to open
-    if ! command -v file >/dev/null 2>&1; then
+    if ! has file; then
         echo "file executable not found" >&2
         return 1
     fi
@@ -24,7 +24,7 @@ gx() {
     done
 
     # Handle non-text files with xdg-open
-    if command -v xdg-open >/dev/null 2>&1; then
+    if has xdg-open; then
         while read -r file; do
             xdg-open "$file" >/dev/null 2>&1
         done <"$other_files"
@@ -35,13 +35,9 @@ gx() {
 
     # Handle text files with $EDITOR
     if [ -s "$text_files" ]; then
-        if command -v "$EDITOR" >/dev/null 2>&1; then
-            # Use xargs to handle multiple files
-            xargs "$EDITOR" <"$text_files"
-        else
-            echo "\$EDITOR not found, omit opening files:" >&2
-            cat "$text_files" >&2
-        fi
+        # Use xargs to handle multiple files
+        # shellcheck disable=SC2086 # `$EDITOR` can have spaces and flags
+        xargs $EDITOR <"$text_files"
     fi
 }
 

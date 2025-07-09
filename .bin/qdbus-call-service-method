@@ -14,12 +14,12 @@ main() {
         qdbus_cmd="qdbus6"
     else
         echo "Error: neither qdbus nor qdbus6 found" >&2
-        exit 1
+        return 1
     fi
 
     if [ -z "$1" ] || [ -z "$2" ]; then
         usage
-        exit 1
+        return 1
     fi
 
     service_pattern="$1"
@@ -28,7 +28,7 @@ main() {
 
     # List all matching services
     services=$("$qdbus_cmd" | grep -i "$service_pattern") || {
-        exit 1
+        return 1
     }
 
     printf '%s\n' "$services" | while read -r service; do

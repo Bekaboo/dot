@@ -2,9 +2,9 @@
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
 main() {
-    if ! command -v plasma-apply-desktoptheme >/dev/null 2>&1; then
+    if ! has plasma-apply-desktoptheme; then
         echo "plasma-apply-desktoptheme not found" >&2
-        exit 1
+        return 1
     fi
 
     # Get list of desktop themes
@@ -15,7 +15,7 @@ main() {
     # * breeze-light (current theme for this Plasma session)
     output=$(plasma-apply-desktoptheme --list-themes 2>/dev/null) || {
         echo "Failed to get desktop themes" >&2
-        exit 1
+        return 1
     }
 
     current_theme=$(printf '%s\n' "$output" |
@@ -24,7 +24,7 @@ main() {
 
     if [ -z "$current_theme" ]; then
         echo "No current desktop theme found" >&2
-        exit 1
+        return 1
     fi
 
     printf '%s\n' "$current_theme"

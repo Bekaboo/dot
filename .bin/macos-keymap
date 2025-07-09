@@ -30,7 +30,7 @@
 
 usage() {
     cat <<EOF
-Usage: $(basename $0) [vendor_id] [product_id] [mapping]
+Usage: $(basename "$0") [vendor_id] [product_id] [mapping]
 
 Remap keys on macOS
 

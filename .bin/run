@@ -17,22 +17,23 @@ run_executable() {
 }
 
 main() {
-    src=$(command -v realpath >/dev/null 2>&1 && realpath "$1" || readlink -f "$1")
+    # shellcheck disable=SC2015
+    src=$(realpath "$1" 2>/dev/null || readlink -f "$1")
     executable=$(echo "$src" | sed -E 's/\.(c|cpp|cc|cxx)$/.run/')
     if [ "$src" = "$executable" ]; then
         echo >&2 "run: error: file name cannot be the same as the run file name"
-        exit 1
+        return 1
     fi
 
     if [ ! -f "$src" ]; then
         echo >&2 "run: error: source file does not exist"
-        exit 1
+        return 1
     fi
 
     build "$src" "$executable"
     if [ ! -f "$executable" ]; then
         echo >&2 "run: error: build failed"
-        exit 1
+        return 1
     fi
 
     run_executable "$executable"

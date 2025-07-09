@@ -16,7 +16,7 @@ has_recent_conflict_bg() {
 
 dbus-monitor --system "type='signal', \
         interface='org.freedesktop.login1.Manager', \
-        member=PrepareForSleep" | while read x; do
+        member=PrepareForSleep" | while read -r x; do
     case "$x" in
     *"boolean false"*)
         if ! has_recent_conflict_bg; then

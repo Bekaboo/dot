@@ -91,7 +91,7 @@ get_fzf_long_opt_no_space() {
     fi
 
     val=$(printf '%s' "$FZF_DEFAULT_OPTS" | grep -o -- "--$1=[^ ]*" | tail -n1)
-    val=${val#--$1=}
+    val=${val#--"$1"=}
     val=${val#[\"\']}
     val=${val%[\"\']}
 
@@ -107,7 +107,6 @@ get_fzf_geometry_normalized() {
     # $1: 'margin' or 'padding'
     # $2: 'top', 'bottom', 'left', or 'right'
     geometry=$(get_fzf_long_opt_no_space "$1" 0)
-    [ $? -ne 0 ] && echo "$geometry" && return 1
 
     case "$2" in
     top | bottom) total=$lines ;;

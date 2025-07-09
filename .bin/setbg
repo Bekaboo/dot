@@ -19,7 +19,7 @@ get_theme_variant() {
 setbg_alacritty() {
     # $1: 'light' or 'dark'
     (
-        cd "$CONFIG_HOME/alacritty" 2>/dev/null || return 1
+        cd "$CONFIG_HOME/alacritty" || return
         theme_path="theme.toml"
         themes_dir="themes"
         # If $1 is empty, only need to ensure symlink to color theme file exists
@@ -34,7 +34,7 @@ setbg_alacritty() {
 setbg_foot() {
     # $1: 'light' or 'dark'
     (
-        cd "$CONFIG_HOME/foot" 2>/dev/null || return 1
+        cd "$CONFIG_HOME/foot" || return
         theme_path="theme.ini"
         themes_dir="themes"
         if [ -z "$1" ]; then
@@ -52,7 +52,7 @@ setbg_foot() {
 setbg_kitty() {
     # $1: 'light' or 'dark'
     (
-        cd "$CONFIG_HOME/kitty" 2>/dev/null || return 1
+        cd "$CONFIG_HOME/kitty" || return
         no_preference_theme_path="no-preference-theme.auto.conf"
         current_theme_path="current-theme.conf"
         # Kitty changes its theme automatically w.r.t.
@@ -78,7 +78,7 @@ setbg_kitty() {
 setbg_wezterm() {
     # $1: 'light' or 'dark'
     (
-        cd "$CONFIG_HOME/wezterm" 2>/dev/null || return 1
+        cd "$CONFIG_HOME/wezterm" || return
         theme_path="theme.toml"
         themes_dir="colors"
         if [ -z "$1" ]; then
@@ -92,7 +92,7 @@ setbg_wezterm() {
 setbg_highlight() {
     # $1: 'light' or 'dark'
     (
-        cd "$HOME/.highlight" 2>/dev/null || return 1
+        cd "$HOME/.highlight" || return
         themes_dir="themes"
         theme_path="highlight.theme"
         if [ -z "$1" ]; then
@@ -270,7 +270,7 @@ setbg_konsole_yakuake() {
 setbg_termux() {
     # $1: 'light' or 'dark'
     (
-        cd "$HOME/.termux" 2>/dev/null || return 1
+        cd "$HOME/.termux" || return
         theme_path="colors.properties"
         themes_dir="colors"
         if [ -z "$1" ]; then
@@ -341,7 +341,7 @@ setbg_vscode() {
 setbg_fish() {
     # $1: 'light' or 'dark'
     (
-        cd "$CONFIG_HOME/fish/themes" 2>/dev/null || return 1
+        cd "$CONFIG_HOME/fish/themes" || return
         theme_path="Current.theme"
         if [ -z "$1" ]; then
             case "$DEFAULT_BG" in
@@ -436,7 +436,7 @@ write_conflict_log() {
 
 usage() {
     echo "Usage: $(basename "$0") [light|dark]"
-    exit 0
+    exit
 }
 
 main() {

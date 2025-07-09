@@ -56,7 +56,7 @@ main() {
             ;;
         -h | --help | -\?)
             usage
-            exit 0
+            return
             ;;
         --pdf-engine=*)
             PDF_ENGINE="${1#*=}"
@@ -64,7 +64,7 @@ main() {
         --pdf-engine)
             if [ -z "$2" ]; then
                 echo "Error: --pdf-engine requires an argument" >&2
-                exit 1
+                return 1
             fi
             PDF_ENGINE="$2"
             shift
@@ -76,7 +76,7 @@ main() {
         -*)
             echo "Error: unknown option '$1'" >&2
             usage
-            exit 1
+            return 1
             ;;
         *)
             break
@@ -88,25 +88,28 @@ main() {
     if [ $# -eq 0 ]; then
         echo "Error: no input files" >&2
         usage
-        exit 1
+        return 1
     fi
+
+    rc=0
 
     for file in "$@"; do
         oldpwd=$PWD
 
         # Pictures in markdown cannot be fetched if we are not in the same
         # directory
-        cd "$(dirname "$(realpath "$file")")" >/dev/null 2>&1 || exit 1
+        cd "$(dirname "$(realpath "$file")")" || return
 
         if ! md2pdf "$(basename "$file")"; then
-            rc=$?
             echo "md2pdf: error: pandoc failed to convert '$file' with exit code $rc" >&2
-            cd "$oldpwd" >/dev/null 2>&1
-            exit $rc
+            cd "$oldpwd" || return
+            rc=1
         fi
 
-        cd "$oldpwd" >/dev/null 2>&1
+        cd "$oldpwd" || return
     done
+
+    return "$rc"
 }
 
 main "$@"

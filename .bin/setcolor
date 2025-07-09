@@ -23,7 +23,7 @@ get_cap_theme_name() {
 setcolor_alacritty() {
     # $1: name of the colorscheme
     (
-        cd "$CONFIG_HOME/alacritty/themes" 2>/dev/null || return 1
+        cd "$CONFIG_HOME/alacritty/themes" || return
         dark_theme_path="dark.toml"
         light_theme_path="light.toml"
         # If $1 is empty, only need to ensure symlink to color theme files exists
@@ -40,7 +40,7 @@ setcolor_alacritty() {
 setcolor_foot() {
     # $1: name of the colorscheme
     (
-        cd "$CONFIG_HOME/foot/themes" 2>/dev/null || return 1
+        cd "$CONFIG_HOME/foot/themes" || return
         dark_theme_path="dark.ini"
         light_theme_path="light.ini"
         if [ -z "$1" ]; then
@@ -59,7 +59,7 @@ setcolor_foot() {
 setcolor_kitty() {
     # $1: name of the colorscheme
     (
-        cd "$CONFIG_HOME/kitty" 2>/dev/null || return 1
+        cd "$CONFIG_HOME/kitty" || return
         # Kitty changes its theme automatically w.r.t.
         # `{dark,light,no-preference}-theme.auto.conf` when OS switches to
         # dark/light mode, see: https://sw.kovidgoyal.net/kitty/kittens/themes/#change-color-themes-automatically-when-the-os-switches-between-light-and-dark
@@ -73,6 +73,7 @@ setcolor_kitty() {
             ln -sf "themes/$1-dark.conf" "$dark_theme_path"
             ln -sf "themes/$1-light.conf" "$light_theme_path"
         fi
+        ln -sf "$dark_theme_path" "$no_preference_theme_path"
         if has kitty; then
             for pid in $(pgrep kitty); do
                 # Don't use `kill -SIGUSR1`, will cause error: 'kill: SIGUSR1: invalid signal specification'
@@ -86,7 +87,7 @@ setcolor_kitty() {
 setcolor_termux() {
     # $1: name of the colorscheme
     (
-        cd "$HOME/.termux/colors" 2>/dev/null || return 1
+        cd "$HOME/.termux/colors" || return
         dark_color_path="dark.properties"
         light_color_path="light.properties"
         if [ -z "$1" ]; then
@@ -105,7 +106,7 @@ setcolor_termux() {
 setcolor_wezterm() {
     # $1: name of the colorscheme
     (
-        cd "$CONFIG_HOME/wezterm/colors" 2>/dev/null || return 1
+        cd "$CONFIG_HOME/wezterm/colors" || return
         dark_theme_path="dark.toml"
         light_theme_path="light.toml"
         if [ -z "$1" ]; then
@@ -121,7 +122,7 @@ setcolor_wezterm() {
 setcolor_highlight() {
     # $1: name of the colorscheme
     (
-        cd "$HOME/.highlight/themes" 2>/dev/null || return 1
+        cd "$HOME/.highlight/themes" || return
         dark_theme_path="dark.theme"
         light_theme_path="light.theme"
         if [ -z "$1" ]; then
@@ -224,7 +225,7 @@ setcolor_konsole_yakuake() {
 setcolor_fish() {
     # $1: name of the colorscheme
     (
-        cd "$CONFIG_HOME/fish/themes" 2>/dev/null || return 1
+        cd "$CONFIG_HOME/fish/themes" || return
         dark_theme_path="Dark.theme"
         light_theme_path="Light.theme"
         default_theme_name=$(get_cap_theme_name "$DEFAULT_COLOR")
@@ -323,7 +324,7 @@ setcolor_plasma() {
 
 usage() {
     echo "Usage: $(basename "$0") [<colorscheme>]"
-    exit 0
+    exit
 }
 
 main() {

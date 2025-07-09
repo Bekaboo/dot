@@ -1,11 +1,18 @@
 #!/usr/bin/env sh
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
-VIM_COMMAND=$(command -v nvim >/dev/null 2>&1 && echo 'nvim -E --headless' || 'vim -E')
 ARGS="$*"
 
-[ -z "$ARGS" ] &&
-    $VIM_COMMAND +'GBrowse' +'qa!' ||
+if has nvim; then
+    VIM_COMMAND='nvim -E --headless'
+else
+    VIM_COMMAND='vim -E'
+fi
+
+if [ -z "$ARGS" ]; then
+    $VIM_COMMAND +'GBrowse' +'qa!'
+else
     $VIM_COMMAND +"exe escape('GBrowse $ARGS', \"\\'\")" +'qa!'
+fi
 
 echo

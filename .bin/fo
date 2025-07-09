@@ -17,6 +17,7 @@ main() {
     # Check if we got any files
     if [ -s "$tmpfile" ]; then
         # Use xargs to handle multiple files properly
+        # shellcheck disable=SC2086 # `$EDITOR` can have spaces and flags
         xargs ${EDITOR:-nvim} <"$tmpfile"
     fi
 }

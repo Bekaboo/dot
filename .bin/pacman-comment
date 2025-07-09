@@ -21,7 +21,7 @@ prepare() {
 add_comments() {
     # Find available editor
     for vim_cmd in nvim vim vi; do
-        if command -v "$vim_cmd" >/dev/null 2>&1; then
+        if has "$vim_cmd"; then
             vim_cmd=$(command -v "$vim_cmd")
             break
         fi
