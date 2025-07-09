@@ -1,3 +1,4 @@
+#!/usr/bin/env sh
 # ~/.profile
 # vim: ft=sh ts=4 sw=4 sts=4 et :
 
@@ -6,21 +7,21 @@ has() {
 }
 
 # macOS homebrew install paths
-export PATH=/opt/homebrew/bin:/usr/local/bin:$PATH
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 if has brew; then
     eval "$(brew shellenv)"
 fi
 
 # Setup pyenv, see:
 # https://github.com/pyenv/pyenv?tab=readme-ov-file#b-set-up-your-shell-environment-for-pyenv
-export PYENV_ROOT=$HOME/.pyenv
-export PATH=$PYENV_ROOT/bin:$PATH
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
 
 # Local executables
-export PATH=$HOME/go/bin:$PATH
-export PATH=$HOME/.cargo/bin:$PATH
-export PATH=$HOME/.local/bin:$PATH
-export PATH=$HOME/.bin:$PATH
+export PATH="$HOME/go/bin:$PATH"
+export PATH="$HOME/.cargo/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.bin:$PATH"
 
 if [ -r "$HOME/.envvars" ]; then
     . "$HOME/.envvars"
@@ -29,46 +30,19 @@ fi
 # Setup default editor
 for editor in nvim vim vi; do
     if has "$editor"; then
-        export EDITOR=$editor
+        export EDITOR="$editor"
         [ "$editor" = nvim ] && export MANPAGER='nvim +Man!'
         break
     fi
 done
 
-# TTY Terminal Colors (base16)
-if [ "$TERM" = linux ]; then
-    echo -en "\e]P00D0C0C" #black
-    echo -en "\e]P1C4746E" #darkred
-    echo -en "\e]P28A9A7B" #darkgreen
-    echo -en "\e]P3D2B788" #brown
-    echo -en "\e]P48BA4B0" #darkblue
-    echo -en "\e]P5A292A3" #darkmagenta
-    echo -en "\e]P68EA4A2" #darkcyan
-    echo -en "\e]P7B4B3A7" #lightgrey
-    echo -en "\e]P87F827F" #darkgrey
-    echo -en "\e]P9E46876" #red
-    echo -en "\e]PA87A987" #green
-    echo -en "\e]PBDCA561" #yellow
-    echo -en "\e]PC7FB4CA" #blue
-    echo -en "\e]PD938AA9" #magenta
-    echo -en "\e]PE7AA89F" #cyan
-    echo -en "\e]PFB4B8B4" #white
-    clear                  #for background artifacting
-fi
-
-# 'less' highlights
-export LESS_TERMCAP_mb=$'\e[1;32m'
-export LESS_TERMCAP_md=$'\e[1;32m'
-export LESS_TERMCAP_me=$'\e[0m'
-export LESS_TERMCAP_se=$'\e[0m'
-export LESS_TERMCAP_so=$'\e[01;33m'
-export LESS_TERMCAP_ue=$'\e[0m'
-export LESS_TERMCAP_us=$'\e[1;4;34m'
-
 # Set rg config path
-export RIPGREP_CONFIG_PATH=$HOME/.ripgreprc
+export RIPGREP_CONFIG_PATH="$HOME/.ripgreprc"
 
 # Fzf configuration
+# shellcheck disable=SC2089
+# we want to include '' (single quotes) in `--preview` option because opts are
+# parsed twice when passing to fzf
 export FZF_DEFAULT_OPTS="--reverse \
     --preview='fzf-file-previewer {}' \
     --preview-window=right,55%,border-none,nocycle \
@@ -94,10 +68,9 @@ export FZF_DEFAULT_OPTS="--reverse \
     --bind=alt-v:preview-half-page-up,ctrl-v:preview-half-page-down"
 
 if has tput && [ "$(tput colors)" -lt 256 ]; then
-    export FZF_DEFAULT_OPTS=$(echo "$FZF_DEFAULT_OPTS" \
-        '--no-unicode' \
-        '--marker=+\ ' \
-        '--pointer=\>\ ')
+    # shellcheck disable=SC2090
+    export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
+        --no-unicode --marker='+ ' --pointer='> '"
 fi
 
 fd=$(has fd && echo fd || echo fdfind)
@@ -209,7 +182,7 @@ if [ -z "$GREETED" ]; then
         # Run in pseudo-terminal to prevent terminal state issues
         # (tmux error: 'not a terminal', etc)
         # macOS `script` does not accept `-c` flag
-        if script -q /dev/null -c exit &>/dev/null; then
+        if script -q /dev/null -c exit >/dev/null 2>&1; then
             script -q /dev/null -c "$fetch"
         else
             script -q /dev/null "$fetch"
