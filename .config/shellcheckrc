@@ -1,0 +1,5 @@
+# Don't show suggestions for double backslashes '\\' in single quotes
+disable=SC1003
+
+# Don't care sourced files
+source=/dev/null
