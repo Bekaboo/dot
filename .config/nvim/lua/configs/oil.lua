@@ -560,8 +560,8 @@ vim.api.nvim_create_autocmd({ 'CursorMoved', 'WinScrolled' }, {
 vim.api.nvim_create_autocmd('BufEnter', {
   desc = 'Close preview window when leaving oil buffers.',
   group = groupid_preview,
-  callback = function(info)
-    if vim.bo[info.buf].filetype ~= 'oil' then
+  callback = function(args)
+    if vim.bo[args.buf].filetype ~= 'oil' then
       preview_finish()
     end
   end,
@@ -570,8 +570,8 @@ vim.api.nvim_create_autocmd('BufEnter', {
 vim.api.nvim_create_autocmd('WinClosed', {
   desc = 'Close preview window when closing oil windows.',
   group = groupid_preview,
-  callback = function(info)
-    local win = tonumber(info.match)
+  callback = function(args)
+    local win = tonumber(args.match)
     if win and preview_wins[win] then
       preview_finish(win)
     end
@@ -581,19 +581,19 @@ vim.api.nvim_create_autocmd('WinClosed', {
 vim.api.nvim_create_autocmd({ 'WinResized', 'WinScrolled' }, {
   desc = 'Update invisible lines in preview buffer.',
   group = groupid_preview,
-  callback = function(info)
+  callback = function(args)
     local wins = vim.tbl_map(
       function(win)
         return tonumber(win)
       end,
       vim.list_extend(
-        { info.match },
+        { args.match },
         vim.v.event.windows or vim.tbl_keys(vim.v.event)
       )
     )
 
     for _, win in ipairs(wins) do
-      preview_set_lines(win, info.event == 'WinScrolled')
+      preview_set_lines(win, args.event == 'WinScrolled')
     end
   end,
 })
@@ -602,8 +602,8 @@ vim.api.nvim_create_autocmd('BufEnter', {
   desc = 'Update invisible lines in preview buffer.',
   group = groupid_preview,
   pattern = '*/oil_preview_\\d\\+://*',
-  callback = function(info)
-    preview_set_lines(vim.fn.bufwinid(info.buf), true)
+  callback = function(args)
+    preview_set_lines(vim.fn.bufwinid(args.buf), true)
   end,
 })
 
@@ -852,8 +852,8 @@ vim.api.nvim_create_autocmd('BufEnter', {
   desc = 'Ensure that oil buffers are not listed.',
   group = groupid,
   pattern = 'oil://*',
-  callback = function(info)
-    vim.bo[info.buf].buflisted = false
+  callback = function(args)
+    vim.bo[args.buf].buflisted = false
   end,
 })
 
@@ -891,16 +891,16 @@ vim.api.nvim_create_autocmd({ 'BufEnter', 'TextChanged' }, {
   group = groupid,
   pattern = 'oil://*',
   nested = true, -- fire `DirChanged` event
-  callback = function(info)
-    oil_cd(info.buf)
+  callback = function(args)
+    oil_cd(args.buf)
   end,
 })
 
 vim.api.nvim_create_autocmd('BufEnter', {
   desc = 'Record alternate file in dir buffers.',
   group = groupid,
-  callback = function(info)
-    local buf = info.buf
+  callback = function(args)
+    local buf = args.buf
     local bufname = vim.api.nvim_buf_get_name(buf)
     if vim.fn.isdirectory(bufname) == 1 then
       vim.b[buf]._alt_file = vim.fn.bufnr('#')
@@ -912,7 +912,7 @@ vim.api.nvim_create_autocmd('BufEnter', {
   desc = 'Set last cursor position in oil buffers when editing parent dir.',
   group = groupid,
   pattern = 'oil://*',
-  callback = function(info)
+  callback = function(args)
     -- Only set cursor position when first entering an oil buffer in current window
     -- This prevents cursor from resetting to the original file when switching
     -- between oil and preview windows, e.g.
@@ -933,10 +933,10 @@ vim.api.nvim_create_autocmd('BufEnter', {
     -- If we use a boolean flag for `_oil_entered`, we will not able to set cursor
     -- position in oil buffer on step 4 because the flag is set in step 2.
     local win = vim.api.nvim_get_current_win()
-    if vim.b[info.buf]._oil_entered == win then
+    if vim.b[args.buf]._oil_entered == win then
       return
     end
-    vim.b[info.buf]._oil_entered = win
+    vim.b[args.buf]._oil_entered = win
     -- Place cursor on the alternate buffer if we are opening
     -- the parent directory of the alternate buffer
     local alt_file = vim.fn.bufnr('#')

@@ -80,7 +80,7 @@ local function bootstrap()
     system_sync(
       { 'git', 'checkout', commit },
       { cwd = lazy_path },
-      vim.log.INFO
+      vim.log.args
     )
   end
   vim.notify(string.format("[plugins] lazy.nvim cloned to '%s'", lazy_path))
@@ -166,10 +166,10 @@ local function enable_plugins(module_names)
         {
           once = true,
           group = groupid,
-          callback = function(info)
+          callback = function(args)
             vim.api.nvim_del_augroup_by_id(groupid)
             setup()
-            vim.api.nvim_exec_autocmds(info.event, { pattern = info.match })
+            vim.api.nvim_exec_autocmds(args.event, { pattern = args.match })
           end,
         }
       )

@@ -236,9 +236,9 @@ return {
         -- Use `vim.schedule()` here to wait session to be loaded and
         -- buffer attributes, e.g. buffer name, to be updated before
         -- checking if the buffer is a directory buffer
-        callback = vim.schedule_wrap(function(info)
-          local buf = info.buf
-          local id = info.id
+        callback = vim.schedule_wrap(function(args)
+          local buf = args.buf
+          local id = args.id
 
           if
             not vim.api.nvim_buf_is_valid(buf)

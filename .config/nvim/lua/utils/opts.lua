@@ -1,11 +1,11 @@
 local M = {}
 
----@param info table
+---@param args table
 ---@return string[]
-function M.qftf(info)
-  local qflist = info.quickfix == 1
-      and vim.fn.getqflist({ id = info.id, items = 0 }).items
-    or vim.fn.getloclist(info.winid, { id = info.id, items = 0 }).items
+function M.qftf(args)
+  local qflist = args.quickfix == 1
+      and vim.fn.getqflist({ id = args.id, items = 0 }).items
+    or vim.fn.getloclist(args.winid, { id = args.id, items = 0 }).items
 
   if vim.tbl_isempty(qflist) then
     return {}

@@ -225,8 +225,8 @@ function M.setup()
   vim.api.nvim_create_autocmd('TermOpen', {
     group = groupid,
     desc = 'Set terminal keymaps and options, open term in split.',
-    callback = function(info)
-      M.term_init(info.buf)
+    callback = function(args)
+      M.term_init(args.buf)
     end,
   })
 end

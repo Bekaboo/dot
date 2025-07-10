@@ -19,17 +19,17 @@ local groupid = vim.api.nvim_create_augroup('FugitiveSettings', {})
 vim.api.nvim_create_autocmd('User', {
   pattern = 'FugitiveIndex',
   group = groupid,
-  callback = function(info)
-    vim.keymap.set({ 'n', 'x' }, 'S', 's', { buffer = info.buf, remap = true })
-    vim.keymap.set({ 'n', 'x' }, 'x', 'X', { buffer = info.buf, remap = true })
+  callback = function(args)
+    vim.keymap.set({ 'n', 'x' }, 'S', 's', { buffer = args.buf, remap = true })
+    vim.keymap.set({ 'n', 'x' }, 'x', 'X', { buffer = args.buf, remap = true })
     vim.keymap.set({ 'n', 'x' }, '[g', '[c', {
       desc = 'Go to previous hunk',
-      buffer = info.buf,
+      buffer = args.buf,
       remap = true,
     })
     vim.keymap.set({ 'n', 'x' }, ']g', ']c', {
       desc = 'Go to next hunk',
-      buffer = info.buf,
+      buffer = args.buf,
       remap = true,
     })
   end,
@@ -63,8 +63,8 @@ vim.api.nvim_create_autocmd('BufEnter', {
   desc = 'Ensure that fugitive buffers are not listed and are wiped out after hidden.',
   group = groupid,
   pattern = 'fugitive://*',
-  callback = function(info)
-    vim.bo[info.buf].buflisted = false
+  callback = function(args)
+    vim.bo[args.buf].buflisted = false
   end,
 })
 

@@ -55,12 +55,12 @@ ls.setup({
 vim.api.nvim_create_autocmd('ModeChanged', {
   desc = 'Unlink current snippet on leaving insert/selection mode.',
   group = vim.api.nvim_create_augroup('LuaSnipModeChanged', {}),
-  callback = function(info)
+  callback = function(args)
     local mode = vim.v.event.new_mode ---@diagnostic disable-line: undefined-field
     local omode = vim.v.event.old_mode ---@diagnostic disable-line: undefined-field
     if
       (omode == 's' and mode == 'n' or omode == 'i')
-      and ls.session.current_nodes[info.buf]
+      and ls.session.current_nodes[args.buf]
       and not ls.session.jump_active
     then
       ls.unlink_current()

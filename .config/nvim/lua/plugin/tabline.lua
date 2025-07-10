@@ -108,8 +108,8 @@ vim.api.nvim_create_autocmd({ 'UIEnter', 'SessionLoadPost' }, {
 vim.api.nvim_create_autocmd('TabClosed', {
   desc = 'Clear global tab name variable for closed tabs.',
   group = groupid,
-  callback = function(info)
-    vim.g['Tabname' .. info.file] = nil
+  callback = function(args)
+    vim.g['Tabname' .. args.file] = nil
   end,
 })
 

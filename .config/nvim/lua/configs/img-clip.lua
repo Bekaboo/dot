@@ -112,7 +112,7 @@ vim.api.nvim_create_autocmd('FileType', {
   desc = 'Buffer-local settings for img-clip.',
   group = vim.api.nvim_create_augroup('ImgClipSetup', {}),
   pattern = vim.tbl_keys(filetypes),
-  callback = function(info)
-    setup_keymaps(info.buf)
+  callback = function(args)
+    setup_keymaps(args.buf)
   end,
 })

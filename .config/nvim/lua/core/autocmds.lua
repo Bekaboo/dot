@@ -20,10 +20,10 @@ do
     'BufReadPre',
     {
       desc = 'Detect big files.',
-      callback = function(info)
-        local stat = vim.uv.fs_stat(info.match)
+      callback = function(args)
+        local stat = vim.uv.fs_stat(args.match)
         if stat and stat.size > vim.g.bigfile_max_size then
-          vim.b[info.buf].bigfile = true
+          vim.b[args.buf].bigfile = true
         end
       end,
     },
@@ -31,8 +31,8 @@ do
     { 'BufEnter', 'TextChanged' },
     {
       desc = 'Detect big files.',
-      callback = function(info)
-        local buf = info.buf
+      callback = function(args)
+        local buf = args.buf
         if vim.b[buf].bigfile then
           return
         end
@@ -47,8 +47,8 @@ do
     {
       once = true,
       desc = 'Prevent treesitter and LSP from attaching to big files.',
-      callback = function(info)
-        vim.api.nvim_del_autocmd(info.id)
+      callback = function(args)
+        vim.api.nvim_del_autocmd(args.id)
 
         local ts_get_parser = vim.treesitter.get_parser
         local ts_foldexpr = vim.treesitter.foldexpr
@@ -91,8 +91,8 @@ do
     'BufReadPre',
     {
       desc = 'Disable options in big files.',
-      callback = function(info)
-        local buf = info.buf
+      callback = function(args)
+        local buf = args.buf
         if not vim.b[buf].bigfile then
           return
         end
@@ -109,8 +109,8 @@ do
     { 'BufEnter', 'TextChanged', 'FileType' },
     {
       desc = 'Stop treesitter in big files.',
-      callback = function(info)
-        local buf = info.buf
+      callback = function(args)
+        local buf = args.buf
         if vim.b[buf].bigfile and require('utils.ts').hl_is_active(buf) then
           vim.treesitter.stop(buf)
           vim.bo[buf].syntax = vim.filetype.match({ buf = buf })
@@ -139,9 +139,9 @@ augroup('Autosave', {
   {
     nested = true,
     desc = 'Autosave on focus change.',
-    callback = function(info)
+    callback = function(args)
       -- Don't auto-save non-file buffers
-      if (vim.uv.fs_stat(info.file) or {}).type ~= 'file' then
+      if (vim.uv.fs_stat(args.file) or {}).type ~= 'file' then
         return
       end
       vim.cmd.update({
@@ -164,10 +164,10 @@ augroup('LastPosJmp', {
   'BufReadPost',
   {
     desc = 'Last position jump.',
-    callback = function(info)
+    callback = function(args)
       vim.api.nvim_create_autocmd('FileType', {
         once = true,
-        buffer = info.buf,
+        buffer = args.buf,
         callback = function(i)
           local ft = vim.bo[i.buf].ft
           if ft ~= 'gitcommit' and ft ~= 'gitrebase' then
@@ -219,9 +219,9 @@ do
     {
       desc = 'Automatically change local current directory.',
       nested = true,
-      callback = function(info)
-        local file = info.file
-        local buf = info.buf
+      callback = function(args)
+        local file = args.file
+        local buf = args.buf
 
         local root_dir_cached = vim.b[buf]._root_dir
         if root_dir_cached and vim.fn.isdirectory(root_dir_cached) == 1 then
@@ -260,9 +260,9 @@ augroup('PromptBufKeymaps', {
   'BufEnter',
   {
     desc = 'Undo automatic <C-w> remap in prompt buffers.',
-    callback = function(info)
-      if vim.bo[info.buf].buftype == 'prompt' then
-        vim.keymap.set('i', '<C-w>', '<C-S-W>', { buffer = info.buf })
+    callback = function(args)
+      if vim.bo[args.buf].buftype == 'prompt' then
+        vim.keymap.set('i', '<C-w>', '<C-S-W>', { buffer = args.buf })
       end
     end,
   },
@@ -272,9 +272,9 @@ augroup('QuickFixAutoOpen', {
   'QuickFixCmdPost',
   {
     desc = 'Open quickfix window if there are results.',
-    callback = function(info)
+    callback = function(args)
       if #vim.fn.getqflist() > 1 then
-        vim.schedule(vim.cmd[info.match:find('^l') and 'lwindow' or 'cwindow'])
+        vim.schedule(vim.cmd[args.match:find('^l') and 'lwindow' or 'cwindow'])
       end
     end,
   },
@@ -379,11 +379,11 @@ do
     {
       desc = 'Set quickfix window initial height.',
       pattern = 'qf',
-      callback = function(info)
+      callback = function(args)
         -- Quickfix window height can be incorrectly set to a value larger
         -- than 10 (the default value) if there's vertical splits with winbar
         -- attached above the quickfix window
-        vim.api.nvim_win_set_height(vim.fn.bufwinid(info.buf), 10)
+        vim.api.nvim_win_set_height(vim.fn.bufwinid(args.buf), 10)
       end,
     },
   })
@@ -394,13 +394,13 @@ augroup('FixCmdLineIskeyword', {
   {
     desc = 'Have consistent &iskeyword and &lisp in Ex command-line mode.',
     pattern = '[:>/?=@]',
-    callback = function(info)
+    callback = function(args)
       -- Don't reset 'iskeyword' and 'lisp' in insert or append command-line
       -- mode ('-'): if we are inserting into a lisp file, we want to have the
       -- same behavior as in insert mode
-      vim.g._isk_lisp_buf = info.buf
-      vim.g._isk_save = vim.bo[info.buf].isk
-      vim.g._lisp_save = vim.bo[info.buf].lisp
+      vim.g._isk_lisp_buf = args.buf
+      vim.g._isk_save = vim.bo[args.buf].isk
+      vim.g._lisp_save = vim.bo[args.buf].lisp
       vim.cmd.setlocal('isk&')
       vim.cmd.setlocal('lisp&')
     end,
@@ -439,8 +439,8 @@ do
     {
       desc = 'Set background color for special buffers.',
       -- Schedule for window to open for the newly created special buffer
-      callback = vim.schedule_wrap(function(info)
-        local buf = info.buf
+      callback = vim.schedule_wrap(function(args)
+        local buf = args.buf
         if not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].bt == '' then
           return
         end
