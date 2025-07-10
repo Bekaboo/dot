@@ -25,7 +25,7 @@ return {
           -- will fail to find definitions in other files in the same package
           -- `--output-format` is removed in golangci-lint v2, see:
           -- https://github.com/golangci/golangci-lint/discussions/5612#discussioncomment-12607774
-          lintCommand = 'golangci-lint run --color never --show-stats=false --output.text.path stdout --output.text.print-issued-lines=false --enable exhaustruct "$(dirname "${INPUT}")"',
+          lintCommand = 'golangci-lint run --color never --show-stats=false --output.text.path stdout --output.text.print-issued-lines=false "$(dirname "${INPUT}")"',
           lintFormats = { '%f:%l:%c: %m' },
           lintSource = 'golangci-lint',
           lintAfterOpen = true,
