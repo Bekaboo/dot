@@ -299,9 +299,8 @@ function M.yank_joined_paragraphs_keymap()
   local reg = vim.v.register
   vim.api.nvim_feedkeys('y', 'n', false)
 
-  vim.api.nvim_create_autocmd('TextYankPost', {
+  local join_paragraphs_autocmd = vim.api.nvim_create_autocmd('TextYankPost', {
     once = true,
-    group = vim.api.nvim_create_augroup('YankJoinedParagraphs', {}),
     callback = function()
       local joined_lines = {}
       local joined_line ---@type string?
@@ -310,7 +309,8 @@ function M.yank_joined_paragraphs_keymap()
         ipairs(vim.v.event.regcontents --[=[@as string[]]=])
       do
         if line ~= '' then
-          joined_line = (joined_line or '') .. vim.trim(line)
+          joined_line = (joined_line and joined_line .. ' ' or '')
+            .. vim.trim(line)
           goto continue
         end
         table.insert(joined_lines, joined_line)
@@ -320,7 +320,29 @@ function M.yank_joined_paragraphs_keymap()
       end
       table.insert(joined_lines, joined_line)
 
-      vim.fn.setreg(reg, table.concat(joined_lines, '\n'), vim.v.event.regtype)
+      vim.fn.setreg(reg, joined_lines, vim.v.event.regtype)
+    end,
+  })
+
+  -- If joined paragraph yank runs successfully, the following events will
+  -- trigger in order:
+  -- 1. `ModeChanged` with pattern 'n:no'
+  -- 2. `TextYankPost`
+  -- 3. `ModeChanged` with pattern 'no:n'
+  --
+  -- If joined paragraph yank is canceled, e.g. with `gy<Esc>` in normal mode,
+  -- the following events will  trigger in order:
+  -- 1. `ModeChanged` with pattern 'n:no'
+  -- 2. `ModeChanged` with pattern 'no:n'
+  --
+  -- So remove the `TextYankPost` autocmd that joins each paragraph as a
+  -- single line after changing from operator pending mode 'no' to normal mode
+  -- 'n' to prevent it from affecting normal yanking e.g. with `y`
+  vim.api.nvim_create_autocmd('ModeChanged', {
+    once = true,
+    pattern = 'no:n',
+    callback = function()
+      pcall(vim.api.nvim_del_autocmd, join_paragraphs_autocmd)
     end,
   })
 end
