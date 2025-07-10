@@ -589,6 +589,63 @@ snoremap <BS>  <C-o>"_s
 snoremap <C-h> <C-o>"_s
 " }}}
 
+" Yank paragraphs as single lines, useful for yanking hard-wrapped
+" paragraphs in nvim and paste it in browsers or other editors {{{2
+if s:supportevents(['TextYankPost', 'ModeChanged'])
+  " param: reg string register name
+  function! s:join_paragraphs_in_reg(reg) abort
+    let joined_lines = []
+    let joined_line = v:null
+
+    for line in v:event.regcontents
+      if line !=# ''
+        let joined_line = joined_line is v:null ? '' : joined_line . ' '
+        let joined_line .= trim(line)
+        continue
+      endif
+      if joined_line isnot v:null
+        call add(joined_lines, joined_line)
+      endif
+      call add(joined_lines, line)
+      let joined_line = v:null
+    endfor
+    if joined_line isnot v:null
+      call add(joined_lines, joined_line)
+    endif
+
+    call setreg(a:reg, joined_lines, v:event.regtype)
+  endfunction
+
+  function! s:yank_joined_paragraphs_keymap() abort
+    let g:_yank_reg = v:register
+    call feedkeys('y', 'n')
+
+    augroup YankJoinedParagraphs
+      au!
+      au TextYankPost * ++once call <SID>join_paragraphs_in_reg(g:_yank_reg)
+      " If joined paragraph yank runs successfully, the following events will
+      " trigger in order:
+      " 1. `ModeChanged` with pattern 'n:no'
+      " 2. `TextYankPost`
+      " 3. `ModeChanged` with pattern 'no:n'
+      "
+      " If joined paragraph yank is canceled, e.g. with `gy<Esc>` in normal
+      " mode, the following events will  trigger in order:
+      " 1. `ModeChanged` with pattern 'n:no'
+      " 2. `ModeChanged` with pattern 'no:n'
+      "
+      " So remove the `TextYankPost` autocmd that joins each paragraph as a
+      " single line after changing from operator pending mode 'no' to normal
+      " mode 'n' to prevent it from affecting normal yanking e.g. with `y`
+      au ModeChanged no:n ++once sil! au! YankJoinedParagraphs
+    augroup END
+  endfunction
+
+  nnoremap <expr><silent> gy <SID>yank_joined_paragraphs_keymap()
+  xnoremap <expr><silent> gy <SID>yank_joined_paragraphs_keymap()
+endif
+" }}}
+
 " Moving up & down in visual line {{{2
 nnoremap <expr> j        v:count ? "j"      : "gj"
 xnoremap <expr> j        v:count ? "j"      : "gj"
