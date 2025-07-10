@@ -619,7 +619,6 @@ if s:supportevents(['TextYankPost', 'ModeChanged'])
 
   function! s:yank_joined_paragraphs_keymap() abort
     let g:_yank_reg = v:register
-    call feedkeys('y', 'n')
 
     augroup YankJoinedParagraphs
       au!
@@ -638,8 +637,12 @@ if s:supportevents(['TextYankPost', 'ModeChanged'])
       " So remove the `TextYankPost` autocmd that joins each paragraph as a
       " single line after changing from operator pending mode 'no' to normal
       " mode 'n' to prevent it from affecting normal yanking e.g. with `y`
-      au ModeChanged no:n ++once sil! au! YankJoinedParagraphs
+      if mode() =~# '^n'
+        au ModeChanged no:n ++once sil! au! YankJoinedParagraphs
+      endif
     augroup END
+
+    call feedkeys('y', 'n')
   endfunction
 
   nnoremap <expr><silent> gy <SID>yank_joined_paragraphs_keymap()
