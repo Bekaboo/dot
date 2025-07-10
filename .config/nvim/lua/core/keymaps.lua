@@ -139,7 +139,7 @@ vim.api.nvim_create_autocmd('UIEnter', {
     -- Yank paragraphs as single lines, useful for yanking hard-wrapped
     -- paragraphs in nvim and paste it in browsers or other editors
     map({ 'n', 'x' }, 'gy', function()
-      require('utils.misc').yank_joined_paragraphs_keymap()
+      require('utils.keys').yank_joined_paragraphs()
     end, { desc = 'Yank text with joined paragraphs' })
 
     -- More consistent behavior when &wrap is set
@@ -227,8 +227,8 @@ vim.api.nvim_create_autocmd('UIEnter', {
     map({ 'o', 'x' }, 'a`', '2i`', { noremap = false, desc = 'Selet around backticks' })
 
     -- Close all floating windows
-    map({ 'n', 'x' }, 'q', function() require('utils.misc').close_floats_keymap('q') end, { desc = 'Close all floating windows or start recording macro' })
-    map({ 'n' }, '<Esc>', function() require('utils.misc').close_floats_keymap('<Esc>') end, { desc = 'Close all floating windows' })
+    map({ 'n', 'x' }, 'q', function() require('utils.keys').close_floats('q') end, { desc = 'Close all floating windows or start recording macro' })
+    map({ 'n' }, '<Esc>', function() require('utils.keys').close_floats('<Esc>') end, { desc = 'Close all floating windows' })
 
     -- Enter insert mode, add a space after the cursor
     map({ 'n', 'x' }, '<M-i>', 'i<Space><Left>', { desc = 'Insert with a space after the cursor' })
@@ -242,16 +242,16 @@ vim.api.nvim_create_autocmd('UIEnter', {
     map('o', 'af', '<Cmd>silent! normal m`Vaf<CR><Cmd>silent! normal! ``<CR>', { silent = true, noremap = false, desc = 'Select current buffer' })
     map('o', 'if', '<Cmd>silent! normal m`Vif<CR><Cmd>silent! normal! ``<CR>', { silent = true, noremap = false, desc = 'Select current buffer' })
 
-    map('x', 'iz', [[':<C-u>silent! keepjumps normal! ' . v:lua.require'utils.misc'.textobj_fold('i') . '<CR>']], { silent = true, expr = true, noremap = false, desc = 'Select inside current fold' })
-    map('x', 'az', [[':<C-u>silent! keepjumps normal! ' . v:lua.require'utils.misc'.textobj_fold('a') . '<CR>']], { silent = true, expr = true, noremap = false, desc = 'Select around current fold' })
+    map('x', 'iz', [[':<C-u>silent! keepjumps normal! ' . v:lua.require'utils.keys'.textobj_fold('i') . '<CR>']], { silent = true, expr = true, noremap = false, desc = 'Select inside current fold' })
+    map('x', 'az', [[':<C-u>silent! keepjumps normal! ' . v:lua.require'utils.keys'.textobj_fold('a') . '<CR>']], { silent = true, expr = true, noremap = false, desc = 'Select around current fold' })
     map('o', 'iz', '<Cmd>silent! normal Viz<CR>', { silent = true, noremap = false, desc = 'Select inside current fold' })
     map('o', 'az', '<Cmd>silent! normal Vaz<CR>', { silent = true, noremap = false, desc = 'Select around current fold' })
 
     -- Use 'g{' and 'g}' to go to the first/last line of a paragraph
     map({ 'o' }, 'g{', '<Cmd>silent! exe "normal V" . v:count1 . "g{"<CR>', { noremap = false, desc = 'Go to the first line of paragraph' })
     map({ 'o' }, 'g}', '<Cmd>silent! exe "normal V" . v:count1 . "g}"<CR>', { noremap = false, desc = 'Go to the last line of paragraph' })
-    map({ 'n', 'x' }, 'g{', function() require('utils.misc').goto_paragraph_firstline() end, { noremap = false, desc = 'Go to the first line of paragraph' })
-    map({ 'n', 'x' }, 'g}', function() require('utils.misc').goto_paragraph_lastline() end, { noremap = false, desc = 'Go to the last line of paragraph' })
+    map({ 'n', 'x' }, 'g{', function() require('utils.keys').goto_paragraph_firstline() end, { noremap = false, desc = 'Go to the first line of paragraph' })
+    map({ 'n', 'x' }, 'g}', function() require('utils.keys').goto_paragraph_lastline() end, { noremap = false, desc = 'Go to the last line of paragraph' })
     -- stylua: ignore end
 
     -- Fzf keymaps
