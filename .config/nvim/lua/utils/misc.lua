@@ -293,4 +293,36 @@ function M.close_floats_keymap(key)
   end
 end
 
+---Yank text with paragraphs joined as a single line, supposed to be used in a
+---keymap
+function M.yank_joined_paragraphs_keymap()
+  local reg = vim.v.register
+  vim.api.nvim_feedkeys('y', 'n', false)
+
+  vim.api.nvim_create_autocmd('TextYankPost', {
+    once = true,
+    group = vim.api.nvim_create_augroup('YankJoinedParagraphs', {}),
+    callback = function()
+      local joined_lines = {}
+      local joined_line ---@type string?
+
+      for _, line in
+        ipairs(vim.v.event.regcontents --[=[@as string[]]=])
+      do
+        if line ~= '' then
+          joined_line = (joined_line or '') .. vim.trim(line)
+          goto continue
+        end
+        table.insert(joined_lines, joined_line)
+        table.insert(joined_lines, line)
+        joined_line = nil
+        ::continue::
+      end
+      table.insert(joined_lines, joined_line)
+
+      vim.fn.setreg(reg, table.concat(joined_lines, '\n'), vim.v.event.regtype)
+    end,
+  })
+end
+
 return M

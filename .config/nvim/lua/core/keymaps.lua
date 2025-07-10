@@ -136,6 +136,12 @@ vim.api.nvim_create_autocmd('UIEnter', {
     map('s', '<BS>', '<C-o>"_s', { desc = 'Delete selection' })
     map('s', '<C-h>', '<C-o>"_s', { desc = 'Delete selection' })
 
+    -- Yank paragraphs as single lines, useful for yanking hard-wrapped
+    -- paragraphs in nvim and paste it in browsers or other editors
+    map({ 'n', 'x' }, 'gy', function()
+      require('utils.misc').yank_joined_paragraphs_keymap()
+    end, { desc = 'Yank text with joined paragraphs' })
+
     -- More consistent behavior when &wrap is set
     -- stylua: ignore start
     map({ 'n', 'x' }, 'j', 'v:count ? "j" : "gj"', { expr = true, desc = 'Move down' })
