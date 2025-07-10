@@ -89,6 +89,10 @@ vim.api.nvim_create_autocmd('FileType', {
 -- continue comments on new lines
 vim.opt.formatoptions:append('norm')
 
+-- Treat number as signed/unsigned based on preceding whitespaces when
+-- incrementing/decrementing numbers
+vim.opt.nrformats:append('blank')
+
 -- Spell check
 vim.opt.spellsuggest = 'best,9'
 vim.opt.spellcapcheck = ''
