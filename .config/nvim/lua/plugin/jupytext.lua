@@ -39,12 +39,12 @@ local function write_sha(ipynb)
 end
 
 ---Callback for BufWriteCmd and FileWriteCmd event on an ipynb buffer
----@param info table
+---@param args table
 ---@return nil
-local function write_cb(info)
-  local fname = vim.fn.fnamemodify(info.match, ':p')
-  if fname == vim.api.nvim_buf_get_name(info.buf) then
-    vim.bo[info.buf].mod = false
+local function write_cb(args)
+  local fname = vim.fn.fnamemodify(args.match, ':p')
+  if fname == vim.api.nvim_buf_get_name(args.buf) then
+    vim.bo[args.buf].mod = false
   end
 
   -- Write destination is a markdown file, no special handling needed
@@ -261,8 +261,8 @@ local function setup(buf)
   vim.api.nvim_create_autocmd('BufReadCmd', {
     group = vim.api.nvim_create_augroup('JupyText', {}),
     pattern = '*.ipynb',
-    callback = function(info)
-      jupytext_convert(info.buf)
+    callback = function(args)
+      jupytext_convert(args.buf)
     end,
   })
 end

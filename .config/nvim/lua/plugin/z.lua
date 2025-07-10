@@ -247,8 +247,8 @@ function M.setup()
     vim.api.nvim_create_autocmd('DirChanged', {
       desc = 'Record nvim path in z.',
       group = vim.api.nvim_create_augroup('ZRecordDir', {}),
-      callback = function(info)
-        local dir = info.file
+      callback = function(args)
+        local dir = args.file
         vim.system(z.cmds.add(dir))
         if cmp_list_cache and not vim.tbl_contains(cmp_list_cache, dir) then
           cmp_list_cache = nil

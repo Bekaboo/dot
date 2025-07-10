@@ -200,7 +200,7 @@ local subcommands = {
   ---LSP subcommands
   ---@type table<string, subcommand_info_t>
   lsp = {
-    info = {
+    args = {
       opts = {
         'filter',
         ['filter.bufnr'] = subcommand_opt_vals.bufs,
@@ -717,17 +717,17 @@ local subcommands = {
         'opts.signs.text',
         'opts.signs.text.ERROR',
         'opts.signs.text.WARN',
-        'opts.signs.text.INFO',
+        'opts.signs.text.args',
         'opts.signs.text.HINT',
         'opts.signs.numhl',
         'opts.signs.numhl.ERROR',
         'opts.signs.numhl.WARN',
-        'opts.signs.numhl.INFO',
+        'opts.signs.numhl.args',
         'opts.signs.numhl.HINT',
         'opts.signs.linehl',
         'opts.signs.linehl.ERROR',
         'opts.signs.linehl.WARN',
-        'opts.signs.linehl.INFO',
+        'opts.signs.linehl.args',
         'opts.signs.linehl.HINT',
         'opts.float',
         'opts.float.namespace',
@@ -1107,9 +1107,9 @@ local function command_complete(meta, subcommand_info_list)
           return cmd:find(arglead, 1, true) == 1
         end,
         vim.tbl_filter(function(key)
-          local info = subcommand_info_list[key] ---@type subcommand_info_t|table|nil
-          return info
-              and (info.arg_handler or info.params or info.opts or info.fn_override or info.completion)
+          local args = subcommand_info_list[key] ---@type subcommand_info_t|table|nil
+          return args
+              and (args.arg_handler or args.params or args.opts or args.fn_override or args.completion)
               and true
             or false
         end, vim.tbl_keys(subcommand_info_list))
@@ -1185,8 +1185,8 @@ local function setup_lsp_autoformat()
   vim.api.nvim_create_autocmd('BufWritePre', {
     desc = 'LSP auto format.',
     group = vim.api.nvim_create_augroup('LspAutoFmt', {}),
-    callback = function(info)
-      local b = vim.b[info.buf]
+    callback = function(args)
+      local b = vim.b[args.buf]
       local g = vim.g
       if
         b.lsp_autofmt_enabled

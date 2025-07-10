@@ -10,16 +10,16 @@ vim.g.vimtex_mappings_prefix = '<LocalLeader>l'
 vim.api.nvim_create_autocmd('FileType', {
   pattern = 'tex',
   group = vim.api.nvim_create_augroup('VimTexFileTypeInit', {}),
-  callback = function(info)
+  callback = function(args)
     -- Make surrounding delimiters large
     vim.keymap.set('n', 'css', vim.fn['vimtex#delim#add_modifiers'], {
-      buffer = info.buf,
+      buffer = args.buf,
       desc = 'Surround with large delimiters',
     })
     -- Remove default `]]` mapping in insert mode as it causes lagging
     -- when typing `]`
     pcall(vim.keymap.del, 'i', ']]', {
-      buffer = info.buf,
+      buffer = args.buf,
     })
   end,
 })

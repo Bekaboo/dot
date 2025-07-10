@@ -117,8 +117,8 @@ function M.watch()
   vim.api.nvim_create_autocmd('BufWritePost', {
     group = vim.api.nvim_create_augroup('AiderWatch', {}),
     desc = 'Watch for AI comments.',
-    callback = function(info)
-      M.check(info.file)
+    callback = function(args)
+      M.check(args.file)
     end,
   })
 end

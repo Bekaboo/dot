@@ -17,13 +17,13 @@ return {
         group = vim.api.nvim_create_augroup('MarkdownPreviewDeferLoading', {}),
         pattern = 'markdown',
         once = true,
-        callback = vim.schedule_wrap(function(info)
+        callback = vim.schedule_wrap(function(args)
           require('lazy.core.loader').load(
             'markdown-preview.nvim',
             { ft = 'markdown' }
           )
-          if vim.api.nvim_buf_is_valid(info.buf) then
-            vim.api.nvim_buf_call(info.buf, function()
+          if vim.api.nvim_buf_is_valid(args.buf) then
+            vim.api.nvim_buf_call(args.buf, function()
               vim.api.nvim_exec_autocmds('FileType', { pattern = 'markdown' })
             end)
           end
@@ -68,10 +68,10 @@ return {
         group = vim.api.nvim_create_augroup('OtterDeferLoading', {}),
         pattern = 'markdown',
         once = true,
-        callback = vim.schedule_wrap(function(info)
+        callback = vim.schedule_wrap(function(args)
           require('otter')
-          if vim.api.nvim_buf_is_valid(info.buf) then
-            vim.api.nvim_buf_call(info.buf, function()
+          if vim.api.nvim_buf_is_valid(args.buf) then
+            vim.api.nvim_buf_call(args.buf, function()
               vim.api.nvim_exec_autocmds('FileType', { pattern = 'markdown' })
             end)
           end
@@ -156,11 +156,11 @@ return {
         desc = 'Lazy-load molten on keys in python or markdown files.',
         group = vim.api.nvim_create_augroup('MoltenLazyLoadKeys', {}),
         pattern = { 'python', 'markdown' },
-        callback = function(info)
+        callback = function(args)
           if loaded then
             return true
           end
-          set_triggers(info.buf)
+          set_triggers(args.buf)
         end,
       })
     end,

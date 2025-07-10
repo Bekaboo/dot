@@ -67,8 +67,8 @@ vim.api.nvim_create_autocmd('FileType', {
   group = vim.api.nvim_create_augroup('TSFolding', {}),
   desc = 'Set treesitter folding.',
   -- Schedule to wait treesitter highlighter to attach
-  callback = vim.schedule_wrap(function(info)
-    local buf = info.buf
+  callback = vim.schedule_wrap(function(args)
+    local buf = args.buf
     if not require('utils.ts').is_active(buf) then
       return
     end
@@ -163,12 +163,12 @@ vim.api.nvim_create_autocmd('UIEnter', {
 -- Align columns in quickfix window
 vim.opt.quickfixtextfunc = [[v:lua.require'utils.opts'.qftf]]
 
----@param info table
+---@param args table
 ---@return string[]
-function _G._qftf(info)
-  local qflist = info.quickfix == 1
-      and vim.fn.getqflist({ id = info.id, items = 0 }).items
-    or vim.fn.getloclist(info.winid, { id = info.id, items = 0 }).items
+function _G._qftf(args)
+  local qflist = args.quickfix == 1
+      and vim.fn.getqflist({ id = args.id, items = 0 }).items
+    or vim.fn.getloclist(args.winid, { id = args.id, items = 0 }).items
 
   if vim.tbl_isempty(qflist) then
     return {}

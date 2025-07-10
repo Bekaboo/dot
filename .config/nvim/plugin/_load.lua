@@ -20,8 +20,8 @@ vim.api.nvim_create_autocmd('BufReadCmd', {
   once = true,
   pattern = '*.ipynb',
   group = vim.api.nvim_create_augroup('JupyTextSetup', {}),
-  callback = function(info)
-    require('plugin.jupytext').setup(info.buf)
+  callback = function(args)
+    require('plugin.jupytext').setup(args.buf)
   end,
 })
 
@@ -88,11 +88,11 @@ load_ui('statuscolumn')
 -- term
 vim.api.nvim_create_autocmd('TermOpen', {
   group = vim.api.nvim_create_augroup('TermSetup', {}),
-  callback = function(info)
+  callback = function(args)
     local term = require('plugin.term')
     term.setup()
     vim.keymap.set('n', '.', term.rerun, {
-      buffer = info.buf,
+      buffer = args.buf,
       desc = 'Re-run terminal job',
     })
   end,
