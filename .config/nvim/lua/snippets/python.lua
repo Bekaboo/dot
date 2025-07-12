@@ -116,6 +116,26 @@ M.snippets = {
   ),
   us.sn(
     {
+      trig = 'lconf',
+      desc = 'Config logging',
+    },
+    un.fmtad('logging.basicConfig(stream=<fd>, level=<level>)', {
+      fd = c(1, {
+        i(1, 'sys.stdout'),
+        i(1, 'sys.stderr'),
+      }),
+      level = c(2, {
+        i(2, 'logging.INFO'),
+        i(2, 'logging.WARNING'),
+        i(2, 'logging.ERROR'),
+        i(2, 'logging.CRITICAL'),
+        i(2, 'logging.DEBUG'),
+        i(2, 'logging.NOTSET'),
+      }),
+    })
+  ),
+  us.sn(
+    {
       trig = 'nl',
       desc = 'Create a new logger',
     },
