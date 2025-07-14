@@ -125,11 +125,11 @@ M.snippets = {
         i(1, 'sys.stderr'),
       }),
       level = c(2, {
+        i(2, 'logging.DEBUG'),
         i(2, 'logging.INFO'),
         i(2, 'logging.WARNING'),
         i(2, 'logging.ERROR'),
         i(2, 'logging.CRITICAL'),
-        i(2, 'logging.DEBUG'),
         i(2, 'logging.NOTSET'),
       }),
     })
