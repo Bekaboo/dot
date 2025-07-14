@@ -150,7 +150,7 @@ M.snippets = {
       trig = 'l',
       desc = 'Logger log',
     },
-    un.fmtad('<logger>.<level>(<q><message><q><e>)', {
+    un.fmtad('<logger>.<level>(f<q><message><q><e>)', {
       logger = i(1, 'logger'),
       level = c(2, {
         i(2, 'info'),
@@ -169,7 +169,7 @@ M.snippets = {
       trig = 'lg',
       desc = 'logger.log()',
     },
-    un.fmtad('<logger>.log(<level>, <q><message><q><e>)', {
+    un.fmtad('<logger>.log(<level>, f<q><message><q><e>)', {
       logger = i(1, 'logger'),
       level = c(2, {
         i(2, 'logging.INFO'),
@@ -189,7 +189,7 @@ M.snippets = {
       trig = 'li',
       desc = 'logger.info()',
     },
-    un.fmtad('<logger>.info(<q><message><q><e>)', {
+    un.fmtad('<logger>.info(f<q><message><q><e>)', {
       logger = i(1, 'logger'),
       q = un.qt(),
       message = i(2, 'message'),
@@ -201,7 +201,7 @@ M.snippets = {
       trig = 'lw',
       desc = 'logger.warning()',
     },
-    un.fmtad('<logger>.warning(<q><message><q><e>)', {
+    un.fmtad('<logger>.warning(f<q><message><q><e>)', {
       logger = i(1, 'logger'),
       q = un.qt(),
       message = i(2, 'message'),
@@ -213,7 +213,7 @@ M.snippets = {
       trig = 'le',
       desc = 'logger.error()',
     },
-    un.fmtad('<logger>.error(<q><message><q><e>)', {
+    un.fmtad('<logger>.error(f<q><message><q><e>)', {
       logger = i(1, 'logger'),
       q = un.qt(),
       message = i(2, 'message'),
@@ -225,7 +225,7 @@ M.snippets = {
       trig = 'lc',
       desc = 'logger.critical()',
     },
-    un.fmtad('<logger>.critical(<q><message><q><e>)', {
+    un.fmtad('<logger>.critical(f<q><message><q><e>)', {
       logger = i(1, 'logger'),
       q = un.qt(),
       message = i(2, 'message'),
@@ -237,7 +237,7 @@ M.snippets = {
       trig = 'ld',
       desc = 'logger.debug()',
     },
-    un.fmtad('<logger>.debug(<q><message><q><e>)', {
+    un.fmtad('<logger>.debug(f<q><message><q><e>)', {
       logger = i(1, 'logger'),
       q = un.qt(),
       message = i(2, 'message'),
@@ -249,7 +249,7 @@ M.snippets = {
       trig = 'll',
       desc = 'Log a line',
     },
-    un.fmtad('<logger>.<level>(<q><line><q><e>)', {
+    un.fmtad('<logger>.<level>(f<q><line><q><e>)', {
       logger = i(1, 'logger'),
       level = c(2, {
         i(2, 'info'),
