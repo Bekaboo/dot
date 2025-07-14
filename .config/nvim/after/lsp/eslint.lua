@@ -27,8 +27,10 @@ local root_markers = {
 }
 
 local fts = {
-  'javascript',
   'typescript',
+  'javascript',
+  'typescriptreact',
+  'javascriptreact',
   'json',
   'jsonc',
   'html',
@@ -150,8 +152,10 @@ return {
   root_markers = root_markers,
   settings = {
     languages = {
-      javascript = eslint_lang_settings,
+      typescriptreact = eslint_lang_settings,
+      javascriptreact = eslint_lang_settings,
       typescript = eslint_lang_settings,
+      javascript = eslint_lang_settings,
       jsonc = eslint_lang_settings,
       json = eslint_lang_settings,
       html = eslint_lang_settings,

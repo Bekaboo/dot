@@ -2,6 +2,8 @@ return {
   filetypes = {
     'typescript',
     'javascript',
+    'typescriptreact',
+    'javascriptreact',
   },
   cmd = {
     'typescript-language-server',

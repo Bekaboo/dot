@@ -44,8 +44,10 @@ local prettier_lang_settings = {
 
 return {
   filetypes = {
-    'javascript',
     'typescript',
+    'javascript',
+    'typescriptreact',
+    'javascriptreact',
     'jsonc',
     'json',
     'html',
@@ -63,8 +65,10 @@ return {
     languages = {
       -- Setup all supported languages because this lsp config file
       -- is shared between all these filetypes
-      javascript = prettier_lang_settings,
+      typescriptreact = prettier_lang_settings,
+      javascriptreact = prettier_lang_settings,
       typescript = prettier_lang_settings,
+      javascript = prettier_lang_settings,
       jsonc = prettier_lang_settings,
       json = prettier_lang_settings,
       html = prettier_lang_settings,

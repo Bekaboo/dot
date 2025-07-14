@@ -1,6 +1,8 @@
 -- Shared lsp config for front end dev:
 -- - javascript
 -- - typescript
+-- - javascriptreact
+-- - typescriptreact
 -- - json
 -- - jsonc
 -- - html
