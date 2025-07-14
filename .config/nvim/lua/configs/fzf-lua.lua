@@ -505,7 +505,7 @@ function fzf.sessions(opts)
 
   return fzf.fzf_exec(
     string.format(
-      [[ls -1 %s | while read -r file; do mod="${file//%%//}"; echo "${mod//\/\//%%}"; done]],
+      [[ls -1 %s | while read -r file; do echo "$file" | sed 's/%%/\//g' | sed 's/\/\//%%/g'; done]],
       session.opts.dir
     ),
     vim.tbl_deep_extend('force', opts or {}, {
