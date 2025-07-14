@@ -1,6 +1,5 @@
 local icons = require('utils.static.icons')
 
--- Setup diagnostic {{{
 -- Diagnostic configs
 vim.diagnostic.config({
   severity_sort = true,
