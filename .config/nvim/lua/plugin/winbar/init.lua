@@ -154,6 +154,4 @@ local function setup(opts)
   vim.g.loaded_winbar = true
 end
 
-return {
-  setup = setup,
-}
+return { setup = setup }
