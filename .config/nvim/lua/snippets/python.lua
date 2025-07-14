@@ -600,7 +600,7 @@ M.snippets = {
         <body>
       ]],
       {
-        name = i(1, 'class_name'),
+        name = i(1, 'ClassName'),
         args = i(2),
         idnt = un.idnt(1),
         body = un.body(3, 2, 'pass'),
