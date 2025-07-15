@@ -1,4 +1,5 @@
 local M = {}
+local fs = require('utils.fs')
 
 ---Check if a buffer is "valid"
 ---@param buf integer
@@ -115,19 +116,21 @@ function M.get(path)
   end
 
   -- Find an existing session file that matches the prefix of `path`, e.g.
-  -- if `path` is `/foo/bar/baz`, then valid sessions are:
-  -- - `%foo%bar%baz`
-  -- - `%foo%bar`
-  -- - `%foo`
-  while not require('utils.fs').is_root_dir(path) do
-    local session = vim.fs.joinpath(session_dir, M.dir2session(path))
+  -- if `path` is '/foo/bar/baz', then valid sessions are:
+  -- - '%foo%bar%baz'
+  -- - '%foo%bar'
+  -- - '%foo'
+  -- This enables us to load session from project subdirectories
+  local cur_path = path
+  while not fs.is_root_dir(cur_path) and not fs.is_home_dir(cur_path) do
+    local session = vim.fs.joinpath(session_dir, M.dir2session(cur_path))
     if vim.fn.filereadable(session) == 1 then
       return session
     end
-    path = vim.fs.dirname(path)
+    cur_path = vim.fs.dirname(cur_path)
   end
 
-  -- If no existing session file is found, use project root as the new session
+  -- If no existing session file is found, use `path` as the new session
   return vim.fs.joinpath(session_dir, M.dir2session(M.opts.root(path) or path))
 end
 
