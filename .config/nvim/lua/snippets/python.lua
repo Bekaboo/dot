@@ -854,13 +854,21 @@ M.snippets = {
       [[
         try:
         <body>
-        except<exc>:
-        <idnt>
+        except <exc><i>:
+        <idnt><exc_body>
       ]],
       {
-        body = un.body(1, 1),
-        exc = i(2),
+        body = un.body(1, 1, 'pass'),
+        exc = c(2, {
+          sn(nil, r(1, 'exc_name', i(nil, 'Exception'))),
+          un.fmtad('<exc_name> as <e>', {
+            exc_name = r(1, 'exc_name', i(nil, 'Exception')),
+            e = i(2, 'e'),
+          }),
+        }),
+        i = i(3),
         idnt = un.idnt(1),
+        exc_body = i(4, 'pass'),
       }
     )
   ),
@@ -871,12 +879,20 @@ M.snippets = {
     },
     un.fmtad(
       [[
-        except<exc>:
-        <body>
+        except <exc><i>:
+        <idnt><exc_body>
       ]],
       {
-        exc = i(1),
-        body = un.body(2, 1, 'pass'),
+        exc = c(1, {
+          sn(nil, r(1, 'exc_name', i(nil, 'Exception'))),
+          un.fmtad('<exc_name> as <e>', {
+            exc_name = r(1, 'exc_name', i(nil, 'Exception')),
+            e = i(2, 'e'),
+          }),
+        }),
+        i = i(2),
+        idnt = un.idnt(1),
+        exc_body = i(3, 'pass'),
       }
     )
   ),
