@@ -1,20 +1,50 @@
+local root_markers = {
+  { '.pyre_configuration' },
+  { '.watchmanconfig' },
+  { 'pyproject.toml' },
+  {
+    'Pipfile',
+    'requirements.txt',
+    'setup.cfg',
+    'setup.py',
+    'tox.ini',
+  },
+  { 'venv', 'env', '.venv', '.env' },
+  { '.python-version' },
+}
+
+-- Pyre lsp requires a watchman config file, so prefer using bare pyre linter
+-- with efm-langserver to avoid scattering untracked watchman config files
+-- everywhere
+if vim.fn.executable('efm-langserver') == 1 then
+  return {
+    filetypes = { 'python' },
+    cmd = { 'efm-langserver' },
+    requires = { 'pyre' },
+    root_markers = root_markers,
+    settings = {
+      languages = {
+        python = {
+          {
+            lintSource = 'pyre',
+            lintCommand = 'pyre',
+            lintFormats = { '%f:%l:%c %m' },
+            lintStdin = false,
+            lintWorkSpace = true,
+            lintOffsetColumns = 1,
+            lintAfterOpen = true,
+            lintIgnoreExitCode = true,
+          },
+        },
+      },
+    },
+  }
+end
+
 return {
   filetypes = { 'python' },
   cmd = { 'pyre', 'persistent' },
-  root_markers = {
-    { '.pyre_configuration' },
-    { '.watchmanconfig' },
-    { 'pyproject.toml' },
-    {
-      'Pipfile',
-      'requirements.txt',
-      'setup.cfg',
-      'setup.py',
-      'tox.ini',
-    },
-    { 'venv', 'env', '.venv', '.env' },
-    { '.python-version' },
-  },
+  root_markers = root_markers,
   before_init = function(params)
     if not params.rootPath or vim.fn.isdirectory(params.rootPath) == 0 then
       return
