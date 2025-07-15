@@ -133,16 +133,20 @@ end
 
 ---Save current session
 ---@param session? string path to session file to save to
-function M.save(session)
+---@param notify? boolean whether to print notify message after saving the session
+function M.save(session, notify)
   if not session then
     session = M.get()
   end
+
+  local saved_sessions = {} ---@type string[]
 
   vim.cmd.mksession({
     vim.fn.fnameescape(session),
     bang = true,
     mods = { silent = true, emsg_silent = true },
   })
+  table.insert(saved_sessions, session)
 
   if vim.g._session_loaded and vim.g._session_loaded ~= session then
     vim.cmd.mksession({
@@ -150,6 +154,16 @@ function M.save(session)
       bang = true,
       mods = { silent = true, emsg_silent = true },
     })
+    table.insert(saved_sessions, vim.g._session_loaded)
+  end
+
+  if notify then
+    vim.notify('[session] saved current session to ' .. vim
+      .iter(saved_sessions)
+      :map(function(s)
+        return string.format("'%s'", vim.fn.fnamemodify(s, ':~:.'))
+      end)
+      :join(', '))
   end
 end
 
@@ -377,17 +391,29 @@ function M.setup(opts)
     complete = cmp,
   })
 
-  vim.api.nvim_create_user_command('SessionSave', cmd(M.save), {
-    desc = 'Save current state to given session.',
-    nargs = '?',
-    complete = cmp,
-  })
+  vim.api.nvim_create_user_command(
+    'SessionSave',
+    cmd(function(path)
+      M.save(path, true)
+    end),
+    {
+      desc = 'Save current state to given session.',
+      nargs = '?',
+      complete = cmp,
+    }
+  )
 
-  vim.api.nvim_create_user_command('Mksession', cmd(M.save), {
-    desc = 'Save current state to given session.',
-    nargs = '?',
-    complete = cmp,
-  })
+  vim.api.nvim_create_user_command(
+    'Mksession',
+    cmd(function(path)
+      M.save(path, true)
+    end),
+    {
+      desc = 'Save current state to given session.',
+      nargs = '?',
+      complete = cmp,
+    }
+  )
 
   vim.api.nvim_create_user_command('SessionRemove', cmd(M.remove), {
     desc = 'Remove session.',
