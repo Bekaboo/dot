@@ -150,7 +150,7 @@ M.snippets = {
       trig = 'l',
       desc = 'Logger log',
     },
-    un.fmtad('<logger>.<level>(f<q><message><q><e>)', {
+    un.fmtad('<logger>.<level>(<msg><e>)', {
       logger = i(1, 'logger'),
       level = c(2, {
         i(2, 'info'),
@@ -159,17 +159,30 @@ M.snippets = {
         i(2, 'critical'),
         i(2, 'debug'),
       }),
-      q = un.qt(),
-      message = i(3, 'message'),
+      msg = c(3, {
+        un.fmtad('<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+        un.fmtad('f<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+      }),
       e = i(4),
-    })
+    }),
+    {
+      stored = {
+        msg = i(nil, 'msg'),
+      },
+    }
   ),
   us.sn(
     {
       trig = 'lg',
       desc = 'logger.log()',
     },
-    un.fmtad('<logger>.log(<level>, f<q><message><q><e>)', {
+    un.fmtad('<logger>.log(<level>, <msg><e>)', {
       logger = i(1, 'logger'),
       level = c(2, {
         i(2, 'logging.INFO'),
@@ -179,77 +192,155 @@ M.snippets = {
         i(2, 'logging.DEBUG'),
         i(2, 'logging.NOTSET'),
       }),
-      q = un.qt(),
-      message = i(3, 'message'),
+      msg = c(3, {
+        un.fmtad('<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+        un.fmtad('f<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+      }),
       e = i(4),
-    })
+    }),
+    {
+      stored = {
+        msg = i(nil, 'msg'),
+      },
+    }
   ),
   us.sn(
     {
       trig = 'li',
       desc = 'logger.info()',
     },
-    un.fmtad('<logger>.info(f<q><message><q><e>)', {
+    un.fmtad('<logger>.info(<msg><e>)', {
       logger = i(1, 'logger'),
-      q = un.qt(),
-      message = i(2, 'message'),
+      msg = c(2, {
+        un.fmtad('<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+        un.fmtad('f<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+      }),
       e = i(3),
-    })
+    }),
+    {
+      stored = {
+        msg = i(nil, 'msg'),
+      },
+    }
   ),
   us.sn(
     {
       trig = 'lw',
       desc = 'logger.warning()',
     },
-    un.fmtad('<logger>.warning(f<q><message><q><e>)', {
+    un.fmtad('<logger>.warning(<msg><e>)', {
       logger = i(1, 'logger'),
-      q = un.qt(),
-      message = i(2, 'message'),
+      msg = c(2, {
+        un.fmtad('<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+        un.fmtad('f<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+      }),
       e = i(3),
-    })
+    }),
+    {
+      stored = {
+        msg = i(nil, 'msg'),
+      },
+    }
   ),
   us.sn(
     {
       trig = 'le',
       desc = 'logger.error()',
     },
-    un.fmtad('<logger>.error(f<q><message><q><e>)', {
+    un.fmtad('<logger>.error(<msg><e>)', {
       logger = i(1, 'logger'),
-      q = un.qt(),
-      message = i(2, 'message'),
+      msg = c(2, {
+        un.fmtad('<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+        un.fmtad('f<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+      }),
       e = i(3),
-    })
+    }),
+    {
+      stored = {
+        msg = i(nil, 'msg'),
+      },
+    }
   ),
   us.sn(
     {
       trig = 'lc',
       desc = 'logger.critical()',
     },
-    un.fmtad('<logger>.critical(f<q><message><q><e>)', {
+    un.fmtad('<logger>.critical(<msg><e>)', {
       logger = i(1, 'logger'),
-      q = un.qt(),
-      message = i(2, 'message'),
+      msg = c(2, {
+        un.fmtad('<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+        un.fmtad('f<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+      }),
       e = i(3),
-    })
+    }),
+    {
+      stored = {
+        msg = i(nil, 'msg'),
+      },
+    }
   ),
   us.sn(
     {
       trig = 'ld',
       desc = 'logger.debug()',
     },
-    un.fmtad('<logger>.debug(f<q><message><q><e>)', {
+    un.fmtad('<logger>.debug(<msg><e>)', {
       logger = i(1, 'logger'),
-      q = un.qt(),
-      message = i(2, 'message'),
+      msg = c(2, {
+        un.fmtad('<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+        un.fmtad('f<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+      }),
       e = i(3),
-    })
+    }),
+    {
+      stored = {
+        msg = i(nil, 'msg'),
+      },
+    }
   ),
   us.sn(
     {
       trig = 'll',
       desc = 'Log a line',
     },
-    un.fmtad('<logger>.<level>(f<q><line><q><e>)', {
+    un.fmtad('<logger>.<level>(<q><line><q><e>)', {
       logger = i(1, 'logger'),
       level = c(2, {
         i(2, 'info'),
