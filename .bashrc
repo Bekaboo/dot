@@ -147,6 +147,12 @@ v() {
     return 1
 }
 
+# Clear both screen and all previous outputs, works on Linux & macOS, see:
+# https://stackoverflow.com/questions/2198377/how-can-i-clear-previous-output-in-terminal-in-mac-os-x
+clear() {
+    printf '\33c\e[3J'
+}
+
 # Manage dotfiles
 dot() {
     git --git-dir="$HOME/.dot" --work-tree="$HOME" "$@"
