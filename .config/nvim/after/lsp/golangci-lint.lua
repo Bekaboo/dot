@@ -1,22 +1,20 @@
-local root_markers = {
-  {
-    '.goalngci.yml',
-    '.golangci.yaml',
-    '.golangci.toml',
-    '.golangci.json',
-  },
-  {
-    'go.work',
-    'go.mod',
-  },
-}
-
 return {
   filetypes = { 'go' },
   cmd = { 'efm-langserver' },
   requires = { 'golangci-lint', 'dirname' },
   name = 'golangci-lint',
-  root_markers = root_markers,
+  root_markers = {
+    {
+      '.goalngci.yml',
+      '.golangci.yaml',
+      '.golangci.toml',
+      '.golangci.json',
+    },
+    {
+      'go.work',
+      'go.mod',
+    },
+  },
   settings = {
     languages = {
       go = {
@@ -31,7 +29,6 @@ return {
           lintAfterOpen = true,
           lintStdin = false,
           lintSeverity = 3,
-          rootMarkers = vim.iter(root_markers):flatten():totable(),
         },
       },
     },

@@ -1,11 +1,9 @@
-local root_markers = { 'go.work', 'go.mod' }
-
 return {
   filetypes = { 'go' },
   cmd = { 'efm-langserver' },
   requires = { 'gofmt' },
   name = 'gofmt',
-  root_markers = root_markers,
+  root_markers = { 'go.work', 'go.mod' },
   init_options = {
     documentFormatting = true,
   },
@@ -15,7 +13,6 @@ return {
         {
           formatStdin = true,
           formatCommand = 'gofmt -s',
-          rootMarkers = vim.iter(root_markers):flatten():totable(),
         },
       },
     },

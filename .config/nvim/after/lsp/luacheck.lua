@@ -14,7 +14,6 @@ return {
           lintAfterOpen = true,
           lintStdin = true,
           lintIgnoreExitCode = true,
-          rootMarkers = { '.luacheckrc' },
         },
       },
     },

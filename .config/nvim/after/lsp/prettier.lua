@@ -13,32 +13,12 @@ for _, c in ipairs(cmds) do
   end
 end
 
-local root_markers = {
-  {
-    'prettier.config.js',
-    'prettier.config.mjs',
-    'prettier.config.cjs',
-    '.prettierrc',
-    '.prettierrc.js',
-    '.prettierrc.mjs',
-    '.prettierrc.cjs',
-    '.prettierrc.json',
-    '.prettierrc.hjson',
-    '.prettierrc.json5',
-    '.prettierrc.toml',
-    '.prettierrc.yaml',
-    '.prettierrc.yml',
-  },
-  { 'package.json' },
-}
-
 local prettier_lang_settings = {
   {
     formatCommand = cmd
       .. ' --stdin-filepath ${INPUT} ${--range-start=charStart} ${--range-end=charEnd} ${--tab-width=tabWidth} ${--use-tabs=!insertSpaces}',
     formatCanRange = true,
     formatStdin = true,
-    rootMarkers = vim.iter(root_markers):flatten():totable(),
   },
 }
 
@@ -56,7 +36,24 @@ return {
   cmd = { 'efm-langserver' },
   requires = { cmd },
   name = cmd,
-  root_markers = root_markers,
+  root_markers = {
+    {
+      'prettier.config.js',
+      'prettier.config.mjs',
+      'prettier.config.cjs',
+      '.prettierrc',
+      '.prettierrc.js',
+      '.prettierrc.mjs',
+      '.prettierrc.cjs',
+      '.prettierrc.json',
+      '.prettierrc.hjson',
+      '.prettierrc.json5',
+      '.prettierrc.toml',
+      '.prettierrc.yaml',
+      '.prettierrc.yml',
+    },
+    { 'package.json' },
+  },
   init_options = {
     documentFormatting = true,
     documentRangeFormatting = true,

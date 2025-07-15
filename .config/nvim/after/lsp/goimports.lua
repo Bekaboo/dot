@@ -3,14 +3,12 @@
 --
 -- https://pkg.go.dev/golang.org/x/tools/cmd/goimports
 
-local root_markers = { '.goimportsignore', 'go.work', 'go.mod' }
-
 return {
   filetypes = { 'go' },
   cmd = { 'efm-langserver' },
   requires = { 'goimports' },
   name = 'goimports',
-  root_markers = root_markers,
+  root_markers = { '.goimportsignore', 'go.work', 'go.mod' },
   init_options = {
     documentFormatting = true,
   },
@@ -20,7 +18,6 @@ return {
         {
           formatStdin = true,
           formatCommand = 'goimports',
-          rootMarkers = vim.iter(root_markers):flatten():totable(),
         },
       },
     },

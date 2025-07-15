@@ -15,17 +15,6 @@ for _, c in ipairs(cmds) do
   end
 end
 
-local root_markers = {
-  'eslint.config.js',
-  'eslint.config.mjs',
-  'eslint.config.cjs',
-  '.eslintrc.js',
-  '.eslintrc.cjs',
-  '.eslintrc.yml',
-  '.eslintrc.yaml',
-  '.eslintrc.json',
-}
-
 local fts = {
   'typescript',
   'javascript',
@@ -136,7 +125,6 @@ local eslint_lang_settings = {
     lintAfterOpen = true,
     lintStdin = true,
     lintIgnoreExitCode = true,
-    rootMarkers = vim.iter(root_markers):flatten():totable(),
   },
 }
 
@@ -149,7 +137,16 @@ return {
     documentFormatting = true,
     documentRangeFormatting = true,
   },
-  root_markers = root_markers,
+  root_markers = {
+    'eslint.config.js',
+    'eslint.config.mjs',
+    'eslint.config.cjs',
+    '.eslintrc.js',
+    '.eslintrc.cjs',
+    '.eslintrc.yml',
+    '.eslintrc.yaml',
+    '.eslintrc.json',
+  },
   settings = {
     languages = {
       typescriptreact = eslint_lang_settings,

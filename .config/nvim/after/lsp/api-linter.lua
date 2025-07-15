@@ -1,13 +1,11 @@
 -- Google api-linter, see: https://linter.aip.dev
 
-local root_markers = { 'apilint.yaml' }
-
 return {
   filetypes = { 'proto' },
   cmd = { 'efm-langserver' },
   requires = { 'api-linter', 'sed' },
   name = 'api-linter',
-  root_markers = root_markers,
+  root_markers = { 'apilint.yaml' },
   settings = {
     languages = {
       proto = {
@@ -33,7 +31,6 @@ return {
           lintAfterOpen = true,
           lintStdin = false,
           lintSeverity = 3,
-          rootMarkers = vim.iter(root_markers):flatten():totable(),
         },
       },
     },
