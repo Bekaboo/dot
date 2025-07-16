@@ -6,6 +6,9 @@ vim.diagnostic.config({
   jump = {
     float = true,
   },
+  float = {
+    source = true,
+  },
   virtual_text = {
     spacing = 4,
     prefix = vim.trim(icons.AngleLeft),
