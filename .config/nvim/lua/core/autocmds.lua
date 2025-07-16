@@ -141,12 +141,16 @@ augroup('Autosave', {
     desc = 'Autosave on focus change.',
     callback = function(args)
       -- Don't auto-save non-file buffers
-      if (vim.uv.fs_stat(args.file) or {}).type ~= 'file' then
-        return
-      end
-      vim.cmd.update({
-        mods = { emsg_silent = true },
-      })
+      vim.uv.fs_stat(args.file, function(err, stat)
+        if err or not stat or stat.type ~= 'file' then
+          return
+        end
+        vim.schedule(function()
+          vim.cmd.wall({
+            mods = { emsg_silent = true },
+          })
+        end)
+      end)
     end,
   },
 })
@@ -482,23 +486,6 @@ do
 end
 
 do
-  ---Check if a buffer is valid, a valid buffer:
-  --- - has non-empty contents, or
-  --- - has corresponding file on disk, or
-  --- - filename contains '://' (special/remote files)
-  ---@param buf integer
-  ---@return boolean
-  local function buf_is_valid(buf)
-    if not require('utils.buf').is_empty(buf) then
-      return true
-    end
-    local bufname = vim.api.nvim_buf_get_name(buf)
-    if bufname:match('://') or vim.uv.fs_stat(bufname) then
-      return true
-    end
-    return false
-  end
-
   ---Check if a window is normal (has empty win type)
   ---@param win integer
   ---@return boolean
@@ -545,9 +532,19 @@ do
 
         -- Wipe out invalid buffers
         for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-          if not whitelist[buf] and not buf_is_valid(buf) then
-            pcall(vim.api.nvim_buf_delete, buf, {})
+          if whitelist[buf] or not require('utils.buf').is_empty(buf) then
+            goto continue
           end
+          local bufname = vim.api.nvim_buf_get_name(buf)
+          if bufname:match('://') then
+            goto continue
+          end
+          vim.uv.fs_stat(bufname, function(err, stat)
+            if err or not stat then
+              pcall(vim.api.nvim_buf_delete, buf, {})
+            end
+          end)
+          ::continue::
         end
       end,
     },
