@@ -117,8 +117,8 @@ function M.compose_name(bufname, opts)
   )
 end
 
-local bracket_paste_start = '\27[200~'
-local bracket_paste_end = '\27[201~'
+local BRACKET_PASTE_START = '\27[200~'
+local BRACKET_PASTE_END = '\27[201~'
 
 ---Send multi-line message to terminal
 ---@param msg string|string[] message
@@ -143,7 +143,7 @@ function M.send(msg, buf)
 
   vim.api.nvim_chan_send(
     chan,
-    bracket_paste_start .. table.concat(msg, '\n') .. bracket_paste_end
+    BRACKET_PASTE_START .. table.concat(msg, '\n') .. BRACKET_PASTE_END
   )
 end
 
