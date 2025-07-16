@@ -6,6 +6,15 @@ function __pyenv \
         return
     end
 
+    # Pyenv will exit early and abort detecting python version file if an
+    # existing virtual env is detected, so exit current python virtual env if
+    # current working directory is outside of virtual env path
+    if test -n "$VIRTUAL_ENV"
+        and not issubdir $VIRTUAL_ENV $PWD
+        and type -q deactivate
+        deactivate
+    end
+
     # Getting version from environment variable or the global version config
     # file
     if test -n "$PYENV_VERSION"
