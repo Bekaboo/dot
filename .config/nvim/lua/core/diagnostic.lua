@@ -159,14 +159,14 @@ vim.keymap.set('n', 'dy', function()
   end
 
   ---@param msg string
-  local function _yank(msg)
+  local function yank(msg)
     vim.fn.setreg('"', msg)
     vim.fn.setreg(vim.v.register, msg)
   end
 
   if n_diags == 1 then
     local msg = diags[1].message
-    _yank(msg)
+    yank(msg)
     vim.notify(
       string.format("[LSP] yanked diagnostic message '%s'", msg),
       vim.log.levels.INFO
@@ -179,7 +179,7 @@ vim.keymap.set('n', 'dy', function()
       return d.message
     end, diags),
     { prompt = 'Select diagnostic message to yank: ' },
-    _yank
+    yank
   )
 end, { desc = 'Yank diagnostic message on current line' })
 
