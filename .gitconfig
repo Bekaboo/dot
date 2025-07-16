@@ -43,6 +43,9 @@
 	ia   = merge-base --is-ancestor
 	l    = log --oneline --graph
 	lg   = log
+	; Show git commit history for a single line/range, see
+	; https://stackoverflow.com/a/50473741
+	ll   = log -L
 	lr   = reflog
 	; `$GIT_PREFIX` contains the relative path from repo root to current working
 	; directory with trailing slash
