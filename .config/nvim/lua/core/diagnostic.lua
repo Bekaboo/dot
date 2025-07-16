@@ -158,8 +158,11 @@ vim.keymap.set('n', 'dy', function()
     return
   end
 
-  ---@param msg string
+  ---@param msg string?
   local function yank(msg)
+    if not msg then
+      return
+    end
     vim.fn.setreg('"', msg)
     vim.fn.setreg(vim.v.register, msg)
   end
