@@ -87,7 +87,10 @@ vim.api.nvim_create_autocmd('FileType', {
 
 -- Recognize numbered lists when formatting text and
 -- continue comments on new lines
-vim.opt.formatoptions:append('norm')
+--
+-- Don't auto-wrap non-comment text by default
+vim.opt.formatoptions:append('normc')
+vim.opt.formatoptions:remove('t')
 
 -- Treat number as signed/unsigned based on preceding whitespaces when
 -- incrementing/decrementing numbers
