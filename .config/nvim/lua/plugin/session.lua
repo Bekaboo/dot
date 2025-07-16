@@ -139,34 +139,20 @@ end
 ---@param notify? boolean whether to print notify message after saving the session
 function M.save(session, notify)
   if not session then
-    session = M.get()
+    session = vim.g._session_loaded or M.get()
   end
-
-  local saved_sessions = {} ---@type string[]
 
   vim.cmd.mksession({
     vim.fn.fnameescape(session),
     bang = true,
     mods = { silent = true, emsg_silent = true },
   })
-  table.insert(saved_sessions, session)
-
-  if vim.g._session_loaded and vim.g._session_loaded ~= session then
-    vim.cmd.mksession({
-      vim.fn.fnameescape(vim.g._session_loaded),
-      bang = true,
-      mods = { silent = true, emsg_silent = true },
-    })
-    table.insert(saved_sessions, vim.g._session_loaded)
-  end
 
   if notify then
-    vim.notify('[session] saved current session to ' .. vim
-      .iter(saved_sessions)
-      :map(function(s)
-        return string.format("'%s'", vim.fn.fnamemodify(s, ':~:.'))
-      end)
-      :join(', '))
+    vim.notify(
+      '[session] saved current session to '
+        .. string.format("'%s'", vim.fn.fnamemodify(session, ':~:.'))
+    )
   end
 end
 
@@ -298,9 +284,16 @@ end
 ---@return function
 local function cmd(cb)
   return function(args)
+    if args.args == '' then
+      cb()
+      return
+    end
+
     cb(
-      args.args ~= '' and vim.fs.joinpath(M.opts.dir, M.dir2session(args.args))
-        or nil
+      vim.fs.joinpath(
+        M.opts.dir,
+        M.dir2session(vim.fn.fnamemodify(vim.fn.expand(args.args), ':p'))
+      )
     )
   end
 end
