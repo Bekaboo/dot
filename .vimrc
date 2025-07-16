@@ -1395,7 +1395,7 @@ if s:supportevents('FileType') && exists('*win_gettype')
   augroup CmdwinSettings
     au!
     au FileType vim if win_gettype() ==# 'command' |
-          \ silent! setlocal nobl nonu nornu scl=no cc=0 |
+          \ silent! setlocal nobl nonu nornu scl=no cc=0 tw=0 |
           \ endif
   augroup END
 endif
