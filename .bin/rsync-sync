@@ -1,0 +1,49 @@
+#!/usr/bin/env sh
+# vim:ft=sh:ts=4:sw=4:sts=4:et:
+#
+# Sync local directory with remote
+
+push_pid=""
+fetch_pid=""
+
+cleanup() {
+    [ -n "$push_pid" ] && kill "$push_pid" 2>/dev/null
+    [ -n "$fetch_pid" ] && kill "$fetch_pid" 2>/dev/null
+    exit 130 # script terminated by ctrl-c
+}
+
+main() {
+    if [ $# -ne 2 ]; then
+        echo "Usage: $(basename "$0") <local> <remote>"
+        return 1
+    fi
+
+    # Make sure we terminate rsync push/fetch background processes
+    # on SIGINT/SIGTERM (ctrl-c)
+    trap cleanup INT TERM
+
+    rsync-push "$1" "$2" &
+    push_pid=$!
+
+    rsync-fetch "$2" "$1" &
+    fetch_pid=$!
+
+    # Monitor processes and exit if either fails
+    while true; do
+        if ! kill -0 "$push_pid" 2>/dev/null; then
+            kill "$fetch_pid" 2>/dev/null
+            wait "$push_pid"
+            return
+        fi
+
+        if ! kill -0 "$fetch_pid" 2>/dev/null; then
+            kill "$push_pid" 2>/dev/null
+            wait "$fetch_pid"
+            return
+        fi
+
+        sleep 1
+    done
+}
+
+main "$@"
