@@ -353,7 +353,10 @@ M.snippets = {
       cmd = i(1, 'cleanup'),
       sig = c(2, {
         i(nil, 'EXIT'),
-        i(nil, 'SIGINT SIGTERM'),
+        i(nil, 'INT'),
+        i(nil, 'TERM'),
+        i(nil, 'QUIT'),
+        i(nil, 'HUP'),
         i(nil, 'ERR'),
       }),
     })
