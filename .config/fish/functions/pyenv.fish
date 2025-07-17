@@ -10,6 +10,13 @@ function pyenv
         fish_add_path $PYENV_ROOT/bin
     end
 
+    # Temporarily remove our wrapper function to prevent infinite recursion
+    # during init when completions are loaded
+    #
+    # This is only needed on macOS -- on Linux there's no recursion issue
+    # without this (why?)
+    functions -e pyenv
+
     # Should redefine `pyenv` function and use redefined `pyenv` function to
     # execute actual command
     command pyenv init - fish | source; or return
