@@ -2,21 +2,16 @@
 # https://github.com/pyenv/pyenv?tab=readme-ov-file#b-set-up-your-shell-environment-for-pyenv
 
 function pyenv
-    # Initialize shell if not yet Initialized
+    # Add `pyenv` executable to path if not yet initialized
     if test -z "$PYENV_ROOT"; and test -d "$HOME/.pyenv"
         set -Ux PYENV_ROOT $HOME/.pyenv
+    end
+    if test -n "$PYENV_ROOT"
         fish_add_path $PYENV_ROOT/bin
-        command pyenv init - fish | source; or return
     end
 
-    # Default `pyenv` function
-    set command $argv[1]
-    set -e argv[1]
-
-    switch "$command"
-        case activate deactivate rehash shell
-            source (pyenv sh-$command $argv|psub)
-        case '*'
-            command pyenv $command $argv
-    end
+    # Should redefine `pyenv` function and use redefined `pyenv` function to
+    # execute actual command
+    command pyenv init - fish | source; or return
+    pyenv $argv
 end
