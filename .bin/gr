@@ -21,9 +21,9 @@ main() {
 
     # Set preview command based on available tools
     if has bat; then
-        preview_cmd='bat --theme base16 --paging never --style numbers,header-filename --color always {1} --highlight-line {2}'
+        preview_cmd='bat --paging never --style numbers,header-filename --color always {1} --highlight-line {2}'
     elif has batcat; then
-        preview_cmd='batcat --theme base16 --paging never --style numbers,header-filename --color always {1} --highlight-line {2}'
+        preview_cmd='batcat --paging never --style numbers,header-filename --color always {1} --highlight-line {2}'
     elif has fzf-file-previewer; then
         preview_cmd='fzf-file-previewer {1} {2}'
     elif has cat; then
