@@ -39,6 +39,8 @@ done
 # Set rg config path
 export RIPGREP_CONFIG_PATH="$HOME/.ripgreprc"
 
+export BAT_THEME=ansi
+
 # Fzf configuration
 # shellcheck disable=SC2089
 # we want to include '' (single quotes) in `--preview` option because opts are
