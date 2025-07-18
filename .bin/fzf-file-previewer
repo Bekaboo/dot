@@ -160,7 +160,17 @@ fzf_file_previewer() {
                 ;;
             esac
 
-            # Use highlight or cat for remaining files
+            # Use bat, highlight or cat for remaining files
+            if has bat; then
+                if [ -z "$2" ]; then
+                    bat --paging never --style plain --color always "$1"
+                else
+                    bat --paging never --style numbers --color always "$1" \
+                        --highlight-line "$2"
+                fi
+                return
+            fi
+
             if has highlight; then
                 highlight_config="$HOME/.highlight/themes/highlight.theme"
                 if [ ! -e "$highlight_config" ]; then
