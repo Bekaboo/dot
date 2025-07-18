@@ -883,6 +883,10 @@ fzf.setup({
     ['--margin'] = '0',
   },
   grep = {
+    -- Respect global ripgrep config, see
+    -- - https://github.com/ibhagwan/fzf-lua/issues/2187
+    -- - https://github.com/ibhagwan/fzf-lua/issues/1506#issuecomment-2447299360
+    RIPGREP_CONFIG_PATH = vim.env.RIPGREP_CONFIG_PATH,
     rg_glob = true,
     actions = {
       ['alt-c'] = actions.change_cwd,
