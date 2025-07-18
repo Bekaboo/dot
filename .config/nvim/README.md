@@ -632,6 +632,8 @@ and it should work out of the box.
 - **Colorschemes**
     - [everforest](https://github.com/sainnhe/everforest)
     - [gruvbox-material](https://github.com/sainnhe/gruvbox-material)
+- **Langs**
+    - [vim-python-pep8-indent](https://github.com/Vimjas/vim-python-pep8-indent)
 
 #### Builtin Plugins
 
