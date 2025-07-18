@@ -1,6 +1,12 @@
 # Pyenv config, see:
 # https://github.com/pyenv/pyenv?tab=readme-ov-file#b-set-up-your-shell-environment-for-pyenv
 
+# Exit if actual pyenv is not installed so that scripts depending on
+# availability of pyenv (e.g. `type -q pyenv`) don't give false positive
+if not type -q pyenv
+    exit 127
+end
+
 function pyenv
     # Add `pyenv` executable to path if not yet initialized
     if test -z "$PYENV_ROOT"; and test -d "$HOME/.pyenv"
