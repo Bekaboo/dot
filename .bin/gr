@@ -19,17 +19,6 @@ main() {
     root_path="${1:-.}"
     shift 2>/dev/null
 
-    # Set preview command based on available tools
-    if has bat; then
-        preview_cmd='bat --paging never --style numbers,header-filename --color always {1} --highlight-line {2}'
-    elif has batcat; then
-        preview_cmd='batcat --paging never --style numbers,header-filename --color always {1} --highlight-line {2}'
-    elif has fzf-file-previewer; then
-        preview_cmd='fzf-file-previewer {1} {2}'
-    elif has cat; then
-        preview_cmd='cat {1}'
-    fi
-
     # Set grep command based on available tools
     if has rg; then
         grep_cmd="rg --no-messages --hidden --follow --smart-case --column --line-number --no-heading --color=always"
@@ -58,7 +47,7 @@ main() {
         --prompt "$regex_prompt" \
         --delimiter ':' \
         --header "$fuzzy_search_hint" \
-        --preview "$preview_cmd" \
+        --preview "fzf-file-previewer {1} {2}" \
         --preview-window '+{2}-6,~1' >"$OUTPUT_FILE"
 
     # Let editor read the output file as error file and jump to the first error
