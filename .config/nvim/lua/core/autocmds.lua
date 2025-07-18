@@ -28,7 +28,7 @@ do
       end,
     },
   }, {
-    { 'BufEnter', 'TextChanged' },
+    { 'BufEnter', 'TextChanged', 'CmdWinEnter' },
     {
       desc = 'Detect big files.',
       callback = function(args)
