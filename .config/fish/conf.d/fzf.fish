@@ -26,7 +26,7 @@ if status is-login
         --bind=alt-v:preview-half-page-up,ctrl-v:preview-half-page-down"
 
     # If supports 256 colors
-    if type -q tput; and test (tput colors 2>/dev/null) -lt 256
+    if type -q tput; and test "$(tput colors 2>/dev/null)" -lt 256 2>/dev/null
         set -Uxa FZF_DEFAULT_OPTS --no-unicode '--marker=+\ ' '--pointer=\>\ '
     end
 
