@@ -343,11 +343,11 @@ M.snippets = {
     un.fmtad('<logger>.<level>(<q><line><q><e>)', {
       logger = i(1, 'logger'),
       level = c(2, {
+        i(2, 'debug'),
         i(2, 'info'),
         i(2, 'warning'),
         i(2, 'error'),
         i(2, 'critical'),
-        i(2, 'debug'),
       }),
       q = un.qt(),
       line = c(3, {
