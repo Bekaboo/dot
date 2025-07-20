@@ -264,22 +264,25 @@ local function preview_decorate(win, hl)
       end
 
       -- Add syntax/treesitter highlighting for normal files
-      if vim.b[buf]._oil_preview_syntax == bufname then
+      if vim.b[buf]._oil_preview_syntax_bufname == bufname then
         preview_restore_win_opts(win)
-        if hl then
-          local ft = vim.filetype.match({
-            buf = buf,
-            filename = path,
-          })
-          if not ft then
-            vim.treesitter.stop(buf)
-            vim.bo[buf].syntax = ''
-            return
-          end
-          if not pcall(vim.treesitter.start, buf, ft) then
-            vim.treesitter.stop(buf)
-            vim.bo[buf].syntax = ft
-          end
+        if not hl then
+          return
+        end
+
+        local ft = vim.filetype.match({
+          buf = buf,
+          filename = path,
+        })
+        if not ft then
+          vim.treesitter.stop(buf)
+          vim.bo[buf].syntax = ''
+          return
+        end
+
+        if not pcall(vim.treesitter.start, buf, ft) then
+          vim.treesitter.stop(buf)
+          vim.bo[buf].syntax = ft
         end
       end
     end)
@@ -403,7 +406,7 @@ local function preview_set_lines(win, all)
       return
     end
 
-    vim.b[buf]._oil_preview_syntax = bufname
+    vim.b[buf]._oil_preview_syntax_bufname = bufname
     preview_win_set_lines(
       win,
       vim
