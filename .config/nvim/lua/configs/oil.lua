@@ -270,10 +270,12 @@ local function preview_decorate(win, hl)
           return
         end
 
-        local ft = vim.filetype.match({
-          buf = buf,
-          filename = path,
-        })
+        local ft = vim.api.nvim_buf_call(buf, function()
+          return vim.filetype.match({
+            buf = buf,
+            filename = path,
+          })
+        end)
         if not ft then
           vim.treesitter.stop(buf)
           vim.bo[buf].syntax = ''
