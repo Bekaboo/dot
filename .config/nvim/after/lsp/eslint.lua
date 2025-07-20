@@ -26,6 +26,17 @@ local fts = {
   'css',
 }
 
+local root_markers = {
+  'eslint.config.js',
+  'eslint.config.mjs',
+  'eslint.config.cjs',
+  '.eslintrc.js',
+  '.eslintrc.cjs',
+  '.eslintrc.yml',
+  '.eslintrc.yaml',
+  '.eslintrc.json',
+}
+
 -- Prefer eslint native language server over efm + eslint
 -- https://github.com/neovim/nvim-lspconfig/blob/master/lua/lspconfig/configs/eslint.lua
 if vim.endswith(cmd, 'language-server') then
@@ -137,16 +148,7 @@ return {
     documentFormatting = true,
     documentRangeFormatting = true,
   },
-  root_markers = {
-    'eslint.config.js',
-    'eslint.config.mjs',
-    'eslint.config.cjs',
-    '.eslintrc.js',
-    '.eslintrc.cjs',
-    '.eslintrc.yml',
-    '.eslintrc.yaml',
-    '.eslintrc.json',
-  },
+  root_markers = root_markers,
   settings = {
     languages = {
       typescriptreact = eslint_lang_settings,
