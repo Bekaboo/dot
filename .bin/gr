@@ -17,7 +17,6 @@ trap cleanup HUP INT QUIT ABRT EXIT
 main() {
     # Set default root path to current directory if not provided
     root_path="${1:-.}"
-    shift 2>/dev/null
 
     # Set grep command based on available tools
     if has rg; then
