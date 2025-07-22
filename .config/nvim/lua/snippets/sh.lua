@@ -352,12 +352,13 @@ M.snippets = {
     un.fmtad('trap <cmd> <sig>', {
       cmd = i(1, 'cleanup'),
       sig = c(2, {
+        i(nil, 'EXIT INT TERM'), -- when script exits or terminates, useful for cleanup
+        i(nil, 'EXIT INT TERM HUP'), -- use for cleanup in scripts that needs a terminal/tty
         i(nil, 'EXIT'),
         i(nil, 'INT'),
         i(nil, 'TERM'),
-        i(nil, 'QUIT'),
-        i(nil, 'HUP'),
-        i(nil, 'ERR'),
+        i(nil, 'HUP'), -- disconnected from terminal, useful for interactive scripts that needs a terminal
+        i(nil, 'ERR'), -- not POSIX but available in bash
       }),
     })
   ),
