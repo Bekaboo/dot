@@ -155,7 +155,7 @@ main() {
     tmp_dir=$(mktemp -d -t "$(basename "$0").XXXXXXXX")
     [ ! -d "$tmp_dir" ] && echo 'Failed to create temp dir' >&2 && return 1
 
-    trap 'rm -rf "$tmp_dir"' HUP INT QUIT ABRT EXIT
+    trap 'rm -rf "$tmp_dir"' EXIT INT TERM HUP
 
     # Link files to avoid recursion
     script_dir=$(dirname "$0")

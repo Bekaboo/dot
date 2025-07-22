@@ -11,10 +11,10 @@ cleanup() {
     rm -f "$REGEX_QUERY_FILE" "$FUZZY_QUERY_FILE" "$OUTPUT_FILE"
 }
 
-trap cleanup HUP INT QUIT ABRT EXIT
-
 # $1: search root path
 main() {
+    trap cleanup EXIT INT TERM HUP
+
     # Set default root path to current directory if not provided
     root_path="${1:-.}"
 

@@ -9,10 +9,11 @@ gx() {
         return 1
     fi
 
+    trap 'rm -f "$text_files" "$other_files"' EXIT INT TERM HUP
+
     # Create temporary files to store file lists
     text_files=$(mktemp)
     other_files=$(mktemp)
-    trap 'rm -f "$text_files" "$other_files"' EXIT
 
     # Categorize files based on their type
     for file in "$@"; do

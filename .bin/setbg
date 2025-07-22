@@ -332,7 +332,7 @@ setbg_vscode() {
     fi
     if [ "$theme" != "$new_theme" ]; then
         tmp=$(mktemp)
-        trap 'rm -f "$tmp"' EXIT
+        trap 'rm -f "$tmp"' EXIT INT TERM
         jq ".\"workbench.colorTheme\" = \"$new_theme\"" "$rc" >"$tmp" &&
             mv "$tmp" "$rc"
     fi
@@ -397,7 +397,7 @@ setbg_libreoffice() {
     esac
 
     tmp=$(mktemp)
-    trap 'rm -f "$tmp"' EXIT
+    trap 'rm -f "$tmp"' EXIT INT TERM
     awk -v new_theme="$new_theme" '
         /<item oor:path="\/org.openoffice.Office.Common\/Misc"><prop oor:name="SymbolStyle" oor:op="fuse"><value>[a-zA-Z0-9_-]+<\/value><\/prop><\/item>/ {
             sub(/<value>[a-zA-Z0-9_-]+<\/value>/, "<value>" new_theme "</value>");

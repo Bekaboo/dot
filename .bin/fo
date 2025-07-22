@@ -4,7 +4,7 @@
 main() {
     # Use a temporary file to store the file list since POSIX sh doesn't support arrays
     tmpfile=$(mktemp)
-    trap 'rm -f "$tmpfile"' EXIT
+    trap 'rm -f "$tmpfile"' EXIT INT TERM HUP
 
     # Get oldfiles from nvim and filter existing files
     nvim -u NONE --headless +'lua io.write(table.concat(vim.v.oldfiles, "\n") .. "\n")' +qa |
