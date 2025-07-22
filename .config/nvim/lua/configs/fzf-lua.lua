@@ -576,7 +576,8 @@ fzf.setup({
         \ let g:_fzf_height = 10 |
         \ let g:_fzf_qfclosed = win_gettype(winnr('$')) |
         \ if g:_fzf_qfclosed ==# 'loclist' || g:_fzf_qfclosed ==# 'quickfix' |
-        \   let g:_fzf_height = nvim_win_get_height(win_getid(winnr('$'))) - 1 |
+        \   let g:_fzf_qfheight = nvim_win_get_height(win_getid(winnr('$'))) |
+        \   let g:_fzf_height = g:_fzf_qfheight - 1 |
         \   cclose |
         \   lclose |
         \ else |
@@ -621,31 +622,6 @@ fzf.setup({
       _restore_global_opt('cmdheight')
       _restore_global_opt('laststatus')
 
-      -- Reopen quickfix/location list after closing fzf if we previous closed
-      -- it to make space for fzf
-      local win = vim.api.nvim_get_current_win()
-      if vim.g._fzf_qfclosed == 'loclist' then
-        vim.cmd.lopen()
-      elseif vim.g._fzf_qfclosed == 'quickfix' then
-        vim.cmd.copen()
-      end
-      vim.g._fzf_qfclosed = nil
-      if
-        win ~= vim.api.nvim_get_current_win()
-        and vim.api.nvim_win_is_valid(win)
-      then
-        vim.api.nvim_set_current_win(win)
-      end
-
-      if
-        vim.g._fzf_leave_win
-        and vim.api.nvim_win_is_valid(vim.g._fzf_leave_win)
-        and vim.api.nvim_get_current_win() ~= vim.g._fzf_leave_win
-      then
-        vim.api.nvim_set_current_win(vim.g._fzf_leave_win)
-      end
-      vim.g._fzf_leave_win = nil
-
       if vim.go.lines == vim.g._fzf_vim_lines then
         utils.win.restore_heights(_G._fzf_lua_win_heights)
       end
@@ -654,6 +630,43 @@ fzf.setup({
 
       utils.win.restore_views(_G._fzf_lua_win_views)
       _G._fzf_lua_win_views = {}
+
+      -- Reopen quickfix/location list after closing fzf if we previous closed
+      -- it to make space for fzf
+      --
+      -- Schedule in case the fzf is making a new split
+      -- (e.g. `actions.file_split`) after opening quickfix window which
+      -- resizes the quickfix window unexpectedly due to an nvim bug, see
+      -- - `lua/core/autocmds.lua` augroup `FixWinFixHeightWithWinBar`
+      -- -  https://github.com/neovim/neovim/issues/30955
+      vim.schedule(function()
+        local win = vim.api.nvim_get_current_win()
+
+        if vim.g._fzf_qfclosed == 'loclist' then
+          vim.cmd.lopen({
+            count = vim.g._fzf_qfheight,
+          })
+        elseif vim.g._fzf_qfclosed == 'quickfix' then
+          vim.cmd.copen({
+            count = vim.g._fzf_qfheight,
+          })
+        end
+        vim.g._fzf_qfclosed = nil
+        vim.g._fzf_qfheight = nil
+
+        -- Keep window visit order
+        if
+          vim.g._fzf_leave_win
+          and vim.api.nvim_win_is_valid(vim.g._fzf_leave_win)
+        then
+          vim.api.nvim_set_current_win(vim.g._fzf_leave_win)
+        end
+        vim.g._fzf_leave_win = nil
+
+        if vim.api.nvim_win_is_valid(win) then
+          vim.api.nvim_set_current_win(win)
+        end
+      end)
     end,
     preview = {
       border = 'none',
