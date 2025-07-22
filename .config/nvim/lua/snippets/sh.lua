@@ -118,7 +118,10 @@ M.snippets = {
       ]],
       {
         var = i(1, 'item'),
-        items = i(2, '${items[@]}'),
+        items = d(2, function()
+          return is_bash() and sn(nil, i(1, '${items[@]}'))
+            or sn(nil, i(1, '$items'))
+        end),
         body = un.body(3, 1, ':'),
       }
     )
@@ -221,7 +224,10 @@ M.snippets = {
       ]],
       {
         var = i(1, 'item'),
-        items = i(2, '${items[@]}'),
+        items = d(2, function()
+          return is_bash() and sn(nil, i(1, '${items[@]}'))
+            or sn(nil, i(1, '$items'))
+        end),
         body = un.body(3, 1, ':'),
       }
     )
