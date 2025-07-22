@@ -350,6 +350,7 @@ main() {
     setcolor_nvim "$color" &
     setcolor_fish "$color" &
     setcolor_plasma "$color" &
+    wait
 }
 
 main "$@"

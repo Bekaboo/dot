@@ -484,6 +484,7 @@ main() {
     setbg_fish "$bg" &
     setbg_libreoffice "$bg" &
     write_conflict_log "$bg" &
+    wait
 }
 
 main "$@"
