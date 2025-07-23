@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Sat 07 Jun 2025 09:02:51 PM PDT
+-- Last Updated: Wed Jul 23 15:49:44 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -321,6 +321,7 @@ local hlgroups = {
   ['@markup.list'] = { fg = c_macroTeal },
   ['@string.escape'] = { fg = c_macroOrange0 },
   ['@string.regexp'] = { fg = c_macroOrange0 },
+  ['@string.yaml'] = { link = 'Normal' },
   ['@markup.link.label.symbol'] = { fg = c_macroFg0 },
   ['@tag.attribute'] = { fg = c_macroFg0 },
   ['@tag.delimiter'] = { fg = c_macroGray1 },

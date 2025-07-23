@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Wed Jul 23 15:41:52 2025
+-- Last Updated: Wed Jul 23 15:49:44 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -241,6 +241,7 @@ local hlgroups = {
   ['@string'] = { link = 'String' },
   ['@string.escape'] = { fg = c_critical },
   ['@string.regexp'] = { fg = c_popout },
+  ['@string.yaml'] = { link = 'Normal' },
   ['@character'] = { link = 'Character' },
   ['@character.special'] = { link = 'SpecialChar' },
   ['@boolean'] = { link = 'Boolean' },
