@@ -10,7 +10,7 @@ return {
         {
           -- If `expandtab` is not set, use tabs for indentation, else use
           -- spaces with the same width in nvim, see `shfmt -h` and
-          -- https://github.com/mattn/efm-langserver/blob/master/schema.md#languages_pattern1_items_format-can-range
+          -- https://github.com/mattn/efm-langserver/blob/master/schema.md#2113-property-format-command
           formatCommand = 'shfmt --filename ${INPUT} --indent=${tabWidth} ${--indent=0:!insertSpaces} -',
           formatStdin = true,
         },
