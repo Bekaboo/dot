@@ -14,14 +14,10 @@ local d = ls.dynamic_node
 ---Check if current file is bash
 ---@return boolean
 local function is_bash()
-  local filename = vim.api.nvim_buf_get_name(0)
-  if filename:match('%.bash$') then
-    return true
-  end
-
-  -- Check first line for bash shebang
-  local first_line = vim.api.nvim_buf_get_lines(0, 0, 1, false)[1] or ''
-  return first_line:match('^#!.*bash') ~= nil
+  return vim.bo.ft == 'bash'
+    or vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':e') == 'bash'
+    or vim.api.nvim_buf_line_count(0) > 0
+      and vim.api.nvim_buf_get_lines(0, 0, 1, false)[1]:match('^#!.*bash') ~= nil
 end
 
 M.snippets = {
