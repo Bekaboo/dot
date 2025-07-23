@@ -1,3 +1,6 @@
+-- Shell script formatter for sh/bash/mksh
+-- https://github.com/patrickvane/shfmt
+
 return {
   filetypes = { 'sh' },
   cmd = { 'efm-langserver' },
