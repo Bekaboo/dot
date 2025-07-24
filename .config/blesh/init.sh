@@ -12,17 +12,17 @@ bleopt term_index_colors=auto
 #
 ble-bind -m 'auto_complete' -f 'C-j' 'auto_complete/insert-on-end'
 
-ble-face -s argument_option           fg=magenta
+ble-face -s argument_option           fg=yellow
 ble-face -s auto_complete             fg=silver
 ble-face -s cmdinfo_cd_cdpath         fg=silver
-ble-face -s command_alias             fg=teal,italic
-ble-face -s command_builtin           fg=brown
-ble-face -s command_builtin_dot       fg=brown,bold
-ble-face -s command_directory         fg=navy,bold
-ble-face -s command_file              fg=lime,bold
-ble-face -s command_function          fg=yellow
-ble-face -s command_jobs              fg=red,bold
-ble-face -s command_keyword           fg=magenta
+ble-face -s command_alias             ref:syntax_command
+ble-face -s command_builtin           ref:syntax_command
+ble-face -s command_builtin_dot       ref:syntax_command
+ble-face -s command_directory         ref:syntax_command
+ble-face -s command_file              ref:syntax_command
+ble-face -s command_function          ref:syntax_command
+ble-face -s command_jobs              ref:syntax_command
+ble-face -s command_keyword           ref:syntax_command
 ble-face -s disabled                  fg=black
 ble-face -s filename_block            fg=yellow,bg=black,bold
 ble-face -s filename_character        fg=yellow,bg=black,bold
@@ -46,21 +46,21 @@ ble-face -s region_insert             fg=silver
 ble-face -s region_match              fg=silver,bold
 ble-face -s region_target             fg=silver
 ble-face -s syntax_brace              fg=smoke
-ble-face -s syntax_command            fg=smoke
+ble-face -s syntax_command            fg=smoke,bold
 ble-face -s syntax_comment            fg=silver
 ble-face -s syntax_default            fg=silver
 ble-face -s syntax_delimiter          fg=smoke
 ble-face -s syntax_document           fg=brown
 ble-face -s syntax_document_begin     fg=brown,bold
-ble-face -s syntax_error              fg=white,italic,strike
+ble-face -s syntax_error              fg=red
 ble-face -s syntax_escape             fg=brown
 ble-face -s syntax_expr               fg=brown
 ble-face -s syntax_function_name      fg=yellow
 ble-face -s syntax_glob               fg=brown
 ble-face -s syntax_history_expansion  fg=silver
 ble-face -s syntax_param_expansion    fg=olive,bold
-ble-face -s syntax_quotation          fg=brown
-ble-face -s syntax_quoted             fg=silver
+ble-face -s syntax_quotation          fg=green
+ble-face -s syntax_quoted             fg=green
 ble-face -s syntax_tilde              fg=smoke
 ble-face -s syntax_varname            fg=silver,bold
 ble-face -s varname_array             fg=silver,bold
