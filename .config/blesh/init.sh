@@ -1,16 +1,11 @@
 #!/usr/bin/env bash
 # vim:et:ft=sh:ts=4:sw=4:sts=4:
+# shellcheck disable=SC2154
 
 bleopt input_encoding=UTF-8
 bleopt prompt_eol_mark=
 bleopt filename_ls_colors="$LS_COLORS"
 bleopt term_index_colors=auto
-# bleopt term_modifyOtherKeys_passthrough_kitty_protocol=1
-
-#
-# keymappings
-#
-ble-bind -m 'auto_complete' -f 'C-j' 'auto_complete/insert-on-end'
 
 ble-face -s argument_option           fg=yellow
 ble-face -s auto_complete             fg=silver
@@ -76,12 +71,9 @@ ble-face -s vbell                     reverse
 ble-face -s vbell_erase               invis
 ble-face -s vbell_flash               fg=yellow,reverse
 
-#
-# Settings for vim editing mode
-#
+# Vim mode settings, enable with `set -o vi`
 function my/vim-load-hook {
     # Vim mode mode line settings
-    # bleopt keymap_vi_mode_show=
     bleopt keymap_vi_mode_string_nmap=$'\e[1m-- NORMAL --\e[m'
 
     # Vim mode status line settings
@@ -90,32 +82,32 @@ function my/vim-load-hook {
     bleopt vim_airline_section_b='\q{lib/vim-airline/gitstatus}'
     bleopt vim_airline_section_c='\w'
     bleopt vim_airline_section_x=
-    bleopt vim_airline_section_y='$_ble_util_locale_encoding'
+    bleopt vim_airline_section_y="$_ble_util_locale_encoding"
     bleopt vim_airline_section_z='\e[1m\q{history-index}/\!\e[22m \q{position} \q{history-percentile}'
     bleopt vim_airline_left_sep=
     bleopt vim_airline_left_alt_sep=
     bleopt vim_airline_right_sep=
     bleopt vim_airline_right_alt_sep=
-    bleopt vim_airline_symbol_branch=$'\uE725 '
+    bleopt vim_airline_symbol_branch='#'
     bleopt vim_airline_symbol_dirty=' +'
 
-    ble-face -s vim_airline_a_normal               fg=silver,bg=none,bold
-    ble-face -s vim_airline_a_insert               fg=purple,bg=none,bold
-    ble-face -s vim_airline_a_replace              fg=olive,bg=none,bold
-    ble-face -s vim_airline_a_visual               fg=brown,bg=none,bold
-    ble-face -s vim_airline_a_commandline          fg=purple,bg=none,bold
-    ble-face -s vim_airline_a_inactive             fg=white,bg=none,bold
+    ble-face -s vim_airline_a_normal      fg=silver,bg=none,bold
+    ble-face -s vim_airline_a_insert      fg=purple,bg=none,bold
+    ble-face -s vim_airline_a_replace     fg=olive,bg=none,bold
+    ble-face -s vim_airline_a_visual      fg=brown,bg=none,bold
+    ble-face -s vim_airline_a_commandline fg=purple,bg=none,bold
+    ble-face -s vim_airline_a_inactive    fg=white,bg=none,bold
 
     local modes=(normal insert replace visual commandline inactive)
-    for mode in "${modes[@]}" ; do
-        ble-face -s vim_airline_b_"$mode"           fg=teal,bg=none
-        ble-face -s vim_airline_c_"$mode"           fg=navy,bg=none,bold
-        ble-face -s vim_airline_x_"$mode"           fg=silver,bg=none
-        ble-face -s vim_airline_y_"$mode"           fg=silver,bg=none
-        ble-face -s vim_airline_z_"$mode"           ref:vim_airline_a_"$mode"
-        ble-face -s vim_airline_error_"$mode"       fg=silver,bg=brown,bold,blink
-        ble-face -s vim_airline_term_"$mode"        bg=none
-        ble-face -s vim_airline_warning_"$mode"     bg=none
+    for mode in "${modes[@]}"; do
+        ble-face -s vim_airline_b_"$mode"       fg=teal,bg=none
+        ble-face -s vim_airline_c_"$mode"       fg=navy,bg=none,bold
+        ble-face -s vim_airline_x_"$mode"       fg=silver,bg=none
+        ble-face -s vim_airline_y_"$mode"       fg=silver,bg=none
+        ble-face -s vim_airline_z_"$mode"       ref:vim_airline_a_"$mode"
+        ble-face -s vim_airline_error_"$mode"   fg=silver,bg=brown,bold,blink
+        ble-face -s vim_airline_term_"$mode"    bg=none
+        ble-face -s vim_airline_warning_"$mode" bg=none
     done
 
     # Vim mode cursor shape settings
@@ -129,4 +121,5 @@ function my/vim-load-hook {
     # Vim mode vim-surround support
     source "$_ble_base/lib/vim-surround.sh"
 }
+
 blehook/eval-after-load keymap_vi my/vim-load-hook
