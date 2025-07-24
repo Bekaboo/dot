@@ -17,6 +17,7 @@ return {
       { "<Leader>'", desc = 'Resume last picker' },
       { '<Leader>`', desc = 'Find marks' },
       { '<Leader>,', desc = 'Find buffers' },
+      { '<Leader>%', desc = 'Find tabpages' },
       { '<Leader>/', desc = 'Grep' },
       { '<Leader>?', desc = 'Find help files' },
       { '<Leader>*', mode = { 'n', 'x' }, desc = 'Grep word under cursor' },
