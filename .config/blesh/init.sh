@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# vim: ft=sh ts=4 sw=4 sts=4 et :
+# vim:et:ft=sh:ts=4:sw=4:sts=4:
 
 bleopt input_encoding=UTF-8
 bleopt prompt_eol_mark=

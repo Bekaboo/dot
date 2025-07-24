@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# vim: ft=sh ts=4 sw=4 sts=4 et :
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
 #
 # Check if a command exists
 

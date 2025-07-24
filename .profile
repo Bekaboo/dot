@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 # ~/.profile
-# vim: ft=sh ts=4 sw=4 sts=4 et :
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
 
 has() {
     command -v "$1" >/dev/null 2>&1

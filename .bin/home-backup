@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# vim: ft=sh ts=4 sw=4 sts=4 et :
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
 
 borg create --list -v --exclude-from ~/.borg/exclude.txt 'borg/home::{hostname}-{user}-{now:%Y-%m-%dT%H:%M:%S.%f}' ~
 borg prune --list -d 7 -w 4 -m 2 -y 2 borg/home

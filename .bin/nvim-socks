@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# vim: ft=sh ts=4 sw=4 sts=4 et :
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
 
 RUN_DIR=$(dirname "$(nvim --clean --headless +"lua io.write(vim.fn.stdpath('run'))" +qa!)")
 APPNAME=${NVIM_APPNAME:-nvim}

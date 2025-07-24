@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# vim: ft=sh ts=4 sw=4 sts=4 et :
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
 
 # Hijack fzf command for extra functionality, including adaptive height,
 # flexible preview window layout, and image preview with ueberzugpp
