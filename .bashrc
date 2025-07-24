@@ -13,8 +13,12 @@ fi
 
 # Start setting up ble.sh
 # https://github.com/akinomyoga/ble.sh?tab=readme-ov-file#set-up-bashrc
-[[ -r /usr/share/blesh/ble.sh ]] &&
-    source -- /usr/share/blesh/ble.sh --attach=none
+for ble_install_path in /usr/share ~/.local/share; do
+    if [[ -r "$ble_install_path/blesh/ble.sh" ]]; then
+        source -- "$ble_install_path/blesh/ble.sh" --attach=none
+        break
+    fi
+done
 
 # Prompt configuration
 PS1='\[\033[01;3'$( ((EUID)) && echo 5 || echo 1)'m\][\u@\h\[\033[01;37m\] \W\[\033[01;3'$( ((EUID)) && echo 5 || echo 1)'m\]]\$\[\033[00m\] '
