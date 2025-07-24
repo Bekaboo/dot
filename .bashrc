@@ -11,6 +11,11 @@ fi
 
 [[ $- != *i* ]] && return
 
+# Start setting up ble.sh
+# https://github.com/akinomyoga/ble.sh?tab=readme-ov-file#set-up-bashrc
+[[ -r /usr/share/blesh/ble.sh ]] &&
+    source -- /usr/share/blesh/ble.sh --attach=none
+
 # Prompt configuration
 PS1='\[\033[01;3'$( ((EUID)) && echo 5 || echo 1)'m\][\u@\h\[\033[01;37m\] \W\[\033[01;3'$( ((EUID)) && echo 5 || echo 1)'m\]]\$\[\033[00m\] '
 
@@ -247,4 +252,9 @@ fi
 # Setup zoxide
 if has zoxide; then
     eval "$(zoxide init bash)"
+fi
+
+# End setting up ble.sh
+if [[ "${BLE_VERSION-}" ]] && has ble-attach; then
+    ble-attach
 fi
