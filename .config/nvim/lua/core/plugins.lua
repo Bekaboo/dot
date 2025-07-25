@@ -65,17 +65,22 @@ local function bootstrap()
   end
 
   -- 'Yes'
-  local lock_data = json.read(vim.g.package_lock)
-  local commit = lock_data['lazy.nvim'] and lock_data['lazy.nvim'].commit
-  local url = 'https://github.com/folke/lazy.nvim.git'
   vim.notify('[plugins] installing lazy.nvim...')
   vim.fn.mkdir(vim.g.package_path, 'p')
   if
-    not system_sync({ 'git', 'clone', '--filter=blob:none', url, lazy_path })
+    not system_sync({
+      'git',
+      'clone',
+      '--filter=blob:none',
+      'https://github.com/folke/lazy.nvim.git',
+      lazy_path,
+    })
   then
     return false
   end
 
+  local lock_data = json.read(vim.g.package_lock)
+  local commit = lock_data['lazy.nvim'] and lock_data['lazy.nvim'].commit
   if commit then
     system_sync(
       { 'git', 'checkout', commit },
