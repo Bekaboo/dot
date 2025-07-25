@@ -2,7 +2,7 @@
 -- https://github.com/redhat-developer/yaml-language-server
 
 return {
-  filetypes = { 'yaml' },
+  filetypes = { 'yaml', 'yaml.gh' },
   cmd = {
     'yaml-language-server',
     '--stdio',
