@@ -44,8 +44,11 @@ do
       end
 
       if #result == 1 then
-        local enc = vim.lsp.get_client_by_id(ctx.client_id).offset_encoding
-        vim.lsp.util.jump_to_location(result[1], enc)
+        vim.lsp.util.show_document(
+          result[1],
+          vim.lsp.get_client_by_id(ctx.client_id).offset_encoding,
+          { focus = true }
+        )
         return
       end
 
