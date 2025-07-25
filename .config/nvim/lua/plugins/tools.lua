@@ -102,7 +102,8 @@ return {
         -- Register fzf as custom `vim.ui.select()` function if not yet
         -- registered
         if not fzf_ui.is_registered() then
-          local _ui_select = fzf_ui.ui_select
+          local ui_select = fzf_ui.ui_select
+
           ---Overriding fzf-lua's default `ui_select()` function to use a
           ---custom prompt
           ---@diagnostic disable-next-line: duplicate-set-field
@@ -120,7 +121,7 @@ return {
             -- result becomes 'foobar> ' as expected.
             opts.prompt = opts.prompt
               and vim.fn.substitute(opts.prompt, ':\\?\\s*$', ':\xc2\xa0', '')
-            _ui_select(items, opts, on_choice)
+            ui_select(items, opts, on_choice)
           end
 
           -- Use the register function provided by fzf-lua. We are using this
