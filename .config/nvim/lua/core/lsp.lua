@@ -54,23 +54,23 @@ do
   ---@returns bufnr,winnr buffer and window number of the newly created floating preview window
   ---@diagnostic disable-next-line: duplicate-set-field
   function vim.lsp.util.open_floating_preview(contents, syntax, opts)
-    opts = vim.tbl_deep_extend('force', opts, {
-      border = 'solid',
-      max_width = math.max(80, math.ceil(vim.go.columns * 0.75)),
-      max_height = math.max(20, math.ceil(vim.go.lines * 0.4)),
-      close_events = {
-        'CursorMovedI',
-        'CursorMoved',
-        'InsertEnter',
-        'WinScrolled',
-        'WinResized',
-        'VimResized',
-      },
-    })
-    local floating_bufnr, floating_winnr =
-      open_floating_preview(contents, syntax, opts)
-    vim.wo[floating_winnr].concealcursor = 'nc'
-    return floating_bufnr, floating_winnr
+    return open_floating_preview(
+      contents,
+      syntax,
+      vim.tbl_deep_extend('force', opts, {
+        border = 'solid',
+        max_width = math.max(80, math.ceil(vim.go.columns * 0.75)),
+        max_height = math.max(20, math.ceil(vim.go.lines * 0.4)),
+        close_events = {
+          'CursorMovedI',
+          'CursorMoved',
+          'InsertEnter',
+          'WinScrolled',
+          'WinResized',
+          'VimResized',
+        },
+      })
+    )
   end
 
   -- Use loclist instead of qflist by default when showing document symbols
