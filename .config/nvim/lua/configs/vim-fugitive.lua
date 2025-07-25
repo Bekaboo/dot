@@ -11,8 +11,8 @@ vim.cmd([[
 vim.keymap.set('n', '<Leader>gd', '<Cmd>Gdiff<CR>', { desc = 'Git diff current file' })
 vim.keymap.set('n', '<Leader>gD', '<Cmd>Git diff<CR>', { desc = 'Git diff entire repo' })
 vim.keymap.set('n', '<Leader>gB', '<Cmd>Git blame<CR>', { desc = 'Git blame current file' })
-vim.keymap.set('n', '<Leader>gl', '<Cmd>Git log -1024 --oneline --follow -- %<CR>', { desc = 'Git log current file' })
-vim.keymap.set('n', '<Leader>gL', '<Cmd>Git log -1024 --oneline --graph<CR>', { desc = 'Git log entire repo' })
+vim.keymap.set('n', '<Leader>gl', '<Cmd>Git log -100 --oneline --follow -- %<CR>', { desc = 'Git log current file' })
+vim.keymap.set('n', '<Leader>gL', '<Cmd>Git log -100 --oneline --graph<CR>', { desc = 'Git log entire repo' })
 -- stylua: ignore end
 
 local groupid = vim.api.nvim_create_augroup('FugitiveSettings', {})
