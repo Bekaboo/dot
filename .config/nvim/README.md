@@ -188,8 +188,9 @@ happen, you have to call `vim.lsp.enable('<language-server>')`, e.g. for clangd:
 vim.lsp.enable('clangd') -- requires `after/lsp/clangd.lua`
 ```
 
-you can put this in [after/ftplugin/c/lsp.lua](after/ftplugin/c/lsp.lua) to
-automatically launch clangd in C files.
+This is already done in [lua/core/lsp.lua](lua/core/lsp.lua), where all LSP
+configurations located in runtime directory will be automatically loaded and
+enabled on `FileType` event.
 
 ### DAP
 

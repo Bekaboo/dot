@@ -2,6 +2,17 @@ local lsp = require('utils.lsp')
 
 vim.lsp.config('*', lsp.default_config)
 
+vim.api.nvim_create_autocmd('FileType', {
+  once = true,
+  callback = function()
+    vim.iter(vim.api.nvim__get_runtime({ 'lsp' }, true, {})):each(function(dir)
+      vim.iter(vim.fs.dir(dir)):each(function(config)
+        vim.lsp.enable(vim.fn.fnamemodify(config, ':r'))
+      end)
+    end)
+  end,
+})
+
 -- Override to perform additional checks on starting language servers
 vim.lsp.start = lsp.start
 
