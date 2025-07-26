@@ -463,7 +463,10 @@ main() {
         setbg_plasma "$bg" &
 
         # Kitty and wezterm have their own mechanism to detect and sync with
-        # system background
+        # system background:
+        # - https://sw.kovidgoyal.net/kitty/kittens/themes/#change-color-themes-automatically-when-the-os-switches-between-light-and-dark
+        # - https://wezterm.org/config/lua/window/get_appearance.html?h=get_app
+        #
         # Fix kitty memory leak on KDE when `__syncbg` is running in the ground
         setbg_kitty "$bg" &
         setbg_wezterm "$bg" &
