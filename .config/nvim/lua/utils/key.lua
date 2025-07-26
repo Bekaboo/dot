@@ -134,7 +134,7 @@ end
 ---Caveat: currently cannot amend keymap with <Cmd>...<CR> rhs
 ---@param modes string[]|string
 ---@param lhs string
----@param rhs function(fallback: function)
+---@param rhs fun(fallback: function)
 ---@param opts table?
 ---@return nil
 function M.amend(modes, lhs, rhs, opts)
