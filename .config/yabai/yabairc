@@ -72,5 +72,6 @@ for event in \
 	application_terminated application_deactivated application_hidden; do
 	yabai -m signal --add \
 		event="$event" \
-		action="yabai -m query --windows --window &> /dev/null || yabai -m window --focus mouse"
+		action="yabai -m query --windows --window >/dev/null 2>&1 || \
+			yabai -m window --focus mouse"
 done
