@@ -69,7 +69,7 @@ yabai -m rule --apply
 for event in \
 	space_changed space_destroyed \
 	window_destroyed window_minimized \
-	application_terminated application_deactivated application_hidden; do
+	application_terminated application_hidden; do
 	yabai -m signal --add \
 		event="$event" \
 		action="yabai -m query --windows --window >/dev/null 2>&1 || \
