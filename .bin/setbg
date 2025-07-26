@@ -125,7 +125,7 @@ setbg_nvim() {
             --remote-expr "execute(\"if &bg !=# '$1' && &tgc \
                 | let g:script_set_bg=1 | set bg=$1 | unlet g:script_set_bg \
                 | endif\")" \
-            +qa! 2>/dev/null & # prevent long-running nvim from blocking the script
+            +qa! >/dev/null 2>&1 &
     done
 
     if ! has jq; then
