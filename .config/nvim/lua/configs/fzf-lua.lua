@@ -392,7 +392,7 @@ function fzf.symbols(opts)
   if
     vim.tbl_isempty(vim.lsp.get_clients({
       bufnr = 0,
-      method = 'textDocument/documentSymbol',
+      method = vim.lsp.protocol.Methods.textDocument_documentSymbol,
     }))
   then
     return fzf.treesitter(opts)

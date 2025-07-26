@@ -6,9 +6,14 @@ vim.api.nvim_create_autocmd('FileType', {
   once = true,
   callback = function()
     vim.iter(vim.api.nvim__get_runtime({ 'lsp' }, true, {})):each(function(dir)
-      vim.iter(vim.fs.dir(dir)):each(function(config)
-        vim.lsp.enable(vim.fn.fnamemodify(config, ':r'))
-      end)
+      vim
+        .iter(vim.fs.dir(dir))
+        :map(function(config)
+          return vim.fn.fnamemodify(config, ':r')
+        end)
+        :each(function(config)
+          vim.lsp.enable(config)
+        end)
     end)
   end,
 })
@@ -20,11 +25,11 @@ vim.lsp.start = lsp.start
 -- implementation or type definition is found
 do
   local methods = {
-    'textDocument/references',
-    'textDocument/definition',
-    'textDocument/declaration',
-    'textDocument/implementation',
-    'textDocument/typeDefinition',
+    vim.lsp.protocol.Methods.textDocument_references,
+    vim.lsp.protocol.Methods.textDocument_definition,
+    vim.lsp.protocol.Methods.textDocument_declaration,
+    vim.lsp.protocol.Methods.textDocument_implementation,
+    vim.lsp.protocol.Methods.textDocument_typeDefinition,
   }
 
   for _, method in ipairs(methods) do
@@ -145,6 +150,28 @@ do
     return false
   end
 
+  ---Returns a function that takes an LSP action if given method is supported,
+  ---else fallback
+  ---@param method string lsp method to check
+  ---@param action string action callback name
+  ---@return fun(fallback: function)
+  local function act_if_supports_method(method, action)
+    return function(fallback)
+      if buf_supports_method(method, 0) then
+        vim.lsp.buf[action]()
+        return
+      end
+      fallback()
+    end
+  end
+
+  local key = require('utils.key')
+
+  -- stylua: ignore start
+  key.amend({ 'n', 'x' }, 'gd', act_if_supports_method(vim.lsp.protocol.Methods.textDocument_definition, 'definition'), { desc = 'Go to definition' })
+  key.amend({ 'n', 'x' }, 'gD', act_if_supports_method(vim.lsp.protocol.Methods.textDocument_declaration, 'declaration'), { desc = 'Go to declaration' })
+  -- stylua: ignore end
+
   -- stylua: ignore start
   vim.keymap.set({ 'n' }, 'gq;', function() vim.lsp.buf.format() end, { desc = 'Format buffer' })
   vim.keymap.set({ 'i' }, '<M-a>', function() vim.lsp.buf.code_action() end, { desc = 'Show code actions' })
@@ -152,8 +179,6 @@ do
   vim.keymap.set({ 'n', 'x' }, 'g/', function() vim.lsp.buf.references() end, { desc = 'Go to references' })
   vim.keymap.set({ 'n', 'x' }, 'g.', function() vim.lsp.buf.implementation() end, { desc = 'Go to implementation' })
   vim.keymap.set({ 'n', 'x' }, 'gb', function() vim.lsp.buf.type_definition() end, { desc = 'Go to type definition' })
-  vim.keymap.set({ 'n', 'x' }, 'gd', function() return buf_supports_method('textDocument/definition', 0) and '<Cmd>lua vim.lsp.buf.definition()<CR>' or 'gd' end, { expr = true, desc = 'Go to definition' })
-  vim.keymap.set({ 'n', 'x' }, 'gD', function() return buf_supports_method('textDocument/declaration', 0) and '<Cmd>lua vim.lsp.buf.declaration()<CR>' or 'gD' end, { expr = true, desc = 'Go to declaration' })
   vim.keymap.set({ 'n', 'x' }, '<Leader>r', function() vim.lsp.buf.rename() end, { desc = 'Rename symbol' })
   vim.keymap.set({ 'n', 'x' }, '<Leader>a', function() vim.lsp.buf.code_action() end, { desc = 'Show code actions' })
   vim.keymap.set({ 'n', 'x' }, '<Leader><', function() vim.lsp.buf.incoming_calls() end, { desc = 'Show incoming calls' })
