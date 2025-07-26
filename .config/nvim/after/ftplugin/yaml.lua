@@ -9,9 +9,6 @@ local bufname = vim.api.nvim_buf_get_name(0)
 for _, dir in ipairs({ 'workflows', 'actions' }) do
   if bufname:find(('/.github/%s/'):format(dir), 1, true) then
     vim.bo.ft = 'yaml.gh'
-    vim.api.nvim_exec_autocmds('FileType', {
-      pattern = 'yaml.gh',
-    })
     break
   end
 end
