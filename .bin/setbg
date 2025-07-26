@@ -142,6 +142,8 @@ setbg_nvim() {
             mv "$colors_json.tmp" "$colors_json"
         fi
     fi
+
+    wait
 }
 
 setbg_macos() {
