@@ -60,9 +60,11 @@ setcolor_kitty() {
     # $1: name of the colorscheme
     (
         cd "$CONFIG_HOME/kitty" || return
+
         # Kitty changes its theme automatically w.r.t.
         # `{dark,light,no-preference}-theme.auto.conf` when OS switches to
         # dark/light mode, see: https://sw.kovidgoyal.net/kitty/kittens/themes/#change-color-themes-automatically-when-the-os-switches-between-light-and-dark
+        current_theme_path="current-theme.conf"
         no_preference_theme_path="no-preference-theme.auto.conf"
         dark_theme_path="dark-theme.auto.conf"
         light_theme_path="light-theme.auto.conf"
@@ -73,7 +75,11 @@ setcolor_kitty() {
             ln -sf "themes/$1-dark.conf" "$dark_theme_path"
             ln -sf "themes/$1-light.conf" "$light_theme_path"
         fi
-        ln -sf "$dark_theme_path" "$no_preference_theme_path"
+
+        # Touch main theme files for kitty to pick up the changes
+        touch "$no_preference_theme_path"
+        touch "$current_theme_path"
+
         if has kitty; then
             for pid in $(pgrep kitty); do
                 # Don't use `kill -SIGUSR1`, will cause error: 'kill: SIGUSR1: invalid signal specification'
