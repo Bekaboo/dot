@@ -146,9 +146,14 @@ augroup('Autosave', {
           return
         end
         vim.schedule(function()
-          vim.cmd.wall({
-            mods = { emsg_silent = true },
-          })
+          if not vim.api.nvim_buf_is_valid(args.buf) then
+            return
+          end
+          vim.api.nvim_buf_call(args.buf, function()
+            vim.cmd.update({
+              mods = { emsg_silent = true },
+            })
+          end)
         end)
       end)
     end,
