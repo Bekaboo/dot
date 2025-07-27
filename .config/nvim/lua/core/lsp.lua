@@ -4,7 +4,7 @@ vim.lsp.config('*', lsp.default_config)
 
 vim.api.nvim_create_autocmd('FileType', {
   once = true,
-  callback = function()
+  callback = function(args)
     vim.iter(vim.api.nvim__get_runtime({ 'lsp' }, true, {})):each(function(dir)
       vim
         .iter(vim.fs.dir(dir))
@@ -15,6 +15,9 @@ vim.api.nvim_create_autocmd('FileType', {
           vim.lsp.enable(config)
         end)
     end)
+    vim.api.nvim_exec_autocmds('FileType', {
+      pattern = args.match,
+    })
   end,
 })
 
