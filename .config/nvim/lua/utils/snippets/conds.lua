@@ -22,9 +22,30 @@ local utils = require('utils')
 ---`captures` (passed in by luasnip) as arguments, see
 ---`LuaSnip/lua/luasnip/extras/conditions/init.lua`
 ---@type snip_conds_t
-local M = setmetatable({ _ = {} }, {
-  __newindex = function(self, k, v)
-    rawset(self, k, lsconds.make_condition(v))
+local M = setmetatable({}, {
+  __newindex = function(self, cond_name, cond_fn)
+    rawset(
+      self,
+      cond_name,
+      lsconds.make_condition(function(...)
+        -- Two cases:
+        -- - The original condition function itself returns boolean that
+        --   indicates whether the condition is met, in which case we can use
+        --   the result as-is. Examples: `in_mathzone()`, `in_codeblock()`
+        --
+        -- - The condition function is a factory function that returns a
+        --   callable with boolean return value that serves as a condition
+        --   function.
+        --   In this case we wrap the callable with `lsconds.make_condition()`
+        --   to turn it into a luasnip condition object. Examples:
+        --   `in_tsnode()`, `in_syngroup()`, `before_pattern()`
+        local result = cond_fn(...) ---@type boolean|fun(...): boolean
+        if not vim.is_callable(result) then
+          return result
+        end
+        return lsconds.make_condition(result)
+      end)
+    )
   end,
 })
 
@@ -108,13 +129,13 @@ end
 ---@return snip_cond_t
 function M.after_pattern(pattern)
   ---@param matched_trigger string the fully matched trigger
-  return lsconds.make_condition(function(_, matched_trigger)
+  return function(_, matched_trigger)
     return vim.api
       .nvim_get_current_line()
       :sub(1, vim.fn.col('.') - 1)
       :gsub(vim.pesc(matched_trigger) .. '$', '', 1)
       :match(pattern .. '$') ~= nil
-  end)
+  end
 end
 
 ---Returns whether the cursor is at the start of a line
