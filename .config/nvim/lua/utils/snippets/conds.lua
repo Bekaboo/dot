@@ -90,6 +90,30 @@ function M.in_tsnode(type, opts)
   end
 end
 
+---Returns whether current cursor is in the given names of syntax group
+---@param name string|string[]|fun(types: string|string[]): boolean type of node, or function to check node type
+---@param opts? syn_find_group_opts_t
+---@return fun(): boolean
+function M.in_syngroup(name, opts)
+  return function()
+    return utils.syn.find_group(name, opts) ~= nil
+  end
+end
+
+---Returns whether current cursor is in a buffer with given filetype
+---@param ft string|string[]
+---@return fun(): boolean
+function M.in_ft(ft)
+  if type(ft) ~= 'table' then
+    ft = { ft }
+  end
+  return function()
+    return vim.iter(ft):any(function(t)
+      return t == vim.bo.ft
+    end)
+  end
+end
+
 ---Returns whether the cursor is in a normal zone
 ---@return boolean
 function M.in_normalzone()
