@@ -80,9 +80,9 @@ function M.in_codeblock()
   return false
 end
 
----Returns whether current cursor is in a comment
+---Returns whether current cursor is in the given types of treesitter node
 ---@param type string|string[]
----@param opts vim.treesitter.get_node.Opts?
+---@param opts ts_find_node_opts_t?
 ---@return fun(): boolean
 function M.in_tsnode(type, opts)
   return function()
