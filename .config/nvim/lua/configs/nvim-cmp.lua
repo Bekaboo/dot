@@ -237,6 +237,7 @@ local function in_cmd()
     or vim.fn.win_gettype() == 'command'
 end
 
+---@diagnostic disable: missing-fields
 cmp.setup({
   performance = {
     debounce = 0,
@@ -550,6 +551,7 @@ cmp.setup({
     },
   },
 })
+---@diagnostic enable: missing-fields
 
 -- Use buffer source for `/`.
 cmp.setup.cmdline('/', {
@@ -576,6 +578,7 @@ cmp.setup.cmdline('?', {
   },
 })
 
+---@diagnostic disable: missing-fields
 cmp.setup.cmdline(':', {
   enabled = function()
     -- Don't auto complete shell cmd which can be slow and block nvim
@@ -641,6 +644,7 @@ cmp.setup.cmdline(':', {
     },
   },
 })
+---@diagnostic enable: missing-fields
 
 -- cmp does not work with cmdline with type other than `:`, '/', and '?', e.g.
 -- it does not respect the completion option of `input()`/`vim.ui.input()`, see
