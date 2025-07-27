@@ -184,12 +184,15 @@ end
 
 ---Redraw so that the new icon can be shown in statusline
 function M.spinner.redraw()
-  vim.cmd.redrawstatus({
-    bang = true,
-    mods = {
-      emsg_silent = true,
-    },
-  })
+  -- Silent occasional treesitter error on text deletion
+  pcall(function()
+    vim.cmd.redrawstatus({
+      bang = true,
+      mods = {
+        emsg_silent = true,
+      },
+    })
+  end)
 end
 
 ---Attach spinner to buffer
