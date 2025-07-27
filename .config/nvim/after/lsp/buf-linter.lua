@@ -1,6 +1,8 @@
 -- Currently buf's lsp implementation (`buf beta lsp`) is missing some
 -- diagnostics from the linter (`buf lint`), so use efm-langserver to extract
 -- and publish the diagnostics from `buf lint` command
+
+---@type lsp_config_t
 return {
   filetypes = { 'proto' },
   cmd = { 'efm-langserver' },

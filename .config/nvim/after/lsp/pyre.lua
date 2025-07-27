@@ -17,6 +17,7 @@ local root_markers = {
 -- with efm-langserver to avoid scattering untracked watchman config files
 -- everywhere
 if vim.fn.executable('efm-langserver') == 1 then
+  ---@type lsp_config_t
   return {
     filetypes = { 'python' },
     cmd = { 'efm-langserver' },
@@ -41,6 +42,7 @@ if vim.fn.executable('efm-langserver') == 1 then
   }
 end
 
+---@type lsp_config_t
 return {
   filetypes = { 'python' },
   cmd = { 'pyre', 'persistent' },

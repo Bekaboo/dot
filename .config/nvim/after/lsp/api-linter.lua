@@ -1,5 +1,6 @@
 -- Google api-linter, see: https://linter.aip.dev
 
+---@type lsp_config_t
 return {
   filetypes = { 'proto' },
   cmd = { 'efm-langserver' },
