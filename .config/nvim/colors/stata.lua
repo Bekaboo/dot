@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      BSD
--- Last Updated: Sun 27 Jul 2025 10:47:43 AM PDT
+-- Last Updated: Mon 28 Jul 2025 02:19:38 AM PDT
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -348,33 +348,6 @@ local hlgroups = {
   fugitiveUnstagedModifier = { fg = c_warn, bold = true },
   fugitiveUntrackedHeading = { fg = c_other, bold = true },
   fugitiveUntrackedModifier = { fg = c_other, bold = true },
-
-  -- nvim-cmp
-  CmpItemAbbrDeprecated = { fg = c_delimiter, strikethrough = true },
-  CmpItemAbbrMatch = { fg = c_other, bold = true },
-  CmpItemAbbrMatchFuzzy = { link = 'CmpItemAbbrMatch' },
-  CmpItemKindText = { link = 'String' },
-  CmpItemKindMethod = { link = 'Function' },
-  CmpItemKindFunction = { link = 'Function' },
-  CmpItemKindConstructor = { link = 'Function' },
-  CmpItemKindField = { fg = c_variable },
-  CmpItemKindProperty = { link = 'CmpItemKindField' },
-  CmpItemKindVariable = { fg = c_variable, bold = true },
-  CmpItemKindReference = { link = 'CmpItemKindVariable' },
-  CmpItemKindModule = { fg = c_keyword },
-  CmpItemKindEnum = { fg = c_keyword },
-  CmpItemKindEnumMember = { link = 'CmpItemKindEnum' },
-  CmpItemKindKeyword = { link = 'Keyword' },
-  CmpItemKindOperator = { link = 'Operator' },
-  CmpItemKindSnippet = { fg = c_string },
-  CmpItemKindColor = { fg = c_keyword },
-  CmpItemKindConstant = { link = 'Constant' },
-  CmpItemKindCopilot = { fg = c_special },
-  CmpItemKindValue = { link = 'Number' },
-  CmpItemKindClass = { link = 'Type' },
-  CmpItemKindStruct = { link = 'Type' },
-  CmpItemKind = { fg = c_foreground },
-  CmpItemMenu = { link = 'Pmenu' },
 
   -- gitsigns
   GitSignsAdd = { fg = c_string },

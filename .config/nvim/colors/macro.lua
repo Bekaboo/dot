@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Sun 27 Jul 2025 10:47:43 AM PDT
+-- Last Updated: Mon 28 Jul 2025 02:19:38 AM PDT
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -16,12 +16,10 @@ local c_autumnGreen
 local c_autumnRed
 local c_autumnYellow
 local c_carpYellow
-local c_katanaGray
 local c_lotusBlue
 local c_lotusGray
 local c_lotusRed0
 local c_lotusRed1
-local c_lotusRed2
 local c_macroAqua
 local c_macroAsh
 local c_macroBg0
@@ -479,44 +477,6 @@ local hlgroups = {
   -- }}}
 
   -- Plugins {{{2
-  -- nvim-cmp
-  CmpCompletion = { link = 'Pmenu' },
-  CmpCompletionBorder = { bg = c_waveBlue0, fg = c_waveBlue1 },
-  CmpCompletionSbar = { link = 'PmenuSbar' },
-  CmpCompletionSel = { bg = c_waveBlue1, fg = 'NONE' },
-  CmpCompletionThumb = { link = 'PmenuThumb' },
-  CmpDocumentation = { link = 'NormalFloat' },
-  CmpDocumentationBorder = { link = 'FloatBorder' },
-  CmpItemAbbr = { fg = c_macroFg2 },
-  CmpItemAbbrDeprecated = { fg = c_macroAsh, strikethrough = true },
-  CmpItemAbbrMatch = { fg = c_macroRed },
-  CmpItemAbbrMatchFuzzy = { link = 'CmpItemAbbrMatch' },
-  CmpItemKindClass = { link = 'Type' },
-  CmpItemKindConstant = { link = 'Constant' },
-  CmpItemKindConstructor = { link = '@constructor' },
-  CmpItemKindCopilot = { link = 'String' },
-  CmpItemKindDefault = { fg = c_katanaGray },
-  CmpItemKindEnum = { link = 'Type' },
-  CmpItemKindEnumMember = { link = 'Constant' },
-  CmpItemKindField = { link = '@variable.member' },
-  CmpItemKindFile = { link = 'Constant' },
-  CmpItemKindFolder = { link = 'Directory' },
-  CmpItemKindFunction = { link = 'Function' },
-  CmpItemKindInterface = { link = 'Type' },
-  CmpItemKindKeyword = { link = '@keyword' },
-  CmpItemKindMethod = { link = 'Function' },
-  CmpItemKindModule = { link = '@keyword.import' },
-  CmpItemKindOperator = { link = 'Operator' },
-  CmpItemKindProperty = { link = '@property' },
-  CmpItemKindReference = { link = 'Type' },
-  CmpItemKindSnippet = { fg = c_macroTeal },
-  CmpItemKindStruct = { link = 'Type' },
-  CmpItemKindText = { fg = c_macroFg2 },
-  CmpItemKindTypeParameter = { link = 'Type' },
-  CmpItemKindValue = { link = 'String' },
-  CmpItemKindVariable = { fg = c_lotusRed2 },
-  CmpItemMenu = { fg = c_macroAsh },
-
   -- gitsigns
   GitSignsAdd = { fg = c_autumnGreen },
   GitSignsChange = { fg = c_sumiInk6 },

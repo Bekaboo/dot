@@ -322,19 +322,16 @@ local function set_cursor(pos)
   end
 end
 
-local TAB = vim.api.nvim_replace_termcodes('<Tab>', true, true, true)
-local S_TAB = vim.api.nvim_replace_termcodes('<S-Tab>', true, true, true)
-
 ---Get the position to jump for Tab or Shift-Tab, perform the jump if
----there is a position to jump to, otherwise fallback (feedkeys)
+---there is a position to jump to
 ---@param direction 1|-1 1 for tabout, -1 for tabin
+---@return boolean? success
 local function jump(direction)
   local pos = get_jump_pos(direction)
   if pos then
     set_cursor(pos)
-    return
+    return true
   end
-  vim.api.nvim_feedkeys(direction == 1 and TAB or S_TAB, 'nt', false)
 end
 
 ---Init tabout plugin
@@ -345,11 +342,18 @@ local function setup()
   end
   vim.g.loaded_tabout = true
 
-  vim.keymap.set({ 'i', 'c' }, '<Tab>', function()
-    jump(1)
+  local key = require('utils.key')
+
+  key.amend({ 'i', 'c' }, '<Tab>', function(fallback)
+    if not jump(1) then
+      fallback()
+    end
   end, { desc = 'Tab out' })
-  vim.keymap.set({ 'i', 'c' }, '<S-Tab>', function()
-    jump(-1)
+
+  key.amend({ 'i', 'c' }, '<S-Tab>', function(fallback)
+    if not jump(-1) then
+      fallback()
+    end
   end, { desc = 'Tab in' })
 end
 

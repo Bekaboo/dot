@@ -580,15 +580,7 @@ and it should work out of the box.
 - **UI**
     - [nvim-web-devicons](https://github.com/kyazdani42/nvim-web-devicons)
 - **Completion**
-    - [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
-    - [cmp-calc](https://github.com/hrsh7th/cmp-calc)
-    - [cmp-cmdline](https://github.com/hrsh7th/cmp-cmdline)
-    - [cmp-path](https://github.com/hrsh7th/cmp-path)
-    - [cmp-nvim-lsp](https://github.com/hrsh7th/cmp-nvim-lsp)
-    - [cmp-buffer](https://github.com/hrsh7th/cmp-buffer)
-    - [cmp_luasnip](https://github.com/saadparwaiz1/cmp_luasnip)
-    - [cmp-nvim-lsp-signature-help](https://github.com/hrsh7th/cmp-nvim-lsp-signature-help)
-    - [cmp-dap](https://github.com/rcarriga/cmp-dap)
+    - [blink.cmp](https://github.com/Saghen/blink.cmp)
     - [LuaSnip](https://github.com/L3MON4D3/LuaSnip)
 - **Markup**
     - [vimtex](https://github.com/lervag/vimtex)

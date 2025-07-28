@@ -23,10 +23,7 @@ return {
       { '<Leader>GB', desc = 'Set conditional breakpoint' },
       { '<Leader>Gl', desc = 'Set logpoint' },
     },
-    dependencies = {
-      'rcarriga/cmp-dap',
-      'rcarriga/nvim-dap-ui',
-    },
+    dependencies = 'rcarriga/nvim-dap-ui',
     config = function()
       require('configs.nvim-dap')
     end,
