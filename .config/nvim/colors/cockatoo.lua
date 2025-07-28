@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Wed Jul 23 15:49:44 2025
+-- Last Updated: Sun 27 Jul 2025 10:47:43 AM PDT
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -211,6 +211,7 @@ local hlgroups = {
   MatchParen = { bg = c_thunder, bold = true },
   NonText = { fg = c_steel },
   Pmenu = { fg = c_smoke, bg = c_ocean },
+  PmenuExtra = { fg = c_steel },
   PmenuSbar = { bg = c_deepsea },
   PmenuSel = { fg = c_smoke, bg = c_thunder },
   PmenuThumb = { bg = c_orange },

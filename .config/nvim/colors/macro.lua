@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Wed Jul 23 15:49:44 2025
+-- Last Updated: Sun 27 Jul 2025 10:47:43 AM PDT
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -250,6 +250,7 @@ local hlgroups = {
   NormalFloat = { bg = c_macroBg0, fg = c_macroFg1 },
   NormalNC = { link = 'Normal' },
   Pmenu = { bg = c_macroBg3, fg = c_macroFg1 },
+  PmenuExtra = { fg = c_macroAsh },
   PmenuSbar = { bg = c_macroBg4 },
   PmenuSel = { bg = c_macroBg4, fg = 'NONE' },
   PmenuThumb = { bg = c_macroBg5 },
