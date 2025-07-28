@@ -105,15 +105,20 @@ end
 local keycodes = {}
 
 ---Feed keys with repeat
----@param keys string keys to be typed
+---@param keys? string keys to be typed
 ---@param modes string behavior flags, see `feedkeys()`
 ---@param escape_ks boolean if true, escape `K_SPECIAL` bytes in `keys`
 function M.feed(keys, modes, escape_ks)
+  if not keys then
+    return
+  end
+
   local keycode = keycodes[keys]
   if not keycode then
     keycode = vim.keycode(keys)
     keycodes[keys] = keycode
   end
+
   vim.api.nvim_feedkeys(
     vim.v.count > 0 and vim.v.count .. keycode or keycode,
     modes,
