@@ -347,7 +347,7 @@ vim.api.nvim_create_autocmd({ 'BufAdd', 'BufWinEnter', 'BufFilePost' }, {
   -- `bt`, are set for special buffers, for example, terminal buffers
   callback = vim.schedule_wrap(function(args)
     add_buf(args.buf)
-    vim.cmd.redrawstatus({
+    pcall(vim.cmd.redrawstatus, {
       bang = true,
       mods = { emsg_silent = true },
     })
@@ -363,7 +363,7 @@ vim.api.nvim_create_autocmd('OptionSet', {
     -- For some reason, invoking `:redrawstatus` directly makes oil.nvim open
     -- a floating window shortly before opening a file
     vim.schedule(function()
-      vim.cmd.redrawstatus({
+      pcall(vim.cmd.redrawstatus, {
         bang = true,
         mods = { emsg_silent = true },
       })
@@ -549,7 +549,7 @@ vim.api.nvim_create_autocmd('DiagnosticChanged', {
   callback = function(args)
     vim.b[args.buf].diag_cnt_cache = vim.diagnostic.count(args.buf)
     vim.b[args.buf].diag_str_cache = nil
-    vim.cmd.redrawstatus({
+    pcall(vim.cmd.redrawstatus, {
       mods = { emsg_silent = true },
     })
   end,
