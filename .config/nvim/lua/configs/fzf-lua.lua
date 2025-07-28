@@ -61,6 +61,7 @@ function actions.switch_provider()
     query = fzf.config.__resume_data.last_query,
     cwd = fzf.config.__resume_data.opts.cwd,
   }
+  ---@diagnostic disable-next-line: missing-fields
   fzf.builtin({
     actions = {
       ['enter'] = function(selected)
