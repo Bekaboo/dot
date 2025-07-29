@@ -102,8 +102,6 @@ require('blink.cmp').setup({
   },
   ---@type table<string, (blink.cmp.KeymapCommand|fun(cmp: blink.cmp.API): boolean?)[]|false>
   keymap = {
-    ['<C-p>'] = { 'show', 'select_prev', 'fallback' },
-    ['<C-n>'] = { 'show', 'select_next', 'fallback' },
     ['<C-u>'] = { 'scroll_documentation_up', 'fallback' },
     ['<C-d>'] = { 'scroll_documentation_down', 'fallback' },
   },
