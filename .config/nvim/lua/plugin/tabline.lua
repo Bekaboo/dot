@@ -6,13 +6,14 @@ setmetatable(_G._tabline, {
   ---@return string
   __call = function()
     local tabnames = {}
+    local tabids = vim.api.nvim_list_tabpages()
     local tabnrcur = vim.fn.tabpagenr()
 
     -- If tab-local tab name variable is not set but a global tab name variable
     -- exists for that tab, restore the tab-local tab name using the global tab
     -- name variable, this should only happen during or after session load once
     if not vim.g._tabline_name_restored then
-      for tabnr, tabid in ipairs(vim.api.nvim_list_tabpages()) do
+      for tabnr, tabid in ipairs(tabids) do
         local tabname_id = vim.t[tabid]._tabname
         local tabname_nr = vim.g['Tabname' .. tabnr]
         if not tabname_id and tabname_nr then
@@ -25,7 +26,7 @@ setmetatable(_G._tabline, {
     -- Save the tab-local name variable to the corresponding global variable
     -- Tab names are saved in global variables by number instead of id
     -- because tab ids are not preserved across sessions
-    for tabnr, tabid in ipairs(vim.api.nvim_list_tabpages()) do
+    for tabnr, tabid in ipairs(tabids) do
       if vim.g._tabline_name_restored then
         vim.g['Tabname' .. tabnr] = vim.t[tabid]._tabname
       end
@@ -33,7 +34,7 @@ setmetatable(_G._tabline, {
 
     local leftpad, rightpad = ' ', ' '
 
-    for tabnr, tabid in ipairs(vim.api.nvim_list_tabpages()) do
+    for tabnr, tabid in ipairs(tabids) do
       table.insert(
         tabnames,
         string.format(
