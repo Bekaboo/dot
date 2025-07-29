@@ -27,9 +27,7 @@ end
 
 require('blink.cmp').setup({
   enabled = function()
-    return not vim.b.bigfile
-      and vim.fn.reg_recording() == ''
-      and vim.fn.reg_executing() == ''
+    return vim.fn.reg_recording() == '' and vim.fn.reg_executing() == ''
   end,
   completion = {
     list = {
