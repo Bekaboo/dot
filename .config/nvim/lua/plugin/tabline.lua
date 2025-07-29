@@ -5,8 +5,6 @@ _G._tabline = {}
 setmetatable(_G._tabline, {
   ---@return string
   __call = function()
-    local tabnames = {}
-    local tabidcur = vim.api.nvim_get_current_tabpage()
     -- If tab-local tab name variable is not set but a global tab name variable
     -- exists for that tab, restore the tab-local tab name using the global tab
     -- name variable, this should only happen during or after session load once
@@ -20,6 +18,10 @@ setmetatable(_G._tabline, {
       end
       vim.g._tabline_name_restored = true
     end
+
+    local tabnames = {} ---@type string[] Tabpage display names
+    local tabpositions = { [0] = 0 } ---@type integer[] End position of tabpages
+
     for tabnr, tabid in ipairs(vim.api.nvim_list_tabpages()) do
       -- Save the tab-local name variable to the corresponding global variable
       -- Tab names are saved in global variables by number instead of id
@@ -27,22 +29,70 @@ setmetatable(_G._tabline, {
       if vim.g._tabline_name_restored then
         vim.g['Tabname' .. tabnr] = vim.t[tabid]._tabname
       end
+      local tabname = string.format(
+        ' %s ',
+        vim.t[tabid]._tabname
+          or vim.fs.basename(
+            vim.fn.getcwd(vim.api.nvim_tabpage_get_win(tabid), tabnr)
+          )
+      )
+      table.insert(tabnames, tabname)
       table.insert(
-        tabnames,
-        utils.stl.hl(
-          string.format(
-            '%%%dT %s %%X',
-            tabnr,
-            vim.t[tabid]._tabname
-              or vim.fs.basename(
-                vim.fn.getcwd(vim.api.nvim_tabpage_get_win(tabid), tabnr)
-              )
-          ),
-          tabid == tabidcur and 'TabLineSel' or 'TabLine'
-        )
+        tabpositions,
+        tabpositions[tabnr - 1] + vim.fn.strdisplaywidth(tabname)
       )
     end
-    return table.concat(tabnames)
+
+    -- Check if current tabpage is visible, if not we need to truncate other
+    -- tabpages to ensure visibility of current tabpage:
+    -- |    1     |  2  |   3   |    4    |
+    --               <----- visible ------>
+    local tabnrcur = vim.fn.tabpagenr()
+    local tabcount = #tabpositions
+    local tablinewidth = tabpositions[tabcount]
+    local offset = tablinewidth - vim.go.columns - tabpositions[tabnrcur - 1]
+
+    -- Current tabpage's start position exceeds left bound, truncate
+    if offset > 0 then
+      local tablinemaxwidth = tablinewidth - offset
+
+      for tabnr = tabcount, 1, -1 do
+        local tabstart = tabpositions[tabnr - 1]
+        local tabend = tabpositions[tabnr]
+
+        -- Tabpage end position below max width, no more tabpage needs to be
+        -- truncated
+        if tabend <= tablinemaxwidth then
+          break
+        end
+
+        -- Tabpage start position is below max width but end position beyond
+        -- max width, truncate tabpage
+        -- This also indicates that no more tabpages needs to be truncated
+        if tabend > tablinemaxwidth then
+          tabnames[tabnr] =
+            vim.fn.strcharpart(tabnames[tabnr], 1, tabend - tabstart - offset)
+          break
+        end
+
+        -- Tabpage start position beyond max width, discard whole tabpage in
+        -- tabline
+        if tabstart >= tablinemaxwidth then
+          table.remove(tabnames, tabnr)
+        end
+      end
+    end
+
+    -- Return colored tabnames
+    return vim
+      .iter(ipairs(tabnames))
+      :map(function(tabnr, tabname)
+        return utils.stl.hl(
+          string.format('%%%dT%s%%X', tabnr, tabname),
+          tabnr == tabnrcur and 'TabLineSel' or 'TabLine'
+        )
+      end)
+      :join('')
   end,
 })
 
