@@ -90,7 +90,7 @@ local function cmd(cb)
   end
 end
 
----@param opts aider_opts_t
+---@param opts? aider_opts_t
 function M.setup(opts)
   if vim.g.loaded_aider ~= nil then
     return
