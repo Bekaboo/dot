@@ -13,12 +13,6 @@ _k_friendly_name=Keyboard Layout Switcher
 Toggle Screen Reader On and Off=Meta+Alt+S,Meta+Alt+S,Toggle Screen Reader On and Off
 _k_friendly_name=Accessibility
 
-[kcm_touchpad]
-Disable Touchpad=Touchpad Off,Touchpad Off,Disable Touchpad
-Enable Touchpad=Touchpad On,Touchpad On,Enable Touchpad
-Toggle Touchpad=Touchpad Toggle,Touchpad Toggle\tTouchpad Toggle\tMeta+Ctrl+Touchpad Toggle\tMeta+Ctrl+Zenkaku Hankaku,Toggle Touchpad
-_k_friendly_name=Touchpad
-
 [kmix]
 _k_friendly_name=Audio Volume
 decrease_microphone_volume=Microphone Volume Down,Microphone Volume Down,Decrease Microphone Volume
@@ -127,7 +121,7 @@ KrohnkiteStackedLayout=Meta+Alt+Shift+S,none,Krohnkite: Stacked Layout
 KrohnkiteStairLayout=Meta+Alt+Shift+L,none,Krohnkite: Stair Layout
 KrohnkiteTileLayout=Meta+Alt+Shift+T,none,Krohnkite: Tile Layout
 KrohnkiteToggleFloat=Meta+F\tMeta+Alt+F,none,Krohnkite: Toggle Float
-KrohnkiteTreeColumnLayout=Meta+Alt+Shift+3,none,Krohnkite: Tree Column Layout
+KrohnkiteTreeColumnLayout=Meta+Alt+Shift+3,none,Krohnkite: Three Column Layout
 KrohnkitegrowWidth=Meta+Alt+>\tMeta+Alt+Right\tMeta+Alt+L\tMeta+Alt+.,none,Krohnkite: Grow Width
 KrohnkitetoggleDock=none,none,Krohnkite: Toggle Dock
 MinimizeAll=none,none,MinimizeAll
@@ -360,7 +354,7 @@ clipboard_action=none,Meta+Ctrl+X,Automatic Action Popup Menu
 cycle-panels=Meta+Alt+P,Meta+Alt+P,Move keyboard focus between panels
 cycleNextAction=none,,Next History Item
 cyclePrevAction=none,,Previous History Item
-edit_clipboard=none,none,Edit Contents…
+edit_clipboard=none,,Edit Contents…
 manage activities=Meta+Q,Meta+Q,Show Activity Switcher
 next activity=none,none,Walk through activities
 previous activity=Meta+Shift+A,none,Walk through activities (Reverse)
