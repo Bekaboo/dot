@@ -102,6 +102,11 @@ require('blink.cmp').setup({
   keymap = {
     ['<C-u>'] = { 'scroll_documentation_up', 'fallback' },
     ['<C-d>'] = { 'scroll_documentation_down', 'fallback' },
+    -- Managed by snippet config and tabout plugin, see
+    -- - `lua/configs/luasnip.lua`
+    -- - `lua/plugin/tabout.lua`
+    ['<Tab>'] = false,
+    ['<S-Tab>'] = false,
   },
   signature = {
     enabled = true,
