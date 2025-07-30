@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Mon 28 Jul 2025 02:19:38 AM PDT
+-- Last Updated: Wed Jul 30 13:28:28 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -52,7 +52,6 @@ local c_sumiInk6
 local c_waveAqua0
 local c_waveAqua1
 local c_waveBlue0
-local c_waveBlue1
 local c_waveRed
 local c_winterBlue
 local c_winterGreen
@@ -64,12 +63,10 @@ if vim.go.bg == 'dark' then
     c_autumnRed    = { '#c34043', 203 }
     c_autumnYellow = { '#dca561', 179 }
     c_carpYellow   = { '#c8ae81', 180 }
-    c_katanaGray   = { '#717c7c', 243 }
     c_lotusBlue    = { '#9fb5c9', 110 }
     c_lotusGray    = { '#716e61', 242 }
     c_lotusRed0    = { '#d7474b', 203 }
     c_lotusRed1    = { '#e84444', 203 }
-    c_lotusRed2    = { '#d9a594', 174 }
     c_macroAqua    = { '#95aeac', 109 }
     c_macroAsh     = { '#626462', 241 }
     c_macroBg0     = { '#0d0c0c', 232 }
@@ -102,7 +99,6 @@ if vim.go.bg == 'dark' then
     c_waveAqua0    = { '#6a9589', 66  }
     c_waveAqua1    = { '#7aa89f', 108 }
     c_waveBlue0    = { '#223249', 237 }
-    c_waveBlue1    = { '#2d4f67', 24  }
     c_waveRed      = { '#e46876', 204 }
     c_winterBlue   = { '#252535', 235 }
     c_winterGreen  = { '#2e322d', 236 }
@@ -113,12 +109,10 @@ if vim.go.bg == 'dark' then
     c_autumnRed    = { '#b73242', 131 }
     c_autumnYellow = { '#a0713c', 130 }
     c_carpYellow   = { '#debe97', 180 }
-    c_katanaGray   = { '#717c7c', 243 }
     c_lotusBlue    = { '#9fb5c9', 110 }
     c_lotusGray    = { '#716e61', 242 }
     c_lotusRed0    = { '#d7474b', 203 }
     c_lotusRed1    = { '#e84444', 203 }
-    c_lotusRed2    = { '#d9a594', 174 }
     c_macroAqua    = { '#586e62', 65  }
     c_macroAsh     = { '#a0a0a0', 247 }
     c_macroBg0     = { '#f6f6f6', 255 }
@@ -151,7 +145,6 @@ if vim.go.bg == 'dark' then
     c_waveAqua0    = { '#69827b', 66  }
     c_waveAqua1    = { '#7aa89f', 108 }
     c_waveBlue0    = { '#223249', 237 }
-    c_waveBlue1    = { '#2d4f67', 24  }
     c_waveRed      = { '#e46876', 204 }
     c_winterBlue   = { '#d4d4f0', 189 }
     c_winterGreen  = { '#d5dcd2', 188 }
