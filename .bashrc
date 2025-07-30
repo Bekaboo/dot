@@ -176,6 +176,20 @@ dot config --local remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
 dot config --local core.worktree "$HOME"
 dot config --local status.showUntrackedFiles no
 
+# Prevent accidental commit without pre-commit hooks
+declare -r precommit_hook="$HOME/.dot/hooks/pre-commit"
+if [[ ! -e "$precommit_hook" ]]; then
+    echo "#!/usr/bin/env sh
+if [ -e \"$precommit_hook\" ] && [ \"\$0\" != \"$precommit_hook\" ]; then
+    exit 0
+fi
+echo '\`pre-commit\` not installed, you should:'
+echo '1. Install \`pre-commit\` command following https://pre-commit.com/'
+echo '2. Enable it in dot repo with \`GIT_DIR=\"\$HOME/.dot\" GIT_WORK_TREE=\"\$HOME\" pre-commit install -f\`'
+exit 1" >"$precommit_hook"
+    chmod +x "$precommit_hook"
+fi
+
 # Complete `dot` command with `git` subcommands, also fix git completion on macOS
 for git_cmp in \
     /usr/share/bash-completion/completions/git \
