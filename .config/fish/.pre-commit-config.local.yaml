@@ -1,0 +1,16 @@
+# vim:ft=yaml:sw=2:sts=2:
+
+repos:
+  - repo: local
+    hooks:
+      - id: fish-lint
+        name: Fish lint
+        entry: fish --no-execute
+        language: system
+        types: [fish]
+
+      - id: fish-format
+        name: Fish format
+        entry: fish_indent -w
+        language: system
+        types: [fish]

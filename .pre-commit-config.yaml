@@ -1,0 +1,50 @@
+#vim:ft=yaml:sw=2:sts=2:
+
+repos:
+  # Prevent secret leak in commits
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.2
+    hooks:
+      - id: gitleaks
+
+  # Dotfiles repo can be considered as a monorepo, sub-configs can have their
+  # own pre-commit configs in corresponding sub-directories
+  #
+  # Pre-commit config file in sub-dirs must not be named with
+  # `.pre-commit-config`, else pre-commit will fail with
+  # 'Your pre-commit configuration is unstaged.'
+  - repo: local
+    hooks:
+      - id: .config/nvim
+        name: Hooks for neovim config
+        entry: sh -c 'cd .config/nvim && pre-commit run -c .pre-commit-config.local.yaml && cd -'
+        language: system
+        files: ^\.config/nvim/
+        verbose: true
+
+      - id: .config/fish
+        name: Hooks for fish config
+        entry: sh -c 'cd .config/fish && pre-commit run -c .pre-commit-config.local.yaml && cd -'
+        language: system
+        files: ^\.config/fish/
+        verbose: true
+
+      - id: .bin
+        name: Hooks for sh scripts under .bin
+        entry: sh -c 'cd .bin && pre-commit run -c .pre-commit-config.local.yaml && cd -'
+        language: system
+        files: ^\.bin/
+        verbose: true
+
+      # Lint and format shell scripts under home directory
+      - id: sh-format
+        name: Shell script format
+        entry: shfmt -w
+        language: system
+        types: [shell]
+
+      - id: sh-lint
+        name: Shell script lint
+        entry: shellcheck
+        language: system
+        types: [shell]
