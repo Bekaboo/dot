@@ -187,7 +187,7 @@ require('blink.cmp').setup({
           end
           return out
         end,
-     },
+      },
     },
   },
 })

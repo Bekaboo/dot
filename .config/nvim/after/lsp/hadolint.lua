@@ -20,7 +20,7 @@ return {
           lintStdin = false,
           lintOffset = -1,
           lintAfterOpen = true,
-        }
+        },
       },
     },
   },
