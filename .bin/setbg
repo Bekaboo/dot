@@ -53,6 +53,7 @@ setbg_kitty() {
     # $1: 'light' or 'dark'
     (
         cd "$CONFIG_HOME/kitty" || return
+
         no_preference_theme_path="no-preference-theme.auto.conf"
         current_theme_path="current-theme.conf"
         # Kitty changes its theme automatically w.r.t.
@@ -65,6 +66,11 @@ setbg_kitty() {
             ln -sf "$1-theme.auto.conf" "$no_preference_theme_path"
             ln -sf "$1-theme.auto.conf" "$current_theme_path"
         fi
+
+        # Touch main theme files for kitty to pick up the changes
+        touch "$no_preference_theme_path"
+        touch "$current_theme_path"
+
         if has kitty; then
             for pid in $(pgrep kitty); do
                 # Don't use `kill -SIGUSR1`, will cause error: 'kill: SIGUSR1: invalid signal specification'
