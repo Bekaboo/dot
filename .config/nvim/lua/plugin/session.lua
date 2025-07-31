@@ -167,16 +167,19 @@ end
 
 ---Load current session
 ---@param session? string path to session file to load from
-function M.load(session)
+---@param notify? boolean
+function M.load(session, notify)
   if not session then
     session = M.get()
   end
 
   if not vim.uv.fs_stat(session) then
-    vim.notify(
-      string.format("[session] session '%s' does not exist", session),
-      vim.log.levels.WARN
-    )
+    if notify then
+      vim.notify(
+        string.format("[session] session '%s' does not exist", session),
+        vim.log.levels.WARN
+      )
+    end
     return
   end
 
@@ -248,7 +251,8 @@ function M.no_auto(cb)
 end
 
 ---Interactively select and load a session file using `vim.ui.select()`
-function M.select()
+---@param notify? boolean
+function M.select(notify)
   M.no_auto(function(finish)
     vim.ui.select(M.list(), {
       prompt = 'Load session: ',
@@ -257,7 +261,7 @@ function M.select()
       end,
     }, function(choice)
       if choice then
-        M.load(choice)
+        M.load(choice, notify)
       end
       finish()
     end)
@@ -362,7 +366,7 @@ function M.setup(opts)
           and not vim.g._session_disabled
           and vim.deep_equal(vim.v.argv, { 'nvim', '--embed' })
         then
-          M.load()
+          M.load(nil, true)
         end
       end,
     })
@@ -381,11 +385,17 @@ function M.setup(opts)
   end
 
   -- Create user commands
-  vim.api.nvim_create_user_command('SessionLoad', cmd(M.load), {
-    desc = 'Load session.',
-    nargs = '?',
-    complete = cmp,
-  })
+  vim.api.nvim_create_user_command(
+    'SessionLoad',
+    cmd(function(path)
+      M.load(path, true)
+    end),
+    {
+      desc = 'Load session.',
+      nargs = '?',
+      complete = cmp,
+    }
+  )
 
   vim.api.nvim_create_user_command(
     'SessionSave',
@@ -417,7 +427,9 @@ function M.setup(opts)
     complete = cmp,
   })
 
-  vim.api.nvim_create_user_command('SessionSelect', M.select, {
+  vim.api.nvim_create_user_command('SessionSelect', function()
+    M.select(true)
+  end, {
     desc = 'Interactively select and load session.',
   })
 end

@@ -202,8 +202,8 @@ end
 -- session
 if vim.g.loaded_session == nil then
   -- stylua: ignore start
-  vim.keymap.set('n', '<Leader>w', function() require('plugin.session').select() end, { desc = 'Load session (workspace) interactively' })
-  vim.keymap.set('n', '<Leader>W', function() require('plugin.session').load() end, { desc = 'Load session (workspace) for cwd' })
+  vim.keymap.set('n', '<Leader>w', function() require('plugin.session').select(true) end, { desc = 'Load session (workspace) interactively' })
+  vim.keymap.set('n', '<Leader>W', function() require('plugin.session').load(nil, true) end, { desc = 'Load session (workspace) for cwd' })
   -- stylua: ignore end
 
   local opts = {

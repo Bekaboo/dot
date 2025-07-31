@@ -556,7 +556,9 @@ function fzf.sessions(opts)
   end
 
   -- Register action descriptions
-  actions.load_session = action(session.load)
+  actions.load_session = action(function(p)
+    session.load(p, true)
+  end)
   core.ACTION_DEFINITIONS[actions.load_session] = { 'load session' }
   config._action_to_helpstr[actions.load_session] = 'load-session'
 
