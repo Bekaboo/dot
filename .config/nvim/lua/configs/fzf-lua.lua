@@ -1,3 +1,8 @@
+if vim.fn.executable('fzf') == 0 then
+  vim.notify('[Fzf-lua] command `fzf` not found', vim.log.levels.ERROR)
+  return
+end
+
 local fzf = require('fzf-lua')
 local actions = require('fzf-lua.actions')
 local core = require('fzf-lua.core')
