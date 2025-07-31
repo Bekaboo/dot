@@ -327,6 +327,57 @@ function actions.insert_register(...)
   vim.api.nvim_feedkeys('a', 'n', true)
 end
 
+---Check if fugitive `:Gedit` command exists
+---@param notify? boolean whether to notify user when command does not exist
+---@return boolean
+local function has_fugitive_gedit_cmd(notify)
+  if vim.fn.exists(':Gedit') == 2 then
+    return true
+  end
+  if notify then
+    vim.notify(
+      '[Fzf-lua] command `:Gedit` does not exist',
+      vim.log.levels.WARN
+    )
+  end
+  return false
+end
+
+---Edit a git commit object with vim-fugitive
+function actions.fugitive_edit(selected)
+  if not has_fugitive_gedit_cmd(true) or not selected[1] then
+    return
+  end
+  vim.cmd.Gedit(selected[1]:match('^%x+'))
+end
+
+---Edit a git commit object in horizontal split with vim-fugitive
+function actions.fugitive_split(selected)
+  if not has_fugitive_gedit_cmd(true) then
+    return
+  end
+  vim.cmd.split()
+  actions.fugitive_edit(selected)
+end
+
+---Edit a git commit object in vertical split with vim-fugitive
+function actions.fugitive_vsplit(selected)
+  if not has_fugitive_gedit_cmd(true) then
+    return
+  end
+  vim.cmd.vsplit()
+  actions.fugitive_edit(selected)
+end
+
+---Edit a git commit object in vertical split with vim-fugitive
+function actions.fugitive_tabedit(selected)
+  if not has_fugitive_gedit_cmd(true) then
+    return
+  end
+  vim.cmd.tabnew()
+  actions.fugitive_edit(selected)
+end
+
 core.ACTION_DEFINITIONS[actions.toggle_dir] = {
   function(o)
     -- When using `fd` the flag is '--type d', but for `find` the flag is
@@ -365,6 +416,10 @@ config._action_to_helpstr[actions.buf_edit_or_qf] = 'buffer-edit-or-qf'
 config._action_to_helpstr[actions.buf_sel_to_qf] = 'buffer-select-to-quickfix'
 config._action_to_helpstr[actions.buf_sel_to_ll] = 'buffer-select-to-loclist'
 config._action_to_helpstr[actions.insert_register] = 'insert-register'
+config._action_to_helpstr[actions.fugitive_edit] = 'fugitive-edit'
+config._action_to_helpstr[actions.fugitive_split] = 'fugitive-split'
+config._action_to_helpstr[actions.fugitive_vsplit] = 'fugitive-vsplit'
+config._action_to_helpstr[actions.fugitive_tabedit] = 'fugitive-tabedit'
 
 -- Use different prompts for document and workspace diagnostics
 -- by overriding `fzf.diagnostics_workspace()` and `fzf.diagnostics_document()`
@@ -847,23 +902,27 @@ fzf.setup({
   git = {
     commits = {
       prompt = 'GitLogs>',
-      actions = {
-        ['enter'] = actions.git_buf_edit,
-        ['alt-s'] = actions.git_buf_split,
-        ['alt-v'] = actions.git_buf_vsplit,
-        ['alt-t'] = actions.git_buf_tabedit,
-        ['ctrl-y'] = { fn = actions.git_yank_commit, exec_silent = true },
-      },
+      actions = has_fugitive_gedit_cmd()
+          and {
+            ['enter'] = actions.fugitive_edit,
+            ['alt-s'] = actions.fugitive_split,
+            ['alt-v'] = actions.fugitive_vsplit,
+            ['alt-t'] = actions.fugitive_tabedit,
+            ['ctrl-y'] = { fn = actions.git_yank_commit, exec_silent = true },
+          }
+        or nil,
     },
     bcommits = {
       prompt = 'GitBLogs>',
-      actions = {
-        ['enter'] = actions.git_buf_edit,
-        ['alt-s'] = actions.git_buf_split,
-        ['alt-v'] = actions.git_buf_vsplit,
-        ['alt-t'] = actions.git_buf_tabedit,
-        ['ctrl-y'] = { fn = actions.git_yank_commit, exec_silent = true },
-      },
+      actions = has_fugitive_gedit_cmd()
+          and {
+            ['enter'] = actions.fugitive_edit,
+            ['alt-s'] = actions.fugitive_split,
+            ['alt-v'] = actions.fugitive_vsplit,
+            ['alt-t'] = actions.fugitive_tabedit,
+            ['ctrl-y'] = { fn = actions.git_yank_commit, exec_silent = true },
+          }
+        or nil,
     },
     blame = {
       actions = {
