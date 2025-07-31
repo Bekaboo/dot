@@ -3,7 +3,7 @@ function __pyenv \
     --on-variable PWD \
     --description 'Automatically init pyenv'
     # Early return if `pyenv` is not available or is already initialized
-    if not type -q pyenv; or set -q PYENV_SHELL
+    if not type -q pyenv
         return
     end
 
@@ -22,7 +22,9 @@ function __pyenv \
     if test -n "$PYENV_VERSION"
         or test -f "$PYENV_ROOT/version"
         or test -f "$HOME/.pyenv/version"
-        pyenv init - fish | source
+        # Erase self because pyenv will automatically detect and activate
+        # global/local python version settings after initialization
+        pyenv init - fish | source; and functions -e __pyenv
         return
     end
 
@@ -30,7 +32,7 @@ function __pyenv \
     set -l path $PWD
     while test $path != (dirname $path)
         if test -f "$path/.python-version"
-            pyenv init - fish | source
+            pyenv init - fish | source; and functions -e __pyenv
             return
         end
         set path (dirname $path)
