@@ -107,6 +107,8 @@ require('blink.cmp').setup({
     -- - `lua/plugin/tabout.lua`
     ['<Tab>'] = false,
     ['<S-Tab>'] = false,
+    -- Conflict with readline's keymap, see `lua/plugin/readline.lua`
+    ['<C-k>'] = false,
   },
   signature = {
     enabled = true,
