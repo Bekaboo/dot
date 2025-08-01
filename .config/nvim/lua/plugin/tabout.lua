@@ -171,6 +171,19 @@ local function get_line()
     or vim.api.nvim_get_current_line()
 end
 
+---@param text string text to find patterns in
+---@return number?
+local function get_tabout_offset(text)
+  local min_offset ---@type number?
+  for _, pattern in ipairs(closing_patterns[vim.bo.ft]) do
+    local _, offset = text:find('%s*' .. pattern)
+    if offset then
+      min_offset = min_offset and math.min(min_offset, offset) or offset
+    end
+  end
+  return min_offset
+end
+
 ---Getting the jump position for Tab
 ---@return number[]? cursor position after jump; nil if no jump
 local function get_tabout_pos()
@@ -179,34 +192,51 @@ local function get_tabout_pos()
   local trailing = current_line:sub(cursor[2] + 1, -1)
   local leading = current_line:sub(1, cursor[2])
 
-  -- Do not jump if the cursor is at the beginning/end of the current line
-  if leading:match('^%s*$') or trailing == '' then
+  -- Do not jump if the cursor is at the beginning of the current line
+  if leading:match('^%s*$') then
     return
   end
 
-  local nearest_jump_offset ---@type number?
-  for _, pattern in ipairs(closing_patterns[vim.bo.ft]) do
-    local _, jump_offset = trailing:find('%s*' .. pattern)
-    if jump_offset then
-      nearest_jump_offset = nearest_jump_offset
-          and math.min(nearest_jump_offset, jump_offset)
-        or jump_offset
-    end
-  end
-
-  if nearest_jump_offset then
+  local offset = get_tabout_offset(trailing)
+  if offset then
     return {
       cursor[1],
-      cursor[2] + nearest_jump_offset,
+      cursor[2] + offset,
     }
   end
 
-  -- Jump to the end of the line if not closing pattern is found
+  -- Jump to the end of the line if no closing pattern is found and not already
+  -- at end of line
   if trailing ~= '' then
     return {
       cursor[1],
       slen(current_line),
     }
+  end
+
+  -- If already at end of line, find opening closing patterns in lines below
+  -- cursor, this is useful to jump out curly braces that takes a seprate lien
+  -- in C-style languages, e.g.
+  --
+  -- int my_func(void) {
+  --   ...|
+  -- } <- jump to here
+  local next_nonblank_linenr = vim.fn.nextnonblank(cursor[1] + 1) -- 1-based line number
+  if next_nonblank_linenr > 0 then
+    local next_nonblank_offset = get_tabout_offset(
+      vim.api.nvim_buf_get_lines(
+        0,
+        next_nonblank_linenr - 1,
+        next_nonblank_linenr,
+        false
+      )[1]
+    )
+    if next_nonblank_offset then
+      return {
+        next_nonblank_linenr,
+        next_nonblank_offset,
+      }
+    end
   end
 end
 
@@ -286,11 +316,29 @@ local function get_tabin_pos()
     }
   end
 
-  -- Jump to the beginning of the line if no closing pattern is found
+  -- Jump to the beginning of the line if no closing pattern is found and not
+  -- already at beginning of line
   if leading ~= '' then
     return {
       cursor[1],
       0,
+    }
+  end
+
+  -- If already at beginning of line, jump to the end of previous non-blank
+  -- line
+  local prev_nonblank_linenr = vim.fn.prevnonblank(cursor[1] - 1)
+  if prev_nonblank_linenr > 0 then
+    return {
+      prev_nonblank_linenr,
+      slen(
+        vim.api.nvim_buf_get_lines(
+          0,
+          prev_nonblank_linenr - 1,
+          prev_nonblank_linenr,
+          false
+        )[1]
+      ),
     }
   end
 end
