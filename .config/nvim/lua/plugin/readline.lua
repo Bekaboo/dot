@@ -1,10 +1,9 @@
 local M = {}
 
-local regex_keyword_at_beginning = vim.regex([=[^\s*[[:keyword:]]*]=])
-local regex_nonkeyword_at_beginning =
-  vim.regex([=[^\s*[^[:keyword:][:space:]]*]=])
-local regex_keyword_at_end = vim.regex([=[[[:keyword:]]*\s*$]=])
-local regex_nonkeyword_at_end = vim.regex([=[[^[:keyword:][:space:]]*\s*$]=])
+local REGEX_KW_START = vim.regex([=[^\s*[[:keyword:]]*]=])
+local REGEX_KW_END = vim.regex([=[[[:keyword:]]*\s*$]=])
+local REGEX_NONKW_START = vim.regex([=[^\s*[^[:keyword:][:space:]]*]=])
+local REGEX_NONKW_END = vim.regex([=[[^[:keyword:][:space:]]*\s*$]=])
 
 ---Check if string is empty
 ---@param str string
@@ -52,8 +51,8 @@ local function get_word_after(str, colnr)
   colnr = colnr or get_current_col()
   return match_nonempty(
     str:sub(colnr),
-    regex_keyword_at_beginning,
-    regex_nonkeyword_at_beginning
+    REGEX_KW_START,
+    REGEX_NONKW_START
   )
 end
 
@@ -66,8 +65,8 @@ local function get_word_before(str, colnr)
   colnr = colnr or get_current_col() - 1
   return match_nonempty(
     str:sub(1, colnr),
-    regex_keyword_at_end,
-    regex_nonkeyword_at_end
+    REGEX_KW_END,
+    REGEX_NONKW_END
   )
 end
 
