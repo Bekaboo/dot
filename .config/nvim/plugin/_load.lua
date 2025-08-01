@@ -206,48 +206,34 @@ if vim.g.loaded_session == nil then
   vim.keymap.set('n', '<Leader>W', function() require('plugin.session').load(nil, true) end, { desc = 'Load session (workspace) for cwd' })
   -- stylua: ignore end
 
-  -- Setup session plugin and load session automatically on startup if nvim is
-  -- launched inside a sub-directory under `~/code`
-  if
-    require('utils.fs').contains(
-      vim.fs.joinpath(vim.uv.os_homedir(), 'code'),
-      vim.uv.cwd() --[[@as string]],
-      true
-    )
-  then
-    ---@diagnostic disable-next-line: missing-fields
-    require('plugin.session').setup({
-      autoremove = { enabled = false },
-    })
-  else
-    local opts = {
-      desc = 'Init session plugin.',
-      group = vim.api.nvim_create_augroup('SessionSetup', {}),
-      once = true,
-      callback = function()
-        if vim.g.loaded_session ~= nil then
-          return
-        end
-        ---@diagnostic disable-next-line: missing-fields
-        require('plugin.session').setup({
-          autoload = { enabled = false },
-          autoremove = { enabled = false },
-        })
-      end,
-    }
+  local opts = {
+    desc = 'Init session plugin.',
+    group = vim.api.nvim_create_augroup('SessionSetup', {}),
+    once = true,
+    callback = function()
+      if vim.g.loaded_session ~= nil then
+        return
+      end
 
-    vim.api.nvim_create_autocmd('CmdlineEnter', opts)
-    vim.api.nvim_create_autocmd(
-      'UIEnter',
-      vim.tbl_deep_extend('force', opts, {
-        callback = vim.schedule_wrap(opts.callback),
+      ---@diagnostic disable-next-line: missing-fields
+      require('plugin.session').setup({
+        autoload = { enabled = false },
+        autoremove = { enabled = false },
       })
-    )
-    vim.api.nvim_create_autocmd(
-      'CmdUndefined',
-      vim.tbl_deep_extend('force', opts, {
-        pattern = { 'Session*', 'Mksession' },
-      })
-    )
-  end
+    end,
+  }
+
+  vim.api.nvim_create_autocmd('CmdlineEnter', opts)
+  vim.api.nvim_create_autocmd(
+    'UIEnter',
+    vim.tbl_deep_extend('force', opts, {
+      callback = vim.schedule_wrap(opts.callback),
+    })
+  )
+  vim.api.nvim_create_autocmd(
+    'CmdUndefined',
+    vim.tbl_deep_extend('force', opts, {
+      pattern = { 'Session*', 'Mksession' },
+    })
+  )
 end
