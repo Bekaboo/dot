@@ -49,11 +49,7 @@ end
 local function get_word_after(str, colnr)
   str = str or get_current_line()
   colnr = colnr or get_current_col()
-  return match_nonempty(
-    str:sub(colnr),
-    REGEX_KW_START,
-    REGEX_NONKW_START
-  )
+  return match_nonempty(str:sub(colnr), REGEX_KW_START, REGEX_NONKW_START)
 end
 
 ---Get word before cursor
@@ -63,11 +59,7 @@ end
 local function get_word_before(str, colnr)
   str = str or get_current_line()
   colnr = colnr or get_current_col() - 1
-  return match_nonempty(
-    str:sub(1, colnr),
-    REGEX_KW_END,
-    REGEX_NONKW_END
-  )
+  return match_nonempty(str:sub(1, colnr), REGEX_KW_END, REGEX_NONKW_END)
 end
 
 ---Check if current line is the last line
