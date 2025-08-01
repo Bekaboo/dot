@@ -366,7 +366,7 @@ function M.setup(opts)
           and not vim.g._session_disabled
           and vim.deep_equal(vim.v.argv, { 'nvim', '--embed' })
         then
-          M.load(nil, true)
+          M.load()
         end
       end,
     })
