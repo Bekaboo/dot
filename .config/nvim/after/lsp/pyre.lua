@@ -29,7 +29,7 @@ if vim.fn.executable('efm-langserver') == 1 then
           {
             lintSource = 'pyre',
             lintCommand = 'pyre',
-            lintFormats = { '%f:%l:%c %m' },
+            lintFormats = { '%f:%l:%c %.%#[%n]: %m' },
             lintStdin = false,
             lintWorkSpace = true,
             lintOffsetColumns = 1,
