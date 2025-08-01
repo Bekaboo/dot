@@ -24,7 +24,10 @@ function __pyenv \
         or test -f "$HOME/.pyenv/version"
         # Erase self because pyenv will automatically detect and activate
         # global/local python version settings after initialization
-        pyenv init - fish | source; and functions -e __pyenv
+        #
+        # Silent 'pyenv: cannot rehash: <HOME>/.pyenv/shims/.pyenv-shim exists'
+        # error
+        pyenv init - fish | source &>/dev/null; and functions -e __pyenv
         return
     end
 
@@ -32,7 +35,7 @@ function __pyenv \
     set -l path $PWD
     while test $path != (dirname $path)
         if test -f "$path/.python-version"
-            pyenv init - fish | source; and functions -e __pyenv
+            pyenv init - fish | source &>/dev/null; and functions -e __pyenv
             return
         end
         set path (dirname $path)
