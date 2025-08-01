@@ -125,11 +125,11 @@ require('blink.cmp').setup({
     },
     providers = {
       lsp = {
-        -- Don't wait for LSP completions before showing buffer completions
+        -- Don't wait for LSP completions for a long time before fallback to
+        -- buffer completions
         -- - https://github.com/Saghen/blink.cmp/issues/2042
         -- - https://cmp.saghen.dev/configuration/sources.html#show-buffer-completions-with-lsp
-        async = true,
-        fallbacks = {},
+        timeout_ms = 500,
       },
       cmdline = {
         -- Don't complete left parenthesis when calling functions or
