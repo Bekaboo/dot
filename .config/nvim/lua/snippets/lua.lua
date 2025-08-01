@@ -280,7 +280,7 @@ M.snippets = {
     }),
     {
       stored = {
-        idx = i(nil, 'i'),
+        idx = i(nil, '_'),
         val = i(nil, 'val'),
         iter = i(nil, 'iter'),
         start = i(nil, 'start'),
