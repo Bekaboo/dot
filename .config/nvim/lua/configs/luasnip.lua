@@ -301,17 +301,44 @@ local function next_choice(fallback)
   ls.change_choice(1)
 end
 
--- stylua: ignore start
--- Schedule to make sure that the keymaps are amended on top of the
--- `<Tab>`/`<S-Tab>` keymaps defined by tabout plugin: `lua/plugin/tabout.lua`
+---Set keymaps for `<Tab>`/`<S-Tab>` in insert mode
+local function setup_insert_mode_tab_keymaps()
+  -- stylua: ignore start
+  utils.key.amend('i', '<Tab>',   expand_or_jump,      { desc = 'Expand snippet or jump'  })
+  utils.key.amend('i', '<S-Tab>', expand_or_jump_back, { desc = 'Expand snippet or jump backward' })
+  -- stylua: ignore end
+end
+
+-- We cannot map `<Tab>`/`<S-Tab>` in insert mode on loading LuaSnip because
+-- LuaSnip can be loaded on entering visual mode (to support selection snippets,
+-- see `:h luasnip-selection`), mapping these insert mode keys on entering
+-- visual mode will make them overridden by keymaps from the tabout plugin, see
+-- `lua/plugin/tabout.lua`, so we defer setting these keymaps on entering
+-- insert mode if not already in insert mode to avoid being overridden by
+-- tabout plugin keymaps.
+--
+-- LuaSnip is loaded on `ModeChanged`. Calling `vim.fn.mode()` right after
+-- changing from normal mode to insert mode will return 'n' instead of 'i',
+-- preventing us from setting keymaps on the first time we enter insert mode.
+-- As a workaround, schedule to make sure that `vim.fn.mode()` returns correct
+-- mode 'i' after the event.
 vim.schedule(function()
-  utils.key.amend('i', '<Tab>',   expand_or_jump,      { desc = 'Expand snippet or jump'         })
-  utils.key.amend('i', '<S-Tab>', expand_or_jump_back, { desc = 'Expand or jump backward'        })
-  utils.key.amend('i', '<C-p>',   prev_choice,         { desc = 'Select previous snippet choice' })
-  utils.key.amend('i', '<C-n>',   next_choice,         { desc = 'Select next snippet choice'     })
-  utils.key.amend('i', '<Up>',    prev_choice,         { desc = 'Select previous snippet choice' })
-  utils.key.amend('i', '<Down>',  next_choice,         { desc = 'Select next snippet choice'     })
+  if vim.startswith(vim.fn.mode(), 'i') then
+    setup_insert_mode_tab_keymaps()
+  else
+    vim.api.nvim_create_autocmd('InsertEnter', {
+      once = true,
+      desc = 'Set snippet `<Tab>`/`<S-Tab>` keymaps in insert mode to avoid being overridden by tabout plugin keymaps.',
+      callback = setup_insert_mode_tab_keymaps,
+    })
+  end
 end)
+
+-- stylua: ignore start
+utils.key.amend('i', '<C-p>',  prev_choice, { desc = 'Select previous snippet choice' })
+utils.key.amend('i', '<C-n>',  next_choice, { desc = 'Select next snippet choice'     })
+utils.key.amend('i', '<Up>',   prev_choice, { desc = 'Select previous snippet choice' })
+utils.key.amend('i', '<Down>', next_choice, { desc = 'Select next snippet choice'     })
 
 vim.keymap.set('s', '<Tab>',   function() ls.jump(1) end,  { desc = 'Jump to next place in snippet' })
 vim.keymap.set('s', '<S-Tab>', function() ls.jump(-1) end, { desc = 'Jump to previous place in snippet' })
