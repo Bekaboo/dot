@@ -9,7 +9,7 @@ TERM = 'alacritty'
 size = 12
 
 [font.normal]
-family = 'Iosevka'
+family = 'Iosevka NF'
 
 [scrolling]
 history = 0
