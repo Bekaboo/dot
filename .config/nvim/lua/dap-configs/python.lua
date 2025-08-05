@@ -6,7 +6,7 @@ local cache = dap_utils.new_cache()
 
 M.adapter = function(cb, config)
   if config.request == 'attach' then
-    local port = (config.connect or config).port
+    local port = (config.connect or config).port or '5678'
     local host = (config.connect or config).host or '127.0.0.1'
     cb({
       type = 'server',
@@ -74,6 +74,11 @@ M.config = {
     env = function()
       return { PYTHONPATH = vim.fn.getcwd(0) }
     end,
+  },
+  {
+    type = 'debugpy',
+    name = 'Attach to running debugpy',
+    request = 'attach',
   },
 }
 
