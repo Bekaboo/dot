@@ -348,22 +348,15 @@ M.snippets = {
       trig = 'll',
       desc = 'Log a line',
     },
-    un.fmtad('logger.<level>(<q><line><q><e>)', {
-      level = c(1, {
-        i(nil, 'debug'),
-        i(nil, 'info'),
-        i(nil, 'warning'),
-        i(nil, 'error'),
-        i(nil, 'critical'),
-      }),
+    un.fmtad('logger.debug(<q><line><q><e>)', {
       q = un.qt(),
-      line = c(2, {
+      line = c(1, {
         i(nil, '----------------------------------------'),
         i(nil, '........................................'),
         i(nil, '========================================'),
         i(nil, '########################################'),
       }),
-      e = i(3),
+      e = i(2),
     })
   ),
   us.sn(
@@ -371,21 +364,14 @@ M.snippets = {
       trig = 'lck',
       desc = 'Check a value of a variable through logger.debug()',
     },
-    un.fmtad('logger.<level>(f<q><expr_escaped>: {<expr>}<q><e>)', {
-      level = c(1, {
-        i(nil, 'debug'),
-        i(nil, 'info'),
-        i(nil, 'warning'),
-        i(nil, 'error'),
-        i(nil, 'critical'),
-      }),
+    un.fmtad('logger.debug(f<q><expr_escaped>: {<expr>}<q><e>)', {
       q = un.qt(),
-      expr = i(2),
-      expr_escaped = d(3, function(texts)
+      expr = i(1),
+      expr_escaped = d(2, function(texts)
         local str = vim.fn.escape(texts[1][1], '\\' .. uf.get_quotation_type())
         return sn(nil, i(1, str))
-      end, { 3 }),
-      e = i(4),
+      end, { 1 }),
+      e = i(3),
     })
   ),
   us.msn({
