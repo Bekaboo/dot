@@ -119,10 +119,26 @@ M.snippets = {
       trig = 'lconf',
       desc = 'Config logging',
     },
-    un.fmtad('logging.basicConfig(stream=<fd>, level=<level>)', {
-      fd = c(1, {
-        i(1, 'sys.stdout'),
-        i(1, 'sys.stderr'),
+    un.fmtad('logging.basicConfig(<out>, level=<level>)', {
+      out = c(1, {
+        un.fmtad('stream=<fd>', {
+          fd = i(1, 'sys.stderr'),
+        }),
+        un.fmtad('filename=<q><fname><q>, filemode=<q><fmode><q>', {
+          q = un.qt(),
+          fname = d(1, function()
+            return sn(nil, {
+              i(
+                1,
+                string.format(
+                  '%s.log',
+                  vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':t:r')
+                )
+              ),
+            })
+          end),
+          fmode = i(2, 'a'),
+        }),
       }),
       level = c(2, {
         i(nil, 'logging.DEBUG'),
