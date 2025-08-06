@@ -59,7 +59,7 @@
 				<key>ActionParameters</key>
 				<dict>
 					<key>COMMAND_STRING</key>
-					<string>open $HOME/Applications/tmux.app/Contents/MacOS/tmux.command</string>
+					<string>open "$HOME/Applications/tmux.app/Contents/MacOS/tmux.command"</string>
 					<key>CheckedForUserDefaultShell</key>
 					<true/>
 					<key>inputMethod</key>
