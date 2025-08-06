@@ -128,6 +128,7 @@ require('blink.cmp').setup({
     ['<S-Tab>'] = false,
     -- Conflict with readline's keymap, see `lua/plugin/readline.lua`
     ['<C-k>'] = false,
+    ['<C-s>'] = { 'show_signature', 'fallback' },
     -- Hide both signature help and completion menu with `<C-e>`
     ['<C-e>'] = {
       function(cmp)
