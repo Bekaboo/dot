@@ -1,7 +1,7 @@
 #!/usr/bin/env sh -l
 # shellcheck disable=SC2096 # macOS allows multiple parameters in shebang, see
 # https://www.shellcheck.net/wiki/SC2096
-# vim: ft=sh ts=4 sw=4 sts=4 et :
+# vim:ft=sh:ts=4:sw=4:sts=4:et:
 #
 # Launch tmux with default terminal on macOS
 #
