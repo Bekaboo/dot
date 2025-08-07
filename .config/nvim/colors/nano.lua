@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Mon 28 Jul 2025 02:19:38 AM PDT
+-- Last Updated: Thu Aug  7 16:00:08 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -149,7 +149,7 @@ local hlgroups = {
   Pmenu = { fg = c_foreground, bg = c_highlight },
   PmenuExtra = { fg = c_faded },
   PmenuSbar = { bg = c_subtle },
-  PmenuSel = { fg = c_foreground, bg = c_subtle, bold = true },
+  PmenuSel = { bg = c_subtle, bold = true },
   PmenuThumb = { bg = c_popout },
   Question = { fg = c_foreground },
   QuickFixLine = { bg = c_grass },
