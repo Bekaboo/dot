@@ -368,8 +368,8 @@ M.snippets = {
     un.fmtad('trap <cmd> <sig>', {
       cmd = i(1, 'cleanup'),
       sig = c(2, {
-        i(nil, 'EXIT INT TERM'), -- when script exits or terminates, useful for cleanup
-        i(nil, 'EXIT INT TERM HUP'), -- use for cleanup in scripts that needs a terminal/tty
+        i(nil, 'EXIT INT TERM HUP'), -- common signals that terminates a program by default, useful for most scripts
+        i(nil, 'EXIT INT TERM'), -- handle `HUP` in another trap, used in a daemon script
         i(nil, 'EXIT'),
         i(nil, 'INT'),
         i(nil, 'TERM'),
