@@ -22,7 +22,7 @@ main() {
 
     # Make sure we terminate rsync push/fetch background processes
     # on SIGTERM/SIGINT (ctrl-c)
-    trap cleanup EXIT INT TERM
+    trap cleanup EXIT INT TERM HUP
 
     rsync-push "$1" "$2" &
     push_pid=$!
