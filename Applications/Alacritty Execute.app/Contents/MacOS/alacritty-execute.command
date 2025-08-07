@@ -7,8 +7,21 @@
 # https://github.com/alacritty/alacritty/issues/4722
 
 if [ "$#" -eq 0 ]; then
-    alacritty "$@"
+    # macOS will wait for shell script to finish, including the script itself
+    # and all subprocess. This can be observed by opening a custom application
+    # that runs a shell script in the Automator app and clicking the "Run"
+    # button on the top right corner.
+    #
+    # In this way, the second terminal will only appear after the first one is
+    # closed, preventing us from opening multiple terminals, e.g. we cannot
+    # open multiple alacritty window for different tmux sessions.
+    #
+    # To workaround this, we use `nohup` and run the terminal process in the
+    # background. For unknown reason, we also need to redirect `stdout` and
+    # `stdin` to `/dev/null` to make macOS consider the script as finished
+    # after launching alacritty.
+    nohup alacritty "$@" >/dev/null 2>&1 &
     exit
 fi
 
-alacritty -e "$@"
+nohup alacritty -e "$@" >/dev/null 2>&1 &
