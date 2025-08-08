@@ -1,3 +1,35 @@
+function __pyenv_init_once --description 'Helper function to initialize pyenv once'
+    # Sometimes pyenv will fail with:
+    # 'pyenv: cannot rehash: <HOME>/.pyenv/shims/.pyenv-shim exists'
+    # to **stdout** (not stderr) instead of printing correct init script to
+    # stdout.
+    #
+    # Sourcing the error message will surely fail with:
+    # fish: Unknown command: pyenv:
+    # - (line 1):
+    # pyenv: cannot rehash: <HOME>/.pyenv/shims/.pyenv-shim exists
+    # ^~~~~^
+    # from sourcing file -
+    #         called on line 38 of file ~/.config/fish/conf.d/pyenv.fish
+    # in function '__pyenv'
+    #         called on line 45 of file ~/.config/fish/conf.d/pyenv.fish
+    # from sourcing file ~/.config/fish/conf.d/pyenv.fish
+    # ...
+    #
+    # So we have to check the existence of `.pyenv-shim` and return early
+    # without sourcing the output if it already exists.
+    if not type -q pyenv; or test -e "$HOME/.pyenv/shims/.pyenv-shim"
+        return
+    end
+
+    # Erase `__pyenv` and `__pyenv_init_once` becausetkkyenv itself will
+    # automatically detect and activate global/local python version settings
+    # after initialization
+    if pyenv init - fish | source &>/dev/null
+        functions -e __pyenv __pyenv_init_once
+    end
+end
+
 # Auto init pyenv when detected `.python-version`
 function __pyenv \
     --on-variable PWD \
@@ -22,12 +54,7 @@ function __pyenv \
     if test -n "$PYENV_VERSION"
         or test -f "$PYENV_ROOT/version"
         or test -f "$HOME/.pyenv/version"
-        # Erase self because pyenv will automatically detect and activate
-        # global/local python version settings after initialization
-        #
-        # Silent 'pyenv: cannot rehash: <HOME>/.pyenv/shims/.pyenv-shim exists'
-        # error
-        pyenv init - fish 2>/dev/null | source &>/dev/null; and functions -e __pyenv
+        __pyenv_init_once
         return
     end
 
@@ -35,7 +62,7 @@ function __pyenv \
     set -l path $PWD
     while test $path != (dirname $path)
         if test -f "$path/.python-version"
-            pyenv init - fish 2>/dev/null | source &>/dev/null; and functions -e __pyenv
+            __pyenv_init_once
             return
         end
         set path (dirname $path)
