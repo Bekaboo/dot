@@ -28,6 +28,7 @@ local fname_prefix_suffix_max_width = 0.2 -- maximum width of filename prefix/su
 ---@param str string
 ---@param percent number
 ---@param str_alt? string alternate string to use when `str` exceeds max width
+---@return string
 local function str_shorten(str, percent, str_alt)
   str = tostring(str)
 
@@ -152,9 +153,9 @@ function _G._statusline.gitdiff()
       )
     or string.format(
       '%s%s%s',
-      icon_added .. utils.stl.hl(added, 'StatusLineGitAdded'),
-      icon_changed .. utils.stl.hl(changed, 'StatusLineGitChanged'),
-      icon_removed .. utils.stl.hl(removed, 'StatusLineGitRemoved')
+      icon_added .. utils.stl.hl(tostring(added), 'StatusLineGitAdded'),
+      icon_changed .. utils.stl.hl(tostring(changed), 'StatusLineGitChanged'),
+      icon_removed .. utils.stl.hl(tostring(removed), 'StatusLineGitRemoved')
     )
 end
 
@@ -471,7 +472,7 @@ function _G._statusline.fname()
       string.format(
         '[%s] %s',
         str_shorten(
-          utils.str.snake_to_camel(vim.fs.basename(prefix)),
+          utils.str.snake_to_camel(vim.fs.basename(prefix)) --[[@as string]],
           fname_prefix_suffix_max_width
         ),
         str_shorten(main, fname_special_max_width)
@@ -620,6 +621,10 @@ vim.api.nvim_create_autocmd('LspProgress', {
         end
 
         local spinner = utils.stl.spinner.get_by_id(b.spinner_id)
+        if not spinner then
+          return
+        end
+
         if spinner.status == 'idle' then
           spinner:spin()
         end

@@ -7,7 +7,7 @@ local M = {}
 ---@return string sign string representation of the sign with highlight
 function M.hl(str, hl, restore)
   hl = hl or ''
-  str = str and tostring(str) or ''
+  str = str or ''
   restore = restore == nil or restore
   return restore and table.concat({ '%#', hl, '#', str, '%*' })
     or table.concat({ '%#', hl, '#', str })
