@@ -121,7 +121,7 @@ ff() {
     fi
 
     local -r tmpfile=$(mktemp)
-    trap 'rm -f "$tmpfile"' EXIT
+    trap 'rm -f "$tmpfile"' EXIT INT TERM HUP
 
     # On some systems, e.g. Ubuntu, fd executable is installed as 'fdfind'
     local -r fd_cmd=$(has fd && echo fd || echo fdfind)
