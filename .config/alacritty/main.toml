@@ -36,5 +36,9 @@ bindings = [
     # neovim, press Ctrl-v + <key>, then put cursor over the char inserted and
     # press `ga`
     { key = 'Key6', mods = 'Control', chars = "\u001e" },
-    { key = 'Key5', mods = 'Control', chars = "\u001d" }
+    { key = 'Key5', mods = 'Control', chars = "\u001d" },
+
+    # Ctrl-/ is the same as Ctrl-_ in Kitty but is the same as / in alacritty,
+    # align with Kitty to make Ctrl-/ work in neovim
+    { key = '/',    mods = 'Control', chars = "\u001f" },
 ]
