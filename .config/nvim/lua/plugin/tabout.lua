@@ -392,13 +392,13 @@ local function setup()
 
   local key = require('utils.key')
 
-  key.amend({ 'i', 'c' }, '<Tab>', function(fallback)
+  key.amend('i', '<Tab>', function(fallback)
     if not jump(1) then
       fallback()
     end
   end, { desc = 'Tab out' })
 
-  key.amend({ 'i', 'c' }, '<S-Tab>', function(fallback)
+  key.amend('i', '<S-Tab>', function(fallback)
     if not jump(-1) then
       fallback()
     end

@@ -111,7 +111,7 @@ if vim.g.has_ui then
 end
 
 -- tabout
-vim.api.nvim_create_autocmd({ 'InsertEnter', 'CmdlineEnter' }, {
+vim.api.nvim_create_autocmd('InsertEnter', {
   group = vim.api.nvim_create_augroup('TabOutSetup', {}),
   desc = 'Init tabout plugin.',
   once = true,
