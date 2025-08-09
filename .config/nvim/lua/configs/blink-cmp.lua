@@ -139,6 +139,16 @@ require('blink.cmp').setup({
       'fallback',
     },
   },
+  cmdline = {
+    completion = {
+      list = {
+        selection = {
+          preselect = false,
+          auto_insert = true,
+        },
+      },
+    },
+  },
   signature = {
     enabled = true,
   },
