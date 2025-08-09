@@ -8,6 +8,14 @@ require('dap-view').setup({
     },
   },
   winbar = {
+    sections = {
+      'watches',
+      'scopes',
+      'exceptions',
+      'breakpoints',
+      'threads',
+      'console',
+    },
     base_sections = {
       -- stylua: ignore start
       breakpoints = { short_label = 'Brk [B]' },
