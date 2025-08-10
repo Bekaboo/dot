@@ -224,7 +224,6 @@ local function enable_plugins(module_names)
       },
       checker = { enabled = false },
       change_detection = { notify = false },
-      install = { colorscheme = { 'wildcharm' } },
       performance = {
         rtp = {
           disabled_plugins = {
