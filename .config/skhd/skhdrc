@@ -13,20 +13,12 @@ cmd - h     : yabai -m window --focus west  || yabai -m window --focus stack.pre
 cmd - j     : yabai -m window --focus south || yabai -m window --focus stack.next || yabai -m window --focus stack.prev
 cmd - k     : yabai -m window --focus north || yabai -m window --focus stack.prev || yabai -m window --focus stack.next
 cmd - l     : yabai -m window --focus east  || yabai -m window --focus stack.next || yabai -m window --focus stack.prev
-cmd - left  : yabai -m window --focus west  || yabai -m window --focus stack.prev || yabai -m window --focus stack.next
-cmd - down  : yabai -m window --focus south || yabai -m window --focus stack.next || yabai -m window --focus stack.prev
-cmd - up    : yabai -m window --focus north || yabai -m window --focus stack.prev || yabai -m window --focus stack.next
-cmd - right : yabai -m window --focus east  || yabai -m window --focus stack.next || yabai -m window --focus stack.prev
 
 # Swap (move) windows
 cmd + shift - h     : yabai -m window --swap west
 cmd + shift - j     : yabai -m window --swap south
 cmd + shift - k     : yabai -m window --swap north
 cmd + shift - l     : yabai -m window --swap east
-cmd + shift - left  : yabai -m window --swap west
-cmd + shift - down  : yabai -m window --swap south
-cmd + shift - up    : yabai -m window --swap north
-cmd + shift - right : yabai -m window --swap east
 cmd - return        : yabai -m window --swap last
 
 # Resize windows
@@ -34,22 +26,14 @@ cmd + alt - h     : yabai -m window --resize left:-40:0;  yabai -m window --resi
 cmd + alt - j     : yabai -m window --resize bottom:0:40; yabai -m window --resize top:0:40
 cmd + alt - k     : yabai -m window --resize top:0:-40;   yabai -m window --resize bottom:0:-40
 cmd + alt - l     : yabai -m window --resize right:40:0;  yabai -m window --resize left:40:0
-cmd + alt - left  : yabai -m window --resize left:-40:0;  yabai -m window --resize right:-40:0
-cmd + alt - down  : yabai -m window --resize bottom:0:40; yabai -m window --resize top:0:40
-cmd + alt - up    : yabai -m window --resize top:0:-40;   yabai -m window --resize bottom:0:-40
-cmd + alt - right : yabai -m window --resize right:40:0;  yabai -m window --resize left:40:0
 
 # Move window to another space (virtual desktop)
 cmd + ctrl + shift - h     : yabai -m window --space prev; yabai -m space --focus prev
 cmd + ctrl + shift - l     : yabai -m window --space next; yabai -m space --focus next
-cmd + ctrl + shift - left  : yabai -m window --space prev; yabai -m space --focus prev
-cmd + ctrl + shift - right : yabai -m window --space next; yabai -m space --focus next
 
 # Switch space (virtual desktop)
 cmd + ctrl - h     : yabai -m space --focus prev
 cmd + ctrl - l     : yabai -m space --focus next
-cmd + ctrl - left  : yabai -m space --focus prev
-cmd + ctrl - right : yabai -m space --focus next
 
 # Override default shortcut to disable desktop-switching animation
 ctrl - left        : yabai -m space --focus prev
@@ -88,10 +72,6 @@ cmd + ctrl + alt - h         : skhd -k 'hyper - 0x80'; skhd -k 'cmd - h';       
 cmd + ctrl + alt - j         : skhd -k 'hyper - 0x80'; skhd -k 'cmd - j';         skhd -k 'hyper - 0x80'
 cmd + ctrl + alt - k         : skhd -k 'hyper - 0x80'; skhd -k 'cmd - k';         skhd -k 'hyper - 0x80'
 cmd + ctrl + alt - l         : skhd -k 'hyper - 0x80'; skhd -k 'cmd - l';         skhd -k 'hyper - 0x80'
-cmd + ctrl + alt - right     : skhd -k 'hyper - 0x80'; skhd -k 'cmd - right';     skhd -k 'hyper - 0x80'
-cmd + ctrl + alt - left      : skhd -k 'hyper - 0x80'; skhd -k 'cmd - left';      skhd -k 'hyper - 0x80'
-cmd + ctrl + alt - up        : skhd -k 'hyper - 0x80'; skhd -k 'cmd - up';        skhd -k 'hyper - 0x80'
-cmd + ctrl + alt - down      : skhd -k 'hyper - 0x80'; skhd -k 'cmd - down';      skhd -k 'hyper - 0x80'
 cmd + ctrl + alt - delete    : skhd -k 'hyper - 0x80'; skhd -k 'cmd - delete';    skhd -k 'hyper - 0x80'
 cmd + ctrl + alt - backspace : skhd -k 'hyper - 0x80'; skhd -k 'cmd - backspace'; skhd -k 'hyper - 0x80'
 cmd + ctrl + alt - pageup    : skhd -k 'hyper - 0x80'; skhd -k 'cmd - pageup';    skhd -k 'hyper - 0x80'
