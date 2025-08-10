@@ -527,7 +527,7 @@ See
 See
 - [lua/configs/dap-configs](lua/configs/dap-configs)
 - [lua/configs/nvim-dap.lua](lua/configs/nvim-dap.lua)
-- [lua/configs/nvim-dap-view.lua](lua/configs/nvim-dap-view.lua).
+- [lua/configs/nvim-dap-ui.lua](lua/configs/nvim-dap-ui.lua).
 
 ### Snippets
 
@@ -609,7 +609,8 @@ and it should work out of the box.
     - [which-key.nvim](https://github.com/folke/which-key.nvim)
 - **Debug**
     - [nvim-dap](https://github.com/mfussenegger/nvim-dap)
-    - [nvim-dap-view](https://github.com/igorlfs/nvim-dap-view)
+    - [nvim-dap-ui](https://github.com/rcarriga/nvim-dap-ui)
+        - [nvim-nio](https://github.com/nvim-neotest/nvim-nio) (dependency)
     - [one-small-step-for-vimkind](https://github.com/jbyuki/one-small-step-for-vimkind)
 - **Build**
     - [vim-test](https://github.com/vim-test/vim-test)
