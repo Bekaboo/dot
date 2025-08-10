@@ -580,6 +580,7 @@ xnoremap <Esc>?  <C-\><C-n>`>?\%V
 
 " Select previously changed/yanked text, useful for selecting pasted text
 nnoremap gz `[v`]
+onoremap gz :normal! `[v`]<CR>
 
 " Go to file under cursor, with line number
 nnoremap gf gF
