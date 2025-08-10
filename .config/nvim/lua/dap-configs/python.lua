@@ -37,6 +37,9 @@ M.config = {
     name = 'Launch file',
     request = 'launch',
     program = '${file}',
+    -- Show program output in console instead of REPL, from
+    -- https://www.reddit.com/r/neovim/comments/14f820c/comment/jp6fr8f/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+    console = 'integratedTerminal',
     args = dap_utils.get_args(cache),
     pythonPath = function()
       return vim.fn.exepath('python3')
@@ -51,6 +54,7 @@ M.config = {
     type = 'debugpy',
     name = 'Debug test',
     request = 'launch',
+    console = 'integratedTerminal',
     module = function()
       -- Example test command: python3 -m pytest -s tests/test_xxx.py::test_xxx
       local test_cmd = require('utils.test').get_test_cmd()
@@ -79,6 +83,7 @@ M.config = {
     type = 'debugpy',
     name = 'Attach to running debugpy',
     request = 'attach',
+    console = 'integratedTerminal',
   },
 }
 
