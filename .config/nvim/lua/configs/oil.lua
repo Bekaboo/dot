@@ -709,6 +709,7 @@ oil.setup({
     },
   },
   buf_options = {
+    textwidth = 0,
     buflisted = false,
     bufhidden = 'hide',
   },
