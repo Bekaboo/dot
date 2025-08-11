@@ -32,7 +32,8 @@ function M.get_args(cache)
       vim.cmd.stopinsert()
     end)
 
-    return cache.args[bufname] and vim.split(cache.args[bufname], ' ') or nil
+    return cache.args[bufname]
+      and require('utils.cmd').split(cache.args[bufname])
   end
 end
 

@@ -134,4 +134,51 @@ function M.complete(params, opts)
   end
 end
 
+---Split string using shell-like syntax
+---
+---Wrapper of Python3 `shlex.split()`, source: https://stackoverflow.com/a/44946430
+---@param str string
+---@param notify boolean? notify when python3 provider or the `shlex` package
+---is unavailable, default `true`
+---@return string[]
+function M.split(str, notify)
+  notify = notify ~= false
+
+  -- Python3 provider is lazy-loaded, see `lua/core/opts.lua`, so first try
+  -- loading python3 provider to get python3 support
+  if vim.fn.has('python3') == 0 then
+    vim.g.loaded_python3_provider = nil
+    vim.cmd.runtime('provider/python3.vim')
+  end
+  -- If python3 is still unavailable, return empty result
+  if vim.fn.has('python3') == 0 then
+    if notify then
+      vim.notify(
+        string.format(
+          "[utils.cmd] cannot split command string '%s': python3 provider unavailable",
+          str
+        ),
+        vim.log.levels.WARN
+      )
+    end
+    return {}
+  end
+
+  if not pcall(vim.cmd.python3, 'import shlex') then
+    if notify then
+      vim.notify(
+        string.format(
+          "[utils.cmd] cannot split command string '%s': python3 shlex package unavailable",
+          str
+        ),
+        vim.log.levels.WARN
+      )
+    end
+    return {}
+  end
+  return vim.fn.py3eval(
+    string.format("shlex.split(r'%s')", vim.fn.escape(str, "'"))
+  )
+end
+
 return M

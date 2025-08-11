@@ -1,5 +1,7 @@
 local M = {}
 local dap_utils = require('utils.dap')
+local cmd_utils = require('utils.cmd')
+local test_utils = require('utils.test')
 
 ---@type dapcache_t
 local cache = dap_utils.new_cache()
@@ -57,23 +59,31 @@ M.config = {
     console = 'integratedTerminal',
     module = function()
       -- Example test command: python3 -m pytest -s tests/test_xxx.py::test_xxx
-      local test_cmd = require('utils.test').get_test_cmd()
+      local test_cmd = test_utils.get_test_cmd()
       if not test_cmd then
         return
       end
-      -- Extract 'pytest'
-      return test_cmd:match('.*python3?.*%s+%-m%s+(%S+)')
+
+      -- Extract module name, e.g. 'pytest'
+      local test_cmd_args = cmd_utils.split(test_cmd)
+      for i, arg in ipairs(test_cmd_args) do
+        if arg == '-m' then
+          return test_cmd_args[i + 1]
+        end
+      end
     end,
     args = function()
-      local test_cmd = require('utils.test').get_test_cmd()
+      local test_cmd = test_utils.get_test_cmd()
       if not test_cmd then
         return
       end
-      -- HACK: cannot handle escaped string in args, e.g.
-      -- 'test_file\ with_spaces' will be split incorrectly
-      return vim.split(test_cmd:gsub('.*python3?.*%s+%-m%s+%S+%s+', ''), ' ', {
-        trimempty = true,
-      })
+
+      local test_cmd_args = cmd_utils.split(test_cmd)
+      for i, arg in ipairs(test_cmd_args) do
+        if arg == '-m' then
+          return vim.iter(test_cmd_args):skip(i + 1):totable()
+        end
+      end
     end,
     env = function()
       return { PYTHONPATH = vim.fn.getcwd(0) }

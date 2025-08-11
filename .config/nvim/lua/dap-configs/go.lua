@@ -1,5 +1,7 @@
 local M = {}
 local dap_utils = require('utils.dap')
+local cmd_utils = require('utils.cmd')
+local test_utils = require('utils.test')
 
 ---@type dapcache_t
 local cache = dap_utils.new_cache()
@@ -54,24 +56,20 @@ M.config = {
     mode = 'test',
     program = './${relativeFileDirname}',
     args = function()
-      local test_cmd = require('utils.test').get_test_cmd()
+      local test_cmd = test_utils.get_test_cmd()
       if not test_cmd then
         return
       end
+
       -- Transform "go test -v -failfast -run 'TestMain$' ./."
       -- to { '-test.v', '-test.failfast', '-test.run', 'TestMain$', './.' }
       -- See https://stackoverflow.com/a/67421231
-      --
-      -- HACK: this only split the command on spaces and does not handle args
-      -- with escaped spaces or quoted args
-      return vim.split(
-        test_cmd
-          :gsub("'", '')
-          :gsub('.*go test%s+', '')
-          :gsub('%-(%w+)', '-test.%1'),
-        ' ',
-        { trimempty = true }
-      )
+      return vim
+        .iter(cmd_utils.split(test_cmd))
+        :map(function(arg)
+          return (arg:gsub('^%-(%w+)', '-test.%1'))
+        end)
+        :totable()
     end,
   },
 }
