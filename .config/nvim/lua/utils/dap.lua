@@ -26,7 +26,9 @@ function M.get_args(cache)
       completion = 'file',
       default = cache.args[bufname],
     }, function(input)
-      cache.args[bufname] = input
+      if input and input ~= '' then
+        cache.args[bufname] = input
+      end
       vim.cmd.stopinsert()
     end)
 
