@@ -1,10 +1,9 @@
 local M = {}
-local dap_utils = require('utils.dap')
-local cmd_utils = require('utils.cmd')
-local test_utils = require('utils.test')
+
+local utils = require('utils')
 
 ---@type dapcache_t
-local cache = dap_utils.new_cache()
+local cache = utils.dap.new_cache()
 
 M.adapter = function(cb, config)
   if config.request == 'attach' then
@@ -42,7 +41,7 @@ M.config = {
     -- Show program output in console instead of REPL, from
     -- https://www.reddit.com/r/neovim/comments/14f820c/comment/jp6fr8f/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
     console = 'integratedTerminal',
-    args = dap_utils.get_args(cache),
+    args = utils.dap.get_args(cache),
     pythonPath = function()
       return vim.fn.exepath('python3')
     end,
@@ -59,13 +58,13 @@ M.config = {
     console = 'integratedTerminal',
     module = function()
       -- Example test command: python3 -m pytest -s tests/test_xxx.py::test_xxx
-      local test_cmd = test_utils.get_test_cmd()
+      local test_cmd = utils.test.get_test_cmd()
       if not test_cmd then
         return
       end
 
       -- Extract module name, e.g. 'pytest'
-      local test_cmd_args = cmd_utils.split(test_cmd)
+      local test_cmd_args = utils.cmd.split(test_cmd)
       for i, arg in ipairs(test_cmd_args) do
         if arg == '-m' then
           return test_cmd_args[i + 1]
@@ -73,12 +72,12 @@ M.config = {
       end
     end,
     args = function()
-      local test_cmd = test_utils.get_test_cmd()
+      local test_cmd = utils.test.get_test_cmd()
       if not test_cmd then
         return
       end
 
-      local test_cmd_args = cmd_utils.split(test_cmd)
+      local test_cmd_args = utils.cmd.split(test_cmd)
       for i, arg in ipairs(test_cmd_args) do
         if arg == '-m' then
           return vim.iter(test_cmd_args):skip(i + 1):totable()

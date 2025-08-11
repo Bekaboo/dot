@@ -1,10 +1,9 @@
 local M = {}
-local dap_utils = require('utils.dap')
-local cmd_utils = require('utils.cmd')
-local test_utils = require('utils.test')
+
+local utils = require('utils')
 
 ---@type dapcache_t
-local cache = dap_utils.new_cache()
+local cache = utils.dap.new_cache()
 
 M.adapter = function(callback, config)
   if config.mode == 'remote' and config.request == 'attach' then
@@ -39,7 +38,7 @@ M.config = {
     name = 'Debug',
     request = 'launch',
     program = '${file}',
-    args = dap_utils.get_args(cache),
+    args = utils.dap.get_args(cache),
   },
   -- Works with go.mod packages and sub packages
   {
@@ -56,7 +55,7 @@ M.config = {
     mode = 'test',
     program = './${relativeFileDirname}',
     args = function()
-      local test_cmd = test_utils.get_test_cmd()
+      local test_cmd = utils.test.get_test_cmd()
       if not test_cmd then
         return
       end
@@ -65,7 +64,7 @@ M.config = {
       -- to { '-test.v', '-test.failfast', '-test.run', 'TestMain$', './.' }
       -- See https://stackoverflow.com/a/67421231
       return vim
-        .iter(cmd_utils.split(test_cmd))
+        .iter(utils.cmd.split(test_cmd))
         :map(function(arg)
           return (arg:gsub('^%-(%w+)', '-test.%1'))
         end)
