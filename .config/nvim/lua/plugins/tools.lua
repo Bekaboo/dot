@@ -199,7 +199,10 @@ return {
       'Gwq',
       'Gwrite',
     },
-    keys = { { '<Leader>gL', desc = 'Git log entire repo' } },
+    keys = {
+      { '<Leader>gL', desc = 'Git log entire repo' },
+      { '<Leader>g<Space>', desc = 'Populate cmdline with ":Git"' },
+    },
     event = { 'BufNew', 'BufWritePost', 'BufReadPre' },
     dependencies = {
       -- Enable :GBrowse command in GitHub/Gitlab repos
