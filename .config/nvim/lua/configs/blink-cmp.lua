@@ -4,12 +4,14 @@ local has_devicons, devicons = pcall(require, 'nvim-web-devicons')
 local blink_source_utils = require('blink.cmp.sources.lib.utils')
 local blink_ctx = require('blink.cmp.completion.trigger.context')
 
+---@param ctx blink.cmp.DrawItemContext
 ---@return boolean
-local function is_cmd_file_compl()
-  return vim.tbl_contains(
-    { 'dir', 'file', 'file_in_path', 'runtime' },
-    blink_source_utils.get_completion_type(blink_ctx.get_mode())
-  )
+local function is_file_compl(ctx)
+  return ctx.item and ctx.item.source_id == 'path'
+    or vim.tbl_contains(
+      { 'dir', 'file', 'file_in_path', 'runtime' },
+      blink_source_utils.get_completion_type(blink_ctx.get_mode())
+    )
 end
 
 ---@return boolean
@@ -59,7 +61,7 @@ require('blink.cmp').setup({
             -- Show different icons for files/directories, use
             -- nvim-web-devicons to show filetype icons if possible
             text = function(ctx)
-              if not is_cmd_file_compl() then
+              if not is_file_compl(ctx) then
                 return icons[ctx.kind] --[[@as string]]
               end
 
@@ -76,7 +78,7 @@ require('blink.cmp').setup({
                 or icons.File
             end,
             highlight = function(ctx)
-              if not is_cmd_file_compl() then
+              if not is_file_compl(ctx) then
                 return ctx.kind_hl
               end
 
