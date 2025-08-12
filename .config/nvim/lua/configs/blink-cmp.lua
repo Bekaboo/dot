@@ -14,12 +14,14 @@ local function is_file_compl(ctx)
     )
 end
 
+---@param items blink.cmp.CompletionItem[]
 ---@return boolean
-local function is_cmd_expr_compl()
-  return vim.tbl_contains(
-    { 'function', 'expression' },
-    blink_source_utils.get_completion_type(blink_ctx.get_mode())
-  )
+local function is_expr_compl(items)
+  return items[1] and items[1].source_id == 'cmdline'
+    or vim.tbl_contains(
+      { 'function', 'expression' },
+      blink_source_utils.get_completion_type(blink_ctx.get_mode())
+    )
 end
 
 ---@param path string
@@ -176,7 +178,7 @@ require('blink.cmp').setup({
         -- Don't complete left parenthesis when calling functions or
         -- expressions in cmdline, e.g. `:call func(...`
         transform_items = function(_, items)
-          if not is_cmd_expr_compl() then
+          if not is_expr_compl(items) then
             return items
           end
 
