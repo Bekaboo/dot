@@ -5,16 +5,11 @@ vim.lsp.config('*', lsp.default_config)
 vim.api.nvim_create_autocmd('FileType', {
   once = true,
   callback = function(args)
-    vim.iter(vim.api.nvim__get_runtime({ 'lsp' }, true, {})):each(function(dir)
-      vim
-        .iter(vim.fs.dir(dir))
-        :map(function(config)
-          return vim.fn.fnamemodify(config, ':r')
-        end)
-        :each(function(config)
-          vim.lsp.enable(config)
-        end)
-    end)
+    for _, dir in ipairs(vim.api.nvim__get_runtime({ 'lsp' }, true, {})) do
+      for config_file in vim.fs.dir(dir) do
+        vim.lsp.enable(vim.fn.fnamemodify(config_file, ':r'))
+      end
+    end
     vim.api.nvim_exec_autocmds('FileType', {
       pattern = args.match,
     })
