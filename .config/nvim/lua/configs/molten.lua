@@ -37,8 +37,8 @@ vim.api.nvim_create_autocmd('BufEnter', {
   desc = 'Change the configuration when editing a python file.',
   pattern = '*.py',
   group = groupid,
-  callback = function(info)
-    if info.buf ~= vim.api.nvim_get_current_buf() then
+  callback = function(args)
+    if args.buf ~= vim.api.nvim_get_current_buf() then
       return
     end
     if require('molten.status').initialized() == 'Molten' then -- this is kinda a hack...
@@ -57,8 +57,8 @@ vim.api.nvim_create_autocmd('BufEnter', {
   desc = 'Undo config changes when we go back to a markdown or quarto file.',
   pattern = { '*.ipynb' },
   group = groupid,
-  callback = function(info)
-    if info.buf ~= vim.api.nvim_get_current_buf() then
+  callback = function(args)
+    if args.buf ~= vim.api.nvim_get_current_buf() then
       return
     end
     if require('molten.status').initialized() == 'Molten' then
@@ -375,8 +375,8 @@ local function setup_buf_keymaps_and_commands(buf)
       desc = 'Close molten output win when src win is scrolled.',
       group = vim.api.nvim_create_augroup('MoltenCloseOutputWin' .. buf, {}),
       buffer = buf,
-      callback = function(info)
-        if src_win == tonumber(info.match) then
+      callback = function(args)
+        if src_win == tonumber(args.match) then
           vim.schedule(function()
             if vim.api.nvim_win_is_valid(output_win) then
               vim.api.nvim_win_close(output_win, false)
@@ -425,8 +425,8 @@ vim.api.nvim_create_autocmd('FileType', {
   desc = 'Set buffer-local keymaps and commands for molten.',
   pattern = { 'python', 'markdown' },
   group = groupid,
-  callback = function(info)
-    setup_buf_keymaps_and_commands(info.buf)
+  callback = function(args)
+    setup_buf_keymaps_and_commands(args.buf)
   end,
 })
 

@@ -1,10 +1,5 @@
 #!/usr/bin/env sh
-# vim: ft=sh ts=4 sw=4 sts=4 et :
-
-# Check if a command exists
-has() {
-    command -v "$1" >/dev/null 2>&1
-}
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
 
 # Print usage message
 usage() {
@@ -19,12 +14,12 @@ main() {
         qdbus_cmd="qdbus6"
     else
         echo "Error: neither qdbus nor qdbus6 found" >&2
-        exit 1
+        return 1
     fi
 
     if [ -z "$1" ] || [ -z "$2" ]; then
         usage
-        exit 1
+        return 1
     fi
 
     service_pattern="$1"
@@ -33,7 +28,7 @@ main() {
 
     # List all matching services
     services=$("$qdbus_cmd" | grep -i "$service_pattern") || {
-        exit 1
+        return 1
     }
 
     printf '%s\n' "$services" | while read -r service; do

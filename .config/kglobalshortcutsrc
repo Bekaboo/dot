@@ -13,12 +13,6 @@ _k_friendly_name=Keyboard Layout Switcher
 Toggle Screen Reader On and Off=Meta+Alt+S,Meta+Alt+S,Toggle Screen Reader On and Off
 _k_friendly_name=Accessibility
 
-[kcm_touchpad]
-Disable Touchpad=Touchpad Off,Touchpad Off,Disable Touchpad
-Enable Touchpad=Touchpad On,Touchpad On,Enable Touchpad
-Toggle Touchpad=Touchpad Toggle,Touchpad Toggle\tTouchpad Toggle\tMeta+Ctrl+Touchpad Toggle\tMeta+Ctrl+Zenkaku Hankaku,Toggle Touchpad
-_k_friendly_name=Touchpad
-
 [kmix]
 _k_friendly_name=Audio Volume
 decrease_microphone_volume=Microphone Volume Down,Microphone Volume Down,Decrease Microphone Volume
@@ -127,7 +121,7 @@ KrohnkiteStackedLayout=Meta+Alt+Shift+S,none,Krohnkite: Stacked Layout
 KrohnkiteStairLayout=Meta+Alt+Shift+L,none,Krohnkite: Stair Layout
 KrohnkiteTileLayout=Meta+Alt+Shift+T,none,Krohnkite: Tile Layout
 KrohnkiteToggleFloat=Meta+F\tMeta+Alt+F,none,Krohnkite: Toggle Float
-KrohnkiteTreeColumnLayout=Meta+Alt+Shift+3,none,Krohnkite: Tree Column Layout
+KrohnkiteTreeColumnLayout=Meta+Alt+Shift+3,none,Krohnkite: Three Column Layout
 KrohnkitegrowWidth=Meta+Alt+>\tMeta+Alt+Right\tMeta+Alt+L\tMeta+Alt+.,none,Krohnkite: Grow Width
 KrohnkitetoggleDock=none,none,Krohnkite: Toggle Dock
 MinimizeAll=none,none,MinimizeAll
@@ -191,14 +185,14 @@ Toggle Night Color=none,none,Suspend/Resume Night Light
 Toggle Window Raise/Lower=none,,Toggle Window Raise/Lower
 ToggleMouseClick=Meta+*,Meta+*,Toggle Mouse Click Effect
 TrackMouse=none,none,Track mouse
-Walk Through Windows=Alt+Tab,Alt+Tab,Walk Through Windows
-Walk Through Windows (Reverse)=Alt+Shift+Tab,Alt+Shift+Tab,Walk Through Windows (Reverse)
-Walk Through Windows Alternative=none,,Walk Through Windows Alternative
-Walk Through Windows Alternative (Reverse)=none,,Walk Through Windows Alternative (Reverse)
-Walk Through Windows of Current Application=Alt+`,Alt+`,Walk Through Windows of Current Application
-Walk Through Windows of Current Application (Reverse)=Alt+~,Alt+~,Walk Through Windows of Current Application (Reverse)
-Walk Through Windows of Current Application Alternative=none,,Walk Through Windows of Current Application Alternative
-Walk Through Windows of Current Application Alternative (Reverse)=none,,Walk Through Windows of Current Application Alternative (Reverse)
+Walk Through Windows=Alt+Tab,Meta+Tab\tAlt+Tab,Walk Through Windows
+Walk Through Windows (Reverse)=Alt+Shift+Tab,Meta+Shift+Tab\tAlt+Shift+Tab,Walk Through Windows (Reverse)
+Walk Through Windows Alternative=none,none,Walk Through Windows Alternative
+Walk Through Windows Alternative (Reverse)=none,none,Walk Through Windows Alternative (Reverse)
+Walk Through Windows of Current Application=Alt+`,Meta+`\tAlt+`,Walk Through Windows of Current Application
+Walk Through Windows of Current Application (Reverse)=Alt+~,Meta+~\tAlt+~,Walk Through Windows of Current Application (Reverse)
+Walk Through Windows of Current Application Alternative=none,none,Walk Through Windows of Current Application Alternative
+Walk Through Windows of Current Application Alternative (Reverse)=none,none,Walk Through Windows of Current Application Alternative (Reverse)
 Window Above Other Windows=none,,Keep Window Above Others
 Window Below Other Windows=none,,Keep Window Below Others
 Window Close=Alt+F4\tMeta+Del,Alt+F4,Close Window
@@ -213,7 +207,7 @@ Window Lower=none,,Lower Window
 Window Maximize=Meta+PgUp,Meta+PgUp,Maximize Window
 Window Maximize Horizontal=none,,Maximize Window Horizontally
 Window Maximize Vertical=none,,Maximize Window Vertically
-Window Minimize=Meta+Backspace,Meta+PgDown,Minimize Window
+Window Minimize=Meta+PgDown,Meta+PgDown,Minimize Window
 Window Move=none,,Move Window
 Window Move Center=Meta+Shift+Space,,Move Window to the Center
 Window No Border=none,,Toggle Window Titlebar and Frame
@@ -360,7 +354,7 @@ clipboard_action=none,Meta+Ctrl+X,Automatic Action Popup Menu
 cycle-panels=Meta+Alt+P,Meta+Alt+P,Move keyboard focus between panels
 cycleNextAction=none,,Next History Item
 cyclePrevAction=none,,Previous History Item
-edit_clipboard=none,none,Edit Contents…
+edit_clipboard=none,,Edit Contents…
 manage activities=Meta+Q,Meta+Q,Show Activity Switcher
 next activity=none,none,Walk through activities
 previous activity=Meta+Shift+A,none,Walk through activities (Reverse)
@@ -387,6 +381,9 @@ _launch=Alt+F2\tSearch\tAlt+Space\tMeta+Space
 RecordRegion=none
 RecordWindow=none
 _launch=Print
+
+[services][org.kde.touchpadshortcuts.desktop]
+ToggleTouchpad=Touchpad Toggle
 
 [services][org.mozilla.Thunderbird.desktop]
 _launch=Launch Mail\tMeta+M

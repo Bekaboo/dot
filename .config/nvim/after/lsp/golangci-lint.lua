@@ -1,22 +1,21 @@
-local root_markers = {
-  {
-    '.goalngci.yml',
-    '.golangci.yaml',
-    '.golangci.toml',
-    '.golangci.json',
-  },
-  {
-    'go.work',
-    'go.mod',
-  },
-}
-
+---@type lsp_config_t
 return {
   filetypes = { 'go' },
   cmd = { 'efm-langserver' },
-  requires = { 'golangci-lint' },
+  requires = { 'golangci-lint', 'dirname' },
   name = 'golangci-lint',
-  root_markers = root_markers,
+  root_markers = {
+    {
+      '.goalngci.yml',
+      '.golangci.yaml',
+      '.golangci.toml',
+      '.golangci.json',
+    },
+    {
+      'go.work',
+      'go.mod',
+    },
+  },
   settings = {
     languages = {
       go = {
@@ -25,12 +24,12 @@ return {
           -- will fail to find definitions in other files in the same package
           -- `--output-format` is removed in golangci-lint v2, see:
           -- https://github.com/golangci/golangci-lint/discussions/5612#discussioncomment-12607774
-          lintCommand = 'golangci-lint run --color never --output.tab.path stdout --enable exhaustruct "$(dirname "${INPUT}")"',
-          lintFormats = { '%f:%l:%c%*\\s%*\\S%*\\s%m' },
+          lintCommand = 'golangci-lint run --color never --show-stats=false --output.text.path stdout --output.text.print-issued-lines=false "$(dirname "${INPUT}")"',
+          lintFormats = { '%f:%l:%c: %m' },
           lintSource = 'golangci-lint',
+          lintAfterOpen = true,
           lintStdin = false,
-          lintSeverity = vim.log.levels.INFO,
-          rootMarkers = vim.iter(root_markers):flatten():totable(),
+          lintSeverity = 3,
         },
       },
     },

@@ -1,23 +1,37 @@
 -- Google api-linter, see: https://linter.aip.dev
 
-local root_markers = { 'apilint.yaml' }
-
+---@type lsp_config_t
 return {
   filetypes = { 'proto' },
   cmd = { 'efm-langserver' },
-  requires = { 'api-linter' },
+  requires = { 'api-linter', 'sed' },
   name = 'api-linter',
-  root_markers = root_markers,
+  root_markers = { 'apilint.yaml' },
   settings = {
     languages = {
       proto = {
         {
           lintSource = 'api-linter',
-          lintCommand = 'api-linter --config apilint.yaml "${INPUT}" || api-lint "${INPUT}"',
-          lintFormats = { '%[0-9/]\\+ %[0-9:]\\+ %f:%l:%c: %m' },
+          lintCommand = [[
+            if [ -f apilint.yaml ]; then
+              config=--config apilint.yaml
+            fi
+            api-linter $config --output-format github "${INPUT}" | \
+              sed 's/\\n/ /g' | \
+              sed -E 's/ +/ /g';
+          ]],
+          lintFormats = {
+            '::error file=%f,endLine=%\\d\\+,col=%c,line=%l,title=%m',
+            '::error file=%f,title=%m',
+          },
+          -- Github format uses 0-based line and column numbers, use offset to
+          -- convert them to 1-based for efm to mark error regions correctly
+          lintOffset = -1,
+          lintOffsetColumns = 1,
+          lintIgnoreExitCode = true,
+          lintAfterOpen = true,
           lintStdin = false,
-          lintSeverity = vim.log.levels.INFO,
-          rootMarkers = vim.iter(root_markers):flatten():totable(),
+          lintSeverity = 3,
         },
       },
     },

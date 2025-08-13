@@ -64,37 +64,53 @@ local function setup(opts)
   if not vim.tbl_isempty(configs.opts.bar.attach_events) then
     vim.api.nvim_create_autocmd(configs.opts.bar.attach_events, {
       group = groupid,
-      callback = function(info)
+      callback = function(args)
         -- Try attaching winbar to all windows containing the buffer
         -- Notice that we cannot simply let `win=0` here since the current
         -- buffer isn't necessarily the window containing the buffer
-        for _, win in ipairs(vim.fn.win_findbuf(info.buf)) do
-          utils.bar.attach(info.buf, win)
+        for _, win in ipairs(vim.fn.win_findbuf(args.buf)) do
+          utils.bar.attach(args.buf, win)
         end
       end,
       desc = 'Attach winbar',
     })
   end
+
+  -- Garbage collection
   vim.api.nvim_create_autocmd('BufDelete', {
     group = groupid,
-    callback = function(info)
-      utils.bar.exec('del', { buf = info.buf })
-      _G._winbar.bars[info.buf] = nil
-      _G._winbar.callbacks['buf' .. info.buf] = nil
+    callback = function(args)
+      utils.bar.exec('del', { buf = args.buf })
     end,
     desc = 'Remove winbar from cache on buffer wipeout.',
   })
+
+  local gc_timer = vim.uv.new_timer()
+  if gc_timer then
+    gc_timer:start(
+      configs.opts.bar.gc.interval,
+      configs.opts.bar.gc.interval,
+      vim.schedule_wrap(function()
+        for buf, _ in pairs(_G._winbar.bars) do
+          if not vim.api.nvim_buf_is_valid(buf) then
+            utils.bar.exec('del', { buf = buf })
+          end
+        end
+      end)
+    )
+  end
+
   if not vim.tbl_isempty(configs.opts.bar.update_events.win) then
     vim.api.nvim_create_autocmd(configs.opts.bar.update_events.win, {
       group = groupid,
-      callback = function(info)
-        if info.event == 'WinResized' then
+      callback = function(args)
+        if args.event == 'WinResized' then
           for _, win in ipairs(vim.v.event.windows or {}) do
             utils.bar.exec('update', { win = win })
           end
         else
           utils.bar.exec('update', {
-            win = info.event == 'WinScrolled' and tonumber(info.match)
+            win = args.event == 'WinScrolled' and tonumber(args.match)
               or vim.api.nvim_get_current_win(),
           })
         end
@@ -105,8 +121,8 @@ local function setup(opts)
   if not vim.tbl_isempty(configs.opts.bar.update_events.buf) then
     vim.api.nvim_create_autocmd(configs.opts.bar.update_events.buf, {
       group = groupid,
-      callback = function(info)
-        utils.bar.exec('update', { buf = info.buf })
+      callback = function(args)
+        utils.bar.exec('update', { buf = args.buf })
       end,
       desc = 'Update all winbars associated with buf.',
     })
@@ -114,8 +130,8 @@ local function setup(opts)
   if not vim.tbl_isempty(configs.opts.bar.update_events.global) then
     vim.api.nvim_create_autocmd(configs.opts.bar.update_events.global, {
       group = groupid,
-      callback = function(info)
-        if vim.tbl_isempty(utils.bar.get({ buf = info.buf })) then
+      callback = function(args)
+        if vim.tbl_isempty(utils.bar.get({ buf = args.buf })) then
           return
         end
         utils.bar.exec('update')
@@ -125,8 +141,8 @@ local function setup(opts)
   end
   vim.api.nvim_create_autocmd({ 'WinClosed' }, {
     group = groupid,
-    callback = function(info)
-      utils.bar.exec('del', { win = tonumber(info.match) })
+    callback = function(args)
+      utils.bar.exec('del', { win = tonumber(args.match) })
     end,
     desc = 'Remove winbar from cache on window closed.',
   })
@@ -154,6 +170,4 @@ local function setup(opts)
   vim.g.loaded_winbar = true
 end
 
-return {
-  setup = setup,
-}
+return { setup = setup }

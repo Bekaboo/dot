@@ -26,6 +26,8 @@ require('nvim-treesitter.configs').setup({
         ['i#'] = '@header.inner',
         ['a3'] = '@header.outer',
         ['i3'] = '@header.inner',
+        ['ar'] = '@return.inner',
+        ['ir'] = '@return.outer',
       },
       selection_modes = {
         ['@block.outer'] = 'V',

@@ -1,10 +1,5 @@
 #!/usr/bin/env sh
-# vim: ft=sh ts=4 sw=4 sts=4 et :
-
-has() {
-    # $1: command to test
-    command -v "$1" >/dev/null 2>&1
-}
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
 
 which_exe() {
     # $@: list of commands to test
@@ -40,7 +35,7 @@ fzf_file_previewer() {
             tree_output=$(tree -N -L 4 -C -- "$1")
             info=$(echo "$tree_output" | tail -n 1)
             printf "\033[1m%s\033[0m\n\n" "$info"
-            printf "%s\n" "$tree_output" | head -n -1
+            printf "%s\n" "$tree_output" | tail -n +2
         else
             if has find && has wc; then
                 num_files=$(find "$fpath" -type f | wc -l)
@@ -165,7 +160,17 @@ fzf_file_previewer() {
                 ;;
             esac
 
-            # Use highlight or cat for remaining files
+            # Use bat, highlight or cat for remaining files
+            if has bat; then
+                if [ -z "$2" ]; then
+                    bat --paging never --style plain --color always "$1"
+                else
+                    bat --paging never --style numbers --color always "$1" \
+                        --highlight-line "$2"
+                fi
+                return
+            fi
+
             if has highlight; then
                 highlight_config="$HOME/.highlight/themes/highlight.theme"
                 if [ ! -e "$highlight_config" ]; then

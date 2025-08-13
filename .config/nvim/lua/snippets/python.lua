@@ -107,11 +107,271 @@ M.snippets = {
     un.fmtad('print(<q><line><q>)', {
       q = un.qt(),
       line = c(1, {
-        i(nil, '........................................'),
         i(nil, '----------------------------------------'),
+        i(nil, '........................................'),
         i(nil, '========================================'),
         i(nil, '########################################'),
       }),
+    })
+  ),
+  us.sn(
+    {
+      trig = 'lconf',
+      desc = 'Config logging',
+    },
+    un.fmtad('logging.basicConfig(<out>, level=<level>)', {
+      out = c(1, {
+        un.fmtad('stream=<fd>', {
+          fd = i(1, 'sys.stderr'),
+        }),
+        un.fmtad('filename=<q><fname><q>, filemode=<q><fmode><q>', {
+          q = un.qt(),
+          fname = d(1, function()
+            return sn(nil, {
+              i(
+                1,
+                string.format(
+                  '%s.log',
+                  vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':t:r')
+                )
+              ),
+            })
+          end),
+          fmode = i(2, 'a'),
+        }),
+      }),
+      level = c(2, {
+        i(nil, 'logging.DEBUG'),
+        i(nil, 'logging.INFO'),
+        i(nil, 'logging.WARNING'),
+        i(nil, 'logging.ERROR'),
+        i(nil, 'logging.CRITICAL'),
+        i(nil, 'logging.NOTSET'),
+      }),
+    })
+  ),
+  us.sn(
+    {
+      trig = 'nl',
+      desc = 'Create a new logger',
+    },
+    un.fmtad('logger = logging.getLogger(<name><e>)', {
+      name = i(1, '__name__'),
+      e = i(2),
+    })
+  ),
+  us.sn(
+    {
+      trig = 'l',
+      desc = 'Logger log',
+    },
+    un.fmtad('logger.<level>(<msg><e>)', {
+      level = c(1, {
+        i(nil, 'info'),
+        i(nil, 'warning'),
+        i(nil, 'error'),
+        i(nil, 'critical'),
+        i(nil, 'debug'),
+      }),
+      msg = c(2, {
+        un.fmtad('<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+        un.fmtad('f<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+      }),
+      e = i(3),
+    }),
+    {
+      stored = {
+        msg = i(nil, 'msg'),
+      },
+    }
+  ),
+  us.sn(
+    {
+      trig = 'lg',
+      desc = 'logger.log()',
+    },
+    un.fmtad('logger.log(<level>, <msg><e>)', {
+      level = c(1, {
+        i(2, 'logging.INFO'),
+        i(2, 'logging.WARNING'),
+        i(2, 'logging.ERROR'),
+        i(2, 'logging.CRITICAL'),
+        i(2, 'logging.DEBUG'),
+        i(2, 'logging.NOTSET'),
+      }),
+      msg = c(2, {
+        un.fmtad('<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+        un.fmtad('f<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+      }),
+      e = i(3),
+    }),
+    {
+      stored = {
+        msg = i(nil, 'msg'),
+      },
+    }
+  ),
+  us.sn(
+    {
+      trig = 'li',
+      desc = 'logger.info()',
+    },
+    un.fmtad('logger.info(<msg><e>)', {
+      msg = c(1, {
+        un.fmtad('<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+        un.fmtad('f<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+      }),
+      e = i(2),
+    }),
+    {
+      stored = {
+        msg = i(nil, 'msg'),
+      },
+    }
+  ),
+  us.sn(
+    {
+      trig = 'lw',
+      desc = 'logger.warning()',
+    },
+    un.fmtad('logger.warning(<msg><e>)', {
+      msg = c(1, {
+        un.fmtad('<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+        un.fmtad('f<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+      }),
+      e = i(2),
+    }),
+    {
+      stored = {
+        msg = i(nil, 'msg'),
+      },
+    }
+  ),
+  us.sn(
+    {
+      trig = 'le',
+      desc = 'logger.error()',
+    },
+    un.fmtad('logger.error(<msg><e>)', {
+      msg = c(1, {
+        un.fmtad('<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+        un.fmtad('f<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+      }),
+      e = i(2),
+    }),
+    {
+      stored = {
+        msg = i(nil, 'msg'),
+      },
+    }
+  ),
+  us.sn(
+    {
+      trig = 'lc',
+      desc = 'logger.critical()',
+    },
+    un.fmtad('logger.critical(<msg><e>)', {
+      msg = c(1, {
+        un.fmtad('<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+        un.fmtad('f<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+      }),
+      e = i(2),
+    }),
+    {
+      stored = {
+        msg = i(nil, 'msg'),
+      },
+    }
+  ),
+  us.sn(
+    {
+      trig = 'ld',
+      desc = 'logger.debug()',
+    },
+    un.fmtad('logger.debug(<msg><e>)', {
+      msg = c(1, {
+        un.fmtad('<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+        un.fmtad('f<q><m><q>', {
+          q = un.qt(),
+          m = r(1, 'msg'),
+        }),
+      }),
+      e = i(2),
+    }),
+    {
+      stored = {
+        msg = i(nil, 'msg'),
+      },
+    }
+  ),
+  us.sn(
+    {
+      trig = 'll',
+      desc = 'Log a line',
+    },
+    un.fmtad('logger.debug(<q><line><q><e>)', {
+      q = un.qt(),
+      line = c(1, {
+        i(nil, '----------------------------------------'),
+        i(nil, '........................................'),
+        i(nil, '========================================'),
+        i(nil, '########################################'),
+      }),
+      e = i(2),
+    })
+  ),
+  us.sn(
+    {
+      trig = 'lck',
+      desc = 'Check a value of a variable through logger.debug()',
+    },
+    un.fmtad('logger.debug(f<q><expr_escaped>: {<expr>}<q><e>)', {
+      q = un.qt(),
+      expr = i(1),
+      expr_escaped = d(2, function(texts)
+        local str = vim.fn.escape(texts[1][1], '\\' .. uf.get_quotation_type())
+        return sn(nil, i(1, str))
+      end, { 1 }),
+      e = i(3),
     })
   ),
   us.msn({
@@ -296,12 +556,50 @@ M.snippets = {
   ),
   us.msn(
     {
-      { trig = 'fi' },
       { trig = 'fr' },
       { trig = 'forr' },
-      { trig = 'fori' },
       { trig = 'forange' },
       { trig = 'forrange' },
+      common = { desc = 'for ... in ... loop' },
+    },
+    c(1, {
+      un.fmtad(
+        [[
+          for <var> in <iterable>:
+            <body>
+        ]],
+        {
+          var = r(1, 'var'),
+          iterable = r(2, 'iterable'),
+          body = un.body(3, 1, 'pass'),
+        }
+      ),
+      un.fmtad(
+        [[
+          for <idx>, <var> in iter(<iterable>):
+          <body>
+        ]],
+        {
+          idx = i(1, 'i'),
+          var = r(2, 'var'),
+          iterable = r(3, 'iterable'),
+          body = un.body(4, 1, 'pass'),
+        }
+      ),
+    }),
+    {
+      common_opts = {
+        stored = {
+          var = i(nil, 'var'),
+          iterable = i(nil, 'iterable'),
+        },
+      },
+    }
+  ),
+  us.msn(
+    {
+      { trig = 'fi' },
+      { trig = 'fori' },
       common = { desc = 'for ... in range(...) loop' },
     },
     un.fmtad(
@@ -423,7 +721,7 @@ M.snippets = {
         <body>
       ]],
       {
-        name = i(1, 'class_name'),
+        name = i(1, 'ClassName'),
         args = i(2),
         idnt = un.idnt(1),
         body = un.body(3, 2, 'pass'),
@@ -537,6 +835,47 @@ M.snippets = {
   ),
   us.msn(
     {
+      { trig = 'en' },
+      { trig = 'enu' },
+      { trig = 'enum' },
+      common = { desc = 'Enum classes' },
+    },
+    c(1, {
+      un.fmtad(
+        [[
+          class <class_name>(Enum):
+              <value1> = 1
+              <value2> = 2
+        ]],
+        {
+          class_name = r(1, 'class_name'),
+          value1 = r(2, 'value1'),
+          value2 = r(3, 'value2'),
+        }
+      ),
+      un.fmtad(
+        '<class_name> = Enum(<q><class_name><q>, [(<q><value1><q>, 1), (<q><value2><q>, 2)<i>])',
+        {
+          class_name = r(1, 'class_name'),
+          value1 = r(2, 'value1'),
+          value2 = r(3, 'value2'),
+          i = i(4),
+          q = un.qt(),
+        }
+      ),
+    }),
+    {
+      common_opts = {
+        stored = {
+          class_name = i(nil, 'EnumClassName'),
+          value1 = i(nil, 'ENUM_VALUE_1'),
+          value2 = i(nil, 'ENUM_VALUE_2'),
+        },
+      },
+    }
+  ),
+  us.msn(
+    {
       { trig = 'tr' },
       { trig = 'try' },
       common = { desc = 'try...except statement' },
@@ -545,13 +884,21 @@ M.snippets = {
       [[
         try:
         <body>
-        except<exc>:
-        <idnt>
+        except <exc><i>:
+        <idnt><exc_body>
       ]],
       {
-        body = un.body(1, 1),
-        exc = i(2),
+        body = un.body(1, 1, 'pass'),
+        exc = c(2, {
+          sn(nil, r(1, 'exc_name', i(nil, 'Exception'))),
+          un.fmtad('<exc_name> as <e>', {
+            exc_name = r(1, 'exc_name', i(nil, 'Exception')),
+            e = i(2, 'e'),
+          }),
+        }),
+        i = i(3),
         idnt = un.idnt(1),
+        exc_body = i(4, 'pass'),
       }
     )
   ),
@@ -562,12 +909,20 @@ M.snippets = {
     },
     un.fmtad(
       [[
-        except<exc>:
-        <body>
+        except <exc><i>:
+        <idnt><exc_body>
       ]],
       {
-        exc = i(1),
-        body = un.body(2, 1, 'pass'),
+        exc = c(1, {
+          sn(nil, r(1, 'exc_name', i(nil, 'Exception'))),
+          un.fmtad('<exc_name> as <e>', {
+            exc_name = r(1, 'exc_name', i(nil, 'Exception')),
+            e = i(2, 'e'),
+          }),
+        }),
+        i = i(2),
+        idnt = un.idnt(1),
+        exc_body = i(3, 'pass'),
       }
     )
   ),

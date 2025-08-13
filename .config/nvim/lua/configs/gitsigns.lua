@@ -63,8 +63,8 @@ vim.api.nvim_create_autocmd('User', {
   pattern = 'GitSignsChanged',
   desc = 'Automatically refresh fugitive buffers on staging/unstaging hunks.',
   group = vim.api.nvim_create_augroup('GitsignsFugitiveIntegration', {}),
-  callback = function(info)
-    local file = info.data.file ---@type string
+  callback = function(args)
+    local file = args.data.file ---@type string
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
       -- Only update fugitive buffers that matches the updated file
       if

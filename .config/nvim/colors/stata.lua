@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      BSD
--- Last Updated: Mon Jun 16 09:34:16 2025
+-- Last Updated: Mon 28 Jul 2025 02:19:38 AM PDT
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -136,7 +136,7 @@ local hlgroups = {
   CursorIM = { link = 'Cursor' },
   CursorLine = { bg = c_faded },
   CursorLineNr = { fg = c_foreground, bold = true },
-  DebugPC = { bg = c_lightgreen },
+  DebugPC = { bg = c_lightgreen, fg = c_background },
   DiffAdd = { bg = c_lightgreen, fg = c_background },
   DiffChange = { bg = c_variable, fg = c_background },
   DiffDelete = { fg = c_other },
@@ -147,7 +147,7 @@ local hlgroups = {
   FloatBorder = { fg = c_foreground, bg = c_highlight },
   FloatTitle = { fg = c_other, bg = c_highlight, bold = true },
   FoldColumn = { fg = c_delimiter },
-  Folded = { fg = c_foreground, bg = c_highlight },
+  Folded = { fg = c_foreground, bg = c_faded },
   IncSearch = { fg = c_background, bg = c_other, bold = true },
   LineNr = { fg = c_comment },
   MatchParen = { bg = c_highlight, bold = true },
@@ -158,6 +158,7 @@ local hlgroups = {
   NormalFloat = { fg = c_foreground, bg = c_highlight },
   NormalNC = { link = 'Normal' },
   Pmenu = { fg = c_foreground, bg = c_highlight },
+  PmenuExtra = { fg = c_delimiter },
   PmenuSbar = { bg = c_highlight },
   PmenuSel = { fg = c_foreground, bg = c_special, bold = true },
   PmenuThumb = { bg = c_keyword },
@@ -239,6 +240,7 @@ local hlgroups = {
   ['@string'] = { link = 'String' },
   ['@string.escape'] = { fg = c_other },
   ['@string.special'] = { link = 'SpecialChar' },
+  ['@string.yaml'] = { link = 'Normal' },
   ['@character'] = { link = 'Character' },
   ['@character.special'] = { link = 'SpecialChar' },
   ['@boolean'] = { link = 'Boolean' },
@@ -347,33 +349,6 @@ local hlgroups = {
   fugitiveUntrackedHeading = { fg = c_other, bold = true },
   fugitiveUntrackedModifier = { fg = c_other, bold = true },
 
-  -- nvim-cmp
-  CmpItemAbbrDeprecated = { fg = c_delimiter, strikethrough = true },
-  CmpItemAbbrMatch = { fg = c_other, bold = true },
-  CmpItemAbbrMatchFuzzy = { link = 'CmpItemAbbrMatch' },
-  CmpItemKindText = { link = 'String' },
-  CmpItemKindMethod = { link = 'Function' },
-  CmpItemKindFunction = { link = 'Function' },
-  CmpItemKindConstructor = { link = 'Function' },
-  CmpItemKindField = { fg = c_variable },
-  CmpItemKindProperty = { link = 'CmpItemKindField' },
-  CmpItemKindVariable = { fg = c_variable, bold = true },
-  CmpItemKindReference = { link = 'CmpItemKindVariable' },
-  CmpItemKindModule = { fg = c_keyword },
-  CmpItemKindEnum = { fg = c_keyword },
-  CmpItemKindEnumMember = { link = 'CmpItemKindEnum' },
-  CmpItemKindKeyword = { link = 'Keyword' },
-  CmpItemKindOperator = { link = 'Operator' },
-  CmpItemKindSnippet = { fg = c_string },
-  CmpItemKindColor = { fg = c_keyword },
-  CmpItemKindConstant = { link = 'Constant' },
-  CmpItemKindCopilot = { fg = c_special },
-  CmpItemKindValue = { link = 'Number' },
-  CmpItemKindClass = { link = 'Type' },
-  CmpItemKindStruct = { link = 'Type' },
-  CmpItemKind = { fg = c_foreground },
-  CmpItemMenu = { link = 'Pmenu' },
-
   -- gitsigns
   GitSignsAdd = { fg = c_string },
   GitSignsChange = { fg = c_special },
@@ -399,6 +374,7 @@ local hlgroups = {
 
 -- Highlight group overrides {{{1
 if vim.go.bg == 'light' then
+  hlgroups.DebugPC = { bg = c_lightgreen }
   hlgroups.Visual = { bg = c_whitespace }
   hlgroups.LineNr = { fg = c_foreground }
   hlgroups.NonText = { fg = c_delimiter }

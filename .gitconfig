@@ -33,11 +33,9 @@
 	cm   = commit -m
 	co   = checkout
 	cof  = checkout --force
-	com  = "!git show-ref --verify --quiet refs/heads/master && git checkout master || git checkout main"
-	comf = "!git show-ref --verify --quiet refs/heads/master && git checkout master --force || git checkout main --force"
 	; Checkout specified commit without changing the working tree and branch
 	; pointer, aka "soft checkout"
-	cos  = "!__git_cos() { git checkout --detach && git reset --soft $1 && git checkout $1; }; __git_cos"
+	cos  = "!fn() { git checkout --detach && git reset --soft $1 && git checkout $1; }; fn"
 	d    = diff
 	dt   = difftool
 	ds   = diff --cached
@@ -45,13 +43,16 @@
 	ia   = merge-base --is-ancestor
 	l    = log --oneline --graph
 	lg   = log
-	ll   = reflog
+	; Show git commit history for a single line/range, see
+	; https://stackoverflow.com/a/50473741
+	ll   = log -L
+	lr   = reflog
 	; `$GIT_PREFIX` contains the relative path from repo root to current working
 	; directory with trailing slash
 	; When no argument is given to `git lc`, use repo root as base path
 	; (default behavior) and all files in the repo is counted,
 	; else use current shell cwd as base path and only count files in given path
-	lc   = "!__git_lc() { git ls-files -z ${1:+\"$GIT_PREFIX$1\"} | xargs -0 wc -l 2>/dev/null; }; __git_lc"
+	lc   = "!fn() { git ls-files -z ${1:+\"$GIT_PREFIX$1\"} | xargs -0 wc -l 2>/dev/null; }; fn"
 	ls   = ls-files
 	m    = merge
 	ma   = merge --abort
@@ -141,7 +142,9 @@
 	indentHeuristic = true
 [filter "vscode-theme"]
 	smudge = cat
-	clean = sed '/[cC]olorTheme/d'
+	clean = sed \
+		-e '/[cC]olorTheme/d' \
+		-e '/defaultInterpreterPath/d'
 [filter "kglobalshortcutsrc"]
 	smudge = cat
 	clean = sed '/switch-to-activity-/d'

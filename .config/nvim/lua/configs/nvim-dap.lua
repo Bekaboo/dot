@@ -56,6 +56,8 @@ vim.keymap.set('n', '<Leader>Gj',      dap_down,                { desc = 'Stack 
 vim.keymap.set('n', '<Leader>G<Up>',   dap_up,                  { desc = 'Stack up' })
 vim.keymap.set('n', '<Leader>G<Down>', dap_down,                { desc = 'Stack down' })
 vim.keymap.set('n', '<Leader>Gc',      dap_continue,            { desc = 'Continue program execution' })
+vim.keymap.set('n', '<Leader>Gg',      dap_continue,            { desc = 'Continue program execution' })
+vim.keymap.set('n', '<Leader>GG',      dap_continue,            { desc = 'Continue program execution' })
 vim.keymap.set('n', '<Leader>Gh',      dap_pause,               { desc = 'Pause program execution' })
 vim.keymap.set('n', '<Leader>Gp',      dap_pause,               { desc = 'Pause program execution' })
 vim.keymap.set('n', '<C-c>',           dap_pause,               { desc = 'Pause program execution' })
@@ -96,7 +98,7 @@ vim.fn.sign_define('DapStopped',             { text = vim.trim(icons.debug.Stack
 dap.adapters = {}
 dap.configurations = {}
 
-require('utils.ft').auto_load_once('dapconfigs', function(ft, spec)
+require('utils.ft').auto_load_once('dap-configs', function(ft, spec)
   if not spec then
     return false
   end

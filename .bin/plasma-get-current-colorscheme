@@ -1,10 +1,10 @@
 #!/usr/bin/env sh
-# vim: ft=sh ts=4 sw=4 sts=4 et :
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
 
 main() {
-    if ! command -v plasma-apply-colorscheme >/dev/null 2>&1; then
+    if ! has plasma-apply-colorscheme; then
         echo "plasma-apply-colorscheme not found" >&2
-        exit 1
+        return 1
     fi
 
     # Get list of color schemes
@@ -15,7 +15,7 @@ main() {
     # * breeze-light (current color scheme for this Plasma session)
     output=$(plasma-apply-colorscheme --list-schemes 2>/dev/null) || {
         echo "Failed to get color schemes" >&2
-        exit 1
+        return 1
     }
 
     current_scheme=$(printf '%s\n' "$output" |
@@ -24,7 +24,7 @@ main() {
 
     if [ -z "$current_scheme" ]; then
         echo "No current color scheme found" >&2
-        exit 1
+        return 1
     fi
 
     printf '%s\n' "$current_scheme"

@@ -35,16 +35,16 @@ table_mode_toggle()
 
 vim.api.nvim_create_autocmd({ 'Filetype', 'BufEnter' }, {
   group = vim.api.nvim_create_augroup('TableModeAutoToggle', {}),
-  callback = function(info)
-    table_mode_toggle(info.buf)
+  callback = function(args)
+    table_mode_toggle(args.buf)
   end,
 })
 
 vim.api.nvim_create_autocmd('BufWritePre', {
   group = vim.api.nvim_create_augroup('TableModeFormatOnSave', {}),
-  callback = function(info)
+  callback = function(args)
     if
-      vim.bo[info.buf].ft == 'markdown'
+      vim.bo[args.buf].ft == 'markdown'
       and vim.api.nvim_get_current_line():match('^%s*|')
     then
       vim.cmd.TableModeRealign({

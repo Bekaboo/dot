@@ -3,7 +3,7 @@ if status is-login
     # Fzf envrionment variables
     set -Ux FZF_DEFAULT_OPTS "--reverse \
         --preview='fzf-file-previewer {}' \
-        --preview-window=right,55%,border-sharp,nocycle \
+        --preview-window=right,55%,border-none,nocycle \
         --info=inline-right \
         --no-separator \
         --no-scrollbar \
@@ -26,7 +26,7 @@ if status is-login
         --bind=alt-v:preview-half-page-up,ctrl-v:preview-half-page-down"
 
     # If supports 256 colors
-    if type -q tput; and test (tput colors 2>/dev/null) -lt 256
+    if type -q tput; and test "$(tput colors 2>/dev/null)" -lt 256 2>/dev/null
         set -Uxa FZF_DEFAULT_OPTS --no-unicode '--marker=+\ ' '--pointer=\>\ '
     end
 

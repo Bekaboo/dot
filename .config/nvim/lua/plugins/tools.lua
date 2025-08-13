@@ -1,6 +1,7 @@
 return {
   {
     'ibhagwan/fzf-lua',
+    dependencies = 'elanmed/fzf-lua-frecency.nvim',
     cmd = 'FzfLua',
     keys = {
       { '<C-_>', desc = 'Fuzzy complete command/search history', mode = 'c' },
@@ -17,6 +18,7 @@ return {
       { "<Leader>'", desc = 'Resume last picker' },
       { '<Leader>`', desc = 'Find marks' },
       { '<Leader>,', desc = 'Find buffers' },
+      { '<Leader>%', desc = 'Find tabpages' },
       { '<Leader>/', desc = 'Grep' },
       { '<Leader>?', desc = 'Find help files' },
       { '<Leader>*', mode = { 'n', 'x' }, desc = 'Grep word under cursor' },
@@ -101,7 +103,8 @@ return {
         -- Register fzf as custom `vim.ui.select()` function if not yet
         -- registered
         if not fzf_ui.is_registered() then
-          local _ui_select = fzf_ui.ui_select
+          local ui_select = fzf_ui.ui_select
+
           ---Overriding fzf-lua's default `ui_select()` function to use a
           ---custom prompt
           ---@diagnostic disable-next-line: duplicate-set-field
@@ -119,7 +122,7 @@ return {
             -- result becomes 'foobar> ' as expected.
             opts.prompt = opts.prompt
               and vim.fn.substitute(opts.prompt, ':\\?\\s*$', ':\xc2\xa0', '')
-            _ui_select(items, opts, on_choice)
+            ui_select(items, opts, on_choice)
           end
           fzf_ui.register()
         end
@@ -173,7 +176,10 @@ return {
       'Gwq',
       'Gwrite',
     },
-    keys = { { '<Leader>gL', desc = 'Git log entire repo' } },
+    keys = {
+      { '<Leader>gL', desc = 'Git log entire repo' },
+      { '<Leader>g<Space>', desc = 'Populate cmdline with ":Git"' },
+    },
     event = { 'BufNew', 'BufWritePost', 'BufReadPre' },
     dependencies = {
       -- Enable :GBrowse command in GitHub/Gitlab repos
@@ -182,6 +188,21 @@ return {
     },
     config = function()
       require('configs.vim-fugitive')
+    end,
+  },
+
+  {
+    'NvChad/nvim-colorizer.lua',
+    event = {
+      'BufNew',
+      'BufRead',
+      'BufWritePost',
+      'TextChanged',
+      'TextChangedI',
+      'StdinReadPre',
+    },
+    config = function()
+      require('configs.nvim-colorizer')
     end,
   },
 
@@ -197,9 +218,9 @@ return {
         -- Use `vim.schedule()` here to wait session to be loaded and
         -- buffer attributes, e.g. buffer name, to be updated before
         -- checking if the buffer is a directory buffer
-        callback = vim.schedule_wrap(function(info)
-          local buf = info.buf
-          local id = info.id
+        callback = vim.schedule_wrap(function(args)
+          local buf = args.buf
+          local id = args.id
 
           if
             not vim.api.nvim_buf_is_valid(buf)

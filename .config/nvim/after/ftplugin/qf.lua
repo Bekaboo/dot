@@ -3,6 +3,7 @@ if vim.fn.win_gettype() == 'quickfix' then
   vim.cmd.wincmd('J')
 end
 
+vim.bo.textwidth = 0
 vim.bo.buflisted = false
 vim.opt_local.list = false
 vim.opt_local.spell = false

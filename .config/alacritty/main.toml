@@ -9,7 +9,7 @@ TERM = 'alacritty'
 size = 12
 
 [font.normal]
-family = 'Iosevka'
+family = 'Iosevka NF'
 
 [scrolling]
 history = 0
@@ -26,3 +26,19 @@ lines = 24
 [window.padding]
 x = 8
 y = 8
+
+[keyboard]
+bindings = [
+    # Fix Ctrl-6 and Ctrl-5 keymap (used in neovim & tmux) on macOS
+    # https://github.com/alacritty/alacritty/issues/1108
+    #
+    # To get hex keycode for a key: in a supported terminal, e.g. Kitty, open
+    # neovim, press Ctrl-v + <key>, then put cursor over the char inserted and
+    # press `ga`
+    { key = 'Key6', mods = 'Control', chars = "\u001e" },
+    { key = 'Key5', mods = 'Control', chars = "\u001d" },
+
+    # Ctrl-/ is the same as Ctrl-_ in Kitty but is the same as / in alacritty,
+    # align with Kitty to make Ctrl-/ work in neovim
+    { key = '/',    mods = 'Control', chars = "\u001f" },
+]

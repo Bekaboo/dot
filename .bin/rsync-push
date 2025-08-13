@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# vim:ft=sh:ts=4:sw=4:sts=4:et:
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
 # Automatically push files from <src> to <dest> on local file change
 
 push() {
@@ -9,9 +9,8 @@ push() {
 }
 
 main() {
-    if ! command -v rsync >/dev/null 2>&1 ||
-        ! command -v inotifywait >/dev/null 2>&1; then
-        echo 'rsync or inotifywait not found, exit'
+    if ! has rsync || ! has inotifywait; then
+        echo 'rsync or inotifywait not found'
         return 1
     fi
 

@@ -7,7 +7,7 @@ local M = {}
 ---@return string sign string representation of the sign with highlight
 function M.hl(str, hl, restore)
   hl = hl or ''
-  str = str and tostring(str) or ''
+  str = str or ''
   restore = restore == nil or restore
   return restore and table.concat({ '%#', hl, '#', str, '%*' })
     or table.concat({ '%#', hl, '#', str })
@@ -184,7 +184,8 @@ end
 
 ---Redraw so that the new icon can be shown in statusline
 function M.spinner.redraw()
-  vim.cmd.redrawstatus({
+  -- Silent occasional treesitter error on text deletion
+  pcall(vim.cmd.redrawstatus, {
     bang = true,
     mods = {
       emsg_silent = true,
@@ -228,8 +229,8 @@ function M.spinner:attach(buf)
     self.attached_autocmd = vim.api.nvim_create_autocmd('BufWipeout', {
       once = true,
       buffer = buf,
-      callback = function(info)
-        if vim.b[info.buf].spinner ~= self then
+      callback = function(args)
+        if vim.b[args.buf].spinner ~= self then
           return
         end
         self:detach()

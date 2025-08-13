@@ -1,12 +1,8 @@
 #!/usr/bin/env sh
-# vim: ft=sh ts=4 sw=4 sts=4 et :
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
 
 # Hijack fzf command for extra functionality, including adaptive height,
 # flexible preview window layout, and image preview with ueberzugpp
-
-has() {
-    command -v "$1" >/dev/null 2>&1
-}
 
 # Get terminal size
 lines=$(has tput && tput lines || echo "${LINES:-24}")
@@ -62,11 +58,11 @@ cursorpos() {
         # Parse response of format "ESC[row;colR"
         case "$pos" in
         *'['*';'*R*)
-            row=${pos#*[}
-            row=${row%;*}
-            col=${pos#*;}
-            col=${col%R}
-            echo "$((row - 1));$((col - 1))"
+            rest=${pos#*[}
+            row=${rest%%[!0-9]*}
+            rest=${rest#*[0-9]?}
+            col=${rest%%[!0-9]*}
+            echo "$((${row:-1} - 1));$((${col:-1} - 1))"
             return
             ;;
         esac
@@ -95,7 +91,7 @@ get_fzf_long_opt_no_space() {
     fi
 
     val=$(printf '%s' "$FZF_DEFAULT_OPTS" | grep -o -- "--$1=[^ ]*" | tail -n1)
-    val=${val#--$1=}
+    val=${val#--"$1"=}
     val=${val#[\"\']}
     val=${val%[\"\']}
 
@@ -111,7 +107,6 @@ get_fzf_geometry_normalized() {
     # $1: 'margin' or 'padding'
     # $2: 'top', 'bottom', 'left', or 'right'
     geometry=$(get_fzf_long_opt_no_space "$1" 0)
-    [ $? -ne 0 ] && echo "$geometry" && return 1
 
     case "$2" in
     top | bottom) total=$lines ;;
@@ -160,7 +155,7 @@ main() {
     tmp_dir=$(mktemp -d -t "$(basename "$0").XXXXXXXX")
     [ ! -d "$tmp_dir" ] && echo 'Failed to create temp dir' >&2 && return 1
 
-    trap 'rm -rf "$tmp_dir"' HUP INT QUIT ABRT EXIT
+    trap 'rm -rf "$tmp_dir"' EXIT INT TERM HUP
 
     # Link files to avoid recursion
     script_dir=$(dirname "$0")

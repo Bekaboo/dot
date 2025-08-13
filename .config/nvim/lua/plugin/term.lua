@@ -208,6 +208,9 @@ function M.setup()
     [[v:lua.require'utils.term'.running_tui() ? "<Esc>" : "<Cmd>stopi<CR>"]],
     { expr = true, replace_keycodes = false, desc = 'Exit terminal mode' }
   )
+  -- Make `<C-[>` the same as `<Esc>` in terminals with kitty keyboard protocol
+  -- support where `<C-[>` and `<Esc>` are treated differently
+  vim.keymap.set('t', '<C-[>', '<Esc>', { remap = true })
 
   vim
     .iter(vim.api.nvim_list_bufs())
@@ -222,8 +225,8 @@ function M.setup()
   vim.api.nvim_create_autocmd('TermOpen', {
     group = groupid,
     desc = 'Set terminal keymaps and options, open term in split.',
-    callback = function(info)
-      M.term_init(info.buf)
+    callback = function(args)
+      M.term_init(args.buf)
     end,
   })
 end

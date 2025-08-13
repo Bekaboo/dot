@@ -1,10 +1,6 @@
 #!/usr/bin/env sh
-# vim: ft=sh ts=4 sw=4 sts=4 et :
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
 # Find a regex pattern using rg and fzf
-
-has() {
-    command -v "$1" >/dev/null 2>&1
-}
 
 # Temporary files used by the script
 REGEX_QUERY_FILE="/tmp/rg-fzf-r-$$"
@@ -15,24 +11,12 @@ cleanup() {
     rm -f "$REGEX_QUERY_FILE" "$FUZZY_QUERY_FILE" "$OUTPUT_FILE"
 }
 
-trap cleanup HUP INT QUIT ABRT EXIT
-
 # $1: search root path
 main() {
+    trap cleanup EXIT INT TERM HUP
+
     # Set default root path to current directory if not provided
     root_path="${1:-.}"
-    shift 2>/dev/null
-
-    # Set preview command based on available tools
-    if has bat; then
-        preview_cmd='bat --theme base16 --paging never --style numbers,header-filename --color always {1} --highlight-line {2}'
-    elif has batcat; then
-        preview_cmd='batcat --theme base16 --paging never --style numbers,header-filename --color always {1} --highlight-line {2}'
-    elif has fzf-file-previewer; then
-        preview_cmd='fzf-file-previewer {1} {2}'
-    elif has cat; then
-        preview_cmd='cat {1}'
-    fi
 
     # Set grep command based on available tools
     if has rg; then
@@ -62,7 +46,7 @@ main() {
         --prompt "$regex_prompt" \
         --delimiter ':' \
         --header "$fuzzy_search_hint" \
-        --preview "$preview_cmd" \
+        --preview "fzf-file-previewer {1} {2}" \
         --preview-window '+{2}-6,~1' >"$OUTPUT_FILE"
 
     # Let editor read the output file as error file and jump to the first error

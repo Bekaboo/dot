@@ -1,7 +1,10 @@
+---@type lsp_config_t
 return {
   filetypes = {
     'typescript',
     'javascript',
+    'typescriptreact',
+    'javascriptreact',
   },
   cmd = {
     'typescript-language-server',

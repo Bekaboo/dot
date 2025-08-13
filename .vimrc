@@ -42,6 +42,8 @@ silent! set viminfo=!,'100,<50,s10,h
 silent! set diffopt+=algorithm:histogram,indent-heuristic
 silent! set clipboard^=unnamedplus
 silent! set formatoptions+=normj
+silent! set formatoptions-=t
+silent! set nrformats+=blank
 silent! set selection=old
 silent! set tabclose=uselast
 
@@ -578,6 +580,7 @@ xnoremap <Esc>?  <C-\><C-n>`>?\%V
 
 " Select previously changed/yanked text, useful for selecting pasted text
 nnoremap gz `[v`]
+onoremap gz :normal! `[v`]<CR>
 
 " Go to file under cursor, with line number
 nnoremap gf gF
@@ -587,6 +590,66 @@ nnoremap ]f gF
 " Delete selection in select mode {{{2
 snoremap <BS>  <C-o>"_s
 snoremap <C-h> <C-o>"_s
+" }}}
+
+" Yank paragraphs as single lines, useful for yanking hard-wrapped
+" paragraphs in nvim and paste it in browsers or other editors {{{2
+if s:supportevents(['TextYankPost', 'ModeChanged'])
+  " param: reg string register name
+  function! s:join_paragraphs_in_reg(reg) abort
+    let joined_lines = []
+    let joined_line = v:null
+
+    for line in v:event.regcontents
+      if line !=# ''
+        let joined_line = joined_line is v:null ? '' : joined_line . ' '
+        let joined_line .= trim(line)
+        continue
+      endif
+      if joined_line isnot v:null
+        call add(joined_lines, joined_line)
+      endif
+      call add(joined_lines, line)
+      let joined_line = v:null
+    endfor
+    if joined_line isnot v:null
+      call add(joined_lines, joined_line)
+    endif
+
+    call setreg(a:reg, joined_lines, v:event.regtype)
+  endfunction
+
+  function! s:yank_joined_paragraphs_keymap() abort
+    let g:_yank_reg = v:register
+
+    augroup YankJoinedParagraphs
+      au!
+      au TextYankPost * ++once call <SID>join_paragraphs_in_reg(g:_yank_reg)
+      " If joined paragraph yank runs successfully, the following events will
+      " trigger in order:
+      " 1. `ModeChanged` with pattern 'n:no'
+      " 2. `TextYankPost`
+      " 3. `ModeChanged` with pattern 'no:n'
+      "
+      " If joined paragraph yank is canceled, e.g. with `gy<Esc>` in normal
+      " mode, the following events will  trigger in order:
+      " 1. `ModeChanged` with pattern 'n:no'
+      " 2. `ModeChanged` with pattern 'no:n'
+      "
+      " So remove the `TextYankPost` autocmd that joins each paragraph as a
+      " single line after changing from operator pending mode 'no' to normal
+      " mode 'n' to prevent it from affecting normal yanking e.g. with `y`
+      if mode() =~# '^n'
+        au ModeChanged no:n ++once sil! au! YankJoinedParagraphs
+      endif
+    augroup END
+
+    call feedkeys('y', 'n')
+  endfunction
+
+  nnoremap <expr><silent> gy <SID>yank_joined_paragraphs_keymap()
+  xnoremap <expr><silent> gy <SID>yank_joined_paragraphs_keymap()
+endif
 " }}}
 
 " Moving up & down in visual line {{{2
@@ -1333,7 +1396,7 @@ if s:supportevents('FileType') && exists('*win_gettype')
   augroup CmdwinSettings
     au!
     au FileType vim if win_gettype() ==# 'command' |
-          \ silent! setlocal nobl nonu nornu scl=no cc=0 |
+          \ silent! setlocal nobl nonu nornu scl=no cc=0 tw=0 |
           \ endif
   augroup END
 endif
@@ -1402,10 +1465,10 @@ endfunction
 " return: 0/1
 function! s:running_tui() abort
   for cmd in s:fg_cmds()
-    if cmd =~# '\v(sudo\s+)?(.*sh\s+-c\s+)?\S*
+    if cmd =~# '\v(sudo.*\s+)?(.*sh\s+-c\s+)?(.*python.*)?\S*
         \(n?vim?|vimdiff|emacs(client)?|lem|nano|h(eli)?x|kak|
-        \tmux|vifm|yazi|ranger|lazygit|h?top|gdb|fzf|nmtui|
-        \sudoedit|crontab|asciinema|w3m)($|\s+)'
+        \tmux|vifm|yazi|ranger|lazygit|h?top|gdb|fzf|nmtui|opencode|
+        \sudoedit|crontab|asciinema|w3m|python3?\s+-m)($|\s+)'
       return 1
     endif
   endfor

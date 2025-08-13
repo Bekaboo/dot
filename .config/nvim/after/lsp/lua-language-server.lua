@@ -1,3 +1,4 @@
+---@type lsp_config_t
 return {
   filetypes = { 'lua' },
   cmd = { 'lua-language-server' },

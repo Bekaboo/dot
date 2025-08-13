@@ -1,27 +1,27 @@
 # Cockatoo dark theme
 [colors.bright]
-black = "0xe5e5eb"
-blue = "0x708296"
-cyan = "0x79ada7"
-green = "0xa4bd84"
-magenta = "0xcaafeb"
-red = "0xe87c69"
-white = "0x8f9fbc"
-yellow = "0xe6bb86"
+black = "#e5e5eb"
+blue = "#708296"
+cyan = "#79ada7"
+green = "#a4bd84"
+magenta = "#caafeb"
+red = "#e87c69"
+white = "#8f9fbc"
+yellow = "#e6bb86"
 
 [colors.cursor]
-cursor = "0xffffff"
+cursor = "#ffffff"
 
 [colors.normal]
-black = "0x2f353e"
-blue = "0x708296"
-cyan = "0x79ada7"
-green = "0xa4bd84"
-magenta = "0xcaafeb"
-red = "0xe87c69"
-white = "0xe5e5eb"
-yellow = "0xe6bb86"
+black = "#2f353e"
+blue = "#708296"
+cyan = "#79ada7"
+green = "#a4bd84"
+magenta = "#caafeb"
+red = "#e87c69"
+white = "#e5e5eb"
+yellow = "#e6bb86"
 
 [colors.primary]
-background = "0x2f353e"
-foreground = "0xbebec3"
+background = "#2f353e"
+foreground = "#bebec3"

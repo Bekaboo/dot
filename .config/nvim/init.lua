@@ -10,3 +10,19 @@ require('core.opts')
 require('core.keymaps')
 require('core.autocmds')
 require('core.plugins')
+
+vim.api.nvim_create_autocmd({ 'FileType', 'LspAttach' }, {
+  once = true,
+  desc = 'Apply lsp settings.',
+  callback = function()
+    require('core.lsp')
+  end,
+})
+
+vim.api.nvim_create_autocmd('DiagnosticChanged', {
+  once = true,
+  desc = 'Apply diagnostic settings.',
+  callback = function()
+    require('core.diagnostic')
+  end,
+})

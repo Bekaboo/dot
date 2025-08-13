@@ -186,10 +186,11 @@ local function preview_decorate(win, hl)
               syn match OilDirPreviewTypeSocket /^s/ nextgroup=OilDirPreviewSocketPerms skipwhite
 
               for type in ['File', 'Dir', 'Fifo', 'Link', 'Socket']
-                exe substitute('syn match OilDirPreview%sPerms /\v[-rwxs]{9}\.?/ contained
+                exe substitute('syn match OilDirPreview%sPerms /\v[-rwxs]{9}[\.\@\+]?/ contained
                               \ contains=OilDirPreviewPermRead,OilDirPreviewPermWrite,
                                        \ OilDirPreviewPermExec,OilDirPreviewPermSetuid,
-                                       \ OilDirPreviewPermNone,OilDirPreviewSecurityContext
+                                       \ OilDirPreviewPermNone,OilDirPreviewSecurityContext,
+                                       \ OilDirPreviewSecurityExtended
                               \ nextgroup=OilDirPreview%sNumHardLinksNormal,
                                         \ OilDirPreview%sNumHardLinksMulti
                               \ skipwhite', '%s', type, 'g')
@@ -216,6 +217,7 @@ local function preview_decorate(win, hl)
               syn match OilDirPreviewPermSetuid /s/ contained
               syn match OilDirPreviewPermNone /-/ contained
               syn match OilDirPreviewSecurityContext /\./ contained
+              syn match OilDirPreviewSecurityExtended /@\|+/ contained
 
               syn match OilDirPreviewDir /[^.].*/ contained
               syn match OilDirPreviewFile /[^.].*/ contained
@@ -242,6 +244,7 @@ local function preview_decorate(win, hl)
               hi def link OilDirPreviewPermSetuid OilPermissionSetuid
               hi def link OilDirPreviewPermNone OilPermissionNone
               hi def link OilDirPreviewSecurityContext OilSecurityContext
+              hi def link OilDirPreviewSecurityExtended OilSecurityExtended
 
               hi def link OilDirPreviewDir OilDir
               hi def link OilDirPreviewFile OilFile
@@ -261,22 +264,27 @@ local function preview_decorate(win, hl)
       end
 
       -- Add syntax/treesitter highlighting for normal files
-      if vim.b[buf]._oil_preview_syntax == bufname then
+      if vim.b[buf]._oil_preview_syntax_bufname == bufname then
         preview_restore_win_opts(win)
-        if hl then
-          local ft = vim.filetype.match({
+        if not hl then
+          return
+        end
+
+        local ft = vim.api.nvim_buf_call(buf, function()
+          return vim.filetype.match({
             buf = buf,
             filename = path,
           })
-          if not ft then
-            vim.treesitter.stop(buf)
-            vim.bo[buf].syntax = ''
-            return
-          end
-          if not pcall(vim.treesitter.start, buf, ft) then
-            vim.treesitter.stop(buf)
-            vim.bo[buf].syntax = ft
-          end
+        end)
+        if not ft then
+          vim.treesitter.stop(buf)
+          vim.bo[buf].syntax = ''
+          return
+        end
+
+        if not pcall(vim.treesitter.start, buf, ft) then
+          vim.treesitter.stop(buf)
+          vim.bo[buf].syntax = ft
         end
       end
     end)
@@ -400,7 +408,7 @@ local function preview_set_lines(win, all)
       return
     end
 
-    vim.b[buf]._oil_preview_syntax = bufname
+    vim.b[buf]._oil_preview_syntax_bufname = bufname
     preview_win_set_lines(
       win,
       vim
@@ -557,8 +565,8 @@ vim.api.nvim_create_autocmd({ 'CursorMoved', 'WinScrolled' }, {
 vim.api.nvim_create_autocmd('BufEnter', {
   desc = 'Close preview window when leaving oil buffers.',
   group = groupid_preview,
-  callback = function(info)
-    if vim.bo[info.buf].filetype ~= 'oil' then
+  callback = function(args)
+    if vim.bo[args.buf].filetype ~= 'oil' then
       preview_finish()
     end
   end,
@@ -567,8 +575,8 @@ vim.api.nvim_create_autocmd('BufEnter', {
 vim.api.nvim_create_autocmd('WinClosed', {
   desc = 'Close preview window when closing oil windows.',
   group = groupid_preview,
-  callback = function(info)
-    local win = tonumber(info.match)
+  callback = function(args)
+    local win = tonumber(args.match)
     if win and preview_wins[win] then
       preview_finish(win)
     end
@@ -578,19 +586,19 @@ vim.api.nvim_create_autocmd('WinClosed', {
 vim.api.nvim_create_autocmd({ 'WinResized', 'WinScrolled' }, {
   desc = 'Update invisible lines in preview buffer.',
   group = groupid_preview,
-  callback = function(info)
+  callback = function(args)
     local wins = vim.tbl_map(
       function(win)
         return tonumber(win)
       end,
       vim.list_extend(
-        { info.match },
+        { args.match },
         vim.v.event.windows or vim.tbl_keys(vim.v.event)
       )
     )
 
     for _, win in ipairs(wins) do
-      preview_set_lines(win, info.event == 'WinScrolled')
+      preview_set_lines(win, args.event == 'WinScrolled')
     end
   end,
 })
@@ -599,8 +607,8 @@ vim.api.nvim_create_autocmd('BufEnter', {
   desc = 'Update invisible lines in preview buffer.',
   group = groupid_preview,
   pattern = '*/oil_preview_\\d\\+://*',
-  callback = function(info)
-    preview_set_lines(vim.fn.bufwinid(info.buf), true)
+  callback = function(args)
+    preview_set_lines(vim.fn.bufwinid(args.buf), true)
   end,
 })
 
@@ -701,6 +709,7 @@ oil.setup({
     },
   },
   buf_options = {
+    textwidth = 0,
     buflisted = false,
     bufhidden = 'hide',
   },
@@ -849,8 +858,8 @@ vim.api.nvim_create_autocmd('BufEnter', {
   desc = 'Ensure that oil buffers are not listed.',
   group = groupid,
   pattern = 'oil://*',
-  callback = function(info)
-    vim.bo[info.buf].buflisted = false
+  callback = function(args)
+    vim.bo[args.buf].buflisted = false
   end,
 })
 
@@ -888,16 +897,16 @@ vim.api.nvim_create_autocmd({ 'BufEnter', 'TextChanged' }, {
   group = groupid,
   pattern = 'oil://*',
   nested = true, -- fire `DirChanged` event
-  callback = function(info)
-    oil_cd(info.buf)
+  callback = function(args)
+    oil_cd(args.buf)
   end,
 })
 
 vim.api.nvim_create_autocmd('BufEnter', {
   desc = 'Record alternate file in dir buffers.',
   group = groupid,
-  callback = function(info)
-    local buf = info.buf
+  callback = function(args)
+    local buf = args.buf
     local bufname = vim.api.nvim_buf_get_name(buf)
     if vim.fn.isdirectory(bufname) == 1 then
       vim.b[buf]._alt_file = vim.fn.bufnr('#')
@@ -909,7 +918,7 @@ vim.api.nvim_create_autocmd('BufEnter', {
   desc = 'Set last cursor position in oil buffers when editing parent dir.',
   group = groupid,
   pattern = 'oil://*',
-  callback = function(info)
+  callback = function(args)
     -- Only set cursor position when first entering an oil buffer in current window
     -- This prevents cursor from resetting to the original file when switching
     -- between oil and preview windows, e.g.
@@ -930,10 +939,10 @@ vim.api.nvim_create_autocmd('BufEnter', {
     -- If we use a boolean flag for `_oil_entered`, we will not able to set cursor
     -- position in oil buffer on step 4 because the flag is set in step 2.
     local win = vim.api.nvim_get_current_win()
-    if vim.b[info.buf]._oil_entered == win then
+    if vim.b[args.buf]._oil_entered == win then
       return
     end
-    vim.b[info.buf]._oil_entered = win
+    vim.b[args.buf]._oil_entered = win
     -- Place cursor on the alternate buffer if we are opening
     -- the parent directory of the alternate buffer
     local alt_file = vim.fn.bufnr('#')
@@ -990,6 +999,7 @@ local function oil_sethl()
   sethl(0, 'OilPermissionExecute', { fg = 'DiagnosticSignInfo' })
   sethl(0, 'OilPermissionSetuid', { fg = 'DiagnosticSignHint' })
   sethl(0, 'OilSecurityContext', { fg = 'Special' })
+  sethl(0, 'OilSecurityExtended', { fg = 'Special' })
   sethl(0, 'OilTypeDir', { fg = 'Directory' })
   sethl(0, 'OilTypeFifo', { fg = 'Special' })
   sethl(0, 'OilTypeFile', { fg = 'NonText' })
