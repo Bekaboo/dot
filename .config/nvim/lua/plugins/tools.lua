@@ -1,9 +1,7 @@
 return {
   {
     'ibhagwan/fzf-lua',
-    -- Last working commit for `change_cwd`, see `lua/configs/fzf-lua.lua`
-    -- https://github.com/ibhagwan/fzf-lua/issues/2245
-    commit = 'e0cca3ed90914221c41acf70f6e7c6ef6d5e0a31',
+    dependencies = 'elanmed/fzf-lua-frecency.nvim',
     cmd = 'FzfLua',
     keys = {
       { '<C-_>', desc = 'Fuzzy complete command/search history', mode = 'c' },

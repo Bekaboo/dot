@@ -4,6 +4,7 @@ if vim.fn.executable('fzf') == 0 then
 end
 
 local fzf = require('fzf-lua')
+local fzf_frecency = require('fzf-lua-frecency')
 local actions = require('fzf-lua.actions')
 local core = require('fzf-lua.core')
 local path = require('fzf-lua.path')
@@ -22,41 +23,6 @@ end
 ---@diagnostic disable-next-line: duplicate-set-field
 function actions.vimcmd_buf(...)
   pcall(_vimcmd_buf, ...)
-end
-
-local _mt_cmd_wrapper = core.mt_cmd_wrapper
-
----Wrap `core.mt_cmd_wrapper()` used in fzf-lua's file and grep providers
----to ignore `opts.cwd` when generating the command string because once the
----cwd is hard-coded in the command string, `opts.cwd` will be ignored.
----
----This fixes the bug where `change_cwd()` does not work if it is used after
----`switch_provider()`:
----
----In `switch_provider()`, `opts.cwd` will be passed the corresponding fzf
----provider (file or grep) where it will be compiled in the command string,
----which will then be stored in `fzf.config.__resume_data.contents`.
----
----`change_cwd()` internally calls the resume action to resume the last
----provider and reuse other info in previous fzf session (e.g. last query, etc)
----except `opts.cwd`, `opts.fn_selected`, etc. that needs to be changed to
----reflect the new cwd.
----
----Thus if `__resume_data.contents` contains information about the previous
----cwd, the new cwd in `opts.cwd` will be ignored and `change_cwd()` will not
----take effect.
----@param opts table?
----@diagnostic disable-next-line: duplicate-set-field
-function core.mt_cmd_wrapper(opts)
-  if not opts or not opts.cwd then
-    return _mt_cmd_wrapper(opts)
-  end
-  local _opts = {}
-  for k, v in pairs(opts) do
-    _opts[k] = v
-  end
-  _opts.cwd = nil
-  return _mt_cmd_wrapper(_opts)
 end
 
 ---Switch provider while preserving the last query and cwd
@@ -80,23 +46,21 @@ end
 ---Change cwd while preserving the last query
 ---@return nil
 function actions.change_cwd()
-  local resume_data = vim.deepcopy(fzf.config.__resume_data)
-  resume_data.opts = resume_data.opts or {}
-
-  -- Remove old fn_selected, else selected item will be opened
-  -- with previous cwd
+  local resume_data = vim.tbl_deep_extend('force', fzf.config.__resume_data, {
+    opts = {},
+  })
   local opts = resume_data.opts
-  opts.fn_selected = nil
-  opts.cwd = opts.cwd or vim.uv.cwd()
-  opts.query = fzf.config.__resume_data.last_query
 
-  local at_home = utils.fs.contains('~', opts.cwd)
+  local cwd = opts.cwd or vim.fn.getcwd(0)
+  local cwd_in_home = utils.fs.contains('~', cwd)
+  local cwd_root = cwd_in_home and '~/' or '/'
+
   fzf.files({
     cwd_prompt = false,
-    prompt = 'New cwd: ' .. (at_home and '~/' or '/'),
-    cwd = at_home and '~' or '/',
+    prompt = 'New cwd: ' .. cwd_root,
+    cwd = cwd_root,
     query = vim.fn
-      .fnamemodify(opts.cwd, at_home and ':~' or ':p')
+      .fnamemodify(cwd, cwd_in_home and ':~' or ':p')
       :gsub('^~', '')
       :gsub('^/', ''),
     -- Append current dir './' to the result list to allow switching to home
@@ -122,15 +86,21 @@ function actions.change_cwd()
     ),
     fzf_opts = { ['--no-multi'] = true },
     actions = {
+      -- Open the same picker with selected new cwd but keep old query
       ['enter'] = function(selected)
         if not selected[1] then
           return
         end
 
+        -- Remove old fn_selected, else selected item will be opened
+        -- with previous cwd
+        opts.fn_selected = nil
+        opts.resume = true
+        opts.query = resume_data.last_query
         opts.cwd = vim.fs.normalize(
           vim.fs.joinpath(
-            at_home and '~' or '/',
-            path.entry_to_file(selected[1]).path
+            cwd_root,
+            path.entry_to_file(selected[1], {}, false).path
           )
         )
 
@@ -148,13 +118,12 @@ function actions.change_cwd()
             opts.prompt = opts.prompt .. path.separator()
           end
         end
-
         if opts.headers then
-          opts = core.set_header(opts, opts.headers)
+          opts = core.set_header(opts)
         end
 
-        fzf.config.__resume_data = resume_data
-        actions.resume()
+        -- Get old picker from `opts.__resume_key`, fallback to files picker
+        (fzf[opts.__resume_key] or fzf.files)(opts)
       end,
       ['esc'] = function()
         fzf.config.__resume_data = resume_data
@@ -499,6 +468,15 @@ function fzf.files(opts)
   opts = opts or {}
   opts.cwd = opts.cwd or vim.fn.getcwd(0)
   return _fzf_files(opts)
+end
+
+---@param opts table?
+function fzf.files_with_frecency(opts)
+  return fzf_frecency.frecency(vim.tbl_deep_extend('keep', opts, {
+    cwd_prompt = true,
+    cwd_only = true,
+    cwd = opts and opts.cwd or vim.fn.getcwd(0),
+  }))
 end
 
 -- Select dirs from `z`
@@ -1015,6 +993,12 @@ fzf.setup({
   },
 })
 
+---@diagnostic disable-next-line: missing-fields
+fzf_frecency.setup({
+  display_score = false,
+  actions = config.setup_opts.files.actions,
+})
+
 -- stylua: ignore start
 vim.keymap.set('c', '<C-_>', fzf.complete_cmdline, { desc = 'Fuzzy complete command/search history' })
 vim.keymap.set('c', '<C-x><C-l>', fzf.complete_cmdline, { desc = 'Fuzzy complete command/search history' })
@@ -1022,7 +1006,7 @@ vim.keymap.set('i', '<C-r>?', fzf.complete_from_registers, { desc = 'Fuzzy compl
 vim.keymap.set('i', '<C-r><C-_>', fzf.complete_from_registers, { desc = 'Fuzzy complete from registers' })
 vim.keymap.set('i', '<C-r><C-r>', fzf.complete_from_registers, { desc = 'Fuzzy complete from registers' })
 vim.keymap.set('i', '<C-x><C-f>', fzf.complete_path, { desc = 'Fuzzy complete path' })
-vim.keymap.set('n', '<Leader>.', fzf.files, { desc = 'Find files' })
+vim.keymap.set('n', '<Leader>.', fzf.files_with_frecency, { desc = 'Find files' })
 vim.keymap.set('n', "<Leader>'", fzf.resume, { desc = 'Resume last picker' })
 vim.keymap.set('n', "<Leader>`", fzf.marks, { desc = 'Find marks' })
 vim.keymap.set('n', '<Leader>,', fzf.buffers, { desc = 'Find buffers' })
@@ -1059,7 +1043,7 @@ vim.keymap.set('n', '<Leader>ft', fzf.tags, { desc = 'Find tags' })
 vim.keymap.set('n', '<Leader>fc', fzf.changes, { desc = 'Find changes' })
 vim.keymap.set('n', '<Leader>fd', fzf.diagnostics_document, { desc = 'Find document diagnostics' })
 vim.keymap.set('n', '<Leader>fD', fzf.diagnostics_workspace, { desc = 'Find workspace diagnostics' })
-vim.keymap.set('n', '<Leader>ff', fzf.files, { desc = 'Find files' })
+vim.keymap.set('n', '<Leader>ff', fzf.files_with_frecency, { desc = 'Find files' })
 vim.keymap.set('n', '<Leader>fa', fzf.args, { desc = 'Find args' })
 vim.keymap.set('n', '<Leader>fl', fzf.loclist, { desc = 'Find location list' })
 vim.keymap.set('n', '<Leader>fq', fzf.quickfix, { desc = 'Find quickfix list' })
