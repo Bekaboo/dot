@@ -800,6 +800,12 @@ function fzf_win:close_preview(...)
         self._previewer.winopts_orig = self._previewer_winopts_orig or {}
         self._previewer:restore_winopts()
       end
+
+      -- Clear live-grep match hl
+      if self._previewer.match_id then
+        pcall(vim.fn.matchdelete, self._previewer.match_id)
+        self._previewer.match_id = nil ---@diagnostic disable-line: inject-field
+      end
     end
   end))
 end
