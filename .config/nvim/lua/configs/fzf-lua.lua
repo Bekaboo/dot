@@ -723,6 +723,17 @@ function fzf_win:redraw_preview(...)
       return
     end
 
+    -- Record source buffer name for some special temporary buffers, e.g.
+    -- `fugitive://` or `oil://` buffers so that we can restore them by
+    -- editing files with the same name if they are deleted after hidden
+    --
+    -- This has a drawback that the cursor position in the original buffer will
+    -- not be restored because original buffer has lost
+    if self.src_bufnr and vim.api.nvim_buf_is_valid(self.src_bufnr) then
+      ---@diagnostic disable-next-line: inject-field
+      self.src_bufname = vim.api.nvim_buf_get_name(self.src_bufnr)
+    end
+
     if self._previewer then
       -- Only builtin previewers have additional backup/restore methods
       ---@diagnostic disable: undefined-field
@@ -742,20 +753,31 @@ function fzf_win:redraw_preview(...)
 end
 
 function fzf_win:close_preview(...)
+  if
+    not self.preview_winid or not vim.api.nvim_win_is_valid(self.preview_winid)
+  then
+    return
+  end
+
+  -- For normal floating window preview with a separate preview window, just
+  -- use the original `close_preview` method
   if self.preview_winid ~= self.src_winid then
     return _win_close_preview(self, ...)
   end
 
-  -- For split preview windows that reuse source window, set buffer back to source
-  -- buffer instead of closing the window
-  if
-    self.src_winid
-    and self.src_bufnr
-    and vim.api.nvim_win_is_valid(self.src_winid)
-    and vim.api.nvim_buf_is_valid(self.src_bufnr)
-  then
-    vim.api.nvim_win_set_buf(self.src_winid, self.src_bufnr)
+  -- For split preview windows that reuse source window, set buffer back to
+  -- source buffer instead of closing the window, fallback to new buffer with
+  -- the same name if the original source buffer is invalid or unavailable
+  local buf = self.src_bufnr
+  if not buf or not vim.api.nvim_buf_is_valid(buf) then
+    buf = vim.api.nvim_create_buf(true, false)
+    -- Try restoring deleted temp buffers
+    if self.src_bufname then
+      vim.api.nvim_buf_set_name(buf, self.src_bufname)
+      vim.api.nvim_buf_call(buf, vim.cmd.edit)
+    end
   end
+  vim.api.nvim_win_set_buf(self.preview_winid, buf)
 
   -- Prevent original `_win_close_preview` from closing the preview & source
   -- window
