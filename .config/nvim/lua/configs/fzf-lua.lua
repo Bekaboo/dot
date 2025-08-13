@@ -9,6 +9,7 @@ local actions = require('fzf-lua.actions')
 local core = require('fzf-lua.core')
 local path = require('fzf-lua.path')
 local config = require('fzf-lua.config')
+local fzf_utils = require('fzf-lua.utils')
 local utils = require('utils')
 local icons = require('utils.static.icons')
 
@@ -139,12 +140,38 @@ end
 ---Include directories, not only files when using the `files` picker
 ---@return nil
 function actions.toggle_dir(_, opts)
-  local exe = opts.cmd:match('^%s*(%S+)')
-  local flag = opts.toggle_dir_flag
-    or (exe == 'fd' or exe == 'fdfind') and '--type d'
-    or (exe == 'find') and '-type d'
-    or ''
-  actions.toggle_flag(_, vim.tbl_extend('force', opts, { toggle_flag = flag }))
+  local flag ---@type string?
+  local flag_cmd_idx ---@type integer?
+  local cmds = vim.iter(opts.cmd:gmatch('([^|;&]+[|;&]*)')):totable()
+
+  -- Handle multiple cmds in one string, e.g. fzf-lua-frecency uses two
+  -- commands in a row: 'cat ... ; fd ...'
+  --
+  -- fzf-lua-frecency does not support overriding cmd passed in `opts` yet
+  -- TODO: make a PR for it
+  for i, cmd in ipairs(cmds) do
+    local exec = cmd:match('^%s*(%S+)')
+    if exec == 'fd' or exec == 'fdfind' then
+      flag = '--type d'
+      flag_cmd_idx = i
+      break
+    end
+    if exec == 'find' then
+      flag = '-type d'
+      flag_cmd_idx = i
+      break
+    end
+  end
+  if not flag or not flag_cmd_idx then
+    return
+  end
+
+  cmds[flag_cmd_idx] = fzf_utils.toggle_cmd_flag(cmds[flag_cmd_idx], flag)
+
+  opts.__call_fn(vim.tbl_deep_extend('force', opts.__call_opts, {
+    cmd = table.concat(cmds),
+    resume = true,
+  }))
 end
 
 ---Delete selected autocmd
