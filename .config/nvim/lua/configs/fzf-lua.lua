@@ -930,6 +930,7 @@ fzf.setup({
         colorcolumn = '',
         signcolumn = vim.go.signcolumn,
         statuscolumn = vim.go.statuscolumn,
+        cursorlineopt = vim.go.cursorlineopt,
       },
     },
   },
