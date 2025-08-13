@@ -207,6 +207,9 @@ M.opts = {
     pick = {
       pivots = 'abcdefghijklmnopqrstuvwxyz',
     },
+    gc = {
+      interval = 60000,
+    },
   },
   menu = {
     -- When on, preview the symbol in the source window
