@@ -32,9 +32,12 @@ function M.add_attr(attr, snip_group)
 end
 
 ---Returns the depth of the current indent given the indent of the current line
----@param indent number|string
+---@param indent? number|string
 ---@return number
 function M.get_indent_depth(indent)
+  if not indent then
+    return 0
+  end
   if type(indent) == 'string' then
     indent = #indent:match('^%s*'):gsub('\t', string.rep(' ', vim.bo.ts))
   end
@@ -82,8 +85,8 @@ end
 local quotation_cache = {}
 vim.api.nvim_create_autocmd({ 'BufDelete', 'BufWipeOut', 'BufUnload' }, {
   group = vim.api.nvim_create_augroup('LuaSnipClearQuotationCache', {}),
-  callback = function(info)
-    quotation_cache[info.buf] = nil
+  callback = function(args)
+    quotation_cache[args.buf] = nil
   end,
 })
 

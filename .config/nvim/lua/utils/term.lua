@@ -2,10 +2,10 @@ local M = {}
 
 ---Compiled vim regex that decides if a command is a TUI app
 M.TUI_REGEX = vim.regex(
-  [[\v(sudo\s+)?(.*sh\s+-c\s+)?\S*]]
+  [[\v(sudo.*\s+)?(.*sh\s+-c\s+)?(.*python.*)?\S*]]
     .. [[(n?vim?|vimdiff|emacs(client)?|lem|nano|h(eli)?x|kak|]]
-    .. [[tmux|vifm|yazi|ranger|lazygit|h?top|gdb|fzf|nmtui|]]
-    .. [[sudoedit|crontab|asciinema|w3m)($|\s+)]]
+    .. [[tmux|vifm|yazi|ranger|lazygit|h?top|gdb|fzf|nmtui|opencode|]]
+    .. [[sudoedit|crontab|asciinema|w3m|python3?\s+-m)($|\s+)]]
 )
 
 ---Check if any of the processes in terminal buffer `buf` is a TUI app
@@ -82,10 +82,10 @@ end
 function M.parse_name(bufname)
   local path, pid, cmd, name =
     bufname:match('^term://(.*)//(%d+):([^#]*)%s*#?%s*(.*)')
-  return vim.fn.fnamemodify(vim.trim(path), ':p'),
-    vim.trim(pid),
-    vim.trim(cmd),
-    vim.trim(name)
+  return vim.fn.fnamemodify(vim.trim(path or ''), ':p'),
+    vim.trim(pid or ''),
+    vim.trim(cmd or ''),
+    vim.trim(name or '')
 end
 
 ---@param bufname string original terminal buffer name
@@ -101,11 +101,14 @@ function M.compose_name(bufname, opts)
 
   local path, pid, cmd, name = M.parse_name(bufname)
   return string.format(
-    'term://%s//%s:%s%s',
+    'term://%s//%s%s%s',
     vim.fn
       .fnamemodify(opts.path or path or vim.fn.getcwd(), ':~')
       :gsub('/+$', ''),
-    opts.pid or pid or '',
+    (function()
+      local term_pid = opts.pid or pid or ''
+      return tonumber(term_pid) and term_pid .. ':' or ''
+    end)(),
     opts.cmd or cmd or '',
     (function()
       local name_str = opts.name or name
@@ -114,8 +117,8 @@ function M.compose_name(bufname, opts)
   )
 end
 
-local bracket_paste_start = '\27[200~'
-local bracket_paste_end = '\27[201~'
+M.BRACKET_PASTE_START = '\27[200~'
+M.BRACKET_PASTE_END = '\27[201~'
 
 ---Send multi-line message to terminal
 ---@param msg string|string[] message
@@ -140,7 +143,7 @@ function M.send(msg, buf)
 
   vim.api.nvim_chan_send(
     chan,
-    bracket_paste_start .. table.concat(msg, '\n') .. bracket_paste_end
+    M.BRACKET_PASTE_START .. table.concat(msg, '\n') .. M.BRACKET_PASTE_END
   )
 end
 

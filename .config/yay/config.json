@@ -1,6 +1,6 @@
 {
 	"aururl": "https://aur.archlinux.org",
-	"aurrpcurl": "",
+	"aurrpcurl": "https://aur.archlinux.org/rpc?",
 	"buildDir": "/home/zeng/.cache/yay",
 	"editor": "nvim",
 	"editorflags": "",
@@ -9,9 +9,8 @@
 	"pacmanbin": "pacman",
 	"pacmanconf": "/etc/pacman.conf",
 	"redownload": "no",
-	"rebuild": "no",
 	"answerclean": "",
-	"answerdiff": "",
+	"answerdiff": "All",
 	"answeredit": "",
 	"answerupgrade": "",
 	"gitbin": "git",
@@ -24,6 +23,7 @@
 	"removemake": "ask",
 	"sudobin": "sudo",
 	"sudoflags": "-E",
+	"version": "12.5.0",
 	"requestsplitn": 150,
 	"completionrefreshtime": 7,
 	"maxconcurrentdownloads": 0,
@@ -32,9 +32,9 @@
 	"timeupdate": false,
 	"devel": true,
 	"cleanAfter": false,
+	"keepSrc": false,
 	"provides": false,
 	"pgpfetch": true,
-	"upgrademenu": true,
 	"cleanmenu": true,
 	"diffmenu": true,
 	"editmenu": true,
@@ -43,5 +43,8 @@
 	"batchinstall": false,
 	"singlelineresults": false,
 	"separatesources": true,
-	"version": "11.3.2"
+	"debug": false,
+	"rpc": true,
+	"doubleconfirm": false,
+	"rebuild": "no"
 }

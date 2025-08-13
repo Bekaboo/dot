@@ -1,14 +1,19 @@
+---@type lsp_config_t
 return {
   filetypes = { 'python' },
   cmd = { 'efm-langserver' },
   requires = { 'black' },
   root_markers = {
-    'Pipfile',
-    'pyproject.toml',
-    'requirements.txt',
-    'setup.cfg',
-    'setup.py',
-    'tox.ini',
+    { 'pyproject.toml' },
+    {
+      'Pipfile',
+      'requirements.txt',
+      'setup.cfg',
+      'setup.py',
+      'tox.ini',
+    },
+    { 'venv', 'env', '.venv', '.env' },
+    { '.python-version' },
   },
   name = 'black',
   init_options = { documentFormatting = true },

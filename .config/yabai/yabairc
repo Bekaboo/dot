@@ -1,3 +1,4 @@
+#!/usr/bin/env sh
 # vim:ft=sh:
 # Yabai macOS window manager config file
 
@@ -43,6 +44,9 @@ yabai -m config mouse_action1 move   # modifier + left-click to move window
 yabai -m config mouse_action2 resize # resize window
 
 # Make focus follow mouse (default: off, options: off, autoraise, autofocus)
+# Zoom meeting (zoom.us) menus close immediately if `focus_follows_mouse` is
+# enabled. Holding mouse modifier can disable `focus_follows_mouse` temporally,
+# see: https://github.com/koekeishiya/yabai/issues/1706#issuecomment-1528513392
 yabai -m config focus_follows_mouse autofocus # focus follows mouse
 yabai -m config mouse_drop_action swap        # swap windows when one dropped on another
 
@@ -62,6 +66,12 @@ yabai -m rule --apply
 # Auto focus the window under cursor after current window is closed or space
 # changed
 # https://github.com/koekeishiya/yabai/issues/692#issuecomment-710810388
-yabai -m signal --add event=space_changed action="yabai -m query --windows --window &> /dev/null || yabai -m window --focus mouse"
-yabai -m signal --add event=window_destroyed action="yabai -m query --windows --window &> /dev/null || yabai -m window --focus mouse"
-yabai -m signal --add event=application_terminated action="yabai -m query --windows --window &> /dev/null || yabai -m window --focus mouse"
+for event in \
+	space_changed space_destroyed \
+	window_destroyed window_minimized \
+	application_terminated application_hidden; do
+	yabai -m signal --add \
+		event="$event" \
+		action="yabai -m query --windows --window >/dev/null 2>&1 || \
+			yabai -m window --focus mouse"
+done

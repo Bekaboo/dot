@@ -1,6 +1,7 @@
 return {
   {
     'ibhagwan/fzf-lua',
+    dependencies = 'elanmed/fzf-lua-frecency.nvim',
     cmd = 'FzfLua',
     keys = {
       { '<C-_>', desc = 'Fuzzy complete command/search history', mode = 'c' },
@@ -17,6 +18,7 @@ return {
       { "<Leader>'", desc = 'Resume last picker' },
       { '<Leader>`', desc = 'Find marks' },
       { '<Leader>,', desc = 'Find buffers' },
+      { '<Leader>%', desc = 'Find tabpages' },
       { '<Leader>/', desc = 'Grep' },
       { '<Leader>?', desc = 'Find help files' },
       { '<Leader>*', mode = { 'n', 'x' }, desc = 'Grep word under cursor' },
@@ -54,15 +56,15 @@ return {
       { '<Leader>fgt', desc = 'Find git tags' },
       { '<Leader>fgs', desc = 'Find git stash' },
       { '<Leader>fgg', desc = 'Find git status' },
-      { '<Leader>fgc', desc = 'Find git commits' },
-      { '<Leader>fgl', desc = 'Find git buffer commits' },
+      { '<Leader>fgL', desc = 'Find git logs' },
+      { '<Leader>fgl', desc = 'Find git buffer logs' },
       { '<Leader>fgb', desc = 'Find git branches' },
       { '<Leader>fgB', desc = 'Find git blame' },
       { '<Leader>gft', desc = 'Find git tags' },
       { '<Leader>gfs', desc = 'Find git stash' },
       { '<Leader>gfg', desc = 'Find git status' },
-      { '<Leader>gfc', desc = 'Find git commits' },
-      { '<Leader>gfl', desc = 'Find git buffer commits' },
+      { '<Leader>gfL', desc = 'Find git logs' },
+      { '<Leader>gfl', desc = 'Find git buffer logs' },
       { '<Leader>gfb', desc = 'Find git branches' },
       { '<Leader>gfB', desc = 'Find git blame' },
       { '<Leader>fh', desc = 'Find help files' },
@@ -101,7 +103,8 @@ return {
         -- Register fzf as custom `vim.ui.select()` function if not yet
         -- registered
         if not fzf_ui.is_registered() then
-          local _ui_select = fzf_ui.ui_select
+          local ui_select = fzf_ui.ui_select
+
           ---Overriding fzf-lua's default `ui_select()` function to use a
           ---custom prompt
           ---@diagnostic disable-next-line: duplicate-set-field
@@ -119,7 +122,7 @@ return {
             -- result becomes 'foobar> ' as expected.
             opts.prompt = opts.prompt
               and vim.fn.substitute(opts.prompt, ':\\?\\s*$', ':\xc2\xa0', '')
-            _ui_select(items, opts, on_choice)
+            ui_select(items, opts, on_choice)
           end
 
           -- Use the register function provided by fzf-lua. We are using this
@@ -136,7 +139,9 @@ return {
             return {
               winopts = {
                 split = string.format(
-                  '%s | if %d < winheight(0) | resize %d | endif',
+                  -- Don't shrink size if a quickfix list is closed for fzf
+                  -- window to avoid window resizing and content shifting
+                  '%s | if get(g:, "_fzf_qfclosed", "") == "" && %d < winheight(0) | resize %d | endif',
                   vim.trim(require('fzf-lua.config').setup_opts.winopts.split),
                   height,
                   height
@@ -164,6 +169,14 @@ return {
   },
 
   {
+    'akinsho/git-conflict.nvim',
+    event = 'BufReadPre',
+    config = function()
+      require('configs.git-conflict')
+    end,
+  },
+
+  {
     'tpope/vim-fugitive',
     cmd = {
       'G',
@@ -187,7 +200,10 @@ return {
       'Gwq',
       'Gwrite',
     },
-    keys = { { '<Leader>gL', desc = 'Git log entire repo' } },
+    keys = {
+      { '<Leader>gL', desc = 'Git log entire repo' },
+      { '<Leader>g<Space>', desc = 'Populate cmdline with ":Git"' },
+    },
     event = { 'BufNew', 'BufWritePost', 'BufReadPre' },
     dependencies = {
       -- Enable :GBrowse command in GitHub/Gitlab repos
@@ -196,6 +212,21 @@ return {
     },
     config = function()
       require('configs.vim-fugitive')
+    end,
+  },
+
+  {
+    'NvChad/nvim-colorizer.lua',
+    event = {
+      'BufNew',
+      'BufRead',
+      'BufWritePost',
+      'TextChanged',
+      'TextChangedI',
+      'StdinReadPre',
+    },
+    config = function()
+      require('configs.nvim-colorizer')
     end,
   },
 
@@ -211,9 +242,9 @@ return {
         -- Use `vim.schedule()` here to wait session to be loaded and
         -- buffer attributes, e.g. buffer name, to be updated before
         -- checking if the buffer is a directory buffer
-        callback = vim.schedule_wrap(function(info)
-          local buf = info.buf
-          local id = info.id
+        callback = vim.schedule_wrap(function(args)
+          local buf = args.buf
+          local id = args.id
 
           if
             not vim.api.nvim_buf_is_valid(buf)
@@ -286,37 +317,6 @@ return {
     event = 'VeryLazy',
     config = function()
       require('configs.which-key')
-    end,
-  },
-
-  {
-    'vim-test/vim-test',
-    keys = {
-      { '<Leader>tk', desc = 'Run the first test class in current file' },
-      { '<Leader>ta', desc = 'Run all tests in current file' },
-      { '<Leader>tt', desc = 'Run the test neartest to cursor' },
-      { '<Leader>t$', desc = 'Run the last test' },
-      { '<Leader>ts', desc = 'Run the whole test suite' },
-      { '<Leader>to', desc = 'Go to last visited test file' },
-    },
-    cmd = {
-      'TestClass',
-      'TestVisit',
-      'TestNearest',
-      'TestSuite',
-      'TestFile',
-      'TestLast',
-    },
-    config = function()
-      require('configs.vim-test')
-    end,
-  },
-
-  {
-    'tpope/vim-projectionist',
-    event = 'BufReadPre',
-    config = function()
-      require('configs.vim-projectionist')
     end,
   },
 }

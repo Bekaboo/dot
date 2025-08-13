@@ -29,6 +29,8 @@
 --glob=!.steam*/
 --glob=!.thunderbird/
 --glob=!.tmp/
+--glob=!/.pyenv/
+--glob=!/go/
 --glob=!__pycache__/
 --glob=!dosdevices/
 --glob=!env/

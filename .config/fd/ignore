@@ -6,12 +6,12 @@
 .*Cache*/
 .*cache*/
 .*wine/
+.aider*.cache*
+.aider*.history*
 .cargo/
 .conda/
 .dot/
 .fonts/
-.aider*.cache*
-.aider*.history*
 .ipython/
 .java/
 .jupyter/
@@ -22,6 +22,8 @@
 .steam*/
 .thunderbird/
 .tmp/
+/.pyenv/
+/go/
 __pycache__/
 dosdevices/
 env/

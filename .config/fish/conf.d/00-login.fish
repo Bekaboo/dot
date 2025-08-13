@@ -3,13 +3,6 @@ if not status is-login
     exit
 end
 
-# Automatically login to proot-distro on termux
-if type -q proot-distro
-    and test -n "$PROOT_DISTRO"
-    and test -n "$PROOT_USER"
-    exec proot-distro login $PROOT_DISTRO --user $PROOT_USER --termux-home
-end
-
 # Setup paths
 # macOS homebrew
 fish_add_path /opt/homebrew/bin /usr/local/bin
@@ -68,3 +61,10 @@ end
 # Ensure color theme files are correctly linked
 type -q setbg; and setbg &
 type -q setcolors; and setcolors &
+
+# Automatically login to proot-distro on termux
+if type -q proot-distro
+    and test -n "$PROOT_DISTRO"
+    and test -n "$PROOT_USER"
+    exec proot-distro login $PROOT_DISTRO --user $PROOT_USER --termux-home
+end

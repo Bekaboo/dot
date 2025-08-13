@@ -1,6 +1,9 @@
 local M = {}
+local u = require('utils')
+local uf = require('utils.snippets.funcs')
 local un = require('utils.snippets.nodes')
 local us = require('utils.snippets.snips')
+local conds = require('utils.snippets.conds')
 local ls = require('luasnip')
 local sn = ls.snippet_node
 local t = ls.text_node
@@ -144,43 +147,47 @@ M.snippets = {
   us.msn(
     {
       { trig = 'sw' },
+      { trig = 'swi' },
       { trig = 'switch' },
       common = { desc = 'switch statement' },
     },
     un.fmtad(
       [[
         switch <expr>
-        <idnt>case <pattern>
+        <idnt>case <match1>
         <body>
+        <idnt>case <match2>
+        <idnt><idnt><i>
         end
       ]],
       {
-        expr = i(1, '$argv[1]'),
-        pattern = i(2, '*'),
-        body = un.body(3, 2),
         idnt = un.idnt(1),
+        expr = i(1, '$argv[1]'),
+        match1 = i(2, "'*'"),
+        body = un.body(3, 2),
+        match2 = i(4, "'*'"),
+        i = i(5),
       }
     )
   ),
-  us.msn(
+  us.msnr(
     {
-      { trig = 'cs' },
-      { trig = 'ca' },
-      { trig = 'case' },
-      common = { desc = 'switch statement' },
+      { trig = '^(%s*)ca' },
+      { trig = '^(%s*)cas' },
+      { trig = '^(%s*)case' },
+      common = { desc = 'case statement' },
     },
     un.fmtad(
       [[
-        switch <expr>
-        <idnt>case <pattern>
+        <ddnt>case <match>
         <body>
-        end
       ]],
       {
-        expr = i(1, '$argv[1]'),
-        pattern = i(2, '*'),
-        body = un.body(3, 2),
-        idnt = un.idnt(1),
+        ddnt = un.ddnt(1),
+        match = i(1, "'*'"),
+        body = un.body(2, function(_, parent)
+          return math.max(0, uf.get_indent_depth(parent.snippet.captures[1]))
+        end),
       }
     )
   ),
@@ -197,18 +204,10 @@ M.snippets = {
     },
     un.fmtad("echo '<line>'", {
       line = c(1, {
-        -- stylua: ignore start
         i(nil, '----------------------------------------'),
-        i(nil, '========================================'),
         i(nil, '........................................'),
-        i(nil, '++++++++++++++++++++++++++++++++++++++++'),
-        i(nil, '****************************************'),
-        i(nil, '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'),
-        i(nil, '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'),
-        i(nil, '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^'),
+        i(nil, '========================================'),
         i(nil, '########################################'),
-        i(nil, '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'),
-        -- stylua: ignore end
       }),
     })
   ),
@@ -303,6 +302,63 @@ M.snippets = {
         body = un.body(1, 1),
       }
     )
+  ),
+  us.sn(
+    {
+      trig = 'cd',
+      desc = 'cd with exit or return',
+    },
+    d(1, function()
+      if u.ts.find_node({ 'function_definition' }) then
+        return sn(
+          nil,
+          un.fmtad('cd <dir>; or return', {
+            dir = i(1, 'dir'),
+          })
+        )
+      end
+      return sn(
+        nil,
+        un.fmtad('cd <dir; or exit', {
+          dir = i(1, 'dir'),
+        })
+      )
+    end)
+  ),
+  us.msn(
+    {
+      { trig = 'si' },
+      { trig = 'sil' },
+      common = { desc = 'Run command silently' },
+    },
+    c(1, {
+      t('&>/dev/null'), -- suppress stdout and error
+      t('2>/dev/null'), -- suppress error only
+      t('>/dev/null'), -- suppress stdout only
+    })
+  ),
+  us.msn({
+    { trig = 'ne' },
+    { trig = 'noe' },
+    { trig = 'noerr' },
+    common = { desc = 'Suppress error' },
+  }, t('2>/dev/null')),
+  us.sn(
+    {
+      trig = 'err',
+      desc = 'Print to stderr',
+    },
+    d(1, function()
+      if not conds.at_line_start() then
+        return sn(nil, t('>&2'))
+      end
+      return sn(
+        nil,
+        un.fmtad('echo "<msg>" >>&2', {
+          msg = i(1, 'msg'),
+        })
+      )
+    end)
   ),
 }
 

@@ -75,7 +75,7 @@ return {
     MarkdownH4          = '󰉮 ',
     MarkdownH5          = '󰉯 ',
     MarkdownH6          = '󰉰 ',
-    Message             = '󰚢 ',
+    Message             = ' ',
     Method              = '󰆧 ',
     Module              = '󰏗 ',
     Namespace           = '󰅩 ',

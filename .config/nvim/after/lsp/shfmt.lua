@@ -1,3 +1,7 @@
+-- Shell script formatter for sh/bash/mksh
+-- https://github.com/patrickvane/shfmt
+
+---@type lsp_config_t
 return {
   filetypes = { 'sh' },
   cmd = { 'efm-langserver' },
@@ -8,7 +12,10 @@ return {
     languages = {
       sh = {
         {
-          formatCommand = 'shfmt --filename ${INPUT} -',
+          -- If `expandtab` is not set, use tabs for indentation, else use
+          -- spaces with the same width in nvim, see `shfmt -h` and
+          -- https://github.com/mattn/efm-langserver/blob/master/schema.md#2113-property-format-command
+          formatCommand = 'shfmt --keep-padding --filename ${INPUT} --indent=${tabWidth} ${--indent=0:!insertSpaces} -',
           formatStdin = true,
         },
       },

@@ -1,7 +1,7 @@
 {
   "editor.bracketPairColorization.enabled": false,
   "editor.cursorBlinking": "solid",
-  "editor.fontFamily": "'Iosevka NF', 'monospace', monospace",
+  "editor.fontFamily": "'Iosevka', 'monospace', monospace",
   "editor.guides.indentation": false,
   "editor.renderLineHighlight": "none",
   "editor.suggest.selectionMode": "never",
@@ -10,6 +10,7 @@
     "asvetliakov.vscode-neovim": 1
   },
   "files.autoSave": "onFocusChange",
+  "git.openRepositoryInParentFolders": "always",
   "security.workspace.trust.enabled": false,
   "security.workspace.trust.untrustedFiles": "open",
   "terminal.integrated.allowChords": false,
@@ -20,7 +21,7 @@
     "-workbench.action.terminal.focusFind"
   ],
   "terminal.integrated.enableMultiLinePasteWarning": false,
-  "terminal.integrated.fontFamily": "'Iosevka NF', 'monospace', monospace",
+  "terminal.integrated.fontFamily": "'Iosevka', 'monospace', monospace",
   "update.showReleaseNotes": false,
   "window.autoDetectColorScheme": true,
   "window.restoreWindows": "none",

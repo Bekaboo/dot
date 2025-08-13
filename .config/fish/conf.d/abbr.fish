@@ -39,16 +39,16 @@ end
 
 __command_abbr cl clear
 __command_abbr cp 'cp -i'
+__command_abbr mv 'mv -i'
+__command_abbr d dot
 __command_abbr df 'df -h'
 __command_abbr fd 'fd -H -L'
 __command_abbr fdfind 'fdfind -H -L'
 __command_abbr free 'free -mh'
 __command_abbr g git
-__command_abbr d dot
 __command_abbr lc 'wc -l'
 __command_abbr ll 'ls -lhA'
 __command_abbr mkdir 'mkdir -p'
-__command_abbr mv 'mv -i'
 __command_abbr sudoe 'sudo -E'
 __command_abbr tree 'tree -N'
 __command_abbr x trash

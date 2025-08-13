@@ -20,12 +20,12 @@ vim.api.nvim_create_autocmd('BufReadCmd', {
   once = true,
   pattern = '*.ipynb',
   group = vim.api.nvim_create_augroup('JupyTextSetup', {}),
-  callback = function(info)
-    require('plugin.jupytext').setup(info.buf)
+  callback = function(args)
+    require('plugin.jupytext').setup(args.buf)
   end,
 })
 
--- lsp & diagnostic settings
+-- lsp & diagnostic commands
 vim.api.nvim_create_autocmd({
   'Syntax',
   'FileType',
@@ -36,7 +36,7 @@ vim.api.nvim_create_autocmd({
   desc = 'Apply lsp and diagnostic settings.',
   group = vim.api.nvim_create_augroup('LspDiagnosticSetup', {}),
   callback = function()
-    require('plugin.lsp').setup()
+    require('plugin.lsp-commands').setup()
   end,
 })
 
@@ -88,8 +88,13 @@ load_ui('statuscolumn')
 -- term
 vim.api.nvim_create_autocmd('TermOpen', {
   group = vim.api.nvim_create_augroup('TermSetup', {}),
-  callback = function()
-    require('plugin.term').setup()
+  callback = function(args)
+    local term = require('plugin.term')
+    term.setup()
+    vim.keymap.set('n', '.', term.rerun, {
+      buffer = args.buf,
+      desc = 'Re-run terminal job',
+    })
   end,
 })
 
@@ -106,7 +111,7 @@ if vim.g.has_ui then
 end
 
 -- tabout
-vim.api.nvim_create_autocmd({ 'InsertEnter', 'CmdlineEnter' }, {
+vim.api.nvim_create_autocmd('InsertEnter', {
   group = vim.api.nvim_create_augroup('TabOutSetup', {}),
   desc = 'Init tabout plugin.',
   once = true,
@@ -167,10 +172,12 @@ if vim.g.loaded_aider == nil then
   local add = function() require('plugin.aider').add() end
   -- stylua: ignore end
 
+  -- stylua: ignore start
   vim.keymap.set('n', '<Leader>@', toggle, { desc = 'Aider (AI) toggle chat panel' })
   vim.keymap.set('x', '<Leader>@', send, { desc = 'Aider (AI) send selection' })
   vim.keymap.set('x', '<Leader>+', send, { desc = 'Aider (AI) send selection' })
   vim.keymap.set('n', '<Leader>+', add, { desc = 'Aider (AI) add current file' })
+  -- stylua: ignore end
 
   local opts = {
     group = vim.api.nvim_create_augroup('AiderSetup', {}),
@@ -184,11 +191,21 @@ if vim.g.loaded_aider == nil then
   }
 
   vim.api.nvim_create_autocmd({ 'BufWritePre', 'CmdlineEnter' }, opts)
-  vim.api.nvim_create_autocmd('CmdUndefined', vim.tbl_deep_extend('force', opts, { pattern = 'Aider*' }))
+  vim.api.nvim_create_autocmd(
+    'CmdUndefined',
+    vim.tbl_deep_extend('force', opts, {
+      pattern = 'Aider*',
+    })
+  )
 end
 
 -- session
-do
+if vim.g.loaded_session == nil then
+  -- stylua: ignore start
+  vim.keymap.set('n', '<Leader>w', function() require('plugin.session').select(true) end, { desc = 'Load session (workspace) interactively' })
+  vim.keymap.set('n', '<Leader>W', function() require('plugin.session').load(nil, true) end, { desc = 'Load session (workspace) for cwd' })
+  -- stylua: ignore end
+
   local opts = {
     desc = 'Init session plugin.',
     group = vim.api.nvim_create_augroup('SessionSetup', {}),
@@ -198,25 +215,11 @@ do
         return
       end
 
-      local session = require('plugin.session')
       ---@diagnostic disable-next-line: missing-fields
-      session.setup({
+      require('plugin.session').setup({
         autoload = { enabled = false },
         autoremove = { enabled = false },
       })
-
-      vim.keymap.set(
-        'n',
-        '<Leader>w',
-        session.select,
-        { desc = 'Load session (workspace) interactively' }
-      )
-      vim.keymap.set(
-        'n',
-        '<Leader>W',
-        session.load,
-        { desc = 'Load session (workspace) for cwd' }
-      )
     end,
   }
 

@@ -1,15 +1,11 @@
 #!/usr/bin/env sh
-# vim: ft=sh ts=4 sw=4 sts=4 et :
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
 
 CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 DEFAULT_COLOR='macro'
 DEFAULT_BG='dark'
-
-has() {
-    command -v "$1" >/dev/null 2>&1
-}
 
 get_theme_variant() {
     # $1: name of the old theme
@@ -23,7 +19,7 @@ get_theme_variant() {
 setbg_alacritty() {
     # $1: 'light' or 'dark'
     (
-        cd "$CONFIG_HOME/alacritty" 2>/dev/null || return 1
+        cd "$CONFIG_HOME/alacritty" || return
         theme_path="theme.toml"
         themes_dir="themes"
         # If $1 is empty, only need to ensure symlink to color theme file exists
@@ -38,7 +34,7 @@ setbg_alacritty() {
 setbg_foot() {
     # $1: 'light' or 'dark'
     (
-        cd "$CONFIG_HOME/foot" 2>/dev/null || return 1
+        cd "$CONFIG_HOME/foot" || return
         theme_path="theme.ini"
         themes_dir="themes"
         if [ -z "$1" ]; then
@@ -56,7 +52,8 @@ setbg_foot() {
 setbg_kitty() {
     # $1: 'light' or 'dark'
     (
-        cd "$CONFIG_HOME/kitty" 2>/dev/null || return 1
+        cd "$CONFIG_HOME/kitty" || return
+
         no_preference_theme_path="no-preference-theme.auto.conf"
         current_theme_path="current-theme.conf"
         # Kitty changes its theme automatically w.r.t.
@@ -69,6 +66,11 @@ setbg_kitty() {
             ln -sf "$1-theme.auto.conf" "$no_preference_theme_path"
             ln -sf "$1-theme.auto.conf" "$current_theme_path"
         fi
+
+        # Touch main theme files for kitty to pick up the changes
+        touch "$no_preference_theme_path"
+        touch "$current_theme_path"
+
         if has kitty; then
             for pid in $(pgrep kitty); do
                 # Don't use `kill -SIGUSR1`, will cause error: 'kill: SIGUSR1: invalid signal specification'
@@ -82,7 +84,7 @@ setbg_kitty() {
 setbg_wezterm() {
     # $1: 'light' or 'dark'
     (
-        cd "$CONFIG_HOME/wezterm" 2>/dev/null || return 1
+        cd "$CONFIG_HOME/wezterm" || return
         theme_path="theme.toml"
         themes_dir="colors"
         if [ -z "$1" ]; then
@@ -96,7 +98,7 @@ setbg_wezterm() {
 setbg_highlight() {
     # $1: 'light' or 'dark'
     (
-        cd "$HOME/.highlight" 2>/dev/null || return 1
+        cd "$HOME/.highlight" || return
         themes_dir="themes"
         theme_path="highlight.theme"
         if [ -z "$1" ]; then
@@ -129,7 +131,7 @@ setbg_nvim() {
             --remote-expr "execute(\"if &bg !=# '$1' && &tgc \
                 | let g:script_set_bg=1 | set bg=$1 | unlet g:script_set_bg \
                 | endif\")" \
-            +qa! 2>/dev/null & # prevent long-running nvim from blocking the script
+            +qa! >/dev/null 2>&1 &
     done
 
     if ! has jq; then
@@ -146,6 +148,8 @@ setbg_nvim() {
             mv "$colors_json.tmp" "$colors_json"
         fi
     fi
+
+    wait
 }
 
 setbg_macos() {
@@ -274,7 +278,7 @@ setbg_konsole_yakuake() {
 setbg_termux() {
     # $1: 'light' or 'dark'
     (
-        cd "$HOME/.termux" 2>/dev/null || return 1
+        cd "$HOME/.termux" || return
         theme_path="colors.properties"
         themes_dir="colors"
         if [ -z "$1" ]; then
@@ -336,7 +340,7 @@ setbg_vscode() {
     fi
     if [ "$theme" != "$new_theme" ]; then
         tmp=$(mktemp)
-        trap 'rm -f "$tmp"' EXIT
+        trap 'rm -f "$tmp"' EXIT INT TERM HUP
         jq ".\"workbench.colorTheme\" = \"$new_theme\"" "$rc" >"$tmp" &&
             mv "$tmp" "$rc"
     fi
@@ -345,7 +349,7 @@ setbg_vscode() {
 setbg_fish() {
     # $1: 'light' or 'dark'
     (
-        cd "$CONFIG_HOME/fish/themes" 2>/dev/null || return 1
+        cd "$CONFIG_HOME/fish/themes" || return
         theme_path="Current.theme"
         if [ -z "$1" ]; then
             case "$DEFAULT_BG" in
@@ -401,7 +405,7 @@ setbg_libreoffice() {
     esac
 
     tmp=$(mktemp)
-    trap 'rm -f "$tmp"' EXIT
+    trap 'rm -f "$tmp"' EXIT INT TERM HUP
     awk -v new_theme="$new_theme" '
         /<item oor:path="\/org.openoffice.Office.Common\/Misc"><prop oor:name="SymbolStyle" oor:op="fuse"><value>[a-zA-Z0-9_-]+<\/value><\/prop><\/item>/ {
             sub(/<value>[a-zA-Z0-9_-]+<\/value>/, "<value>" new_theme "</value>");
@@ -440,7 +444,7 @@ write_conflict_log() {
 
 usage() {
     echo "Usage: $(basename "$0") [light|dark]"
-    exit 0
+    exit
 }
 
 main() {
@@ -465,7 +469,10 @@ main() {
         setbg_plasma "$bg" &
 
         # Kitty and wezterm have their own mechanism to detect and sync with
-        # system background
+        # system background:
+        # - https://sw.kovidgoyal.net/kitty/kittens/themes/#change-color-themes-automatically-when-the-os-switches-between-light-and-dark
+        # - https://wezterm.org/config/lua/window/get_appearance.html?h=get_app
+        #
         # Fix kitty memory leak on KDE when `__syncbg` is running in the ground
         setbg_kitty "$bg" &
         setbg_wezterm "$bg" &
@@ -488,6 +495,7 @@ main() {
     setbg_fish "$bg" &
     setbg_libreoffice "$bg" &
     write_conflict_log "$bg" &
+    wait
 }
 
 main "$@"

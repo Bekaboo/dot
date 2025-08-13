@@ -1,15 +1,19 @@
+---@type lsp_config_t
 return {
   filetypes = { 'python' },
   cmd = { 'ruff', 'server' },
   buf_support = false,
   root_markers = {
-    'ruff.toml',
-    '.ruff.toml',
-    'Pipfile',
-    'pyproject.toml',
-    'requirements.txt',
-    'setup.cfg',
-    'setup.py',
-    'tox.ini',
+    { 'ruff.toml', '.ruff.toml' },
+    { 'pyproject.toml' },
+    {
+      'Pipfile',
+      'requirements.txt',
+      'setup.cfg',
+      'setup.py',
+      'tox.ini',
+    },
+    { 'venv', 'env', '.venv', '.env' },
+    { '.python-version' },
   },
 }

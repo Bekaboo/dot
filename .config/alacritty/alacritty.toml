@@ -1,14 +1,8 @@
 [general]
 import = [
-    '~/.config/alacritty/themes/macro-dark.toml',
-    '~/.config/alacritty/themes/dark.toml',
-    '~/.config/alacritty/theme.toml',
-    '~/.config/alacritty/main.toml',
-    '~/.config/alacritty/local.toml',
-
-    '$XDG_CONFIG_HOME/.config/alacritty/themes/macro-dark.toml',
-    '$XDG_CONFIG_HOME/.config/alacritty/themes/dark.toml',
-    '$XDG_CONFIG_HOME/.config/alacritty/theme.toml',
-    '$XDG_CONFIG_HOME/.config/alacritty/main.toml',
-    '$XDG_CONFIG_HOME/.config/alacritty/local.toml',
+    'themes/macro-dark.toml',
+    'themes/dark.toml',
+    'theme.toml',
+    'main.toml',
+    'local.toml',
 ]

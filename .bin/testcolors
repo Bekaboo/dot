@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# vim: ft=sh ts=4 sw=4 sts=4 et :
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
 
 #   This file echoes a bunch of 24-bit color codes
 #   to the terminal to demonstrate its functionality.
@@ -18,9 +18,9 @@ reset_output() {
 
 # Get terminal width, default to 80 if unable to determine
 get_width() {
-    if command -v tput >/dev/null 2>&1; then
+    if has tput; then
         tput cols
-    elif command -v stty >/dev/null 2>&1; then
+    elif has stty; then
         stty size | cut -d' ' -f2
     else
         echo 80
@@ -71,7 +71,7 @@ draw_gradient() {
     chars_per_line=$((256 / lines + (256 % lines > 0)))
 
     line=0
-    while [ $line -lt $lines ]; do
+    while [ $line -lt "$lines" ]; do
         start=$((line * colors_per_line))
         end=$((start + colors_per_line))
         [ $line -eq $((lines - 1)) ] && end=256
@@ -80,16 +80,16 @@ draw_gradient() {
         count=0
         while [ $count -lt $chars_per_line ]; do
             if [ $i -lt $end ] && [ $i -lt 256 ]; then
-                if [ "$4" = "1" ]; then
-                    set_bg $(rainbow $i)
+                if [ "$4" = 1 ]; then
+                    set_bg "$(rainbow $i)"
                 else
                     set_bg $(($1 * i)) $(($2 * i)) $(($3 * i))
                 fi
                 i=$((i + 1))
             else
                 # Pad with last color if needed
-                if [ "$4" = "1" ]; then
-                    set_bg $(rainbow $((end - 1)))
+                if [ "$4" = 1 ]; then
+                    set_bg "$(rainbow $((end - 1)))"
                 else
                     set_bg $(($1 * (end - 1))) $(($2 * (end - 1))) $(($3 * (end - 1)))
                 fi

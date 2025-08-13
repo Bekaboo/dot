@@ -1,6 +1,9 @@
 local M = {}
+local u = require('utils')
+local uf = require('utils.snippets.funcs')
 local un = require('utils.snippets.nodes')
 local us = require('utils.snippets.snips')
+local conds = require('utils.snippets.conds')
 local ls = require('luasnip')
 local sn = ls.snippet_node
 local t = ls.text_node
@@ -11,14 +14,24 @@ local d = ls.dynamic_node
 ---Check if current file is bash
 ---@return boolean
 local function is_bash()
-  local filename = vim.api.nvim_buf_get_name(0)
-  if filename:match('%.bash$') then
+  if vim.bo.ft == 'bash' then
     return true
   end
 
-  -- Check first line for bash shebang
-  local first_line = vim.api.nvim_buf_get_lines(0, 0, 1, false)[1] or ''
-  return first_line:match('^#!.*bash') ~= nil
+  local bufname = vim.api.nvim_buf_get_name(0)
+  if
+    vim.fn.fnamemodify(bufname, ':e') == 'bash'
+    or vim.tbl_contains(
+      { '.bashrc', '.bash_profile' },
+      vim.fn.fnamemodify(bufname, ':t')
+    )
+  then
+    return true
+  end
+
+  return vim.api.nvim_buf_line_count(0) > 0
+    and vim.api.nvim_buf_get_lines(0, 0, 1, false)[1]:match('^#!.*bash')
+      ~= nil
 end
 
 M.snippets = {
@@ -115,7 +128,10 @@ M.snippets = {
       ]],
       {
         var = i(1, 'item'),
-        items = i(2, '${items[@]}'),
+        items = d(2, function()
+          return is_bash() and sn(nil, i(1, '${items[@]}'))
+            or sn(nil, i(1, '$items'))
+        end),
         body = un.body(3, 1, ':'),
       }
     )
@@ -159,9 +175,12 @@ M.snippets = {
   ),
   us.msn(
     {
-      { trig = 'cs' },
       { trig = 'ca' },
+      { trig = 'cas' },
       { trig = 'case' },
+      { trig = 'sw' },
+      { trig = 'swi' },
+      { trig = 'switch' },
       common = { desc = 'case statement' },
     },
     un.fmtad(
@@ -169,31 +188,36 @@ M.snippets = {
         case <expr> in
         <idnt><pattern>)
         <body>
-        <idnt>;;
+        <idnt><idnt>;;<i>
         esac
       ]],
       {
+        idnt = un.idnt(1),
         expr = i(1, '$1'),
         pattern = i(2, '*'),
         body = un.body(3, 2, ':'),
-        idnt = un.idnt(1),
+        i = i(4),
       }
     )
   ),
-  us.sn(
+  us.snr(
     {
-      trig = 'pat',
+      trig = '^(%s*)pat',
       desc = 'case pattern',
     },
     un.fmtad(
       [[
-        <pattern>)
+        <ddnt><pattern>)
         <body>
-        ;;
+        <ddnt><idnt>;;
       ]],
       {
+        idnt = un.idnt(1),
+        ddnt = un.ddnt(1),
         pattern = i(1, '*'),
-        body = un.body(2, 1, ':'),
+        body = un.body(2, function(_, parent)
+          return math.max(0, uf.get_indent_depth(parent.snippet.captures[1]))
+        end, ':'),
       }
     )
   ),
@@ -210,7 +234,10 @@ M.snippets = {
       ]],
       {
         var = i(1, 'item'),
-        items = i(2, '${items[@]}'),
+        items = d(2, function()
+          return is_bash() and sn(nil, i(1, '${items[@]}'))
+            or sn(nil, i(1, '$items'))
+        end),
         body = un.body(3, 1, ':'),
       }
     )
@@ -246,18 +273,10 @@ M.snippets = {
     },
     un.fmtad("echo '<line>'", {
       line = c(1, {
-        -- stylua: ignore start
         i(nil, '----------------------------------------'),
-        i(nil, '========================================'),
         i(nil, '........................................'),
-        i(nil, '++++++++++++++++++++++++++++++++++++++++'),
-        i(nil, '****************************************'),
-        i(nil, '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'),
-        i(nil, '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'),
-        i(nil, '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^'),
+        i(nil, '========================================'),
         i(nil, '########################################'),
-        i(nil, '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'),
-        -- stylua: ignore end
       }),
     })
   ),
@@ -349,11 +368,72 @@ M.snippets = {
     un.fmtad('trap <cmd> <sig>', {
       cmd = i(1, 'cleanup'),
       sig = c(2, {
+        i(nil, 'EXIT INT TERM HUP'), -- common signals that terminates a program by default, useful for most scripts
+        i(nil, 'EXIT INT TERM'), -- handle `HUP` in another trap, used in a daemon script
         i(nil, 'EXIT'),
-        i(nil, 'SIGINT SIGTERM'),
-        i(nil, 'ERR'),
+        i(nil, 'INT'),
+        i(nil, 'TERM'),
+        i(nil, 'HUP'), -- disconnected from terminal, useful for interactive scripts that needs a terminal
+        i(nil, 'ERR'), -- not POSIX but available in bash
       }),
     })
+  ),
+  us.sn(
+    {
+      trig = 'cd',
+      desc = 'cd with exit or return',
+    },
+    d(1, function()
+      if u.ts.find_node({ 'function_definition' }) then
+        return sn(
+          nil,
+          un.fmtad('cd <dir> || return', {
+            dir = i(1, 'dir'),
+          })
+        )
+      end
+      return sn(
+        nil,
+        un.fmtad('cd <dir> || exit', {
+          dir = i(1, 'dir'),
+        })
+      )
+    end)
+  ),
+  us.msn(
+    {
+      { trig = 'si' },
+      { trig = 'sil' },
+      common = { desc = 'Run command silently' },
+    },
+    c(1, {
+      t('>/dev/null 2>&1'), -- suppress stdout and error
+      t('2>/dev/null'), -- suppress error only
+      t('>/dev/null'), -- suppress stdout only
+    })
+  ),
+  us.msn({
+    { trig = 'ne' },
+    { trig = 'noe' },
+    { trig = 'noerr' },
+    common = { desc = 'Suppress error' },
+  }, t('2>/dev/null')),
+  us.sn(
+    {
+      trig = 'err',
+      desc = 'Print to stderr',
+    },
+    d(1, function()
+      if not conds.at_line_start() then
+        return sn(nil, t('>&2'))
+      end
+      return sn(
+        nil,
+        un.fmtad('echo "<msg>" >>&2', {
+          msg = i(1, 'msg'),
+        })
+      )
+    end)
   ),
 }
 

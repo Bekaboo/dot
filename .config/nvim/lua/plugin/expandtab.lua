@@ -35,14 +35,14 @@ local function setup()
 
   vim.api.nvim_create_autocmd('TextChangedI', {
     group = vim.api.nvim_create_augroup('Expandtab', {}),
-    callback = function(info)
+    callback = function(args)
       -- Restore 'expandtab' setting
-      if vim.b[info.buf].et == nil then
+      if vim.b[args.buf].et == nil then
         return
       end
 
-      vim.bo[info.buf].et = vim.b[info.buf].et
-      vim.b[info.buf].et = nil
+      vim.bo[args.buf].et = vim.b[args.buf].et
+      vim.b[args.buf].et = nil
     end,
   })
 end

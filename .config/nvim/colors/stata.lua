@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      BSD
--- Last Updated: Fri May 30 15:30:53 2025
+-- Last Updated: Mon 28 Jul 2025 02:19:38 AM PDT
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -61,9 +61,9 @@ if vim.go.bg == 'dark' then
 else
   c_background      = { '#ffffff', 231 }
   c_foreground      = { '#111111', 233 }
-  c_faded           = { '#f8fafa', 254 }
-  c_highlight       = { '#f4f5f5', 255 }
-  c_whitespace      = { '#e0e2e2', 250 }
+  c_faded           = { '#f6f6f6', 254 }
+  c_highlight       = { '#efefef', 255 }
+  c_whitespace      = { '#dedede', 250 }
   c_delimiter       = { '#888888', 245 }
   c_error           = { '#bc5555', 124 }
   c_warn            = { '#cba260', 137 }
@@ -136,7 +136,7 @@ local hlgroups = {
   CursorIM = { link = 'Cursor' },
   CursorLine = { bg = c_faded },
   CursorLineNr = { fg = c_foreground, bold = true },
-  DebugPC = { bg = c_lightgreen },
+  DebugPC = { bg = c_lightgreen, fg = c_background },
   DiffAdd = { bg = c_lightgreen, fg = c_background },
   DiffChange = { bg = c_variable, fg = c_background },
   DiffDelete = { fg = c_other },
@@ -146,8 +146,8 @@ local hlgroups = {
   ErrorMsg = { fg = c_error },
   FloatBorder = { fg = c_foreground, bg = c_highlight },
   FloatTitle = { fg = c_other, bg = c_highlight, bold = true },
-  FoldColumn = { fg = c_comment },
-  Folded = { fg = c_comment, bg = c_highlight },
+  FoldColumn = { fg = c_delimiter },
+  Folded = { fg = c_foreground, bg = c_faded },
   IncSearch = { fg = c_background, bg = c_other, bold = true },
   LineNr = { fg = c_comment },
   MatchParen = { bg = c_highlight, bold = true },
@@ -158,6 +158,7 @@ local hlgroups = {
   NormalFloat = { fg = c_foreground, bg = c_highlight },
   NormalNC = { link = 'Normal' },
   Pmenu = { fg = c_foreground, bg = c_highlight },
+  PmenuExtra = { fg = c_delimiter },
   PmenuSbar = { bg = c_highlight },
   PmenuSel = { fg = c_foreground, bg = c_special, bold = true },
   PmenuThumb = { bg = c_keyword },
@@ -239,6 +240,7 @@ local hlgroups = {
   ['@string'] = { link = 'String' },
   ['@string.escape'] = { fg = c_other },
   ['@string.special'] = { link = 'SpecialChar' },
+  ['@string.yaml'] = { link = 'Normal' },
   ['@character'] = { link = 'Character' },
   ['@character.special'] = { link = 'SpecialChar' },
   ['@boolean'] = { link = 'Boolean' },
@@ -281,6 +283,7 @@ local hlgroups = {
   LspReferenceWrite = { link = 'LspReferenceText' },
   LspSignatureActiveParameter = { link = 'Search' },
   LspInfoBorder = { link = 'FloatBorder' },
+  LspInlayHint = { bg = c_faded, fg = c_delimiter },
   -- }}}2
 
   -- Diagnostic {{{2
@@ -309,7 +312,7 @@ local hlgroups = {
   DiagnosticSignWarn = { link = 'DiagnosticWarn' },
   DiagnosticSignInfo = { link = 'DiagnosticInfo' },
   DiagnosticSignHint = { link = 'DiagnosticHint' },
-  DiagnosticUnnecessary = { fg = c_comment, undercurl = true, sp = c_comment },
+  DiagnosticUnnecessary = { undercurl = true, sp = c_special },
   -- }}}2
 
   -- Filetype {{{2
@@ -346,33 +349,6 @@ local hlgroups = {
   fugitiveUntrackedHeading = { fg = c_other, bold = true },
   fugitiveUntrackedModifier = { fg = c_other, bold = true },
 
-  -- nvim-cmp
-  CmpItemAbbrDeprecated = { fg = c_delimiter, strikethrough = true },
-  CmpItemAbbrMatch = { fg = c_other, bold = true },
-  CmpItemAbbrMatchFuzzy = { link = 'CmpItemAbbrMatch' },
-  CmpItemKindText = { link = 'String' },
-  CmpItemKindMethod = { link = 'Function' },
-  CmpItemKindFunction = { link = 'Function' },
-  CmpItemKindConstructor = { link = 'Function' },
-  CmpItemKindField = { fg = c_variable },
-  CmpItemKindProperty = { link = 'CmpItemKindField' },
-  CmpItemKindVariable = { fg = c_variable, bold = true },
-  CmpItemKindReference = { link = 'CmpItemKindVariable' },
-  CmpItemKindModule = { fg = c_keyword },
-  CmpItemKindEnum = { fg = c_keyword },
-  CmpItemKindEnumMember = { link = 'CmpItemKindEnum' },
-  CmpItemKindKeyword = { link = 'Keyword' },
-  CmpItemKindOperator = { link = 'Operator' },
-  CmpItemKindSnippet = { fg = c_string },
-  CmpItemKindColor = { fg = c_keyword },
-  CmpItemKindConstant = { link = 'Constant' },
-  CmpItemKindCopilot = { fg = c_special },
-  CmpItemKindValue = { link = 'Number' },
-  CmpItemKindClass = { link = 'Type' },
-  CmpItemKindStruct = { link = 'Type' },
-  CmpItemKind = { fg = c_foreground },
-  CmpItemMenu = { link = 'Pmenu' },
-
   -- gitsigns
   GitSignsAdd = { fg = c_string },
   GitSignsChange = { fg = c_special },
@@ -388,6 +364,7 @@ local hlgroups = {
   StatusLineGitChanged = { fg = c_lightblue },
   StatusLineGitDeleted = { fg = c_lightred },
   StatusLineGitRemoved = { fg = c_lightred },
+  StatusLineDiagnosticInfo = { fg = c_lightblue },
   StatusLineDiagnosticHint = { fg = c_lightblue },
   StatusLineDiagnosticWarn = { fg = c_lightyellow },
   StatusLineDiagnosticError = { fg = c_lightred },
@@ -397,6 +374,7 @@ local hlgroups = {
 
 -- Highlight group overrides {{{1
 if vim.go.bg == 'light' then
+  hlgroups.DebugPC = { bg = c_lightgreen }
   hlgroups.Visual = { bg = c_whitespace }
   hlgroups.LineNr = { fg = c_foreground }
   hlgroups.NonText = { fg = c_delimiter }

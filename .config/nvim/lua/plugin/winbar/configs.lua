@@ -150,14 +150,15 @@ M.opts = {
         and ft ~= 'query'
         and ft ~= 'help'
         and ft ~= 'diff'
-        and not vim.startswith(ft, 'git')
+        and ft ~= 'gitcommit'
+        and ft ~= 'gitrebase'
         and not utils.opt.winbar:was_locally_set({ win = 0 })
         and (
           ft == 'markdown'
           or utils.ts.is_active(buf)
           or not vim.tbl_isempty(vim.lsp.get_clients({
             bufnr = buf,
-            method = 'textDocument/documentSymbol',
+            method = vim.lsp.protocol.Methods.textDocument_documentSymbol,
           }))
         )
     end,
@@ -329,12 +330,13 @@ M.opts = {
         )
       end,
       zindex = function(menu)
-        if menu.prev_menu then
-          if menu.prev_menu.scrollbar and menu.prev_menu.scrollbar.thumb then
-            return vim.api.nvim_win_get_config(menu.prev_menu.scrollbar.thumb).zindex
-          end
-          return vim.api.nvim_win_get_config(menu.prev_win).zindex
+        if not menu.prev_menu then
+          return
         end
+        return menu.prev_menu.scrollbar
+            and menu.prev_menu.scrollbar.thumb
+            and vim.api.nvim_win_get_config(menu.prev_menu.scrollbar.thumb).zindex
+          or vim.api.nvim_win_get_config(menu.prev_win).zindex
       end,
     },
   },

@@ -1,4 +1,5 @@
 local M = {}
+local fs = require('utils.fs')
 
 ---Check if a buffer is "valid"
 ---@param buf integer
@@ -45,7 +46,7 @@ M.opts = {
   ---@param path string
   ---@return string?
   root = function(path)
-    return vim.fs.root(path, require('utils.fs').root_markers)
+    return require('utils.fs').root(path)
       or vim.fn.isdirectory(path) == 1 and path
       or vim.fs.dirname(path)
   end,
@@ -115,27 +116,30 @@ function M.get(path)
   end
 
   -- Find an existing session file that matches the prefix of `path`, e.g.
-  -- if `path` is `/foo/bar/baz`, then valid sessions are:
-  -- - `%foo%bar%baz`
-  -- - `%foo%bar`
-  -- - `%foo`
-  while not require('utils.fs').is_root_dir(path) do
-    local session = vim.fs.joinpath(session_dir, M.dir2session(path))
+  -- if `path` is '/foo/bar/baz', then valid sessions are:
+  -- - '%foo%bar%baz'
+  -- - '%foo%bar'
+  -- - '%foo'
+  -- This enables us to load session from project subdirectories
+  local cur_path = path
+  while not fs.is_root_dir(cur_path) and not fs.is_home_dir(cur_path) do
+    local session = vim.fs.joinpath(session_dir, M.dir2session(cur_path))
     if vim.fn.filereadable(session) == 1 then
       return session
     end
-    path = vim.fs.dirname(path)
+    cur_path = vim.fs.dirname(cur_path)
   end
 
-  -- If no existing session file is found, use project root as the new session
+  -- If no existing session file is found, use `path` as the new session
   return vim.fs.joinpath(session_dir, M.dir2session(M.opts.root(path) or path))
 end
 
 ---Save current session
 ---@param session? string path to session file to save to
-function M.save(session)
+---@param notify? boolean whether to print notify message after saving the session
+function M.save(session, notify)
   if not session then
-    session = M.get()
+    session = vim.g._session_loaded or M.get()
   end
 
   vim.cmd.mksession({
@@ -144,12 +148,11 @@ function M.save(session)
     mods = { silent = true, emsg_silent = true },
   })
 
-  if vim.g._session_loaded and vim.g._session_loaded ~= session then
-    vim.cmd.mksession({
-      vim.fn.fnameescape(vim.g._session_loaded),
-      bang = true,
-      mods = { silent = true, emsg_silent = true },
-    })
+  if notify then
+    vim.notify(
+      '[session] saved current session to '
+        .. string.format("'%s'", vim.fn.fnamemodify(session, ':~:.'))
+    )
   end
 end
 
@@ -164,16 +167,19 @@ end
 
 ---Load current session
 ---@param session? string path to session file to load from
-function M.load(session)
+---@param notify? boolean
+function M.load(session, notify)
   if not session then
     session = M.get()
   end
 
   if not vim.uv.fs_stat(session) then
-    vim.notify(
-      string.format("[session] session '%s' does not exist", session),
-      vim.log.levels.WARN
-    )
+    if notify then
+      vim.notify(
+        string.format("[session] session '%s' does not exist", session),
+        vim.log.levels.WARN
+      )
+    end
     return
   end
 
@@ -245,7 +251,8 @@ function M.no_auto(cb)
 end
 
 ---Interactively select and load a session file using `vim.ui.select()`
-function M.select()
+---@param notify? boolean
+function M.select(notify)
   M.no_auto(function(finish)
     vim.ui.select(M.list(), {
       prompt = 'Load session: ',
@@ -254,7 +261,7 @@ function M.select()
       end,
     }, function(choice)
       if choice then
-        M.load(choice)
+        M.load(choice, notify)
       end
       finish()
     end)
@@ -281,9 +288,16 @@ end
 ---@return function
 local function cmd(cb)
   return function(args)
+    if args.args == '' then
+      cb()
+      return
+    end
+
     cb(
-      args.args ~= '' and vim.fs.joinpath(M.opts.dir, M.dir2session(args.args))
-        or nil
+      vim.fs.joinpath(
+        M.opts.dir,
+        M.dir2session(vim.fn.fnamemodify(vim.fn.expand(args.args), ':p'))
+      )
     )
   end
 end
@@ -371,23 +385,41 @@ function M.setup(opts)
   end
 
   -- Create user commands
-  vim.api.nvim_create_user_command('SessionLoad', cmd(M.load), {
-    desc = 'Load session.',
-    nargs = '?',
-    complete = cmp,
-  })
+  vim.api.nvim_create_user_command(
+    'SessionLoad',
+    cmd(function(path)
+      M.load(path, true)
+    end),
+    {
+      desc = 'Load session.',
+      nargs = '?',
+      complete = cmp,
+    }
+  )
 
-  vim.api.nvim_create_user_command('SessionSave', cmd(M.save), {
-    desc = 'Save current state to given session.',
-    nargs = '?',
-    complete = cmp,
-  })
+  vim.api.nvim_create_user_command(
+    'SessionSave',
+    cmd(function(path)
+      M.save(path, true)
+    end),
+    {
+      desc = 'Save current state to given session.',
+      nargs = '?',
+      complete = cmp,
+    }
+  )
 
-  vim.api.nvim_create_user_command('Mksession', cmd(M.save), {
-    desc = 'Save current state to given session.',
-    nargs = '?',
-    complete = cmp,
-  })
+  vim.api.nvim_create_user_command(
+    'Mksession',
+    cmd(function(path)
+      M.save(path, true)
+    end),
+    {
+      desc = 'Save current state to given session.',
+      nargs = '?',
+      complete = cmp,
+    }
+  )
 
   vim.api.nvim_create_user_command('SessionRemove', cmd(M.remove), {
     desc = 'Remove session.',
@@ -395,7 +427,9 @@ function M.setup(opts)
     complete = cmp,
   })
 
-  vim.api.nvim_create_user_command('SessionSelect', M.select, {
+  vim.api.nvim_create_user_command('SessionSelect', function()
+    M.select(true)
+  end, {
     desc = 'Interactively select and load session.',
   })
 end

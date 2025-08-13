@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# vim: ft=sh ts=4 sw=4 sts=4 et :
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
 # Watch for sleep signal to check current time and set bg accordingly on awake from sleep
 
 has_recent_conflict_bg() {
@@ -16,7 +16,7 @@ has_recent_conflict_bg() {
 
 dbus-monitor --system "type='signal', \
         interface='org.freedesktop.login1.Manager', \
-        member=PrepareForSleep" | while read x; do
+        member=PrepareForSleep" | while read -r x; do
     case "$x" in
     *"boolean false"*)
         if ! has_recent_conflict_bg; then

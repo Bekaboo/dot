@@ -16,15 +16,14 @@ return {
       { '<F21>', desc = 'Set conditional breakpoint' },
       { '<F45>', desc = 'Set logpoint' },
       { '<Leader>Gc', desc = 'Continue program execution' },
+      { '<Leader>Gg', desc = 'Continue program execution' },
+      { '<Leader>GG', desc = 'Continue program execution' },
       { '<Leader>Ge', desc = 'Open debug REPL' },
       { '<Leader>Gb', desc = 'Toggle breakpoint' },
       { '<Leader>GB', desc = 'Set conditional breakpoint' },
       { '<Leader>Gl', desc = 'Set logpoint' },
     },
-    dependencies = {
-      'rcarriga/cmp-dap',
-      'rcarriga/nvim-dap-ui',
-    },
+    dependencies = 'rcarriga/nvim-dap-ui',
     config = function()
       require('configs.nvim-dap')
     end,

@@ -1,18 +1,20 @@
 local dap, dapui = require('dap'), require('dapui')
 local static = require('utils.static')
 
--- stylua: ignore start
 dap.listeners.after.event_initialized['dapui_config'] = dapui.open
 dap.listeners.before.event_terminated['dapui_config'] = dapui.close
-dap.listeners.before.event_exited['dapui_config']     = dapui.close
--- stylua: ignore end
+dap.listeners.before.event_exited['dapui_config'] = dapui.close
 
--- stylua: ignore start
-vim.keymap.set({ 'n', 'x' }, '<F24>', dapui.eval, { desc = 'Inspect element value' }) -- <S-F12>
-vim.keymap.set({ 'n', 'x' }, '<Leader>GK', dapui.eval, { desc = 'Inspect element value' })
--- stylua: ignore end
+vim.keymap.set({ 'n', 'x' }, '<F24>', dapui.eval, {
+  desc = 'Inspect element value',
+})
+vim.keymap.set({ 'n', 'x' }, '<Leader>GK', dapui.eval, {
+  desc = 'Inspect element value',
+})
 
+---@diagnostic disable-next-line: missing-fields
 dapui.setup({
+  expand_lines = false, -- don't overflow text in debug info wins
   layouts = {
     {
       elements = {
@@ -38,6 +40,7 @@ dapui.setup({
     collapsed = vim.trim(static.icons.ui.AngleRight),
     current_frame = vim.trim(static.icons.StackFrameCurrent),
   },
+  ---@diagnostic disable-next-line: missing-fields
   controls = {
     icons = {
       play = vim.trim(static.icons.debug.Start),
@@ -69,4 +72,19 @@ dapui.setup({
     },
   },
   windows = { indent = 1 },
+})
+
+---Set default highlight groups for nvim-dap-ui
+local function set_default_hlgroups()
+  require('utils.hl').set(0, 'DapUIFloatBorder', {
+    link = 'FloatBorder',
+  })
+end
+
+set_default_hlgroups()
+
+vim.api.nvim_create_autocmd('ColorScheme', {
+  group = vim.api.nvim_create_augroup('DapUISetup', {}),
+  desc = 'Set default highlight groups for nvim-dap-ui.',
+  callback = set_default_hlgroups,
 })

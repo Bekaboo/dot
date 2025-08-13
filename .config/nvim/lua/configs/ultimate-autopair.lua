@@ -185,26 +185,3 @@ require('ultimate-autopair').setup({
     ft = { 'markdown', 'tex' },
   },
 })
-
-local has_cmp, cmp = pcall(require, 'cmp')
-if has_cmp then
-  cmp.setup({
-    formatting = {
-      format = (function(cb) ---@param cb function?
-        ---@param entry cmp.Entry
-        ---@param item vim.CompletedItem
-        ---@return vim.CompletedItem
-        return function(entry, item)
-          -- Don't complete left parenthesis when calling functions or
-          -- expressions in cmdline, e.g. `:call func(...`
-          local type = compltype[1]
-          if type == 'function' or type == 'expression' then
-            item.word = string.gsub(item.word, '%($', '')
-            item.abbr = item.word
-          end
-          return cb and cb(entry, item) or item
-        end
-      end)(require('cmp.config').get().formatting.format),
-    },
-  })
-end

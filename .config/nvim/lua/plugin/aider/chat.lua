@@ -2,7 +2,7 @@ local utils = require('plugin.aider.utils')
 local configs = require('plugin.aider.configs')
 local term_t = require('utils.term_t')
 
-local aider_cmd_regex = vim.regex(
+local AIDER_CMD_REGEX = vim.regex(
   [[\v(sudo(\s+--?(\w|-)+((\s+|\=)\S+)?)*\s+)?(.*(sh\s+-c|python)\s+)?.*aider($|\s+)]]
 )
 
@@ -55,7 +55,7 @@ end
 ---@return boolean
 function aider_chat_t:validate()
   return term_t.validate(self)
-    and utils.term.running(aider_cmd_regex, self.buf)
+    and utils.term.running(AIDER_CMD_REGEX, self.buf)
 end
 
 ---Get a valid aider chat in `path`
@@ -66,7 +66,7 @@ end
 ---@return boolean? is_new whether the chat is newly created or reused
 function aider_chat_t:get(path, tab)
   ---@diagnostic disable-next-line: return-type-mismatch
-  return term_t.get(self, path and configs.opts.root(path) or path, tab)
+  return term_t.get(self, configs.opts.root(path or vim.fn.getcwd(0)), tab)
 end
 
 ---Open chat in current tabpage

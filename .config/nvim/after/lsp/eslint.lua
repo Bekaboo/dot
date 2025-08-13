@@ -15,6 +15,17 @@ for _, c in ipairs(cmds) do
   end
 end
 
+local fts = {
+  'typescript',
+  'javascript',
+  'typescriptreact',
+  'javascriptreact',
+  'json',
+  'jsonc',
+  'html',
+  'css',
+}
+
 local root_markers = {
   'eslint.config.js',
   'eslint.config.mjs',
@@ -26,18 +37,10 @@ local root_markers = {
   '.eslintrc.json',
 }
 
-local fts = {
-  'javascript',
-  'typescript',
-  'json',
-  'jsonc',
-  'html',
-  'css',
-}
-
 -- Prefer eslint native language server over efm + eslint
 -- https://github.com/neovim/nvim-lspconfig/blob/master/lua/lspconfig/configs/eslint.lua
 if vim.endswith(cmd, 'language-server') then
+  ---@type lsp_config_t
   return {
     filetypes = fts,
     cmd = { cmd, '--stdio' },
@@ -131,15 +134,17 @@ local eslint_lang_settings = {
       '%f(%l,%c): %tarning : %m',
     },
     lintSource = cmd,
+    lintAfterOpen = true,
     lintStdin = true,
     lintIgnoreExitCode = true,
-    rootMarkers = root_markers,
   },
 }
 
+---@type lsp_config_t
 return {
   filetypes = fts,
   cmd = { 'efm-langserver' },
+  requires = { cmd },
   name = cmd,
   init_options = {
     documentFormatting = true,
@@ -148,8 +153,10 @@ return {
   root_markers = root_markers,
   settings = {
     languages = {
-      javascript = eslint_lang_settings,
+      typescriptreact = eslint_lang_settings,
+      javascriptreact = eslint_lang_settings,
       typescript = eslint_lang_settings,
+      javascript = eslint_lang_settings,
       jsonc = eslint_lang_settings,
       json = eslint_lang_settings,
       html = eslint_lang_settings,

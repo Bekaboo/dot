@@ -119,11 +119,11 @@ vim.api.nvim_create_autocmd({
 }, {
   group = groupid,
   desc = 'Refresh headlines.',
-  callback = function(info)
-    if vim.bo[info.buf].ft ~= ft then
+  callback = function(args)
+    if vim.bo[args.buf].ft ~= ft then
       return
     end
-    refresh(info.buf)
+    refresh(args.buf)
   end,
 })
 
@@ -131,8 +131,8 @@ vim.api.nvim_create_autocmd('Syntax', {
   group = groupid,
   pattern = ft,
   desc = 'Refresh headlines.',
-  callback = function(info)
-    refresh(info.buf)
+  callback = function(args)
+    refresh(args.buf)
   end,
 })
 

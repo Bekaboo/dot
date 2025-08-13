@@ -93,6 +93,7 @@ Currently only tested on Linux (X11/Wayland/TTY) and Android (Termux).
 - [Fd](https://github.com/sharkdp/fd), [Ripgrep](https://github.com/BurntSushi/ripgrep), and [Fzf](https://github.com/junegunn/fzf) for fuzzy search
 - [Pandoc](https://pandoc.org/), [custom scripts](../../.bin) and [TexLive](https://www.tug.org/texlive/) (for ArchLinux users, it is `texlive-core` and `texlive-extra`) for markdown → PDF conversion (`:MarkdownToPDF`)
 - [Node.js](https://nodejs.org/en) for installing dependencies for [markdown-preview.nvim](https://github.com/iamcco/markdown-preview.nvim)
+- [Pynvim](https://github.com/neovim/pynvim) for accessing some Python utility functions, e.g. [`shlex.split()`](https://docs.python.org/3/library/shlex.html#shlex.split), see `split()` in [`lua/utils/cmd.lua`](lua/utils/cmd.lua).
 - [Pynvim](https://github.com/neovim/pynvim), [Jupyter Client](https://github.com/jupyter/jupyter_client), and [IPython Kernel](https://github.com/ipython/ipykernel) for Python support
 - [Jupytext](https://github.com/mwouts/jupytext) for editing Jupyter notebooks
 - A decent terminal emulator
@@ -141,6 +142,9 @@ favorite package manager:
     sudo pacman -S bash-language-server # example for Arch Linux
     ```
 
+    Also install [ShellCheck](https://www.shellcheck.net/) for extra
+    linting.
+
 - C/C++: [Clang](https://clang.llvm.org/)
 - Lua: [LuaLS](https://github.com/LuaLS/lua-language-server)
 - Python: one of
@@ -185,8 +189,9 @@ happen, you have to call `vim.lsp.enable('<language-server>')`, e.g. for clangd:
 vim.lsp.enable('clangd') -- requires `after/lsp/clangd.lua`
 ```
 
-you can put this in [after/ftplugin/c/lsp.lua](after/ftplugin/c/lsp.lua) to
-automatically launch clangd in C files.
+This is already done in [lua/core/lsp.lua](lua/core/lsp.lua), where all LSP
+configurations located in runtime directory will be automatically loaded and
+enabled on `FileType` event.
 
 ### DAP
 
@@ -247,7 +252,7 @@ Install the following debug adapters manually:
 
 #### DAP Configuration
 
-Configuration for each filetypes: [lua/dapconfigs](lua/dapconfigs).
+Configuration for each filetypes: [lua/dap-configs](lua/dap-configs).
 
 #### DAP Activation
 
@@ -576,15 +581,7 @@ and it should work out of the box.
 - **UI**
     - [nvim-web-devicons](https://github.com/kyazdani42/nvim-web-devicons)
 - **Completion**
-    - [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
-    - [cmp-calc](https://github.com/hrsh7th/cmp-calc)
-    - [cmp-cmdline](https://github.com/hrsh7th/cmp-cmdline)
-    - [cmp-path](https://github.com/hrsh7th/cmp-path)
-    - [cmp-nvim-lsp](https://github.com/hrsh7th/cmp-nvim-lsp)
-    - [cmp-buffer](https://github.com/hrsh7th/cmp-buffer)
-    - [cmp_luasnip](https://github.com/saadparwaiz1/cmp_luasnip)
-    - [cmp-nvim-lsp-signature-help](https://github.com/hrsh7th/cmp-nvim-lsp-signature-help)
-    - [cmp-dap](https://github.com/rcarriga/cmp-dap)
+    - [blink.cmp](https://github.com/Saghen/blink.cmp)
     - [LuaSnip](https://github.com/L3MON4D3/LuaSnip)
 - **Markup**
     - [vimtex](https://github.com/lervag/vimtex)
@@ -601,14 +598,23 @@ and it should work out of the box.
     - [vim-conjoin](https://github.com/flwyd/vim-conjoin)
 - **Tools**
     - [fzf-lua](https://github.com/ibhagwan/fzf-lua)
+        - [fzf-lua-frecency](https://github.com/elanmed/fzf-lua-frecency.nvim)
     - [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim)
         - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) (dependency)
+    - [git-conflict](https://github.com/akinsho/git-conflict.nvim)
+    - [nvim-colorizer.lua](https://github.com/NvChad/nvim-colorizer.lua)
     - [vim-fugitive](https://github.com/tpope/vim-fugitive)
         - [vim-rhubarb](https://github.com/tpope/vim-rhubarb) (dependency)
         - [fugitive-gitlab.vim](https://github.com/shumphrey/fugitive-gitlab.vim) (dependency)
     - [oil.nvim](https://github.com/stevearc/oil.nvim)
     - [quicker.nvim](https://github.com/stevearc/quicker.nvim)
     - [which-key.nvim](https://github.com/folke/which-key.nvim)
+- **Debug**
+    - [nvim-dap](https://github.com/mfussenegger/nvim-dap)
+    - [nvim-dap-ui](https://github.com/rcarriga/nvim-dap-ui)
+        - [nvim-nio](https://github.com/nvim-neotest/nvim-nio) (dependency)
+    - [one-small-step-for-vimkind](https://github.com/jbyuki/one-small-step-for-vimkind)
+- **Build**
     - [vim-test](https://github.com/vim-test/vim-test)
     - [vim-projectionist](https://github.com/tpope/vim-projectionist)
 - **Treesitter**
@@ -618,14 +624,11 @@ and it should work out of the box.
     - [ts-autotag.nvim](https://github.com/tronikelis/ts-autotag.nvim)
     - [treesj](https://github.com/Wansmer/treesj)
     - [cellular-automaton.nvim](https://github.com/Eandrju/cellular-automaton.nvim)
-- **Debug**
-    - [nvim-dap](https://github.com/mfussenegger/nvim-dap)
-    - [nvim-dap-ui](https://github.com/rcarriga/nvim-dap-ui)
-        - [nvim-nio](https://github.com/nvim-neotest/nvim-nio) (dependency)
-    - [one-small-step-for-vimkind](https://github.com/jbyuki/one-small-step-for-vimkind)
 - **Colorschemes**
     - [everforest](https://github.com/sainnhe/everforest)
     - [gruvbox-material](https://github.com/sainnhe/gruvbox-material)
+- **Langs**
+    - [vim-python-pep8-indent](https://github.com/Vimjas/vim-python-pep8-indent)
 
 #### Builtin Plugins
 
@@ -641,9 +644,8 @@ and it should work out of the box.
       experience than [jupytext.vim](https://github.com/goerz/jupytext)
 - [intro](plugin/intro.lua)
     - Shows a custom intro message on startup
-- [lsp](lua/plugin/lsp.lua)
-    - Sets up LSP and diagnostic options and commands on `LspAttach` or
-      `DiagnosticChanged`
+- [lsp-commands](lua/plugin/lsp-commands.lua)
+    - Sets up LSP and diagnostic commands `:LspXXX` and `:DiagnosticXXX`
 - [readline](lua/plugin/readline.lua)
     - Readline-like keybindings in insert and command mode
 - [statuscolumn](lua/plugin/statuscolumn.lua)
