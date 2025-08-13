@@ -393,67 +393,52 @@ fzf_core.ACTION_DEFINITIONS[fzf_actions.toggle_dir] = {
   end,
 }
 
--- -- stylua: ignore start
--- fzf_core.ACTION_DEFINITIONS[fzf_actions.change_cwd] = { 'Change cwd', pos = 1 }
--- fzf_core.ACTION_DEFINITIONS[fzf_actions.arg_del] = { 'delete' }
--- fzf_core.ACTION_DEFINITIONS[fzf_actions.del_autocmd] = { 'delete autocmd' }
--- fzf_core.ACTION_DEFINITIONS[fzf_actions.arg_search_add] = { 'add new file' }
--- fzf_core.ACTION_DEFINITIONS[fzf_actions.search] = { 'edit' }
--- fzf_core.ACTION_DEFINITIONS[fzf_actions.ex_run] = { 'edit' }
--- fzf_core.ACTION_DEFINITIONS[fzf_actions.insert_register] = { 'insert register' }
--- -- stylua: ignore end
---
--- -- stylua: ignore start
--- fzf_config._action_to_helpstr[fzf_actions.toggle_dir] = 'toggle-dir'
--- fzf_config._action_to_helpstr[fzf_actions.switch_provider] = 'switch-provider'
--- fzf_config._action_to_helpstr[fzf_actions.change_cwd] = 'change-cwd'
--- fzf_config._action_to_helpstr[fzf_actions.arg_del] = 'delete'
--- fzf_config._action_to_helpstr[fzf_actions.del_autocmd] = 'delete-autocmd'
--- fzf_config._action_to_helpstr[fzf_actions.arg_search_add] = 'search-and-add-new-file'
--- fzf_config._action_to_helpstr[fzf_actions.file_split] = 'file-split'
--- fzf_config._action_to_helpstr[fzf_actions.file_vsplit] = 'file-vsplit'
--- fzf_config._action_to_helpstr[fzf_actions.file_tabedit] = 'file-tabedit'
--- fzf_config._action_to_helpstr[fzf_actions.file_edit_or_qf] = 'file-edit-or-qf'
--- fzf_config._action_to_helpstr[fzf_actions.file_sel_to_qf] = 'file-select-to-quickfix'
--- fzf_config._action_to_helpstr[fzf_actions.file_sel_to_ll] = 'file-select-to-loclist'
--- fzf_config._action_to_helpstr[fzf_actions.buf_split] = 'buffer-split'
--- fzf_config._action_to_helpstr[fzf_actions.buf_vsplit] = 'buffer-vsplit'
--- fzf_config._action_to_helpstr[fzf_actions.buf_tabedit] = 'buffer-tabedit'
--- fzf_config._action_to_helpstr[fzf_actions.buf_edit_or_qf] = 'buffer-edit-or-qf'
--- fzf_config._action_to_helpstr[fzf_actions.buf_sel_to_qf] = 'buffer-select-to-quickfix'
--- fzf_config._action_to_helpstr[fzf_actions.buf_sel_to_ll] = 'buffer-select-to-loclist'
--- fzf_config._action_to_helpstr[fzf_actions.insert_register] = 'insert-register'
--- -- stylua: ignore end
+fzf_core.ACTION_DEFINITIONS[fzf_actions.toggle_dir] = {
+  function(o)
+    -- When using `fd` the flag is '--type d', but for `find` the flag is
+    -- '-type d', use '-type d' as default flag here anyway since it is
+    -- the common substring for both `find` and `fd` commands
+    local flag = o.toggle_dir_flag or '-type d'
+    local escape = require('fzf-lua.utils').lua_regex_escape
+    return o.cmd and o.cmd:match(escape(flag)) and 'Exclude dirs'
+      or 'Include dirs'
+  end,
+}
+-- stylua: ignore start
+fzf_core.ACTION_DEFINITIONS[fzf_actions.change_cwd] = { 'Change cwd', pos = 1 }
+fzf_core.ACTION_DEFINITIONS[fzf_actions.arg_del] = { 'delete' }
+fzf_core.ACTION_DEFINITIONS[fzf_actions.del_autocmd] = { 'delete autocmd' }
+fzf_core.ACTION_DEFINITIONS[fzf_actions.arg_search_add] = { 'add new file' }
+fzf_core.ACTION_DEFINITIONS[fzf_actions.search] = { 'edit' }
+fzf_core.ACTION_DEFINITIONS[fzf_actions.ex_run] = { 'edit' }
+fzf_core.ACTION_DEFINITIONS[fzf_actions.insert_register] = { 'insert register' }
+-- stylua: ignore end
 
+-- stylua: ignore start
 fzf_config._action_to_helpstr[fzf_actions.toggle_dir] = 'toggle-dir'
 fzf_config._action_to_helpstr[fzf_actions.switch_provider] = 'switch-provider'
 fzf_config._action_to_helpstr[fzf_actions.change_cwd] = 'change-cwd'
 fzf_config._action_to_helpstr[fzf_actions.arg_del] = 'delete'
 fzf_config._action_to_helpstr[fzf_actions.del_autocmd] = 'delete-autocmd'
-fzf_config._action_to_helpstr[fzf_actions.arg_search_add] =
-  'search-and-add-new-file'
+fzf_config._action_to_helpstr[fzf_actions.arg_search_add] = 'search-and-add-new-file'
 fzf_config._action_to_helpstr[fzf_actions.file_split] = 'file-split'
 fzf_config._action_to_helpstr[fzf_actions.file_vsplit] = 'file-vsplit'
 fzf_config._action_to_helpstr[fzf_actions.file_tabedit] = 'file-tabedit'
 fzf_config._action_to_helpstr[fzf_actions.file_edit_or_qf] = 'file-edit-or-qf'
-fzf_config._action_to_helpstr[fzf_actions.file_sel_to_qf] =
-  'file-select-to-quickfix'
-fzf_config._action_to_helpstr[fzf_actions.file_sel_to_ll] =
-  'file-select-to-loclist'
+fzf_config._action_to_helpstr[fzf_actions.file_sel_to_qf] = 'file-select-to-quickfix'
+fzf_config._action_to_helpstr[fzf_actions.file_sel_to_ll] = 'file-select-to-loclist'
 fzf_config._action_to_helpstr[fzf_actions.buf_split] = 'buffer-split'
 fzf_config._action_to_helpstr[fzf_actions.buf_vsplit] = 'buffer-vsplit'
 fzf_config._action_to_helpstr[fzf_actions.buf_tabedit] = 'buffer-tabedit'
 fzf_config._action_to_helpstr[fzf_actions.buf_edit_or_qf] = 'buffer-edit-or-qf'
-fzf_config._action_to_helpstr[fzf_actions.buf_sel_to_qf] =
-  'buffer-select-to-quickfix'
-fzf_config._action_to_helpstr[fzf_actions.buf_sel_to_ll] =
-  'buffer-select-to-loclist'
+fzf_config._action_to_helpstr[fzf_actions.buf_sel_to_qf] = 'buffer-select-to-quickfix'
+fzf_config._action_to_helpstr[fzf_actions.buf_sel_to_ll] = 'buffer-select-to-loclist'
 fzf_config._action_to_helpstr[fzf_actions.insert_register] = 'insert-register'
 fzf_config._action_to_helpstr[fzf_actions.fugitive_edit] = 'fugitive-edit'
 fzf_config._action_to_helpstr[fzf_actions.fugitive_split] = 'fugitive-split'
 fzf_config._action_to_helpstr[fzf_actions.fugitive_vsplit] = 'fugitive-vsplit'
-fzf_config._action_to_helpstr[fzf_actions.fugitive_tabedit] =
-  'fugitive-tabedit'
+fzf_config._action_to_helpstr[fzf_actions.fugitive_tabedit] = 'fugitive-tabedit'
+-- stylua: ignore end
 
 -- Use different prompts for document and workspace diagnostics
 -- by overriding `fzf.diagnostics_workspace()` and `fzf.diagnostics_document()`
