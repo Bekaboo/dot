@@ -79,8 +79,6 @@ local function setup(opts)
     group = groupid,
     callback = function(args)
       utils.bar.exec('del', { buf = args.buf })
-      _G._winbar.bars[args.buf] = nil
-      _G._winbar.callbacks['buf' .. args.buf] = nil
     end,
     desc = 'Remove winbar from cache on buffer wipeout.',
   })
