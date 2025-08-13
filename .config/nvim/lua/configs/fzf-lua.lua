@@ -916,6 +916,7 @@ fzf.setup({
       end)
     end,
     preview = {
+      border = 'solid',
       layout = 'horizontal',
       scrollbar = false,
     },
