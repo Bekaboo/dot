@@ -919,6 +919,9 @@ fzf.setup({
       border = 'solid',
       layout = 'horizontal',
       scrollbar = false,
+      winopts = {
+        colorcolumn = '',
+      },
     },
   },
   -- Open help window at top of screen with single border
@@ -1083,33 +1086,29 @@ fzf.setup({
   git = {
     commits = {
       prompt = 'GitLogs>',
-      actions = has_fugitive_gedit_cmd()
-          and {
-            ['enter'] = fzf_actions.fugitive_edit,
-            ['alt-s'] = fzf_actions.fugitive_split,
-            ['alt-v'] = fzf_actions.fugitive_vsplit,
-            ['alt-t'] = fzf_actions.fugitive_tabedit,
-            ['ctrl-y'] = {
-              fn = fzf_actions.git_yank_commit,
-              exec_silent = true,
-            },
-          }
-        or nil,
+      actions = has_fugitive_gedit_cmd() and {
+        ['enter'] = fzf_actions.fugitive_edit,
+        ['alt-s'] = fzf_actions.fugitive_split,
+        ['alt-v'] = fzf_actions.fugitive_vsplit,
+        ['alt-t'] = fzf_actions.fugitive_tabedit,
+        ['ctrl-y'] = {
+          fn = fzf_actions.git_yank_commit,
+          exec_silent = true,
+        },
+      } or nil,
     },
     bcommits = {
       prompt = 'GitLogs>',
-      actions = has_fugitive_gedit_cmd()
-          and {
-            ['enter'] = fzf_actions.fugitive_edit,
-            ['alt-s'] = fzf_actions.fugitive_split,
-            ['alt-v'] = fzf_actions.fugitive_vsplit,
-            ['alt-t'] = fzf_actions.fugitive_tabedit,
-            ['ctrl-y'] = {
-              fn = fzf_actions.git_yank_commit,
-              exec_silent = true,
-            },
-          }
-        or nil,
+      actions = has_fugitive_gedit_cmd() and {
+        ['enter'] = fzf_actions.fugitive_edit,
+        ['alt-s'] = fzf_actions.fugitive_split,
+        ['alt-v'] = fzf_actions.fugitive_vsplit,
+        ['alt-t'] = fzf_actions.fugitive_tabedit,
+        ['ctrl-y'] = {
+          fn = fzf_actions.git_yank_commit,
+          exec_silent = true,
+        },
+      } or nil,
     },
     blame = {
       actions = {
