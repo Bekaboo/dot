@@ -664,8 +664,6 @@ fzf.setup({
     preview_title = 'TelescopeTitle',
     -- Builtin preview only
     cursor = 'Cursor',
-    cursorline = 'TelescopePreviewLine',
-    cursorlinenr = 'TelescopePreviewLine',
     search = 'IncSearch',
   },
   fzf_colors = {
