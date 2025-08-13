@@ -4,6 +4,7 @@ if vim.fn.executable('fzf') == 0 then
 end
 
 local fzf = require('fzf-lua')
+local fzf_utils = require('fzf-lua.utils')
 local fzf_actions = require('fzf-lua.actions')
 local fzf_core = require('fzf-lua.core')
 local fzf_path = require('fzf-lua.path')
@@ -102,7 +103,7 @@ function fzf_actions.change_cwd()
         opts.cwd = vim.fs.normalize(
           vim.fs.joinpath(
             cwd_root,
-            path.entry_to_file(selected[1], {}, false).path
+            fzf_path.entry_to_file(selected[1], {}, false).path
           )
         )
 
