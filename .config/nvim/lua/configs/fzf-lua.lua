@@ -973,7 +973,7 @@ fzf.setup({
       ['alt-{'] = 'first',
     },
   },
-  fzf_actions = {
+  actions = {
     files = {
       ['alt-s'] = fzf_actions.file_split,
       ['alt-v'] = fzf_actions.file_vsplit,
