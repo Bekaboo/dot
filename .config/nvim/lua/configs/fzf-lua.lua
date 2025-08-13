@@ -690,13 +690,11 @@ function fzf_win:generate_layout(...)
         width = self.winopts.width,
         height = self.winopts.height,
         border = self._o.winopts.border,
-        style = 'minimal',
         relative = self.winopts.relative or 'editor',
         zindex = self.winopts.zindex,
         hide = self.winopts.hide,
       }, { type = 'nvim', name = 'fzf', nwin = 2 }),
       preview = {
-        style = 'minimal',
         border = self._o.winopts.preview.border,
         focusable = true,
         hide = self.winopts.hide,
