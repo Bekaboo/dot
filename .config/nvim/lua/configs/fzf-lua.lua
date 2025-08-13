@@ -429,25 +429,30 @@ fzf_config._action_to_helpstr[fzf_actions.switch_provider] = 'switch-provider'
 fzf_config._action_to_helpstr[fzf_actions.change_cwd] = 'change-cwd'
 fzf_config._action_to_helpstr[fzf_actions.arg_del] = 'delete'
 fzf_config._action_to_helpstr[fzf_actions.del_autocmd] = 'delete-autocmd'
-fzf_config._action_to_helpstr[fzf_actions.arg_search_add] = 'search-and-add-new-file'
+fzf_config._action_to_helpstr[fzf_actions.arg_search_add] =
+  'search-and-add-new-file'
 fzf_config._action_to_helpstr[fzf_actions.file_split] = 'file-split'
 fzf_config._action_to_helpstr[fzf_actions.file_vsplit] = 'file-vsplit'
 fzf_config._action_to_helpstr[fzf_actions.file_tabedit] = 'file-tabedit'
 fzf_config._action_to_helpstr[fzf_actions.file_edit_or_qf] = 'file-edit-or-qf'
-fzf_config._action_to_helpstr[fzf_actions.file_sel_to_qf] = 'file-select-to-quickfix'
-fzf_config._action_to_helpstr[fzf_actions.file_sel_to_ll] = 'file-select-to-loclist'
+fzf_config._action_to_helpstr[fzf_actions.file_sel_to_qf] =
+  'file-select-to-quickfix'
+fzf_config._action_to_helpstr[fzf_actions.file_sel_to_ll] =
+  'file-select-to-loclist'
 fzf_config._action_to_helpstr[fzf_actions.buf_split] = 'buffer-split'
 fzf_config._action_to_helpstr[fzf_actions.buf_vsplit] = 'buffer-vsplit'
 fzf_config._action_to_helpstr[fzf_actions.buf_tabedit] = 'buffer-tabedit'
 fzf_config._action_to_helpstr[fzf_actions.buf_edit_or_qf] = 'buffer-edit-or-qf'
-fzf_config._action_to_helpstr[fzf_actions.buf_sel_to_qf] = 'buffer-select-to-quickfix'
-fzf_config._action_to_helpstr[fzf_actions.buf_sel_to_ll] = 'buffer-select-to-loclist'
+fzf_config._action_to_helpstr[fzf_actions.buf_sel_to_qf] =
+  'buffer-select-to-quickfix'
+fzf_config._action_to_helpstr[fzf_actions.buf_sel_to_ll] =
+  'buffer-select-to-loclist'
 fzf_config._action_to_helpstr[fzf_actions.insert_register] = 'insert-register'
 fzf_config._action_to_helpstr[fzf_actions.fugitive_edit] = 'fugitive-edit'
 fzf_config._action_to_helpstr[fzf_actions.fugitive_split] = 'fugitive-split'
 fzf_config._action_to_helpstr[fzf_actions.fugitive_vsplit] = 'fugitive-vsplit'
-fzf_config._action_to_helpstr[fzf_actions.fugitive_tabedit] = 'fugitive-tabedit'
-
+fzf_config._action_to_helpstr[fzf_actions.fugitive_tabedit] =
+  'fugitive-tabedit'
 
 -- Use different prompts for document and workspace diagnostics
 -- by overriding `fzf.diagnostics_workspace()` and `fzf.diagnostics_document()`
@@ -733,9 +738,15 @@ function fzf_win:redraw_preview(...)
     end
 
     if self._previewer then
-      ---@diagnostic disable-next-line: undefined-field
-      self._previewer:backup_winhl()
-      self._previewer:backup_winopts()
+      -- Only builtin previewers have additional backup/restore methods
+      ---@diagnostic disable: undefined-field
+      if self._previewer.backup_winhl then
+        self._previewer:backup_winhl()
+      end
+      if self._previewer.backup_winopts then
+        self._previewer:backup_winopts()
+      end
+      ---@diagnostic enable: undefined-field
       ---@diagnostic disable-next-line: inject-field
       self._previewer_winopts_orig = self._previewer.winopts_orig
     end
@@ -771,11 +782,16 @@ function fzf_win:close_preview(...)
   -- Restore source window appearance
   vim.schedule(vim.schedule_wrap(function()
     if self._previewer then
-      ---@diagnostic disable-next-line: undefined-field
-      self._previewer:restore_winhl()
+      ---@diagnostic disable: undefined-field
+      if self._previewer.restore_winhl then
+        self._previewer:restore_winhl()
+      end
+      ---@diagnostic enable: undefined-field
 
-      self._previewer.winopts_orig = self._previewer_winopts_orig or {}
-      self._previewer:restore_winopts()
+      if self._previewer.restore_winopts then
+        self._previewer.winopts_orig = self._previewer_winopts_orig or {}
+        self._previewer:restore_winopts()
+      end
     end
   end))
 end
@@ -1080,7 +1096,10 @@ fzf.setup({
             ['alt-s'] = fzf_actions.fugitive_split,
             ['alt-v'] = fzf_actions.fugitive_vsplit,
             ['alt-t'] = fzf_actions.fugitive_tabedit,
-            ['ctrl-y'] = { fn = fzf_actions.git_yank_commit, exec_silent = true },
+            ['ctrl-y'] = {
+              fn = fzf_actions.git_yank_commit,
+              exec_silent = true,
+            },
           }
         or nil,
     },
@@ -1092,7 +1111,10 @@ fzf.setup({
             ['alt-s'] = fzf_actions.fugitive_split,
             ['alt-v'] = fzf_actions.fugitive_vsplit,
             ['alt-t'] = fzf_actions.fugitive_tabedit,
-            ['ctrl-y'] = { fn = fzf_actions.git_yank_commit, exec_silent = true },
+            ['ctrl-y'] = {
+              fn = fzf_actions.git_yank_commit,
+              exec_silent = true,
+            },
           }
         or nil,
     },
