@@ -906,6 +906,8 @@ fzf.setup({
       scrollbar = false,
       winopts = {
         colorcolumn = '',
+        signcolumn = vim.go.signcolumn,
+        statuscolumn = vim.go.statuscolumn,
       },
     },
   },
