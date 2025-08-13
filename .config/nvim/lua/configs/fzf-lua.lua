@@ -928,15 +928,6 @@ fzf.setup({
     opts.col = 0
     return vim.api.nvim_open_win(buf, enter, opts)
   end,
-  hls = {
-    title = 'TelescopeTitle',
-    preview_title = 'TelescopeTitle',
-    -- Builtin preview only
-    cursor = 'Cursor',
-    cursorline = 'TelescopePreviewLine',
-    cursorlinenr = 'TelescopePreviewLine',
-    search = 'IncSearch',
-  },
   fzf_colors = {
     ['hl'] = { 'fg', 'TelescopeMatching' },
     ['fg+'] = { 'fg', 'TelescopeSelection' },
