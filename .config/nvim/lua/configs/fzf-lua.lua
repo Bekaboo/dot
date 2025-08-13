@@ -622,11 +622,13 @@ _G._fzf_lua_win_views = {}
 _G._fzf_lua_win_heights = {}
 
 fzf.setup({
-  'borderless-full',
   -- Use nbsp in tty to avoid showing box chars
   nbsp = not vim.go.termguicolors and '\xc2\xa0' or nil,
   dir_icon = vim.trim(icons.Folder),
   winopts = {
+    row = 0.4,
+    height = 0.75,
+    border = 'solid',
     on_create = function()
       vim.keymap.set(
         't',
@@ -647,6 +649,7 @@ fzf.setup({
     end,
     preview = {
       scrollbar = false,
+      border =  'solid',
     },
   },
   -- Open help window at top of screen with single border
