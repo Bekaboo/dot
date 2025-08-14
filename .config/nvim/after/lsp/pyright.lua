@@ -1,7 +1,9 @@
 local settings = {
-  -- Too many warnings in default 'recommended' mode from basedpyright
-  typeCheckingMode = 'standard',
   analysis = {
+    -- Too many warnings in default 'recommended' mode from basedpyright
+    -- `typeCheckingMode` has been moved from top-level to `analysis`, see
+    -- https://docs.basedpyright.com/latest/configuration/language-server-settings/
+    typeCheckingMode = 'standard',
     autoSearchPaths = true,
     useLibraryCodeForTypes = true,
     diagnosticMode = 'openFilesOnly',
