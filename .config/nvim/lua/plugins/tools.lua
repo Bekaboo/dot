@@ -1,7 +1,6 @@
 return {
   {
     'ibhagwan/fzf-lua',
-    dependencies = 'elanmed/fzf-lua-frecency.nvim',
     cmd = 'FzfLua',
     keys = {
       { '<C-_>', desc = 'Fuzzy complete command/search history', mode = 'c' },
