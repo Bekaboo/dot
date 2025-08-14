@@ -154,6 +154,9 @@ end
 function M.after_pattern(pattern)
   ---@param matched_trigger string the fully matched trigger
   return function(_, matched_trigger)
+    if not matched_trigger then
+      return false
+    end
     return vim.api
       .nvim_get_current_line()
       :sub(1, vim.fn.col('.') - 1)
