@@ -1022,6 +1022,9 @@ fzf.setup({
 
 ---@diagnostic disable-next-line: missing-fields
 fzf_frecency.setup({
+  -- Fzf-lua default to `1` but fzf-lua-frecency set it to `true`,
+  -- Set it back to `1` to suppress warnings when nvim-wev-devicons is disabled
+  file_icons = 1,
   display_score = false,
   actions = config.setup_opts.files.actions,
 })
