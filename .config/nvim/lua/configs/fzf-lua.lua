@@ -4,7 +4,6 @@ if vim.fn.executable('fzf') == 0 then
 end
 
 local fzf = require('fzf-lua')
-local fzf_frecency = require('fzf-lua-frecency')
 local actions = require('fzf-lua.actions')
 local core = require('fzf-lua.core')
 local path = require('fzf-lua.path')
@@ -497,15 +496,6 @@ function fzf.files(opts)
   return _fzf_files(opts)
 end
 
----@param opts table?
-function fzf.files_with_frecency(opts)
-  return fzf_frecency.frecency(vim.tbl_deep_extend('keep', opts, {
-    cwd_prompt = true,
-    cwd_only = true,
-    cwd = opts and opts.cwd or vim.fn.getcwd(0),
-  }))
-end
-
 -- Select dirs from `z`
 ---@param opts table?
 function fzf.z(opts)
@@ -926,12 +916,6 @@ fzf.setup({
   },
 })
 
----@diagnostic disable-next-line: missing-fields
-fzf_frecency.setup({
-  display_score = false,
-  actions = config.setup_opts.files.actions,
-})
-
 -- stylua: ignore start
 vim.keymap.set('c', '<C-_>', fzf.complete_cmdline, { desc = 'Fuzzy complete command/search history' })
 vim.keymap.set('c', '<C-x><C-l>', fzf.complete_cmdline, { desc = 'Fuzzy complete command/search history' })
@@ -939,7 +923,7 @@ vim.keymap.set('i', '<C-r>?', fzf.complete_from_registers, { desc = 'Fuzzy compl
 vim.keymap.set('i', '<C-r><C-_>', fzf.complete_from_registers, { desc = 'Fuzzy complete from registers' })
 vim.keymap.set('i', '<C-r><C-r>', fzf.complete_from_registers, { desc = 'Fuzzy complete from registers' })
 vim.keymap.set('i', '<C-x><C-f>', fzf.complete_path, { desc = 'Fuzzy complete path' })
-vim.keymap.set('n', '<Leader>.', fzf.files_with_frecency, { desc = 'Find files' })
+vim.keymap.set('n', '<Leader>.', fzf.files, { desc = 'Find files' })
 vim.keymap.set('n', "<Leader>'", fzf.resume, { desc = 'Resume last picker' })
 vim.keymap.set('n', "<Leader>`", fzf.marks, { desc = 'Find marks' })
 vim.keymap.set('n', '<Leader>,', fzf.buffers, { desc = 'Find buffers' })
@@ -976,7 +960,7 @@ vim.keymap.set('n', '<Leader>ft', fzf.tags, { desc = 'Find tags' })
 vim.keymap.set('n', '<Leader>fc', fzf.changes, { desc = 'Find changes' })
 vim.keymap.set('n', '<Leader>fd', fzf.diagnostics_document, { desc = 'Find document diagnostics' })
 vim.keymap.set('n', '<Leader>fD', fzf.diagnostics_workspace, { desc = 'Find workspace diagnostics' })
-vim.keymap.set('n', '<Leader>ff', fzf.files_with_frecency, { desc = 'Find files' })
+vim.keymap.set('n', '<Leader>ff', fzf.files, { desc = 'Find files' })
 vim.keymap.set('n', '<Leader>fa', fzf.args, { desc = 'Find args' })
 vim.keymap.set('n', '<Leader>fl', fzf.loclist, { desc = 'Find location list' })
 vim.keymap.set('n', '<Leader>fq', fzf.quickfix, { desc = 'Find quickfix list' })

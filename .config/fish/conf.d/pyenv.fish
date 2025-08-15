@@ -22,7 +22,7 @@ function __pyenv_init_once --description 'Helper function to initialize pyenv on
         return
     end
 
-    # Erase `__pyenv` and `__pyenv_init_once` becausetkkyenv itself will
+    # Erase `__pyenv` and `__pyenv_init_once` because pyenv itself will
     # automatically detect and activate global/local python version settings
     # after initialization
     if pyenv init - fish | source &>/dev/null

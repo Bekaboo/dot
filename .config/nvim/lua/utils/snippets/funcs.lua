@@ -82,31 +82,38 @@ function M.get_char_after()
   return line:sub(col, col)
 end
 
-local quotation_cache = {}
-vim.api.nvim_create_autocmd({ 'BufDelete', 'BufWipeOut', 'BufUnload' }, {
-  group = vim.api.nvim_create_augroup('LuaSnipClearQuotationCache', {}),
-  callback = function(args)
-    quotation_cache[args.buf] = nil
-  end,
-})
-
 ---Get which quotation mark (single or double) is preferred in current buffer
----@param buf integer?
+---@param buf? integer
+---@param default? '"'|"'"
 ---@return '"'|"'"
-function M.get_quotation_type(buf)
+function M.get_quotation_type(buf, default)
   buf = buf or vim.api.nvim_get_current_buf()
-  if quotation_cache[buf] then
-    return quotation_cache[buf]
+  default = default or "'"
+
+  if not vim.api.nvim_buf_is_valid(buf) then
+    return default
   end
-  local lines = vim.api.nvim_buf_get_lines(buf, 0, 128, false)
+
+  local b = vim.b[buf]
+  if b._ls_quote_type then
+    return b._ls_quote_type
+  end
+
   local num_double_quotes = 0
   local num_single_quotes = 0
-  for _, line in ipairs(lines) do
+  for _, line in ipairs(vim.api.nvim_buf_get_lines(buf, 0, -1, false)) do
     num_double_quotes = num_double_quotes + line:gsub('[^"]', ''):len()
     num_single_quotes = num_single_quotes + line:gsub("[^']", ''):len()
   end
-  quotation_cache[buf] = num_double_quotes > num_single_quotes and '"' or "'"
-  return quotation_cache[buf]
+
+  local quote = num_double_quotes > num_single_quotes and '"'
+    or num_double_quotes < num_single_quotes and "'"
+    or default
+  if num_double_quotes + num_single_quotes > 0 then
+    b._ls_quote_type = quote
+  end
+
+  return quote
 end
 
 return M

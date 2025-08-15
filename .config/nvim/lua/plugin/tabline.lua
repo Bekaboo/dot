@@ -116,13 +116,18 @@ end, {
   complete = function()
     local tabnrcur = vim.fn.tabpagenr()
     local tabidcur = vim.api.nvim_get_current_tabpage()
+    local tabnamecur = tabgetname(tabnrcur, tabidcur)
+
+    local tabnames = {} ---@type table<string, true> deduplicated tab names
+    for tabnr, tabid in ipairs(vim.api.nvim_list_tabpages()) do
+      tabnames[tabgetname(tabnr, tabid)] = true
+    end
 
     -- Make current tab's name first in the completion menu
-    local compl = { tabgetname(tabnrcur, tabidcur) }
-
-    for tabnr, tabid in ipairs(vim.api.nvim_list_tabpages()) do
-      if tabnr ~= tabnrcur then
-        table.insert(compl, tabgetname(tabnr, tabid))
+    local compl = { tabnamecur } ---@type string[]
+    for tabname, _ in pairs(tabnames) do
+      if tabname ~= tabnamecur then
+        table.insert(compl, tabname)
       end
     end
 

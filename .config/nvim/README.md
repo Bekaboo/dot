@@ -598,7 +598,6 @@ and it should work out of the box.
     - [vim-conjoin](https://github.com/flwyd/vim-conjoin)
 - **Tools**
     - [fzf-lua](https://github.com/ibhagwan/fzf-lua)
-        - [fzf-lua-frecency](https://github.com/elanmed/fzf-lua-frecency.nvim)
     - [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim)
         - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) (dependency)
     - [git-conflict](https://github.com/akinsho/git-conflict.nvim)
