@@ -665,21 +665,6 @@ M.snippets = {
       }
     )
   ),
-  us.sn(
-    {
-      trig = 'df',
-      desc = 'default statement',
-    },
-    un.fmtad(
-      [[
-        default:
-        <body>
-      ]],
-      {
-        body = un.body(1, 1, false),
-      }
-    )
-  ),
   us.msn({
     { trig = 'br' },
     { trig = 'brk' },
@@ -732,6 +717,42 @@ M.snippets = {
       un.fmtad(
         [[
           go func(<args>) { <body> }(<vals>)
+        ]],
+        {
+          vals = r(1, 'vals'),
+          args = r(2, 'args'),
+          body = un.body(1, 0),
+        }
+      ),
+    }),
+    {
+      stored = {
+        vals = i(),
+        args = i(),
+      },
+    }
+  ),
+  us.sn(
+    {
+      trig = 'df',
+      desc = 'defer func()',
+    },
+    c(1, {
+      un.fmtad(
+        [[
+          defer func(<args>) {
+          <body>
+          }(<vals>)
+        ]],
+        {
+          vals = r(1, 'vals'),
+          args = r(2, 'args'),
+          body = un.body(3, 1),
+        }
+      ),
+      un.fmtad(
+        [[
+          defer func(<args>) { <body> }(<vals>)
         ]],
         {
           vals = r(1, 'vals'),
