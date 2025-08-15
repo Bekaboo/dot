@@ -74,13 +74,75 @@ vim.keymap.set('n', '<Leader>Gl',      dap_set_logpoint,        { desc = 'Set lo
 vim.keymap.set('n', '<Leader>G<Esc>',  '<Nop>',                 { desc = 'Cancel debug action' })
 -- stylua: ignore end
 
--- When there's active dap session, use `<CR>` to repeat the last dap function
-key.amend('n', '<CR>', function(fallback)
-  if dap.session() then
-    last_dap_fn()
+---Check if debug PC is in given buffer
+---@param buf? integer
+---@param cb fun(in_buf: boolean, line?: integer)
+local function dap_pc_in_buf_async(buf, cb)
+  buf = buf ~= 0 and buf or vim.api.nvim_get_current_buf()
+  local s = dap.session()
+  if
+    not s
+    or not s.current_frame
+    or not s.current_frame.source
+    or not vim.api.nvim_buf_is_valid(buf)
+  then
+    cb(false, nil)
     return
   end
-  fallback()
+
+  local src = s.current_frame.source
+  if not src then
+    cb(false, nil)
+    return
+  end
+
+  if src.path and src.path ~= '' then
+    local is_uri = src.path:match('://')
+    local pc_buf = is_uri and vim.uri_to_bufnr(src.path)
+      or vim.fn.bufadd(src.path)
+    local pc_in_buf = pc_buf == buf
+    cb(pc_in_buf, pc_in_buf and s.current_frame.line or nil)
+    return
+  end
+
+  -- Not all debugger provide src.path, so use `session:source()` to check
+  -- if debug PC is in given buffer
+  require('dap.async').run(function()
+    s:source(src, function(_, b)
+      if not vim.api.nvim_buf_is_valid(buf) then
+        cb(false, nil)
+        return
+      end
+
+      if b == buf then
+        cb(true, s.current_frame.line)
+        return
+      end
+
+      -- Fallback to sign check
+      local placed = vim.fn.sign_getplaced(b, { group = s.sign_group })[1]
+      if placed and placed.signs then
+        for _, sign in ipairs(placed.signs) do
+          if sign.name == 'DapStopped' then
+            cb(true, sign.lnum)
+            return
+          end
+        end
+      end
+      cb(false, nil)
+    end)
+  end)
+end
+
+-- If debug PC is in current buffer, use `<CR>` to repeat the last dap function
+key.amend('n', '<CR>', function(fallback)
+  dap_pc_in_buf_async(nil, function(pc_in_buf)
+    if not pc_in_buf then
+      fallback()
+      return
+    end
+    last_dap_fn()
+  end)
 end)
 
 vim.api.nvim_create_user_command('DapClear', dap.clear_breakpoints, {
