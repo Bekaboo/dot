@@ -622,7 +622,8 @@ local function restore_global_opt(name)
   end
 end
 
----Restore window heights and views, supposed to be called after fzf closes
+---Restore window heights and views, supposed to be called after fzf opens or
+---closes
 local function restore_win_heights_and_views()
   if vim.go.lines == vim.g._fzf_vim_lines then
     utils.win.restore_heights(_G._fzf_lua_win_heights)
@@ -679,8 +680,7 @@ fzf.setup({
       -- Sometimes windows will shift/change size after closing quickfix window
       -- and reopening fzf, maybe related to https://github.com/neovim/neovim/issues/30955
       if vim.g._fzf_qfclosed then
-        utils.win.restore_heights(_G._fzf_lua_win_heights)
-        utils.win.restore_views(_G._fzf_lua_win_views)
+        restore_win_heights_and_views()
       end
     end,
     on_close = function()
