@@ -121,8 +121,8 @@ vim.api.nvim_create_autocmd('UIEnter', {
     -- - https://stackoverflow.com/a/3264324/16371328
     -- - https://www.reddit.com/r/neovim/comments/1kv7som/comment/mu7lo52/
     -- stylua: ignore start
-    map('x', '<M-/>',  '<C-\\><C-n>`</\\%V', { desc = 'Search forward within visual selection' })
-    map('x', '<M-?>',  '<C-\\><C-n>`>?\\%V', { desc = 'Search backward within visual selection' })
+    map('x', '<M-/>',  '<C-\\><C-n>`</\\%V\\(\\)<Left><Left>', { desc = 'Search forward within visual selection' })
+    map('x', '<M-?>',  '<C-\\><C-n>`>?\\%V\\(\\)<Left><Left>', { desc = 'Search backward within visual selection' })
     -- stylua: ignore end
 
     -- Select previously changed/yanked text, useful for selecting pasted text
