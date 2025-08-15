@@ -51,13 +51,12 @@ end
 
 ---Returns function node that returns a quotation mark based on the number of
 ---double quotes and single quotes in the first 128 lines current buffer
----@param argnode_references number|table?
----@param opts table?
+---@param default? '"'|"'"
 ---@return table node
-function M.qt(argnode_references, opts)
+function M.qt(default)
   return f(function()
-    return require('utils.snippets.funcs').get_quotation_type()
-  end, argnode_references, opts)
+    return require('utils.snippets.funcs').get_quotation_type(nil, default)
+  end)
 end
 
 ---Returns a dynamic node for suffix snippet
