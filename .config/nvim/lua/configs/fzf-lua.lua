@@ -611,6 +611,25 @@ end
 _G._fzf_lua_win_views = {}
 _G._fzf_lua_win_heights = {}
 
+---@param name string
+---@return nil
+local function restore_global_opt(name)
+  local backup_name = '_fzf_' .. name
+  local backup = vim.g[backup_name]
+  if backup ~= nil and vim.go[name] ~= backup then
+    vim.go[name] = backup
+    vim.g[backup_name] = nil
+  end
+end
+
+---Restore window heights and views, supposed to be called after fzf closes
+local function restore_win_heights_and_views()
+  if vim.go.lines == vim.g._fzf_vim_lines then
+    utils.win.restore_heights(_G._fzf_lua_win_heights)
+  end
+  utils.win.restore_views(_G._fzf_lua_win_views)
+end
+
 fzf.setup({
   -- Default profile 'default-title' disables prompt in favor of title
   -- on nvim >= 0.9, but a fzf windows with split layout cannot have titles
@@ -665,29 +684,11 @@ fzf.setup({
       end
     end,
     on_close = function()
-      ---@param name string
-      ---@return nil
-      local function _restore_global_opt(name)
-        local backup_name = '_fzf_' .. name
-        local backup = vim.g[backup_name]
-        if backup ~= nil and vim.go[name] ~= backup then
-          vim.go[name] = backup
-          vim.g[backup_name] = nil
-        end
-      end
+      restore_win_heights_and_views()
 
-      _restore_global_opt('splitkeep')
-      _restore_global_opt('cmdheight')
-      _restore_global_opt('laststatus')
-
-      if vim.go.lines == vim.g._fzf_vim_lines then
-        utils.win.restore_heights(_G._fzf_lua_win_heights)
-      end
-      vim.g._fzf_vim_lines = nil
-      _G._fzf_lua_win_heights = {}
-
-      utils.win.restore_views(_G._fzf_lua_win_views)
-      _G._fzf_lua_win_views = {}
+      restore_global_opt('splitkeep')
+      restore_global_opt('cmdheight')
+      restore_global_opt('laststatus')
 
       -- Reopen quickfix/location list after closing fzf if we previous closed
       -- it to make space for fzf
@@ -700,14 +701,15 @@ fzf.setup({
       vim.schedule(function()
         local win = vim.api.nvim_get_current_win()
 
-        if vim.g._fzf_qfclosed == 'loclist' then
-          vim.cmd.lopen({
+        if vim.g._fzf_qfclosed then
+          vim.cmd[vim.g._fzf_qfclosed == 'loclist' and 'lopen' or 'copen']({
             count = vim.g._fzf_qfheight,
           })
-        elseif vim.g._fzf_qfclosed == 'quickfix' then
-          vim.cmd.copen({
-            count = vim.g._fzf_qfheight,
-          })
+          -- Restore window view & heights after re-opening quickfix windows
+          -- to avoid evidentially resizing windows with `winfixheight` set, e.g.
+          -- nvim-dap-ui windows
+          -- See https://github.com/neovim/neovim/issues/30955
+          restore_win_heights_and_views()
         end
         vim.g._fzf_qfclosed = nil
         vim.g._fzf_qfheight = nil
