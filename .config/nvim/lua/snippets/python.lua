@@ -28,7 +28,7 @@ M.snippets = {
   }, t('return ')),
   us.sn(
     {
-      trig = 'p',
+      trig = 'pr',
       desc = 'print()',
     },
     un.fmtad('print(<expr>)', {
@@ -37,7 +37,7 @@ M.snippets = {
   ),
   us.sn(
     {
-      trig = 'o',
+      trig = 'op',
       desc = 'open()',
     },
     un.fmtad('<fd> = open(<q><file><q>, encoding=<q><encoding><q><kwargs>)', {
@@ -162,60 +162,51 @@ M.snippets = {
   ),
   us.sn(
     {
-      trig = 'l',
+      trig = 'lg',
       desc = 'Logger log',
     },
-    un.fmtad('logger.<level>(<msg><e>)', {
-      level = c(1, {
-        i(nil, 'info'),
-        i(nil, 'warning'),
-        i(nil, 'error'),
-        i(nil, 'critical'),
-        i(nil, 'debug'),
-      }),
-      msg = c(2, {
-        un.fmtad('<q><m><q>', {
-          q = un.qt('"'),
-          m = r(1, 'msg'),
+    c(1, {
+      un.fmtad('logger.<level>(<msg><e>)', {
+        level = c(1, {
+          i(nil, 'info'),
+          i(nil, 'warning'),
+          i(nil, 'error'),
+          i(nil, 'critical'),
+          i(nil, 'debug'),
         }),
-        un.fmtad('f<q><m><q>', {
-          q = un.qt('"'),
-          m = r(1, 'msg'),
+        msg = c(2, {
+          un.fmtad('<q><m><q>', {
+            q = un.qt('"'),
+            m = r(1, 'msg'),
+          }),
+          un.fmtad('f<q><m><q>', {
+            q = un.qt('"'),
+            m = r(1, 'msg'),
+          }),
         }),
+        e = i(3),
       }),
-      e = i(3),
-    }),
-    {
-      stored = {
-        msg = i(nil, 'msg'),
-      },
-    }
-  ),
-  us.sn(
-    {
-      trig = 'lg',
-      desc = 'logger.log()',
-    },
-    un.fmtad('logger.log(<level>, <msg><e>)', {
-      level = c(1, {
-        i(2, 'logging.INFO'),
-        i(2, 'logging.WARNING'),
-        i(2, 'logging.ERROR'),
-        i(2, 'logging.CRITICAL'),
-        i(2, 'logging.DEBUG'),
-        i(2, 'logging.NOTSET'),
-      }),
-      msg = c(2, {
-        un.fmtad('<q><m><q>', {
-          q = un.qt('"'),
-          m = r(1, 'msg'),
+      un.fmtad('logger.log(<level>, <msg><e>)', {
+        level = c(1, {
+          i(2, 'logging.INFO'),
+          i(2, 'logging.WARNING'),
+          i(2, 'logging.ERROR'),
+          i(2, 'logging.CRITICAL'),
+          i(2, 'logging.DEBUG'),
+          i(2, 'logging.NOTSET'),
         }),
-        un.fmtad('f<q><m><q>', {
-          q = un.qt('"'),
-          m = r(1, 'msg'),
+        msg = c(2, {
+          un.fmtad('<q><m><q>', {
+            q = un.qt('"'),
+            m = r(1, 'msg'),
+          }),
+          un.fmtad('f<q><m><q>', {
+            q = un.qt('"'),
+            m = r(1, 'msg'),
+          }),
         }),
+        e = i(3),
       }),
-      e = i(3),
     }),
     {
       stored = {

@@ -26,7 +26,7 @@ M.snippets = {
   }, t('return ')),
   us.sn(
     {
-      trig = 'p',
+      trig = 'pr',
       desc = 'print statement',
     },
     c(1, {
@@ -137,7 +137,7 @@ M.snippets = {
   ),
   us.sn(
     {
-      trig = 'l',
+      trig = 'lg',
       desc = 'testing.T.Log()',
     },
     un.fmtad('t.Log("<str>"<args>)', {
