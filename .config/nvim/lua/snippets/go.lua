@@ -777,9 +777,11 @@ M.snippets = {
           'argument_list', -- foo(func() { ... }, ...)
           'assignment', -- val = function() ... end
           'short_var_declaration', -- val := func() { ... }
-          'return_statement', -- return func() { ... }
           'binary_expression', -- <expression> and func() { ... }
           'parenthesized_expression', -- (func() { ... })()
+          'return_statement', -- return func() { ... }
+          'go_statement', -- go func() { ... }()
+          'defer_statement', -- defer func() { ... }()
         }, { ignore_injections = false })
       then
         -- Unnamed function
