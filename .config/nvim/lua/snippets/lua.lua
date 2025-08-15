@@ -578,7 +578,7 @@ M.snippets = {
         ---@class <class_name>
         local <class_name> = {}
 
-        function <class_name>.new(<opts>)
+        function <class_name>:new(<opts>)
         <body>
         end
       ]],
