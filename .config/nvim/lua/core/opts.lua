@@ -390,7 +390,7 @@ vim.g.loaded_zipPlugin = 0
 ---@param runtime string
 ---@param flag string
 ---@param events string|string[]
-local function load(runtime, flag, events)
+local function load_runtime(runtime, flag, events)
   if vim.g[flag] and vim.g[flag] ~= 0 then
     return
   end
@@ -424,14 +424,15 @@ local function load(runtime, flag, events)
   end
 end
 
-load('plugin/rplugin.vim', 'loaded_remote_plugins', {
+load_runtime('plugin/rplugin.vim', 'loaded_remote_plugins', {
   'FileType',
   'BufNew',
   'BufWritePost',
   'BufReadPre',
   'CmdUndefined UpdateRemotePlugins',
 })
-load('provider/python3.vim', 'loaded_python3_provider', {
+
+load_runtime('provider/python3.vim', 'loaded_python3_provider', {
   'FileType python',
   'BufNew *.py,*.ipynb',
   'BufEnter *.py,*.ipynb',
