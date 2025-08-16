@@ -78,9 +78,6 @@ return {
         end),
       })
     end,
-    dependencies = {
-      'nvim-treesitter/nvim-treesitter',
-    },
     config = function()
       require('configs.otter')
     end,

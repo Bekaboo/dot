@@ -11,6 +11,14 @@ require('core.keymaps')
 require('core.autocmds')
 require('core.plugins')
 
+vim.api.nvim_create_autocmd('FileType', {
+  once = true,
+  desc = 'Apply treesitter settings.',
+  callback = function()
+    require('core.treesitter')
+  end,
+})
+
 vim.api.nvim_create_autocmd({ 'FileType', 'LspAttach' }, {
   once = true,
   desc = 'Apply lsp settings.',

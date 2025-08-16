@@ -1,6 +1,7 @@
 return {
   {
     'nvim-treesitter/nvim-treesitter',
+    branch = 'main', -- master branch is deprecated
     build = function()
       local ts_install_ok, ts_install =
         pcall(require, 'nvim-treesitter.install')
@@ -35,7 +36,10 @@ return {
 
   {
     'nvim-treesitter/nvim-treesitter-textobjects',
-    dependencies = 'nvim-treesitter/nvim-treesitter',
+    -- 'main' branch uses `vim.treesitter` module and does not depend on
+    -- nvim-treesitter, compatible with nvim-treesitter 'master' -> 'main'
+    -- switch
+    branch = 'main',
     event = 'FileType [^_]\\+',
     config = function()
       require('configs.nvim-treesitter-textobjects')
@@ -44,7 +48,6 @@ return {
 
   {
     'RRethy/nvim-treesitter-endwise',
-    dependencies = 'nvim-treesitter/nvim-treesitter',
     event = 'InsertEnter',
     config = function()
       -- Manually trigger `FileType` event to make nvim-treesitter-endwise
@@ -56,7 +59,6 @@ return {
   {
     'tronikelis/ts-autotag.nvim',
     event = 'InsertEnter',
-    dependencies = 'nvim-treesitter/nvim-treesitter',
     config = true,
   },
 
@@ -71,7 +73,6 @@ return {
       { 'g<M-NL>', desc = 'Split current treesitter node recursively' },
       { 'g<M-C-Down>', desc = 'Split current treesitter node recursively' },
     },
-    dependencies = 'nvim-treesitter/nvim-treesitter',
     config = function()
       require('configs.treesj')
     end,
@@ -80,6 +81,5 @@ return {
   {
     'Eandrju/cellular-automaton.nvim',
     cmd = 'CellularAutomaton',
-    dependencies = 'nvim-treesitter/nvim-treesitter',
   },
 }
