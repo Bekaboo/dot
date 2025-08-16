@@ -684,11 +684,11 @@ fzf.setup({
       end
     end,
     on_close = function()
-      restore_win_heights_and_views()
-
       restore_global_opt('splitkeep')
       restore_global_opt('cmdheight')
       restore_global_opt('laststatus')
+
+      restore_win_heights_and_views()
 
       -- Reopen quickfix/location list after closing fzf if we previous closed
       -- it to make space for fzf
