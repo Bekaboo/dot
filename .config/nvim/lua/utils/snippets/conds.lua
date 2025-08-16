@@ -49,18 +49,24 @@ local M = setmetatable({}, {
   end,
 })
 
----Returns whether the cursor is in a math zone
+---Returns whether the cursor is in a tex math zone (excluding `\text{}`)
 ---@return boolean
 function M.in_mathzone()
   if utils.ts.is_active() then
+    -- Requires latex treesitter parser
     return utils.ts.find_node(
-      { 'formula', 'equation', 'math' }, -- requires latex ts parser
+      { 'formula', 'equation', 'math' },
       { ignore_injections = false }
-    ) ~= nil
+    ) ~= nil and utils.ts.find_node(
+      { 'text_mode' },
+      { ignore_injections = false }
+    ) == nil
   end
 
+  -- Fall back to vim legacy regex syntax
   if vim.b.current_syntax then
-    return utils.syn.find_group({ 'MathZone' }) ~= nil
+    return utils.syn.find_group({ 'texMathZone' }) ~= nil
+      and utils.syn.find_group({ 'texMathText' }) == nil
   end
 
   return false
