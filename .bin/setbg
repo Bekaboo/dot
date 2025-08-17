@@ -127,7 +127,11 @@ setbg_nvim() {
         # operator-pending/replace mode. This makes nvim unexpectedly insert
         # the command string "f &bg ..." to the buffer, see:
         # https://github.com/neovim/neovim/issues/31238
-        nvim --clean --headless --server "$sock" \
+        #
+        # Sometimes nvim leaves unused sockets on system. Sending remote expr
+        # to these sockets will freeze our nvim client, so use timeout 1 and
+        # kill the nvim client if it does not exit within the threshold.
+        timeout 1 nvim --clean --headless --server "$sock" \
             --remote-expr "execute(\"if &bg !=# '$1' && &tgc \
                 | let g:script_set_bg=1 | set bg=$1 | unlet g:script_set_bg \
                 | endif\")" \
