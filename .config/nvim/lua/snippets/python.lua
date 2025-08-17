@@ -506,7 +506,7 @@ M.snippets = {
       un.fmtad(
         [[
           for <var> in <iterable>:
-            <body>
+          <body>
         ]],
         {
           var = r(1, 'var'),
@@ -557,7 +557,7 @@ M.snippets = {
       un.fmtad(
         [[
           for <var> in <iterable>:
-            <body>
+          <body>
         ]],
         {
           var = r(1, 'var'),
