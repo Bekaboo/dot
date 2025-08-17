@@ -328,6 +328,26 @@ M.snippets = {
         name = i(1, 'var'),
         value = i(2, 'value'),
       }),
+      un.fmtad('local -r <name>=<value>', {
+        name = i(1, 'var'),
+        value = i(2, 'value'),
+      }),
+      un.fmtad('readonly <name>=<value>', {
+        name = i(1, 'var'),
+        value = i(2, 'value'),
+      }),
+    }),
+  }),
+  us.msn({
+    { trig = 'con' },
+    { trig = 'const' },
+    common = { desc = 'variable declaration' },
+  }, {
+    c(1, {
+      un.fmtad('local -r <name>=<value>', {
+        name = i(1, 'var'),
+        value = i(2, 'value'),
+      }),
       un.fmtad('readonly <name>=<value>', {
         name = i(1, 'var'),
         value = i(2, 'value'),
