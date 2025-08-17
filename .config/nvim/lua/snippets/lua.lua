@@ -61,7 +61,7 @@ M.snippets = {
     t('local '),
     i(1, 'var'),
     t(' = '),
-    i(0, 'value'),
+    un.body(2, 0, 'value'),
   }),
   us.msn({
     { trig = 'lf' },
