@@ -17,16 +17,33 @@ end
 vim.treesitter.start = ts_buf_call_wrap(vim.treesitter.start)
 vim.treesitter.stop = ts_buf_call_wrap(vim.treesitter.stop)
 
+---Enable treesitter highlighting for given buffer
+---@param buf integer
+local function enable_ts_hl(buf)
+  if
+    not vim.api.nvim_buf_is_valid(buf)
+    -- Don't enable treesitter highlighting if buffer is a command window
+    -- vimscript buffer as it can get very long over time and make treesitter
+    -- very slow
+    or vim.iter(vim.fn.win_findbuf(buf)):any(function(win)
+      return vim.fn.win_gettype(win) == 'command'
+    end)
+  then
+    return
+  end
+  pcall(vim.treesitter.start, buf)
+end
+
 -- Automatically start treesitter highlighting for buffers
 for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-  pcall(vim.treesitter.start, buf)
+  enable_ts_hl(buf)
 end
 
 vim.api.nvim_create_autocmd('FileType', {
   group = vim.api.nvim_create_augroup('TSAutoStart', {}),
   desc = 'Automatically start treesitter highlighting for buffers.',
   callback = function(args)
-    pcall(vim.treesitter.start, args.buf)
+    enable_ts_hl(args.buf)
   end,
 })
 
