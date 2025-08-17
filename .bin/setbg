@@ -136,6 +136,8 @@ setbg_nvim() {
                 | let g:script_set_bg=1 | set bg=$1 | unlet g:script_set_bg \
                 | endif\")" \
             +qa! >/dev/null 2>&1 &
+
+        nvim_clients="$nvim_clients $!"
     done
 
     if ! has jq; then
@@ -153,7 +155,10 @@ setbg_nvim() {
         fi
     fi
 
-    wait
+    if [ -n "$nvim_clients" ]; then
+        # shellcheck disable=SC2086
+        wait $nvim_clients
+    fi
 }
 
 setbg_macos() {

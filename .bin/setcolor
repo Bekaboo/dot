@@ -170,6 +170,8 @@ setcolor_nvim() {
                 let g:script_set_colors=1 | silent! colors $1 | \
                 unlet g:script_set_colors | endif\")" \
             +qa! >/dev/null 2>&1 &
+
+        nvim_clients="$nvim_clients $!"
     done
 
     if ! has jq; then
@@ -187,7 +189,10 @@ setcolor_nvim() {
         fi
     fi
 
-    wait
+    if [ -n "$nvim_clients" ]; then
+        # shellcheck disable=SC2086
+        wait $nvim_clients
+    fi
 }
 
 get_new_profile_name() {
