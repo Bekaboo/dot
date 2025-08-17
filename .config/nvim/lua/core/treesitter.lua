@@ -61,8 +61,7 @@ end
 vim.api.nvim_create_autocmd('FileType', {
   group = vim.api.nvim_create_augroup('TSFolding', {}),
   desc = 'Set treesitter folding.',
-  -- Schedule to wait treesitter highlighter to attach
-  callback = vim.schedule_wrap(function(args)
+  callback = function(args)
     enable_ts_folding(args.buf)
-  end),
+  end,
 })
