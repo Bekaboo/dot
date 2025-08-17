@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Thu Aug  7 16:00:08 2025
+-- Last Updated: Sat Aug 16 23:56:57 2025
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -267,15 +267,15 @@ local hlgroups = {
   ['@keyword.import'] = { link = 'Include' },
   ['@keyword.exception'] = { link = 'Exception' },
   ['@type'] = { link = 'Type' },
-  ['@type.Builtin'] = { link = 'Type' },
+  ['@type.builtin'] = { link = 'Type' },
   ['@type.qualifier'] = { link = 'Type' },
   ['@type.definition'] = { link = 'Typedef' },
   ['@keyword.storage'] = { link = 'StorageClass' },
   ['@attribute'] = { link = 'Label' },
   ['@variable'] = { link = 'Identifier' },
-  ['@variable.Builtin'] = { link = 'Builtin' },
+  ['@variable.builtin'] = { link = 'Builtin' },
   ['@constant'] = { link = 'Constant' },
-  ['@constant.Builtin'] = { link = 'Constant' },
+  ['@constant.builtin'] = { link = 'Constant' },
   ['@constant.macro'] = { link = 'Macro' },
   ['@module'] = { link = 'Namespace' },
   ['@markup.heading'] = { link = 'Title' },
