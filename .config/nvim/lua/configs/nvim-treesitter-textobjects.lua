@@ -78,7 +78,7 @@ vim.keymap.set({ 'n', 'x', 'o' }, '[3', function() goto_previous_start('@header.
 
 vim.keymap.set({ 'n', 'x', 'o' }, '[M', function() goto_previous_end('@function.outer') end)
 vim.keymap.set({ 'n', 'x', 'o' }, '[O', function() goto_previous_end('@loop.outer') end)
-vim.keymap.set({ 'n', 'x', 'o' }, '[[', function() goto_previous_end('@function.outer') end)
+vim.keymap.set({ 'n', 'x', 'o' }, '[]', function() goto_previous_end('@function.outer') end)
 vim.keymap.set({ 'n', 'x', 'o' }, '[K', function() goto_previous_end('@class.outer') end)
 vim.keymap.set({ 'n', 'x', 'o' }, '[<', function() goto_previous_end('@parameter.outer') end)
 vim.keymap.set({ 'n', 'x', 'o' }, '[/', function() goto_previous_end('@comment.outer') end)
