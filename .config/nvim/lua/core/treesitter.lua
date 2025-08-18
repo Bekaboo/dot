@@ -1,3 +1,5 @@
+local ts = require('utils.ts')
+
 -- Fix treesitter bug: when `vim.treesitter.start/stop` is called with a
 -- different `buf` from current buffer, it can affect current buffer's
 -- language tree
@@ -21,7 +23,9 @@ vim.treesitter.stop = ts_buf_call_wrap(vim.treesitter.stop)
 ---@param buf integer
 local function enable_ts_hl(buf)
   if
-    not vim.api.nvim_buf_is_valid(buf)
+    -- Don't re-enable in the same buffer, else buffers loaded from session
+    -- can have blank highlighting
+    not ts.is_active(buf)
     -- Don't enable treesitter highlighting if buffer is a command window
     -- vimscript buffer as it can get very long over time and make treesitter
     -- very slow
@@ -50,7 +54,7 @@ vim.api.nvim_create_autocmd('FileType', {
 ---Enable treesitter folding for given buffer if fold expr and method are unset
 ---@param buf integer
 local function enable_ts_folding(buf)
-  if not require('utils.ts').is_active(buf) then
+  if not ts.is_active(buf) then
     return
   end
 
