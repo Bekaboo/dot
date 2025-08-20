@@ -11,19 +11,9 @@ return {
     end,
     cmd = {
       'TSInstall',
-      'TSInstallSync',
       'TSInstallFromGrammar',
-      'TSInstallInfo',
       'TSUninstall',
       'TSUpdate',
-      'TSUpdateSync',
-      'TSBufEnable',
-      'TSBufToggle',
-      'TSEnable',
-      'TSToggle',
-      'TSModuleInfo',
-      'TSEditQuery',
-      'TSEditQueryUserAfter',
     },
     -- Skip loading nvim-treesitter for plugin-specific filetypes containing
     -- underscores (e.g. 'cmp_menu') to improve initial cmdline responsiveness
