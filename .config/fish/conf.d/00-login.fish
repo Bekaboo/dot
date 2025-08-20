@@ -66,5 +66,6 @@ type -q setcolors; and setcolors &
 if type -q proot-distro
     and test -n "$PROOT_DISTRO"
     and test -n "$PROOT_USER"
+    and test -n "$TERMUX_VERSION"
     exec proot-distro login $PROOT_DISTRO --user $PROOT_USER --termux-home
 end
