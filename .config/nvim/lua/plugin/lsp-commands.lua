@@ -1133,7 +1133,7 @@ local function setup_commands(meta, subcommand_info_list, fn_scope)
   -- Format: MetaCommandSubcommand opts ...
   for subcommand, _ in pairs(subcommand_info_list) do
     vim.api.nvim_create_user_command(
-      meta .. utils.str.snake_to_camel(subcommand),
+      meta .. utils.str.snake_to_pascal(subcommand),
       command_meta(subcommand_info_list, fn_scope, subcommand),
       {
         bang = true,

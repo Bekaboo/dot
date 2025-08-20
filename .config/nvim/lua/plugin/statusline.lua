@@ -472,7 +472,7 @@ function _G._statusline.fname()
       string.format(
         '[%s] %s',
         str_shorten(
-          utils.str.snake_to_camel(vim.fs.basename(prefix)) --[[@as string]],
+          utils.str.snake_to_pascal(vim.fs.basename(prefix)) --[[@as string]],
           fname_prefix_suffix_max_width
         ),
         str_shorten(main, fname_special_max_width)
