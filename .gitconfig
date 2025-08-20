@@ -53,6 +53,7 @@
 	; (default behavior) and all files in the repo is counted,
 	; else use current shell cwd as base path and only count files in given path
 	lc   = "!fn() { git ls-files -z ${1:+\"$GIT_PREFIX$1\"} | xargs -0 wc -l 2>/dev/null; }; fn"
+	lca  = "!fn() { git ls-files -z ${1:+\"$GIT_PREFIX$1\"} | xargs -0 cat | wc -l 2>/dev/null; }; fn"
 	ls   = ls-files
 	m    = merge
 	ma   = merge --abort
