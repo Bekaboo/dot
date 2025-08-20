@@ -48,9 +48,11 @@ _G._winbar.bars = setmetatable({}, {
 ---Setup winbar
 ---@param opts winbar_configs_t?
 local function setup(opts)
+  -- Allow following calls to `setup()` to change config options
+  configs.set(opts)
+
   -- Don't init twice, but still allow dynamic config change
   -- after first call to `setup()`
-  configs.set(opts)
   if vim.g.loaded_winbar ~= nil then
     return
   end
