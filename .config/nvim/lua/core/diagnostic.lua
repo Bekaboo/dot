@@ -162,15 +162,15 @@ vim.keymap.set('n', 'dy', function()
     end
     vim.fn.setreg('"', msg)
     vim.fn.setreg(vim.v.register, msg)
+    vim.notify(
+      string.format("Yanked diagnostic message '%s'", msg),
+      vim.log.levels.INFO
+    )
   end
 
   if n_diags == 1 then
     local msg = diags[1].message
     yank(msg)
-    vim.notify(
-      string.format("Yanked diagnostic message '%s'", msg),
-      vim.log.levels.INFO
-    )
     return
   end
 
