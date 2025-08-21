@@ -370,6 +370,8 @@ local function set_cursor(pos)
   end
 end
 
+local KC_START_NEW_UNDO = vim.keycode('<C-g>u')
+
 ---Get the position to jump for Tab or Shift-Tab, perform the jump if
 ---there is a position to jump to
 ---@param direction 1|-1 1 for tabout, -1 for tabin
@@ -378,6 +380,9 @@ local function jump(direction)
   local pos = get_jump_pos(direction)
   if pos then
     set_cursor(pos)
+    -- Start new undo block after moving cursor, else changes made
+    -- after the cursor jump cannot be undone
+    vim.api.nvim_feedkeys(KC_START_NEW_UNDO, 'nt', false)
     return true
   end
 end
