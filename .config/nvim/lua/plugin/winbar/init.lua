@@ -112,10 +112,7 @@ local function setup(opts)
   if not vim.tbl_isempty(configs.opts.bar.update_events.global) then
     vim.api.nvim_create_autocmd(configs.opts.bar.update_events.global, {
       group = groupid,
-      callback = function(args)
-        if vim.tbl_isempty(utils.bar.get({ buf = args.buf })) then
-          return
-        end
+      callback = function()
         utils.bar.exec('update')
       end,
       desc = 'Update all winbars.',
