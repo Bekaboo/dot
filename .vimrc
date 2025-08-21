@@ -682,29 +682,6 @@ nnoremap <silent> ]Q :exec (v:count ? v:count : '') . 'cla'<CR>
 nnoremap <silent> ]L :exec (v:count ? v:count : '') . 'lla'<CR>
 " }}}
 
-" Tabpages {{{2
-" param: tab_action tab switch command 'tabnext'|'tabprev'
-" param: a:1 default_count number? default to v:count
-" return: 0
-function! TabSwitch(tab_action, ...) abort
-  let cnt = get(a:, 1, v:count)
-  let num_tabs = tabpagenr('$')
-  if num_tabs >= cnt
-    exe printf('silent! %s %s', a:tab_action, cnt == 0 ? '' : string(cnt))
-    return
-  endif
-  tablast
-  for _ in range(cnt - num_tabs)
-    tabnew
-  endfor
-endfunction
-
-nnoremap <silent> gt :<C-u>call TabSwitch('tabnext')<CR>
-nnoremap <silent> gT :<C-u>call TabSwitch('tabprev')<CR>
-xnoremap <silent> gt :<C-u>call TabSwitch('tabnext')<CR>
-xnoremap <silent> gT :<C-u>call TabSwitch('tabprev')<CR>
-" }}}2
-
 " Spell {{{2
 inoremap <C-g>+ <Esc>[szg`]a
 inoremap <C-g>= <C-g>u<Esc>[s1z=`]a<C-G>u

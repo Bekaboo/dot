@@ -155,29 +155,6 @@ vim.api.nvim_create_autocmd('UIEnter', {
     map({ 'i' }, '<Up>',   '<Cmd>norm! g<Up><CR>',   { desc = 'Move up' })
     -- stylua: ignore end
 
-    -- Tabpages
-    ---@param tab_action function
-    ---@param default_count number?
-    ---@return function
-    local function tabswitch(tab_action, default_count)
-      return function()
-        local count = default_count or vim.v.count
-        local num_tabs = vim.fn.tabpagenr('$')
-        if num_tabs >= count then
-          tab_action(count ~= 0 and count or nil)
-          return
-        end
-        vim.cmd.tablast()
-        for _ = 1, count - num_tabs do
-          vim.cmd.tabnew()
-        end
-      end
-    end
-    -- stylua: ignore start
-    map({ 'n', 'x' }, 'gt', tabswitch(vim.cmd.tabnext), { desc = 'Go to next tab' })
-    map({ 'n', 'x' }, 'gT', tabswitch(vim.cmd.tabprev), { desc = 'Go to previous tab' })
-    -- stylua: ignore end
-
     -- Correct misspelled word / mark as correct
     -- stylua: ignore start
     map('i', '<C-g>+', '<Esc>[szg`]a', { desc = 'Correct misspelled word before cursor' })
