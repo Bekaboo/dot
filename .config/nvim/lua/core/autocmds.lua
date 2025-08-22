@@ -111,7 +111,7 @@ do
       desc = 'Stop treesitter in big files.',
       callback = function(args)
         local buf = args.buf
-        if vim.b[buf].bigfile and require('utils.ts').hl_is_active(buf) then
+        if vim.b[buf].bigfile and require('utils.ts').is_active(buf) then
           vim.treesitter.stop(buf)
           vim.bo[buf].syntax = vim.filetype.match({ buf = buf })
             or vim.bo[buf].bt
