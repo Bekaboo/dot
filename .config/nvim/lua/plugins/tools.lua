@@ -318,4 +318,13 @@ return {
       require('configs.which-key')
     end,
   },
+
+  {
+    'dlants/magenta.nvim',
+    enabled = vim.env.OPENAI_API_KEY,
+    build = 'npm install --frozen-lockfile',
+    config = function()
+      require('configs.magenta')
+    end,
+  },
 }
