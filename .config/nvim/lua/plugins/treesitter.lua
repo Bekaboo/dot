@@ -19,9 +19,6 @@ return {
     -- underscores (e.g. 'cmp_menu') to improve initial cmdline responsiveness
     -- on slower systems
     event = 'FileType [^_]\\+',
-    config = function()
-      require('configs.nvim-treesitter')
-    end,
   },
 
   {
