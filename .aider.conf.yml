@@ -9,9 +9,9 @@ architect: true
 cache-prompts: true
 auto-accept-architect: false
 
-model: r1
+model: gpt-5
 weak-model: deepseek
-editor-model: deepseek
+editor-model: opus
 chat-language: >
   prefer English or Chinese for explanation, according to the language of
   user's question; always generate code or comments with English
