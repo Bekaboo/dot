@@ -599,7 +599,6 @@ and it should work out of the box.
 - **Tools**
     - [fzf-lua](https://github.com/ibhagwan/fzf-lua)
     - [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim)
-        - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) (dependency)
     - [git-conflict](https://github.com/akinsho/git-conflict.nvim)
     - [nvim-colorizer.lua](https://github.com/NvChad/nvim-colorizer.lua)
     - [vim-fugitive](https://github.com/tpope/vim-fugitive)
@@ -608,6 +607,8 @@ and it should work out of the box.
     - [oil.nvim](https://github.com/stevearc/oil.nvim)
     - [quicker.nvim](https://github.com/stevearc/quicker.nvim)
     - [which-key.nvim](https://github.com/folke/which-key.nvim)
+    - [opencode.nvim](https://github.com/sudo-tee/opencode.nvim)
+        - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) (dependency)
 - **Debug**
     - [nvim-dap](https://github.com/mfussenegger/nvim-dap)
     - [nvim-dap-ui](https://github.com/rcarriga/nvim-dap-ui)
@@ -680,11 +681,6 @@ and it should work out of the box.
 - [addasync](lua/plugin/addasync.lua)
     - Automatically add `async` to python/javascript/typescript functions
       containing `await`
-- [aider](lua/plugin/aider/)
-    - Integration with [aider](https://aider.chat/)
-    - Opens aider automatically when [AI comments](https://aider.chat/docs/usage/watch.html#ai-comments)
-      are detected
-    - Use keymaps to add files/selections to aider
 - [session](lua/plugin/session.lua)
     - Automatically load (disabled), save, and remove sessions for projects
     - Use `Session...` commands to manipulate sessions

@@ -164,41 +164,6 @@ vim.api.nvim_create_autocmd('InsertEnter', {
   end,
 })
 
--- aider
-if vim.g.loaded_aider == nil then
-  -- stylua: ignore start
-  local toggle = function() require('plugin.aider').toggle() end
-  local send = function() require('plugin.aider').send() end
-  local add = function() require('plugin.aider').add() end
-  -- stylua: ignore end
-
-  -- stylua: ignore start
-  vim.keymap.set('n', '<Leader>@', toggle, { desc = 'Aider (AI) toggle chat panel' })
-  vim.keymap.set('x', '<Leader>@', send, { desc = 'Aider (AI) send selection' })
-  vim.keymap.set('x', '<Leader>+', send, { desc = 'Aider (AI) send selection' })
-  vim.keymap.set('n', '<Leader>+', add, { desc = 'Aider (AI) add current file' })
-  -- stylua: ignore end
-
-  local opts = {
-    group = vim.api.nvim_create_augroup('AiderSetup', {}),
-    desc = 'Init aider plugin.',
-    once = true,
-    callback = function()
-      if vim.fn.executable('aider') == 1 then
-        require('plugin.aider').setup()
-      end
-    end,
-  }
-
-  vim.api.nvim_create_autocmd({ 'BufWritePre', 'CmdlineEnter' }, opts)
-  vim.api.nvim_create_autocmd(
-    'CmdUndefined',
-    vim.tbl_deep_extend('force', opts, {
-      pattern = 'Aider*',
-    })
-  )
-end
-
 -- session
 if vim.g.loaded_session == nil then
   -- stylua: ignore start
