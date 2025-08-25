@@ -475,6 +475,11 @@ do
           return
         end
         vim.api.nvim_win_call(winid, function()
+          -- Don't remap `hl-Normal` to `NormalSpecial` if it is already mapped
+          -- to another hlgroup
+          if vim.opt_local.winhighlight:get().Normal then
+            return
+          end
           vim.opt_local.winhighlight:append({
             Normal = 'NormalSpecial',
             EndOfBuffer = 'NormalSpecial',
