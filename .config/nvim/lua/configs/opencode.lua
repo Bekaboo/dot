@@ -10,7 +10,7 @@ require('opencode').setup({
   },
   keymap = {
     window = {
-      toggle_pane = '<Nop>', -- default overrides `<Tab>` in insert mode
+      toggle_pane = false, -- default overrides `<Tab>` in insert mode
     },
   },
 })
