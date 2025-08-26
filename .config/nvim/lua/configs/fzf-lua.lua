@@ -652,7 +652,12 @@ fzf.setup({
         \ let g:_fzf_cmdheight = &cmdheight | let &cmdheight = 0 |
         \ let g:_fzf_laststatus = &laststatus | let &laststatus = 0 |
         \ let g:_fzf_height = 10 |
-        \ let g:_fzf_qfclosed = win_gettype(winnr('$')) |
+        \ for winnr in range(winnr('$'), 1, -1) |
+        \   if win_gettype(winnr) !=# 'autocmd' && win_gettype(winnr) !=# 'popup' |
+        \     let g:_fzf_qfclosed = win_gettype(winnr) |
+        \     break |
+        \   endif |
+        \ endfor |
         \ if g:_fzf_qfclosed ==# 'loclist' || g:_fzf_qfclosed ==# 'quickfix' |
         \   let g:_fzf_qfheight = nvim_win_get_height(win_getid(winnr('$'))) |
         \   let g:_fzf_height = g:_fzf_qfheight - 1 |
