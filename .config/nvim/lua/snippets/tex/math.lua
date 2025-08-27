@@ -229,12 +229,7 @@ return {
           t('}'),
         })
       end
-      return sn(1, {
-        c(1, { i(1, '\\bm'), i(1, '\\boldsymbol'), i(1, '\\mathbf') }),
-        t('{'),
-        t(symbol),
-        t('}'),
-      })
+      return sn(1, { t('\\bm{'), t(symbol), t('}') })
     end)
   ),
   -- Math bold symbol with `\mathbf`
