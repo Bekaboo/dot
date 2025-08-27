@@ -420,7 +420,8 @@ return {
   us.sam({ trig = 'ell' }, t('\\ell')),
 
   us.sam({ trig = 'set' }, { t('\\{'), i(1), t('\\}') }),
-  us.sam({ trig = 'void' }, t('\\emptyset')),
+  us.sam({ trig = 'void' }, t('\\varnothing')),
+  us.sam({ trig = 'o/' }, t('\\varnothing')),
   us.sam({ trig = 'emptyset' }, t('\\emptyset')),
   us.sam({ trig = 'tt' }, { t('\\text{'), i(1), t('}') }),
   us.sam({ trig = 'cc' }, t('\\subset ')),
