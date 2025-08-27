@@ -11,6 +11,8 @@ require('opencode').setup({
   keymap = {
     window = {
       toggle_pane = false, -- default overrides `<Tab>` in insert mode
+      submit_insert = '<M-CR>',
+      close = '<C-c>',
     },
   },
 })
