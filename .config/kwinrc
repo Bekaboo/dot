@@ -146,7 +146,7 @@ Placement=Centered
 RollOverDesktops=false
 
 [Xwayland]
-Scale=1.45
+Scale=1.25
 
 [org.kde.kdecoration2]
 BorderSize=None
