@@ -356,6 +356,7 @@ return {
   us.sam({ trig = 'op' }, { t('\\operatorname{'), i(1), t('}') }),
   us.sam({ trig = 'xx' }, t('\\times ')),
   us.sam({ trig = 'o*' }, t('\\circledast ')),
+  us.sam({ trig = 'o.' }, t('\\odot ')),
   us.sam({ trig = 'ox' }, t('\\otimes ')),
   us.sam({ trig = 'Ox' }, t('\\bigotimes ')),
   us.sam({ trig = 'dd' }, t('\\mathrm{d}')),
