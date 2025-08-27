@@ -216,13 +216,35 @@ return {
   us.sambW({ trig = '\\in v' }, t('^{-1}')),
   us.sambW({ trig = '.T' }, t('^{\\intercal}')),
 
+  -- Math bold symbol with `\bm`
+  us.samWr(
+    { trig = '(\\?%w*_*%w*),,' },
+    d(1, function(_, snip)
+      local symbol = snip.captures[1]
+      if not symbol or not symbol:match('%S') then
+        return sn(1, {
+          c(1, { i(1, '\\bm'), i(1, '\\boldsymbol'), i(1, '\\mathbf') }),
+          t('{'),
+          i(2),
+          t('}'),
+        })
+      end
+      return sn(1, {
+        c(1, { i(1, '\\bm'), i(1, '\\boldsymbol'), i(1, '\\mathbf') }),
+        t('{'),
+        t(symbol),
+        t('}'),
+      })
+    end)
+  ),
+  -- Math bold symbol with `\mathbf`
   us.samWr(
     { trig = '(\\?%w*_*%w*);;' },
     d(1, function(_, snip)
       local symbol = snip.captures[1]
       if not symbol or not symbol:match('%S') then
         return sn(1, {
-          c(1, { i(1, '\\mathbf'), i(1, '\\boldsymbol') }),
+          c(1, { i(1, '\\mathbf'), i(1, '\\boldsymbol'), i(1, '\\bm') }),
           t('{'),
           i(2),
           t('}'),
