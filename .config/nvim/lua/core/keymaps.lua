@@ -126,22 +126,16 @@ vim.api.nvim_create_autocmd('UIEnter', {
     -- stylua: ignore end
 
     -- Remove trailing whitespaces
-    map(
-      'n',
-      'd<Space>',
-      function()
-        vim.cmd.normal({ 'm`', bang = true })
-        local lz = vim.go.lz
-        vim.go.lz = true
+    map('n', 'd<Space>', function()
+      local key = require('utils.key')
+      key.with_cursorpos(key.with_lazyredraw(function()
         vim.cmd.substitute({
           [[/\s\+$//e]],
           range = { 1, vim.api.nvim_buf_line_count(0) },
+          mods = { silent = true },
         })
-        vim.go.lz = lz
-        vim.cmd.normal({ '``', bang = true })
-      end,
-      { desc = 'Remove trailing whitespaces' }
-    )
+      end))()
+    end, { desc = 'Remove trailing whitespaces' })
 
     -- Select previously changed/yanked text, useful for selecting pasted text
     map('n', 'gz', '`[v`]', { desc = 'Select previously changed/yanked text' })
@@ -212,10 +206,10 @@ vim.api.nvim_create_autocmd('UIEnter', {
 
     -- Folding
     map({ 'n', 'x' }, 'zV', function()
-      local lz = vim.go.lz
-      vim.go.lz = true
-      vim.cmd.normal({ 'zMzv', bang = true })
-      vim.go.lz = lz
+      local key = require('utils.key')
+      key.with_lazyredraw(function()
+        vim.cmd.normal({ 'zMzv', bang = true })
+      end)()
     end, { desc = 'Close all folds except current' })
 
     -- Don't include extra spaces around quotes
