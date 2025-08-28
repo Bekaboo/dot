@@ -495,7 +495,7 @@ return {
     t('}'),
   }),
   us.sam({ trig = 'argmax' }, {
-    t('\\operatorname{argamx}_{'),
+    t('\\operatorname{argmax}_{'),
     i(1),
     t('}'),
   }),
