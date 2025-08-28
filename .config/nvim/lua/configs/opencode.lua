@@ -33,6 +33,8 @@ vim.api.nvim_create_autocmd('FileType', {
   group = groupid,
   callback = function(args)
     vim.bo[args.buf].textwidth = 0
+    vim.bo[args.buf].filetype = 'markdown'
+    vim.b[args.buf].winbar_no_attach = true
   end,
 })
 
