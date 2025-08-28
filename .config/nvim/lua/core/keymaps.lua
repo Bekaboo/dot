@@ -125,6 +125,24 @@ vim.api.nvim_create_autocmd('UIEnter', {
     map('x', '<M-?>',  '<C-\\><C-n>`>?\\%V\\(\\)<Left><Left>', { desc = 'Search backward within visual selection' })
     -- stylua: ignore end
 
+    -- Remove trailing whitespaces
+    map(
+      'n',
+      'd<Space>',
+      function()
+        vim.cmd.normal({ 'm`', bang = true })
+        local lz = vim.go.lz
+        vim.go.lz = true
+        vim.cmd.substitute({
+          [[/\s\+$//e]],
+          range = { 1, vim.api.nvim_buf_line_count(0) },
+        })
+        vim.go.lz = lz
+        vim.cmd.normal({ '``', bang = true })
+      end,
+      { desc = 'Remove trailing whitespaces' }
+    )
+
     -- Select previously changed/yanked text, useful for selecting pasted text
     map('n', 'gz', '`[v`]', { desc = 'Select previously changed/yanked text' })
     map('o', 'gz', '<Cmd>normal! `[v`]<CR>', {

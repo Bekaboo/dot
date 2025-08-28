@@ -578,6 +578,17 @@ inoremap <C-r> <C-r><C-p>
 xnoremap <Esc>/  <C-\><C-n>`</\%V\(\)<Left><Left>
 xnoremap <Esc>?  <C-\><C-n>`>?\%V\(\)<Left><Left>
 
+" Remove trailing spaces
+function! s:remove_trailing_whitespaces() abort
+  normal! m`
+  let lz = &lazyredraw
+  set lazyredraw
+  silent %s/\s\+$//e
+  let &lazyredraw = lz
+  normal! ``
+endfunction
+nnoremap <silent> d<Space> :call <SID>remove_trailing_whitespaces()<CR>
+
 " Select previously changed/yanked text, useful for selecting pasted text
 nnoremap gz `[v`]
 onoremap gz :normal! `[v`]<CR>
