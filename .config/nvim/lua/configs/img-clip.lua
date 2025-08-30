@@ -95,7 +95,7 @@ local filetypes = require('img-clip.config').opts.filetypes
 ---@param buf integer?
 ---@return nil
 local function setup_keymaps(buf)
-  buf = buf or 0
+  buf = vim._resolve_bufnr(buf)
   if filetypes[vim.bo[buf].ft] then
     vim.keymap.set('n', '<Leader>p', img_clip.paste_image, {
       buffer = buf,

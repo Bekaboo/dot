@@ -19,7 +19,7 @@ local dash_string = '-'
 
 ---@param buf? integer
 local function refresh(buf)
-  buf = buf ~= 0 and buf or vim.api.nvim_get_current_buf()
+  buf = vim._resolve_bufnr(buf)
   if not vim.api.nvim_buf_is_valid(buf) then
     return
   end

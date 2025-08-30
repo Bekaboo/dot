@@ -866,7 +866,7 @@ vim.api.nvim_create_autocmd('BufEnter', {
 ---Change cwd in oil buffer to follow the directory shown in the buffer
 ---@param buf integer? default to current buffer
 local function oil_cd(buf)
-  buf = buf or vim.api.nvim_get_current_buf()
+  buf = vim._resolve_bufnr(buf)
   if not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].ft ~= 'oil' then
     return
   end

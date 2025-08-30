@@ -107,7 +107,7 @@ end
 ---@param buf integer?
 ---@return nil
 local function jupytext_convert(buf)
-  buf = buf or vim.api.nvim_get_current_buf()
+  buf = vim._resolve_bufnr(buf)
   if not vim.api.nvim_buf_is_valid(buf) then
     return
   end
@@ -253,7 +253,7 @@ local function setup(buf)
   end
   vim.g.loaded_jupytext = true
 
-  buf = buf or vim.api.nvim_get_current_buf()
+  buf = vim._resolve_bufnr(buf)
   if vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf), ':e') == 'ipynb' then
     jupytext_convert(buf)
   end

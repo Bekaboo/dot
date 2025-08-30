@@ -4,7 +4,7 @@ local term_utils = require('utils.term')
 ---@param buf? integer terminal buffer id
 ---@return boolean
 local function validate_term_buf(buf)
-  buf = buf or 0
+  buf = vim._resolve_bufnr(buf)
   if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].bt == 'terminal' then
     return true
   end
@@ -18,7 +18,7 @@ end
 ---@param cmd? string new command
 ---@param buf? integer terminal buffer id
 function M.set_cmd(cmd, buf)
-  buf = buf or 0
+  buf = vim._resolve_bufnr(buf)
   if not validate_term_buf(buf) then
     return
   end
@@ -43,7 +43,7 @@ end
 ---@param path? string
 ---@param buf? integer terminal buffer id
 function M.set_path(path, buf)
-  buf = buf or 0
+  buf = vim._resolve_bufnr(buf)
   if not validate_term_buf(buf) then
     return
   end
@@ -64,7 +64,7 @@ end
 
 ---@param buf integer? terminal buffer handler
 function M.rerun(buf)
-  buf = buf or 0
+  buf = vim._resolve_bufnr(buf)
   if not validate_term_buf(buf) then
     return
   end
@@ -78,7 +78,7 @@ end
 ---@param name? string
 ---@param buf? integer
 function M.rename(name, buf)
-  buf = buf or 0
+  buf = vim._resolve_bufnr(buf)
   if not validate_term_buf(buf) then
     return
   end
@@ -96,7 +96,7 @@ end
 ---@param buf integer? terminal buffer handler
 ---@return nil
 function M.term_init(buf)
-  buf = buf or vim.api.nvim_get_current_buf()
+  buf = vim._resolve_bufnr(buf)
   if not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].bt ~= 'terminal' then
     return
   end

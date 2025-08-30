@@ -78,7 +78,7 @@ vim.keymap.set('n', '<Leader>G<Esc>',  '<Nop>',                 { desc = 'Cancel
 ---@param buf? integer
 ---@param cb fun(in_buf: boolean, line?: integer)
 local function dap_pc_in_buf_async(buf, cb)
-  buf = buf ~= 0 and buf or vim.api.nvim_get_current_buf()
+  buf = vim._resolve_bufnr(buf)
   local s = dap.session()
   if
     not s

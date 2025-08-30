@@ -87,7 +87,7 @@ end
 ---@param default? '"'|"'"
 ---@return '"'|"'"
 function M.get_quotation_type(buf, default)
-  buf = buf or vim.api.nvim_get_current_buf()
+  buf = vim._resolve_bufnr(buf)
   default = default or "'"
 
   if not vim.api.nvim_buf_is_valid(buf) then

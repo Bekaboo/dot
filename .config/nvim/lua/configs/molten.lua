@@ -331,7 +331,7 @@ end
 ---@param buf integer? buffer handler, defaults to current buffer
 ---@return nil
 local function setup_buf_keymaps_and_commands(buf)
-  buf = buf or vim.api.nvim_get_current_buf()
+  buf = vim._resolve_bufnr(buf)
   if not vim.api.nvim_buf_is_valid(buf) then
     return
   end

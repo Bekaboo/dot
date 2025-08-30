@@ -11,7 +11,7 @@ vim.api.nvim_create_autocmd('FileChangedShellPost', {
 ---@param buf integer? defaults to the current buffer
 ---@return string branch name
 function M.branch(buf)
-  buf = buf or vim.api.nvim_get_current_buf()
+  buf = vim._resolve_bufnr(buf)
   if not vim.api.nvim_buf_is_valid(buf) then
     return ''
   end
@@ -48,7 +48,7 @@ vim.api.nvim_create_autocmd({ 'BufWrite', 'FileChangedShellPost' }, {
 ---@param buf integer? buffer handler, defaults to the current buffer
 ---@return {added: integer?, removed: integer?, changed: integer?} diff stats
 function M.diffstat(buf)
-  buf = buf or vim.api.nvim_get_current_buf()
+  buf = vim._resolve_bufnr(buf)
   if not vim.api.nvim_buf_is_valid(buf) then
     return {}
   end

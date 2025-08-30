@@ -203,7 +203,7 @@ end
 --- - A buffer can only have at most one spinner attached
 ---@param buf? integer
 function M.spinner:attach(buf)
-  buf = buf or vim.api.nvim_get_current_buf()
+  buf = vim._resolve_bufnr(buf)
 
   local b = vim.b[buf]
   if b.spinner_id == self.id then
