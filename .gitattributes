@@ -1,3 +1,4 @@
 .config/Code/User/settings.json filter=vscode-theme
 .config/kglobalshortcutsrc filter=kglobalshortcutsrc
 .config/kwinrc filter=kwinrc
+.config/okularpartrc filter=okularpartrc

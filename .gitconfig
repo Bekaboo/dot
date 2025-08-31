@@ -159,6 +159,12 @@
 		-e '/^\\[Activities\\]/,/^$/d' \
 		-e '/^\\[SubSession:.*\\]/,/^$/d' \
 		-e '/^\\[Tiling\\]\\[[[:alnum:]-]\\+\\]/,/^$/d'
+[filter "okularpartrc"]
+	smudge = cat
+	clean = sed \
+		-e '/^\\[Main View\\]/,/^$/d' \
+		-e '/^\\[Nav Panel\\]/,/^$/d' \
+		-e '/ChangeColors=/d'
 [filter "lfs"]
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
