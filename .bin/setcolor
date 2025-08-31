@@ -10,7 +10,6 @@ DEFAULT_BG='dark'
 # Convert a color name to capital style
 # gruvbox-material -> Gruvbox Material
 get_cap_theme_name() {
-    # $1: name of the fish theme
     if ! has awk || ! has sed; then
         return 1
     fi
@@ -20,8 +19,8 @@ get_cap_theme_name() {
     echo "$theme_name"
 }
 
+# $1: name of the colorscheme
 setcolor_alacritty() {
-    # $1: name of the colorscheme
     (
         cd "$CONFIG_HOME/alacritty/themes" || return
         dark_theme_path="dark.toml"
@@ -39,8 +38,8 @@ setcolor_alacritty() {
     )
 }
 
+# $1: name of the colorscheme
 setcolor_foot() {
-    # $1: name of the colorscheme
     (
         cd "$CONFIG_HOME/foot/themes" || return
         dark_theme_path="dark.ini"
@@ -58,8 +57,8 @@ setcolor_foot() {
     [ -e "$config_path" ] && touch "$config_path"
 }
 
+# $1: name of the colorscheme
 setcolor_kitty() {
-    # $1: name of the colorscheme
     (
         cd "$CONFIG_HOME/kitty" || return
 
@@ -92,8 +91,8 @@ setcolor_kitty() {
     )
 }
 
+# $1: name of the colorscheme
 setcolor_termux() {
-    # $1: name of the colorscheme
     (
         cd "$HOME/.termux/colors" || return
         dark_color_path="dark.properties"
@@ -111,8 +110,8 @@ setcolor_termux() {
     )
 }
 
+# $1: name of the colorscheme
 setcolor_wezterm() {
-    # $1: name of the colorscheme
     (
         cd "$CONFIG_HOME/wezterm/colors" || return
         dark_theme_path="dark.toml"
@@ -127,8 +126,8 @@ setcolor_wezterm() {
     )
 }
 
+# $1: name of the colorscheme
 setcolor_highlight() {
-    # $1: name of the colorscheme
     (
         cd "$HOME/.highlight/themes" || return
         dark_theme_path="dark.theme"
@@ -143,8 +142,8 @@ setcolor_highlight() {
     )
 }
 
+# $1: name of the colorscheme
 setcolor_nvim() {
-    # $1: name of the colorscheme
     if [ -z "$1" ] || ! has nvim; then
         return 1
     fi
@@ -195,9 +194,9 @@ setcolor_nvim() {
     fi
 }
 
+# $1: path to config file
+# $2: name of the colorscheme
 get_new_profile_name() {
-    # $1: path to config file
-    # $2: name of the colorscheme
     current_profile=$(kreadconfig5 --file "$1" \
         --group 'Desktop Entry' --key 'DefaultProfile')
     current_profile_name=${current_profile%\.profile}
@@ -214,9 +213,9 @@ get_new_profile_name() {
     echo "$new_profile_name"
 }
 
+# $1: name of the app
+# $2: colorscheme name
 konsole_switch_profile_colorscheme() {
-    # $1: name of the app
-    # $2: colorscheme name
     if ! has kreadconfig5 || ! has kwriteconfig5; then
         return 1
     fi
@@ -230,8 +229,8 @@ konsole_switch_profile_colorscheme() {
     fi
 }
 
+# $1: name of the colorscheme
 setcolor_konsole_yakuake() {
-    # $1: name of the colorscheme
     if [ -z "$1" ]; then
         return 1
     fi
@@ -241,8 +240,8 @@ setcolor_konsole_yakuake() {
     konsole_switch_profile_colorscheme kate "$1"
 }
 
+# $1: name of the colorscheme
 setcolor_fish() {
-    # $1: name of the colorscheme
     (
         cd "$CONFIG_HOME/fish/themes" || return
         dark_theme_path="Dark.theme"
@@ -281,8 +280,8 @@ get_plasma_splash() {
     esac
 }
 
+# $1: name of the colorscheme
 setcolor_plasma() {
-    # $1: name of the colorscheme
     if [ -z "$1" ]; then
         return 1
     fi
@@ -346,6 +345,7 @@ usage() {
     exit
 }
 
+# $1: name of the fish theme
 main() {
     color=''
     for arg in "$@"; do
