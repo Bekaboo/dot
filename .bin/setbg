@@ -324,17 +324,27 @@ setbg_zathura() {
     fi
 
     case "$1" in
-        dark) recolor=true ;;
-        light) recolor=false ;;
+        dark) should_recolor=true ;;
+        light) should_recolor=false ;;
         *) return ;;
     esac
-    zathura_recolor_cmd=$(printf 'set recolor %s' "$recolor")
+    zathura_recolor_cmd=$(printf 'set recolor %s' "$should_recolor")
 
     # https://blog.akaisuisei.org/communicating-with-zathura-via-dbus.html
     qdbus | grep 'org\.pwmt\.zathura\.PID-' | while read -r dest; do
         qdbus "$dest" /org/pwmt/zathura org.pwmt.zathura.ExecuteCommand \
             "$zathura_recolor_cmd" >/dev/null 2>&1 &
     done
+
+    # Persist bg settings, main config `$XDG_CONFIG_HOME/zathura/zathurarc`
+    # needs to include local config `zathuralocalrc`
+    zathuralocalrc="$CONFIG_HOME/zathura/zathuralocalrc"
+    if grep -qE '^\s*set\s+recolor\s+.*' "$zathuralocalrc" 2>/dev/null; then
+        sed -i'' "s/^\s*set\s\+recolor\s\+.*/set recolor $should_recolor/" \
+            "$zathuralocalrc"
+    else
+            printf '\nset recolor %s\n' "$should_recolor" >>"$zathuralocalrc"
+    fi
 }
 
 # $1: 'light' or 'dark'

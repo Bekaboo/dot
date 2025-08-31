@@ -10,6 +10,8 @@ map <A-d>   recolor
 map \\      toggle_page_mode
 map |       cycle_first_column
 
+include zathuralocalrc
+
 # Some useful keymaps:
 # o     - populate command line with ":open "
 # O     - populate command line with ":open <recent-path>"
