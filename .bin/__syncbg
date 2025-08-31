@@ -2,7 +2,16 @@
 # vim:ft=sh:et:ts=4:sw=4:sts=4:
 # Poll and sync apps' background with system background
 
+PREV_BG_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/syncbg_prev_bg"
+
 while true; do
-    syncbg
+    cur_bg=$(getbg)
+    prev_bg=$(cat "$PREV_BG_FILE")
+    # Don't repeatedly set bg if system bg does not change
+    # This allows us to set a different bg in some applications e.g. okular
+    # without constantly being overridden by this script
+    if [ "$cur_bg" != "$prev_bg" ]; then
+        SETBG_SKIP_SYSTEM=1 setbg "$cur_bg" && echo "$cur_bg" >"$PREV_BG_FILE"
+    fi
     sleep 1
 done
