@@ -13,3 +13,4 @@ map \\      cycle_first_column
 # o     - populate command line with ":open "
 # O     - populate command line with ":open <recent-path>"
 # <A-o> - open system file chooser
+# <Tab> - show table of contents
