@@ -2,6 +2,7 @@ return {
   {
     'lervag/vimtex',
     ft = 'tex',
+    cmd = 'VimtexInverseSearch',
     config = function()
       require('configs.vimtex')
     end,
