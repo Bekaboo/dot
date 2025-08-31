@@ -93,8 +93,10 @@ vim.api.nvim_create_autocmd('FileType', {
             },
             {},
             vim.schedule_wrap(function(out)
+              local linenr = vim.fn.line('.')
               if
                 out.stdout == ''
+                or linenr == vim.g._vimtex_auto_sync_view_source_line
                 or vim.g._vimtex_auto_sync_view_request_time ~= auto_sync_view_request_time
                 or vim.api.nvim_get_current_buf() ~= a.buf
                 or not vim.api.nvim_buf_is_valid(a.buf)
@@ -102,6 +104,7 @@ vim.api.nvim_create_autocmd('FileType', {
                 return
               end
               vim.fn['vimtex#view#view']()
+              vim.g._vimtex_auto_sync_view_source_line = linenr
             end)
           )
         end, vim.g.vimtex_auto_sync_view_debounce)
