@@ -1,7 +1,7 @@
 local utils = require('plugin.winbar.utils')
 local configs = require('plugin.winbar.configs')
 local bar = require('plugin.winbar.bar')
-local groupid = vim.api.nvim_create_augroup('WinBarLsp', {})
+local groupid = vim.api.nvim_create_augroup('my.winbar.sources.lsp', {})
 local initialized = false
 
 ---@type table<integer, lsp_document_symbol_t[]>

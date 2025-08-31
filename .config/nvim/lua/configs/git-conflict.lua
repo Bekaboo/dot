@@ -25,7 +25,7 @@ end
 set_default_hlgroups()
 
 vim.api.nvim_create_autocmd('ColorScheme', {
-  group = vim.api.nvim_create_augroup('GitConflictSetup', {}),
+  group = vim.api.nvim_create_augroup('my.git-conflict', {}),
   desc = 'Set default highlight groups for git-conflict.nvim.',
   callback = set_default_hlgroups,
 })

@@ -32,7 +32,7 @@ if not pcall(vim.fn.MoltenStatusLineInit) then
   end
 end
 
-local groupid = vim.api.nvim_create_augroup('MoltenSetup', {})
+local groupid = vim.api.nvim_create_augroup('my.molten', {})
 vim.api.nvim_create_autocmd('BufEnter', {
   desc = 'Change the configuration when editing a python file.',
   pattern = '*.py',
@@ -373,7 +373,10 @@ local function setup_buf_keymaps_and_commands(buf)
     local output_win = vim.api.nvim_get_current_win()
     vim.api.nvim_create_autocmd('WinScrolled', {
       desc = 'Close molten output win when src win is scrolled.',
-      group = vim.api.nvim_create_augroup('MoltenCloseOutputWin' .. buf, {}),
+      group = vim.api.nvim_create_augroup(
+        'my.molten.close_output_win.buf.' .. buf,
+        {}
+      ),
       buffer = buf,
       callback = function(args)
         if src_win == tonumber(args.match) then

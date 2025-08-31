@@ -9,7 +9,7 @@ end
 -- expandtab
 vim.api.nvim_create_autocmd('InsertEnter', {
   once = true,
-  group = vim.api.nvim_create_augroup('ExpandTabSetup', {}),
+  group = vim.api.nvim_create_augroup('my.expandtab.load', {}),
   callback = function()
     require('plugin.expandtab').setup()
   end,
@@ -19,7 +19,7 @@ vim.api.nvim_create_autocmd('InsertEnter', {
 vim.api.nvim_create_autocmd('BufReadCmd', {
   once = true,
   pattern = '*.ipynb',
-  group = vim.api.nvim_create_augroup('JupyTextSetup', {}),
+  group = vim.api.nvim_create_augroup('my.jupytext.load', {}),
   callback = function(args)
     require('plugin.jupytext').setup(args.buf)
   end,
@@ -34,7 +34,7 @@ vim.api.nvim_create_autocmd({
 }, {
   once = true,
   desc = 'Apply lsp and diagnostic settings.',
-  group = vim.api.nvim_create_augroup('LspDiagnosticSetup', {}),
+  group = vim.api.nvim_create_augroup('my.lsp-commands.load', {}),
   callback = function()
     require('plugin.lsp-commands').setup()
   end,
@@ -42,7 +42,7 @@ vim.api.nvim_create_autocmd({
 
 -- readline
 vim.api.nvim_create_autocmd({ 'CmdlineEnter', 'InsertEnter' }, {
-  group = vim.api.nvim_create_augroup('ReadlineSetup', {}),
+  group = vim.api.nvim_create_augroup('my.readline.load', {}),
   once = true,
   callback = function()
     require('plugin.readline').setup()
@@ -52,7 +52,7 @@ vim.api.nvim_create_autocmd({ 'CmdlineEnter', 'InsertEnter' }, {
 -- winbar
 vim.api.nvim_create_autocmd('FileType', {
   once = true,
-  group = vim.api.nvim_create_augroup('WinBarSetup', {}),
+  group = vim.api.nvim_create_augroup('my.winbar.load', {}),
   callback = function()
     if vim.g.loaded_winbar ~= nil then
       return
@@ -87,7 +87,7 @@ load_ui('statuscolumn')
 
 -- term
 vim.api.nvim_create_autocmd('TermOpen', {
-  group = vim.api.nvim_create_augroup('TermSetup', {}),
+  group = vim.api.nvim_create_augroup('my.term.load', {}),
   callback = function(args)
     local term = require('plugin.term')
     term.setup()
@@ -101,7 +101,7 @@ vim.api.nvim_create_autocmd('TermOpen', {
 -- tmux
 if vim.g.has_ui then
   vim.api.nvim_create_autocmd('UIEnter', {
-    group = vim.api.nvim_create_augroup('TmuxSetup', {}),
+    group = vim.api.nvim_create_augroup('my.tmux.load', {}),
     desc = 'Init tmux plugin.',
     once = true,
     callback = vim.schedule_wrap(function()
@@ -112,7 +112,7 @@ end
 
 -- tabout
 vim.api.nvim_create_autocmd('InsertEnter', {
-  group = vim.api.nvim_create_augroup('TabOutSetup', {}),
+  group = vim.api.nvim_create_augroup('my.tabout.load', {}),
   desc = 'Init tabout plugin.',
   once = true,
   callback = function()
@@ -123,7 +123,7 @@ vim.api.nvim_create_autocmd('InsertEnter', {
 -- z
 do
   local opts = {
-    group = vim.api.nvim_create_augroup('ZSetup', {}),
+    group = vim.api.nvim_create_augroup('my.z.load', {}),
     desc = 'Init z plugin.',
     once = true,
     callback = function()
@@ -154,7 +154,7 @@ end
 
 -- addasync
 vim.api.nvim_create_autocmd('InsertEnter', {
-  group = vim.api.nvim_create_augroup('AddAsyncSetup', {}),
+  group = vim.api.nvim_create_augroup('my.addasync.load', {}),
   desc = 'Init addasync plugin.',
   callback = function()
     if require('utils.ts').is_active() then
@@ -173,7 +173,7 @@ if vim.g.loaded_session == nil then
 
   local opts = {
     desc = 'Init session plugin.',
-    group = vim.api.nvim_create_augroup('SessionSetup', {}),
+    group = vim.api.nvim_create_augroup('my.session.load', {}),
     once = true,
     callback = function()
       if vim.g.loaded_session ~= nil then

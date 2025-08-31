@@ -16,7 +16,8 @@ vim.keymap.set('n', '<Leader>gL',       '<Cmd>Git log -100 --oneline --graph<CR>
 vim.keymap.set('n', '<Leader>g<Space>', ':Git<Space>',                                   { desc = 'Populate cmdline with ":Git"' })
 -- stylua: ignore end
 
-local groupid = vim.api.nvim_create_augroup('FugitiveSettings', {})
+local groupid = vim.api.nvim_create_augroup('my.fugitive', {})
+
 vim.api.nvim_create_autocmd('User', {
   pattern = 'FugitiveIndex',
   group = groupid,

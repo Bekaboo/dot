@@ -1152,7 +1152,7 @@ local function setup_lsp_autoformat()
   -- Automatically format code on buf save and insert leave
   vim.api.nvim_create_autocmd('BufWritePre', {
     desc = 'LSP auto format.',
-    group = vim.api.nvim_create_augroup('LspAutoFmt', {}),
+    group = vim.api.nvim_create_augroup('my.lsp.auto_fmt', {}),
     callback = function(args)
       local b = vim.b[args.buf]
       local g = vim.g

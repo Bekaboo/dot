@@ -25,12 +25,10 @@ vim.keymap.set('n', ']@', opencode_api.diff_next, { desc = 'Navigate to opencode
 vim.keymap.set('n', '[@', opencode_api.diff_prev, { desc = 'Navigate to opencode previous file diff' })
 -- stylua: ignore end
 
-local groupid = vim.api.nvim_create_augroup('OpenCodeFtSettings', {})
-
 vim.api.nvim_create_autocmd('FileType', {
   desc = 'Filetype settings for opencode buffers.',
   pattern = 'opencode*',
-  group = groupid,
+  group = vim.api.nvim_create_augroup('my.opencode.ft', {}),
   callback = function(args)
     vim.bo[args.buf].textwidth = 0
     vim.bo[args.buf].filetype = 'markdown'
@@ -79,7 +77,7 @@ end
 set_default_hlgroups()
 
 vim.api.nvim_create_autocmd('ColorScheme', {
-  group = groupid,
+  group = vim.api.nvim_create_augroup('my.opencode.hl', {}),
   desc = 'Set default highlight groups for opencode.nvim.',
   callback = set_default_hlgroups,
 })

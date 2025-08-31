@@ -88,7 +88,7 @@ M.snippets = {
         augroup END
       ]],
       {
-        name = i(1, 'AugroupName'),
+        name = i(1, 'augroup_name'),
         body = un.body(2, 1),
         idnt = un.idnt(1),
       }

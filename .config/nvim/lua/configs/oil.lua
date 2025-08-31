@@ -514,7 +514,7 @@ local function preview()
   vim.keymap.set('n', '<CR>', preview_edit, { buffer = preview_buf })
   vim.api.nvim_create_autocmd('BufReadCmd', {
     desc = 'Edit corresponding file in oil preview buffers.',
-    group = vim.api.nvim_create_augroup('OilPreviewEdit', {}),
+    group = vim.api.nvim_create_augroup('my.oil.preview_edit', {}),
     buffer = preview_buf,
     callback = vim.schedule_wrap(preview_edit),
   })
@@ -540,7 +540,8 @@ local function preview()
   preview_set_lines(preview_win)
 end
 
-local groupid_preview = vim.api.nvim_create_augroup('OilPreview', {})
+local groupid_preview =
+  vim.api.nvim_create_augroup('my.oil.preview', {})
 vim.api.nvim_create_autocmd({ 'CursorMoved', 'WinScrolled' }, {
   desc = 'Update floating preview window when cursor moves or window scrolls.',
   group = groupid_preview,
@@ -853,7 +854,7 @@ oil.setup({
   },
 })
 
-local groupid = vim.api.nvim_create_augroup('OilSetup', {})
+local groupid = vim.api.nvim_create_augroup('my.oil', {})
 vim.api.nvim_create_autocmd('BufEnter', {
   desc = 'Ensure that oil buffers are not listed.',
   group = groupid,
@@ -1010,7 +1011,7 @@ oil_sethl()
 
 vim.api.nvim_create_autocmd('ColorScheme', {
   desc = 'Set some default hlgroups for oil.',
-  group = vim.api.nvim_create_augroup('OilSetDefaultHlgroups', {}),
+  group = vim.api.nvim_create_augroup('my.oil.hl', {}),
   callback = oil_sethl,
 })
 

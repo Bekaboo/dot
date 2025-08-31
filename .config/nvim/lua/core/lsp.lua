@@ -113,7 +113,7 @@ do
   local lsp_autostop_timeout_ms = 60000
 
   vim.api.nvim_create_autocmd('LspDetach', {
-    group = vim.api.nvim_create_augroup('LspAutoStop', {}),
+    group = vim.api.nvim_create_augroup('my.lsp.auto_stop', {}),
     desc = 'Automatically stop detached language servers.',
     callback = function()
       if lsp_autostop_pending then

@@ -221,7 +221,7 @@ function M.setup()
       M.term_init(buf)
     end)
 
-  local groupid = vim.api.nvim_create_augroup('Term', {})
+  local groupid = vim.api.nvim_create_augroup('my.term', {})
   vim.api.nvim_create_autocmd('TermOpen', {
     group = groupid,
     desc = 'Set terminal keymaps and options, open term in split.',

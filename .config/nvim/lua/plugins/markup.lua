@@ -15,7 +15,7 @@ return {
     init = function()
       vim.api.nvim_create_autocmd('FileType', {
         desc = 'Defer loading markdown-preview in markdown files.',
-        group = vim.api.nvim_create_augroup('MarkdownPreviewDeferLoading', {}),
+        group = vim.api.nvim_create_augroup('my.markdown-preview.load', {}),
         pattern = 'markdown',
         once = true,
         callback = vim.schedule_wrap(function(args)
@@ -44,7 +44,7 @@ return {
 
       vim.api.nvim_create_autocmd('FileType', {
         desc = 'Defer loading vim-table-mode in markdown files.',
-        group = vim.api.nvim_create_augroup('VimTableModeDeferLoading', {}),
+        group = vim.api.nvim_create_augroup('my.vim-table-mode.load', {}),
         pattern = 'markdown',
         once = true,
         callback = vim.schedule_wrap(function()
@@ -66,7 +66,7 @@ return {
     init = function()
       vim.api.nvim_create_autocmd('FileType', {
         desc = 'Defer loading otter.nvim in markdown files.',
-        group = vim.api.nvim_create_augroup('OtterDeferLoading', {}),
+        group = vim.api.nvim_create_augroup('my.otter.load', {}),
         pattern = 'markdown',
         once = true,
         callback = vim.schedule_wrap(function(args)
@@ -152,7 +152,7 @@ return {
 
       vim.api.nvim_create_autocmd('FileType', {
         desc = 'Lazy-load molten on keys in python or markdown files.',
-        group = vim.api.nvim_create_augroup('MoltenLazyLoadKeys', {}),
+        group = vim.api.nvim_create_augroup('my.molten.load', {}),
         pattern = { 'python', 'markdown' },
         callback = function(args)
           if loaded then

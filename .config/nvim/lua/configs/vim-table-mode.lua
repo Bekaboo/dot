@@ -34,14 +34,17 @@ end
 table_mode_toggle()
 
 vim.api.nvim_create_autocmd({ 'Filetype', 'BufEnter' }, {
-  group = vim.api.nvim_create_augroup('TableModeAutoToggle', {}),
+  group = vim.api.nvim_create_augroup('my.vim-table-mode.toggle', {}),
   callback = function(args)
     table_mode_toggle(args.buf)
   end,
 })
 
 vim.api.nvim_create_autocmd('BufWritePre', {
-  group = vim.api.nvim_create_augroup('TableModeFormatOnSave', {}),
+  group = vim.api.nvim_create_augroup(
+    'my.vim-table-mode.format_on_save',
+    {}
+  ),
   callback = function(args)
     if
       vim.bo[args.buf].ft == 'markdown'

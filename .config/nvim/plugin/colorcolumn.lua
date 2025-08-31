@@ -201,7 +201,8 @@ local function setup(o)
   end
 
   ---Create autocmds for concealing / showing colorcolumn
-  local id = vim.api.nvim_create_augroup('AutoColorColumn', {})
+  local id = vim.api.nvim_create_augroup('my.colorcolumn', {})
+
   vim.api.nvim_create_autocmd('WinLeave', {
     desc = 'Conceal colorcolumn in other windows.',
     group = id,

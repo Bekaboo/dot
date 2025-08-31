@@ -506,7 +506,7 @@ Neovim is configured to restore the previous background and colorscheme
 settings on startup, so there is no need to set them up in the config file
 explicitly.
 
-To disable the auto-restore feature, remove the `ColorSchemeRestore` augroup
+To disable the auto-restore feature, remove the `my.colorscheme_restore` augroup
 in [lua/core/autocmds.lua](lua/core/autocmds.lua).
 
 To tweak a colorscheme, edit corresponding colorscheme files under [colors](colors).

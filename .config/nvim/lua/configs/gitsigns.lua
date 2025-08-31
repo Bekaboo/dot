@@ -62,7 +62,10 @@ vim.keymap.set({ 'o', 'x' }, 'ag', ':<C-u>Gitsigns select_hunk<CR>', { silent = 
 vim.api.nvim_create_autocmd('User', {
   pattern = 'GitSignsChanged',
   desc = 'Automatically refresh fugitive buffers on staging/unstaging hunks.',
-  group = vim.api.nvim_create_augroup('GitsignsFugitiveIntegration', {}),
+  group = vim.api.nvim_create_augroup(
+    'my.gitsigns.fugitive_integration',
+    {}
+  ),
   callback = function(args)
     local file = args.data.file ---@type string
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do

@@ -22,7 +22,7 @@ ot.setup({
 
 vim.api.nvim_create_autocmd('FileType', {
   desc = 'Activate otter for filetypes with injections.',
-  group = vim.api.nvim_create_augroup('OtterActivate', {}),
+  group = vim.api.nvim_create_augroup('my.otter.activate', {}),
   pattern = { 'markdown', 'norg', 'org' },
   callback = function(args)
     local buf = args.buf

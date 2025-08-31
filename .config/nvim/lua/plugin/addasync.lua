@@ -62,7 +62,7 @@ local function setup()
   vim.g.loaded_addasync = true
 
   vim.api.nvim_create_autocmd('TextChangedI', {
-    group = vim.api.nvim_create_augroup('AddAsync', {}),
+    group = vim.api.nvim_create_augroup('my.addasync', {}),
     callback = add_async,
   })
 end

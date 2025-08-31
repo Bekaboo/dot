@@ -159,7 +159,7 @@ local function enable_plugins(module_names)
         end
       end
 
-      local groupid = vim.api.nvim_create_augroup('PluginDeferSetup', {})
+      local groupid = vim.api.nvim_create_augroup('my.plugins.defer', {})
 
       -- If we have undefined commands (possibly from a plugin),
       -- setup the plugin manager immediately to get the commands

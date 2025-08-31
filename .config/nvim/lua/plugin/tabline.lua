@@ -138,7 +138,8 @@ end, {
 -- Preserve tab names across sessions
 vim.opt.sessionoptions:append('globals')
 
-local groupid = vim.api.nvim_create_augroup('TablineName', {})
+local groupid = vim.api.nvim_create_augroup('my.tabline.name', {})
+
 vim.api.nvim_create_autocmd({ 'UIEnter', 'SessionLoadPost' }, {
   desc = 'Set flag to enable tab name psersistence across sessions.',
   group = groupid,
@@ -147,6 +148,7 @@ vim.api.nvim_create_autocmd({ 'UIEnter', 'SessionLoadPost' }, {
     vim.g._tabline_name_restored = true
   end,
 })
+
 vim.api.nvim_create_autocmd('TabClosed', {
   desc = 'Clear global tab name variable for closed tabs.',
   group = groupid,

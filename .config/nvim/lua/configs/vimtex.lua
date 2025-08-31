@@ -41,7 +41,7 @@ end
 
 vim.api.nvim_create_autocmd('FileType', {
   pattern = 'tex',
-  group = vim.api.nvim_create_augroup('VimTexFileTypeInit', {}),
+  group = vim.api.nvim_create_augroup('vim.plugin.vimtex.ft', {}),
   callback = function(args)
     -- Make surrounding delimiters large
     vim.keymap.set('n', 'css', vim.fn['vimtex#delim#add_modifiers'], {
@@ -59,7 +59,7 @@ vim.api.nvim_create_autocmd('FileType', {
       desc = 'Automatically sync pdf viewer with tex source file.',
       buffer = args.buf,
       group = vim.api.nvim_create_augroup(
-        'VimTexAutoSyncView' .. args.buf,
+        'my.vimtex.auto_sync_view.buf.' .. args.buf,
         {}
       ),
       callback = function(a)

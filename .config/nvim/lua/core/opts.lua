@@ -34,7 +34,7 @@ vim.opt.selection = 'old'
 vim.opt.tabclose = 'uselast'
 
 -- Defer shada reading
-local shada_augroup = vim.api.nvim_create_augroup('OptShada', {})
+local shada_augroup = vim.api.nvim_create_augroup('my.opt.shada', {})
 
 ---Restore 'shada' option and read from shada once
 local function rshada()
@@ -79,7 +79,7 @@ vim.opt.spellcapcheck = ''
 vim.opt.spelllang = 'en,cjk'
 vim.opt.spelloptions = 'camel'
 
-local spell_augroup = vim.api.nvim_create_augroup('OptSpell', {})
+local spell_augroup = vim.api.nvim_create_augroup('my.opt.spell', {})
 
 ---Set spell check options
 ---@return nil
@@ -377,7 +377,7 @@ local function load_runtime(runtime, flag, events)
     events = { events }
   end
 
-  local gid = vim.api.nvim_create_augroup('Load_' .. runtime, {})
+  local gid = vim.api.nvim_create_augroup('my.load_runtime.' .. runtime, {})
   for _, e in
     ipairs(vim.tbl_map(function(e)
       return vim.split(e, ' ', {
@@ -416,4 +416,3 @@ load_runtime('provider/python3.vim', 'loaded_python3_provider', {
   'BufWritePost *.py,*.ipynb',
   'BufReadPre *.py,*.ipynb',
 })
-

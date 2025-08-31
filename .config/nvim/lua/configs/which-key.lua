@@ -128,14 +128,17 @@ end
 
 set_default_hlgroups()
 vim.api.nvim_create_autocmd('ColorScheme', {
-  group = vim.api.nvim_create_augroup('WhichKeySetDefaultHlgroups', {}),
+  group = vim.api.nvim_create_augroup('my.which-key.hl', {}),
   desc = 'Set default highlight groups for which-key.nvim.',
   callback = set_default_hlgroups,
 })
 
 vim.api.nvim_create_autocmd('ModeChanged', {
   desc = 'Redraw statusline shortly after mode change to ensure correct mode display after enting visual mode when which-key.nvim is enabled.',
-  group = vim.api.nvim_create_augroup('WhichKeyRedrawStatusline', {}),
+  group = vim.api.nvim_create_augroup(
+    'my.which-key.redraw_statusline',
+    {}
+  ),
   callback = vim.schedule_wrap(function()
     vim.cmd.redrawstatus({
       mods = { emsg_silent = true },

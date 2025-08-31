@@ -84,7 +84,7 @@ end
 set_default_hlgroups()
 
 vim.api.nvim_create_autocmd('ColorScheme', {
-  group = vim.api.nvim_create_augroup('DapUISetup', {}),
+  group = vim.api.nvim_create_augroup('my.dap-ui', {}),
   desc = 'Set default highlight groups for nvim-dap-ui.',
   callback = set_default_hlgroups,
 })

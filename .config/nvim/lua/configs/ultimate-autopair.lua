@@ -38,7 +38,10 @@ local compltype = {}
 
 vim.api.nvim_create_autocmd('CmdlineChanged', {
   desc = 'Record cmd compltype to determine whether to autopair.',
-  group = vim.api.nvim_create_augroup('AutopairRecordCmdCompltype', {}),
+  group = vim.api.nvim_create_augroup(
+    'my.ultimate-autopair.record_cmdcompltype',
+    {}
+  ),
   callback = function()
     local type = vim.fn.getcmdcompltype()
     if compltype[1] == type then
