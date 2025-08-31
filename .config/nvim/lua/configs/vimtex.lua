@@ -28,8 +28,10 @@ vim.g.vimtex_format_enabled = 1
 vim.g.vimtex_imaps_enabled = 0
 vim.g.vimtex_mappings_prefix = '<LocalLeader>l'
 
--- Explicitly set view method to 'okular' for forward and inverse search
-if vim.fn.executable('okular') == 1 then
+-- Explicitly set view method for forward and inverse search
+if vim.fn.executable('zathura') == 1 then
+  vim.g.vimtex_view_method = 'zathura'
+elseif vim.fn.executable('okular') == 1 then
   vim.g.vimtex_view_general_viewer = 'okular'
   vim.g.vimtex_view_general_options = '--unique file:@pdf#src:@line@tex'
 end
