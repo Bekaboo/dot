@@ -28,9 +28,14 @@ vim.g.vimtex_format_enabled = 1
 vim.g.vimtex_imaps_enabled = 0
 vim.g.vimtex_mappings_prefix = '<LocalLeader>l'
 
+-- Time to defer before doing automatic forward search, i.e. sync viewer with
+-- nvim tex source file
+vim.g.vimtex_auto_sync_view_debounce = 500
+
 -- Explicitly set view method for forward and inverse search
 if vim.fn.executable('zathura') == 1 then
   vim.g.vimtex_view_method = 'zathura'
+  vim.g.vimtex_auto_sync_view_debounce = 0
 elseif vim.fn.executable('okular') == 1 then
   vim.g.vimtex_view_general_viewer = 'okular'
   vim.g.vimtex_view_general_options = '--unique file:@pdf#src:@line@tex'
@@ -49,6 +54,58 @@ vim.api.nvim_create_autocmd('FileType', {
     -- when typing `]`
     pcall(vim.keymap.del, 'i', ']]', {
       buffer = args.buf,
+    })
+
+    -- Automatically sync pdf viewer with tex source file
+    vim.api.nvim_create_autocmd('CursorMoved', {
+      desc = 'Automatically sync pdf viewer with tex source file.',
+      buffer = args.buf,
+      group = vim.api.nvim_create_augroup(
+        'VimTexAutoSyncView' .. args.buf,
+        {}
+      ),
+      callback = function(a)
+        local viewer_name = vim.b[a.buf].vimtex.viewer.name
+        if viewer_name == 'General' then
+          viewer_name = vim.g.vimtex_view_general_viewer
+        end
+        if not viewer_name then
+          return
+        end
+
+        local auto_sync_view_request_time = vim.uv.now()
+        vim.g._vimtex_auto_sync_view_request_time = auto_sync_view_request_time
+
+        -- Skip spawning a viewer; only sync if a viewer window already exists
+        -- Some examples of `ps fp "$(pgrep ...)"` command output (stdout):
+        -- zathura: zathura -x /usr/bin/nvim --headless -c "VimtexInverseSearch %{line}:%{column} '%{input}'" --synctex-forward 62:1:/home/user/test.tex test.pdf
+        -- okular:  okular --unique file:/home/user/test.pdf#src:74/home/user/test.tex
+        vim.defer_fn(function()
+          vim.system(
+            {
+              'pgrep',
+              '-if',
+              string.format(
+                '%s.*%s',
+                viewer_name,
+                vim.api.nvim_buf_get_name(0)
+              ),
+            },
+            {},
+            vim.schedule_wrap(function(out)
+              if
+                out.stdout == ''
+                or vim.g._vimtex_auto_sync_view_request_time ~= auto_sync_view_request_time
+                or vim.api.nvim_get_current_buf() ~= a.buf
+                or not vim.api.nvim_buf_is_valid(a.buf)
+              then
+                return
+              end
+              vim.fn['vimtex#view#view']()
+            end)
+          )
+        end, vim.g.vimtex_auto_sync_view_debounce)
+      end,
     })
   end,
 })
