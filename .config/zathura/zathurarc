@@ -1,4 +1,5 @@
 set selection-clipboard clipboard
+set recolor-lightcolor "#21272c"
 
 map d       scroll half-down
 map u       scroll half-up
