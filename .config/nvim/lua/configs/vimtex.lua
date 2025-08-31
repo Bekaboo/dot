@@ -5,23 +5,21 @@ end
 -- Enable vim's legacy regex-based syntax highlighting alongside treesitter
 -- highlighting for some vimtex functions, e.g. changing modifiers, formatting,
 -- indentation, etc.
-if pcall(vim.treesitter.get_parser, nil, 'latex') then
-  vim.treesitter.start = (function(cb)
-    ---@param bufnr integer? Buffer to be highlighted (default: current buffer)
-    ---@param lang string? Language of the parser (default: from buffer filetype)
-    return function(bufnr, lang, ...)
-      bufnr = vim._resolve_bufnr(bufnr)
-      if not vim.api.nvim_buf_is_valid(bufnr) then
-        return
-      end
-      cb(bufnr, lang, ...)
-      -- Re-enable regex syntax highlighting after starting treesitter
-      if vim.bo[bufnr].ft == 'tex' or lang == 'latex' then
-        vim.bo[bufnr].syntax = 'on'
-      end
+vim.treesitter.start = (function(cb)
+  ---@param bufnr integer? Buffer to be highlighted (default: current buffer)
+  ---@param lang string? Language of the parser (default: from buffer filetype)
+  return function(bufnr, lang, ...)
+    bufnr = vim._resolve_bufnr(bufnr)
+    if not vim.api.nvim_buf_is_valid(bufnr) then
+      return
     end
-  end)(vim.treesitter.start)
-end
+    cb(bufnr, lang, ...)
+    -- Re-enable regex syntax highlighting after starting treesitter
+    if vim.bo[bufnr].ft == 'tex' or lang == 'latex' then
+      vim.bo[bufnr].syntax = 'on'
+    end
+  end
+end)(vim.treesitter.start)
 
 vim.g.vimtex_quickfix_mode = 0
 vim.g.vimtex_format_enabled = 1
