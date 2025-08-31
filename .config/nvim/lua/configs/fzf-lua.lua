@@ -672,6 +672,7 @@ fzf.setup({
         \ setlocal bt=nofile bh=wipe nobl noswf
     ]],
     on_create = function()
+      vim.wo.wfh = true
       vim.keymap.set(
         't',
         '<C-r>',
