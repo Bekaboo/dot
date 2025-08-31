@@ -317,6 +317,26 @@ setbg_okular() {
         "$changecolors"
 }
 
+setbg_zathura() {
+    # $1: 'light' or 'dark'
+    if [ -z "$1" ]; then
+        return
+    fi
+
+    case "$1" in
+        dark) recolor=true ;;
+        light) recolor=false ;;
+        *) return ;;
+    esac
+    zathura_recolor_cmd=$(printf 'set recolor %s' "$recolor")
+
+    # https://blog.akaisuisei.org/communicating-with-zathura-via-dbus.html
+    qdbus | grep 'org\.pwmt\.zathura\.PID-' | while read -r dest; do
+        qdbus "$dest" /org/pwmt/zathura org.pwmt.zathura.ExecuteCommand \
+            "$zathura_recolor_cmd" >/dev/null 2>&1 &
+    done
+}
+
 setbg_vscode() {
     # $1: 'light' or 'dark'
     rc="$CONFIG_HOME/Code/User/settings.json"
@@ -500,6 +520,7 @@ main() {
     setbg_konsole_yakuake "$bg" &
     setbg_termux "$bg" &
     setbg_okular "$bg" &
+    setbg_zathura "$bg" &
     setbg_vscode "$bg" &
     setbg_fish "$bg" &
     setbg_libreoffice "$bg" &
