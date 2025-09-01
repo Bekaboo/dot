@@ -605,7 +605,7 @@ snoremap <C-h> <C-o>"_s
 
 " Yank paragraphs as single lines, useful for yanking hard-wrapped
 " paragraphs in nvim and paste it in browsers or other editors {{{2
-if s:supportevents(['TextYankPost', 'ModeChanged'])
+if s:supportevents(['TextYankPost', 'ModeChanged']) && exists('*timer_start')
   " param: reg string register name
   function! s:join_paragraphs_in_reg(reg) abort
     let joined_lines = []
@@ -640,7 +640,8 @@ if s:supportevents(['TextYankPost', 'ModeChanged'])
       " trigger in order:
       " 1. `ModeChanged` with pattern 'n:no'
       " 2. `TextYankPost`
-      " 3. `ModeChanged` with pattern 'no:n'
+      " 3. `ModeChanged` with pattern 'no:n' (or 'V:n', if using custom text
+      "    object, e.g. `af`, `az`)
       "
       " If joined paragraph yank is canceled, e.g. with `gy<Esc>` in normal
       " mode, the following events will  trigger in order:
@@ -651,7 +652,8 @@ if s:supportevents(['TextYankPost', 'ModeChanged'])
       " single line after changing from operator pending mode 'no' to normal
       " mode 'n' to prevent it from affecting normal yanking e.g. with `y`
       if mode() =~# '^n'
-        au ModeChanged no:n ++once sil! au! YankJoinedParagraphs
+        au ModeChanged *:n ++once call timer_start(0,
+              \ {-> execute('sil! au! YankJoinedParagraphs')})
       endif
     augroup END
 

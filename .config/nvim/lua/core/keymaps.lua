@@ -160,7 +160,7 @@ vim.api.nvim_create_autocmd('UIEnter', {
     local function yank_joined_paragraphs()
       local reg = vim.v.register
 
-      local join_paragraphs_autocmd =
+      local yank_joined_paragraphs_autocmd =
         vim.api.nvim_create_autocmd('TextYankPost', {
           once = true,
           callback = function()
@@ -191,7 +191,8 @@ vim.api.nvim_create_autocmd('UIEnter', {
         -- events will trigger in order:
         -- 1. `ModeChanged` with pattern 'n:no'
         -- 2. `TextYankPost`
-        -- 3. `ModeChanged` with pattern 'no:n'
+        -- 3. `ModeChanged` with pattern 'no:n' (or 'V:n', if using custom text
+        --    object, e.g. `af`, `az`)
         --
         -- If joined paragraph yank is canceled, e.g. with `gy<Esc>` in normal mode,
         -- the following events will  trigger in order:
@@ -203,10 +204,10 @@ vim.api.nvim_create_autocmd('UIEnter', {
         -- 'n' to prevent it from affecting normal yanking e.g. with `y`
         vim.api.nvim_create_autocmd('ModeChanged', {
           once = true,
-          pattern = 'no:n',
-          callback = function()
-            pcall(vim.api.nvim_del_autocmd, join_paragraphs_autocmd)
-          end,
+          pattern = '*:n',
+          callback = vim.schedule_wrap(function()
+            pcall(vim.api.nvim_del_autocmd, yank_joined_paragraphs_autocmd)
+          end),
         })
       end
 
