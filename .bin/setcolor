@@ -27,11 +27,11 @@ setcolor_alacritty() {
         light_theme_path="light.toml"
         # If $1 is empty, only need to ensure symlink to color theme files exists
         if [ -z "$1" ]; then
-            ln -s "$DEFAULT_COLOR-dark.toml" "$dark_theme_path" 2>/dev/null
-            ln -s "$DEFAULT_COLOR-light.toml" "$light_theme_path" 2>/dev/null
+            [ -e "$DEFAULT_COLOR-dark.toml" ] && ln -s "$DEFAULT_COLOR-dark.toml" "$dark_theme_path" 2>/dev/null
+            [ -e "$DEFAULT_COLOR-light.toml" ] && ln -s "$DEFAULT_COLOR-light.toml" "$light_theme_path" 2>/dev/null
         else
-            ln -sf "$1-dark.toml" "$dark_theme_path"
-            ln -sf "$1-light.toml" "$light_theme_path"
+            [ -e "$1-dark.toml" ] && ln -sf "$1-dark.toml" "$dark_theme_path"
+            [ -e "$1-light.toml" ] && ln -sf "$1-light.toml" "$light_theme_path"
         fi
         touch "$dark_theme_path"
         touch "$light_theme_path"
@@ -45,11 +45,11 @@ setcolor_foot() {
         dark_theme_path="dark.ini"
         light_theme_path="light.ini"
         if [ -z "$1" ]; then
-            ln -s "$DEFAULT_COLOR-dark.ini" "$dark_theme_path" 2>/dev/null
-            ln -s "$DEFAULT_COLOR-light.ini" "$light_theme_path" 2>/dev/null
+            [ -e "$DEFAULT_COLOR-dark.ini" ] && ln -s "$DEFAULT_COLOR-dark.ini" "$dark_theme_path" 2>/dev/null
+            [ -e "$DEFAULT_COLOR-light.ini" ] && ln -s "$DEFAULT_COLOR-light.ini" "$light_theme_path" 2>/dev/null
         else
-            ln -sf "$1-dark.ini" "$dark_theme_path"
-            ln -sf "$1-light.ini" "$light_theme_path"
+            [ -e "$1-dark.ini" ] && ln -sf "$1-dark.ini" "$dark_theme_path"
+            [ -e "$1-light.ini" ] && ln -sf "$1-light.ini" "$light_theme_path"
         fi
     )
 
@@ -70,11 +70,11 @@ setcolor_kitty() {
         dark_theme_path="dark-theme.auto.conf"
         light_theme_path="light-theme.auto.conf"
         if [ -z "$1" ]; then
-            ln -s "themes/$DEFAULT_COLOR-dark.conf" "$dark_theme_path" 2>/dev/null
-            ln -s "themes/$DEFAULT_COLOR-light.conf" "$light_theme_path" 2>/dev/null
+            [ -e "themes/$DEFAULT_COLOR-dark.conf" ] && ln -s "themes/$DEFAULT_COLOR-dark.conf" "$dark_theme_path" 2>/dev/null
+            [ -e "themes/$DEFAULT_COLOR-light.conf" ] && ln -s "themes/$DEFAULT_COLOR-light.conf" "$light_theme_path" 2>/dev/null
         else
-            ln -sf "themes/$1-dark.conf" "$dark_theme_path"
-            ln -sf "themes/$1-light.conf" "$light_theme_path"
+            [ -e "themes/$1-dark.conf" ] && ln -sf "themes/$1-dark.conf" "$dark_theme_path"
+            [ -e "themes/$1-light.conf" ] && ln -sf "themes/$1-light.conf" "$light_theme_path"
         fi
 
         # Touch main theme files for kitty to pick up the changes
@@ -98,11 +98,11 @@ setcolor_termux() {
         dark_color_path="dark.properties"
         light_color_path="light.properties"
         if [ -z "$1" ]; then
-            ln -s "$DEFAULT_COLOR-dark.properties" "$dark_color_path" 2>/dev/null
-            ln -s "$DEFAULT_COLOR-light.properties" "$light_color_path" 2>/dev/null
+            [ -e "$DEFAULT_COLOR-dark.properties" ] && ln -s "$DEFAULT_COLOR-dark.properties" "$dark_color_path" 2>/dev/null
+            [ -e "$DEFAULT_COLOR-light.properties" ] && ln -s "$DEFAULT_COLOR-light.properties" "$light_color_path" 2>/dev/null
         else
-            ln -sf "$1-dark.properties" "$dark_color_path"
-            ln -sf "$1-light.properties" "$light_color_path"
+            [ -e "$1-dark.properties" ] && ln -sf "$1-dark.properties" "$dark_color_path"
+            [ -e "$1-light.properties" ] && ln -sf "$1-light.properties" "$light_color_path"
         fi
         if has termux-reload-settings; then
             termux-reload-settings
@@ -117,11 +117,11 @@ setcolor_wezterm() {
         dark_theme_path="dark.toml"
         light_theme_path="light.toml"
         if [ -z "$1" ]; then
-            ln -s "$DEFAULT_COLOR-dark.toml" "$dark_theme_path" 2>/dev/null
-            ln -s "$DEFAULT_COLOR-light.toml" "$light_theme_path" 2>/dev/null
+            [ -e "$DEFAULT_COLOR-dark.toml" ] && ln -s "$DEFAULT_COLOR-dark.toml" "$dark_theme_path" 2>/dev/null
+            [ -e "$DEFAULT_COLOR-light.toml" ] && ln -s "$DEFAULT_COLOR-light.toml" "$light_theme_path" 2>/dev/null
         else
-            ln -sf "$1-dark.toml" "$dark_theme_path"
-            ln -sf "$1-light.toml" "$light_theme_path"
+            [ -e "$1-dark.toml" ] && ln -sf "$1-dark.toml" "$dark_theme_path"
+            [ -e "$1-light.toml" ] && ln -sf "$1-light.toml" "$light_theme_path"
         fi
     )
 }
@@ -133,11 +133,11 @@ setcolor_highlight() {
         dark_theme_path="dark.theme"
         light_theme_path="light.theme"
         if [ -z "$1" ]; then
-            ln -s "$DEFAULT_COLOR-dark.theme" "$dark_theme_path" 2>/dev/null
-            ln -s "$DEFAULT_COLOR-light.theme" "$light_theme_path" 2>/dev/null
+            [ -e "$DEFAULT_COLOR-dark.theme" ] && ln -s "$DEFAULT_COLOR-dark.theme" "$dark_theme_path" 2>/dev/null
+            [ -e "$DEFAULT_COLOR-light.theme" ] && ln -s "$DEFAULT_COLOR-light.theme" "$light_theme_path" 2>/dev/null
         else
-            ln -sf "$1-dark.theme" "$dark_theme_path"
-            ln -sf "$1-light.theme" "$light_theme_path"
+            [ -e "$1-dark.theme" ] && ln -sf "$1-dark.theme" "$dark_theme_path"
+            [ -e "$1-light.theme" ] && ln -sf "$1-light.theme" "$light_theme_path"
         fi
     )
 }
@@ -248,8 +248,8 @@ setcolor_fish() {
         light_theme_path="Light.theme"
         default_theme_name=$(get_cap_theme_name "$DEFAULT_COLOR")
         if [ -z "$1" ]; then
-            ln -s "${default_theme_name} Dark.theme" "$dark_theme_path" 2>/dev/null
-            ln -s "${default_theme_name} Light.theme" "$light_theme_path" 2>/dev/null
+            [ -e "${default_theme_name} Dark.theme" ] && ln -s "${default_theme_name} Dark.theme" "$dark_theme_path" 2>/dev/null
+            [ -e "${default_theme_name} Light.theme" ] && ln -s "${default_theme_name} Light.theme" "$light_theme_path" 2>/dev/null
         else
             theme_name=$(get_cap_theme_name "$1")
             ln -sf "${theme_name} Dark.theme" "$dark_theme_path"

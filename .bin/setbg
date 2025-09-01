@@ -24,9 +24,11 @@ setbg_alacritty() {
         themes_dir="themes"
         # If $1 is empty, only need to ensure symlink to color theme file exists
         if [ -z "$1" ]; then
-            ln -s "$themes_dir/$DEFAULT_BG.toml" "$theme_path" 2>/dev/null
+            [ -e "$themes_dir/$DEFAULT_BG.toml" ] &&
+                ln -s "$themes_dir/$DEFAULT_BG.toml" "$theme_path" 2>/dev/null
         else
-            ln -sf "$themes_dir/$1.toml" "$theme_path"
+            [ -e "$themes_dir/$1.toml" ] &&
+                ln -sf "$themes_dir/$1.toml" "$theme_path"
         fi
     )
 }
@@ -38,9 +40,11 @@ setbg_foot() {
         theme_path="theme.ini"
         themes_dir="themes"
         if [ -z "$1" ]; then
-            ln -s "$themes_dir/$DEFAULT_BG.ini" "$theme_path" 2>/dev/null
+            [ -e "$themes_dir/$DEFAULT_BG.ini" ] &&
+                ln -s "$themes_dir/$DEFAULT_BG.ini" "$theme_path" 2>/dev/null
         else
-            ln -sf "$themes_dir/$1.ini" "$theme_path"
+            [ -e "$themes_dir/$1.ini" ] &&
+                ln -sf "$themes_dir/$1.ini" "$theme_path"
         fi
     )
 
@@ -60,11 +64,11 @@ setbg_kitty() {
         # `{dark,light,no-preference}-theme.auto.conf` when OS switches to
         # dark/light mode, see: https://sw.kovidgoyal.net/kitty/kittens/themes/#change-color-themes-automatically-when-the-os-switches-between-light-and-dark
         if [ -z "$1" ]; then
-            ln -s "$DEFAULT_BG-theme.auto.conf" "$no_preference_theme_path" 2>/dev/null
-            ln -s "$DEFAULT_BG-theme.auto.conf" "$current_theme_path" 2>/dev/null
+            [ -e "$DEFAULT_BG-theme.auto.conf" ] && ln -s "$DEFAULT_BG-theme.auto.conf" "$no_preference_theme_path" 2>/dev/null
+            [ -e "$DEFAULT_BG-theme.auto.conf" ] && ln -s "$DEFAULT_BG-theme.auto.conf" "$current_theme_path" 2>/dev/null
         else
-            ln -sf "$1-theme.auto.conf" "$no_preference_theme_path"
-            ln -sf "$1-theme.auto.conf" "$current_theme_path"
+            [ -e "$1-theme.auto.conf" ] && ln -sf "$1-theme.auto.conf" "$no_preference_theme_path"
+            [ -e "$1-theme.auto.conf" ] && ln -sf "$1-theme.auto.conf" "$current_theme_path"
         fi
 
         # Touch main theme files for kitty to pick up the changes
@@ -88,9 +92,11 @@ setbg_wezterm() {
         theme_path="theme.toml"
         themes_dir="colors"
         if [ -z "$1" ]; then
-            ln -s "$themes_dir/$DEFAULT_BG.toml" "$theme_path" 2>/dev/null
+            [ -e "$themes_dir/$DEFAULT_BG.toml" ] &&
+                ln -s "$themes_dir/$DEFAULT_BG.toml" "$theme_path" 2>/dev/null
         else
-            ln -sf "$themes_dir/$1.toml" "$theme_path"
+            [ -e "$themes_dir/$1.toml" ] &&
+                ln -sf "$themes_dir/$1.toml" "$theme_path"
         fi
     )
 }
@@ -102,9 +108,11 @@ setbg_highlight() {
         themes_dir="themes"
         theme_path="highlight.theme"
         if [ -z "$1" ]; then
-            ln -s "$themes_dir/$DEFAULT_BG.theme" "$theme_path" 2>/dev/null
+            [ -e "$themes_dir/$DEFAULT_BG.theme" ] &&
+                ln -s "$themes_dir/$DEFAULT_BG.theme" "$theme_path" 2>/dev/null
         else
-            ln -sf "$themes_dir/$1.theme" "$theme_path"
+            [ -e "$themes_dir/$1.theme" ] &&
+                ln -sf "$themes_dir/$1.theme" "$theme_path"
         fi
     )
 }
@@ -291,9 +299,11 @@ setbg_termux() {
         theme_path="colors.properties"
         themes_dir="colors"
         if [ -z "$1" ]; then
-            ln -s "$themes_dir/$DEFAULT_BG.properties" "$theme_path" 2>/dev/null
+            [ -e "$themes_dir/$DEFAULT_BG.properties" ] &&
+                ln -s "$themes_dir/$DEFAULT_BG.properties" "$theme_path" 2>/dev/null
         else
-            ln -sf "$themes_dir/$1.properties" "$theme_path"
+            [ -e "$themes_dir/$1.properties" ] &&
+                ln -sf "$themes_dir/$1.properties" "$theme_path"
         fi
         if has termux-reload-settings; then
             termux-reload-settings
@@ -392,13 +402,13 @@ setbg_fish() {
         theme_path="Current.theme"
         if [ -z "$1" ]; then
             case "$DEFAULT_BG" in
-            dark) ln -s "Dark.theme" "$theme_path" 2>/dev/null ;;
-            light) ln -s "Light.theme" "$theme_path" 2>/dev/null ;;
+            dark) [ -e "Dark.theme" ] && ln -s "Dark.theme" "$theme_path" 2>/dev/null ;;
+            light) [ -e "Light.theme" ] && ln -s "Light.theme" "$theme_path" 2>/dev/null ;;
             esac
         else
             case "$1" in
-            dark) ln -sf "Dark.theme" "$theme_path" ;;
-            light) ln -sf "Light.theme" "$theme_path" ;;
+            dark) [ -e "Dark.theme" ] && ln -sf "Dark.theme" "$theme_path" ;;
+            light) [ -e "Light.theme" ] && ln -sf "Light.theme" "$theme_path" ;;
             esac
         fi
         has fish &&
