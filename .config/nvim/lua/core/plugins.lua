@@ -224,27 +224,6 @@ local function enable_plugins(module_names)
       },
       checker = { enabled = false },
       change_detection = { notify = false },
-      performance = {
-        rtp = {
-          disabled_plugins = {
-            '2html_plugin',
-            'compiler',
-            'ftplugin',
-            'gzip',
-            'matchit',
-            'rplugin',
-            'spellfile_plugin',
-            'synmenu',
-            'syntax',
-            'tar',
-            'tarPlugin',
-            'tohtml',
-            'tutor',
-            'zip',
-            'zipPlugin',
-          },
-        },
-      },
     })
   end)
 end
