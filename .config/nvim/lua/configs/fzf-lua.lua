@@ -667,12 +667,22 @@ fzf.setup({
         \   unlet g:_fzf_qfclosed |
         \ endif |
         \ exe printf('botright %dnew', g:_fzf_height) |
-        \ exe 'resize' . (g:_fzf_height + g:_fzf_cmdheight + (g:_fzf_laststatus ? 1 : 0)) |
+        \ let g:_fzf_win = nvim_get_current_win() |
+        \ let g:_fzf_height += g:_fzf_cmdheight + g:_fzf_laststatus ? 1 : 0 |
         \ let w:winbar_no_attach = v:true |
         \ setlocal bt=nofile bh=wipe nobl noswf
     ]],
     on_create = function()
-      vim.wo.wfh = true
+      -- Prevent fzf-lua window from being squeezed by windows with
+      -- `winfixheight`, see augroup `my.fix_winfixheight_with_winbar` in
+      -- `lua/core/autocmds.lua`
+      vim.schedule(function()
+        if not vim.api.nvim_win_is_valid(vim.g._fzf_win) then
+          return
+        end
+        vim.api.nvim_win_set_height(vim.g._fzf_win, vim.g._fzf_height)
+      end)
+
       vim.keymap.set(
         't',
         '<C-r>',
