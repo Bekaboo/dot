@@ -10,17 +10,17 @@ local function buf_valid(buf)
   end
 
   local bt = vim.bo[buf].bt
-  if
-    bt == 'help'
-    or bt == 'quickfix'
-    or bt == 'terminal'
-    or bt == 'prompt'
-  then
+  if bt == 'help' or bt == 'quickfix' or bt == 'prompt' then
     return false
   end
 
   local ft = vim.bo[buf].ft
   if ft == 'gitcommit' or ft == 'gitrebase' then
+    return false
+  end
+
+  -- Fzf-lua temp window
+  if bt == 'terminal' and ft == 'fzf' then
     return false
   end
 
