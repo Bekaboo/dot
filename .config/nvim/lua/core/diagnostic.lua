@@ -147,7 +147,7 @@ vim.keymap.set({ 'n', 'x' }, '<C-w><C-d>', diagnostic_open_float, { desc = 'Open
 vim.keymap.set({ 'n', 'x' }, '<Leader>i', diagnostic_open_float, { desc = 'Open diagnostic floating window' })
 -- stylua: ignore end
 
-vim.keymap.set('n', 'dy', function()
+vim.keymap.set('n', 'yd', function()
   local diags = vim.diagnostic.get(0, { lnum = vim.fn.line('.') - 1 })
   local n_diags = #diags
   if n_diags == 0 then
