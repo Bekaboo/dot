@@ -27,7 +27,10 @@ vim.keymap.set('n', '[@', opencode_api.diff_prev, { desc = 'Navigate to opencode
 
 vim.api.nvim_create_autocmd('FileType', {
   desc = 'Filetype settings for opencode buffers.',
-  pattern = 'opencode*',
+  pattern = {
+    'opencode_input',
+    'opencode_output',
+  },
   group = vim.api.nvim_create_augroup('my.opencode.ft', {}),
   callback = function(args)
     vim.bo[args.buf].textwidth = 0
