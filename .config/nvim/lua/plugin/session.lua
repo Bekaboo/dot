@@ -76,7 +76,9 @@ M.opts = {
     enabled = true,
     events = { 'BufDelete' },
     ---@type fun(): boolean
-    cond = has_valid_buf,
+    cond = function()
+      return not has_valid_buf()
+    end,
   },
 }
 
