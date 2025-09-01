@@ -268,10 +268,7 @@ end
 set_default_hlgroups()
 
 vim.api.nvim_create_autocmd('ColorScheme', {
-  group = vim.api.nvim_create_augroup(
-    string.format('my.blink-cmp.hl'),
-    {}
-  ),
+  group = vim.api.nvim_create_augroup(string.format('my.blink-cmp.hl'), {}),
   desc = 'Set default hlgroups for blink.cmp.',
   callback = set_default_hlgroups,
 })

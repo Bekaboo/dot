@@ -41,10 +41,7 @@ vim.api.nvim_create_autocmd({ 'Filetype', 'BufEnter' }, {
 })
 
 vim.api.nvim_create_autocmd('BufWritePre', {
-  group = vim.api.nvim_create_augroup(
-    'my.vim-table-mode.format_on_save',
-    {}
-  ),
+  group = vim.api.nvim_create_augroup('my.vim-table-mode.format_on_save', {}),
   callback = function(args)
     if
       vim.bo[args.buf].ft == 'markdown'

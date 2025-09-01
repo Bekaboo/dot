@@ -540,8 +540,7 @@ local function preview()
   preview_set_lines(preview_win)
 end
 
-local groupid_preview =
-  vim.api.nvim_create_augroup('my.oil.preview', {})
+local groupid_preview = vim.api.nvim_create_augroup('my.oil.preview', {})
 vim.api.nvim_create_autocmd({ 'CursorMoved', 'WinScrolled' }, {
   desc = 'Update floating preview window when cursor moves or window scrolls.',
   group = groupid_preview,
