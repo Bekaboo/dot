@@ -6,7 +6,7 @@ PREV_BG_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/syncbg_prev_bg"
 
 while true; do
     cur_bg=$(getbg)
-    prev_bg=$(cat "$PREV_BG_FILE")
+    prev_bg=$(cat "$PREV_BG_FILE" 2>/dev/null)
     # Don't repeatedly set bg if system bg does not change
     # This allows us to set a different bg in some applications e.g. okular
     # without constantly being overridden by this script
