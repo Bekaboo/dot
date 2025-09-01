@@ -17,7 +17,7 @@ flatten_single_dir() {
     extracted_dir=$(realpath "$1")
     sub_dir=""
 
-    for item in "$extracted_dir"/*; do
+    for item in "$extracted_dir"/* "$extracted_dir"/.*; do
         # Extracted dir contains file or more than 1 sub-dir
         if [ -d "$sub_dir" ] || [ ! -d "$item" ]; then
             return 1
@@ -29,7 +29,7 @@ flatten_single_dir() {
     fi
 
     tmp_dir=$(mktemp -d)
-    trap 'rmdir $tmp_dir 2>/dev/null' EXIT INT TERM HUP
+    trap 'rmdir "$tmp_dir" 2>/dev/null' EXIT INT TERM HUP
 
     # Move extracted dir to tmp dir to avoid name conflict with sub-dir
     mv "$extracted_dir" "$tmp_dir"
