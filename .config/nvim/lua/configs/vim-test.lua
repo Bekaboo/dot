@@ -19,7 +19,7 @@ vim.g['test#strategy'] = 'dispatch'
 vim.g['test#confirm#strategy'] = 'dispatch'
 
 -- Lazy-load test configs for each filetype
-require('utils.ft').auto_load_once('test-configs', function(ft, configs)
+require('utils.load').ft_auto_load_once('test-configs', function(ft, configs)
   if not configs then
     return false
   end

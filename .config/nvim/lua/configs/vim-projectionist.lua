@@ -29,7 +29,7 @@ vim.cmd([=[
 ]=])
 
 -- Lazy load projections for each filetype
-require('utils.ft').auto_load_once('projections', function(_, projections)
+require('utils.load').ft_auto_load_once('projections', function(_, projections)
   if not projections then
     return false
   end

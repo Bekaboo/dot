@@ -8,7 +8,7 @@ local utils = require('utils')
 local function load_snippets(ft)
   ft = ft or vim.bo.ft
 
-  utils.ft.load_once('snippets', ft, function(_, snips)
+  utils.load.ft_load_once(ft, 'snippets', function(_, snips)
     if not snips or vim.tbl_isempty(snips) then
       return false
     end
