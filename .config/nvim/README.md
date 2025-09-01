@@ -393,7 +393,6 @@ paths:
 │   │   ├── completion.lua      # auto-completion
 │   │   ├── debug.lua           # debug adapter (DAP) support
 │   │   ├── edit.lua            # general editing enhancements, e.g. auto-pair, surround, align, etc.
-│   │   ├── langs.lua           # language-specific plugins
 │   │   ├── llm.lua             # completion and code generators using LLMs
 │   │   ├── markup.lua          # enhancement for markdown and tex editing
 │   │   ├── tools.lua           # tools like fuzzy finder, git integration, etc.
@@ -627,8 +626,6 @@ and it should work out of the box.
 - **Colorschemes**
     - [everforest](https://github.com/sainnhe/everforest)
     - [gruvbox-material](https://github.com/sainnhe/gruvbox-material)
-- **Langs**
-    - [vim-python-pep8-indent](https://github.com/Vimjas/vim-python-pep8-indent)
 
 #### Builtin Plugins
 
