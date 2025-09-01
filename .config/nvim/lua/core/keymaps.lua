@@ -155,6 +155,17 @@ vim.api.nvim_create_autocmd('UIEnter', {
     map('s', '<BS>', '<C-o>"_s', { desc = 'Delete selection' })
     map('s', '<C-h>', '<C-o>"_s', { desc = 'Delete selection' })
 
+    ---Check if given line should join with previews lines in current buffer
+    ---@param line string
+    ---@return boolean
+    local function should_join_line(line)
+      -- Buffer-local rules
+      if vim.b.should_join_line then
+        return vim.b.should_join_line(line)
+      end
+      return line ~= ''
+    end
+
     ---Yank text with paragraphs joined as a single line, supposed to be used
     ---in a keymap
     local function yank_joined_paragraphs()
@@ -165,22 +176,23 @@ vim.api.nvim_create_autocmd('UIEnter', {
           once = true,
           callback = function()
             local joined_lines = {}
-            local joined_line ---@type string?
 
             for _, line in
               ipairs(vim.v.event.regcontents --[=[@as string[]]=])
             do
-              if line ~= '' then
-                joined_line = (joined_line and joined_line .. ' ' or '')
-                  .. vim.trim(line)
+              if not should_join_line(line) then
+                table.insert(joined_lines, line)
                 goto continue
               end
-              table.insert(joined_lines, joined_line)
-              table.insert(joined_lines, line)
-              joined_line = nil
+
+              local last_line = table.remove(joined_lines, #joined_lines)
+              table.insert(
+                joined_lines,
+                (last_line == '' or last_line == nil) and vim.trim(line)
+                  or string.format('%s %s', last_line, vim.trim(line))
+              )
               ::continue::
             end
-            table.insert(joined_lines, joined_line)
 
             vim.fn.setreg(reg, joined_lines, vim.v.event.regtype)
           end,

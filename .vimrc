@@ -606,26 +606,47 @@ snoremap <C-h> <C-o>"_s
 " Yank paragraphs as single lines, useful for yanking hard-wrapped
 " paragraphs in nvim and paste it in browsers or other editors {{{2
 if s:supportevents(['TextYankPost', 'ModeChanged']) && exists('*timer_start')
-  " param: reg string register name
+  " Buffer-local rules to decide if a line should be joined with previous lines
+  "
+  " In text/markdown files, don't join title/first line of list item with
+  " previous lines when yanking with joined paragraphs
+  augroup YankJoinedParagraphsFt
+    au!
+    au FileType text let b:should_join_line = {
+          \ line -> line !=# '' && line !~# '^\s*\([-*]\s\+\|\d\+\.\)'
+          \ }
+    au FileType markdown,quarto,rmd let b:should_join_line = {
+          \ line -> line !=# '' && line !~# '^\s*\([-*#]\s\+\|\d\+\.\)'
+          \ }
+  augroup END
+
+  " param: line string
+  " return: 0/1
+  function! s:should_join_line(line) abort
+    " Buffer-local rules
+    if exists('b:should_join_line')
+      return call(b:should_join_line, [a:line])
+    endif
+    return a:line !=# ''
+  endfunction
+
   function! s:join_paragraphs_in_reg(reg) abort
     let joined_lines = []
-    let joined_line = v:null
 
     for line in v:event.regcontents
-      if line !=# ''
-        let joined_line = joined_line is v:null ? '' : joined_line . ' '
-        let joined_line .= trim(line)
+      if !s:should_join_line(line)
+        call add(joined_lines, line)
         continue
       endif
-      if joined_line isnot v:null
-        call add(joined_lines, joined_line)
+
+      let last_line = empty(joined_lines) ? v:null : remove(joined_lines, len(joined_lines) - 1)
+      let trimmed = trim(line)
+      if type(last_line) == v:t_none || last_line ==# ''
+        call add(joined_lines, trimmed)
+      else
+        call add(joined_lines, printf('%s %s', last_line, trimmed))
       endif
-      call add(joined_lines, line)
-      let joined_line = v:null
     endfor
-    if joined_line isnot v:null
-      call add(joined_lines, joined_line)
-    endif
 
     call setreg(a:reg, joined_lines, v:event.regtype)
   endfunction
