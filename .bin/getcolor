@@ -1,0 +1,42 @@
+#!/usr/bin/env sh
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
+# Get system colorscheme
+
+getbg_linux() {
+    case "$XDG_CURRENT_DESKTOP" in
+    # For possible values, see:
+    # https://wiki.archlinux.org/title/Environment_variables#Examples
+    KDE) getbg_kde ;;
+    *)
+        echo "Unsupported desktop environment: $XDG_CURRENT_DESKTOP" >&2
+        return 1
+        ;;
+    esac
+
+}
+
+getbg_kde() {
+    if ! has plasma-get-current-colorscheme; then
+        # shellcheck disable=SC2016
+        echo 'Cannot get KDE colorscheme: `plasma-get-current-colorscheme` not available' >&2
+        return 1
+    fi
+
+    # Normalize colorscheme: strip trailing Light/Dark (case-insensitive),
+    # then kebab-case
+    # E.g. 'StataLight' -> 'stata'
+    plasma-get-current-colorscheme |
+          sed -E 's/Light|Dark//I' |
+          sed -E 's/[_ ]+/-/g' |
+          sed -E 's/([a-z0-9])([A-Z])/\1-\L\2/g' |
+          sed -E 's/^-+|-+$//g; s/-+/-/g' |
+          tr '[:upper:]' '[:lower:]'
+}
+
+case "$(uname)" in
+Linux*) getbg_linux ;;
+*)
+    echo "Unsupported system: $(uname)" >&2
+    return 1
+    ;;
+esac

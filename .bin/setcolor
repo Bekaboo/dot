@@ -359,6 +359,13 @@ main() {
             ;;
         esac
     done
+
+    # Sync app's colorscheme with system/desktop colorscheme, don't set system
+    # colorscheme
+    if [ -z "$SETCOLOR_SKIP_SYSTEM" ]; then
+        setcolor_plasma "$color" &
+        wait
+    fi
     setcolor_alacritty "$color" &
     setcolor_foot "$color" &
     setcolor_kitty "$color" &
@@ -368,7 +375,6 @@ main() {
     setcolor_highlight "$color" &
     setcolor_nvim "$color" &
     setcolor_fish "$color" &
-    setcolor_plasma "$color" &
     wait
 }
 

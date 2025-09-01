@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
+# Sync with system colorscheme
+
+SETCOLOR_SKIP_SYSTEM=1 setcolor "$(getcolor)"
