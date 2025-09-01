@@ -253,22 +253,16 @@ call s:command_abbrev('man', 'Man')
 " }}}
 
 """ Autocmds {{{1
-" Check if an event or a list of events are supported
-" param: events string|string[] event or list of events
+" Check if given events are supported
+" param: string... event names
 " return: 0/1
-function! s:supportevents(events) abort
-  if type(a:events) == v:t_string
-    return exists('##' . a:events)
-  endif
-  if type(a:events) == v:t_list
-    for event in a:events
-      if !exists('##' . event)
-        return 0
-      endif
-    endfor
-    return 1
-  endif
-  return 0
+function! s:supportevents(...) abort
+  for event in a:000
+    if !exists('##' . event)
+      return 0
+    endif
+  endfor
+  return 1
 endfunction
 
 " https://github.com/vim/vim/commit/eb93f3f0e2b2ae65c5c3f55be3e62d64e3066f35
@@ -278,7 +272,7 @@ function! s:has_autocmd_once() abort
 endfunction
 
 " Autosave on focus lost, window/buf leave, etc. {{{2
-if s:supportevents(['BufLeave', 'WinLeave', 'FocusLost'])
+if s:supportevents('BufLeave', 'WinLeave', 'FocusLost')
   function! s:auto_save(buf, file) abort
     if getbufvar(a:buf, '&bt', '') ==# ''
       silent! update
@@ -354,12 +348,12 @@ endif
 " }}}2
 
 " Automatically setting cwd to the root directory {{{2
-if s:supportevents([
+if s:supportevents(
       \ 'BufReadPost',
       \ 'BufWinEnter',
       \ 'WinEnter',
       \ 'FileChangedShellPost'
-      \ ])
+      \ )
   " Compute project directory for given path.
   " param: fpath string
   " param: a:1 patterns string[]? root patterns
@@ -435,7 +429,7 @@ endif
 " Restore and switch background from viminfo file,
 " for this autocmd to work properly, 'viminfo' option must contain '!'
 if ($COLORTERM ==# 'truecolor' || has('gui_running'))
-      \ && s:supportevents(['VimEnter', 'OptionSet', 'ColorScheme'])
+      \ && s:supportevents('VimEnter', 'OptionSet', 'ColorScheme')
 
   " Restore &background and colorscheme from viminfo file
   function! s:theme_restore() abort
@@ -485,7 +479,7 @@ if s:supportevents('FocusLost')
   augroup END
 endif
 
-if s:supportevents(['CursorMoved', 'ModeChanged'])
+if s:supportevents('CursorMoved', 'ModeChanged')
   augroup FixVirtualEditCursorPos
     au!
     " Record cursor position in visual mode if virtualedit is set and
@@ -503,7 +497,7 @@ endif
 " }}}2
 
 " Consistent &iskeyword in Ex command-line {{{2
-if s:supportevents(['CmdlineEnter', 'CmdlineLeave'])
+if s:supportevents('CmdlineEnter', 'CmdlineLeave')
   augroup FixCmdLineIskeyword
     au!
     au CmdlineEnter [:>/?=@] let g:_isk_lisp_buf = str2nr(expand('<abuf>')) |
@@ -605,7 +599,7 @@ snoremap <C-h> <C-o>"_s
 
 " Yank paragraphs as single lines, useful for yanking hard-wrapped
 " paragraphs in nvim and paste it in browsers or other editors {{{2
-if s:supportevents(['TextYankPost', 'ModeChanged']) && exists('*timer_start')
+if s:supportevents('TextYankPost', 'ModeChanged') && exists('*timer_start')
   " Buffer-local rules to decide if a line should be joined with previous lines
   "
   " In text/markdown files, don't join title/first line of list item with
@@ -1246,7 +1240,7 @@ noremap! <expr> <Esc>b <SID>ic_meta_b()
 noremap! <expr> <C-a>  <SID>ic_ctrl_a()
 noremap! <expr> <C-e>  <SID>ic_ctrl_e()
 
-if s:supportevents(['TextChangedI', 'CmdlineChanged']) && s:has_autocmd_once()
+if s:supportevents('TextChangedI', 'CmdlineChanged') && s:has_autocmd_once()
   " `ic_small_del()` requires support for `TextChangedI`, `CmdlineChanged`
   " events and the `++once` argument (patch-8.1.1113)
   function! s:ic_ctrl_w() abort
@@ -1743,7 +1737,7 @@ if $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.1140')
   " in a vim/nvim session
   if s:tmux_get_pane_opt('@is_vim') ==# ''
     call s:tmux_set_pane_opt('@is_vim', 'yes')
-    if s:supportevents(['VimResume', 'VimLeave', 'VimSuspend'])
+    if s:supportevents('VimResume', 'VimLeave', 'VimSuspend')
       augroup TmuxNavSetIsVim
         au!
         au VimResume           * :call s:tmux_set_pane_opt('@is_vim', 'yes')
