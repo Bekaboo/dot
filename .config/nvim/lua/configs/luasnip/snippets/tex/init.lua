@@ -7,7 +7,7 @@ local i = ls.insert_node
 local c = ls.choice_node
 local r = ls.restore_node
 
-M.math = require('snippets.tex.math')
+M.math = require('configs.luasnip.snippets.tex.math')
 
 M.snippets = {
   us.sM(

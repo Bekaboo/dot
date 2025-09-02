@@ -29,14 +29,17 @@ vim.cmd([=[
 ]=])
 
 -- Lazy load projections for each filetype
-require('utils.load').ft_auto_load_once('projections', function(_, projections)
-  if not projections then
-    return false
+require('utils.load').ft_auto_load_once(
+  'configs.vim-projectionist.projections',
+  function(_, projections)
+    if not projections then
+      return false
+    end
+    vim.g.projectionist_heuristics = vim.tbl_deep_extend(
+      'force',
+      vim.g.projectionist_heuristics or {},
+      projections
+    )
+    return true
   end
-  vim.g.projectionist_heuristics = vim.tbl_deep_extend(
-    'force',
-    vim.g.projectionist_heuristics or {},
-    projections
-  )
-  return true
-end)
+)

@@ -76,7 +76,7 @@ Currently only tested on Linux (X11/Wayland/TTY) and Android (Termux).
     - [intro message](plugin/intro.lua)
 - [VSCode-Neovim](https://github.com/vscode-neovim/vscode-neovim) integration, makes you feel at home in VSCode when you
   occasionally need it
-- Massive [TeX math snippets](lua/snippets/shared/math.lua)
+- Massive [TeX math snippets](lua/configs/luasnip/snippets/tex/math.lua)
 - Jupyter Notebook integration: edit notebooks like markdown files, run code in
   cells with simple commands and shortcuts
 - Optimization for large files, open any file larger than 100 MB and edit like
@@ -252,7 +252,7 @@ Install the following debug adapters manually:
 
 #### DAP Configuration
 
-Configuration for each filetypes: [lua/dap-configs](lua/dap-configs).
+Configuration for each filetypes: [lua/configs/nvim-dap/dap](lua/configs/nvim-dap/dap).
 
 #### DAP Activation
 
@@ -388,7 +388,7 @@ paths:
 │   │   ├── opts.lua            # options and general settings
 │   │   ├── keymaps.lua
 │   │   └── plugins.lua         # bootstraps plugin manager and specifies which plugins to include
-│   ├── plugins                 # all plugin specifications and configs go here
+│   ├── plugins                 # all 3rd-party plugin specifications
 │   │   ├── ui.lua              # ui elements, e.g. icons
 │   │   ├── completion.lua      # auto-completion
 │   │   ├── debug.lua           # debug adapter (DAP) support
@@ -398,9 +398,8 @@ paths:
 │   │   ├── tools.lua           # tools like fuzzy finder, git integration, etc.
 │   │   ├── treesitter.lua      # treesitter related plugins
 │   │   └── colorschemes.lua    # third-party themes
-│   ├── configs                 # configs for each plugin
-│   ├── snippets                # snippets
-│   ├── plugin                  # the actual implementation of custom plugins
+│   ├── configs                 # configs for each 3rd-party plugin
+│   ├── plugin                  # the actual implementation of custom lua plugins
 │   └── utils
 └── syntax                      # syntax files
 ```
@@ -525,15 +524,15 @@ See
 ### DAP Configurations
 
 See
-- [lua/configs/dap-configs](lua/configs/dap-configs)
+- [lua/configs/nvim-dap/dap](lua/configs/nvim-dap/dap)
 - [lua/configs/nvim-dap.lua](lua/configs/nvim-dap.lua)
 - [lua/configs/nvim-dap-ui.lua](lua/configs/nvim-dap-ui.lua).
 
 ### Snippets
 
-This configuration use [LuaSnip](https://github.com/L3MON4D3/LuaSnip) as the snippet engine,
-custom snippets for different filetypes
-are defined under [lua/snippets](lua/snippets).
+This configuration use [LuaSnip](https://github.com/L3MON4D3/LuaSnip) as the
+snippet engine, custom snippets for different filetypes are defined under
+[lua/configs/luasnip/snippets](lua/configs/luasnip/snippets).
 
 ### Enabling VSCode Integration
 
