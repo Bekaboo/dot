@@ -164,7 +164,9 @@ require('utils.load').ft_auto_load_once('dap-configs', function(ft, spec)
   if not spec then
     return false
   end
-  dap.adapters[spec.config[1].type] = spec.adapter
+  if spec.config and spec.config[1] and spec.config[1].type then
+    dap.adapters[spec.config[1].type] = spec.adapter
+  end
   dap.configurations[ft] = spec.config
   return true
 end)
