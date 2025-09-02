@@ -39,5 +39,9 @@ return {
   init_options = {
     workspace = jdtls_workspace_dir,
     jvm_args = {},
+    -- Java debugger settings, see:
+    -- https://codeberg.org/mfussenegger/nvim-dap/wiki/Java#via-other-language-server-clients
+    -- https://github.com/microsoft/java-debug?tab=readme-ov-file#usage-with-eclipsejdtls
+    bundles = { '/usr/share/java-debug/com.microsoft.java.debug.plugin.jar' },
   },
 }
