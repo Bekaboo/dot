@@ -13,23 +13,15 @@ return {
     build = 'cd app && npm install && cd - && git restore .',
     lazy = true,
     init = function()
-      vim.api.nvim_create_autocmd('FileType', {
-        desc = 'Defer loading markdown-preview in markdown files.',
-        group = vim.api.nvim_create_augroup('my.markdown-preview.load', {}),
-        pattern = 'markdown',
-        once = true,
-        callback = vim.schedule_wrap(function(args)
+      require('utils.load').on_events(
+        { event = 'FileType', pattern = 'markdown' },
+        function()
           require('lazy.core.loader').load(
             'markdown-preview.nvim',
             { ft = 'markdown' }
           )
-          if vim.api.nvim_buf_is_valid(args.buf) then
-            vim.api.nvim_buf_call(args.buf, function()
-              vim.api.nvim_exec_autocmds('FileType', { pattern = 'markdown' })
-            end)
-          end
-        end),
-      })
+        end
+      )
     end,
     config = function()
       require('configs.markdown-preview')
@@ -42,18 +34,15 @@ return {
     init = function()
       vim.g.table_mode_map_prefix = '<Leader><Tab>'
 
-      vim.api.nvim_create_autocmd('FileType', {
-        desc = 'Defer loading vim-table-mode in markdown files.',
-        group = vim.api.nvim_create_augroup('my.vim-table-mode.load', {}),
-        pattern = 'markdown',
-        once = true,
-        callback = vim.schedule_wrap(function()
+      require('utils.load').on_events(
+        { event = 'FileType', pattern = 'markdown' },
+        function()
           require('lazy.core.loader').load(
             'vim-table-mode',
             { ft = 'markdown' }
           )
-        end),
-      })
+        end
+      )
     end,
     config = function()
       require('configs.vim-table-mode')
@@ -64,20 +53,12 @@ return {
     'jmbuhr/otter.nvim',
     lazy = true,
     init = function()
-      vim.api.nvim_create_autocmd('FileType', {
-        desc = 'Defer loading otter.nvim in markdown files.',
-        group = vim.api.nvim_create_augroup('my.otter.load', {}),
-        pattern = 'markdown',
-        once = true,
-        callback = vim.schedule_wrap(function(args)
-          require('otter')
-          if vim.api.nvim_buf_is_valid(args.buf) then
-            vim.api.nvim_buf_call(args.buf, function()
-              vim.api.nvim_exec_autocmds('FileType', { pattern = 'markdown' })
-            end)
-          end
-        end),
-      })
+      require('utils.load').on_events(
+        { event = 'FileType', pattern = 'markdown' },
+        function()
+          return require('otter') ~= nil
+        end
+      )
     end,
     config = function()
       require('configs.otter')
@@ -150,17 +131,15 @@ return {
         end
       end
 
-      vim.api.nvim_create_autocmd('FileType', {
-        desc = 'Lazy-load molten on keys in python or markdown files.',
-        group = vim.api.nvim_create_augroup('my.molten.load', {}),
-        pattern = { 'python', 'markdown' },
-        callback = function(args)
+      require('utils.load').on_events(
+        { event = 'FileType', pattern = { 'python', 'markdown' } },
+        function(args)
           if loaded then
             return true
           end
           set_triggers(args.buf)
-        end,
-      })
+        end
+      )
     end,
     -- No need to lazy load on molten's builtin commands (e.g. `:MoltenInit`)
     -- since they are already registered in rplugin manifest,

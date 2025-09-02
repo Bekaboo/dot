@@ -6,69 +6,60 @@ if vim.g.vscode then
   return
 end
 
+local load = require('utils.load')
+
 -- expandtab
-vim.api.nvim_create_autocmd('InsertEnter', {
-  once = true,
-  group = vim.api.nvim_create_augroup('my.expandtab.load', {}),
-  callback = function()
-    require('plugin.expandtab').setup()
-  end,
-})
+load.on_events('InsertEnter', function()
+  require('plugin.expandtab').setup()
+end)
 
 -- jupytext
-vim.api.nvim_create_autocmd('BufReadCmd', {
-  once = true,
-  pattern = '*.ipynb',
-  group = vim.api.nvim_create_augroup('my.jupytext.load', {}),
-  callback = function(args)
-    require('plugin.jupytext').setup(args.buf)
-  end,
-})
+load.on_events({ event = 'BufReadCmd', pattern = '*.ipynb' }, function(args)
+  require('plugin.jupytext').setup(args.buf)
+end)
 
 -- lsp & diagnostic commands
-vim.api.nvim_create_autocmd({
-  'Syntax',
-  'FileType',
-  'LspAttach',
-  'DiagnosticChanged',
-}, {
-  once = true,
-  desc = 'Apply lsp and diagnostic settings.',
-  group = vim.api.nvim_create_augroup('my.lsp-commands.load', {}),
-  callback = function()
+load.on_events(
+  { 'Syntax', 'FileType', 'LspAttach', 'DiagnosticChanged' },
+  function()
     require('plugin.lsp-commands').setup()
-  end,
-})
+  end
+)
 
 -- readline
-vim.api.nvim_create_autocmd({ 'CmdlineEnter', 'InsertEnter' }, {
-  group = vim.api.nvim_create_augroup('my.readline.load', {}),
-  once = true,
-  callback = function()
-    require('plugin.readline').setup()
-  end,
-})
+load.on_events({ 'CmdlineEnter', 'InsertEnter' }, function()
+  require('plugin.readline').setup()
+end)
 
 -- winbar
-vim.api.nvim_create_autocmd('FileType', {
-  once = true,
-  group = vim.api.nvim_create_augroup('my.winbar.load', {}),
-  callback = function()
-    if vim.g.loaded_winbar ~= nil then
-      return
-    end
+load.on_events('FileType', function()
+  if vim.g.loaded_winbar ~= nil then
+    return
+  end
 
-    local winbar = require('plugin.winbar')
-    local api = require('plugin.winbar.api')
-    winbar.setup({ bar = { hover = false } })
+  local winbar = require('plugin.winbar')
+  local api = require('plugin.winbar.api')
+  winbar.setup({ bar = { hover = false } })
 
-    -- stylua: ignore start
-    vim.keymap.set('n', '<Leader>;', api.pick, { desc = 'Pick symbols in winbar' })
-    vim.keymap.set('n', '[;', api.goto_context_start, { desc = 'Go to start of current context' })
-    vim.keymap.set('n', '];', api.select_next_context, { desc = 'Select next context' })
-    -- stylua: ignore end
-  end,
-})
+  vim.keymap.set(
+    'n',
+    '<Leader>;',
+    api.pick,
+    { desc = 'Pick symbols in winbar' }
+  )
+  vim.keymap.set(
+    'n',
+    '[;',
+    api.goto_context_start,
+    { desc = 'Go to start of current context' }
+  )
+  vim.keymap.set(
+    'n',
+    '];',
+    api.select_next_context,
+    { desc = 'Select next context' }
+  )
+end)
 
 ---Load ui elements e.g. tabline, statusline, statuscolumn
 ---@param name string
@@ -86,119 +77,68 @@ load_ui('statusline')
 load_ui('statuscolumn')
 
 -- term
-vim.api.nvim_create_autocmd('TermOpen', {
-  group = vim.api.nvim_create_augroup('my.term.load', {}),
-  callback = function(args)
-    local term = require('plugin.term')
-    term.setup()
-    vim.keymap.set('n', '.', term.rerun, {
-      buffer = args.buf,
-      desc = 'Re-run terminal job',
-    })
-  end,
-})
+load.on_events('TermOpen', function(args)
+  local term = require('plugin.term')
+  term.setup()
+  vim.keymap.set('n', '.', term.rerun, {
+    buffer = args.buf,
+    desc = 'Re-run terminal job',
+  })
+end)
 
 -- tmux
 if vim.g.has_ui then
-  vim.api.nvim_create_autocmd('UIEnter', {
-    group = vim.api.nvim_create_augroup('my.tmux.load', {}),
-    desc = 'Init tmux plugin.',
-    once = true,
-    callback = vim.schedule_wrap(function()
-      require('plugin.tmux').setup()
-    end),
-  })
+  load.on_events({ event = 'UIEnter', schedule = true }, function()
+    require('plugin.tmux').setup()
+  end)
 end
 
 -- tabout
-vim.api.nvim_create_autocmd('InsertEnter', {
-  group = vim.api.nvim_create_augroup('my.tabout.load', {}),
-  desc = 'Init tabout plugin.',
-  once = true,
-  callback = function()
-    require('plugin.tabout').setup()
-  end,
-})
+load.on_events('InsertEnter', function()
+  require('plugin.tabout').setup()
+end)
 
 -- z
-do
-  local opts = {
-    group = vim.api.nvim_create_augroup('my.z.load', {}),
-    desc = 'Init z plugin.',
-    once = true,
-    callback = function()
-      if vim.g.loaded_z then
-        return
-      end
+if vim.g.loaded_z == nil then
+  vim.keymap.set('n', '<Leader>z', function()
+    require('plugin.z').select()
+  end, { desc = 'Open a directory from z' })
 
-      local z = require('plugin.z')
-      z.setup()
-      vim.keymap.set('n', '<Leader>z', z.select, {
-        desc = 'Open a directory from z',
-      })
-    end,
-  }
-
-  vim.api.nvim_create_autocmd({ 'CmdlineEnter', 'DirChanged' }, opts)
-  vim.api.nvim_create_autocmd(
-    'UIEnter',
-    vim.tbl_deep_extend('force', opts, {
-      callback = vim.schedule_wrap(opts.callback),
-    })
-  )
-  vim.api.nvim_create_autocmd(
-    'CmdUndefined',
-    vim.tbl_deep_extend('force', opts, { pattern = 'Z*' })
-  )
+  load.on_events({
+    'CmdlineEnter',
+    'DirChanged',
+    { event = 'UIEnter', schedule = true },
+    { event = 'CmdUndefined', pattern = 'Z*' },
+  }, function()
+    require('plugin.z').setup()
+  end)
 end
 
 -- addasync
-vim.api.nvim_create_autocmd('InsertEnter', {
-  group = vim.api.nvim_create_augroup('my.addasync.load', {}),
-  desc = 'Init addasync plugin.',
-  callback = function()
-    if require('utils.ts').is_active() then
-      require('plugin.addasync').setup()
-      return true
-    end
-  end,
-})
+load.on_events('InsertEnter', function()
+  if require('utils.ts').is_active() then
+    require('plugin.addasync').setup()
+  end
+end)
 
 -- session
 if vim.g.loaded_session == nil then
-  -- stylua: ignore start
-  vim.keymap.set('n', '<Leader>w', function() require('plugin.session').select(true) end, { desc = 'Load session (workspace) interactively' })
-  vim.keymap.set('n', '<Leader>W', function() require('plugin.session').load(nil, true) end, { desc = 'Load session (workspace) for cwd' })
-  -- stylua: ignore end
+  vim.keymap.set('n', '<Leader>w', function()
+    require('plugin.session').select(true)
+  end, { desc = 'Load session (workspace) interactively' })
 
-  local opts = {
-    desc = 'Init session plugin.',
-    group = vim.api.nvim_create_augroup('my.session.load', {}),
-    once = true,
-    callback = function()
-      if vim.g.loaded_session ~= nil then
-        return
-      end
+  vim.keymap.set('n', '<Leader>W', function()
+    require('plugin.session').load(nil, true)
+  end, { desc = 'Load session (workspace) for cwd' })
 
-      ---@diagnostic disable-next-line: missing-fields
-      require('plugin.session').setup({
-        autoload = { enabled = false },
-        autoremove = { enabled = false },
-      })
-    end,
-  }
-
-  vim.api.nvim_create_autocmd('CmdlineEnter', opts)
-  vim.api.nvim_create_autocmd(
-    'UIEnter',
-    vim.tbl_deep_extend('force', opts, {
-      callback = vim.schedule_wrap(opts.callback),
+  load.on_events({
+    'CmdlineEnter',
+    { event = 'UIEnter', schedule = true },
+    { event = 'CmdUndefined', pattern = { 'Session*', 'Mksession' } },
+  }, function()
+    require('plugin.session').setup({
+      autoload = { enabled = false },
+      autoremove = { enabled = false },
     })
-  )
-  vim.api.nvim_create_autocmd(
-    'CmdUndefined',
-    vim.tbl_deep_extend('force', opts, {
-      pattern = { 'Session*', 'Mksession' },
-    })
-  )
+  end)
 end

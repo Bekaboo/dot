@@ -99,14 +99,15 @@ vim.api.nvim_create_autocmd('FileType', {
   group = spell_augroup,
   once = true,
   callback = function()
-    local ts_start = vim.treesitter.start
-    function vim.treesitter.start(...) ---@diagnostic disable-line: duplicate-set-field
-      -- Ensure spell check settings are set before starting treesitter
-      -- to avoid highlighting `@nospell` nodes
-      spellcheck()
-      vim.treesitter.start = ts_start
-      return vim.treesitter.start(...)
-    end
+    vim.treesitter.start = (function(ts_start)
+      return function(...)
+        -- Ensure spell check settings are set before starting treesitter
+        -- to avoid highlighting `@nospell` nodes
+        spellcheck()
+        vim.treesitter.start = ts_start
+        return vim.treesitter.start(...)
+      end
+    end)(vim.treesitter.start)
   end,
 })
 
@@ -363,56 +364,36 @@ vim.g.loaded_tutor_mode_plugin = 0
 vim.g.loaded_zip = 0
 vim.g.loaded_zipPlugin = 0
 
----Lazy-load runtime files
----@param runtime string
----@param flag string
----@param events string|string[]
-local function load_runtime(runtime, flag, events)
-  if vim.g[flag] and vim.g[flag] ~= 0 then
-    return
-  end
-
-  vim.g[flag] = 0
-  if type(events) ~= 'table' then
-    events = { events }
-  end
-
-  local gid = vim.api.nvim_create_augroup('my.load_runtime.' .. runtime, {})
-  for _, e in
-    ipairs(vim.tbl_map(function(e)
-      return vim.split(e, ' ', {
-        trimempty = true,
-        plain = true,
-      })
-    end, events))
-  do
-    vim.api.nvim_create_autocmd(e[1], {
-      once = true,
-      pattern = e[2],
-      group = gid,
-      callback = function()
-        if vim.g[flag] == 0 then
-          vim.g[flag] = nil
-          vim.cmd.runtime(runtime)
-        end
-        vim.api.nvim_del_augroup_by_id(gid)
-      end,
-    })
+----Return function to lazy-load runtime files
+----@param runtime string
+----@param flag string
+----@return function
+local function load_runtime(runtime, flag)
+  return function()
+    if vim.g[flag] ~= nil and vim.g[flag] ~= 0 then
+      return
+    end
+    vim.g[flag] = nil
+    vim.cmd.runtime(runtime)
   end
 end
 
-load_runtime('plugin/rplugin.vim', 'loaded_remote_plugins', {
+require('utils.load').on_events({
   'FileType',
   'BufNew',
   'BufWritePost',
   'BufReadPre',
-  'CmdUndefined UpdateRemotePlugins',
-})
+  {
+    event = 'CmdUndefined',
+    pattern = 'UpdateRemotePlugins',
+  },
+}, load_runtime('rplugin/rplugin.vim', 'loaded_remote_plugins'))
 
-load_runtime('provider/python3.vim', 'loaded_python3_provider', {
-  'FileType python',
-  'BufNew *.py,*.ipynb',
-  'BufEnter *.py,*.ipynb',
-  'BufWritePost *.py,*.ipynb',
-  'BufReadPre *.py,*.ipynb',
-})
+require('utils.load').on_events({
+  { event = 'FileType', pattern = 'python' },
+  { event = 'BufNew', pattern = { '*.py', '*.ipynb' } },
+  { event = 'BufEnter', pattern = { '*.py', '*.ipynb' } },
+  { event = 'BufWritePost', pattern = { '*.py', '*.ipynb' } },
+  { event = 'BufReadPre', pattern = { '*.py', '*.ipynb' } },
+  { event = 'CmdUndefined', pattern = 'UpdateRemotePlugins' },
+}, load_runtime('rplugin/rplugin.vim', 'loaded_remote_plugins'))
