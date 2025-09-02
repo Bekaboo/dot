@@ -88,7 +88,7 @@ vim.api.nvim_create_autocmd('FileType', {
         end
 
         -- Skip spawning a viewer; only sync if a viewer window already exists
-        -- Some examples of `ps fp "$(pgrep ...)"` command output (stdout):
+        -- Some examples of `ps fp $(pgrep ...)` command output (stdout):
         -- zathura: zathura -x /usr/bin/nvim --headless -c "VimtexInverseSearch %{line}:%{column} '%{input}'" --synctex-forward 62:1:/home/user/test.tex test.pdf
         -- okular:  okular --unique file:/home/user/test.pdf#src:74/home/user/test.tex
         vim.defer_fn(function()
