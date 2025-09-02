@@ -22,8 +22,12 @@ vim.api.nvim_create_autocmd('FileType', {
 vim.api.nvim_create_autocmd({ 'FileType', 'LspAttach' }, {
   once = true,
   desc = 'Apply lsp settings.',
-  callback = function()
+  callback = function(args)
     require('core.lsp')
+    vim.api.nvim_exec_autocmds(args.event, {
+      pattern = args.match,
+      data = args.data,
+    })
   end,
 })
 

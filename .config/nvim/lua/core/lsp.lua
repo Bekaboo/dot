@@ -2,22 +2,14 @@ local lsp = require('utils.lsp')
 
 vim.lsp.config('*', lsp.default_config)
 
-vim.api.nvim_create_autocmd('FileType', {
-  once = true,
-  callback = function(args)
-    for _, dir in ipairs(vim.api.nvim__get_runtime({ 'lsp' }, true, {})) do
-      for config_file in vim.fs.dir(dir) do
-        vim.lsp.enable(vim.fn.fnamemodify(config_file, ':r'))
-      end
-    end
-    vim.api.nvim_exec_autocmds('FileType', {
-      pattern = args.match,
-    })
-  end,
-})
-
 -- Override to perform additional checks on starting language servers
 vim.lsp.start = lsp.start
+
+for _, dir in ipairs(vim.api.nvim__get_runtime({ 'lsp' }, true, {})) do
+  for config_file in vim.fs.dir(dir) do
+    vim.lsp.enable(vim.fn.fnamemodify(config_file, ':r'))
+  end
+end
 
 -- Show notification if no references, definition, declaration,
 -- implementation or type definition is found
