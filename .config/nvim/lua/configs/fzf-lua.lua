@@ -674,8 +674,8 @@ fzf.setup({
     ]],
     on_create = function()
       -- Prevent fzf-lua window from being squeezed by windows with
-      -- `winfixheight`, see augroup `my.fix_winfixheight_with_winbar` in
-      -- `lua/core/autocmds.lua`
+      -- `winfixheight`, this is a neovim bug and can be reproduced by
+      -- `nvim --clean +'set sb spr' +'wincmd v | wincmd s | resize 8 | windo set wfh' +'botr new'`
       vim.schedule(function()
         if not vim.api.nvim_win_is_valid(vim.g._fzf_win) then
           return
