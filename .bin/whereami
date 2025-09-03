@@ -6,7 +6,7 @@ LOC_URL=http://ipinfo.io/loc
 
 if has curl; then
     coords=$(curl -s "$LOC_URL")
-elif     has wget; then
+elif has wget; then
     coords=$(wget -qO- "$LOC_URL")
 else
     # shellcheck disable=SC2016
