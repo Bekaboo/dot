@@ -628,6 +628,12 @@ if s:supportevents('TextYankPost', 'ModeChanged') && exists('*timer_start')
     let joined_lines = []
 
     for line in v:event.regcontents
+      " Start a new paragraph if line is an empty line so that the original
+      " paragraphs are kept
+      if line ==# ''
+        call add(joined_lines, '')
+      endif
+
       if !s:should_join_line(line)
         call add(joined_lines, line)
         continue

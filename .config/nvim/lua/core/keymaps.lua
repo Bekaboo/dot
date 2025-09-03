@@ -180,6 +180,12 @@ vim.api.nvim_create_autocmd('UIEnter', {
             for _, line in
               ipairs(vim.v.event.regcontents --[=[@as string[]]=])
             do
+              -- Start a new paragraph if line is an empty line so that the
+              -- original paragraphs are kept
+              if line == '' then
+                table.insert(joined_lines, '')
+              end
+
               if not should_join_line(line) then
                 table.insert(joined_lines, line)
                 goto continue
