@@ -3,4 +3,13 @@
 
 # Set bg to suggested bg
 
-setbg "$(suggestbg)"
+main() {
+    cur_bg=$(getbg)
+    target_bg=$(suggestbg)
+
+    if [ "$cur_bg" != "$target_bg" ]; then
+        setbg "$target_bg"
+    fi
+}
+
+main "$@"

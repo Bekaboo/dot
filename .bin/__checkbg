@@ -1,0 +1,57 @@
+#!/usr/bin/env sh
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
+#
+# Spawns two processes:
+#
+# 1. Watch for sleep signal to check current time and set bg accordingly on
+#    awake from sleep
+# 2. Periodically check current time and set background
+
+has_recent_conflict_bg() {
+    # File that stores the last time when a setbg command is called,
+    # see `setbg`
+    conflict_file="${XDG_STATE_HOME:-$HOME/.local/state}/setbg/conflict"
+    if [ ! -e "$conflict_file" ]; then
+        return 1
+    fi
+
+    conflict_time=$(cat "$conflict_file") # seconds since the epoch (1970-01-01 00:00 UTC)
+    if [ -z "$conflict_time" ] ||
+        [ $(($(date +%s) - conflict_time)) -gt $((12 * 60 * 60)) ]; then
+        return 1
+    fi
+}
+
+main() {
+    # Make sure terminating signals are forwarded to subprocesses
+    trap 'kill $(jobs -p) 2>/dev/null; wait' EXIT INT TERM HUP
+
+    # Set bg on awake
+    (
+        dbus-monitor --system "type=signal, \
+            interface=org.freedesktop.login1.Manager, \
+            member=PrepareForSleep" | while read -r x; do
+            case "$x" in
+            *"boolean false"*)
+                if ! has_recent_conflict_bg; then
+                    checkbg
+                fi
+                ;;
+            esac
+        done
+    ) &
+
+    # Set bg periodically
+    (
+        while true; do
+            if ! has_recent_conflict_bg; then
+                checkbg
+            fi
+            sleep 1
+        done
+    ) &
+}
+
+main "$@"
+
+wait

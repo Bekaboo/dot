@@ -1,6 +1,6 @@
 [Desktop Entry]
-Exec=__checkbg_watch_awake
+Exec=__checkbg
 Icon=application-x-shellscript
-Name=__checkbg_watch_awake
+Name=__checkbg
 Type=Application
 X-KDE-AutostartScript=true

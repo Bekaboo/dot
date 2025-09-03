@@ -469,27 +469,28 @@ setbg_libreoffice() {
 # Record the last timestamp when this script is called with 'conflict' bg
 # (different bg from suggested bg, see `suggestbg`) so that we can check the log
 # and avoid automatically setting the background if the user has already
-# manually set the background, see `__checkbg_watch_awake` and
-# `~/.config/autostart/__checkbg_watch_awake.desktop`
+# manually set the background, see `__checkbg` and
+# `~/.config/autostart/__checkbg.desktop`
 #
 # $1: bg, 'light' or 'dark'
-write_conflict_log() {
-    timestamp_dir="$STATE_HOME/setbg"
-    timestamp_file="$timestamp_dir/timestamp"
-    if [ ! -d "$timestamp_dir" ]; then
-        mkdir -p "$timestamp_dir" || return 1
+write_conflict() {
+    conflict_file="$STATE_HOME/setbg/conflict"
+    conflict_file_dir="$(dirname conflict_file)"
+
+    if [ ! -d "$conflict_file_dir" ]; then
+        mkdir -p "$conflict_file_dir"
     fi
 
     # Non-conflict bg
     if [ -z "$1" ] || [ "$1" = "$(suggestbg)" ]; then
-        if [ -e "$timestamp_file" ]; then
-            rm "$timestamp_file" || return 1
+        if [ -e "$conflict_file" ]; then
+            rm "$conflict_file"
         fi
         return
     fi
 
     # Conflict bg
-    date +%s >"$timestamp_file" # seconds since the epoch (1970-01-01 00:00 UTC)
+    date +%s >"$conflict_file" # seconds since the epoch (1970-01-01 00:00 UTC)
 }
 
 usage() {
@@ -545,7 +546,7 @@ main() {
     setbg_vscode "$bg" &
     setbg_fish "$bg" &
     setbg_libreoffice "$bg" &
-    write_conflict_log "$bg" &
+    write_conflict "$bg" &
     wait
 }
 
