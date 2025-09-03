@@ -655,11 +655,12 @@ fzf.setup({
         \ for winnr in range(winnr('$'), 1, -1) |
         \   if win_gettype(winnr) !=# 'autocmd' && win_gettype(winnr) !=# 'popup' |
         \     let g:_fzf_qfclosed = win_gettype(winnr) |
+        \     let g:_fzf_qfwin = win_getid(winnr) |
         \     break |
         \   endif |
         \ endfor |
         \ if g:_fzf_qfclosed ==# 'loclist' || g:_fzf_qfclosed ==# 'quickfix' |
-        \   let g:_fzf_qfheight = nvim_win_get_height(win_getid(winnr('$'))) |
+        \   let g:_fzf_qfheight = nvim_win_get_height(g:_fzf_qfwin) |
         \   let g:_fzf_height = g:_fzf_qfheight - 1 |
         \   cclose |
         \   lclose |
@@ -668,7 +669,7 @@ fzf.setup({
         \ endif |
         \ exe printf('botright %dnew', g:_fzf_height) |
         \ let g:_fzf_win = nvim_get_current_win() |
-        \ let g:_fzf_height += g:_fzf_cmdheight + g:_fzf_laststatus ? 1 : 0 |
+        \ let g:_fzf_height += g:_fzf_cmdheight + (g:_fzf_laststatus ? 1 : 0) |
         \ let w:winbar_no_attach = v:true |
         \ setlocal bt=nofile bh=wipe nobl noswf
     ]],
