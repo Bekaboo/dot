@@ -144,6 +144,23 @@ M.snippets = {
       }
     )
   ),
+  us.mssn(
+    {
+      { trig = 'mn' },
+      { trig = 'main' },
+      common = { desc = 'main function' },
+    },
+    un.fmtad(
+      [[
+        function main
+        <body>
+        end
+      ]],
+      {
+        body = un.body(1, 1),
+      }
+    )
+  ),
   us.msn(
     {
       { trig = 'sw' },

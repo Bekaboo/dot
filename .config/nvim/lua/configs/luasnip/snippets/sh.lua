@@ -173,6 +173,23 @@ M.snippets = {
       }
     )
   ),
+  us.mssn(
+    {
+      { trig = 'mn' },
+      { trig = 'main' },
+      common = { desc = 'main function' },
+    },
+    un.fmtad(
+      [[
+        main() {
+        <body>
+        }
+      ]],
+      {
+        body = un.body(1, 1),
+      }
+    )
+  ),
   us.msn(
     {
       { trig = 'ca' },
