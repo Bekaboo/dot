@@ -555,26 +555,57 @@ endif
 " }}}2
 
 " Make `colorcolumn` follow `textwidth` automatically {{{2
-if s:supportevents('BufNew', 'OptionSet')
+if s:supportevents('BufNew', 'OptionSet') && exists('*timer_start')
+  " Set `colorcolumn` to follow `textwidth` in new buffers
+  " param: buf int buf number of the newly created buffer
+  function! s:init_cc(buf) abort
+    if !bufexists(a:buf)
+      return
+    endif
+
+    let buf_tw = getbufvar(a:buf, '&tw')
+    let buf_cc = getbufvar(a:buf, '&cc')
+
+    if buf_tw == 0 || buf_cc =~# '+'
+      return
+    endif
+
+    let b:cc = buf_cc
+    for win in win_findbuf(a:buf)
+      call setwinvar(win, '&cc', '+1')
+    endfor
+  endfunction
+
+  " Set `colorcolumn` to follow `textwidth` when `textwidth` is set
+  " Restore `colorcolumn` when `textwidth` is unset
+  function! s:update_cc() abort
+    if v:option_command ==# 'setglobal'
+      return
+    endif
+
+    " `textwidth` is set, make `colorcolumn` follow it
+    if v:option_new > 0 && &l:cc !~# '+'
+      let b:cc = &l:cc
+      for win in win_findbuf(bufnr())
+        silent! call setwinvar(win, '&cc', '+1')
+      endfor
+      return
+    endif
+
+    " `textwidth` is unset, restore `colorcolumn`
+    if v:option_new == 0 && &l:cc =~# '+' && exists('b:cc')
+      for win in win_findbuf(bufnr())
+        silent! call setwinvar(win, '&cc', b:cc)
+      endfor
+      unlet b:cc
+    endif
+  endfunction
+
   augroup OptColorColumn
     autocmd!
-    " Set `colorcolumn` to follow `textwidth` in new buffers
-    autocmd BufNew * if &l:tw > 0 && &l:cc !~# '+' |
-          \   let b:cc = &l:cc |
-          \   for win in win_findbuf(expand('<abuf>')) |
-          \     call setwinvar(win, '&cc', '+1') |
-          \   endfor |
-          \ endif
-    " Set `colorcolumn` to follow `textwidth` when `textwidth` is set
-    " Restore `colorcolumn` when `textwidth` is unset
-    autocmd OptionSet textwidth let set_cmd = v:option_command == 'modeline' ? 'setl' : v:option_command |
-          \ if v:option_new > 0 && &l:cc !~# '+' |
-          \   let b:cc = &l:cc |
-          \   exe printf('%s cc=+1', set_cmd) |
-          \ elseif v:option_new == 0 && &l:cc =~# '+' && exists('b:cc') |
-          \   exe printf('%s cc=%s', set_cmd, b:cc) |
-          \   unlet b:cc |
-          \ endif
+    autocmd BufNew * let g:_cc_abuf = str2nr(expand('<abuf>')) |
+          \ call timer_start(0, {-> s:init_cc(g:_cc_abuf)})
+    autocmd OptionSet textwidth call s:update_cc()
   augroup END
 endif
 " }}}2

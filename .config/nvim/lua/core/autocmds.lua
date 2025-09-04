@@ -470,20 +470,27 @@ augroup('my.dynamic_colorcolumn', {
     desc = 'Set `colorcolumn` to follow `textwidth` when `textwidth` is set.',
     pattern = 'textwidth',
     callback = function()
+      if vim.v.option_command == 'setglobal' then
+        return
+      end
+
       local cc_is_relative = vim.wo.colorcolumn:find('+', 1, true)
-      local set_cmd = vim.v.option_command == 'modeline' and 'setlocal'
-        or vim.v.option_command
+      local wins = vim.fn.win_findbuf(vim.api.nvim_get_current_buf())
 
       -- `textwidth` is set, make `colorcolumn` follow it
       if vim.v.option_new > 0 and not cc_is_relative then
         vim.b.cc = vim.wo.colorcolumn
-        vim.cmd[set_cmd]('colorcolumn=+1')
+        for _, win in ipairs(wins) do
+          vim.wo[win][0].colorcolumn = '+1'
+        end
         return
       end
 
       -- `textwidth` is unset, restore `colorcolumn`
       if vim.v.option_new == 0 and cc_is_relative and vim.b.cc then
-        vim.cmd[set_cmd]('colorcolumn=' .. vim.b.cc)
+        for _, win in ipairs(wins) do
+          vim.wo[win][0].colorcolumn = vim.b.cc
+        end
         vim.b.cc = nil
       end
     end,
