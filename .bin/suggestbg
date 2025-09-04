@@ -12,10 +12,12 @@ if ! has sunwait; then
     exit
 fi
 
-# Use `sunwait` to determine if it's day or night
+# Use `sunwait` to determine if it's day or night using current coordinate,
+# using twilight angle of 8 degree above horizon (report dark when the sun is
+# below 8 degree above the horizon)
 #
 # shellcheck disable=SC2046 # we want to split result from `whereami` of the
 # form 'latitude longitude', e.g. '55.6013N 83.7034W'
-[ "$(sunwait poll $(whereami))" = "DAY" ] &&
+[ "$(sunwait poll $(whereami) angle 8)" = "DAY" ] &&
     echo light ||
     echo dark
