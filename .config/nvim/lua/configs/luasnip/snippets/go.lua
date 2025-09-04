@@ -917,7 +917,7 @@ M.snippets = {
         }
       ]],
       {
-        args = r(1, 'args'),
+        args = i(1),
         body = un.body(2, 1),
       }
     )
