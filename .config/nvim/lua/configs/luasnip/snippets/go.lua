@@ -684,7 +684,7 @@ M.snippets = {
     },
     un.fmtad(
       [[
-        (func(<args>) <ret> {
+        (func(<args>)<ret> {
         <body>
         })(<vals>)
       ]],
@@ -810,7 +810,7 @@ M.snippets = {
           nil,
           un.fmtad(
             [[
-              func(<args>) <ret> {
+              func(<args>)<ret> {
               <body>
               }
             ]],
@@ -832,7 +832,7 @@ M.snippets = {
           c(1, {
             un.fmtad(
               [[
-                <name> := func(<args>) <ret> {
+                <name> := func(<args>)<ret> {
                 <body>
                 }
               ]],
@@ -847,8 +847,8 @@ M.snippets = {
             -- recursion
             un.fmtad(
               [[
-                var <name> = func(<args>) <ret>
-                <name> = func(<args>) <ret> {
+                var <name> = func(<args>)<ret>
+                <name> = func(<args>)<ret> {
                 <body>
                 }
               ]],
@@ -869,7 +869,7 @@ M.snippets = {
         c(1, {
           un.fmtad(
             [[
-              func <name>(<args>) <ret> {
+              func <name>(<args>)<ret> {
               <body>
               }
             ]],
@@ -882,7 +882,7 @@ M.snippets = {
           ),
           un.fmtad(
             [[
-              func (<args>) <ret> {
+              func (<args>)<ret> {
               <body>
               }
             ]],
@@ -912,14 +912,13 @@ M.snippets = {
     },
     un.fmtad(
       [[
-        func main(<args>) <ret> {
+        func main(<args>) {
         <body>
         }
       ]],
       {
         args = r(1, 'args'),
-        ret = r(2, 'ret'),
-        body = un.body(3, 1),
+        body = un.body(2, 1),
       }
     )
   ),
@@ -931,7 +930,7 @@ M.snippets = {
     },
     un.fmtad(
       [[
-        func (<struct>) <name>(<args>) <ret> {
+        func (<struct>) <name>(<args>)<ret> {
         <body>
         }
       ]],
