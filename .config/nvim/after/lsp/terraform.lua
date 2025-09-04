@@ -3,7 +3,7 @@
 -- https://developer.hashicorp.com/terraform/cli
 
 return {
-  filetypes = { 'terraform' },
+  filetypes = { 'terraform', 'terraform-vars', 'hcl' },
   cmd = { 'efm-langserver' },
   requires = { 'terraform' },
   name = 'terraform',
