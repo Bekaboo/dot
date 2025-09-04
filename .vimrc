@@ -3,8 +3,7 @@ silent! set confirm
 silent! set notimeout
 silent! set hidden
 silent! set foldlevelstart=99
-silent! set textwidth=79
-silent! set colorcolumn=+1
+silent! set colorcolumn=80
 silent! set helpheight=10
 silent! set laststatus=2
 silent! set mouse=a
@@ -551,6 +550,31 @@ if s:supportevents('SessionLoadPost') &&
   augroup SessionCloseEmptyWins
     autocmd!
     autocmd SessionLoadPost * call s:clear_invalid_buffers()
+  augroup END
+endif
+" }}}2
+
+" Make `colorcolumn` follow `textwidth` automatically {{{2
+if s:supportevents('BufNew', 'OptionSet')
+  augroup OptColorColumn
+    autocmd!
+    " Set `colorcolumn` to follow `textwidth` in new buffers
+    autocmd BufNew * if &l:tw > 0 && &l:cc !~# '+' |
+          \   let b:cc = &l:cc |
+          \   for win in win_findbuf(expand('<abuf>')) |
+          \     call setwinvar(win, '&cc', '+1') |
+          \   endfor |
+          \ endif
+    " Set `colorcolumn` to follow `textwidth` when `textwidth` is set
+    " Restore `colorcolumn` when `textwidth` is unset
+    autocmd OptionSet textwidth let set_cmd = v:option_command == 'modeline' ? 'setl' : v:option_command |
+          \ if v:option_new > 0 && &l:cc !~# '+' |
+          \   let b:cc = &l:cc |
+          \   exe printf('%s cc=+1', set_cmd) |
+          \ elseif v:option_new == 0 && &l:cc =~# '+' && exists('b:cc') |
+          \   exe printf('%s cc=%s', set_cmd, b:cc) |
+          \   unlet b:cc |
+          \ endif
   augroup END
 endif
 " }}}2

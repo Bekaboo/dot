@@ -441,6 +441,55 @@ augroup('my.fix_cmdline_iskeyword', {
   },
 })
 
+-- Make `colorcolumn` follow `textwidth` automatically
+augroup('my.dynamic_colorcolumn', {
+  'BufNew',
+  {
+    desc = 'Set `colorcolumn` to follow `textwidth` in new buffers.',
+    callback = function(args)
+      if vim.bo[args.buf].textwidth == 0 then
+        return
+      end
+
+      local cc = vim.api.nvim_get_option_value('colorcolumn', {
+        buf = args.buf,
+      })
+      if cc:find('+', 1, true) then
+        return
+      end
+      vim.b[args.buf].cc = cc
+
+      for _, win in ipairs(vim.fn.win_findbuf(args.buf)) do
+        vim.wo[win][0].colorcolumn = '+1'
+      end
+    end,
+  },
+}, {
+  'OptionSet',
+  {
+    desc = 'Set `colorcolumn` to follow `textwidth` when `textwidth` is set.',
+    pattern = 'textwidth',
+    callback = function()
+      local cc_is_relative = vim.wo.colorcolumn:find('+', 1, true)
+      local set_cmd = vim.v.option_command == 'modeline' and 'setlocal'
+        or vim.v.option_command
+
+      -- `textwidth` is set, make `colorcolumn` follow it
+      if vim.v.option_new > 0 and not cc_is_relative then
+        vim.b.cc = vim.wo.colorcolumn
+        vim.cmd[set_cmd]('colorcolumn=+1')
+        return
+      end
+
+      -- `textwidth` is unset, restore `colorcolumn`
+      if vim.v.option_new == 0 and cc_is_relative and vim.b.cc then
+        vim.cmd[set_cmd]('colorcolumn=' .. vim.b.cc)
+        vim.b.cc = nil
+      end
+    end,
+  },
+})
+
 do
   ---Set default value for `hl-NormalSpecial`
   local function set_default_hlgroups()
