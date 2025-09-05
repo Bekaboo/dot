@@ -54,7 +54,7 @@ return {
     lazy = true,
     init = function()
       require('utils.load').on_events(
-        { event = 'FileType', pattern = 'markdown' },
+        { event = 'FileType', pattern = 'markdown', schedule = true },
         function()
           return require('otter') ~= nil
         end
