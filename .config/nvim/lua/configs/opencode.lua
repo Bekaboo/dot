@@ -39,48 +39,19 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
-local function set_default_hlgroups()
-  local hl = require('utils.hl')
+local hl = require('utils.hl')
 
+hl.persist(function()
   -- See `lua/core/autocmds.lua` for `hl-NormalSpecial` definition
-  hl.set_default(
-    0,
-    'OpenCodeNormal',
-    { link = 'NormalSpecial', default = true }
-  )
-  hl.set_default(
-    0,
-    'OpenCodeBackground',
-    { link = 'NormalSpecial', default = true }
-  )
-  hl.set_default(0, 'OpenCodeDiffAdd', { link = 'DiffAdd', default = true })
-  hl.set_default(
-    0,
-    'OpencodeDiffDelete',
-    { link = 'DiffDelete', default = true }
-  )
-  hl.set_default(0, 'OpencodeAgentBuild', { link = 'Todo', default = true })
-  hl.set_default(
-    0,
-    'OpencodeInputLegend',
-    { link = 'SpecialKey', default = true }
-  )
-  hl.set_default(0, 'OpenCodeSessionDescription', {
-    bg = 'OpenCodeNormal',
-    fg = 'Comment',
-    default = true,
-  })
-  hl.set_default(0, 'OpenCodeHint', {
-    bg = 'OpenCodeNormal',
-    fg = 'Comment',
-    default = true,
-  })
-end
+  -- stylua: ignore start
+  hl.set_default(0, 'OpenCodeNormal',      { link = 'NormalSpecial' })
+  hl.set_default(0, 'OpenCodeBackground',  { link = 'NormalSpecial' })
+  hl.set_default(0, 'OpenCodeDiffAdd',     { link = 'DiffAdd'       })
+  hl.set_default(0, 'OpencodeDiffDelete',  { link = 'DiffDelete'    })
+  hl.set_default(0, 'OpencodeAgentBuild',  { link = 'Todo'          })
+  hl.set_default(0, 'OpencodeInputLegend', { link = 'SpecialKey'    })
 
-set_default_hlgroups()
-
-vim.api.nvim_create_autocmd('ColorScheme', {
-  group = vim.api.nvim_create_augroup('my.opencode.hl', {}),
-  desc = 'Set default highlight groups for opencode.nvim.',
-  callback = set_default_hlgroups,
-})
+  hl.set_default(0, 'OpenCodeSessionDescription', { bg = 'OpenCodeNormal', fg = 'Comment' })
+  hl.set_default(0, 'OpenCodeHint',               { bg = 'OpenCodeNormal', fg = 'Comment' })
+  -- stylua: ignore end
+end)

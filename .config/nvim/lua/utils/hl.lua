@@ -347,4 +347,29 @@ function M.separate(h1, h2, alpha)
   -- stylua: ignore end
 end
 
+---Persist hlgroup settings across different colorschemes/bg settings
+---by re-applying them when colorscheme/bg changes
+---@param cb function
+function M.persist(cb)
+  cb()
+
+  local group = vim.api.nvim_create_augroup(
+    string.format('my.hl.persist.%d', vim.uv.hrtime()),
+    {}
+  )
+  vim.api.nvim_create_autocmd('ColorScheme', {
+    group = group,
+    callback = function()
+      cb()
+    end,
+  })
+  vim.api.nvim_create_autocmd('OptionSet', {
+    group = group,
+    pattern = 'background',
+    callback = function()
+      cb()
+    end,
+  })
+end
+
 return M

@@ -433,19 +433,9 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
----Set default highlight groups for headlines.nvim
----@return nil
-local function set_default_hlgroups()
-  local hl = require('utils.hl')
-  hl.set(0, 'MoltenCell', { link = 'CursorLine' })
-  hl.set(0, 'MoltenOutputWin', { link = 'NonText' })
-  hl.set(0, 'MoltenOutputWinNC', { link = 'NonText' })
-  hl.set(0, 'MoltenVirtualText', { link = 'NonText' })
-end
-set_default_hlgroups()
-
-vim.api.nvim_create_autocmd('ColorScheme', {
-  group = groupid,
-  desc = 'Set default highlight groups for headlines.nvim.',
-  callback = set_default_hlgroups,
-})
+require('utils.hl').persist(function()
+  vim.api.nvim_set_hl(0, 'MoltenCell', { link = 'CursorLine' })
+  vim.api.setm_set_hl(0, 'MoltenOutputWin', { link = 'NonText' })
+  vim.api.setm_set_hl(0, 'MoltenOutputWinNC', { link = 'NonText' })
+  vim.api.setm_set_hl(0, 'MoltenVirtualText', { link = 'NonText' })
+end)

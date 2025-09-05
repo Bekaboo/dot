@@ -498,12 +498,12 @@ augroup('my.dynamic_colorcolumn', {
 })
 
 do
+  local hl = require('utils.hl')
+
   ---Set default value for `hl-NormalSpecial`
-  local function set_default_hlgroups()
-    local hl = require('utils.hl')
-    local blended = hl.blend('Normal', 'CursorLine')
-    hl.set_default(0, 'NormalSpecial', blended)
-  end
+  hl.persist(function()
+    hl.set_default(0, 'NormalSpecial', hl.blend('Normal', 'CursorLine'))
+  end)
 
   augroup('my.special_buf_hl', {
     { 'BufEnter', 'BufNew', 'FileType', 'TermOpen' },
@@ -540,19 +540,6 @@ do
           })
         end)
       end),
-    },
-  }, {
-    'ColorScheme',
-    {
-      desc = 'Set special buffer normal hl.',
-      callback = set_default_hlgroups,
-    },
-  }, {
-    'OptionSet',
-    {
-      desc = 'Set special buffer normal hl.',
-      pattern = 'background',
-      callback = set_default_hlgroups,
     },
   })
 end

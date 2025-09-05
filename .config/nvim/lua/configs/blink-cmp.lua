@@ -237,8 +237,7 @@ require('blink.cmp').setup({
   },
 })
 
----Set completion lsp kind icon default hlgroups
-local function set_default_hlgroups()
+require('utils.hl').persist(function()
   -- stylua: ignore start
   vim.api.nvim_set_hl(0, 'BlinkCmpKindClass',       { link = '@type',               default = true })
   vim.api.nvim_set_hl(0, 'BlinkCmpKindConstant',    { link = '@constant',           default = true })
@@ -263,12 +262,4 @@ local function set_default_hlgroups()
   vim.api.nvim_set_hl(0, 'BlinkCmpKindVariable',    { link = 'Special',             default = true })
   vim.api.nvim_set_hl(0, 'BlinkCmpLabelDeprecated', { link = '@lsp.mod.deprecated', default = true })
   -- stylua: ignore end
-end
-
-set_default_hlgroups()
-
-vim.api.nvim_create_autocmd('ColorScheme', {
-  group = vim.api.nvim_create_augroup(string.format('my.blink-cmp.hl'), {}),
-  desc = 'Set default hlgroups for blink.cmp.',
-  callback = set_default_hlgroups,
-})
+end)

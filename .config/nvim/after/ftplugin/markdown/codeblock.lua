@@ -140,20 +140,17 @@ vim.api.nvim_create_autocmd('Syntax', {
   end,
 })
 
-local function set_default_hlgroups()
-  local hl = require('utils.hl')
+local hl = require('utils.hl')
+
+hl.persist(function()
   hl.set_default(0, 'CodeBlock', { link = 'CursorLine' })
   hl.set_default(0, 'Dash', { link = 'LineNr' })
   hl.set(0, 'markdownCode', { bg = 'CodeBlock' })
   hl.set(0, 'markdownCodeDelimiter', { bg = 'CodeBlock' })
+
   -- Treesitter hl
-  hl.set(0, '@markup.raw.markdown_inline', { fg = 'String', bg = 'CodeBlock' })
-end
-
-set_default_hlgroups()
-
-vim.api.nvim_create_autocmd('ColorScheme', {
-  group = groupid,
-  desc = 'Set default highlight groups for headlines.nvim.',
-  callback = set_default_hlgroups,
-})
+  hl.set(0, '@markup.raw.markdown_inline', {
+    fg = 'String',
+    bg = 'CodeBlock',
+  })
+end)

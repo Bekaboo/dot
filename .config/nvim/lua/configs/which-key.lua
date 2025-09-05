@@ -111,27 +111,19 @@ wk.add({
   { '<LocalLeader>l', group = 'TeX' },
 })
 
----Set default highlight groups for which-key.nvim
----@return nil
-local function set_default_hlgroups()
-  -- Ensure visibility in tty
-  if not vim.go.termguicolors then
-    vim.api.nvim_set_hl(0, 'WhichKey', { link = 'Normal', default = true })
-    vim.api.nvim_set_hl(0, 'WhichKeyDesc', { link = 'Normal', default = true })
-    vim.api.nvim_set_hl(
-      0,
-      'WhichKeySeparator',
-      { link = 'WhichKeyGroup', default = true }
-    )
+require('utils.hl').persist(function()
+  if vim.go.termguicolors then
+    return
   end
-end
 
-set_default_hlgroups()
-vim.api.nvim_create_autocmd('ColorScheme', {
-  group = vim.api.nvim_create_augroup('my.which-key.hl', {}),
-  desc = 'Set default highlight groups for which-key.nvim.',
-  callback = set_default_hlgroups,
-})
+  -- Ensure visibility in TTY
+  vim.api.nvim_set_hl(0, 'WhichKey', { link = 'Normal', default = true })
+  vim.api.nvim_set_hl(0, 'WhichKeyDesc', { link = 'Normal', default = true })
+  vim.api.nvim_set_hl(0, 'WhichKeySeparator', {
+    link = 'WhichKeyGroup',
+    default = true,
+  })
+end)
 
 vim.api.nvim_create_autocmd('ModeChanged', {
   desc = 'Redraw statusline shortly after mode change to ensure correct mode display after enting visual mode when which-key.nvim is enabled.',

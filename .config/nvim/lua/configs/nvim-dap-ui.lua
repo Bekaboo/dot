@@ -74,17 +74,6 @@ dapui.setup({
   windows = { indent = 1 },
 })
 
----Set default highlight groups for nvim-dap-ui
-local function set_default_hlgroups()
-  require('utils.hl').set(0, 'DapUIFloatBorder', {
-    link = 'FloatBorder',
-  })
-end
-
-set_default_hlgroups()
-
-vim.api.nvim_create_autocmd('ColorScheme', {
-  group = vim.api.nvim_create_augroup('my.dap-ui', {}),
-  desc = 'Set default highlight groups for nvim-dap-ui.',
-  callback = set_default_hlgroups,
-})
+require('utils.hl').persist(function()
+  vim.api.nvim_set_hl(0, 'DapUIFloatBorder', { link = 'FloatBorder' })
+end)
