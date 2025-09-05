@@ -11,18 +11,7 @@ return {
   {
     'iamcco/markdown-preview.nvim',
     build = 'cd app && npm install && cd - && git restore .',
-    lazy = true,
-    init = function()
-      require('utils.load').on_events(
-        { event = 'FileType', pattern = 'markdown' },
-        function()
-          require('lazy.core.loader').load(
-            'markdown-preview.nvim',
-            { ft = 'markdown' }
-          )
-        end
-      )
-    end,
+    ft = 'markdown',
     config = function()
       require('configs.markdown-preview')
     end,
@@ -30,19 +19,9 @@ return {
 
   {
     'dhruvasagar/vim-table-mode',
-    lazy = true,
+    ft = 'markdown',
     init = function()
       vim.g.table_mode_map_prefix = '<Leader><Tab>'
-
-      require('utils.load').on_events(
-        { event = 'FileType', pattern = 'markdown' },
-        function()
-          require('lazy.core.loader').load(
-            'vim-table-mode',
-            { ft = 'markdown' }
-          )
-        end
-      )
     end,
     config = function()
       require('configs.vim-table-mode')
