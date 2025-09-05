@@ -340,6 +340,21 @@ return {
       }
     )
   ),
+  us.sam(
+    { trig = 'rot', desc = 'Rotation matrix' },
+    un.fmtad(
+      [[
+        \begin{bmatrix}
+        <idnt>\cos\left(<angle>\right) x & -\sin\left(<angle>\right) y \\
+        <idnt>\sin\left(<angle>\right) x &  \cos\left(<angle>\right) y \\
+        \end{bmatrix}
+      ]],
+      {
+        idnt = un.idnt(1),
+        angle = i(1, '\\theta'),
+      }
+    )
+  ),
   us.msam({
     { trig = 'prop' },
     { trig = 'oc' },
