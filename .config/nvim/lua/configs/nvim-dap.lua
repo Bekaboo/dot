@@ -160,13 +160,16 @@ vim.fn.sign_define('DapStopped',             { text = vim.trim(icons.debug.Stack
 dap.adapters = {}
 dap.configurations = {}
 
-require('utils.load').ft_auto_load_once('configs.nvim-dap.dap', function(ft, spec)
-  if not spec then
-    return false
+require('utils.load').ft_auto_load_once(
+  'configs.nvim-dap.dap',
+  function(ft, spec)
+    if not spec then
+      return false
+    end
+    if spec.config and spec.config[1] and spec.config[1].type then
+      dap.adapters[spec.config[1].type] = spec.adapter
+    end
+    dap.configurations[ft] = spec.config
+    return true
   end
-  if spec.config and spec.config[1] and spec.config[1].type then
-    dap.adapters[spec.config[1].type] = spec.adapter
-  end
-  dap.configurations[ft] = spec.config
-  return true
-end)
+)
