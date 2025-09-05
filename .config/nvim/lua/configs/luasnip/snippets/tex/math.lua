@@ -540,17 +540,17 @@ return {
 
   us.sam({ trig = 'sin', priority = 999 }, {
     t('\\sin\\left('),
-    i(1),
+    i(1, '\\theta'),
     t('\\right)'),
   }),
   us.sam({ trig = 'cos', priority = 999 }, {
     t('\\cos\\left('),
-    i(1),
+    i(1, '\\theta'),
     t('\\right)'),
   }),
   us.sam({ trig = 'tan', priority = 999 }, {
     t('\\tan\\left('),
-    i(1),
+    i(1, '\\theta'),
     t('\\right)'),
   }),
   us.sam({ trig = 'asin' }, {
@@ -570,7 +570,7 @@ return {
   }),
   us.sam({ trig = 'sc' }, {
     t('\\operatorname{sinc}\\left('),
-    i(1),
+    i(1, '\\theta'),
     t('\\right)'),
   }),
   us.sam({ trig = 'exp' }, {
