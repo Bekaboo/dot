@@ -499,6 +499,13 @@ usage() {
 }
 
 main() {
+    lockfile="${XDG_RUNTIME_DIR:-/tmp}/setbg.lock"
+    exec 9>"$lockfile"
+    if ! flock -n 9; then
+        echo "Waiting for existing instance (lock: '$lockfile')" >&2
+        flock 9
+    fi
+
     bg=''
     for arg in "$@"; do
         case "$arg" in
