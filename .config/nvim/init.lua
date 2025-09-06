@@ -13,14 +13,9 @@ require('core.plugins')
 
 local load = require('utils.load')
 
-load.on_events('FileType', function()
-  require('core.treesitter')
-end)
-
-load.on_events({ 'FileType', 'LspAttach' }, function()
-  return require('core.lsp')
-end)
-
-load.on_events('DiagnosticChanged', function()
-  require('core.diagnostic')
-end)
+load.on_events('FileType', 'core.treesitter')
+load.on_events('DiagnosticChanged', 'core.diagnostic')
+load.on_events({
+  'FileType',
+  'LspAttach',
+}, 'core.lsp', true)

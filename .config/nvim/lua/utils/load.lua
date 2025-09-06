@@ -45,27 +45,40 @@ end
 ---@field desc? string
 ---@field nested? boolean
 ---@field pattern? string|string[]
----@field schedule? boolean whether the callback should scheduled to next event loop
 
 ---@alias load_event_spec_t load_event_spec_structured_t|string
 
 ---Load plugin once on given events
 ---@param event_specs load_event_spec_t|load_event_spec_t[] event/list of events to load the plugin
----@param cb fun(args: vim.api.keyset.create_autocmd.callback_args): boolean? return true if the event should be re-triggered to execute corresponding event handlers in lazy-loaded plugins
+---@param name string unique name of the plugin, also used as a namespace to prevent setting duplicated lazy-loading handlers for the same plugin/module
+---@param load? boolean|(fun(args: vim.api.keyset.create_autocmd.callback_args): boolean?) function to load the plugin. Return true if the event should be re-triggered to execute corresponding event handlers in lazy-loaded plugins; if not a function, use `name` as the lua module name
 ---@return integer # augroup id
-function M.on_events(event_specs, cb)
+function M.on_events(event_specs, name, load)
   local augroup_id = vim.api.nvim_create_augroup(
-    string.format('my.load.on_events.%s', vim.uv.hrtime()),
-    {}
+    string.format('my.load.on_events.%s', name),
+    { clear = false }
   )
 
-  cb = (function(c)
+  ---@param l? boolean|(fun(args: vim.api.keyset.create_autocmd.callback_args): boolean?)
+  load = (function(l)
     ---Wrapped callback that deletes the loading augroup to avoid double loading
     ---and re-triggers event to execute event handlers in lazy-loaded plugins
     ---@param args vim.api.keyset.create_autocmd.callback_args
     return function(args)
       pcall(vim.api.nvim_del_augroup_by_id, augroup_id)
-      if c(args) then
+
+      local retrig = (function()
+        if l and vim.is_callable(l) then
+          return l(args)
+        end
+
+        require(name)
+        if type(l) == 'boolean' then
+          return l
+        end
+      end)()
+
+      if retrig then
         vim.schedule(function()
           if not vim.api.nvim_buf_is_valid(args.buf) then
             return
@@ -78,7 +91,7 @@ function M.on_events(event_specs, cb)
         end)
       end
     end
-  end)(cb)
+  end)(load)
 
   -- Normalize `event_specs` to be a list of structured specs, e.g.
   -- {
@@ -104,7 +117,7 @@ function M.on_events(event_specs, cb)
       desc = event_spec.desc,
       nested = event_spec.nested,
       pattern = event_spec.pattern,
-      callback = event_spec.schedule and vim.schedule_wrap(cb) or cb,
+      callback = load,
     })
   end
 

@@ -33,9 +33,13 @@ return {
     lazy = true,
     init = function()
       require('utils.load').on_events(
-        { event = 'FileType', pattern = 'markdown', schedule = true },
+        { event = 'FileType', pattern = 'markdown' },
+        'otter',
         function()
-          return require('otter') ~= nil
+          vim.schedule(function()
+            require('otter')
+          end)
+          return true
         end
       )
     end,
@@ -112,6 +116,7 @@ return {
 
       require('utils.load').on_events(
         { event = 'FileType', pattern = { 'python', 'markdown' } },
+        'molten',
         function(args)
           if loaded then
             return true

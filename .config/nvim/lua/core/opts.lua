@@ -381,19 +381,27 @@ local function load_runtime(runtime, flag)
   end
 end
 
-require('utils.load').on_events({
-  'FileType',
-  'BufNew',
-  'BufWritePost',
-  'BufReadPre',
-  { event = 'CmdUndefined', pattern = 'UpdateRemotePlugins' },
-}, load_runtime('rplugin/rplugin.vim', 'loaded_remote_plugins'))
+require('utils.load').on_events(
+  {
+    'FileType',
+    'BufNew',
+    'BufWritePost',
+    'BufReadPre',
+    { event = 'CmdUndefined', pattern = 'UpdateRemotePlugins' },
+  },
+  'rplugin/rplugin.nvim',
+  load_runtime('rplugin/rplugin.vim', 'loaded_remote_plugins')
+)
 
-require('utils.load').on_events({
-  { event = 'FileType', pattern = 'python' },
-  { event = 'BufNew', pattern = { '*.py', '*.ipynb' } },
-  { event = 'BufEnter', pattern = { '*.py', '*.ipynb' } },
-  { event = 'BufWritePost', pattern = { '*.py', '*.ipynb' } },
-  { event = 'BufReadPre', pattern = { '*.py', '*.ipynb' } },
-  { event = 'CmdUndefined', pattern = 'UpdateRemotePlugins' },
-}, load_runtime('provider/python3.vim', 'loaded_python3_provider'))
+require('utils.load').on_events(
+  {
+    { event = 'FileType', pattern = 'python' },
+    { event = 'BufNew', pattern = { '*.py', '*.ipynb' } },
+    { event = 'BufEnter', pattern = { '*.py', '*.ipynb' } },
+    { event = 'BufWritePost', pattern = { '*.py', '*.ipynb' } },
+    { event = 'BufReadPre', pattern = { '*.py', '*.ipynb' } },
+    { event = 'CmdUndefined', pattern = 'UpdateRemotePlugins' },
+  },
+  'provider/python3.vim',
+  load_runtime('provider/python3.vim', 'loaded_python3_provider')
+)

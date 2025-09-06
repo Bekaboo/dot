@@ -9,54 +9,60 @@ end
 local load = require('utils.load')
 
 -- expandtab
-load.on_events('InsertEnter', function()
+load.on_events('InsertEnter', 'plugin.expandtab', function()
   require('plugin.expandtab').setup()
 end)
 
 -- jupytext
-load.on_events({ event = 'BufReadCmd', pattern = '*.ipynb' }, function(args)
-  require('plugin.jupytext').setup(args.buf)
-end)
+load.on_events(
+  { event = 'BufReadCmd', pattern = '*.ipynb' },
+  'plugin.jupytext',
+  function(args)
+    require('plugin.jupytext').setup(args.buf)
+  end
+)
 
 -- lsp & diagnostic commands
 load.on_events(
   { 'Syntax', 'FileType', 'LspAttach', 'DiagnosticChanged' },
+  'plugin.lsp-commands',
   function()
     require('plugin.lsp-commands').setup()
   end
 )
 
 -- readline
-load.on_events({ 'CmdlineEnter', 'InsertEnter' }, function()
+load.on_events({ 'CmdlineEnter', 'InsertEnter' }, 'plugin.readline', function()
   require('plugin.readline').setup()
 end)
 
 -- winbar
-load.on_events('FileType', function()
+load.on_events('FileType', 'plugin.winbar', function()
   if vim.g.loaded_winbar ~= nil then
     return
   end
 
-  local winbar = require('plugin.winbar')
-  local api = require('plugin.winbar.api')
-  winbar.setup({ bar = { hover = false } })
+  require('plugin.winbar').setup({
+    bar = { hover = false },
+  })
 
+  local winbar_api = require('plugin.winbar.api')
   vim.keymap.set(
     'n',
     '<Leader>;',
-    api.pick,
+    winbar_api.pick,
     { desc = 'Pick symbols in winbar' }
   )
   vim.keymap.set(
     'n',
     '[;',
-    api.goto_context_start,
+    winbar_api.goto_context_start,
     { desc = 'Go to start of current context' }
   )
   vim.keymap.set(
     'n',
     '];',
-    api.select_next_context,
+    winbar_api.select_next_context,
     { desc = 'Select next context' }
   )
 end)
@@ -77,7 +83,7 @@ load_ui('statusline')
 load_ui('statuscolumn')
 
 -- term
-load.on_events('TermOpen', function(args)
+load.on_events('TermOpen', 'plugin.term', function(args)
   local term = require('plugin.term')
   term.setup()
   vim.keymap.set('n', '.', term.rerun, {
@@ -88,13 +94,17 @@ end)
 
 -- tmux
 if vim.g.has_ui then
-  load.on_events({ event = 'UIEnter', schedule = true }, function()
-    require('plugin.tmux').setup()
-  end)
+  load.on_events(
+    { event = 'UIEnter' },
+    'plugin.tmux',
+    vim.schedule_wrap(function()
+      require('plugin.tmux').setup()
+    end)
+  )
 end
 
 -- tabout
-load.on_events('InsertEnter', function()
+load.on_events('InsertEnter', 'plugin.tabout', function()
   require('plugin.tabout').setup()
 end)
 
@@ -104,21 +114,21 @@ if vim.g.loaded_z == nil then
     require('plugin.z').select()
   end, { desc = 'Open a directory from z' })
 
+  local function setup()
+    require('plugin.z').setup()
+  end
+
+  load.on_events('UIEnter', 'plugin.z', vim.schedule_wrap(setup))
   load.on_events({
     'CmdlineEnter',
     'DirChanged',
-    { event = 'UIEnter', schedule = true },
     { event = 'CmdUndefined', pattern = 'Z*' },
-  }, function()
-    require('plugin.z').setup()
-  end)
+  }, 'plugin.z', setup)
 end
 
 -- addasync
-load.on_events('InsertEnter', function()
-  if require('utils.ts').is_active() then
-    require('plugin.addasync').setup()
-  end
+load.on_events('InsertEnter', 'plugin.addaync', function()
+  require('plugin.addasync').setup()
 end)
 
 -- session
@@ -131,14 +141,19 @@ if vim.g.loaded_session == nil then
     require('plugin.session').load(nil, true)
   end, { desc = 'Load session (workspace) for cwd' })
 
-  load.on_events({
-    'CmdlineEnter',
-    { event = 'UIEnter', schedule = true },
-    { event = 'CmdUndefined', pattern = { 'Session*', 'Mksession' } },
-  }, function()
+  local function setup()
     require('plugin.session').setup({
       autoload = { enabled = false },
       autoremove = { enabled = false },
     })
-  end)
+  end
+
+  load.on_events('UIEnter', 'plugin.session', vim.schedule_wrap(setup))
+  load.on_events({
+    'CmdlineEnter',
+    {
+      event = 'CmdUndefined',
+      pattern = { 'Session*', 'Mksession' },
+    },
+  }, 'plugin.session', setup)
 end
