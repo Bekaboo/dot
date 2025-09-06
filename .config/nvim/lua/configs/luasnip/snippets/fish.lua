@@ -374,6 +374,23 @@ M.snippets = {
       )
     end)
   ),
+  us.sn(
+    {
+      trig = 'trap',
+      desc = 'trap command',
+    },
+    un.fmtad('trap <cmd> <sig>', {
+      cmd = i(1, 'cleanup'),
+      sig = c(2, {
+        i(nil, 'EXIT INT TERM HUP'), -- common signals that terminates a program by default, useful for most scripts
+        i(nil, 'EXIT INT TERM'), -- handle `HUP` in another trap, used in a daemon script
+        i(nil, 'EXIT'),
+        i(nil, 'INT'),
+        i(nil, 'TERM'),
+        i(nil, 'HUP'), -- disconnected from terminal, useful for interactive scripts that needs a terminal
+      }),
+    })
+  ),
 }
 
 return M
