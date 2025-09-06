@@ -7,7 +7,14 @@ local blink_ctx = require('blink.cmp.completion.trigger.context')
 ---@param ctx blink.cmp.DrawItemContext
 ---@return boolean
 local function is_file_compl(ctx)
-  return ctx.item and ctx.item.source_id == 'path'
+  return ctx.source_id == 'path'
+    -- Opencode has slash commands (starting with `/`) and file references,
+    -- both provided by the 'opencode_mentions' source. Show file icons only
+    -- for file require.
+    or ctx.source_id == 'opencode_mentions' and not vim.startswith(
+      ctx.label,
+      '/'
+    )
     or vim.tbl_contains(
       { 'dir', 'file', 'file_in_path', 'runtime' },
       blink_source_utils.get_completion_type(blink_ctx.get_mode())
