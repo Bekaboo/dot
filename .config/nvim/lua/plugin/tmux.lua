@@ -129,17 +129,17 @@ end
 ---Check if nvim has only one window in current session
 ---@return boolean
 local function nvim_has_only_win()
-  return #vim.tbl_filter(function(win)
+  return not vim.iter(vim.api.nvim_list_wins()):any(function(win)
     return vim.fn.win_gettype(win) ~= 'popup'
-  end, vim.api.nvim_list_wins()) <= 1
+  end)
 end
 
 ---Check if nvim has only one window in current tab
 ---@return boolean
 local function nvim_tabpage_has_only_win()
-  return #vim.tbl_filter(function(win)
+  return not vim.iter(vim.api.nvim_tabpage_list_wins(0)):any(function(win)
     return vim.fn.win_gettype(win) ~= 'popup'
-  end, vim.api.nvim_tabpage_list_wins(0)) <= 1
+  end)
 end
 
 ---@param direction nvim_direction_t
