@@ -367,6 +367,8 @@ main() {
         esac
     done
 
+    trap 'kill $(jobs -p) 2>/dev/null; wait' EXIT INT TERM HUP
+
     # Sync app's colorscheme with system/desktop colorscheme, don't set system
     # colorscheme
     if [ -z "$SETCOLOR_SKIP_SYSTEM" ]; then

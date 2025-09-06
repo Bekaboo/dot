@@ -519,6 +519,8 @@ main() {
         esac
     done
 
+    trap 'kill $(jobs -p) 2>/dev/null; wait' EXIT INT TERM HUP
+
     # Called by `syncbg` to sync apps' background with system/desktop
     # background, don't set system background
     if [ -z "$SETBG_SKIP_SYSTEM" ]; then
