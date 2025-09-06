@@ -182,7 +182,9 @@ end
 
 ---@return boolean
 local function tmux_mapkey_close_win_condition()
-  return not tmux_is_zoomed() and nvim_has_only_win()
+  return not tmux_is_zoomed()
+    and not nvim_in_floating_win()
+    and nvim_has_only_win()
 end
 
 ---@return boolean
