@@ -667,23 +667,13 @@ fzf.setup({
         \ else |
         \   unlet g:_fzf_qfclosed |
         \ endif |
+        \ let g:_fzf_height += g:_fzf_cmdheight + (g:_fzf_laststatus ? 1 : 0) |
         \ exe printf('botright %dnew', g:_fzf_height) |
         \ let g:_fzf_win = nvim_get_current_win() |
-        \ let g:_fzf_height += g:_fzf_cmdheight + (g:_fzf_laststatus ? 1 : 0) |
         \ let w:winbar_no_attach = v:true |
-        \ setlocal bt=nofile bh=wipe nobl noswf
+        \ setlocal bt=nofile bh=wipe nobl noswf wfh
     ]],
     on_create = function()
-      -- Prevent fzf-lua window from being squeezed by windows with
-      -- `winfixheight`, this is a neovim bug and can be reproduced by
-      -- `nvim --clean +'set sb spr' +'wincmd v | wincmd s | resize 8 | windo set wfh' +'botr new'`
-      vim.schedule(function()
-        if not vim.api.nvim_win_is_valid(vim.g._fzf_win) then
-          return
-        end
-        vim.api.nvim_win_set_height(vim.g._fzf_win, vim.g._fzf_height)
-      end)
-
       vim.keymap.set(
         't',
         '<C-r>',
