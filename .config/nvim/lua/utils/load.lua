@@ -48,13 +48,6 @@ function M.ft_auto_load_once(from, load)
   })
 end
 
----Load lua module or plugin
----@param name string
-function M.load(name)
-  pcall(vim.cmd.packadd, name)
-  pcall(require, name)
-end
-
 ---@class load_event_spec_structured_t
 ---@field event string
 ---@field buffer? integer
@@ -93,7 +86,8 @@ function M.on_events(event_specs, name, load)
           return l(args)
         end
 
-        M.load(name)
+        pcall(vim.cmd.packadd, name)
+        pcall(require, name)
 
         if type(l) == 'boolean' then
           return l
@@ -168,7 +162,8 @@ function M.on_cmds(cmds, name, load)
         if l and vim.is_callable(l) then
           l()
         else
-          M.load(name)
+          pcall(vim.cmd.packadd, name)
+          pcall(require, name)
         end
         M.loaded[name] = true
       end
