@@ -435,7 +435,7 @@ vim.api.nvim_create_autocmd('FileType', {
 
 require('utils.hl').persist(function()
   vim.api.nvim_set_hl(0, 'MoltenCell', { link = 'CursorLine' })
-  vim.api.setm_set_hl(0, 'MoltenOutputWin', { link = 'NonText' })
-  vim.api.setm_set_hl(0, 'MoltenOutputWinNC', { link = 'NonText' })
-  vim.api.setm_set_hl(0, 'MoltenVirtualText', { link = 'NonText' })
+  vim.api.nvim_set_hl(0, 'MoltenOutputWin', { link = 'NonText' })
+  vim.api.nvim_set_hl(0, 'MoltenOutputWinNC', { link = 'NonText' })
+  vim.api.nvim_set_hl(0, 'MoltenVirtualText', { link = 'NonText' })
 end)
