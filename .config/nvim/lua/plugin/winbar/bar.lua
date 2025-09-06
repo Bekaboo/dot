@@ -607,7 +607,8 @@ function winbar_t:pick(idx)
     -- Read the input from user
     local shortcut_read = ''
     for _ = 1, n_chars do
-      shortcut_read = shortcut_read .. vim.fn.nr2char(vim.fn.getchar())
+      shortcut_read = shortcut_read
+        .. vim.fn.nr2char(vim.fn.getchar() --[[@as integer]])
     end
     -- Restore the original content of each component
     for _, component in ipairs(clickables) do
