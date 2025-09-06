@@ -119,11 +119,8 @@ if vim.g.loaded_z == nil then
   end
 
   load.on_events('UIEnter', 'plugin.z', vim.schedule_wrap(setup))
-  load.on_events({
-    'CmdlineEnter',
-    'DirChanged',
-    { event = 'CmdUndefined', pattern = 'Z*' },
-  }, 'plugin.z', setup)
+  load.on_events('DirChanged', 'plugin.z', setup)
+  load.on_cmds({ 'Z', 'ZSelect' }, 'plugin.z', setup)
 end
 
 -- addasync
@@ -141,19 +138,20 @@ if vim.g.loaded_session == nil then
     require('plugin.session').load(nil, true)
   end, { desc = 'Load session (workspace) for cwd' })
 
-  local function setup()
-    require('plugin.session').setup({
-      autoload = { enabled = false },
-      autoremove = { enabled = false },
-    })
-  end
-
-  load.on_events('UIEnter', 'plugin.session', vim.schedule_wrap(setup))
-  load.on_events({
-    'CmdlineEnter',
+  load.on_cmds(
     {
-      event = 'CmdUndefined',
-      pattern = { 'Session*', 'Mksession' },
+      'SessionLoad',
+      'SessionSave',
+      'SessionRemove',
+      'SessionSelect',
+      'Mkssession',
     },
-  }, 'plugin.session', setup)
+    'plugin.session',
+    function()
+      require('plugin.session').setup({
+        autoload = { enabled = false },
+        autoremove = { enabled = false },
+      })
+    end
+  )
 end

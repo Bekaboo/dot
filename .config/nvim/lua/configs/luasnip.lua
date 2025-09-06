@@ -10,7 +10,7 @@ local function load_snippets(ft)
 
   utils.load.ft_load_once(ft, 'configs.luasnip.snippets', function(_, snips)
     if not snips or vim.tbl_isempty(snips) then
-      return false
+      return
     end
     for _, group in pairs(snips) do
       ls.add_snippets(ft, group.snip or group, group.opts or {})
