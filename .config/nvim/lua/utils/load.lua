@@ -48,13 +48,8 @@ function M.ft_auto_load_once(from, load)
   })
 end
 
----@class load_event_spec_structured_t
+---@class (partial) load_event_spec_structured_t : vim.api.keyset.create_autocmd
 ---@field event string
----@field buffer? integer
----@field desc? string
----@field nested? boolean
----@field pattern? string|string[]
----@field retrig? boolean
 
 ---@alias load_event_spec_t load_event_spec_structured_t|string
 
