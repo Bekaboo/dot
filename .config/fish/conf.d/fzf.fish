@@ -25,11 +25,6 @@ if status is-login
         --bind=shift-up:preview-up,shift-down:preview-down \
         --bind=alt-v:preview-half-page-up,ctrl-v:preview-half-page-down"
 
-    # If supports 256 colors
-    if type -q tput; and test "$(tput colors 2>/dev/null)" -lt 256 2>/dev/null
-        set -Uxa FZF_DEFAULT_OPTS --no-unicode '--marker=+\ ' '--pointer=\>\ '
-    end
-
     # Disable ueberzug preview
     set -Ux FZF_PREVIEW_DISABLE_UB true
 

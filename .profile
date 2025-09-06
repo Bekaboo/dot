@@ -69,12 +69,6 @@ export FZF_DEFAULT_OPTS="--reverse \
     --bind=shift-up:preview-up,shift-down:preview-down \
     --bind=alt-v:preview-half-page-up,ctrl-v:preview-half-page-down"
 
-if has tput && [ "$(tput colors)" -lt 256 ]; then
-    # shellcheck disable=SC2090
-    export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
-        --no-unicode --marker='+ ' --pointer='> '"
-fi
-
 fd=$(has fd && echo fd || echo fdfind)
 
 if has "$fd"; then
