@@ -80,6 +80,7 @@ function M.on_events(event_specs, name, load)
     ---@param args vim.api.keyset.create_autocmd.callback_args
     return function(args)
       pcall(vim.api.nvim_del_augroup_by_id, augroup_id)
+      M.loaded[name] = true
 
       local retrig = (function()
         if l and vim.is_callable(l) then
@@ -106,8 +107,6 @@ function M.on_events(event_specs, name, load)
           end)
         end)
       end
-
-      M.loaded[name] = true
     end
   end)(load)
 
@@ -159,13 +158,14 @@ function M.on_cmds(cmds, name, load)
     load = (function(l)
       return function()
         pcall(vim.api.nvim_del_user_command, cmd)
+        M.loaded[name] = true
+
         if l and vim.is_callable(l) then
           l()
         else
           pcall(vim.cmd.packadd, name)
           pcall(require, name)
         end
-        M.loaded[name] = true
       end
     end)(load)
 
