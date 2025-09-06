@@ -19,7 +19,7 @@ function M.ft_load_once(ft, from, load)
     return
   end
 
-  -- Only trigger FileType event when ft matches curent buffer's ft, else
+  -- Only trigger FileType event when ft matches current buffer's ft, else
   -- it will mess up current buffer's hl and conceal
   if ft == vim.bo.ft and load(ft, mod) then
     vim.api.nvim_exec_autocmds('FileType', { pattern = ft })
