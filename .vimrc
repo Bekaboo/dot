@@ -559,19 +559,15 @@ if s:supportevents('BufNew', 'OptionSet') && exists('*timer_start')
   " Set `colorcolumn` to follow `textwidth` in new buffers
   " param: buf int buf number of the newly created buffer
   function! s:init_cc(buf) abort
-    if !bufexists(a:buf)
+    if !bufexists(a:buf) || getbufvar(a:buf, '&tw') == 0
       return
     endif
 
-    let buf_tw = getbufvar(a:buf, '&tw')
-    let buf_cc = getbufvar(a:buf, '&cc')
-
-    if buf_tw == 0 || buf_cc =~# '+'
-      return
-    endif
-
-    let b:cc = buf_cc
     for win in win_findbuf(a:buf)
+      if getwinvar(win, '&cc') =~# '+'
+        continue
+      endif
+      call setbufvar(a:buf, 'cc', getwinvar(win, '&cc'))
       call setwinvar(win, '&cc', '+1')
     endfor
   endfunction
@@ -603,7 +599,7 @@ if s:supportevents('BufNew', 'OptionSet') && exists('*timer_start')
 
   augroup DynamicCC
     autocmd!
-    autocmd BufNew * let g:_cc_abuf = str2nr(expand('<abuf>')) |
+    autocmd BufNew,BufEnter * let g:_cc_abuf = str2nr(expand('<abuf>')) |
           \ call timer_start(0, {-> s:init_cc(g:_cc_abuf)})
     autocmd OptionSet textwidth call s:update_cc()
   augroup END

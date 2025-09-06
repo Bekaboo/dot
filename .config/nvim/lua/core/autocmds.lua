@@ -443,7 +443,7 @@ augroup('my.fix_cmdline_iskeyword', {
 
 -- Make `colorcolumn` follow `textwidth` automatically
 augroup('my.dynamic_cc', {
-  'BufNew',
+  { 'BufNew', 'BufEnter' },
   {
     desc = 'Set `colorcolumn` to follow `textwidth` in new buffers.',
     callback = function(args)
@@ -451,16 +451,13 @@ augroup('my.dynamic_cc', {
         return
       end
 
-      local cc = vim.api.nvim_get_option_value('colorcolumn', {
-        buf = args.buf,
-      })
-      if cc:find('+', 1, true) then
-        return
-      end
-      vim.b[args.buf].cc = cc
-
       for _, win in ipairs(vim.fn.win_findbuf(args.buf)) do
+        if vim.wo[win].colorcolumn:find('+', 1, true) then
+          goto continue
+        end
+        vim.b[args.buf].cc = vim.wo[win].colorcolumn
         vim.wo[win][0].colorcolumn = '+1'
+        ::continue::
       end
     end,
   },
