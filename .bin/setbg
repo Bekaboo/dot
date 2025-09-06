@@ -475,7 +475,7 @@ setbg_libreoffice() {
 # $1: bg, 'light' or 'dark'
 write_conflict() {
     conflict_file="$STATE_HOME/setbg/conflict"
-    conflict_file_dir="$(dirname conflict_file)"
+    conflict_file_dir="$(dirname "$conflict_file")"
 
     if [ ! -d "$conflict_file_dir" ]; then
         mkdir -p "$conflict_file_dir"
