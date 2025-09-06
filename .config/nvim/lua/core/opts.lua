@@ -386,10 +386,7 @@ require('utils.load').on_events({
   'BufNew',
   'BufWritePost',
   'BufReadPre',
-  {
-    event = 'CmdUndefined',
-    pattern = 'UpdateRemotePlugins',
-  },
+  { event = 'CmdUndefined', pattern = 'UpdateRemotePlugins' },
 }, load_runtime('rplugin/rplugin.vim', 'loaded_remote_plugins'))
 
 require('utils.load').on_events({
@@ -399,4 +396,4 @@ require('utils.load').on_events({
   { event = 'BufWritePost', pattern = { '*.py', '*.ipynb' } },
   { event = 'BufReadPre', pattern = { '*.py', '*.ipynb' } },
   { event = 'CmdUndefined', pattern = 'UpdateRemotePlugins' },
-}, load_runtime('rplugin/rplugin.vim', 'loaded_remote_plugins'))
+}, load_runtime('provider/python3.vim', 'loaded_python3_provider'))
