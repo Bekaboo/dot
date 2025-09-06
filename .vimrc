@@ -601,7 +601,7 @@ if s:supportevents('BufNew', 'OptionSet') && exists('*timer_start')
     endif
   endfunction
 
-  augroup OptColorColumn
+  augroup DynamicCC
     autocmd!
     autocmd BufNew * let g:_cc_abuf = str2nr(expand('<abuf>')) |
           \ call timer_start(0, {-> s:init_cc(g:_cc_abuf)})

@@ -442,7 +442,7 @@ augroup('my.fix_cmdline_iskeyword', {
 })
 
 -- Make `colorcolumn` follow `textwidth` automatically
-augroup('my.dynamic_colorcolumn', {
+augroup('my.dynamic_cc', {
   'BufNew',
   {
     desc = 'Set `colorcolumn` to follow `textwidth` in new buffers.',
