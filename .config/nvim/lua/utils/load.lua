@@ -220,28 +220,24 @@ function M.on_cmds(cmds, name, load)
   end
 
   for _, cmd in ipairs(cmds) do
-    ---@param l? function function to load the plugin
-    ---@return function
-    load = (function(l)
-      return function()
-        pcall(vim.api.nvim_del_user_command, cmd)
-        loaded[name] = true
+    local function load_cmd()
+      pcall(vim.api.nvim_del_user_command, cmd)
+      loaded[name] = true
 
-        if l then
-          l()
-        else
-          pcall(vim.cmd.packadd, name)
-          pcall(require, name)
-        end
+      if load then
+        load()
+      else
+        pcall(vim.cmd.packadd, name)
+        pcall(require, name)
       end
-    end)(load)
+    end
 
     if vim.fn.exists(':' .. cmd) == 2 then
       goto continue
     end
 
     vim.api.nvim_create_user_command(cmd, function(call_args)
-      load()
+      load_cmd()
 
       -- Adapted from
       -- https://github.com/folke/lazy.nvim/blob/main/lua/lazy/core/handler/cmd.lua
@@ -281,7 +277,7 @@ function M.on_cmds(cmds, name, load)
       range = true,
       nargs = '*',
       complete = function(_, line)
-        load()
+        load_cmd()
         return vim.fn.getcompletion(line, 'cmdline')
       end,
     })
