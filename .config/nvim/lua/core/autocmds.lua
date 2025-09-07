@@ -46,13 +46,12 @@ do
     'FileType',
     {
       once = true,
-      desc = 'Prevent treesitter and LSP from attaching to big files.',
+      desc = 'Prevent treesitter from attaching to big files.',
       callback = function(args)
         vim.api.nvim_del_autocmd(args.id)
 
         local ts_get_parser = vim.treesitter.get_parser
         local ts_foldexpr = vim.treesitter.foldexpr
-        local lsp_start = vim.lsp.start
 
         ---@diagnostic disable-next-line: duplicate-set-field
         function vim.treesitter.get_parser(buf, ...)
@@ -74,14 +73,6 @@ do
             return
           end
           return ts_foldexpr(...)
-        end
-
-        ---@diagnostic disable-next-line: duplicate-set-field
-        function vim.lsp.start(...)
-          if vim.b.bigfile then
-            return
-          end
-          return lsp_start(...)
         end
       end,
     },
