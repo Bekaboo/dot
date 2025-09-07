@@ -282,12 +282,11 @@ function M.on_cmds(cmds, name, load)
         return vim.fn.getcompletion(line, 'cmdline')
       end,
     })
-    ::continue::
   end
 end
 
 ---@class load_key_spec_structured_t
----@field mode string|string[]
+---@field mode? string|string[]
 ---@field lhs string
 ---@field opts? vim.keymap.set.Opts
 
@@ -296,18 +295,21 @@ end
 ---Load plugin once on given keys
 ---@param key_specs load_key_spec_t|load_key_spec_t[]
 ---@param name string unique name of the plugin, also used as a namespace to prevent setting duplicated lazy-loading handlers for the same plugin/module
----@param load? fun(args: vim.api.keyset.create_autocmd.callback_args) function to load the plugin
+---@param load? function function to load the plugin
 function M.on_keys(key_specs, name, load)
   if loaded[name] then
     return
   end
 
-  if type(key_specs) ~= 'table' then
-    key_specs = { key_specs }
+  ---@diagnostic disable-next-line: param-type-mismatch
+  if not vim.islist(key_specs) then
+    key_specs = { key_specs } ---@cast key_specs load_key_spec_t[]
   end
   for i, spec in ipairs(key_specs) do
     if type(spec) == 'string' then
       key_specs[i] = { mode = 'n', lhs = spec }
+    else
+      spec.mode = spec.mode or 'n'
     end
   end
 
@@ -330,8 +332,8 @@ function M.on_keys(key_specs, name, load)
         pcall(vim.api.nvim_del_keymap, spec.mode, spec.lhs)
       end
 
-      if l then
-        l()
+      if load then
+        load()
       else
         M.load(name)
       end
