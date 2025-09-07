@@ -232,10 +232,6 @@ function M.on_cmds(cmds, name, load)
       end
     end
 
-    if vim.fn.exists(':' .. cmd) == 2 then
-      goto continue
-    end
-
     vim.api.nvim_create_user_command(cmd, function(call_args)
       load_cmd()
 
