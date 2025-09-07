@@ -10,14 +10,17 @@ vim.treesitter.start = (function(cb)
   ---@param lang string? Language of the parser (default: from buffer filetype)
   return function(bufnr, lang, ...)
     bufnr = vim._resolve_bufnr(bufnr)
-    if not vim.api.nvim_buf_is_valid(bufnr) then
+    cb(bufnr, lang, ...)
+    if vim.bo[bufnr].ft ~= 'tex' and lang ~= 'latex' then
       return
     end
-    cb(bufnr, lang, ...)
     -- Re-enable regex syntax highlighting after starting treesitter
-    if vim.bo[bufnr].ft == 'tex' or lang == 'latex' then
+    vim.schedule(function()
+      if not vim.api.nvim_buf_is_valid(bufnr) then
+        return
+      end
       vim.bo[bufnr].syntax = 'on'
-    end
+    end)
   end
 end)(vim.treesitter.start)
 
