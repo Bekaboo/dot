@@ -6,8 +6,8 @@ local loaded = {}
 ---Load lua module for given filetype once
 ---@param ft string filetype to load, default to current buffer's filetype
 ---@param from string module to load from
----@param load fun(ft: string, ...)
-function M.ft_load_once(ft, from, load)
+---@param after_load fun(ft: string, ...)
+function M.ft_load_once(ft, from, after_load)
   local mod_name = string.format('%s.%s', from, ft)
   if loaded[mod_name] then
     return
@@ -19,7 +19,7 @@ function M.ft_load_once(ft, from, load)
     return
   end
 
-  load(ft, mod)
+  after_load(ft, mod)
 
   -- Only trigger FileType event when ft matches current buffer's ft, else
   -- it will mess up current buffer's hl and conceal
@@ -30,22 +30,22 @@ end
 
 ---Automatically load filetype-specific lua file from given module once
 ---@param from string module to load from
----@param load fun(ft: string, ...)
-function M.ft_auto_load_once(from, load)
+---@param after_load fun(ft: string, ...)
+function M.ft_auto_load_once(from, after_load)
   if loaded[from] then
     return
   end
   loaded[from] = true
 
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-    M.ft_load_once(vim.bo[buf].ft, from, load)
+    M.ft_load_once(vim.bo[buf].ft, from, after_load)
   end
 
   vim.api.nvim_create_autocmd('FileType', {
     desc = string.format('Load for filetypes from %s lazily.', from),
     group = vim.api.nvim_create_augroup('my.ft_load.' .. from, {}),
     callback = function(args)
-      M.ft_load_once(args.match, from, load)
+      M.ft_load_once(args.match, from, after_load)
     end,
   })
 end
