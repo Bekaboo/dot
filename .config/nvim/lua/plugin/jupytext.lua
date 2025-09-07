@@ -108,7 +108,9 @@ end
 ---@return nil
 local function jupytext_convert(buf)
   buf = vim._resolve_bufnr(buf)
-  if not vim.api.nvim_buf_is_valid(buf) then
+
+  -- If filetype if markdown, the buf is already converted, so early return
+  if not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].ft == 'markdown' then
     return
   end
 

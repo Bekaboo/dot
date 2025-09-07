@@ -35,12 +35,9 @@ return {
       require('utils.load').on_events(
         { event = 'FileType', pattern = 'markdown' },
         'otter',
-        function()
-          vim.schedule(function()
-            require('otter')
-          end)
-          return true
-        end
+        vim.schedule_wrap(function()
+          require('otter')
+        end)
       )
     end,
     config = function()
