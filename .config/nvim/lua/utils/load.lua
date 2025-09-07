@@ -186,7 +186,7 @@ function M.on_events(event_specs, name, load)
             callback = trig_loaders_fn(loaders),
           })
         end
-        table.insert(event_loaders[spec.event].pats[pat], load)
+        table.insert(loaders, load)
       end
       goto continue
     end
@@ -206,7 +206,7 @@ function M.on_events(event_specs, name, load)
           callback = trig_loaders_fn(loaders),
         })
       end
-      table.insert(event_loaders[spec.event].all, load)
+      table.insert(loaders, load)
     end
     ::continue::
   end
