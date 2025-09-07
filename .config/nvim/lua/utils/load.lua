@@ -281,4 +281,69 @@ function M.on_cmds(cmds, name, load)
   end
 end
 
+---@class load_key_spec_structured_t
+---@field mode string|string[]
+---@field lhs string
+---@field opts? vim.keymap.set.Opts
+
+---@alias load_key_spec_t load_key_spec_structured_t|string
+
+---Load plugin once on given keys
+---@param key_specs load_key_spec_t|load_key_spec_t[]
+---@param name string unique name of the plugin, also used as a namespace to prevent setting duplicated lazy-loading handlers for the same plugin/module
+---@param load? fun(args: vim.api.keyset.create_autocmd.callback_args) function to load the plugin
+function M.on_keys(key_specs, name, load)
+  if loaded[name] then
+    return
+  end
+
+  if type(key_specs) ~= 'table' then
+    key_specs = { key_specs }
+  end
+  for i, spec in ipairs(key_specs) do
+    if type(spec) == 'string' then
+      key_specs[i] = { mode = 'n', lhs = spec }
+    end
+  end
+
+  ---@cast key_specs load_key_spec_structured_t[]
+  for _, spec in ipairs(key_specs) do
+    local function rhs()
+      if loaded[name] then
+        return
+      end
+      loaded[name] = true
+
+      if spec.opts and spec.opts.buffer then
+        pcall(
+          vim.api.nvim_buf_del_keymap,
+          spec.opts.buffer == true and 0 or spec.opts.buffer,
+          spec.mode,
+          spec.lhs
+        )
+      else
+        pcall(vim.api.nvim_del_keymap, spec.mode, spec.lhs)
+      end
+
+      if l then
+        l()
+      else
+        pcall(vim.cmd.packadd, name)
+        pcall(require, name)
+      end
+
+      vim.api.nvim_feedkeys(vim.keycode('<Ignore>' .. spec.lhs), 'i', false)
+    end
+
+    vim.keymap.set(
+      spec.mode,
+      spec.lhs,
+      rhs,
+      vim.tbl_deep_extend('force', spec.opts, {
+        expr = true, -- make operator-pending mode work
+      })
+    )
+  end
+end
+
 return M
