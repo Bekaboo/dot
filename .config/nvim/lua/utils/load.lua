@@ -50,6 +50,13 @@ function M.ft_auto_load_once(from, after_load)
   })
 end
 
+---Load vim plugin or lua module given `name`
+---@param name string
+function M.load(name)
+  pcall(vim.cmd.packadd, name)
+  pcall(require, name)
+end
+
 ---@class (partial) load_event_spec_structured_t : vim.api.keyset.create_autocmd
 ---@field event string
 
@@ -111,8 +118,7 @@ function M.on_events(event_specs, name, load)
       if l then
         l(args)
       else
-        pcall(vim.cmd.packadd, name)
-        pcall(require, name)
+        M.load(name)
       end
     end
   end)(load)
@@ -227,8 +233,7 @@ function M.on_cmds(cmds, name, load)
       if load then
         load()
       else
-        pcall(vim.cmd.packadd, name)
-        pcall(require, name)
+        M.load(name)
       end
     end
 
@@ -328,8 +333,7 @@ function M.on_keys(key_specs, name, load)
       if l then
         l()
       else
-        pcall(vim.cmd.packadd, name)
-        pcall(require, name)
+        M.load(name)
       end
 
       vim.api.nvim_feedkeys(vim.keycode('<Ignore>' .. spec.lhs), 'i', false)
