@@ -39,6 +39,19 @@ elseif vim.fn.executable('okular') == 1 then
   vim.g.vimtex_view_general_options = '--unique file:@pdf#src:@line@tex'
 end
 
+vim.g.vimtex_auto_sync_view = true
+
+vim.api.nvim_create_user_command('VimtexAutoSyncView', function(args)
+  vim.g.vimtex_auto_sync_view = args.bang or not vim.g.vimtex_auto_sync_view
+  vim.notify(
+    'Vimtex: auto-sync '
+      .. (vim.g.vimtex_auto_sync_view and 'started' or 'stopped')
+  )
+end, {
+  bang = true,
+  desc = 'Toggle vimtex auto sync view.',
+})
+
 vim.api.nvim_create_autocmd('FileType', {
   pattern = 'tex',
   group = vim.api.nvim_create_augroup('vim.plugin.vimtex.ft', {}),
@@ -63,6 +76,10 @@ vim.api.nvim_create_autocmd('FileType', {
         {}
       ),
       callback = function(a)
+        if not vim.g.vimtex_auto_sync_view then
+          return
+        end
+
         local viewer_name = vim.b[a.buf].vimtex.viewer.name
         if viewer_name == 'General' then
           viewer_name = vim.g.vimtex_view_general_viewer
