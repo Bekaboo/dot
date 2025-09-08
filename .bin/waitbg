@@ -1,0 +1,28 @@
+#!/usr/bin/env sh
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
+#
+# Wait until sunrise/sunset
+
+if has sunwait; then
+    # shellcheck disable=SC2046 # we mean to split result from `whereami`
+    sunwait wait $(whereami)
+    exit
+fi
+
+# If `sunwait` is not executable, use 6 AM/PM as sunrise/sunset time
+six_am=$((6 * 3600))
+six_pm=$((18 * 3600))
+one_day=$((24 * 3600))
+
+# https://unix.stackexchange.com/a/506806
+cur=$(date -d "1970-01-01 UTC $(date +%T)" +%s)
+
+if [ "$cur" -lt "$six_am" ]; then
+    sleep "$((six_am - cur))"
+    exit
+fi
+if [ "$cur" -lt "$six_pm" ]; then
+    sleep "$((six_pm - cur))"
+    exit
+fi
+sleep "$((one_day + six_am - cur))"
