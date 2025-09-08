@@ -470,6 +470,11 @@ M.snippets = {
       )
     end)
   ),
+  us.msn({
+    { trig = 'hr' },
+    { trig = 'here' },
+    common = { desc = 'Get script dir' },
+  }, t('"$(dirname -- "$(readlink -f -- "$0")")/"')),
 }
 
 return M

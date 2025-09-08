@@ -394,6 +394,11 @@ M.snippets = {
       }),
     })
   ),
+  us.msn({
+    { trig = 'hr' },
+    { trig = 'here' },
+    common = { desc = 'Get script dir' },
+  }, t('(status dirname)/')),
 }
 
 return M
