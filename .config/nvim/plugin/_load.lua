@@ -138,20 +138,19 @@ if vim.g.loaded_session == nil then
     require('plugin.session').load(nil, true)
   end, { desc = 'Load session (workspace) for cwd' })
 
-  load.on_cmds(
-    {
-      'SessionLoad',
-      'SessionSave',
-      'SessionRemove',
-      'SessionSelect',
-      'Mkssession',
-    },
-    'plugin.session',
-    function()
-      require('plugin.session').setup({
-        autoload = { enabled = false },
-        autoremove = { enabled = false },
-      })
-    end
-  )
+  local function setup()
+    require('plugin.session').setup({
+      autoload = { enabled = false },
+      autoremove = { enabled = false },
+    })
+  end
+
+  load.on_events('BufRead', 'plugin.session', setup)
+  load.on_cmds({
+    'SessionLoad',
+    'SessionSave',
+    'SessionRemove',
+    'SessionSelect',
+    'Mkssession',
+  }, 'plugin.session', setup)
 end
