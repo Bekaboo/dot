@@ -7,7 +7,7 @@ WindowsBlockCompositing=false
 
 [Desktops]
 Number=4
-Rows=3
+Rows=2
 
 [Effect-Blur]
 BlurStrength=5
