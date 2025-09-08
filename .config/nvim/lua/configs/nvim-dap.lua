@@ -164,12 +164,11 @@ require('utils.load').ft_auto_load_once(
   'configs.nvim-dap.dap',
   function(ft, spec)
     if not spec then
-      return false
+      return
     end
     if spec.config and spec.config[1] and spec.config[1].type then
       dap.adapters[spec.config[1].type] = spec.adapter
     end
     dap.configurations[ft] = spec.config
-    return true
   end
 )

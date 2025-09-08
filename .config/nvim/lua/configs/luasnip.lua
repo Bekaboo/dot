@@ -15,7 +15,6 @@ local function load_snippets(ft)
     for _, group in pairs(snips) do
       ls.add_snippets(ft, group.snip or group, group.opts or {})
     end
-    return true
   end)
 end
 

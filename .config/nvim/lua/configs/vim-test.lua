@@ -23,7 +23,7 @@ require('utils.load').ft_auto_load_once(
   'configs.vim-test.tests',
   function(ft, configs)
     if not configs then
-      return false
+      return
     end
     -- Vim-test use autoload vim variables, e.g. `g:test#go#gotest#options...`
     -- so we have to first unnest lua table using '#' as delimiter then set
@@ -34,7 +34,6 @@ require('utils.load').ft_auto_load_once(
       :each(function(name, val)
         vim.g[name] = val
       end)
-    return true
   end
 )
 

@@ -33,13 +33,12 @@ require('utils.load').ft_auto_load_once(
   'configs.vim-projectionist.projections',
   function(_, projections)
     if not projections then
-      return false
+      return
     end
     vim.g.projectionist_heuristics = vim.tbl_deep_extend(
       'force',
       vim.g.projectionist_heuristics or {},
       projections
     )
-    return true
   end
 )
