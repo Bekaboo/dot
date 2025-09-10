@@ -55,7 +55,7 @@ M.snippets = {
       trig = 'pck',
       desc = 'Check a value of a variable or expression',
     },
-    un.fmtad('System.out.printf("<expr_escaped>: <placeholder>\n", <expr>);', {
+    un.fmtad('System.out.printf("<expr_escaped>: <placeholder>\\n", <expr>);', {
       expr = r(1, 'expr'),
       expr_escaped = d(2, function(texts)
         local str = vim.fn.escape(texts[1][1], '\\"')
