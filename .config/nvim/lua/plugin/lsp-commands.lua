@@ -1084,10 +1084,11 @@ local function command_complete(meta, subcommand_info_list)
       )
     end
     -- If subcommand is specified, complete with its options or params
-    local subcommand = utils.str.camel_to_snake(
-      cmdline:match('^%s*' .. meta .. '(%w+)')
-    ) or cmdline:match('^%s*' .. meta .. '%s+(%S+)')
-    if not subcommand_info_list[subcommand] then
+    local subcommand_match_camel = cmdline:match('^%s*' .. meta .. '(%w+)')
+    local subcommand = subcommand_match_camel
+        and utils.str.camel_to_snake(subcommand_match_camel)
+      or cmdline:match('^%s*' .. meta .. '%s+(%S+)')
+    if not subcommand or not subcommand_info_list[subcommand] then
       return {}
     end
     -- Use subcommand's custom completion function if it exists
