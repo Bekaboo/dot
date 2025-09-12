@@ -1031,16 +1031,6 @@ vim.paste = (function(cb)
 
     local uri = lines[1]
     local fname = vim.fs.basename(uri:gsub('/+$', ''))
-    vim.ui.input(
-      { prompt = 'File name: ', completion = 'file', default = fname },
-      function(input)
-        fname = input
-      end
-    )
-    if not fname then
-      return
-    end
-
     local buf = vim.api.nvim_get_current_buf()
     local current_dir = oil.get_current_dir()
     local dest = vim.fs.joinpath(current_dir, fname)
@@ -1095,7 +1085,7 @@ vim.paste = (function(cb)
         return
       end
 
-      require('oil.fs').recursive_copy(
+      require('oil.fs').recursive_move(
         stat.type,
         path,
         dest,
