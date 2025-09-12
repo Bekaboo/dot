@@ -41,13 +41,13 @@ main() {
         done
     ) &
 
-    # Wait for sunrise/sunset and set bg
+    # Set bg periodically
     (
-        while waitbg; do
+        while true; do
             if ! has_recent_conflict_bg; then
                 checkbg
             fi
-            sleep 1
+            sleep 60
         done
     ) &
 }
