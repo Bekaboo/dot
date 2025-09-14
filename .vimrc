@@ -628,7 +628,7 @@ function! s:remove_trailing_whitespaces() abort
   normal! m`
   let lz = &lazyredraw
   set lazyredraw
-  silent %s/\s\+$//e
+  keeppatterns silent %s/\s\+$//e
   let &lazyredraw = lz
   normal! ``
 endfunction

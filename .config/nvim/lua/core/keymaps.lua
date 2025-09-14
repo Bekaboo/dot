@@ -135,7 +135,7 @@ vim.api.nvim_create_autocmd('UIEnter', {
         vim.cmd.substitute({
           [[/\s\+$//e]],
           range = { 1, vim.api.nvim_buf_line_count(0) },
-          mods = { silent = true },
+          mods = { silent = true, keeppatterns = true },
         })
       end)),
       { desc = 'Delete trailing whitespaces' }
