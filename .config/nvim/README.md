@@ -77,7 +77,7 @@ Currently only tested on Linux (X11/Wayland/TTY) and Android (Termux).
     - [intro message](plugin/intro.lua)
 - [VSCode-Neovim](https://github.com/vscode-neovim/vscode-neovim) integration, makes you feel at home in VSCode when you
   occasionally need it
-- Massive [TeX math snippets](lua/configs/luasnip/snippets/tex/math.lua)
+- Massive [TeX math snippets](lua/configs/luasnip/snippets/tex.lua)
 - Jupyter Notebook integration: edit notebooks like markdown files, run code in
   cells with simple commands and shortcuts
 - Optimization for large files, open any file larger than 100 MB and edit like
