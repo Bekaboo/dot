@@ -64,10 +64,11 @@ Currently only tested on Linux (X11/Wayland/TTY) and Android (Termux).
 
 ## Features
 
-- Modular design
-    - Install and manage packages in groups
-    - Make it easy to use different set of configuration for different use
-      cases
+- Simple & modular design
+    - Builtin `vim.pack()` as plugin manager
+    - Manage each plugin in separate files under
+      [`lua/pack/specs/start`](lua/pack/specs/start) or
+      [`lua/pack/specs/opt`](lua/pack/specs/opt)
 - Clean and uncluttered UI, including customized versions of:
     - [winbar](lua/plugin/winbar)
     - [statusline](lua/plugin/statusline.lua)
@@ -87,7 +88,7 @@ Currently only tested on Linux (X11/Wayland/TTY) and Android (Termux).
 
 ### Basic
 
-- [Neovim](https://github.com/neovim/neovim) 0.11, for exact version see [nvim-version.txt](nvim-version.txt)
+- [Neovim](https://github.com/neovim/neovim) 0.12, for exact version see [nvim-version.txt](nvim-version.txt)
 - [Git](https://git-scm.com/)
 - [GCC](https://gcc.gnu.org/) or [Clang](https://clang.llvm.org/) for building treesitter parsers and some libs
 - [Fd](https://github.com/sharkdp/fd), [Ripgrep](https://github.com/BurntSushi/ripgrep), and [Fzf](https://github.com/junegunn/fzf) for fuzzy search
@@ -326,16 +327,14 @@ or continue a debug session.
 
 If you encounter any issue, please try the following steps:
 
-1. Run `:Lazy restore` once to ensure that all packages are properly
-   installed
-2. Run `:checkhealth` to check potential dependency issues
-3. Check `:version` to make sure you are on the same (of above) version of
+1. Run `:checkhealth` to check potential dependency issues
+2. Check `:version` to make sure you are on the same (of above) version of
    neovim as specified in [nvim-version.txt](nvim-version.txt)
-4. Try removing the following paths then restart neovim:
+3. Try removing the following paths then restart neovim:
     - `:echo stdpath('cache')`
     - `:echo stdpath('state')`
     - `:echo stdpath('data')`
-5. If still not working, please open an issue and I will be happy to help
+4. If still not working, please open an issue and I will be happy to help
 
 ## Performance
 
@@ -387,18 +386,10 @@ paths:
 │   │   ├── autocmds.lua
 │   │   ├── opts.lua            # options and general settings
 │   │   ├── keymaps.lua
-│   │   └── plugins.lua         # bootstraps plugin manager and specifies which plugins to include
-│   ├── plugins                 # all 3rd-party plugin specifications
-│   │   ├── ui.lua              # ui elements, e.g. icons
-│   │   ├── completion.lua      # auto-completion
-│   │   ├── debug.lua           # debug adapter (DAP) support
-│   │   ├── edit.lua            # general editing enhancements, e.g. auto-pair, surround, align, etc.
-│   │   ├── llm.lua             # completion and code generators using LLMs
-│   │   ├── markup.lua          # enhancement for markdown and tex editing
-│   │   ├── tools.lua           # tools like fuzzy finder, git integration, etc.
-│   │   ├── treesitter.lua      # treesitter related plugins
-│   │   └── colorschemes.lua    # third-party themes
-│   ├── configs                 # configs for each 3rd-party plugin
+│   │   └── pack.lua            # load and manage 3rd-party plugin specs with `vim.pack`
+│   ├── pack                    # 3rd-party plugin specs and configs
+│   │   ├── specs               # specs for installing and configuring plugins, see `vim.pack.Spec`
+│   │   └── ftconfigs           # filetype-specific configs
 │   ├── plugin                  # the actual implementation of custom lua plugins
 │   └── utils
 └── syntax                      # syntax files
@@ -406,79 +397,36 @@ paths:
 
 ## Tweaking this Configuration
 
-### Managing Plugins with Groups
+### Installing New Plugins
 
-In order to enable or disable a module, one need to change the table in
-[lua/core/plugins.lua](lua/core/plugins.lua) passed to `enable_plugins()`, for example
+To install plugin `foo`, just create a new file `foo.lua` under
+[`lua/pack/specs/opt`](lua/pack/specs/opt) or
+[`lua/pack/specs/start`](lua/pack/specs/start).
 
-```lua
-enable_plugins({
-  'treesitter',
-  'edit',
-  -- ...
-})
-```
+- Plugins specs under [`lua/pack/specs/start`](lua/pack/specs/start) will be
+  required immediately on startup
+- Plugins specs under [`lua/pack/specs/opt`](lua/pack/specs/opt) will be
+  required after a short time after `UIEnter`, unless a file is provided to
+  nvim in cmdline
 
-### Installing Packages to an Existing Module
+Notice that the `start` and `opt` directories only controls when a plugin spec
+is required and manged by `vim.pack`, this is different from plugin's actual
+loading time. A plugin can be managed on startup but lazy-loaded, see
+[`lua/utils/load.lua`](lua/utils/load.lua) and
+[`lua/utils/pack.lua`](lua/utils/pack.lua).
 
-To install plugin `foo` under module `bar`, just insert the corresponding
-specification to the big table `lua/plugins/bar.lua` returns, for instance,
+E.g.
 
-`lua/plugins/bar.lua`:
-
-```lua
-return {
-  -- ...
-  {
-    'foo/foo',
-    dependencies = 'foo_dep',
-  },
-}
-```
-
-### Installing Packages to a New Module
-
-To install plugin `foo` under module `bar`, one should first
-create module `bar` under [lua/plugins](lua/plugins):
-
-```
-.
-└── lua
-    └── plugins
-        └── bar.lua
-```
-
-a module should return a big table containing all specifications of plugins
-under that module, for instance:
+`lua/pack/specs/start/foo.lua`:
 
 ```lua
 return {
-  {
-    'goolord/alpha-nvim',
-    cond = function()
-      return vim.fn.argc() == 0 and
-          vim.o.lines >= 36 and vim.o.columns >= 80
-    end,
-    dependencies = 'nvim-web-devicons',
-  },
-
-  {
-    'romgrk/barbar.nvim',
-    dependencies = 'nvim-web-devicons',
-    config = function() require('bufferline').setup() end,
+  src = 'https://github.com/bar/foo',
+  version = ...,
+  data = {
+     ...
   },
 }
-```
-
-After creating the new module `bar`, enable it in
-[lua/core/plugins.lua](lua/core/plugins.lua):
-
-```lua
-enable_plugins({
-  -- ...
-  'bar',
-  -- ...
-})
 ```
 
 ### General Settings and Options
