@@ -138,19 +138,18 @@ return {
             -- is basically the same as that used in fzf config file:
             -- lua/configs/fzf-lua.lua
             fzf_ui.register(function(_, items)
-              local height = #items + 1
+              local n_items = #items
               return {
                 winopts = {
                   split = string.format(
                     -- Don't shrink size if a quickfix list is closed for fzf
                     -- window to avoid window resizing and content shifting
-                    '%s | if get(g:, "_fzf_qfclosed", "") == "" && %d < winheight(0) | resize %d | let g:_fzf_height = %d | endif',
+                    'let g:_fzf_n_items =%d | %s | unlet g:_fzf_n_items',
+                    n_items,
                     vim.trim(
                       require('fzf-lua.config').setup_opts.winopts.split
                     ),
-                    height,
-                    height,
-                    height
+                    n_items
                   ),
                 },
               }
@@ -847,7 +846,11 @@ return {
               \ else |
               \   unlet g:_fzf_qfclosed |
               \ endif |
-              \ let g:_fzf_height += g:_fzf_cmdheight + (g:_fzf_laststatus ? 1 : 0) |
+              \ if exists('g:_fzf_n_items') && !exists('g:_fzf_qfclosed') |
+              \   let g:_fzf_height = g:_fzf_n_items + 1 |
+              \ else |
+              \   let g:_fzf_height += g:_fzf_cmdheight + (g:_fzf_laststatus ? 1 : 0) |
+              \ endif |
               \ exe printf('botright %dnew', g:_fzf_height) |
               \ let g:_fzf_win = nvim_get_current_win() |
               \ let w:winbar_no_attach = v:true |
