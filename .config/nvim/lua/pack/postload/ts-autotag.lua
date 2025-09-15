@@ -1,1 +1,0 @@
-require('ts-autotag').setup()

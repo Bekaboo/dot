@@ -4,22 +4,10 @@ local M = {}
 ---@type table<string, vim.pack.Spec>
 local specs_registry = {}
 
----@param spec vim.pack.Spec
----@return string
-function M.get_name(spec)
-  return (
-    vim.fs
-      .basename(spec.name or spec.src)
-      :lower()
-      :gsub('%.nvim$', '')
-      :gsub('%.', '-')
-  )
-end
-
 ---Load a plugin with init, pre/post hooks, dependencies etc.
 ---@param spec vim.pack.Spec
----@param _? string
-function M.load(spec, _)
+---@param path? string
+function M.load(spec, path)
   spec.data = spec.data or {}
 
   -- Dependencies must be loaded before current plugin
@@ -32,20 +20,26 @@ function M.load(spec, _)
     end
   end
 
-  local plugin_name = M.get_name(spec)
-  spec.data.preload = spec.data.preload
-    or function()
-      require('pack.preload.' .. plugin_name)
-    end
-  spec.data.postload = spec.data.postload
-    or function()
-      require('pack.postload.' .. plugin_name)
-    end
+  if spec.data.load then
+    spec.data.load(spec, path)
+    return
+  end
 
-  pcall(spec.data.preload)
+  if spec.data.preload then
+    spec.data.preload()
+  end
   pcall(vim.cmd.packadd, vim.fs.basename(spec.src))
-  pcall(require, plugin_name)
-  pcall(spec.data.postload)
+  pcall(
+    require,
+    vim.fs
+      .basename(spec.name or spec.src)
+      :lower()
+      :gsub('%.nvim$', '')
+      :gsub('%.', '-')
+  )
+  if spec.data.postload then
+    spec.data.postload()
+  end
 end
 
 ---Lazy-load plugin for given plugin spec
@@ -100,9 +94,11 @@ function M.register(specs)
   if not vim.islist(specs) then
     specs = { specs } ---@cast specs (string|vim.pack.Spec)[]
   end
+
+  ---@cast specs vim.pack.Spec[]
   for i, spec in ipairs(specs) do
     if type(spec) == 'string' then
-      specs[i] = { src = spec } ---@cast specs vim.pack.Spec[]
+      specs[i] = { src = spec }
     end
   end
 
@@ -187,10 +183,7 @@ function M.add(specs)
 
   pack_add(specs, {
     load = function(args)
-      (args.spec.data and args.spec.data.load or M.lazy_load)(
-        args.spec,
-        args.path
-      )
+      M.lazy_load(args.spec, args.path)
     end,
   })
 end
