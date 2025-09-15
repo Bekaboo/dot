@@ -9,7 +9,7 @@ vim.loader.enable()
 require('core.opts')
 require('core.keymaps')
 require('core.autocmds')
-require('core.plugins')
+require('core.pack')
 
 local load = require('utils.load')
 
