@@ -3,11 +3,8 @@ return {
   version = 'main', -- master branch is deprecated
   data = {
     build = function()
-      local ts_install_ok, ts_install =
-        pcall(require, 'nvim-treesitter.install')
-      if ts_install_ok then
-        ts_install.update()
-      end
+      vim.cmd.packadd('nvim-treesitter')
+      require('nvim-treesitter.install').update()
     end,
     cmds = {
       'TSInstall',
