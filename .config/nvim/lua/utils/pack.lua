@@ -192,7 +192,10 @@ function M.add(specs)
     end
   end
 
-  pack_add(specs, {
+  -- `vim.pack.add()` throws error if previous confirm is denied
+  -- This happens if installation of plugins under `start` is denied
+  -- first, then plugin specs under `opt` is collected and managed
+  pcall(pack_add, specs, {
     load = function(args)
       M.lazy_load(args.spec, args.path)
     end,
