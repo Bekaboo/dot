@@ -30,7 +30,7 @@ local function enable_plugins(plugins)
     return
   end
 
-  -- Defer plugin manager setup if no files are specified
+  -- Defer loading plugin specs if no files are specified
   utils.pack.add(
     collect_specs(vim.fs.joinpath(config_path, 'lua/pack/specs/start'))
   )
