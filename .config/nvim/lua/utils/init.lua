@@ -15,6 +15,7 @@ return setmetatable({
   lua = nil, ---@module 'utils.lua'
   opt = nil, ---@module 'utils.opt'
   opts = nil, ---@module 'utils.opts'
+  pack = nil, ---@module 'utils.pack'
   snippets = nil, ---@module 'utils.snip'
   static = nil, ---@module 'utils.static'
   stl = nil, ---@module 'utils.stl'
