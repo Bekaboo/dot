@@ -178,7 +178,9 @@ function M.add(specs)
 
   specs = {}
   for _, spec in pairs(specs_registry) do
-    table.insert(specs, spec)
+    if not spec.data or spec.data.enabled ~= false then
+      table.insert(specs, spec)
+    end
   end
 
   pack_add(specs, {
