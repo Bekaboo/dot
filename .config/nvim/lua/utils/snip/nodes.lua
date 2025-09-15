@@ -10,7 +10,7 @@ local d = ls.dynamic_node
 local fmt = require('luasnip.extras.fmt').fmt
 local fmta = require('luasnip.extras.fmt').fmta
 
-local uf = require('utils.snippets.funcs')
+local uf = require('utils.snip.funcs')
 
 ---Returns a function node that returns a string for indentation at the given
 ---depth
@@ -55,7 +55,7 @@ end
 ---@return table node
 function M.qt(default)
   return f(function()
-    return require('utils.snippets.funcs').get_quotation_type(nil, default)
+    return require('utils.snip.funcs').get_quotation_type(nil, default)
   end)
 end
 
@@ -93,7 +93,7 @@ function M.body(jump_index, indent_depth, default_text)
       or {}
     for idx = 2, #selected do
       if selected[idx]:match('%S') then
-        selected[idx] = require('utils.snippets.funcs').get_indent_str(
+        selected[idx] = require('utils.snip.funcs').get_indent_str(
           indent_depth,
           argnode_texts,
           parent,

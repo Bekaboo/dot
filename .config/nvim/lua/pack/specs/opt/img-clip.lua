@@ -19,7 +19,7 @@ return {
       ---Get indentation string
       ---@return string
       local function indent()
-        return utils.snippets.funcs.get_indent_str(1)
+        return utils.snip.funcs.get_indent_str(1)
       end
 
       img_clip.setup({
