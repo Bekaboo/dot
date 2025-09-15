@@ -20,6 +20,9 @@ function M.load(spec, path)
     end
   end
 
+  -- Custom per-spec load function takes full control of loading that plugin,
+  -- including running pre/post-loading hooks as only the custom loader
+  -- knows when the plugin can be considered as 'loaded'
   if spec.data.load then
     spec.data.load(spec, path)
     return
@@ -28,17 +31,23 @@ function M.load(spec, path)
   if spec.data.preload then
     spec.data.preload()
   end
+
   pcall(vim.cmd.packadd, vim.fs.basename(spec.src))
-  pcall(
-    require,
-    vim.fs
-      .basename(spec.name or spec.src)
-      :lower()
-      :gsub('%.nvim$', '')
-      :gsub('%.', '-')
-  )
+
   if spec.data.postload then
     spec.data.postload()
+  else
+    local ok, plugin = pcall(
+      require,
+      vim.fs
+        .basename(spec.name or spec.src)
+        :lower()
+        :gsub('%.nvim$', '')
+        :gsub('%.', '-')
+    )
+    if ok and type(plugin) == 'table' and plugin.setup then
+      pcall(plugin.setup)
+    end
   end
 end
 
