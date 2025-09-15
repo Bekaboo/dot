@@ -13,7 +13,6 @@ return {
       ---@param ft string?
       local function load_snippets(ft)
         ft = ft or vim.bo.ft
-
         utils.load.ft_load_once(
           ft,
           'pack.ftconfigs.luasnip.snippets',
