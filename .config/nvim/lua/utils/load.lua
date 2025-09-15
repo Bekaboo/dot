@@ -290,6 +290,10 @@ end
 
 ---@alias load_key_spec_t load_key_spec_structured_t|string
 
+---Mapping from plugin/module name to triggering keys
+---@type table<string, load_key_spec_t[]>
+local keys = {}
+
 ---Load plugin once on given keys
 ---@param key_specs load_key_spec_t|load_key_spec_t[]
 ---@param name string unique name of the plugin, also used as a namespace to prevent setting duplicated lazy-loading handlers for the same plugin/module
@@ -303,15 +307,25 @@ function M.on_keys(key_specs, name, load)
   if not vim.islist(key_specs) then
     key_specs = { key_specs } ---@cast key_specs load_key_spec_t[]
   end
+  ---@cast key_specs load_key_spec_structured_t[]
   for i, spec in ipairs(key_specs) do
     if type(spec) == 'string' then
-      key_specs[i] = { mode = 'n', lhs = spec }
+      key_specs[i] = { mode = { 'n' }, lhs = spec }
     else
-      spec.mode = spec.mode or 'n'
+      spec.mode = spec.mode or { 'n' }
+      if not vim.islist(spec.mode) then
+        spec.mode = {
+          spec.mode --[[@as string]],
+        }
+      end
     end
   end
 
-  ---@cast key_specs load_key_spec_structured_t[]
+  if not keys[name] then
+    keys[name] = {}
+  end
+  vim.list_extend(keys[name], key_specs)
+
   for _, spec in ipairs(key_specs) do
     local function rhs()
       if loaded[name] then
@@ -319,16 +333,28 @@ function M.on_keys(key_specs, name, load)
       end
       loaded[name] = true
 
-      if spec.opts and spec.opts.buffer then
-        pcall(
-          vim.api.nvim_buf_del_keymap,
-          spec.opts.buffer == true and 0 or spec.opts.buffer,
-          spec.mode,
-          spec.lhs
-        )
-      else
-        pcall(vim.api.nvim_del_keymap, spec.mode, spec.lhs)
+      -- Delete all key triggers associated with the plugin
+      -- Some plugins, e.g. vim-conjoin, detects existing keys, and prepend
+      -- its keymap before existing ones. When there are multiple key triggers
+      -- for such plugin, the one that is not used as the initial trigger can
+      -- has wrong definition
+      for _, s in ipairs(keys[name] or {}) do
+        local buf = s.opts and (s.opts.buffer == true and 0 or s.opts.buffer)
+        if buf then
+          for _, mode in
+            ipairs(s.mode --[=[@as string[]]=])
+          do
+            pcall(vim.api.nvim_buf_del_keymap, buf, mode, s.lhs)
+          end
+        else
+          for _, mode in
+            ipairs(s.mode --[=[@as string[]]=])
+          do
+            pcall(vim.api.nvim_del_keymap, mode, s.lhs)
+          end
+        end
       end
+      keys[name] = nil
 
       if load then
         load()
