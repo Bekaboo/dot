@@ -1,7 +1,8 @@
 return {
   src = 'https://github.com/stevearc/quicker.nvim',
   data = {
-    load = function()
+    ---@param spec vim.pack.Spec
+    load = function(spec)
       local load = require('utils.load')
 
       load.on_events(
@@ -9,6 +10,7 @@ return {
         'quicker',
         vim.schedule_wrap(function()
           load.load('quicker.nvim')
+          spec.data.postload()
         end)
       )
     end,

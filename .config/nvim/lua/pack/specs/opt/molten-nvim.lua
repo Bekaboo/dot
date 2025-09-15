@@ -27,67 +27,52 @@ return {
       'MoltenNotebookRunVisual',
       'MoltenNotebookRunOperator',
     },
-    load = function()
-      local loaded = false
-
-      ---Lazy-load molten plugin on keys
-      ---@param mode string in which mode to set the triggering keymap
-      ---@param key string the key to trigger molten plugin
-      ---@param opts vim.keymap.set.Opts? the keymap options
-      local function load_on_key(mode, key, opts)
-        if loaded then
-          return
-        end
-
-        vim.keymap.set(mode, key, function()
-          require('molten.status')
-          loaded = true
-          vim.api.nvim_feedkeys(
-            vim.api.nvim_replace_termcodes(key, true, true, true),
-            'im',
-            false
-          )
-        end, opts)
-      end
-
-      ---@param buf integer
-      local function set_triggers(buf)
-        if not vim.api.nvim_buf_is_valid(buf) then
-          return
-        end
-
-        if
-          vim.bo[buf].ft ~= 'python'
-          and vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf), ':e')
-            ~= 'ipynb'
-        then
-          return
-        end
-
-        -- For both python and notebook buffers
-        load_on_key('x', '<CR>', { buffer = buf, desc = 'Run current cell' })
-
-        -- Jupyter notebook only keymaps
-        if vim.bo[buf].ft == 'markdown' then
-          -- stylua: ignore start
-          load_on_key('n', '<CR>', { buffer = buf, desc = 'Run current cell' })
-          load_on_key('n', '<LocalLeader>k', { buffer = buf, desc = 'Run current cell and all above' })
-          load_on_key('n', '<LocalLeader>j', { buffer = buf, desc = 'Run current cell and all below' })
-          load_on_key('n', '<LocalLeader><CR>', { buffer = buf, desc = 'Run code selected by operator' })
-          -- stylua: ignore end
-        end
-      end
-
-      require('utils.load').on_events(
-        { event = 'FileType', pattern = { 'python', 'markdown' } },
-        'molten',
-        function(args)
-          if loaded then
+    ---@param spec vim.pack.Spec
+    ---@param path string
+    init = function(spec, path)
+      vim.api.nvim_create_autocmd('FileType', {
+        pattern = { 'python', 'markdown' },
+        callback = function(args)
+          if
+            vim.bo[args.buf].ft ~= 'python'
+            and vim.fn.fnamemodify(vim.api.nvim_buf_get_name(args.buf), ':e')
+              ~= 'ipynb'
+          then
             return
           end
-          set_triggers(args.buf)
-        end
-      )
+
+          local utils = require('utils')
+
+          utils.load.on_keys(
+            {
+              mode = 'x',
+              lhs = '<CR>',
+              opts = { buffer = args.buf, desc = 'Run selected code' },
+            },
+            'molten',
+            function()
+              utils.pack.load(spec, path)
+            end
+          )
+          if vim.bo[args.buf].ft == 'markdown' then
+            utils.load.on_keys(
+              {
+                -- stylua: ignore start
+                { lhs = '<CR>', opts = { buffer = args.buf, desc = 'Run current cell' } },
+                { lhs = '<LocalLeader>k', opts = { buffer = args.buf, desc = 'Run current cell and all above' } },
+                { lhs = '<LocalLeader>j', opts = { buffer = args.buf, desc = 'Run current cell and all below' } },
+                { lhs = '<LocalLeader><CR>', opts = { buffer = args.buf, desc = 'Run current cell by operator' } },
+                -- stylua: ignore end
+              },
+              'molten',
+              function()
+                utils.pack.load(spec, path)
+              end
+            )
+          end
+          return true
+        end,
+      })
     end,
     postload = function()
       if pcall(require, 'image') then
