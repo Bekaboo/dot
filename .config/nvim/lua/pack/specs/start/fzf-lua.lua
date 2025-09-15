@@ -5,36 +5,13 @@ return {
     cmds = 'FzfLua',
     events = 'LspAttach',
     keys = {
-      {
-        mode = 'c',
-        lhs = '<C-_>',
-        opts = { desc = 'Fuzzy complete command/search history' },
-      },
-      {
-        mode = 'c',
-        lhs = '<C-x><C-l>',
-        opts = { desc = 'Fuzzy complete command/search history' },
-      },
-      {
-        mode = 'i',
-        lhs = '<C-r>?',
-        opts = { desc = 'Fuzzy complete from registers' },
-      },
-      {
-        mode = 'i',
-        lhs = '<C-r><C-_>',
-        opts = { desc = 'Fuzzy complete from registers' },
-      },
-      {
-        mode = 'i',
-        lhs = '<C-r><C-r>',
-        opts = { desc = 'Fuzzy complete from registers' },
-      },
-      {
-        mode = 'i',
-        lhs = '<C-x><C-f>',
-        opts = { desc = 'Fuzzy complete path' },
-      },
+      -- stylua: ignore start
+      { lhs = '<C-_>', mode = 'c', opts = { desc = 'Fuzzy complete command/search history' } },
+      { lhs = '<C-x><C-l>', mode = 'c', opts = { desc = 'Fuzzy complete command/search history' } },
+      { lhs = '<C-r>?', mode = 'i', opts = { desc = 'Fuzzy complete from registers' } },
+      { lhs = '<C-r><C-_>', mode = 'i', opts = { desc = 'Fuzzy complete from registers' } },
+      { lhs = '<C-r><C-r>', mode = 'i', opts = { desc = 'Fuzzy complete from registers' } },
+      { lhs = '<C-x><C-f>', mode = 'i', opts = { desc = 'Fuzzy complete path' } },
       { lhs = '<Leader>.', opts = { desc = 'Find files' } },
       { lhs = "<Leader>'", opts = { desc = 'Resume last picker' } },
       { lhs = '<Leader>`', opts = { desc = 'Find marks' } },
@@ -42,45 +19,21 @@ return {
       { lhs = '<Leader>%', opts = { desc = 'Find tabpages' } },
       { lhs = '<Leader>/', opts = { desc = 'Grep' } },
       { lhs = '<Leader>?', opts = { desc = 'Find help files' } },
-      {
-        lhs = '<Leader>*',
-        mode = { 'n', 'x' },
-        opts = { desc = 'Grep word under cursor' },
-      },
-      {
-        lhs = '<Leader>#',
-        mode = { 'n', 'x' },
-        opts = { desc = 'Grep word under cursor' },
-      },
+      { lhs = '<Leader>*', mode = { 'n', 'x' }, opts = { desc = 'Grep word under cursor' } },
+      { lhs = '<Leader>#', mode = { 'n', 'x' }, opts = { desc = 'Grep word under cursor' } },
       { lhs = '<Leader>"', opts = { desc = 'Find registers' } },
       { lhs = '<Leader>:', opts = { desc = 'Find commands' } },
       { lhs = '<Leader>F', opts = { desc = 'Find all available pickers' } },
       { lhs = '<Leader>o', opts = { desc = 'Find oldfiles' } },
       { lhs = '<Leader>-', opts = { desc = 'Find lines in buffer' } },
       { lhs = '<Leader>=', opts = { desc = 'Find lines across buffers' } },
-      {
-        lhs = '<Leader>-',
-        opts = { desc = 'Find lines in selection' },
-        mode = 'x',
-      },
-      {
-        lhs = '<Leader>=',
-        opts = { desc = 'Find lines in selection' },
-        mode = 'x',
-      },
+      { lhs = '<Leader>-', opts = { desc = 'Find lines in selection' }, mode = 'x' },
+      { lhs = '<Leader>=', opts = { desc = 'Find lines in selection' }, mode = 'x' },
       { lhs = '<Leader>n', opts = { desc = 'Find treesitter nodes' } },
       { lhs = '<Leader>R', opts = { desc = 'Find symbol locations' } },
       { lhs = '<Leader>f"', opts = { desc = 'Find registers' } },
-      {
-        lhs = '<Leader>f*',
-        mode = { 'n', 'x' },
-        opts = { desc = 'Grep word under cursor' },
-      },
-      {
-        lhs = '<Leader>f#',
-        mode = { 'n', 'x' },
-        opts = { desc = 'Grep word under cursor' },
-      },
+      { lhs = '<Leader>f*', mode = { 'n', 'x' }, opts = { desc = 'Grep word under cursor' } },
+      { lhs = '<Leader>f#', mode = { 'n', 'x' }, opts = { desc = 'Grep word under cursor' } },
       { lhs = '<Leader>f:', opts = { desc = 'Find commands' } },
       { lhs = '<Leader>f/', opts = { desc = 'Grep' } },
       { lhs = '<Leader>fH', opts = { desc = 'Find highlights' } },
@@ -115,102 +68,106 @@ return {
       { lhs = '<Leader>fh', opts = { desc = 'Find help files' } },
       { lhs = '<Leader>fk', opts = { desc = 'Find keymaps' } },
       { lhs = '<Leader>f-', opts = { desc = 'Find lines in buffer' } },
-      {
-        lhs = '<Leader>f-',
-        opts = { desc = 'Find lines in selection' },
-        mode = 'x',
-      },
+      { lhs = '<Leader>f-', opts = { desc = 'Find lines in selection' }, mode = 'x' },
       { lhs = '<Leader>f=', opts = { desc = 'Find lines across buffers' } },
       { lhs = '<Leader>fm', opts = { desc = 'Find marks' } },
       { lhs = '<Leader>fo', opts = { desc = 'Find oldfiles' } },
       { lhs = '<Leader>fz', opts = { desc = 'Find directories from z' } },
       { lhs = '<Leader>fw', opts = { desc = 'Find sessions (workspaces)' } },
       { lhs = '<Leader>fn', opts = { desc = 'Find treesitter nodes' } },
-      {
-        lhs = '<Leader>fs',
-        opts = { desc = 'Find lsp symbols or treesitter nodes' },
-      },
+      { lhs = '<Leader>fs', opts = { desc = 'Find lsp symbols or treesitter nodes' } },
       { lhs = '<Leader>fSa', opts = { desc = 'Find code actions' } },
       { lhs = '<Leader>fSd', opts = { desc = 'Find symbol definitions' } },
       { lhs = '<Leader>fSD', opts = { desc = 'Find symbol declarations' } },
-      {
-        lhs = '<Leader>fS<C-d>',
-        opts = { desc = 'Find symbol type definitions' },
-      },
-      {
-        lhs = '<Leader>fSs',
-        opts = { desc = 'Find symbol in current document' },
-      },
-      {
-        lhs = '<Leader>fSS',
-        opts = { desc = 'Find symbol in whole workspace' },
-      },
+      { lhs = '<Leader>fS<C-d>', opts = { desc = 'Find symbol type definitions' } },
+      { lhs = '<Leader>fSs', opts = { desc = 'Find symbol in current document' } },
+      { lhs = '<Leader>fSS', opts = { desc = 'Find symbol in whole workspace' } },
       { lhs = '<Leader>fSi', opts = { desc = 'Find symbol implementations' } },
       { lhs = '<Leader>fS<', opts = { desc = 'Find symbol incoming calls' } },
       { lhs = '<Leader>fS>', opts = { desc = 'Find symbol outgoing calls' } },
       { lhs = '<Leader>fSr', opts = { desc = 'Find symbol references' } },
       { lhs = '<Leader>fSR', opts = { desc = 'Find symbol locations' } },
       { lhs = '<Leader>fF', opts = { desc = 'Find all available pickers' } },
+      -- stylua: ignore end
     },
     init = function()
       -- Disable fzf's default vim plugin
       vim.g.loaded_fzf = 1
 
-      ---@diagnostic disable-next-line: duplicate-set-field
-      vim.ui.select = function(...)
-        local fzf_ui = require('fzf-lua.providers.ui_select')
-        -- Register fzf as custom `vim.ui.select()` function if not yet
-        -- registered
-        if not fzf_ui.is_registered() then
-          local ui_select = fzf_ui.ui_select
+      local function setup_ui_select()
+        ---@diagnostic disable-next-line: duplicate-set-field
+        vim.ui.select = function(...)
+          local fzf_ui = require('fzf-lua.providers.ui_select')
+          -- Register fzf as custom `vim.ui.select()` function if not yet
+          -- registered
+          if not fzf_ui.is_registered() then
+            local ui_select = fzf_ui.ui_select
 
-          ---Overriding fzf-lua's default `ui_select()` function to use a
-          ---custom prompt
-          ---@diagnostic disable-next-line: duplicate-set-field
-          fzf_ui.ui_select = function(items, opts, on_choice)
-            -- Hack: use nbsp after ':' here because currently fzf-lua does
-            -- not allow custom prompt and force substitute pattern ':%s?$'
-            -- in `opts.prompt` to '> ' as the fzf prompt. We WANT the column
-            -- in the prompt, so use nbsp to avoid this substitution.
-            -- Also, don't use `opts.prompt:gsub(':?%s*$', ':\xc2\xa0')` here
-            -- because it does a non-greedy match and will not substitute
-            -- ':' at the end of the prompt, e.g. if `opts.prompt` is
-            -- 'foobar: ' then result will be 'foobar: : ', interestingly
-            -- this behavior changes in Lua 5.4, where the match becomes
-            -- greedy, i.e. given the same string and substitution above the
-            -- result becomes 'foobar> ' as expected.
-            opts.prompt = opts.prompt
-              and vim.fn.substitute(opts.prompt, ':\\?\\s*$', ':\xc2\xa0', '')
-            ui_select(items, opts, on_choice)
+            ---Overriding fzf-lua's default `ui_select()` function to use a
+            ---custom prompt
+            ---@diagnostic disable-next-line: duplicate-set-field
+            fzf_ui.ui_select = function(items, opts, on_choice)
+              -- Hack: use nbsp after ':' here because currently fzf-lua does
+              -- not allow custom prompt and force substitute pattern ':%s?$'
+              -- in `opts.prompt` to '> ' as the fzf prompt. We WANT the column
+              -- in the prompt, so use nbsp to avoid this substitution.
+              -- Also, don't use `opts.prompt:gsub(':?%s*$', ':\xc2\xa0')` here
+              -- because it does a non-greedy match and will not substitute
+              -- ':' at the end of the prompt, e.g. if `opts.prompt` is
+              -- 'foobar: ' then result will be 'foobar: : ', interestingly
+              -- this behavior changes in Lua 5.4, where the match becomes
+              -- greedy, i.e. given the same string and substitution above the
+              -- result becomes 'foobar> ' as expected.
+              opts.prompt = opts.prompt
+                and vim.fn.substitute(
+                  opts.prompt,
+                  ':\\?\\s*$',
+                  ':\xc2\xa0',
+                  ''
+                )
+              ui_select(items, opts, on_choice)
+            end
+
+            -- Use the register function provided by fzf-lua. We are using this
+            -- wrapper instead of directly replacing `vim.ui.selct()` with fzf
+            -- select function because in this way we can pass a callback to this
+            -- `register()` function to generate fzf opts in different contexts,
+            -- see https://github.com/ibhagwan/fzf-lua/issues/755
+            -- Here we use the callback to achieve adaptive height depending on
+            -- the number of items, with a max height of 10, the `split` option
+            -- is basically the same as that used in fzf config file:
+            -- lua/configs/fzf-lua.lua
+            fzf_ui.register(function(_, items)
+              local height = #items + 1
+              return {
+                winopts = {
+                  split = string.format(
+                    -- Don't shrink size if a quickfix list is closed for fzf
+                    -- window to avoid window resizing and content shifting
+                    '%s | if get(g:, "_fzf_qfclosed", "") == "" && %d < winheight(0) | resize %d | let g:_fzf_height = %d | endif',
+                    vim.trim(
+                      require('fzf-lua.config').setup_opts.winopts.split
+                    ),
+                    height,
+                    height,
+                    height
+                  ),
+                },
+              }
+            end)
           end
 
-          -- Use the register function provided by fzf-lua. We are using this
-          -- wrapper instead of directly replacing `vim.ui.selct()` with fzf
-          -- select function because in this way we can pass a callback to this
-          -- `register()` function to generate fzf opts in different contexts,
-          -- see https://github.com/ibhagwan/fzf-lua/issues/755
-          -- Here we use the callback to achieve adaptive height depending on
-          -- the number of items, with a max height of 10, the `split` option
-          -- is basically the same as that used in fzf config file:
-          -- lua/configs/fzf-lua.lua
-          fzf_ui.register(function(_, items)
-            local height = #items + 1
-            return {
-              winopts = {
-                split = string.format(
-                  -- Don't shrink size if a quickfix list is closed for fzf
-                  -- window to avoid window resizing and content shifting
-                  '%s | if get(g:, "_fzf_qfclosed", "") == "" && %d < winheight(0) | resize %d | let g:_fzf_height = %d | endif',
-                  vim.trim(require('fzf-lua.config').setup_opts.winopts.split),
-                  height,
-                  height,
-                  height
-                ),
-              },
-            }
-          end)
+          vim.ui.select(...)
         end
-        vim.ui.select(...)
+      end
+
+      if vim.v.vim_did_enter == 1 then
+        setup_ui_select()
+      else
+        vim.api.nvim_create_autocmd('UIEnter', {
+          once = true,
+          callback = vim.schedule_wrap(setup_ui_select),
+        })
       end
     end,
     postload = function()
