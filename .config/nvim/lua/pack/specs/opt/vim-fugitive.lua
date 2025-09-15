@@ -24,8 +24,14 @@ return {
       'Gwrite',
     },
     keys = {
-      { lhs = '<Leader>gL', desc = 'Git log entire repo' },
-      { lhs = '<Leader>g<Space>', desc = 'Populate cmdline with ":Git"' },
+      {
+        lhs = '<Leader>gL',
+        opts = { desc = 'Git log entire repo' },
+      },
+      {
+        lhs = '<Leader>g<Space>',
+        opts = { desc = 'Populate cmdline with ":Git"' },
+      },
     },
     events = { 'BufNew', 'BufWritePost', 'BufReadPre' },
     deps = {

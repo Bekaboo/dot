@@ -3,17 +3,20 @@ return {
   data = {
     cmds = { 'TSJToggle', 'TSJSplit', 'TSJJoin' },
     keys = {
-      { lhs = '<M-C-K>', desc = 'Join current treesitter node' },
-      { lhs = '<M-C-Up>', desc = 'Join current treesitter node' },
-      { lhs = '<M-NL>', desc = 'Split current treesitter node' },
-      { lhs = '<M-C-Down>', desc = 'Split current treesitter node' },
+      { lhs = '<M-C-K>', opts = { desc = 'Join current treesitter node' } },
+      { lhs = '<M-C-Up>', opts = { desc = 'Join current treesitter node' } },
+      { lhs = '<M-NL>', opts = { desc = 'Split current treesitter node' } },
+      {
+        lhs = '<M-C-Down>',
+        opts = { desc = 'Split current treesitter node' },
+      },
       {
         lhs = 'g<M-NL>',
-        desc = 'Split current treesitter node recursively',
+        opts = { desc = 'Split current treesitter node recursively' },
       },
       {
         lhs = 'g<M-C-Down>',
-        desc = 'Split current treesitter node recursively',
+        opts = { desc = 'Split current treesitter node recursively' },
       },
     },
     postload = function()

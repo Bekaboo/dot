@@ -5,13 +5,19 @@ return {
     keys = {
       {
         lhs = '<Leader>tk',
-        desc = 'Run the first test class in current file',
+        opts = { desc = 'Run the first test class in current file' },
       },
-      { lhs = '<Leader>tf', desc = 'Run all tests in current file' },
-      { lhs = '<Leader>tt', desc = 'Run the test neartest to cursor' },
-      { lhs = '<Leader>tr', desc = 'Run the last test' },
-      { lhs = '<Leader>ts', desc = 'Run the whole test suite' },
-      { lhs = '<Leader>to', desc = 'Go to last visited test file' },
+      {
+        lhs = '<Leader>tf',
+        opts = { desc = 'Run all tests in current file' },
+      },
+      {
+        lhs = '<Leader>tt',
+        opts = { desc = 'Run the test neartest to cursor' },
+      },
+      { lhs = '<Leader>tr', opts = { desc = 'Run the last test' } },
+      { lhs = '<Leader>ts', opts = { desc = 'Run the whole test suite' } },
+      { lhs = '<Leader>to', opts = { desc = 'Go to last visited test file' } },
     },
     cmds = {
       'TestClass',

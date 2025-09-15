@@ -39,7 +39,7 @@ return {
     },
     keys = {
       lhs = '<Leader>@',
-      desc = 'Toggle focus between opencode and last window',
+      opts = { desc = 'Toggle focus between opencode and last window' },
     },
     postload = function()
       -- Default configuration with all available options

@@ -3,7 +3,7 @@ return {
   data = {
     events = { 'BufReadPre', 'SessionLoadPost' },
     cmds = 'Gitsigns',
-    keys = { lhs = '<Leader>gG', desc = 'Git list repo hunks' },
+    keys = { lhs = '<Leader>gG', opts = { desc = 'Git list repo hunks' } },
     postload = function()
       local icons = require('utils').static.icons
       local gs = require('gitsigns')

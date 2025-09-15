@@ -2,8 +2,16 @@ return {
   src = 'https://github.com/junegunn/vim-easy-align',
   data = {
     keys = {
-      { lhs = 'gl', mode = { 'n', 'x' }, desc = 'Align text' },
-      { lhs = 'gL', mode = { 'n', 'x' }, desc = 'Align text interactively' },
+      {
+        lhs = 'gl',
+        mode = { 'n', 'x' },
+        opts = { desc = 'Align text' },
+      },
+      {
+        lhs = 'gL',
+        mode = { 'n', 'x' },
+        opts = { desc = 'Align text interactively' },
+      },
     },
     postload = function()
       vim.g.easy_align_delimiters = {
