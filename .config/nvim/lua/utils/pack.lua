@@ -44,15 +44,15 @@ end
 
 ---Lazy-load plugin for given plugin spec
 ---@param spec vim.pack.Spec
----@param _ string
-function M.lazy_load(spec, _)
+---@param path string
+function M.lazy_load(spec, path)
   if not spec.data then
     M.load(spec)
     return
   end
 
   if spec.data.init then
-    spec.data.init()
+    spec.data.init(spec, path)
   end
 
   ---Whether the plugin is lazy-loaded

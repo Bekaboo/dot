@@ -2,12 +2,10 @@ return {
   src = 'https://github.com/stevearc/oil.nvim',
   data = {
     cmds = 'Oil',
-    preload = function()
-      -- Ensure that img-clip is loaded before oil to prevent its `vim.paste`
-      -- handler from overriding oil's (see `lua/configs/oil.lua`)
-      require('utils.load').load('img-clip')
-    end,
-    load = function() -- Load oil on startup only when editing a directory
+    ---Load oil on startup only when editing a directory
+    ---@param spec vim.pack.Spec
+    ---@param path string
+    init = function(spec, path)
       vim.g.loaded_fzf_file_explorer = 0
       vim.g.loaded_netrw = 0
       vim.g.loaded_netrwPlugin = 0
@@ -40,10 +38,16 @@ return {
             return
           end
 
-          pcall(require, 'oil')
           pcall(vim.api.nvim_del_autocmd, id)
+          pcall(vim.cmd.packadd, 'oil.nvim')
+          require('utils.pack').load(spec, path)
         end),
       })
+    end,
+    preload = function()
+      -- Ensure that img-clip is loaded before oil to prevent its `vim.paste`
+      -- handler from overriding oil's (see `lua/configs/oil.lua`)
+      require('utils.load').load('img-clip')
     end,
     postload = function()
       local oil = require('oil')
