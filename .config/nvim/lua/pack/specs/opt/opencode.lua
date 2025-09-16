@@ -58,7 +58,9 @@ return {
           input = { text = { wrap = true } },
         },
         context = {
-          cursor_data = true,
+          cursor_data = {
+            enabled = true,
+          },
         },
         keymap = {
           window = {
