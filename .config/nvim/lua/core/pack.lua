@@ -34,14 +34,14 @@ end
 utils.pack.add(collect_specs(specs_start_path))
 utils.load.on_events(
   'UIEnter',
-  'my.pack.load',
+  'my.pack.load_opt',
   vim.schedule_wrap(function()
     utils.pack.add(collect_specs(specs_opt_path))
   end)
 )
 utils.load.on_events(
   { 'CmdUndefined', 'SessionLoadPost', 'FileType' },
-  'my.pack.load',
+  'my.pack.load_opt',
   function()
     utils.pack.add(collect_specs(specs_opt_path))
   end
