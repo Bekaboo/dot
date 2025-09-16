@@ -347,7 +347,7 @@ usage() {
 
 # $1: name of the fish theme
 main() {
-    lockfile="${XDG_RUNTIME_DIR:-/tmp}/setcolor.lock"
+    lockfile="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/setbg.lock"
     exec 9>"$lockfile"
     if ! flock -n 9; then
         echo "Waiting for existing instance (lock: '$lockfile')" >&2
