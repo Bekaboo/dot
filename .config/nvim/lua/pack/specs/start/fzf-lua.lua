@@ -89,13 +89,17 @@ return {
       { lhs = '<Leader>fF', opts = { desc = 'Find all available pickers' } },
       -- stylua: ignore end
     },
-    init = function()
+    ---@param spec vim.pack.Spec
+    ---@param path string
+    init = function(spec, path)
       -- Disable fzf's default vim plugin
       vim.g.loaded_fzf = 1
 
       local function setup_ui_select()
         ---@diagnostic disable-next-line: duplicate-set-field
         vim.ui.select = function(...)
+          require('utils.pack').load(spec, path)
+
           local fzf_ui = require('fzf-lua.providers.ui_select')
           -- Register fzf as custom `vim.ui.select()` function if not yet
           -- registered
