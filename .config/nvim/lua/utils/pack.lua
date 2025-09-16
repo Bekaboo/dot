@@ -8,6 +8,10 @@ local specs_registry = {}
 ---@type table<string, boolean>
 local loaded = {}
 
+---Plugins whose `init()` is already called
+---@type table<string, boolean>
+local initialized = {}
+
 ---Load a plugin with init, pre/post hooks, dependencies etc.
 ---@param spec vim.pack.Spec
 ---@param path? string
@@ -68,13 +72,11 @@ end
 ---@param spec vim.pack.Spec
 ---@param path string
 function M.lazy_load(spec, path)
-  if not spec.data then
-    M.load(spec)
-    return
-  end
+  spec.data = spec.data or {}
 
-  if spec.data.init then
+  if spec.data.init and not initialized[spec.src] then
     spec.data.init(spec, path)
+    initialized[spec.src] = true
   end
 
   ---Whether the plugin is lazy-loaded
