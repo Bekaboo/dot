@@ -1,6 +1,12 @@
 return {
   src = 'https://github.com/ibhagwan/fzf-lua',
   data = {
+    deps = {
+      {
+        src = 'https://github.com/kyazdani42/nvim-web-devicons',
+        data = { optional = true },
+      },
+    },
     cmds = 'FzfLua',
     events = 'LspAttach',
     keys = {
