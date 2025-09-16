@@ -1,6 +1,18 @@
 return {
   src = 'https://github.com/stevearc/oil.nvim',
   data = {
+    deps = {
+      {
+        src = 'https://github.com/kyazdani42/nvim-web-devicons',
+        data = { optional = true },
+      },
+      {
+        -- Ensure that img-clip is loaded before oil to prevent its `vim.paste`
+        -- handler from overriding oil's
+        src = 'https://github.com/HakonHarnes/img-clip.nvim',
+        data = { optional = true },
+      },
+    },
     cmds = 'Oil',
     ---Load oil on startup only when editing a directory
     ---@param spec vim.pack.Spec
@@ -43,11 +55,6 @@ return {
           require('utils.pack').load(spec, path)
         end),
       })
-    end,
-    preload = function()
-      -- Ensure that img-clip is loaded before oil to prevent its `vim.paste`
-      -- handler from overriding oil's (see `lua/configs/oil.lua`)
-      require('utils.load').load('img-clip')
     end,
     postload = function()
       local oil = require('oil')

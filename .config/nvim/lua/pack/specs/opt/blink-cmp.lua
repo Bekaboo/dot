@@ -1,6 +1,16 @@
 return {
   src = 'https://github.com/saghen/blink.cmp',
   data = {
+    deps = {
+      {
+        src = 'https://github.com/L3MON4D3/LuaSnip',
+        data = { optional = true },
+      },
+      {
+        src = 'https://github.com/kyazdani42/nvim-web-devicons',
+        data = { optional = true },
+      },
+    },
     -- https://github.com/Saghen/blink.cmp/issues/145#issuecomment-2483686337
     -- https://github.com/Saghen/blink.cmp/issues/145#issuecomment-2492759016
     build = string.format(

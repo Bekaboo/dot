@@ -3,9 +3,12 @@ return {
   data = {
     lazy = true,
     deps = {
-      'https://github.com/mfussenegger/nvim-dap',
-      'https://github.com/nvim-neotest/nvim-nio',
-      'https://github.com/kyazdani42/nvim-web-devicons',
+      { src = 'https://github.com/mfussenegger/nvim-dap' },
+      { src = 'https://github.com/nvim-neotest/nvim-nio' },
+      {
+        src = 'https://github.com/kyazdani42/nvim-web-devicons',
+        data = { optional = true },
+      },
     },
     postload = function()
       local dap, dapui = require('dap'), require('dapui')

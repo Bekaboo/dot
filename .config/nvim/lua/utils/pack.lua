@@ -8,6 +8,10 @@ local specs_registry = {}
 ---@param spec vim.pack.Spec
 ---@param path? string
 function M.load(spec, path)
+  if spec.data and (spec.data.enabled == false or spec.data.optional) then
+    return
+  end
+
   spec.data = spec.data or {}
 
   -- Dependencies must be loaded before current plugin
@@ -85,18 +89,6 @@ function M.lazy_load(spec, path)
   end
 end
 
----Register single plugin spec with lazy-loading, dependencies, etc.
----Helper function of `add()`
----@param spec vim.pack.Spec
-function M.register_spec(spec)
-  if spec.data and spec.data.deps then
-    M.register(spec.data.deps)
-  end
-
-  specs_registry[spec.src] =
-    vim.tbl_deep_extend('keep', spec, specs_registry[spec.src] or {})
-end
-
 ---Add specified plugin spec with lazy-loading
 ---@param specs string|vim.pack.Spec|(string|vim.pack.Spec)[]
 function M.register(specs)
@@ -112,7 +104,31 @@ function M.register(specs)
   end
 
   for _, spec in ipairs(specs) do
-    M.register_spec(spec)
+    local existing_spec = specs_registry[spec.src]
+
+    -- A plugin can flagged as an optional dependency of other plugins
+    -- Optional plugins will not be installed and configured unless there's
+    -- another spec for the same plugin without `data.optional` or with
+    -- `data.optional` being `false`
+    local optional = spec.data
+      and spec.data.optional
+      and (
+        not existing_spec
+        or existing_spec.data and existing_spec.data.optional
+      )
+
+    if not optional then
+      spec.data = spec.data or {}
+      spec.data.optional = false
+    end
+  end
+
+  for _, spec in ipairs(specs) do
+    if spec.data and spec.data.deps then
+      M.register(spec.data.deps)
+    end
+    specs_registry[spec.src] =
+      vim.tbl_deep_extend('force', specs_registry[spec.src] or {}, spec)
   end
 end
 
@@ -133,9 +149,7 @@ function M.build(spec, path, notify)
 
   notify = notify ~= false
   if notify then
-    vim.notify(
-      string.format('[utils.pack] Building %s', spec.src)
-    )
+    vim.notify(string.format('[utils.pack] Building %s', spec.src))
   end
 
   -- Build can be a function, a vim command (starting with ':'), or a shell
@@ -194,7 +208,9 @@ function M.add(specs)
 
   specs = {}
   for _, spec in pairs(specs_registry) do
-    if not spec.data or spec.data.enabled ~= false then
+    if
+      not spec.data or spec.data.enabled ~= false and not spec.data.optional
+    then
       table.insert(specs, spec)
     end
   end
