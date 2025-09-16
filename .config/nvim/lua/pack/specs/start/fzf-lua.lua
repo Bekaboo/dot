@@ -1,7 +1,6 @@
 return {
   src = 'https://github.com/ibhagwan/fzf-lua',
   data = {
-    build = 'fzf --version',
     cmds = 'FzfLua',
     events = 'LspAttach',
     keys = {
