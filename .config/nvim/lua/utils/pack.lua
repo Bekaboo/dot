@@ -4,6 +4,10 @@ local M = {}
 ---@type table<string, vim.pack.Spec>
 local specs_registry = {}
 
+---Loaded plugins
+---@type table<string, boolean>
+local loaded = {}
+
 ---Load a plugin with init, pre/post hooks, dependencies etc.
 ---@param spec vim.pack.Spec
 ---@param path? string
@@ -11,6 +15,11 @@ function M.load(spec, path)
   if spec.data and (spec.data.enabled == false or spec.data.optional) then
     return
   end
+
+  if loaded[spec.src] then
+    return
+  end
+  loaded[spec.src] = true
 
   spec.data = spec.data or {}
 
