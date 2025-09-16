@@ -294,7 +294,7 @@ return {
       ---Select previous snippet choice or fallback
       ---@param fallback function
       local function prev_choice(fallback)
-        if not ls.choice_active() then
+        if vim.fn.pumvisible() ~= 0 or not ls.choice_active() then
           fallback()
           return
         end
@@ -304,7 +304,7 @@ return {
       ---Select next snippet choice or fallback
       ---@param fallback function
       local function next_choice(fallback)
-        if not ls.choice_active() then
+        if vim.fn.pumvisible() ~= 0 or not ls.choice_active() then
           fallback()
           return
         end
