@@ -1,7 +1,14 @@
 return {
   src = 'https://github.com/saghen/blink.cmp',
   data = {
-    build = 'cargo build --release',
+    -- https://github.com/Saghen/blink.cmp/issues/145#issuecomment-2483686337
+    -- https://github.com/Saghen/blink.cmp/issues/145#issuecomment-2492759016
+    build = string.format(
+      '%s cargo build --release',
+      vim.env.TERMUX_VERSION
+          and 'RUSTC_BOOTSTRAP=1 RUSTFLAGS="-C link-args=-lluajit"'
+        or ''
+    ),
     events = { 'InsertEnter', 'CmdlineEnter' },
     postload = function()
       local icons = require('utils.static.icons')
@@ -47,6 +54,10 @@ return {
         enabled = function()
           return vim.fn.reg_recording() == '' and vim.fn.reg_executing() == ''
         end,
+        fuzzy = {
+          -- Don't error when rust fuzzy lib is unavailable
+          implementation = 'prefer_rust',
+        },
         completion = {
           list = {
             selection = {
