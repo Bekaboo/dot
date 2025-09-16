@@ -812,11 +812,11 @@ return {
           ['gh'] = 'actions.toggle_hidden',
           ['gs'] = 'actions.change_sort',
           ['gx'] = 'actions.open_external',
-          ['gY'] = 'actions.copy_to_system_clipboard',
-          ['gp'] = 'actions.paste_from_system_clipboard',
+          ['<LocalLeader>y'] = 'actions.copy_to_system_clipboard',
+          ['<LocalLeader>p'] = 'actions.paste_from_system_clipboard',
           -- Drag and drop
           -- Source: https://github.com/ndavd/dotfiles/blob/7af6efa64007c9e28ca5461c101034c2d5d53000/.config/nvim/lua/plugins/oil.lua#L15
-          ['gd'] = {
+          ['<LocalLeader>d'] = {
             mode = { 'x', 'n' },
             buffer = true,
             desc = 'Drag and drop entry under the cursor',
