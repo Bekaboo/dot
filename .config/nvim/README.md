@@ -97,10 +97,23 @@ Currently only tested on Linux (X11/Wayland/TTY) and Android (Termux).
 - [Pynvim](https://github.com/neovim/pynvim) for accessing some Python utility functions, e.g. [`shlex.split()`](https://docs.python.org/3/library/shlex.html#shlex.split), see `split()` in [`lua/utils/cmd.lua`](lua/utils/cmd.lua).
 - [Pynvim](https://github.com/neovim/pynvim), [Jupyter Client](https://github.com/jupyter/jupyter_client), and [IPython Kernel](https://github.com/ipython/ipykernel) for Python support
 - [Jupytext](https://github.com/mwouts/jupytext) for editing Jupyter notebooks
+- [Rust](https://www.rust-lang.org/) tool chain for building [blink.cmp](https://github.com/Saghen/blink.cmp)'s fuzzy-matching lib
 - A decent terminal emulator
 - A nerd font, e.g. [JetbrainsMono Nerd Font](https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/JetBrainsMono).
   This is optional as nerd icons are disabled by default, to enable it, set the
   environment variable `$NVIM_NF`, see [environment variables](#environment-variables)
+
+### Build Neovim-Nightly From Source on Android Termux
+
+```sh
+pkg i build-essential cmake luajit ninja git
+git clone --filter=blob:none https://github.com/neovim/neovim.git && cd neovim
+make CMAKE_BUILD_TYPE=RelWithDebInfo \
+    DEPS_CMAKE_FLAGS='-DUSE_BUNDLED_LUAJIT=OFF -DUSE_BUNDLED_LUA=OFF'
+make CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX='$HOME/.local'" install
+```
+
+Neovim will be installed under `~/.local/bin`, make sure it is in your `$PATH`.
 
 ### Tree-sitter
 
