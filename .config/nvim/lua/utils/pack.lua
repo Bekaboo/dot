@@ -12,7 +12,7 @@ local loaded = {}
 ---@param spec vim.pack.Spec
 ---@param path? string
 function M.load(spec, path)
-  if spec.data and (spec.data.enabled == false or spec.data.optional) then
+  if spec.data and spec.data.optional then
     return
   end
 
@@ -217,9 +217,7 @@ function M.add(specs)
 
   specs = {}
   for _, spec in pairs(specs_registry) do
-    if
-      not spec.data or spec.data.enabled ~= false and not spec.data.optional
-    then
+    if not spec.data or not spec.data.optional then
       table.insert(specs, spec)
     end
   end

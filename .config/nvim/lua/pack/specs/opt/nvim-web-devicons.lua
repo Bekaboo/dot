@@ -2,7 +2,7 @@ return {
   src = 'https://github.com/kyazdani42/nvim-web-devicons',
   data = {
     lazy = true,
-    enabled = vim.g.has_nf,
+    optional = not vim.g.has_nf,
     postload = function()
       local icons = require('utils.static').icons
 
