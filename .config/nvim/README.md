@@ -92,7 +92,6 @@ Currently only tested on Linux (X11/Wayland/TTY) and Android (Termux).
 - [Git](https://git-scm.com/)
 - [GCC](https://gcc.gnu.org/) or [Clang](https://clang.llvm.org/) for building treesitter parsers and some libs
 - [Fd](https://github.com/sharkdp/fd), [Ripgrep](https://github.com/BurntSushi/ripgrep), and [Fzf](https://github.com/junegunn/fzf) for fuzzy search
-- [Pandoc](https://pandoc.org/), [custom scripts](../../.bin) and [TexLive](https://www.tug.org/texlive/) (for ArchLinux users, it is `texlive-core` and `texlive-extra`) for markdown → PDF conversion (`:MarkdownToPDF`)
 - [Node.js](https://nodejs.org/en) for installing dependencies for [markdown-preview.nvim](https://github.com/iamcco/markdown-preview.nvim)
 - [Pynvim](https://github.com/neovim/pynvim) for accessing some Python utility functions, e.g. [`shlex.split()`](https://docs.python.org/3/library/shlex.html#shlex.split), see `split()` in [`lua/utils/cmd.lua`](lua/utils/cmd.lua).
 - [Pynvim](https://github.com/neovim/pynvim), [Jupyter Client](https://github.com/jupyter/jupyter_client), and [IPython Kernel](https://github.com/ipython/ipykernel) for Python support
