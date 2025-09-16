@@ -849,10 +849,9 @@ return {
               \ else |
               \   unlet g:_fzf_qfclosed |
               \ endif |
+              \ let g:_fzf_height += g:_fzf_cmdheight + (g:_fzf_laststatus ? 1 : 0) |
               \ if exists('g:_fzf_n_items') && !exists('g:_fzf_qfclosed') |
-              \   let g:_fzf_height = g:_fzf_n_items + 1 |
-              \ else |
-              \   let g:_fzf_height += g:_fzf_cmdheight + (g:_fzf_laststatus ? 1 : 0) |
+              \   let g:_fzf_height = min([g:_fzf_height, g:_fzf_n_items + 1]) |
               \ endif |
               \ exe printf('botright %dnew', g:_fzf_height) |
               \ let g:_fzf_win = nvim_get_current_win() |
