@@ -77,24 +77,34 @@ return {
       vim.keymap.set('n', ']@', opencode_api.diff_next, { desc = 'Navigate to opencode next file diff' })
       -- stylua: ignore end
 
-      local ft_group = vim.api.nvim_create_augroup('my.opencode.ft', {})
+      local group = vim.api.nvim_create_augroup('my.opencode.settings', {})
 
       vim.api.nvim_create_autocmd('FileType', {
         desc = 'Filetype settings for opencode buffers.',
         pattern = 'opencode*',
-        group = ft_group,
+        group = group,
         callback = function(args)
-          vim.api.nvim_buf_call(args.buf, function()
-            vim.opt_local.colorcolumn = ''
-            vim.b.winbar_no_attach = true
-          end)
+          vim.b[args.buf].winbar_no_attach = true
+        end,
+      })
+
+      vim.api.nvim_create_autocmd('BufWinEnter', {
+        desc = 'Opencode window settings.',
+        group = group,
+        callback = function(args)
+          if not vim.startswith(vim.bo[args.buf].ft, 'opencode') then
+            return
+          end
+          for _, win in ipairs(vim.fn.win_findbuf(args.buf)) do
+            vim.wo[win][0].cc = ''
+          end
         end,
       })
 
       vim.api.nvim_create_autocmd('FileType', {
         desc = 'Filetype settings for opencode buffers.',
         pattern = 'opencode_output',
-        group = ft_group,
+        group = group,
         callback = function(args)
           vim.bo[args.buf].filetype = 'markdown'
         end,
