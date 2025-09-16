@@ -786,6 +786,7 @@ return {
           relativenumber = false,
           signcolumn = 'no',
           foldcolumn = '0',
+          colorcolumn = '',
           winbar = '',
         },
         watch_for_changes = true,
