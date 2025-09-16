@@ -116,19 +116,26 @@ function M.register(specs)
   end
 end
 
+---Maps from plugin spec src to building status
+---@type table<string, boolean>
+local building = {}
+
 ---Build plugin, e.g. build c/rust lib, install node dependencies, etc.
 ---comment
 ---@param spec vim.pack.Spec
 ---@param path string
 ---@param notify? boolean default to `true`
 function M.build(spec, path, notify)
-  if not spec.data or not spec.data.build then
+  if not spec.data or not spec.data.build or building[spec.src] then
     return
   end
+  building[spec.src] = true
 
   notify = notify ~= false
   if notify then
-    vim.notify(string.format('[utils.pack] Building %s', spec.src))
+    vim.notify(
+      string.format('[utils.pack] Building %s', spec.src)
+    )
   end
 
   -- Build can be a function, a vim command (starting with ':'), or a shell
