@@ -28,7 +28,6 @@ return {
         -- checking if the buffer is a directory buffer
         callback = vim.schedule_wrap(function(args)
           local buf = args.buf
-          local id = args.id
 
           if
             not vim.api.nvim_buf_is_valid(buf)
@@ -50,9 +49,8 @@ return {
             return
           end
 
-          pcall(vim.api.nvim_del_autocmd, id)
-          pcall(vim.cmd.packadd, 'oil.nvim')
           require('utils.pack').load(spec, path)
+          return true
         end),
       })
     end,
