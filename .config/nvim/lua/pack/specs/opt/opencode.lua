@@ -42,6 +42,14 @@ return {
       opts = { desc = 'Toggle focus between opencode and last window' },
     },
     postload = function()
+      if vim.fn.executable('opencode') == 0 then
+        vim.notify(
+          '[Opencode.nvim] command `opencode` not found',
+          vim.log.levels.ERROR
+        )
+        return
+      end
+
       -- Default configuration with all available options
       require('opencode').setup({
         default_global_keymaps = false,
