@@ -968,82 +968,100 @@ return {
         end,
       })
 
-      vim.api.nvim_create_autocmd('BufEnter', {
-        desc = 'Record alternate file in dir buffers.',
-        group = groupid,
-        callback = function(args)
-          local buf = args.buf
-          local bufname = vim.api.nvim_buf_get_name(buf)
-          if vim.fn.isdirectory(bufname) == 1 then
-            vim.b[buf]._alt_file = vim.fn.bufnr('#')
+      ---Record alternate file in dir buffers.
+      ---@param buf? integer
+      local function oil_record_alt_file(buf)
+        buf = vim._resolve_bufnr(buf)
+        if not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].ft ~= 'oil' then
+          return
+        end
+
+        if vim.fn.isdirectory(vim.api.nvim_buf_get_name(buf)) == 1 then
+          vim.b[buf]._alt_file = vim.fn.bufnr('#')
+        end
+      end
+
+      ---Set last cursor position in oil buffers when editing parent dir
+      ---@param buf? integer
+      local function oil_set_cursor(buf)
+        buf = vim._resolve_bufnr(buf)
+        if not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].ft ~= 'oil' then
+          return
+        end
+
+        -- Only set cursor position when first entering an oil buffer in current window
+        -- This prevents cursor from resetting to the original file when switching
+        -- between oil and preview windows, e.g.
+        -- 1. Open `foo/bar.txt`
+        -- 2. Run `:e %:p:h` to open `foo/` in oil - cursor starts on `bar.txt`
+        -- 3. Open preview window
+        -- 4. Move cursor to different files in oil buffer
+        -- 5. Switch to preview window
+        -- 6. Switch back to oil buffer
+        -- Without this check, cursor would incorrectly reset to `bar.txt`
+        -- Setting a boolean flag i.e. set `_oil_entered` to `true` or `false`
+        -- is not enough because oil reuses buffers for the same directory, consider
+        -- the following case:
+        -- 1. `:vsplit`
+        -- 2. `:e .` to open oil in one split
+        -- 3. `:close`
+        -- 4. `:e .` to open oil in another split (reuse oil buffer!)
+        -- If we use a boolean flag for `_oil_entered`, we will not able to set cursor
+        -- position in oil buffer on step 4 because the flag is set in step 2.
+        local win = vim.api.nvim_get_current_win()
+        if vim.b[buf]._oil_entered == win then
+          return
+        end
+        vim.b[buf]._oil_entered = win
+
+        -- Place cursor on the alternate buffer if we are opening
+        -- the parent directory of the alternate buffer
+        local alt_file = vim.fn.bufnr('#')
+        if not vim.api.nvim_buf_is_valid(alt_file) then
+          return
+        end
+
+        -- Because we use `:e <dir>` to open oil, the alternate file will be a dir
+        -- buffer. Retrieve the "real" alternate buffer (file buffer) we recorded
+        -- in the dir buffer
+        local _alt_file = vim.b[alt_file]._alt_file
+        if _alt_file and vim.api.nvim_buf_is_valid(_alt_file) then
+          alt_file = _alt_file
+        end
+        local bufname_alt = vim.api.nvim_buf_get_name(alt_file)
+        local parent_url, basename =
+          oil.get_buffer_parent_url(bufname_alt, true)
+        if basename then
+          if
+            not oil_config.view_options.show_hidden
+            and oil_config.view_options.is_hidden_file(
+              basename,
+              (function()
+                for _, b in ipairs(vim.api.nvim_list_bufs()) do
+                  if vim.api.nvim_buf_get_name(b) == basename then
+                    return b
+                  end
+                end
+              end)()
+            )
+          then
+            oil_view.toggle_hidden()
           end
-        end,
-      })
+          oil_view.set_last_cursor(parent_url, basename)
+          oil_view.maybe_set_cursor()
+        end
+      end
+
+      oil_record_alt_file(0)
+      oil_set_cursor(0)
 
       vim.api.nvim_create_autocmd('BufEnter', {
         desc = 'Set last cursor position in oil buffers when editing parent dir.',
         group = groupid,
         pattern = 'oil://*',
         callback = function(args)
-          -- Only set cursor position when first entering an oil buffer in current window
-          -- This prevents cursor from resetting to the original file when switching
-          -- between oil and preview windows, e.g.
-          -- 1. Open `foo/bar.txt`
-          -- 2. Run `:e %:p:h` to open `foo/` in oil - cursor starts on `bar.txt`
-          -- 3. Open preview window
-          -- 4. Move cursor to different files in oil buffer
-          -- 5. Switch to preview window
-          -- 6. Switch back to oil buffer
-          -- Without this check, cursor would incorrectly reset to `bar.txt`
-          -- Setting a boolean flag i.e. set `_oil_entered` to `true` or `false`
-          -- is not enough because oil reuses buffers for the same directory, consider
-          -- the following case:
-          -- 1. `:vsplit`
-          -- 2. `:e .` to open oil in one split
-          -- 3. `:close`
-          -- 4. `:e .` to open oil in another split (reuse oil buffer!)
-          -- If we use a boolean flag for `_oil_entered`, we will not able to set cursor
-          -- position in oil buffer on step 4 because the flag is set in step 2.
-          local win = vim.api.nvim_get_current_win()
-          if vim.b[args.buf]._oil_entered == win then
-            return
-          end
-          vim.b[args.buf]._oil_entered = win
-          -- Place cursor on the alternate buffer if we are opening
-          -- the parent directory of the alternate buffer
-          local alt_file = vim.fn.bufnr('#')
-          if not vim.api.nvim_buf_is_valid(alt_file) then
-            return
-          end
-          -- Because we use `:e <dir>` to open oil, the alternate file will be a dir
-          -- buffer. Retrieve the "real" alternate buffer (file buffer) we recorded
-          -- in the dir buffer
-          local _alt_file = vim.b[alt_file]._alt_file
-          if _alt_file and vim.api.nvim_buf_is_valid(_alt_file) then
-            alt_file = _alt_file
-          end
-          local bufname_alt = vim.api.nvim_buf_get_name(alt_file)
-          local parent_url, basename =
-            oil.get_buffer_parent_url(bufname_alt, true)
-          if basename then
-            if
-              not oil_config.view_options.show_hidden
-              and oil_config.view_options.is_hidden_file(
-                basename,
-                (function()
-                  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-                    if vim.api.nvim_buf_get_name(buf) == basename then
-                      return buf
-                    end
-                  end
-                end)()
-              )
-            then
-              oil_view.toggle_hidden()
-            end
-            oil_view.set_last_cursor(parent_url, basename)
-            oil_view.maybe_set_cursor()
-          end
+          oil_record_alt_file(args.buf)
+          oil_set_cursor(args.buf)
         end,
       })
 
