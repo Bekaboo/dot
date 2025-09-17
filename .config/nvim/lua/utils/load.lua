@@ -82,10 +82,12 @@ local function trig_loaders_fn(loaders)
       if not vim.api.nvim_buf_is_valid(args.buf) then
         return
       end
-      vim.api.nvim_exec_autocmds(
-        args.event,
-        { pattern = args.match, data = args.data }
-      )
+      vim.api.nvim_buf_call(args.buf, function()
+        vim.api.nvim_exec_autocmds(
+          args.event,
+          { pattern = args.match, data = args.data }
+        )
+      end)
     end)
 
     return true
