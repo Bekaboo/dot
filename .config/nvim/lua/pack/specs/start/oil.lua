@@ -1124,18 +1124,18 @@ return {
               uri,
               dest,
               vim.schedule_wrap(function(o)
-                if o.code ~= 0 then
-                  vim.notify(
-                    string.format(
-                      "[oil.nvim] failed to fetch from '%s': %s",
-                      uri,
-                      o.stderr
-                    ),
-                    vim.log.levels.WARN
-                  )
+                if o.code == 0 then
+                  oil_refresh_place_cursor()
                   return
                 end
-                oil_refresh_place_cursor()
+                vim.notify(
+                  string.format(
+                    "[oil.nvim] failed to fetch from '%s': %s",
+                    uri,
+                    o.stderr
+                  ),
+                  vim.log.levels.WARN
+                )
               end)
             )
             return
@@ -1157,18 +1157,19 @@ return {
               path,
               dest,
               vim.schedule_wrap(function(err)
-                if err then
-                  vim.notify(
-                    string.format(
-                      "[oil.nvim] failed to copy from '%s': %s",
-                      path,
-                      err
-                    ),
-                    vim.log.levels.WARN
-                  )
+                if not err then
+                  oil_refresh_place_cursor()
                   return
                 end
-                oil_refresh_place_cursor()
+                vim.notify(
+                  string.format(
+                    "[oil.nvim] failed to move from '%s' to '%s': %s",
+                    path,
+                    dest,
+                    err
+                  ),
+                  vim.log.levels.WARN
+                )
               end)
             )
           end)
