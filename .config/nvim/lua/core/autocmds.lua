@@ -181,11 +181,13 @@ augroup('my.last_pos_jmp', {
           if ft == 'gitcommit' or ft == 'gitrebase' then
             return
           end
-          vim.cmd.normal({
-            'g`"zvzz',
-            bang = true,
-            mods = { emsg_silent = true },
-          })
+          local last_pos = vim.api.nvim_buf_get_mark(a.buf, '"')
+          if vim.deep_equal(last_pos, { 0, 0 }) then
+            return
+          end
+          for _, win in ipairs(vim.fn.win_findbuf(a.buf)) do
+            vim.api.nvim_win_set_cursor(win, last_pos)
+          end
         end,
       })
     end,
