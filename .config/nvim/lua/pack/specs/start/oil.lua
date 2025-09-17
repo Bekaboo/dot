@@ -1065,39 +1065,31 @@ return {
         end,
       })
 
-      ---Set some default hlgroups for oil
-      ---@return nil
-      local function oil_sethl()
-        local sethl = require('utils.hl').set
-        sethl(0, 'OilDir', { fg = 'Directory' })
-        sethl(0, 'OilDirIcon', { fg = 'Directory' })
-        sethl(0, 'OilLink', { fg = 'Constant' })
-        sethl(0, 'OilLinkTarget', { fg = 'Special' })
-        sethl(0, 'OilCopy', { fg = 'DiagnosticSignHint', bold = true })
-        sethl(0, 'OilMove', { fg = 'DiagnosticSignWarn', bold = true })
-        sethl(0, 'OilChange', { fg = 'DiagnosticSignWarn', bold = true })
-        sethl(0, 'OilCreate', { fg = 'DiagnosticSignInfo', bold = true })
-        sethl(0, 'OilDelete', { fg = 'DiagnosticSignError', bold = true })
-        sethl(0, 'OilPermissionNone', { fg = 'NonText' })
-        sethl(0, 'OilPermissionRead', { fg = 'DiagnosticSignWarn' })
-        sethl(0, 'OilPermissionWrite', { fg = 'DiagnosticSignError' })
-        sethl(0, 'OilPermissionExecute', { fg = 'DiagnosticSignInfo' })
-        sethl(0, 'OilPermissionSetuid', { fg = 'DiagnosticSignHint' })
-        sethl(0, 'OilSecurityContext', { fg = 'Special' })
-        sethl(0, 'OilSecurityExtended', { fg = 'Special' })
-        sethl(0, 'OilTypeDir', { fg = 'Directory' })
-        sethl(0, 'OilTypeFifo', { fg = 'Special' })
-        sethl(0, 'OilTypeFile', { fg = 'NonText' })
-        sethl(0, 'OilTypeLink', { fg = 'Constant' })
-        sethl(0, 'OilTypeSocket', { fg = 'OilSocket' })
-      end
-      oil_sethl()
+      require('utils.hl').persist(function()
+        local hl = require('utils.hl')
 
-      vim.api.nvim_create_autocmd('ColorScheme', {
-        desc = 'Set some default hlgroups for oil.',
-        group = vim.api.nvim_create_augroup('my.oil.hl', {}),
-        callback = oil_sethl,
-      })
+        hl.set(0, 'OilDir', { fg = 'Directory' })
+        hl.set(0, 'OilDirIcon', { fg = 'Directory' })
+        hl.set(0, 'OilLink', { fg = 'Constant' })
+        hl.set(0, 'OilLinkTarget', { fg = 'Special' })
+        hl.set(0, 'OilCopy', { fg = 'DiagnosticSignHint', bold = true })
+        hl.set(0, 'OilMove', { fg = 'DiagnosticSignWarn', bold = true })
+        hl.set(0, 'OilChange', { fg = 'DiagnosticSignWarn', bold = true })
+        hl.set(0, 'OilCreate', { fg = 'DiagnosticSignInfo', bold = true })
+        hl.set(0, 'OilDelete', { fg = 'DiagnosticSignError', bold = true })
+        hl.set(0, 'OilPermissionNone', { fg = 'NonText' })
+        hl.set(0, 'OilPermissionRead', { fg = 'DiagnosticSignWarn' })
+        hl.set(0, 'OilPermissionWrite', { fg = 'DiagnosticSignError' })
+        hl.set(0, 'OilPermissionExecute', { fg = 'DiagnosticSignInfo' })
+        hl.set(0, 'OilPermissionSetuid', { fg = 'DiagnosticSignHint' })
+        hl.set(0, 'OilSecurityContext', { fg = 'Special' })
+        hl.set(0, 'OilSecurityExtended', { fg = 'Special' })
+        hl.set(0, 'OilTypeDir', { fg = 'Directory' })
+        hl.set(0, 'OilTypeFifo', { fg = 'Special' })
+        hl.set(0, 'OilTypeFile', { fg = 'NonText' })
+        hl.set(0, 'OilTypeLink', { fg = 'Constant' })
+        hl.set(0, 'OilTypeSocket', { fg = 'OilSocket' })
+      end)
 
       ---Drag & drop files into oil buffer
       ---Source: https://github.com/HakonHarnes/img-clip.nvim/blob/main/plugin/img-clip.lua
