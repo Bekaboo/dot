@@ -938,7 +938,7 @@ return {
         end
 
         vim.api.nvim_buf_call(buf, function()
-          local oildir = vim.fs.normalize(oil.get_current_dir())
+          local oildir = vim.fs.normalize(oil.get_current_dir() or '')
           if vim.fn.isdirectory(oildir) == 0 then
             return
           end
