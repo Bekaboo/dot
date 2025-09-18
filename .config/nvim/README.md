@@ -499,7 +499,7 @@ snippet engine, custom snippets for different filetypes are defined under
 VSCode integration takes advantages of the modular design, allowing to use
 a different set of plugins when neovim is launched by VSCode, relevant code is
 in [autoload/plugin/vscode.vim](autoload/plugin/vscode.vim) and
-[lua/core/plugins.lua](lua/core/plugins.lua).
+[lua/core/pack.lua](lua/core/pack.lua).
 
 To make VSCode integration work, please install [VSCode-Neovim](https://github.com/vscode-neovim/vscode-neovim) in VSCode
 and configure it correctly.
