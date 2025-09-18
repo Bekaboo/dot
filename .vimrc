@@ -1287,8 +1287,10 @@ map! <Esc>[3;3~ <C-w>
 
 noremap! <C-d>  <Del>
 cnoremap <C-b>  <Left>
-cnoremap <C-f>  <Right>
-cnoremap <C-o>  <C-f>
+
+cnoremap <expr> <C-f> exists('+cedit') && &cedit ==# "\x06" && <SID>end_of_line()
+      \ ? "\x06"
+      \ : "\<Right>"
 
 inoremap <expr> <C-b>  <SID>i_ctrl_b()
 inoremap <expr> <C-f>  <SID>i_ctrl_f()

@@ -181,20 +181,22 @@ function M.setup()
   end
   vim.g.loaded_readline = true
 
-  -- Default 'cedit' is `<C-f>` which is taken by readline keymap
-  if vim.go.cedit == vim.keycode('<C-f>') then
-    vim.go.cedit = '<C-o>'
-  end
+  vim.keymap.set('c', '<C-f>', function()
+    return vim.go.cedit == vim.keycode('<C-f>')
+        and end_of_line()
+        and vim.go.cedit
+      or '<Right>'
+  end, { expr = true, desc = 'Move cursor forward or open cmdwin' })
 
   -- stylua: ignore start
   vim.keymap.set('!', '<C-d>', '<Del>', { desc = 'Delete character under cursor' })
   vim.keymap.set('c', '<C-b>', '<Left>', { desc = 'Move cursor backward' })
-  vim.keymap.set('c', '<C-f>', '<Right>', { desc = 'Move cursor forward' })
 
   vim.keymap.set('!', '<C-BS>', '<C-w>', { remap = true, desc = 'Delete word before cursor' })
   vim.keymap.set('!', '<M-BS>', '<C-w>', { remap = true, desc = 'Delete word before cursor' })
   vim.keymap.set('!', '<M-Del>', '<C-w>', { remap = true, desc = 'Delete word before cursor' })
   -- stylua: ignore end
+
   vim.keymap.set('!', '<C-w>', function()
     return small_del(
       start_of_line() and not first_line() and '\n' or get_word_before(),
