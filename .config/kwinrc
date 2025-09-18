@@ -116,6 +116,8 @@ screenGapRight=12
 screenGapTop=12
 tileLayoutGap=12
 tileLayoutInitialRotationAngle=2
+unfitGreater=false
+unfitLess=false
 
 [Script-tilegaps]
 gapMid=14
