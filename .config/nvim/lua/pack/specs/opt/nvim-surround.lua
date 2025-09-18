@@ -13,5 +13,15 @@ return {
       { lhs = '<C-g>s', mode = 'i', opts = { desc = 'Surround' } },
       { lhs = '<C-g>S', mode = 'i', opts = { desc = 'Surround' } },
     },
+    postload = function()
+      require('nvim-surround').setup({
+        surrounds = {
+          -- Bold markers in markdown
+          ['<M-*>'] = {
+            add = { '**', '**' },
+          },
+        },
+      })
+    end,
   },
 }
