@@ -7,6 +7,10 @@ return {
         src = 'https://github.com/saghen/blink.cmp',
         data = { optional = true },
       },
+      {
+        src = 'https://github.com/ibhagwan/fzf-lua',
+        data = { optional = true },
+      },
     },
     cmds = {
       'OpencodeSwapPosition',
