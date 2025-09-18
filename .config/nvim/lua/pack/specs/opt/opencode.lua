@@ -1,7 +1,13 @@
 return {
   src = 'https://github.com/sudo-tee/opencode.nvim',
   data = {
-    deps = 'https://github.com/nvim-lua/plenary.nvim',
+    deps = {
+      'https://github.com/nvim-lua/plenary.nvim',
+      {
+        src = 'https://github.com/saghen/blink.cmp',
+        data = { optional = true },
+      },
+    },
     cmds = {
       'OpencodeSwapPosition',
       'Opencode',
