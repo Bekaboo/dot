@@ -18,6 +18,9 @@ flatten_single_dir() {
     sub_dir=""
 
     for item in "$extracted_dir"/* "$extracted_dir"/.*; do
+        if [ ! -e "$item" ]; then
+            continue
+        fi
         # Extracted dir contains file or more than 1 sub-dir
         if [ -d "$sub_dir" ] || [ ! -d "$item" ]; then
             return 1
