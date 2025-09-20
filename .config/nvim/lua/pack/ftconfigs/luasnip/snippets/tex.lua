@@ -258,7 +258,7 @@ M.math = {
   us.samWr({ trig = '(\\?%w*_*%w*)vv' }, un.sdn(1, '\\vec{', '}')),
   us.samWr({ trig = '(\\?%w*_*%w*)hat' }, un.sdn(1, '\\hat{', '}')),
   us.samWr({ trig = '(\\?%w*_*%w*)bar' }, un.sdn(1, '\\bar{', '}')),
-  us.samWr({ trig = '(\\?%w*_*%w*)td' }, un.sdn(1, '\\tilde{', '}')),
+  us.samWr({ trig = '(\\?%w*_*%w*)tld' }, un.sdn(1, '\\tilde{', '}')),
   us.samWr(
     { trig = '(\\?%w*_*%w*)dot', priority = 999 },
     un.sdn(1, '\\dot{', '}')
