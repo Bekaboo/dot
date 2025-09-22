@@ -1,6 +1,7 @@
 return {
   src = 'https://github.com/saghen/blink.cmp',
   data = {
+    optional = vim.g.vscode,
     deps = {
       {
         src = 'https://github.com/L3MON4D3/LuaSnip',
