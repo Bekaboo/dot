@@ -17,8 +17,8 @@ end)
 load.on_events(
   { event = 'BufReadCmd', pattern = '*.ipynb' },
   'plugin.jupytext',
-  function(args)
-    require('plugin.jupytext').setup(args.buf)
+  function()
+    require('plugin.jupytext').setup()
   end
 )
 
