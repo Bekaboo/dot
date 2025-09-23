@@ -22,3 +22,10 @@ My dotfiles on Linux (KDE Wayland) and macOS, with configs for:
 - [Wezterm](.config/wezterm/)
 - [Foot](.config/foot/)
 - ...
+
+### Environment Variables
+
+- `$DOT_DIR`: set this to indicate the path to the bare repo for dotfiles. Used
+  in bash, fish, and nvim config to detect the dotfiles bare repo. If you use
+  `git clone --bare <url> "$HOME/.dot"` to clone this repo, you should set it
+  to `$HOME/.dot`

@@ -175,7 +175,7 @@ return {
         end
         -- Fallback to dotfiles bare repo
         -- https://github.com/tpope/vim-fugitive/issues/1796#issuecomment-900725518
-        vim.fn.FugitiveDetect(vim.fs.joinpath(vim.uv.os_homedir(), '.dot'))
+        vim.fn.FugitiveDetect(vim.env.DOT_DIR)
       end
 
       detect()

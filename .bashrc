@@ -165,7 +165,7 @@ clear() {
 
 # Manage dotfiles
 dot() {
-    git --git-dir="$HOME/.dot" --work-tree="$HOME" "$@"
+    git --git-dir="$DOT_DIR" --work-tree="$HOME" "$@"
 }
 
 # Create remote branches (e.g. origin/master) on git fetch like normal repos

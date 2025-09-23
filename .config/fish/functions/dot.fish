@@ -1,7 +1,7 @@
 function dot \
     --wraps git \
     --description 'Manage dot files under home directory'
-    git --git-dir=$HOME/.dot/ --work-tree=$HOME $argv
+    git --git-dir=$DOT_DIR --work-tree=$HOME $argv
 end
 
 # Make sure that we don't show all untracked files in home directory, this

@@ -449,6 +449,11 @@ See [lua/core/opts.lua](lua/core/opts.lua).
 
 - `$NVIM_NO3RD`: disable third-party plugins if set
 - `$NVIM_NF`: enable nerd font icons if set
+- `$DOT_DIR`: path to the bare repo for dotfiles, e.g. `$HOME/.dot`, used in
+  [gitsigns.nvim config](lua/pack/specs/opt/gitsigns.lua) and
+  [vim-fugitive config](lua/pack/specs/opt/vim-fugitive.lua) to fallback to
+  the dotfiles bare repo when current buffer does not correspond to a file in a
+  regular git repo.
 
 ### Keymaps
 
