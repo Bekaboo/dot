@@ -167,7 +167,7 @@ function M.build(spec, path, notify)
   -- command
   if vim.is_callable(spec.data.build) then
     spec.data.build(spec, path)
-    return
+    goto done
   end
 
   if
@@ -175,27 +175,35 @@ function M.build(spec, path, notify)
     and vim.startswith(spec.data.build, ':')
   then
     vim.cmd(spec.data.build:gsub('^:', ''))
-    return
+    goto done
   end
 
-  local o = vim
-    .system(
-      type(spec.data.build) == 'table' and spec.data.build
-        or { 'sh', '-c', spec.data.build },
-      { cwd = path }
-    )
-    :wait()
-  if o.code ~= 0 then
-    vim.notify(
-      string.format(
-        '[utils.pack] Error building plugin %s (exited with code %d): %s',
-        spec.src,
-        o.code,
-        o.stderr
-      ),
-      vim.log.levels.ERROR
-    )
+  do
+    local o = vim
+      .system(
+        type(spec.data.build) == 'table' and spec.data.build
+          or { 'sh', '-c', spec.data.build },
+        { cwd = path }
+      )
+      :wait()
+
+    if o.code ~= 0 then
+      vim.notify(
+        string.format(
+          '[utils.pack] Error building plugin %s (exited with code %d): %s',
+          spec.src,
+          o.code,
+          o.stderr
+        ),
+        vim.log.levels.ERROR
+      )
+    end
   end
+
+  ::done::
+  vim.notify(
+    string.format('[utils.pack] Successfully built plugin %s', spec.src)
+  )
 end
 
 local pack_add = vim.pack.add
