@@ -213,7 +213,10 @@ return {
       ---@param fugitive_cmd string corresponding fugitive command
       ---@param opts? vim.api.keyset.user_command
       local function create_dotfiles_cmd(cmd, fugitive_cmd, opts)
-        vim.api.nvim_create_user_command(cmd, function(t)
+        opts = opts or {}
+
+        ---@param a vim.api.keyset.create_user_command.command_args
+        vim.api.nvim_create_user_command(cmd, function(a)
           local buf_git_dir = vim.b.git_dir
           local env_git_dir = vim.env.GIT_DIR
           local env_git_work_tree = vim.env.GIT_WORK_TREE
@@ -223,13 +226,18 @@ return {
           vim.env.GIT_WORK_TREE = vim.uv.os_homedir()
 
           vim.cmd[fugitive_cmd]({
-            args = t.fargs,
+            args = a.fargs,
+            mods = a.smods,
+            bang = a.bang,
+            reg = opts.register and a.reg,
+            range = opts.range and { a.line1, a.line2 },
+            count = opts.count and a.count,
           })
 
           vim.b.git_dir = buf_git_dir
           vim.env.GIT_DIR = env_git_dir
           vim.env.GIT_WORK_TREE = env_git_work_tree
-        end, opts or {})
+        end, opts)
       end
 
       for _, cmd in ipairs({ 'D', 'Dot' }) do
