@@ -22,6 +22,7 @@ return {
       'Gvsplit',
       'Gwq',
       'Gwrite',
+      'D',
       'Dot',
       'Dread',
       'Dedit',
@@ -231,21 +232,23 @@ return {
         end, opts or {})
       end
 
-      create_dotfiles_cmd('Dot', 'Git', {
-        nargs = '?',
-        ---@param arglead string leading portion of the argument being completed
-        ---@param cmdline string the entire command line
-        ---@param cursorpos integer cursor position in the command line
-        ---@return string[] completion completion results
-        complete = function(arglead, cmdline, cursorpos)
-          return vim.fn['fugitive#Complete'](
-            arglead,
-            cmdline,
-            cursorpos,
-            { git_dir = vim.env.DOT_DIR }
-          )
-        end,
-      })
+      for _, cmd in ipairs({ 'D', 'Dot' }) do
+        create_dotfiles_cmd(cmd, 'Git', {
+          nargs = '?',
+          ---@param arglead string leading portion of the argument being completed
+          ---@param cmdline string the entire command line
+          ---@param cursorpos integer cursor position in the command line
+          ---@return string[] completion completion results
+          complete = function(arglead, cmdline, cursorpos)
+            return vim.fn['fugitive#Complete'](
+              arglead,
+              cmdline,
+              cursorpos,
+              { git_dir = vim.env.DOT_DIR }
+            )
+          end,
+        })
+      end
       -- stylua: ignore start
       create_dotfiles_cmd('Dread',       'Gread',       { nargs = '*', complete = vim.fn['fugitive#ReadComplete'] })
       create_dotfiles_cmd('Dedit',       'Gedit',       { nargs = '*', complete = vim.fn['fugitive#EditComplete'] })
