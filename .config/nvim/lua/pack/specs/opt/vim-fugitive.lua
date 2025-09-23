@@ -156,6 +156,37 @@ return {
           vim.opt_local.relativenumber = false
         end,
       })
+
+      ---Detect and set git dir for given buffer, fallback to dotfiles bare
+      ---repo if current file is not in a regular git repo
+      ---@param buf? integer
+      local function detect(buf)
+        buf = vim._resolve_bufnr(buf)
+        if not vim.api.nvim_buf_is_valid(buf) then
+          return
+        end
+        local b = vim.b[buf]
+        if b.git_dir and b.git_dir ~= '' then
+          return
+        end
+        vim.fn.FugitiveDetect()
+        if b.git_dir and b.git_dir ~= '' then
+          return
+        end
+        -- Fallback to dotfiles bare repo
+        -- https://github.com/tpope/vim-fugitive/issues/1796#issuecomment-900725518
+        vim.fn.FugitiveDetect(vim.fs.joinpath(vim.uv.os_homedir(), '.dot'))
+      end
+
+      detect()
+
+      vim.api.nvim_create_autocmd('BufEnter', {
+        desc = 'Make fugitive aware of bare repo for dotfiles.',
+        group = group,
+        callback = function(args)
+          detect(args.buf)
+        end,
+      })
     end,
   },
 }

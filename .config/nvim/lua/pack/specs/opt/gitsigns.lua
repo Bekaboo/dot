@@ -28,6 +28,14 @@ return {
           virt_text_pos = 'eol',
           delay = 100,
         },
+        worktrees = {
+          -- Make gitsigns aware of bare repo for dotfiles
+          -- https://github.com/lewis6991/gitsigns.nvim/pull/600
+          {
+            toplevel = vim.uv.os_homedir(),
+            gitdir = vim.fs.joinpath(vim.uv.os_homedir(), '.dot'),
+          },
+        },
       })
 
       -- Setup keymaps
