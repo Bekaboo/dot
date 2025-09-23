@@ -169,6 +169,8 @@ return {
         end,
       })
 
+      -- Configs for dotfiles bare repo
+
       ---Detect and set git dir for given buffer, fallback to dotfiles bare
       ---repo if current file is not in a regular git repo
       ---@param buf? integer
