@@ -169,13 +169,15 @@ return {
         if b.git_dir and b.git_dir ~= '' then
           return
         end
-        vim.fn.FugitiveDetect()
+        vim.api.nvim_buf_call(buf, vim.fn.FugitiveDetect)
         if b.git_dir and b.git_dir ~= '' then
           return
         end
         -- Fallback to dotfiles bare repo
         -- https://github.com/tpope/vim-fugitive/issues/1796#issuecomment-900725518
-        vim.fn.FugitiveDetect(vim.env.DOT_DIR)
+        vim.api.nvim_buf_call(buf, function()
+          vim.fn.FugitiveDetect(vim.env.DOT_DIR)
+        end)
       end
 
       detect()
