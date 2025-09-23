@@ -22,6 +22,18 @@ return {
       'Gvsplit',
       'Gwq',
       'Gwrite',
+      'Dot',
+      'Dread',
+      'Dedit',
+      'Dwrite',
+      'Ddiffsplit',
+      'Dhdiffsplit',
+      'Dvdiffsplit',
+      'DMove',
+      'DRename',
+      'DRemove',
+      'DUnlink',
+      'DDelete',
     },
     keys = {
       {
@@ -189,6 +201,62 @@ return {
           detect(args.buf)
         end,
       })
+
+      -- Custom commands to manage dotfiles bare repo, adapted from:
+      -- https://github.com/tpope/vim-fugitive/issues/2191#issuecomment-1636692107
+
+      ---Create corresponding commands for dotfiles bare repo
+      ---@param cmd string command name
+      ---@param fugitive_cmd string corresponding fugitive command
+      ---@param opts? vim.api.keyset.user_command
+      local function create_dotfiles_cmd(cmd, fugitive_cmd, opts)
+        vim.api.nvim_create_user_command(cmd, function(t)
+          local buf_git_dir = vim.b.git_dir
+          local env_git_dir = vim.env.GIT_DIR
+          local env_git_work_tree = vim.env.GIT_WORK_TREE
+
+          vim.b.git_dir = vim.env.DOT_DIR
+          vim.env.GIT_DIR = vim.env.DOT_DIR
+          vim.env.GIT_WORK_TREE = vim.uv.os_homedir()
+
+          vim.cmd[fugitive_cmd]({
+            args = t.fargs,
+          })
+
+          vim.b.git_dir = buf_git_dir
+          vim.env.GIT_DIR = env_git_dir
+          vim.env.GIT_WORK_TREE = env_git_work_tree
+        end, opts or {})
+      end
+
+      create_dotfiles_cmd('Dot', 'Git', {
+        nargs = '?',
+        ---@param arglead string leading portion of the argument being completed
+        ---@param cmdline string the entire command line
+        ---@param cursorpos integer cursor position in the command line
+        ---@return string[] completion completion results
+        complete = function(arglead, cmdline, cursorpos)
+          return vim.fn['fugitive#Complete'](
+            arglead,
+            cmdline,
+            cursorpos,
+            { git_dir = vim.env.DOT_DIR }
+          )
+        end,
+      })
+      -- stylua: ignore start
+      create_dotfiles_cmd('Dread',       'Gread',       { nargs = '*', complete = vim.fn['fugitive#ReadComplete'] })
+      create_dotfiles_cmd('Dedit',       'Gedit',       { nargs = '*', complete = vim.fn['fugitive#EditComplete'] })
+      create_dotfiles_cmd('Dwrite',      'Gwrite',      { nargs = '*', complete = vim.fn['fugitive#EditComplete'] })
+      create_dotfiles_cmd('Ddiffsplit',  'Gdiffsplit',  { nargs = '*', complete = vim.fn['fugitive#EditComplete'] })
+      create_dotfiles_cmd('Dhdiffsplit', 'Ghdiffsplit', { nargs = '*', complete = vim.fn['fugitive#EditComplete'] })
+      create_dotfiles_cmd('Dvdiffsplit', 'Gvdiffsplit', { nargs = '*', complete = vim.fn['fugitive#EditComplete'] })
+      create_dotfiles_cmd('DMove',       'GMove',       { nargs = 1,   complete = vim.fn['fugitive#CompleteObject'] })
+      create_dotfiles_cmd('DRename',     'GRename',     { nargs = 1,   complete = vim.fn['fugitive#RenameComplete'] })
+      create_dotfiles_cmd('DRemove',     'GRemove',     { nargs = 0 })
+      create_dotfiles_cmd('DUnlink',     'GUnlink',     { nargs = 0 })
+      create_dotfiles_cmd('DDelete',     'GDelete',     { nargs = 0 })
+      -- stylua: ignore end
     end,
   },
 }
