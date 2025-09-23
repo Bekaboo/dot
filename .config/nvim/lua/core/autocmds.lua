@@ -186,7 +186,7 @@ augroup('my.last_pos_jmp', {
             return
           end
           for _, win in ipairs(vim.fn.win_findbuf(a.buf)) do
-            vim.api.nvim_win_set_cursor(win, last_pos)
+            pcall(vim.api.nvim_win_set_cursor, win, last_pos)
           end
         end,
       })
