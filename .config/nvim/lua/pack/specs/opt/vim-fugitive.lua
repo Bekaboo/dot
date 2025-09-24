@@ -184,7 +184,12 @@ return {
         if b.git_dir and b.git_dir ~= '' then
           return
         end
-        vim.api.nvim_buf_call(buf, vim.fn.FugitiveDetect)
+        vim.api.nvim_buf_call(buf, function()
+          -- `FugitiveDetect()` will fail to detect git dir under current
+          -- working directory in the first empty buffer
+          -- Workaround: pass current cwd to it
+          vim.fn.FugitiveDetect(vim.fs.dirname(vim.api.nvim_buf_get_name(buf)))
+        end)
         if b.git_dir and b.git_dir ~= '' then
           return
         end
