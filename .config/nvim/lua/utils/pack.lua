@@ -42,28 +42,37 @@ function M.load(spec, path)
   -- knows when the plugin can be considered as 'loaded'
   if spec.data.load then
     spec.data.load(spec, path)
-    return
-  end
-
-  if spec.data.preload then
-    spec.data.preload()
-  end
-
-  pcall(vim.cmd.packadd, vim.fs.basename(spec.src))
-
-  if spec.data.postload then
-    spec.data.postload()
   else
-    local ok, plugin = pcall(
-      require,
-      vim.fs
-        .basename(spec.name or spec.src)
-        :lower()
-        :gsub('%.nvim$', '')
-        :gsub('%.', '-')
-    )
-    if ok and type(plugin) == 'table' and plugin.setup then
-      pcall(plugin.setup)
+    if spec.data.preload then
+      spec.data.preload()
+    end
+
+    pcall(vim.cmd.packadd, vim.fs.basename(spec.src))
+
+    if spec.data.postload then
+      spec.data.postload()
+    else
+      local ok, plugin = pcall(
+        require,
+        vim.fs
+          .basename(spec.name or spec.src)
+          :lower()
+          :gsub('%.nvim$', '')
+          :gsub('%.', '-')
+      )
+      if ok and type(plugin) == 'table' and plugin.setup then
+        pcall(plugin.setup)
+      end
+    end
+  end
+
+  -- Extensions should be loaded after current plugin
+  if spec.data.exts then
+    if not vim.islist(spec.data.exts) then
+      spec.data.exts = { spec.data.exts }
+    end
+    for _, ext in ipairs(spec.data.exts) do
+      M.load(specs_registry[type(ext) == 'string' and ext or ext.src])
     end
   end
 end

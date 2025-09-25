@@ -1,7 +1,10 @@
 return {
   src = 'https://github.com/mfussenegger/nvim-dap',
   data = {
-    deps = 'https://github.com/rcarriga/nvim-dap-ui',
+    exts = {
+      src = 'https://github.com/rcarriga/nvim-dap-ui',
+      data = { optional = true },
+    },
     cmds = {
       'DapContinue',
       'DapLoadLaunchJSON',
