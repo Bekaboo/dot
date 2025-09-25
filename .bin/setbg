@@ -128,7 +128,7 @@ setbg_nvim() {
         return 1
     fi
 
-    for sock in $(nvim-socks); do
+    for sock in $(timeout 1 nvim-socks); do
         # Notice: Don't use `--remote-send "<Cmd>...<CR>"` to send the command
         # here because of nvim's bug where the string following `<Cmd>` will be
         # interpreted as normal keys (not as part of a command) if nvim is in
