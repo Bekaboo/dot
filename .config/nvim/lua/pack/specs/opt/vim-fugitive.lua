@@ -202,7 +202,7 @@ return {
 
       detect()
 
-      vim.api.nvim_create_autocmd('BufEnter', {
+      vim.api.nvim_create_autocmd({ 'BufEnter', 'FileType' }, {
         desc = 'Make fugitive aware of bare repo for dotfiles.',
         group = group,
         callback = function(args)
