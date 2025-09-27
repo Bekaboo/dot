@@ -640,7 +640,7 @@ do
   ---'remembers' the background and colorscheme when it is restarted.
   local function restore_colorscheme()
     local c = require('utils.json').read(colors_file)
-    c.colors_name = c.colors_name or 'macro'
+    c.colors_name = c.colors_name or 'nano'
     if c.bg then
       vim.go.bg = c.bg
     end

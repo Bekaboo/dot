@@ -4,7 +4,7 @@
 CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
-DEFAULT_COLOR='macro'
+DEFAULT_COLOR='nano'
 DEFAULT_BG='dark'
 
 # Convert a color name to capital style
