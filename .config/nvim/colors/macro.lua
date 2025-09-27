@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Sat 27 Sep 2025 02:23:39 AM EDT
+-- Last Updated: Sat 27 Sep 2025 02:30:15 AM EDT
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -480,8 +480,12 @@ local hlgroups = {
   -- fugitive
   fugitiveHash = { link = 'gitHash' },
   fugitiveHeader = { link = 'Title' },
+  fugitiveHeading = { link = 'Title' },
+  fugitiveStagedHeading = { fg = c_autumnGreen, bold = true },
   fugitiveStagedModifier = { fg = c_autumnGreen },
+  fugitiveUnStagedHeading = { fg = c_autumnYellow, bold = true },
   fugitiveUnstagedModifier = { fg = c_autumnYellow },
+  fugitiveUntrackedHeading = { fg = c_macroAqua, bold = true },
   fugitiveUntrackedModifier = { fg = c_macroAqua },
 
   -- telescope
