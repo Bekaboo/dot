@@ -175,20 +175,26 @@ return {
       ---Detect and set git dir for given buffer, fallback to dotfiles bare
       ---repo if current file is not in a regular git repo
       ---@param buf? integer
-      local function detect(buf)
+      ---@param force? boolean ignore current `b:git_dir`, force re-detect
+      local function detect(buf, force)
         buf = vim._resolve_bufnr(buf)
         if not vim.api.nvim_buf_is_valid(buf) then
           return
         end
         local b = vim.b[buf]
-        if b.git_dir and b.git_dir ~= '' then
+        if b.git_dir and b.git_dir ~= '' and not force then
           return
         end
         vim.api.nvim_buf_call(buf, function()
           -- `FugitiveDetect()` will fail to detect git dir under current
           -- working directory in the first empty buffer
           -- Workaround: pass current cwd to it
-          vim.fn.FugitiveDetect(vim.fs.dirname(vim.api.nvim_buf_get_name(buf)))
+          vim.fn.FugitiveDetect(
+            vim.fs.dirname(
+              -- Normalize `oil://...` buffers
+              vim.api.nvim_buf_get_name(buf):gsub('^%S+://', '', 1)
+            )
+          )
         end)
         if b.git_dir and b.git_dir ~= '' then
           return
@@ -207,6 +213,13 @@ return {
         group = group,
         callback = function(args)
           detect(args.buf)
+        end,
+      })
+      vim.api.nvim_create_autocmd('DirChanged', {
+        desc = 'Re-detect current git dir on buf dir changed.',
+        group = group,
+        callback = function(args)
+          detect(args.buf, true)
         end,
       })
 
