@@ -58,7 +58,6 @@ alias lc='wc -l'
 alias df='df -h'
 alias free='free -mh'
 alias tree='tree -N'
-alias vs='vim-startuptime'
 alias sudoe='sudo -E'
 alias plasma-save-session="qdbus org.kde.ksmserver /KSMServer saveCurrentSession"
 alias clean-tmp="find /tmp -ctime +7 -exec rm -rf {} +"
