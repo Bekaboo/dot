@@ -1155,10 +1155,12 @@ return {
           local path = uri:gsub('^file://', '')
           vim.uv.fs_stat(path, function(_, stat)
             if not stat then
-              vim.notify(
-                string.format("[oil.nvim] invalid path: '%s'", path),
-                vim.log.levels.WARN
-              )
+              vim.schedule(function()
+                vim.notify(
+                  string.format("[oil.nvim] invalid path: '%s'", path),
+                  vim.log.levels.WARN
+                )
+              end)
               return
             end
 
