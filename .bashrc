@@ -61,6 +61,7 @@ alias tree='tree -N'
 alias sudoe='sudo -E'
 alias plasma-save-session="qdbus org.kde.ksmserver /KSMServer saveCurrentSession"
 alias clean-tmp="find /tmp -ctime +7 -exec rm -rf {} +"
+alias kc='kubectl'
 
 # Fzf keybindings and completion
 [[ -r /usr/share/fzf/key-bindings.bash ]] && . /usr/share/fzf/key-bindings.bash
