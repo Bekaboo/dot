@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Sat 27 Sep 2025 01:37:57 AM EDT
+-- Last Updated: Mon 29 Sep 2025 12:35:13 AM EDT
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -78,7 +78,7 @@ if vim.go.bg == 'dark' then
   vim.g.terminal_color_5  = c_strong[1]
   vim.g.terminal_color_6  = c_salient[1]
   vim.g.terminal_color_7  = c_faded[1]
-  vim.g.terminal_color_8  = c_faded[1]
+  vim.g.terminal_color_8  = c_faint[1]
   vim.g.terminal_color_9  = c_popout[1]
   vim.g.terminal_color_10 = c_pine[1]
   vim.g.terminal_color_11 = c_critical[1]
@@ -95,7 +95,7 @@ else
   vim.g.terminal_color_5  = c_strong[1]
   vim.g.terminal_color_6  = c_salient[1]
   vim.g.terminal_color_7  = c_faded[1]
-  vim.g.terminal_color_8  = c_faded[1]
+  vim.g.terminal_color_8  = c_faint[1]
   vim.g.terminal_color_9  = c_critical[1]
   vim.g.terminal_color_10 = c_pine[1]
   vim.g.terminal_color_11 = c_popout[1]
