@@ -170,14 +170,16 @@ if has proot-distro &&
 fi
 
 # Greeting message
-if [ -z "$GREETED" ]; then
+if [ ! -e "${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/greeted" ]; then
+    touch "${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/greeted"
+
     if has fastfetch; then
         fetch=fastfetch
     elif has neofetch; then
         fetch=neofetch
     fi
+
     if [ -n "$fetch" ]; then
-        export GREETED=1
         # Run in pseudo-terminal to prevent terminal state issues
         # (tmux error: 'not a terminal', etc)
         # macOS `script` does not accept `-c` flag
