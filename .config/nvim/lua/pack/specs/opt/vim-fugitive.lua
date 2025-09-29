@@ -180,6 +180,17 @@ return {
         if not vim.api.nvim_buf_is_valid(buf) then
           return
         end
+        -- Buffer already in a valid local git dir
+        -- Re-check git dir if the buffer has the dotfiles bare repo as git
+        -- dir as a new local git dir is likely to be created in the containing
+        -- dir of the buffer later
+        if
+          vim.b[buf].git_dir
+          and vim.b[buf].git_dir ~= ''
+          and vim.b[buf].git_dir ~= vim.env.DOT_DIR
+        then
+          return
+        end
         vim.b[buf].git_dir = nil
         -- Normalize `oil://...` buffers
         local buf_name = vim.api.nvim_buf_get_name(buf):gsub('^%S+://', '', 1)
