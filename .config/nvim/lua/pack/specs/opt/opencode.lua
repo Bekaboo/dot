@@ -49,7 +49,7 @@ return {
     },
     keys = {
       lhs = '<Leader>@',
-      opts = { desc = 'Toggle focus between opencode and last window' },
+      opts = { desc = 'Toggle opencode' },
     },
     postload = function()
       if vim.fn.executable('opencode') == 0 then
@@ -84,7 +84,7 @@ return {
       local opencode_api = require('opencode.api')
 
       -- stylua: ignore start
-      vim.keymap.set('n', '<Leader>@', opencode_api.toggle_focus, { desc = 'Toggle focus between opencode and last window' })
+      vim.keymap.set('n', '<Leader>@', opencode_api.toggle_focus, { desc = 'Toggle opencode' })
       vim.keymap.set('n', '[@', opencode_api.diff_prev, { desc = 'Navigate to opencode previous file diff' })
       vim.keymap.set('n', ']@', opencode_api.diff_next, { desc = 'Navigate to opencode next file diff' })
       -- stylua: ignore end
