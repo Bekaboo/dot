@@ -2,3 +2,6 @@
 
 .aider*.history*
 .aider*.cache*
+
+.claude/*
+!.claude/*.md
