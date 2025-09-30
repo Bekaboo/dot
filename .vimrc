@@ -1811,8 +1811,11 @@ endif
 noremap  <nowait> <Esc> <Esc>
 noremap! <nowait> <Esc> <C-\><C-n>
 if exists(':tmap') == 2
+  " Wisely exit terminal mode with <Esc>
   tnoremap       <nowait> <Esc> <Esc>
   tnoremap <expr><nowait> <Esc> <SID>running_tui() ? '<Esc>' : '<C-\><C-n>'
+  " Force-send <Esc> to the terminal regardless of the running app
+  tnoremap <C-\><Esc> <Esc>
 endif
 " }}}1
 

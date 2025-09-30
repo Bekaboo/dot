@@ -208,6 +208,14 @@ function M.setup()
     [[v:lua.require'utils.term'.running_tui() ? "<Esc>" : "<Cmd>stopi<CR>"]],
     { expr = true, replace_keycodes = false, desc = 'Exit terminal mode' }
   )
+  -- Use `<C-\\><Esc>` instead to force send `<Esc>` to the terminal regardless
+  -- of the underlying app
+  vim.keymap.set(
+    't',
+    '<C-\\><Esc>',
+    '<Esc>',
+    { expr = true, replace_keycodes = false, desc = 'Send <Esc> to terminal' }
+  )
   -- Make `<C-[>` the same as `<Esc>` in terminals with kitty keyboard protocol
   -- support where `<C-[>` and `<Esc>` are treated differently
   vim.keymap.set('t', '<C-[>', '<Esc>', { remap = true })
