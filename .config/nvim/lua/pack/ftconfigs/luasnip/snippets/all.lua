@@ -8,8 +8,8 @@ local c = ls.choice_node
 M.snippets = {
   us.ms(
     {
-      { trig = 'date' },
-      { trig = 'Date' },
+      { trig = 'now' },
+      { trig = 'Now' },
       common = {
         desc = 'Current date and time',
         condition = conds.in_ft({ '', 'text' })
