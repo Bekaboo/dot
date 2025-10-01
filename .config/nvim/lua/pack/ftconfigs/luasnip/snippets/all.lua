@@ -16,7 +16,7 @@ M.snippets = {
           + conds.in_ft('markdown') * conds.in_normalzone
           + conds.in_syngroup('Comment')
           + conds.in_tsnode(
-            { 'comment', 'curly_group' },
+            { 'source', 'comment', 'curly_group' },
             { ignore_injections = false }
           ),
       },
