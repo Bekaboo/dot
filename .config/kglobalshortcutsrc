@@ -103,6 +103,7 @@ KrohnkiteFocusUp=Meta+K\tMeta+Up,none,Krohnkite: Focus Up
 KrohnkiteGrowHeight=Meta+Alt+J\tMeta+Alt+Down,none,Krohnkite: Grow Height
 KrohnkiteIncrease=Meta++,none,Krohnkite: Increase
 KrohnkiteLowerSurfaceCapacity=none,none,Krohnkite: Lower Surface Capacity
+KrohnkiteMeta=none,none,Krohnkite: Meta Key
 KrohnkiteMonocleLayout=Meta+Alt+Shift+M,none,Krohnkite: Monocle Layout
 KrohnkiteNextLayout=Meta+],none,Krohnkite: Next Layout
 KrohnkitePreviousLayout=Meta+[,none,Krohnkite: Previous Layout
