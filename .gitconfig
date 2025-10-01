@@ -18,6 +18,7 @@
 	bl   = branch -v
 	bu   = branch -u
 	brn  = branch -m
+	bn   = checkout -b
 	bs   = bisect
 	bsb  = bisect bad
 	bsg  = bisect good
@@ -32,6 +33,7 @@
 	clr  = clone --recursive
 	cm   = commit -m
 	co   = checkout
+	cob  = checkout -b
 	cof  = checkout --force
 	; Checkout specified commit without changing the working tree and branch
 	; pointer, aka "soft checkout"
