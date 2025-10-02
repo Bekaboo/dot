@@ -197,6 +197,11 @@ done
 # List current directory on directory change, see `__post_cd` below
 __autols() {
     local -r output=$(ls -C --color)
+
+    if [[ -z "$output" ]]; then
+        return
+    fi
+
     local max_lines=4
     local num_lines=4
 
