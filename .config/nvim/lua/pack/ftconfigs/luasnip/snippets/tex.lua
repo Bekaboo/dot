@@ -364,10 +364,8 @@ M.math = {
       }
     )
   ),
-  us.msam({
-    { trig = 'prop' },
-    { trig = 'oc' },
-  }, t('\\propto ')),
+  us.msam({ { trig = 'prop' }, { trig = 'oc' } }, t('\\propto ')),
+  us.msam({ { trig = 'cop' }, { trig = 'perp' } }, t('\\perp ')),
   us.sam({ trig = 'deg' }, t('\\degree')),
   us.sam({ trig = 'ang' }, t('\\angle ')),
   us.sam({ trig = 'mcal' }, { t('\\mathcal{'), i(1), t('}') }),
