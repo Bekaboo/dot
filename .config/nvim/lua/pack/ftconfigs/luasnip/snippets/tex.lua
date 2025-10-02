@@ -906,6 +906,7 @@ M.math = {
       { mean = i(1, '\\mu'), var = i(2, '\\sigma^2') }
     )
   ),
+  us.sam({ trig = 'mod' }, { t('\\operatorname{mod} ') }),
 
   -- Math env
   -- Press double '$' -> $|$ -> press '$' again -> multi-line math env
