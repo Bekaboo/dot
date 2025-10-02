@@ -144,6 +144,19 @@ M.snippets = {
       }
     )
   ),
+  us.sn({
+    trig = 'ret',
+    desc = 'return statement',
+  }, {
+    d(1, function()
+      return u.ts.find_node('function') and sn(nil, { t('return') })
+        or sn(nil, { t('exit') })
+    end),
+  }),
+  us.sn({
+    trig = 'ex',
+    desc = 'exit statement',
+  }, t('exit')),
   us.mssn(
     {
       { trig = 'mn' },
