@@ -475,6 +475,26 @@ M.snippets = {
     { trig = 'here' },
     common = { desc = 'Get script dir' },
   }, t('"$(dirname -- "$(readlink -f -- "$0")")/"')),
+  us.msn(
+    {
+      { trig = 'bs' },
+      { trig = 'base' },
+      common = { desc = 'Base of the filename (without extension)' },
+    },
+    un.fmtad('"${<fname>%.*}"', {
+      fname = i(1, 'fname'),
+    })
+  ),
+  us.msn(
+    {
+      { trig = 'ext' },
+      { trig = 'extension' },
+      common = { desc = 'Extension of the filename' },
+    },
+    un.fmtad('"${<fname>##*.}"', {
+      fname = i(1, 'fname'),
+    })
+  ),
 }
 
 return M

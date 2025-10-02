@@ -399,6 +399,26 @@ M.snippets = {
     { trig = 'here' },
     common = { desc = 'Get script dir' },
   }, t('(status dirname)/')),
+  us.msn(
+    {
+      { trig = 'bs' },
+      { trig = 'base' },
+      common = { desc = 'Base of the filename (without extension)' },
+    },
+    un.fmtad('(path stem -- $<fname>)', {
+      fname = i(1, 'fname'),
+    })
+  ),
+  us.msn(
+    {
+      { trig = 'ext' },
+      { trig = 'extension' },
+      common = { desc = 'Extension of the filename' },
+    },
+    un.fmtad('(path extension -- $<fname>)', {
+      fname = i(1, 'fname'),
+    })
+  ),
 }
 
 return M
