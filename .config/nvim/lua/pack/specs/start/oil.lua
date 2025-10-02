@@ -794,6 +794,7 @@ return {
         prompt_save_on_select_new_entry = true,
         use_default_keymaps = false,
         view_options = {
+          show_hidden = true,
           is_always_hidden = function(name)
             return name == '..'
           end,
