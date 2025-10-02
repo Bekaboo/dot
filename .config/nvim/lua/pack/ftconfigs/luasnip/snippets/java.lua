@@ -27,7 +27,7 @@ M.snippets = {
 
   us.sn(
     { trig = 'ret', desc = 'return statement' },
-    { t('return '), i(1), t(';') }
+    { t('return'), i(1), t(';') }
   ),
 
   us.sn(

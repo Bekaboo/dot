@@ -458,7 +458,7 @@ M.snippets = {
     { trig = 'rt' },
     { trig = 'ret' },
   }, {
-    t('return '),
+    t('return'),
   }),
   us.sn({ trig = 'pr' }, {
     t('print('),

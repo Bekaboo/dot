@@ -180,7 +180,7 @@ M.snippets = {
   us.sn({
     trig = 'ret',
     desc = 'return statement',
-  }, t('return ')),
+  }, t('return')),
   us.sn(
     {
       trig = 'ifa',
