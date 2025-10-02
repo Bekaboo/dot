@@ -16,6 +16,7 @@
 	bdf  = branch -d --force
 	bdr  = push -d
 	bl   = branch -v
+	bla  = branch -v --all
 	bu   = branch -u
 	brn  = branch -m
 	bn   = checkout -b
