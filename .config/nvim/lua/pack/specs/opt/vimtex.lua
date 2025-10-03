@@ -16,6 +16,47 @@ return {
       vim.g.vimtex_imaps_enabled = 0
       vim.g.vimtex_mappings_prefix = '<LocalLeader>l'
 
+      -- Enable vim's legacy regex-based syntax highlighting alongside treesitter
+      -- highlighting for some vimtex functions, e.g. changing modifiers, formatting,
+      -- indentation, etc.
+      vim.treesitter.start = (function(cb)
+        ---@param bufnr integer? Buffer to be highlighted (default: current buffer)
+        ---@param lang string? Language of the parser (default: from buffer filetype)
+        return function(bufnr, lang, ...)
+          bufnr = vim._resolve_bufnr(bufnr)
+          cb(bufnr, lang, ...)
+          if vim.bo[bufnr].ft ~= 'tex' and lang ~= 'latex' then
+            return
+          end
+          -- Re-enable regex syntax highlighting after starting treesitter
+          vim.bo[bufnr].syntax = 'on'
+        end
+      end)(vim.treesitter.start)
+
+      vim.api.nvim_create_autocmd('FileType', {
+        pattern = 'tex',
+        group = vim.api.nvim_create_augroup('my.vimtex.settings', {}),
+        callback = function(args)
+          -- Enable vim's legacy regex-based syntax highlighting alongside treesitter
+          -- highlighting for some vimtex functions, e.g. changing modifiers, formatting,
+          -- indentation, etc.
+          if vim.bo[args.buf].syntax == '' then
+            vim.bo[args.buf].syntax = 'on'
+          end
+
+          -- Make surrounding delimiters large
+          vim.keymap.set('n', 'css', vim.fn['vimtex#delim#add_modifiers'], {
+            buffer = args.buf,
+            desc = 'Surround with large delimiters',
+          })
+          -- Remove default `]]` mapping in insert mode as it causes lagging
+          -- when typing `]`
+          pcall(vim.keymap.del, 'i', ']]', {
+            buffer = args.buf,
+          })
+        end,
+      })
+
       -- Time to defer before doing automatic forward search, i.e. sync viewer with
       -- nvim tex source file
       vim.g.vimtex_auto_sync_view_debounce = 500
@@ -45,26 +86,8 @@ return {
 
       vim.api.nvim_create_autocmd('FileType', {
         pattern = 'tex',
-        group = vim.api.nvim_create_augroup('vim.plugin.vimtex.ft', {}),
+        group = vim.api.nvim_create_augroup('my.vimtex.auto_sync_view', {}),
         callback = function(args)
-          -- Enable vim's legacy regex-based syntax highlighting alongside treesitter
-          -- highlighting for some vimtex functions, e.g. changing modifiers, formatting,
-          -- indentation, etc.
-          if vim.bo[args.buf].syntax == '' then
-            vim.bo[args.buf].syntax = 'on'
-          end
-
-          -- Make surrounding delimiters large
-          vim.keymap.set('n', 'css', vim.fn['vimtex#delim#add_modifiers'], {
-            buffer = args.buf,
-            desc = 'Surround with large delimiters',
-          })
-          -- Remove default `]]` mapping in insert mode as it causes lagging
-          -- when typing `]`
-          pcall(vim.keymap.del, 'i', ']]', {
-            buffer = args.buf,
-          })
-
           -- Automatically sync pdf viewer with tex source file
           vim.api.nvim_create_autocmd('CursorMoved', {
             desc = 'Automatically sync pdf viewer with tex source file.',
