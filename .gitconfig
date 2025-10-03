@@ -165,6 +165,7 @@
 [filter "okularpartrc"]
 	smudge = cat
 	clean = sed \
+		-e '/^\\[PageView\\]/,/^$/d' \
 		-e '/^\\[Main View\\]/,/^$/d' \
 		-e '/^\\[Nav Panel\\]/,/^$/d' \
 		-e '/ChangeColors=/d'
