@@ -57,10 +57,6 @@ return {
         end,
       })
 
-      -- Time to defer before doing automatic forward search, i.e. sync viewer with
-      -- nvim tex source file
-      vim.g.vimtex_auto_sync_view_debounce = 500
-
       -- Explicitly set view method for forward and inverse search
       local viewer = (function()
         if vim.fn.executable('xdg-mime') == 1 then
@@ -89,108 +85,6 @@ return {
         vim.g.vimtex_view_general_viewer = 'okular'
         vim.g.vimtex_view_general_options = '--unique file:@pdf#src:@line@tex'
       end
-
-      vim.g.vimtex_auto_sync_view = true
-
-      vim.api.nvim_create_user_command('VimtexAutoSyncView', function(args)
-        vim.g.vimtex_auto_sync_view = args.bang
-          or not vim.g.vimtex_auto_sync_view
-        vim.notify(
-          'Vimtex: auto-sync '
-            .. (vim.g.vimtex_auto_sync_view and 'started' or 'stopped')
-        )
-      end, {
-        bang = true,
-        desc = 'Toggle vimtex auto sync view.',
-      })
-
-      vim.api.nvim_create_autocmd('FileType', {
-        pattern = 'tex',
-        group = vim.api.nvim_create_augroup('my.vimtex.auto_sync_view', {}),
-        callback = function(args)
-          -- Automatically sync pdf viewer with tex source file
-          vim.api.nvim_create_autocmd('CursorMoved', {
-            desc = 'Automatically sync pdf viewer with tex source file.',
-            buffer = args.buf,
-            group = vim.api.nvim_create_augroup(
-              'my.vimtex.auto_sync_view.buf.' .. args.buf,
-              {}
-            ),
-            callback = function(a)
-              if not vim.g.vimtex_auto_sync_view then
-                return
-              end
-
-              local viewer_name = vim.b[a.buf].vimtex.viewer.name
-              if viewer_name == 'General' then
-                viewer_name = vim.g.vimtex_view_general_viewer
-              end
-              if not viewer_name then
-                return
-              end
-
-              local auto_sync_view_request_time = vim.uv.now()
-              vim.g._vimtex_auto_sync_view_request_time =
-                auto_sync_view_request_time
-
-              ---Check if the previous should be updated
-              ---
-              ---The preview should be updated if
-              ---  - current cursor line has changed
-              ---  - current request is the latest request sent
-              ---  - current buffer is a tex buffer
-              ---@return boolean
-              local function should_update_preview()
-                return vim.fn.line('.')
-                    ~= vim.g._vimtex_auto_sync_view_source_line
-                  and vim.g._vimtex_auto_sync_view_request_time == auto_sync_view_request_time
-                  and vim.api.nvim_get_current_buf() == a.buf
-              end
-
-              -- Skip spawning a viewer; only sync if a viewer window already exists
-              -- Some examples of `ps fp $(pgrep ...)` command output (stdout):
-              -- zathura: zathura -x /usr/bin/nvim --headless -c "VimtexInverseSearch %{line}:%{column} '%{input}'" --synctex-forward 62:1:/home/user/test.tex test.pdf
-              -- okular:  okular --unique file:/home/user/test.pdf#src:74/home/user/test.tex
-              vim.defer_fn(function()
-                if not should_update_preview() then
-                  return
-                end
-
-                local out_pdf =
-                  vim.F.npcall(vim.api.nvim_eval, 'b:vimtex.viewer.out()')
-                if not out_pdf then
-                  return
-                end
-
-                vim.system(
-                  {
-                    'pgrep',
-                    '-if',
-                    string.format(
-                      '%s.*%s.*%s',
-                      viewer_name,
-                      -- Don't match against `vim.api.nvim_buf_get_name(a.buf)` here
-                      -- as nvim can be inside another tex file in a tex project with
-                      -- multiple tex files, e.g. (main.tex, section1.tex,
-                      -- section2.tex, etc.)
-                      vim.fs.dirname(out_pdf),
-                      vim.fs.basename(out_pdf)
-                    ),
-                  },
-                  {},
-                  vim.schedule_wrap(function(out)
-                    if out.stdout == '' or not should_update_preview() then
-                      return
-                    end
-                    vim.fn['vimtex#view#view']()
-                    vim.g._vimtex_auto_sync_view_source_line = vim.fn.line('.')
-                  end)
-                )
-              end, vim.g.vimtex_auto_sync_view_debounce)
-            end,
-          })
-        end,
-      })
     end,
   },
 }
