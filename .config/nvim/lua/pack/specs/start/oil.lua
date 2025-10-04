@@ -54,6 +54,22 @@ return {
         end),
       })
     end,
+    preload = function()
+      local to_lpeg = vim.glob.to_lpeg
+
+      ---HACK: override `vim.glob.to_lpeg()` to avoid 'invalid glob' error, see
+      ---https://github.com/stevearc/oil.nvim/issues/672
+      ---@param pattern string
+      ---@return vim.lpeg.Pattern|string
+      ---@diagnostic disable-next-line: duplicate-set-field
+      function vim.glob.to_lpeg(pattern)
+        local ok, lpeg_pattern = pcall(to_lpeg, pattern)
+        if not ok then
+          return pattern
+        end
+        return lpeg_pattern
+      end
+    end,
     postload = function()
       local oil = require('oil')
       local oil_config = require('oil.config')
