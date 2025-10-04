@@ -34,27 +34,20 @@ vim.opt.tabclose = 'uselast'
 
 -- Defer shada reading
 do
-  local group = vim.api.nvim_create_augroup('my.opt.shada', {})
+  vim.opt.shada = ''
 
   ---Restore 'shada' option and read from shada once
   local function rshada()
-    pcall(vim.api.nvim_del_augroup_by_id, group)
-
     vim.opt.shada = vim.api.nvim_get_option_info2('shada', {}).default
     pcall(vim.cmd.rshada)
   end
 
-  vim.opt.shada = ''
-  vim.api.nvim_create_autocmd('BufReadPre', {
-    group = group,
-    once = true,
-    callback = rshada,
-  })
-  vim.api.nvim_create_autocmd('UIEnter', {
-    group = group,
-    once = true,
-    callback = vim.schedule_wrap(rshada),
-  })
+  require('utils.load').on_events('BufReadPre', 'my.opt.shada', rshada)
+  require('utils.load').on_events(
+    'UIEnter',
+    'my.opt.shada',
+    vim.schedule_wrap(rshada)
+  )
 end
 
 -- Folding
@@ -81,13 +74,8 @@ do
   vim.opt.spelllang = 'en,cjk'
   vim.opt.spelloptions = 'camel'
 
-  local group = vim.api.nvim_create_augroup('my.opt.spell', {})
-
-  ---Set spell check options
-  ---@return nil
-  local function spellcheck()
-    pcall(vim.api.nvim_del_augroup_by_id, group)
-
+  ---Set spell check option
+  local function set_spell()
     for _, win in ipairs(vim.api.nvim_list_wins()) do
       if not require('utils.opt').spell:was_locally_set({ win = win }) then
         vim.api.nvim_win_call(win, function()
@@ -97,27 +85,12 @@ do
     end
   end
 
-  vim.api.nvim_create_autocmd('FileType', {
-    group = group,
-    once = true,
-    callback = function()
-      vim.treesitter.start = (function(ts_start)
-        return function(...)
-          -- Ensure spell check settings are set before starting treesitter
-          -- to avoid highlighting `@nospell` nodes
-          spellcheck()
-          vim.treesitter.start = ts_start
-          return vim.treesitter.start(...)
-        end
-      end)(vim.treesitter.start)
-    end,
-  })
-
-  vim.api.nvim_create_autocmd('UIEnter', {
-    group = group,
-    once = true,
-    callback = vim.schedule_wrap(spellcheck),
-  })
+  require('utils.load').on_events('FileType', 'my.opt.spell', set_spell)
+  require('utils.load').on_events(
+    'UIEnter',
+    'my.opt.spell',
+    vim.schedule_wrap(set_spell)
+  )
 end
 
 -- Cursor shape
