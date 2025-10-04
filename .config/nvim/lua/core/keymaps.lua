@@ -1,9 +1,10 @@
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
-vim.api.nvim_create_autocmd('UIEnter', {
-  once = true,
-  callback = vim.schedule_wrap(function()
+require('utils.load').on_events(
+  'UIEnter',
+  'my.keymaps',
+  vim.schedule_wrap(function()
     local keymaps = {} ---@type table<string, table<string, true>>
     local buf_keymaps = {} ---@type table<integer, table<string, table<string, true>>>
 
@@ -55,7 +56,7 @@ vim.api.nvim_create_autocmd('UIEnter', {
       end
     end
 
-    local key_utils = require('utils.key')
+    local key = require('utils.key')
 
     -- Multi-window operations
     -- stylua: ignore start
@@ -131,7 +132,7 @@ vim.api.nvim_create_autocmd('UIEnter', {
     map(
       'n',
       'd<Space>',
-      key_utils.with_cursorpos(key_utils.with_lazyredraw(function()
+      key.with_cursorpos(key.with_lazyredraw(function()
         vim.cmd.substitute({
           [[/\s\+$//e]],
           range = { 1, vim.api.nvim_buf_line_count(0) },
@@ -289,7 +290,7 @@ vim.api.nvim_create_autocmd('UIEnter', {
     map(
       { 'n', 'x' },
       'zV',
-      key_utils.with_lazyredraw(function()
+      key.with_lazyredraw(function()
         vim.cmd.normal({ 'zMzv', bang = true })
       end),
       { desc = 'Close all folds except current' }
@@ -494,25 +495,27 @@ vim.api.nvim_create_autocmd('UIEnter', {
     map('!a', 'saher', 'share')
     map('!a', 'balme', 'blame')
     map('!a', 'intall', 'install')
-  end),
-})
+  end)
+)
 
-vim.api.nvim_create_autocmd('CmdlineEnter', {
-  once = true,
-  callback = function()
-    local key = require('utils.key')
-    key.command_map(':', 'lua =')
-    key.command_abbrev('man', 'Man')
-    key.command_abbrev('tt', 'tab te')
-    key.command_abbrev('bt', 'bot te')
-    key.command_abbrev('ht', 'hor te')
-    key.command_abbrev('vt', 'vert te')
-    key.command_abbrev('rm', '!rm')
-    key.command_abbrev('mv', '!mv')
-    key.command_abbrev('git', '!git')
-    key.command_abbrev('tree', '!tree')
-    key.command_abbrev('mkdir', '!mkdir')
-    key.command_abbrev('touch', '!touch')
-    key.command_abbrev('chmod', '!chmod')
-  end,
-})
+require('utils.load').on_events(
+  'CmdlineEnter',
+  'my.keymaps.cmdline_abbrevs',
+  function()
+    local key_utils = require('utils.key')
+
+    key_utils.command_map(':', 'lua =')
+    key_utils.command_abbrev('man', 'Man')
+    key_utils.command_abbrev('tt', 'tab te')
+    key_utils.command_abbrev('bt', 'bot te')
+    key_utils.command_abbrev('ht', 'hor te')
+    key_utils.command_abbrev('vt', 'vert te')
+    key_utils.command_abbrev('rm', '!rm')
+    key_utils.command_abbrev('mv', '!mv')
+    key_utils.command_abbrev('git', '!git')
+    key_utils.command_abbrev('tree', '!tree')
+    key_utils.command_abbrev('mkdir', '!mkdir')
+    key_utils.command_abbrev('touch', '!touch')
+    key_utils.command_abbrev('chmod', '!chmod')
+  end
+)
