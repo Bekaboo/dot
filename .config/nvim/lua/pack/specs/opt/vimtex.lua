@@ -6,16 +6,7 @@ return {
       event = 'Filetype',
       pattern = 'tex',
     },
-    postload = function()
-      if vim.env.TERM == 'linux' then
-        vim.g.vimtex_syntax_conceal_disable = true
-      end
-
-      vim.g.vimtex_quickfix_mode = 0
-      vim.g.vimtex_format_enabled = 1
-      vim.g.vimtex_imaps_enabled = 0
-      vim.g.vimtex_mappings_prefix = '<LocalLeader>l'
-
+    preload = function()
       -- Enable vim's legacy regex-based syntax highlighting alongside treesitter
       -- highlighting for some vimtex functions, e.g. changing modifiers, formatting,
       -- indentation, etc.
@@ -32,18 +23,21 @@ return {
           vim.bo[bufnr].syntax = 'on'
         end
       end)(vim.treesitter.start)
+    end,
+    postload = function()
+      if vim.env.TERM == 'linux' then
+        vim.g.vimtex_syntax_conceal_disable = true
+      end
+
+      vim.g.vimtex_quickfix_mode = 0
+      vim.g.vimtex_format_enabled = 1
+      vim.g.vimtex_imaps_enabled = 0
+      vim.g.vimtex_mappings_prefix = '<LocalLeader>l'
 
       vim.api.nvim_create_autocmd('FileType', {
         pattern = 'tex',
         group = vim.api.nvim_create_augroup('my.vimtex.settings', {}),
         callback = function(args)
-          -- Enable vim's legacy regex-based syntax highlighting alongside treesitter
-          -- highlighting for some vimtex functions, e.g. changing modifiers, formatting,
-          -- indentation, etc.
-          if vim.bo[args.buf].syntax == '' then
-            vim.bo[args.buf].syntax = 'on'
-          end
-
           -- Make surrounding delimiters large
           vim.keymap.set('n', 'css', vim.fn['vimtex#delim#add_modifiers'], {
             buffer = args.buf,
