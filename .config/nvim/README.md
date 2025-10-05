@@ -583,6 +583,7 @@ and it should work out of the box.
     - [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter)
     - [nvim-treesitter-textobjects](https://github.com/nvim-treesitter/nvim-treesitter-textobjects)
     - [nvim-treesitter-endwise](https://github.com/RRethy/nvim-treesitter-endwise)
+    - [nvim-treesitter-incremental-selection](https://github.com/shushtain/nvim-treesitter-incremental-selection)
     - [ts-autotag.nvim](https://github.com/tronikelis/ts-autotag.nvim)
     - [treesj](https://github.com/Wansmer/treesj)
     - [cellular-automaton.nvim](https://github.com/Eandrju/cellular-automaton.nvim)
