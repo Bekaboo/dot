@@ -400,6 +400,7 @@ M.opts = {
         'repeat',
         'return_statement',
         'rpc',
+        'rule',
         'rule_set',
         'scope',
         'section',

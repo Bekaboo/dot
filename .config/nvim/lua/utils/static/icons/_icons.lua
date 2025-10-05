@@ -92,6 +92,7 @@ return {
     Repeat              = 'Rep ',
     ReturnStatement     = 'Ret ',
     Rpc                 = 'Rpc ',
+    Rule                = 'Rule ',
     RuleSet             = 'Rule ',
     Scope               = 'Scope ',
     Section             = 'Sec ',
