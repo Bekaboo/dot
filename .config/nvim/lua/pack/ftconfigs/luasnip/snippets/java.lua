@@ -55,21 +55,24 @@ M.snippets = {
       trig = 'pck',
       desc = 'Check a value of a variable or expression',
     },
-    un.fmtad('System.out.printf("<expr_escaped>: <placeholder>\\n", <expr>);', {
-      expr = r(1, 'expr'),
-      expr_escaped = d(2, function(texts)
-        local str = vim.fn.escape(texts[1][1], '\\"')
-        return sn(nil, i(1, str))
-      end, { 1 }),
-      placeholder = c(3, {
-        i(nil, '%s'),
-        i(nil, '%d'),
-        i(nil, '%#x'),
-        i(nil, '%f'),
-        i(nil, '%g'),
-        i(nil, '%c'),
-      }),
-    })
+    un.fmtad(
+      'System.out.printf("<expr_escaped>: <placeholder>\\n", <expr>);',
+      {
+        expr = r(1, 'expr'),
+        expr_escaped = d(2, function(texts)
+          local str = vim.fn.escape(texts[1][1], '\\"')
+          return sn(nil, i(1, str))
+        end, { 1 }),
+        placeholder = c(3, {
+          i(nil, '%s'),
+          i(nil, '%d'),
+          i(nil, '%#x'),
+          i(nil, '%f'),
+          i(nil, '%g'),
+          i(nil, '%c'),
+        }),
+      }
+    )
   ),
   us.sn(
     {

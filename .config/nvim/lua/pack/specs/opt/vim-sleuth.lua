@@ -4,4 +4,3 @@ return {
     events = { 'BufReadPre', 'StdinReadPre' },
   },
 }
-
