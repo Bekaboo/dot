@@ -258,18 +258,6 @@ augroup('my.prompt_keymaps', {
   },
 })
 
-augroup('my.qf_auto_open', {
-  'QuickFixCmdPost',
-  {
-    desc = 'Open quickfix window if there are results.',
-    callback = function(args)
-      if #vim.fn.getqflist() > 1 then
-        vim.schedule(vim.cmd[args.match:find('^l') and 'lwindow' or 'cwindow'])
-      end
-    end,
-  },
-})
-
 do
   local win_ratio = {}
   augroup('my.keep_win_ratio', {

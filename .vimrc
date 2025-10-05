@@ -290,25 +290,6 @@ if s:supportevents('BufLeave', 'WinLeave', 'FocusLost')
 endif
 " }}}2
 
-" Open quickfix/location list automatically when set with commands {{{2
-if s:supportevents('QuickFixCmdPost') && exists('*timer_start')
-  function! s:defer_open_qflist(type) abort
-    if expand(a:type) =~# '^l'
-      call timer_start(0, {-> execute('bel lwindow')})
-    else
-      call timer_start(0, {-> execute('bot cwindow')})
-    endif
-  endfunction
-
-  augroup QuickFixAutoOpen
-    au!
-    au QuickFixCmdPost * if len(getqflist()) > 1 |
-          \ call s:defer_open_qflist(expand('<amatch>')) |
-          \ endif
-  augroup END
-endif
-" }}} 2
-
 " Make all windows the same height/width on vim resized {{{2
 if s:supportevents('VimResized')
   augroup EqualWinSize
