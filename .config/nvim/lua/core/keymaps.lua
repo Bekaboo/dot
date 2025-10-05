@@ -307,8 +307,8 @@ require('utils.load').on_events(
     --- 1. If current window is a floating window, close it and return
     --- 2. Else, close all floating windows that can be focused
     --- 3. Fallback to `key` if no floating window can be focused
-    ---@param key string
-    local function close_floats(key)
+    ---@param k string key (lhs) of the mapping
+    local function close_floats(k)
       local current_win = vim.api.nvim_get_current_win()
 
       -- Only close current win if it's a floating window
@@ -332,7 +332,7 @@ require('utils.load').on_events(
       -- If no floating window is closed, fallback
       if not win_closed then
         vim.api.nvim_feedkeys(
-          vim.api.nvim_replace_termcodes(key, true, true, true),
+          vim.api.nvim_replace_termcodes(k, true, true, true),
           'n',
           false
         )
@@ -502,20 +502,20 @@ require('utils.load').on_events(
   'CmdlineEnter',
   'my.keymaps.cmdline_abbrevs',
   function()
-    local key_utils = require('utils.key')
+    local key = require('utils.key')
 
-    key_utils.command_map(':', 'lua =')
-    key_utils.command_abbrev('man', 'Man')
-    key_utils.command_abbrev('tt', 'tab te')
-    key_utils.command_abbrev('bt', 'bot te')
-    key_utils.command_abbrev('ht', 'hor te')
-    key_utils.command_abbrev('vt', 'vert te')
-    key_utils.command_abbrev('rm', '!rm')
-    key_utils.command_abbrev('mv', '!mv')
-    key_utils.command_abbrev('git', '!git')
-    key_utils.command_abbrev('tree', '!tree')
-    key_utils.command_abbrev('mkdir', '!mkdir')
-    key_utils.command_abbrev('touch', '!touch')
-    key_utils.command_abbrev('chmod', '!chmod')
+    key.command_map(':', 'lua =')
+    key.command_abbrev('man', 'Man')
+    key.command_abbrev('tt', 'tab te')
+    key.command_abbrev('bt', 'bot te')
+    key.command_abbrev('ht', 'hor te')
+    key.command_abbrev('vt', 'vert te')
+    key.command_abbrev('rm', '!rm')
+    key.command_abbrev('mv', '!mv')
+    key.command_abbrev('git', '!git')
+    key.command_abbrev('tree', '!tree')
+    key.command_abbrev('mkdir', '!mkdir')
+    key.command_abbrev('touch', '!touch')
+    key.command_abbrev('chmod', '!chmod')
   end
 )
