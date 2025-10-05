@@ -40,7 +40,7 @@ M.adapter = function(cb)
   end
 
   client:request(
-    vim.lsp.protocol.Methods.workspace_executeCommand,
+    'workspace/executeCommand',
     { command = 'vscode.java.startDebugSession', arguments = {} },
     function(err, response)
       if err then
@@ -90,7 +90,7 @@ M.config = (function()
   local done = false
 
   client:request(
-    vim.lsp.protocol.Methods.workspace_executeCommand,
+    'workspace/executeCommand',
     { command = 'vscode.java.resolveMainClass' },
     function(err, classes)
       if err then
@@ -113,7 +113,7 @@ M.config = (function()
       local java_exec_path = vim.fn.exepath('java')
 
       for _, c in ipairs(classes) do
-        client:request(vim.lsp.protocol.Methods.workspace_executeCommand, {
+        client:request('workspace/executeCommand', {
           command = 'vscode.java.resolveClasspath',
           arguments = { c.mainClass, c.projectName },
         }, function(_, paths)
