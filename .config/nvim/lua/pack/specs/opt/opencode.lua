@@ -114,15 +114,6 @@ return {
         end,
       })
 
-      vim.api.nvim_create_autocmd('FileType', {
-        desc = 'Filetype settings for opencode buffers.',
-        pattern = 'opencode_output',
-        group = group,
-        callback = function(args)
-          vim.bo[args.buf].filetype = 'markdown'
-        end,
-      })
-
       local hl = require('utils.hl')
 
       hl.persist(function()
