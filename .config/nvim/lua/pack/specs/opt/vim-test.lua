@@ -30,7 +30,7 @@ return {
     postload = function()
       local strategies = vim.g['test#custom_strategies'] or {}
 
-      -- Modify & confirm test command before running
+      ---Modify & confirm test command before running
       strategies.confirm = function(cmd)
         vim.ui.input(
           { prompt = 'Test command: ', default = cmd },
@@ -43,6 +43,19 @@ return {
         end
         return vim.fn['test#strategy#' .. (vim.g['test#confirm#strategy'] or 'basic')](
           cmd
+        )
+      end
+
+      ---Yank instead of run the test command
+      strategies.yank = function(cmd)
+        vim.fn.setreg('"', cmd)
+        vim.fn.setreg(vim.v.register, cmd)
+        vim.notify(
+          string.format(
+            "[vim-test] yanked '%s' to register '%s'",
+            cmd,
+            vim.v.register
+          )
         )
       end
 
