@@ -16,7 +16,7 @@ return {
         ft = ft or vim.bo.ft
         utils.load.ft_load_once(
           ft,
-          'pack.ftconfigs.luasnip.snippets',
+          'pack.res.luasnip.snippets',
           function(_, snips)
             if not snips or vim.tbl_isempty(snips) then
               return

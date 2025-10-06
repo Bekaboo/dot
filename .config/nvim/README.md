@@ -401,7 +401,7 @@ paths:
 │   │   └── pack.lua            # load and manage 3rd-party plugin specs with `vim.pack`
 │   ├── pack                    # 3rd-party plugin specs and configs
 │   │   ├── specs               # specs for installing and configuring plugins, see `vim.pack.Spec`
-│   │   └── ftconfigs           # filetype-specific configs
+│   │   └── res                 # dynamically loaded resources
 │   ├── plugin                  # the actual implementation of custom lua plugins
 │   └── utils
 └── syntax                      # syntax files

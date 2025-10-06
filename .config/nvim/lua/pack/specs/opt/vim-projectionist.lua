@@ -41,7 +41,7 @@ return {
 
       -- Lazy load projections for each filetype
       require('utils.load').ft_auto_load_once(
-        'pack.ftconfigs.vim-projectionist.projections',
+        'pack.res.vim-projectionist.projections',
         function(_, projections)
           if not projections then
             return

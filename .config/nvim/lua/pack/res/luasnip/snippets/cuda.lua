@@ -7,7 +7,7 @@ local i = ls.insert_node
 local c = ls.choice_node
 local r = ls.restore_node
 
-M.c = require('pack.ftconfigs.luasnip.snippets.c').snippets
+M.c = require('pack.res.luasnip.snippets.c').snippets
 
 M.snippets = {
   us.msn(

@@ -67,7 +67,7 @@ return {
 
       -- Lazy-load test configs for each filetype
       require('utils.load').ft_auto_load_once(
-        'pack.ftconfigs.vim-test.tests',
+        'pack.res.vim-test.tests',
         function(ft, configs)
           if not configs then
             return
