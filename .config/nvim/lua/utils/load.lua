@@ -212,8 +212,10 @@ function M.on_events(event_specs, name, load)
   end
 end
 
+---@alias load.cmd.spec string
+
 ---Load plugin once on given commands
----@param cmds string|string[] command/list of commands to load the plugin
+---@param cmds load.cmd.spec|load.cmd.spec[] command/list of commands to load the plugin
 ---@param name string unique name of the plugin, also used as a namespace to prevent setting duplicated lazy-loading handlers for the same plugin/module
 ---@param load? function function to load the plugin
 function M.on_cmds(cmds, name, load)

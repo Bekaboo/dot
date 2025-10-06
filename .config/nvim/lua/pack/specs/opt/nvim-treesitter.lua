@@ -1,3 +1,4 @@
+---@type pack.spec
 return {
   src = 'https://github.com/nvim-treesitter/nvim-treesitter',
   version = 'main', -- master branch is deprecated

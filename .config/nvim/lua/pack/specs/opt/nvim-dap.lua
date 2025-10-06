@@ -1,3 +1,4 @@
+---@type pack.spec
 return {
   src = 'https://github.com/mfussenegger/nvim-dap',
   data = {

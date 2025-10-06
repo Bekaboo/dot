@@ -1,8 +1,8 @@
+---@type pack.spec
 return {
   src = 'https://github.com/HakonHarnes/img-clip.nvim',
   data = {
-    ---@param spec vim.pack.Spec
-    load = function(spec)
+    load = function(spec, path)
       local load = require('utils.load')
 
       load.on_events(
@@ -10,7 +10,7 @@ return {
         'img-clip',
         vim.schedule_wrap(function()
           load.load('img-clip.nvim')
-          spec.data.postload()
+          spec.data.postload(spec, path)
         end)
       )
     end,

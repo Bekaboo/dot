@@ -1,3 +1,4 @@
+---@type pack.spec
 -- Python dependencies:
 -- - pynvim
 -- - ipykernel
@@ -27,8 +28,6 @@ return {
       'MoltenNotebookRunVisual',
       'MoltenNotebookRunOperator',
     },
-    ---@param spec vim.pack.Spec
-    ---@param path string
     init = function(spec, path)
       vim.api.nvim_create_autocmd('FileType', {
         pattern = { 'python', 'markdown' },

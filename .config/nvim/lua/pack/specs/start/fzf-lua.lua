@@ -1,3 +1,4 @@
+---@type pack.spec
 return {
   src = 'https://github.com/ibhagwan/fzf-lua',
   data = {
@@ -95,8 +96,6 @@ return {
       { lhs = '<Leader>fF', opts = { desc = 'Find all available pickers' } },
       -- stylua: ignore end
     },
-    ---@param spec vim.pack.Spec
-    ---@param path string
     init = function(spec, path)
       -- Disable fzf's default vim plugin
       vim.g.loaded_fzf = 1

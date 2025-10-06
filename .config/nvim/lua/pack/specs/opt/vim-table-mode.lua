@@ -1,3 +1,4 @@
+---@type pack.spec
 return {
   src = 'https://github.com/dhruvasagar/vim-table-mode',
   data = {

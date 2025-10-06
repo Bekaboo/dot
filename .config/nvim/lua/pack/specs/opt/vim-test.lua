@@ -1,3 +1,4 @@
+---@type pack.spec
 return {
   src = 'https://github.com/vim-test/vim-test',
   data = {

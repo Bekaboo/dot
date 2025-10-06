@@ -1,3 +1,4 @@
+---@type pack.spec
 return {
   src = 'https://github.com/stevearc/oil.nvim',
   data = {
@@ -15,8 +16,6 @@ return {
     },
     cmds = 'Oil',
     ---Load oil on startup only when editing a directory
-    ---@param spec vim.pack.Spec
-    ---@param path string
     init = function(spec, path)
       vim.g.loaded_fzf_file_explorer = 0
       vim.g.loaded_netrw = 0

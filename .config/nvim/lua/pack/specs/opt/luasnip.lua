@@ -1,3 +1,4 @@
+---@type pack.spec
 return {
   src = 'https://github.com/L3MON4D3/LuaSnip',
   data = {
