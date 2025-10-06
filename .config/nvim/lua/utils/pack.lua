@@ -44,13 +44,13 @@ function M.load(spec, path)
     spec.data.load(spec, path)
   else
     if spec.data.preload then
-      spec.data.preload()
+      spec.data.preload(spec, path)
     end
 
     pcall(vim.cmd.packadd, vim.fs.basename(spec.src))
 
     if spec.data.postload then
-      spec.data.postload()
+      spec.data.postload(spec, path)
     else
       local ok, plugin = pcall(
         require,
