@@ -311,6 +311,7 @@ function M.on_keys(key_specs, name, load)
   if not vim.islist(key_specs) then
     key_specs = { key_specs } ---@cast key_specs load.key.spec[]
   end
+  ---@cast key_specs load.key.structured_spec[]
   for i, spec in ipairs(key_specs) do
     if type(spec) == 'string' then
       key_specs[i] = { mode = { 'n' }, lhs = spec }
