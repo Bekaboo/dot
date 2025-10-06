@@ -1,7 +1,7 @@
 -- Language server for YAML files
 -- https://github.com/redhat-developer/yaml-language-server
 
----@type lsp_config_t
+---@type lsp.config
 return {
   filetypes = { 'yaml', 'yaml.gh' },
   cmd = {

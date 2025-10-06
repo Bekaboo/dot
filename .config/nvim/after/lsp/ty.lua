@@ -1,7 +1,7 @@
 -- Python type checker and language server
 -- https://github.com/astral-sh/ty
 
----@type lsp_config_t
+---@type lsp.config
 return {
   filetypes = { 'python' },
   cmd = { 'ty', 'server' },

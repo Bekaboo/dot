@@ -1,7 +1,7 @@
 -- LSP wrapper for typescript extension of vscode
 -- https://github.com/yioneko/vtsls
 
----@type lsp_config_t
+---@type lsp.config
 return {
   filetypes = {
     'typescript',

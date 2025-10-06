@@ -40,7 +40,7 @@ local root_markers = {
 -- Prefer eslint native language server over efm + eslint
 -- https://github.com/neovim/nvim-lspconfig/blob/master/lua/lspconfig/configs/eslint.lua
 if vim.endswith(cmd, 'language-server') then
-  ---@type lsp_config_t
+  ---@type lsp.config
   return {
     filetypes = fts,
     cmd = { cmd, '--stdio' },
@@ -140,7 +140,7 @@ local eslint_lang_settings = {
   },
 }
 
----@type lsp_config_t
+---@type lsp.config
 return {
   filetypes = fts,
   cmd = { 'efm-langserver' },

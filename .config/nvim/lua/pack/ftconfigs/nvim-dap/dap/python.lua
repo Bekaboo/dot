@@ -2,7 +2,7 @@ local M = {}
 
 local utils = require('utils')
 
----@type dapcache_t
+---@type dap.cache
 local cache = utils.dap.new_cache()
 
 M.adapter = function(cb, config)

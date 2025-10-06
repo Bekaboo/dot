@@ -11,7 +11,7 @@ local settings = {
 }
 
 if vim.fn.executable('basedpyright-langserver') == 1 then
-  ---@type lsp_config_t
+  ---@type lsp.config
   return {
     filetypes = { 'python' },
     cmd = { 'basedpyright-langserver', '--stdio' },

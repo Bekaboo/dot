@@ -1,6 +1,6 @@
----@alias nvim_direction_t 'h'|'j'|'k'|'l'
----@alias tmux_direction_t 'L'|'D'|'U'|'R'
----@alias tmux_borderpane_direction_t 'left'|'bottom'|'top'|'right'
+---@alias direction.nvim 'h'|'j'|'k'|'l'
+---@alias direction.tmux 'L'|'D'|'U'|'R'
+---@alias direction.tmux_borderpane 'left'|'bottom'|'top'|'right'
 
 ---@return string tmux socket path
 local function tmux_get_socket()
@@ -70,7 +70,7 @@ local function tmux_is_zoomed()
   return tmux_get_pane_opt('window_zoomed_flag') == '1'
 end
 
----@type table<nvim_direction_t, tmux_borderpane_direction_t>
+---@type table<direction.nvim, direction.tmux_borderpane>
 local tmux_pane_position_map = {
   h = 'left',
   j = 'bottom',
@@ -78,20 +78,20 @@ local tmux_pane_position_map = {
   l = 'right',
 }
 
----@param direction nvim_direction_t
+---@param direction direction.nvim
 ---@return boolean
 local function tmux_at_border(direction)
   return tmux_get_pane_opt('pane_at_' .. tmux_pane_position_map[direction])
     == '1'
 end
 
----@param direction nvim_direction_t
+---@param direction direction.nvim
 ---@return boolean
 local function tmux_should_move(direction)
   return not tmux_is_zoomed() and not tmux_at_border(direction)
 end
 
----@type table<nvim_direction_t, tmux_direction_t>
+---@type table<direction.nvim, direction.tmux>
 local tmux_direction_map = {
   h = 'L',
   j = 'D',
@@ -99,7 +99,7 @@ local tmux_direction_map = {
   l = 'R',
 }
 
----@param direction nvim_direction_t
+---@param direction direction.nvim
 ---@param count integer? default to 1
 ---@return nil
 local function tmux_navigate(direction, count)
@@ -115,7 +115,7 @@ local function tmux_navigate(direction, count)
   end
 end
 
----@param direction nvim_direction_t
+---@param direction direction.nvim
 ---@return boolean
 local function nvim_at_border(direction)
   return vim.fn.winnr() == vim.fn.winnr(direction)
@@ -148,7 +148,7 @@ local function nvim_tabpage_has_only_win()
     :totable() <= 1
 end
 
----@param direction nvim_direction_t
+---@param direction direction.nvim
 ---@param count integer? default to 1
 ---@return nil
 local function nvim_navigate(direction, count)
@@ -158,7 +158,7 @@ local function nvim_navigate(direction, count)
   })
 end
 
----@param direction nvim_direction_t
+---@param direction direction.nvim
 ---@param count integer? default to 1
 ---@return nil
 local function navigate(direction, count)
@@ -173,7 +173,7 @@ local function navigate(direction, count)
   end
 end
 
----@param direction nvim_direction_t
+---@param direction direction.nvim
 ---@return function: rhs of a window navigation keymap
 local function navigate_wrap(direction)
   return function()

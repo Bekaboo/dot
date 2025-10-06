@@ -3,7 +3,7 @@
 --
 -- https://pkg.go.dev/golang.org/x/tools/cmd/goimports
 
----@type lsp_config_t
+---@type lsp.config
 return {
   filetypes = { 'go' },
   cmd = { 'efm-langserver' },

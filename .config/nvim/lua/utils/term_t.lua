@@ -1,11 +1,11 @@
 local utils = require('utils')
 
----@type table<string, table<string, term_t>>
+---@type table<string, table<string, term>>
 local terms = vim.defaulttable(function()
   return {}
 end)
 
----@class term_t
+---@class term
 ---@field buf integer
 ---@field dir string
 ---@field type string type of the terminal, useful to flag dedicated terminal running TUI apps, e.g. aider
@@ -14,9 +14,9 @@ end)
 ---@field check_interval integer timeout waiting for aider to render
 ---@field win_configs vim.api.keyset.win_config
 ---@field entered? boolean whether we have ever entered this terminal buffer
-local term_t = {}
+local term = {}
 
----@class term_opts_t
+---@class term.opts
 ---@field dir? string path to project root directory where a terminal will be created
 ---@field buf? integer existing terminal buffer
 ---@field type? string type of the terminal, useful to flag dedicated terminal running TUI apps, e.g. aider
@@ -24,7 +24,7 @@ local term_t = {}
 ---@field check_interval? integer timeout in ms waiting for aider to render
 ---@field win_configs? table window configs, see `vim.api.nvim_open_win`
 
----@type term_opts_t
+---@type term.opts
 local default_opts = {
   type = '',
   win_configs = {
@@ -40,9 +40,9 @@ local default_opts = {
 }
 
 ---Create a new terminal
----@param opts? term_opts_t
----@return term_t?
-function term_t:new(opts)
+---@param opts? term.opts
+---@return term?
+function term:new(opts)
   opts = vim.tbl_deep_extend('force', default_opts, self, opts)
 
   local chat = (function()
@@ -70,9 +70,9 @@ end
 
 ---Create from existing terminal buffer
 ---@private
----@param opts? term_opts_t
----@return term_t?
-function term_t:_new_from_buf(opts)
+---@param opts? term.opts
+---@return term?
+function term:_new_from_buf(opts)
   if
     not opts
     or not opts.buf
@@ -84,7 +84,7 @@ function term_t:_new_from_buf(opts)
 
   -- Create terminal, no need to call `jobstart` as job is already
   -- running in `buf`
-  local term = setmetatable(
+  local t = setmetatable(
     vim.tbl_deep_extend('force', opts, {
       dir = utils.term.parse_name(vim.api.nvim_buf_get_name(opts.buf)),
       chan = vim.b[opts.buf].terminal_job_id,
@@ -92,13 +92,13 @@ function term_t:_new_from_buf(opts)
     { __index = self }
   )
 
-  return term --[[@as term_t]]
+  return t --[[@as term]]
 end
 
 ---@private
----@param opts? term_opts_t
----@return term_t?
-function term_t:_new_from_dir(opts)
+---@param opts? term.opts
+---@return term?
+function term:_new_from_dir(opts)
   if not opts then
     opts = {}
   end
@@ -114,7 +114,7 @@ function term_t:_new_from_dir(opts)
   end
 
   -- Create a terminal instance
-  local term = setmetatable(
+  local t = setmetatable(
     vim.tbl_deep_extend('force', opts, {
       buf = vim.api.nvim_create_buf(false, true),
     }),
@@ -122,8 +122,8 @@ function term_t:_new_from_dir(opts)
   )
 
   -- Launch command
-  term.chan = vim.api.nvim_buf_call(term.buf, function()
-    local exe = term.cmd and term.cmd[1]
+  t.chan = vim.api.nvim_buf_call(t.buf, function()
+    local exe = t.cmd and t.cmd[1]
     if not exe or vim.fn.executable(exe) == 0 then
       vim.notify_once(
         string.format('[term] `%s` is not executable', tostring(exe)),
@@ -131,20 +131,20 @@ function term_t:_new_from_dir(opts)
       )
       return 0
     end
-    return vim.fn.jobstart(term.cmd, {
+    return vim.fn.jobstart(t.cmd, {
       term = true,
       cwd = opts.dir,
     })
   end)
-  if term.chan <= 0 then
+  if t.chan <= 0 then
     return -- failed to run command
   end
 
-  return term --[[@as term_t]]
+  return t --[[@as term]]
 end
 
 ---Remove terminal from list
-function term_t:del()
+function term:del()
   if self.dir and (terms[self.type][self.dir] or {}).buf == self.buf then
     terms[self.type][self.dir] = nil
   end
@@ -152,7 +152,7 @@ end
 
 ---Check if a terminal is valid, delete it if not
 ---@return boolean
-function term_t:validate()
+function term:validate()
   local valid = self.buf
     and self.chan
     and vim.api.nvim_buf_is_valid(self.buf)
@@ -167,9 +167,9 @@ end
 ---If `path` is not given, prefer current visible terminal, if any
 ---@param path? string file or directory path, default to cwd
 ---@param tab? number default to current tabpage
----@return term_t? terminal object at `path`
+---@return term? terminal object at `path`
 ---@return boolean? is_new whether the chat is newly created or reused
-function term_t:get(path, tab)
+function term:get(path, tab)
   if not path then
     path = vim.fn.getcwd(0)
     -- Check if there is any terminal visible in given tabpage
@@ -188,9 +188,9 @@ function term_t:get(path, tab)
   -- Normalized `path`, always use absolute path and include trailing slash
   path = vim.fn.fnamemodify(path, ':p')
 
-  local term = terms[self.type or default_opts.type or ''][path]
-  if term and term:validate() then
-    return term, false
+  local t = terms[self.type or default_opts.type or ''][path]
+  if t and t:validate() then
+    return t, false
   end
 
   -- Terminal recorded, add existing terminal buffer at `path` or create new
@@ -208,7 +208,7 @@ end
 ---Open terminal in current tabpage
 ---@param enter? boolean enter the terminal window, default `true`
 ---@return integer? win window id of the opened terminal, `nil` or <= 0 if invalid
-function term_t:open(enter)
+function term:open(enter)
   if not self:validate() then
     return
   end
@@ -249,7 +249,7 @@ function term_t:open(enter)
 end
 
 ---Close terminal window in current tabpage
-function term_t:close()
+function term:close()
   for win in self:wins() do
     -- Don't close the only window in current tabpage
     -- Try switching to alternative buffer to "close" the terminal
@@ -265,7 +265,7 @@ function term_t:close()
 end
 
 ---Toggle terminal
-function term_t:toggle()
+function term:toggle()
   if self:wins():peek() then
     self:close()
   else
@@ -276,7 +276,7 @@ end
 ---Get windows containing terminal buffer in given `tabpage`
 ---@param tabpage? integer tabpage id, default to current tabpage
 ---@return Iter wins iterator of windows containing terminal if it is visible in given tabpage, else `nil`
-function term_t:wins(tabpage)
+function term:wins(tabpage)
   if not self:validate() then
     return vim.iter({})
   end
@@ -294,7 +294,7 @@ end
 
 ---Send `lines` from `buf` to terminal
 ---@param msg string|string[]
-function term_t:send(msg)
+function term:send(msg)
   if type(msg) ~= 'table' then
     msg = { msg }
   end
@@ -303,9 +303,9 @@ function term_t:send(msg)
 end
 
 ---Call `cb` on terminal buffer update
----@param cb fun(chat: term_t): any
+---@param cb fun(chat: term): any
 ---@param tick? integer previous update's `b:changedtick`, should be `nil` on first call
-function term_t:on_update(cb, tick)
+function term:on_update(cb, tick)
   if not self:validate() then
     return
   end
@@ -323,4 +323,4 @@ function term_t:on_update(cb, tick)
   end, self.check_interval)
 end
 
-return term_t
+return term

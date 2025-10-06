@@ -27,7 +27,7 @@ end
 ---Highlight text in buffer, clear previous highlight if any exists
 ---@param buf integer
 ---@param hlgroup string
----@param range winbar_symbol_range_t?
+---@param range winbar.symbol.range?
 function M.range_single(buf, hlgroup, range)
   if not vim.api.nvim_buf_is_valid(buf) then
     return
