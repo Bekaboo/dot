@@ -210,7 +210,7 @@ end
 
 ---Maps from plugin spec src to building status
 ---@type table<string, boolean>
-local building = {}
+local built = {}
 
 ---Build plugin, e.g. build c/rust lib, install node dependencies, etc.
 ---comment
@@ -218,10 +218,10 @@ local building = {}
 ---@param path string
 ---@param notify? boolean default to `true`
 function M.build(spec, path, notify)
-  if not spec.data or not spec.data.build or building[spec.src] then
+  if not spec.data or not spec.data.build or built[spec.src] then
     return
   end
-  building[spec.src] = true
+  built[spec.src] = true
 
   notify = notify ~= false
   if notify then
