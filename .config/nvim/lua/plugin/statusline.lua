@@ -12,7 +12,7 @@ local diag_severity_map = {
   [4] = 'HINT',
   ERROR = 1,
   WARN = 2,
-  args = 3,
+  INFO = 3,
   HINT = 4,
 }
 
