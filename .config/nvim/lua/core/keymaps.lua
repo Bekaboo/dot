@@ -480,21 +480,6 @@ require('utils.load').on_events(
     -- Fzf keymaps
     map('n', '<Leader>.', '<Cmd>FZF<CR>', { desc = 'Find files' })
     map('n', '<Leader>ff', '<Cmd>FZF<CR>', { desc = 'Find files' })
-
-    -- Abbreviations
-    map('!a', 'ture', 'true')
-    map('!a', 'Ture', 'True')
-    map('!a', 'flase', 'false')
-    map('!a', 'fasle', 'false')
-    map('!a', 'Flase', 'False')
-    map('!a', 'Fasle', 'False')
-    map('!a', 'lcaol', 'local')
-    map('!a', 'lcoal', 'local')
-    map('!a', 'locla', 'local')
-    map('!a', 'sahre', 'share')
-    map('!a', 'saher', 'share')
-    map('!a', 'balme', 'blame')
-    map('!a', 'intall', 'install')
   end)
 )
 

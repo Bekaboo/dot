@@ -240,13 +240,6 @@ call s:command_abbrev('mkdir', '!mkdir')
 call s:command_abbrev('touch', '!touch')
 call s:command_abbrev('chmod', '!chmod')
 
-abbrev ture  true
-abbrev Ture  True
-abbrev flase false
-abbrev fasle false
-abbrev Flase False
-abbrev Fasle False
-
 runtime ftplugin/man.vim
 call s:command_abbrev('man', 'Man')
 " }}}
