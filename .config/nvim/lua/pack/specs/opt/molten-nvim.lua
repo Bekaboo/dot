@@ -15,7 +15,10 @@
 return {
   src = 'https://github.com/benlubas/molten-nvim',
   data = {
-    build = ':UpdateRemotePlugins',
+    build = function()
+      vim.cmd.packadd('molten-nvim')
+      vim.cmd.UpdateRemotePlugins()
+    end,
     -- No need to lazy load on molten's builtin commands (e.g. `:MoltenInit`)
     -- since they are already registered in rplugin manifest,
     -- see `:h $NVIM_RPLUGIN_MANIFEST`
