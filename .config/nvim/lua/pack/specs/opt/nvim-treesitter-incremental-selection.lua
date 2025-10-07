@@ -2,7 +2,7 @@
 return {
   src = 'https://github.com/shushtain/nvim-treesitter-incremental-selection',
   data = {
-    event = 'FileType',
+    events = 'FileType',
     postload = function()
       local key = require('utils.key')
       local tsis = require('nvim-treesitter-incremental-selection')
