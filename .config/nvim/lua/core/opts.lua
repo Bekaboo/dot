@@ -340,41 +340,28 @@ vim.g.loaded_tutor_mode_plugin = 0
 vim.g.loaded_zip = 0
 vim.g.loaded_zipPlugin = 0
 
-----Return function to lazy-load runtime files
-----@param runtime string
-----@param flag string
-----@return function
-local function load_runtime(runtime, flag)
-  return function()
-    if vim.g[flag] ~= nil and vim.g[flag] ~= 0 then
-      return
-    end
-    vim.g[flag] = nil
-    vim.cmd.runtime(runtime)
-  end
-end
+-- Lazy-load some runtime files
+vim.g.loaded_remote_plugins = 0
+vim.g.loaded_python3_provider = 0
 
 require('utils.load').on_events(
-  {
-    'FileType',
-    'BufNew',
-    'BufWritePost',
-    'BufReadPre',
-    { event = 'CmdUndefined', pattern = 'UpdateRemotePlugins' },
-  },
-  'rplugin/rplugin.nvim',
-  load_runtime('rplugin/rplugin.vim', 'loaded_remote_plugins')
+  { 'FileType', 'BufReadPre', 'BufWritePost' },
+  'my.load_runtime',
+  function()
+    vim.g.loaded_python3_provider = nil
+    vim.g.loaded_remote_plugins = nil
+    vim.cmd.runtime('provider/python3.vim')
+    vim.cmd.runtime('plugin/rplugin.vim')
+  end
 )
 
-require('utils.load').on_events(
-  {
-    { event = 'FileType', pattern = 'python' },
-    { event = 'BufNew', pattern = { '*.py', '*.ipynb' } },
-    { event = 'BufEnter', pattern = { '*.py', '*.ipynb' } },
-    { event = 'BufWritePost', pattern = { '*.py', '*.ipynb' } },
-    { event = 'BufReadPre', pattern = { '*.py', '*.ipynb' } },
-    { event = 'CmdUndefined', pattern = 'UpdateRemotePlugins' },
-  },
-  'provider/python3.vim',
-  load_runtime('provider/python3.vim', 'loaded_python3_provider')
+require('utils.load').on_cmds(
+  'UpdateRemotePlugins',
+  'my.load_runtime',
+  function()
+    vim.g.loaded_python3_provider = nil
+    vim.g.loaded_remote_plugins = nil
+    vim.cmd.runtime('provider/python3.vim')
+    vim.cmd.runtime('plugin/rplugin.vim')
+  end
 )
