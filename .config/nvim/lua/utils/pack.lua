@@ -118,18 +118,6 @@ function M.load(spec, path)
 
     if spec.data.postload then
       spec.data.postload(spec, path)
-    else
-      local ok, plugin = pcall(
-        require,
-        vim.fs
-          .basename(spec.name or spec.src)
-          :lower()
-          :gsub('%.nvim$', '')
-          :gsub('%.', '-')
-      )
-      if ok and type(plugin) == 'table' and plugin.setup then
-        pcall(plugin.setup)
-      end
     end
   end
 
