@@ -60,6 +60,18 @@ local loaded = {}
 ---@type table<string, boolean>
 local initialized = {}
 
+---Get plugin installation root dir
+---@return string
+function M.root()
+  return vim.fs.joinpath(vim.fn.stdpath('data'), 'site/pack/core/opt')
+end
+
+---Get install path of a plugin given spec
+---@param spec pack.spec
+function M.path(spec)
+  return vim.fs.joinpath(M.root(), vim.fs.basename(spec.name or spec.src))
+end
+
 ---Load a plugin with init, pre/post hooks, dependencies etc.
 ---@param spec pack.spec
 ---@param path string
@@ -87,7 +99,8 @@ function M.load(spec, path)
     for _, dep in
       ipairs(spec.data.deps --[=[@as pack.spec[]]=])
     do
-      M.load(specs_registry[type(dep) == 'string' and dep or dep.src], path)
+      local dep_spec = specs_registry[type(dep) == 'string' and dep or dep.src]
+      M.load(dep_spec, M.path(dep_spec))
     end
   end
 
@@ -101,7 +114,7 @@ function M.load(spec, path)
       spec.data.preload(spec, path)
     end
 
-    pcall(vim.cmd.packadd, vim.fs.basename(spec.src))
+    pcall(vim.cmd.packadd, vim.fs.basename(path))
 
     if spec.data.postload then
       spec.data.postload(spec, path)
@@ -128,7 +141,8 @@ function M.load(spec, path)
     for _, ext in
       ipairs(spec.data.exts --[=[@as pack.spec[]]=])
     do
-      M.load(specs_registry[type(ext) == 'string' and ext or ext.src], path)
+      local ext_spec = specs_registry[type(ext) == 'string' and ext or ext.src]
+      M.load(ext_spec, M.path(ext_spec))
     end
   end
 end
