@@ -179,9 +179,12 @@ function M.lazy_load(spec, path)
   end
 end
 
+---@class (partial) pack.structured_spec.opts : pack.structured_spec
+
 ---Add specified plugin spec with lazy-loading
 ---@param specs pack.spec|pack.spec[]
-function M.register(specs)
+---@param default pack.structured_spec.opts? Default options to merge with the plugin spec table if the plugin is not registered
+function M.register(specs, default)
   if not vim.islist(specs) then
     specs = { specs } ---@cast specs pack.spec[]
   end
@@ -214,11 +217,23 @@ function M.register(specs)
   end
 
   for _, spec in ipairs(specs) do
-    if spec.data and spec.data.deps then
-      M.register(spec.data.deps)
+    if spec.data then
+      if spec.data.deps then
+        M.register(spec.data.deps, {
+          data = { lazy = true },
+        })
+      end
+      if spec.data.exts then
+        M.register(spec.data.exts, {
+          data = { lazy = true },
+        })
+      end
     end
-    specs_registry[spec.src] =
-      vim.tbl_deep_extend('force', specs_registry[spec.src] or {}, spec)
+    specs_registry[spec.src] = vim.tbl_deep_extend(
+      'force',
+      specs_registry[spec.src] or default or {},
+      spec
+    )
   end
 end
 
