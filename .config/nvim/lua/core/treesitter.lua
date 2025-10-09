@@ -39,7 +39,7 @@ for _, buf in ipairs(vim.api.nvim_list_bufs()) do
   enable_ts_hl(buf)
 end
 
-vim.api.nvim_create_autocmd('Syntax', {
+vim.api.nvim_create_autocmd({ 'BufEnter', 'FileType' }, {
   group = vim.api.nvim_create_augroup('my.ts.auto_start', {}),
   desc = 'Automatically start treesitter highlighting for buffers.',
   callback = function(args)

@@ -43,7 +43,7 @@ do
       end,
     },
   }, {
-    'Syntax',
+    { 'BufEnter', 'FileType' },
     {
       once = true,
       desc = 'Prevent treesitter from attaching to big files.',
@@ -95,7 +95,7 @@ do
       end,
     },
   }, {
-    { 'TextChanged', 'Syntax' },
+    { 'BufEnter', 'TextChanged', 'FileType' },
     {
       desc = 'Stop treesitter in big files.',
       callback = function(args)
