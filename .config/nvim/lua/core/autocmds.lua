@@ -102,8 +102,7 @@ do
         local buf = args.buf
         if vim.b[buf].bigfile and require('utils.ts').is_active(buf) then
           vim.treesitter.stop(buf)
-          vim.bo[buf].syntax = vim.filetype.match({ buf = buf })
-            or vim.bo[buf].bt
+          vim.bo[buf].syntax = 'ON'
         end
       end,
     },
