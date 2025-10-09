@@ -26,9 +26,11 @@ vim.treesitter.stop = ts_buf_call_wrap(vim.treesitter.stop)
 ---Enable treesitter highlighting for given buffer
 ---@param buf integer
 local function enable_ts_hl(buf)
+  -- Don't start treesitter in bufs without filetype to avoid unnecessary calls
+  -- to `vim.treesitter.start()` and improve startup time
   -- Don't re-enable in the same buffer, else buffers loaded from session can
   -- have blank highlighting
-  if not ts.is_active(buf) then
+  if vim.b[buf].ft == '' or not ts.is_active(buf) then
     return
   end
   pcall(vim.treesitter.start, buf)
