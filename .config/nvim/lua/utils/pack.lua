@@ -4,7 +4,8 @@ local M = {}
 ---Mark plugin as optional
 ---
 ---Plugins marked as optional will not be installed, managed or enabled unless
----another spec without `optional` being set
+---there's another spec for the same plugin with `optional=nil` or
+---`optional=false`
 ---
 ---Useful for optional dependencies and plugins that are only used under
 ---specific conditions
