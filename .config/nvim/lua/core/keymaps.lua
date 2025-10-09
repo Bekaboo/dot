@@ -480,6 +480,11 @@ require('utils.load').on_events(
     -- Fzf keymaps
     map('n', '<Leader>.', '<Cmd>FZF<CR>', { desc = 'Find files' })
     map('n', '<Leader>ff', '<Cmd>FZF<CR>', { desc = 'Find files' })
+
+    -- Nvim's new built-in undotree plugin
+    map('n', '<Leader>u', '<Cmd>packadd nvim.undotree|Undotree<CR>', {
+      desc = 'Toggle undotree',
+    })
   end)
 )
 
