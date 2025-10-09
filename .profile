@@ -45,6 +45,9 @@ export BAT_THEME=ansi
 # shellcheck disable=SC2089
 # we want to include '' (single quotes) in `--preview` option because opts are
 # parsed twice when passing to fzf
+#
+# Set gutter to space to hide gutter:
+# https://github.com/junegunn/fzf/blob/master/CHANGELOG.md#hiding-the-gutter-column
 export FZF_DEFAULT_OPTS="--reverse \
     --preview='fzf-file-previewer {}' \
     --preview-window=right,55%,border-none,nocycle \
@@ -58,6 +61,7 @@ export FZF_DEFAULT_OPTS="--reverse \
     --scroll-off=999 \
     --multi \
     --ansi \
+    --gutter=' ' \
     --color=fg:-1,bg:-1,hl:bold:cyan \
     --color=fg+:-1,bg+:-1,hl+:bold:cyan \
     --color=border:white,preview-border:white \

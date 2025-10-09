@@ -1,6 +1,9 @@
 # Set fzf environment variables only once on login for performance
 if status is-login
     # Fzf envrionment variables
+    #
+    # Set gutter to space to hide gutter:
+    # https://github.com/junegunn/fzf/blob/master/CHANGELOG.md#hiding-the-gutter-column
     set -Ux FZF_DEFAULT_OPTS "--reverse \
         --preview='fzf-file-previewer {}' \
         --preview-window=right,55%,border-none,nocycle \
@@ -14,6 +17,7 @@ if status is-login
         --scroll-off=999 \
         --multi \
         --ansi \
+        --gutter=' ' \
         --color=fg:-1,bg:-1,hl:bold:cyan \
         --color=fg+:-1,bg+:-1,hl+:bold:cyan \
         --color=border:white,preview-border:white \
