@@ -697,6 +697,11 @@ local subcommands = {
         end,
       },
     },
+    selection_range = {
+      arg_handler = function(args)
+        return tonumber((unpack(args))) or 1
+      end,
+    },
   },
 
   ---Diagnostic subcommands
