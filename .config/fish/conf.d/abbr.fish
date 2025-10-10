@@ -2,36 +2,6 @@ if not status is-interactive
     exit
 end
 
-# Spell fix abbreviation
-set -g __spellfix_pairs \
-    'ture true' \
-    'Ture True' \
-    'flase false' \
-    'fasle false' \
-    'Flase False' \
-    'Fasle False' \
-    'lcaol local' \
-    'lcoal local' \
-    'locla local' \
-    'sahre share' \
-    'saher share' \
-    'balme blame'
-function __spellfix_abbr_fn --description 'Fix spelling errors'
-    # $argv: matched string
-    set -l str "$argv"
-    for pair_str in $__spellfix_pairs
-        set -l pair (string split ' ' $pair_str)
-        set pair[1] (string escape --style regex $pair[1])
-        set pair[2] (string escape --style regex $pair[2])
-        set pair[1] (string join '' '\b' $pair[1] '\b')
-        set str (string replace --all --regex -- $pair $str)
-    end
-    echo -- $str
-end
-
-abbr --add spellfix --position anywhere \
-    --regex '\S*' --function __spellfix_abbr_fn
-
 # Command abbreviations
 function __command_abbr --description 'Add an command abbreviation' -a trigger
     abbr --add $trigger --position command $argv[2..-1]
