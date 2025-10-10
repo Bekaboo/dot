@@ -74,10 +74,18 @@ return {
           },
         },
         keymap = {
-          window = {
-            toggle_pane = false, -- default overrides `<Tab>` in insert mode
-            submit_insert = '<M-CR>',
-            close = '<C-c>',
+          input_window = {
+            ['<cr>'] = {
+              'submit_input_prompt',
+              mode = 'n',
+            },
+            ['<m-cr>'] = {
+              'submit_input_prompt',
+              mode = { 'i', 'n' },
+            },
+            -- Must use lower-case '<tab>' to disable default keymaps
+            -- https://github.com/sudo-tee/opencode.nvim/issues/61
+            ['<tab>'] = false,
           },
         },
       })

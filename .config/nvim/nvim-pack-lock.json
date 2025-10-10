@@ -65,7 +65,7 @@
       "src": "https://github.com/kylechui/nvim-surround"
     },
     "nvim-treesitter": {
-      "rev": "0594d1ba",
+      "rev": "de003000",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter",
       "version": "'main'"
     },
@@ -95,7 +95,7 @@
       "src": "https://github.com/jbyuki/one-small-step-for-vimkind"
     },
     "opencode.nvim": {
-      "rev": "476ce82",
+      "rev": "601cc82",
       "src": "https://github.com/sudo-tee/opencode.nvim"
     },
     "otter.nvim": {
