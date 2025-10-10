@@ -46,22 +46,11 @@ bind 'set keyseq-timeout 1'
 
 # Common aliases
 alias cl='clear'
-alias cp='cp -i'
-alias mv='mv -i'
 alias x='trash'
 alias xr='trash-restore'
 alias g='git'
 alias d='dot'
-alias grep='grep --color=auto'
-alias ls='ls --color=auto -h'
 alias ll='ls -lhA'
-alias lc='wc -l'
-alias df='df -h'
-alias free='free -mh'
-alias tree='tree -N'
-alias sudoe='sudo -E'
-alias plasma-save-session="qdbus org.kde.ksmserver /KSMServer saveCurrentSession"
-alias clean-tmp="find /tmp -ctime +7 -exec rm -rf {} +"
 alias kc='kubectl'
 
 # Fzf keybindings and completion
