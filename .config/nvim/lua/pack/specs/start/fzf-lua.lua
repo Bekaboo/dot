@@ -100,16 +100,24 @@ return {
       -- Disable fzf's default vim plugin
       vim.g.loaded_fzf = 1
 
+      local ui_select = vim.ui.select
+
       local function setup_ui_select()
         ---@diagnostic disable-next-line: duplicate-set-field
         vim.ui.select = function(...)
+          if vim.fn.executable('fzf') == 0 then
+            vim.ui.select = ui_select
+            vim.ui.select(...)
+            return
+          end
+
           require('utils.pack').load(spec, path)
 
           local fzf_ui = require('fzf-lua.providers.ui_select')
           -- Register fzf as custom `vim.ui.select()` function if not yet
           -- registered
           if not fzf_ui.is_registered() then
-            local ui_select = fzf_ui.ui_select
+            local fzf_ui_select = fzf_ui.ui_select
 
             ---Overriding fzf-lua's default `ui_select()` function to use a
             ---custom prompt
@@ -133,7 +141,7 @@ return {
                   ':\xc2\xa0',
                   ''
                 )
-              ui_select(items, opts, on_choice)
+              fzf_ui_select(items, opts, on_choice)
             end
 
             -- Use the register function provided by fzf-lua. We are using this
