@@ -125,12 +125,11 @@ end
 ---@param opts cmd.opts?
 ---@return fun(arglead: string, cmdline: string, cursorpos: integer): string[]
 function M.complete(params, opts)
-  local fn_compl_params = M.complete_params(params)
-  local fn_compl_opts = M.complete_opts(opts)
   return function(arglead, cmdline, cursorpos)
-    local param_completions = fn_compl_params(arglead, cmdline, cursorpos)
-    local opt_completions = fn_compl_opts(arglead, cmdline, cursorpos)
-    return vim.list_extend(param_completions, opt_completions)
+    return vim.list_extend(
+      M.complete_params(params)(arglead, cmdline, cursorpos),
+      M.complete_opts(opts)(arglead, cmdline, cursorpos)
+    )
   end
 end
 
