@@ -52,6 +52,7 @@ __command_abbr mkdir 'mkdir -p'
 __command_abbr sudoe 'sudo -E'
 __command_abbr tree 'tree -N'
 __command_abbr x trash
+__command_abbr xr trash-restore
 __command_abbr kc kubectl
 
 function __command_abbr_v_fn --description 'Abbreviation function for `v`'
