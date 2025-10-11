@@ -252,8 +252,8 @@ setcolor_fish() {
             [ -e "${default_theme_name} Light.theme" ] && ln -s "${default_theme_name} Light.theme" "$light_theme_path" 2>/dev/null
         else
             theme_name=$(get_cap_theme_name "$1")
-            ln -sf "${theme_name} Dark.theme" "$dark_theme_path"
-            ln -sf "${theme_name} Light.theme" "$light_theme_path"
+            [ -e "${theme_name} Dark.theme" ] && ln -sf "${theme_name} Dark.theme" "$dark_theme_path"
+            [ -e "${theme_name} Light.theme" ] && ln -sf "${theme_name} Light.theme" "$light_theme_path"
         fi
         has fish &&
             fish -c 'set -U __fish_reload_theme (head -c 16 /dev/urandom)'
