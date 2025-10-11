@@ -11,8 +11,8 @@ DEFAULT_BG='dark'
 # $2: 'light' or 'dark'
 get_theme_variant() {
     case "$2" in
-    light) echo "$1" | sed 's/dark\|light/light/' | sed 's/Dark\|Light/Light/' ;;
-    dark) echo "$1" | sed 's/dark\|light/dark/' | sed 's/Dark\|Light/Dark/' ;;
+    light) echo "$1" | sed 's/dark$/light/' | sed 's/Dark$/Light/' ;;
+    dark) echo "$1" | sed 's/light$/dark/' | sed 's/Light$/Dark/' ;;
     esac
 }
 
