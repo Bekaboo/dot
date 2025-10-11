@@ -1,10 +1,10 @@
 [Desktop Entry]
-Name=Lofoten Sunset
-Comment=Lofoten Sunset Wallpapers
+Name=Clouds
+Comment=Clouds Wallpapers
 
 X-KDE-PluginInfo-Author=Bekaboo
 X-KDE-PluginInfo-Email=kankefengjing@gmail.com
-X-KDE-PluginInfo-Name=Lofoten Sunset
+X-KDE-PluginInfo-Name=Clouds
 X-KDE-PluginInfo-Version=0.0
 X-KDE-PluginInfo-Website=
 X-KDE-PluginInfo-Category=
@@ -17,7 +17,7 @@ X-Plasma-API=5.0
 FallbackTheme=default
 
 [Wallpaper]
-defaultWallpaperTheme=Lofoten Sunset
+defaultWallpaperTheme=Clouds
 defaultFileSuffix=.png
 defaultWidth=3840
 defaultHeight=2160

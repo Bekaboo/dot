@@ -1,10 +1,10 @@
 [Desktop Entry]
-Name=Lofoten Sunset
-Comment=Lofoten Sunset Wallpapers
+Name=Fish
+Comment=Fish Wallpapers
 
 X-KDE-PluginInfo-Author=Bekaboo
 X-KDE-PluginInfo-Email=kankefengjing@gmail.com
-X-KDE-PluginInfo-Name=Lofoten Sunset
+X-KDE-PluginInfo-Name=Fish
 X-KDE-PluginInfo-Version=0.0
 X-KDE-PluginInfo-Website=
 X-KDE-PluginInfo-Category=
@@ -17,10 +17,10 @@ X-Plasma-API=5.0
 FallbackTheme=default
 
 [Wallpaper]
-defaultWallpaperTheme=Lofoten Sunset
+defaultWallpaperTheme=Fish
 defaultFileSuffix=.png
-defaultWidth=3840
-defaultHeight=2160
+defaultWidth=10240
+defaultHeight=5760
 
 [Branding]
 homepage=
