@@ -12,6 +12,7 @@ __command_abbr d dot
 __command_abbr g git
 __command_abbr kc kubectl
 __command_abbr ll 'ls -lhA'
+__command_abbr tf terraform
 __command_abbr x trash
 __command_abbr xr trash-restore
 

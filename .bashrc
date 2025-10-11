@@ -52,6 +52,7 @@ alias g='git'
 alias d='dot'
 alias ll='ls -lhA'
 alias kc='kubectl'
+alias tf='terraform'
 
 # Fzf keybindings and completion
 [[ -r /usr/share/fzf/key-bindings.bash ]] && . /usr/share/fzf/key-bindings.bash
