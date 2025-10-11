@@ -74,22 +74,32 @@ do
   vim.opt.spelllang = 'en,cjk'
   vim.opt.spelloptions = 'camel'
 
-  ---Set spell check option
-  local function set_spell()
-    for _, win in ipairs(vim.api.nvim_list_wins()) do
-      if not require('utils.opt').spell:was_locally_set({ win = win }) then
-        vim.api.nvim_win_call(win, function()
-          vim.opt.spell = true
-        end)
-      end
-    end
-  end
-
-  require('utils.load').on_events('FileType', 'my.opt.spell', set_spell)
   require('utils.load').on_events(
     'UIEnter',
     'my.opt.spell',
-    vim.schedule_wrap(set_spell)
+    vim.schedule_wrap(function()
+      ---Buffers where spellcheck is enabled
+      ---@type table<integer, true>
+      local bufs = {}
+
+      for _, win in ipairs(vim.api.nvim_list_wins()) do
+        if require('utils.opt').spell:was_locally_set({ win = win }) then
+          goto continue
+        end
+        vim.api.nvim_win_call(win, function()
+          vim.opt.spell = true
+        end)
+        bufs[vim.fn.winbufnr(win)] = true
+        ::continue::
+      end
+
+      -- Restart treesitter to correctly apply `@spell` nodes
+      for buf, _ in pairs(bufs) do
+        if require('utils.ts').is_active(buf) then
+          pcall(vim.treesitter.start, buf)
+        end
+      end
+    end)
   )
 end
 
