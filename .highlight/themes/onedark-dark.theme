@@ -1,0 +1,49 @@
+-- vim: ft=lua:et:ts=2:sts=2:sw=2:
+
+Description = "Onedark Dark Theme"
+Categories = { "dark" }
+
+local palette = {
+  bg = "#31353f",
+  fg = "#abb2bf",
+  purple = "#c678dd",
+  green = "#98c379",
+  orange = "#d19a66",
+  blue = "#61afef",
+  yellow = "#e5c07b",
+  cyan = "#56b6c2",
+  red = "#e86671",
+  grey = "#5c6370",
+  light_grey = "#848b98",
+}
+
+Default       = { Colour = palette.fg }
+Canvas        = { Colour = palette.bg }
+Number        = { Colour = palette.orange }
+Escape        = { Colour = palette.red }
+String        = { Colour = palette.green }
+BlockComment  = { Colour = palette.grey }
+PreProcessor  = { Colour = palette.purple }
+LineNum       = { Colour = palette.light_grey }
+StringPreProc = String
+LineComment   = BlockComment
+Operator      = { Colour = palette.purple }
+Interpolation = Operator
+
+Keywords = {
+  { Colour = palette.purple },
+}
+
+SemanticTokenTypes = {
+  { Type = 'keyword',     Style = { Colour = palette.purple } },
+  { Type = 'type',        Style = { Colour = palette.yellow } },
+  { Type = 'function',    Style = { Colour = palette.blue, Bold = true } },
+  { Type = 'method',      Style = { Colour = palette.blue, Bold = true } },
+  { Type = 'class',       Style = { Colour = palette.yellow } },
+  { Type = 'struct',      Style = { Colour = palette.yellow } },
+  { Type = 'parameter',   Style = { Colour = palette.fg } },
+  { Type = 'variable',    Style = { Colour = palette.fg } },
+  { Type = 'number',      Style = Number },
+  { Type = 'regexp',      Style = { Colour = palette.orange } },
+  { Type = 'operator',    Style = Operator },
+}

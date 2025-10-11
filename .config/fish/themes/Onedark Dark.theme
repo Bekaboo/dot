@@ -1,0 +1,43 @@
+# name: 'Onedark Dark'
+# preferred_background: 282c34
+
+fish_color_autosuggestion            5c6370 --italics
+fish_color_cancel                           --reverse
+fish_color_command                   61afef
+fish_color_comment                   5c6370
+fish_color_cwd                       abb2bf --background=393f4a
+fish_color_cwd_root                  e86671 --background=393f4a
+fish_color_end                       61afef
+fish_color_error                     e86671
+fish_color_escape                    e86671
+fish_color_hg_added                  98c379
+fish_color_hg_clean                  61afef
+fish_color_hg_copied                 abb2bf
+fish_color_hg_deleted                e86671
+fish_color_hg_dirty                  e5c07b
+fish_color_hg_modified               e5c07b
+fish_color_hg_renamed                abb2bf
+fish_color_hg_unmerged               e86671
+fish_color_hg_untracked              5c6370
+fish_color_history_current                  --bold
+fish_color_host                      normal
+fish_color_host_remote               98c379
+fish_color_normal                    normal
+fish_color_operator                  e86671
+fish_color_param                     e86671
+fish_color_quote                     98c379
+fish_color_redirection               abb2bf
+fish_color_search_match                     --reverse
+fish_color_selection                 abb2bf --background=3b3f4c
+
+fish_color_status                    282c34 --background=e86671
+fish_color_status_0                  282c34 --background=abb2bf
+
+fish_color_user                      61afef
+fish_color_valid_path                98c379
+fish_color_vcs                       abb2bf
+fish_pager_color_completion          normal
+fish_pager_color_description         5c6370
+fish_pager_color_prefix              normal --bold --underline
+fish_pager_color_progress            abb2bf --bold
+fish_pager_color_selected_background        --reverse

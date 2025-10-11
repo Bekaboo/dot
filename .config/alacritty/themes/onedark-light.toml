@@ -1,0 +1,27 @@
+# Onedark light theme
+[colors.bright]
+black   = "#c9c9c9"
+red     = "#e45649"
+green   = "#50a14f"
+yellow  = "#986801"
+blue    = "#4078f2"
+magenta = "#a626a4"
+cyan    = "#0184bc"
+white   = "#383a42"
+
+[colors.cursor]
+cursor = "#383a42"
+
+[colors.normal]
+black   = "#fafafa"
+red     = "#e45649"
+green   = "#50a14f"
+yellow  = "#986801"
+blue    = "#4078f2"
+magenta = "#a626a4"
+cyan    = "#0184bc"
+white   = "#383a42"
+
+[colors.primary]
+background = "#fafafa"
+foreground = "#383a42"

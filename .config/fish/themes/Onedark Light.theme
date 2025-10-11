@@ -1,0 +1,43 @@
+# name: 'Onedark Light'
+# preferred_background: fafafa
+
+fish_color_autosuggestion            c9c9c9 --italics
+fish_color_cancel                           --reverse
+fish_color_command                   4078f2
+fish_color_comment                   c9c9c9
+fish_color_cwd                       383a42 --background=e6e6e6
+fish_color_cwd_root                  c18401 --background=e6e6e6
+fish_color_end                       0184bc
+fish_color_error                     e45649
+fish_color_escape                    c18401
+fish_color_hg_added                  50a14f
+fish_color_hg_clean                  0184bc
+fish_color_hg_copied                 383a42
+fish_color_hg_deleted                e45649
+fish_color_hg_dirty                  986801
+fish_color_hg_modified               986801
+fish_color_hg_renamed                383a42
+fish_color_hg_unmerged               e45649
+fish_color_hg_untracked              c9c9c9
+fish_color_history_current                  --bold
+fish_color_host                      normal
+fish_color_host_remote               50a14f
+fish_color_normal                    normal
+fish_color_operator                  e45649
+fish_color_param                     e45649
+fish_color_quote                     50a14f
+fish_color_redirection               383a42
+fish_color_search_match                     --reverse
+fish_color_selection                 383a42 --background=dcdcdc
+
+fish_color_status                    fafafa --background=e45649
+fish_color_status_0                  fafafa --background=383a42
+
+fish_color_user                      0184bc
+fish_color_valid_path                50a14f
+fish_color_vcs                       c9c9c9
+fish_pager_color_completion          normal
+fish_pager_color_description         c9c9c9
+fish_pager_color_prefix              normal --bold --underline
+fish_pager_color_progress            383a42 --bold
+fish_pager_color_selected_background        --reverse

@@ -94,6 +94,10 @@
       "rev": "99c22f1",
       "src": "https://github.com/jbyuki/one-small-step-for-vimkind"
     },
+    "onedark.nvim": {
+      "rev": "de495fa",
+      "src": "https://github.com/navarasu/onedark.nvim"
+    },
     "opencode.nvim": {
       "rev": "601cc82",
       "src": "https://github.com/sudo-tee/opencode.nvim"
