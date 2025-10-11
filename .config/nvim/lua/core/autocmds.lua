@@ -623,26 +623,26 @@ do
         vim.schedule(function()
           local json_utils = require('utils.json')
 
-          local d = json_utils.read(colors_file)
-          if d.colors_name == vim.g.colors_name and d.bg == vim.go.bg then
+          local c = json_utils.read(colors_file)
+          if c.colors_name == vim.g.colors_name and c.bg == vim.go.bg then
             return
           end
 
-          if d.colors_name ~= vim.g.colors_name then
-            d.colors_name = vim.g.colors_name
+          if c.colors_name ~= vim.g.colors_name then
+            c.colors_name = vim.g.colors_name
             if vim.fn.executable('setcolor') == 1 then
               vim.system({ 'setcolor', vim.g.colors_name })
             end
           end
 
-          if d.bg ~= vim.go.bg and vim.go.termguicolors then
-            d.bg = vim.go.bg
+          if c.bg ~= vim.go.bg and vim.go.termguicolors then
+            c.bg = vim.go.bg
             if vim.fn.executable('setbg') == 1 then
               vim.system({ 'setbg', vim.go.bg })
             end
           end
 
-          json_utils.write(colors_file, d)
+          json_utils.write(colors_file, c)
         end)
       end,
     },
