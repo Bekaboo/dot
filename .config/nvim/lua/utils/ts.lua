@@ -4,14 +4,7 @@ local M = {}
 ---@param buf integer? default: current buffer
 ---@return boolean
 function M.is_active(buf)
-  if not buf or buf == 0 then
-    buf = vim.api.nvim_get_current_buf()
-  end
-  if vim.treesitter.highlighter.active[buf] then
-    return true
-  end
-  -- `vim.treesitter.get_parser()` can be slow for big files
-  return not vim.b.bigfile and (pcall(vim.treesitter.get_parser, buf))
+  return vim.treesitter.highlighter.active[vim._resolve_bufnr(buf or 0)] ~= nil
 end
 
 local ts_get_node = vim.treesitter.get_node
