@@ -648,11 +648,16 @@ do
 
           if d.colors_name ~= vim.g.colors_name then
             d.colors_name = vim.g.colors_name
-            pcall(vim.system, { 'setcolor', vim.g.colors_name })
+            if vim.fn.executable('setcolor') == 1 then
+              vim.system({ 'setcolor', vim.g.colors_name })
+            end
           end
+
           if d.bg ~= vim.go.bg and vim.go.termguicolors then
             d.bg = vim.go.bg
-            pcall(vim.system, { 'setbg', vim.go.bg })
+            if vim.fn.executable('setbg') == 1 then
+              vim.system({ 'setbg', vim.go.bg })
+            end
           end
 
           json_utils.write(colors_file, d)
