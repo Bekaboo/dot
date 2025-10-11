@@ -581,27 +581,6 @@ do
   local colors_file =
     vim.fs.joinpath(vim.fn.stdpath('state') --[[@as string]], 'colors.json')
 
-  ---@param colors_name string
-  ---@return nil
-  local function load_colorscheme(colors_name)
-    local colors_path = vim.fs.joinpath(
-      vim.fn.stdpath('config') --[[@as string]],
-      'colors',
-      colors_name .. '.lua'
-    )
-    if vim.fn.filereadable(colors_path) == 1 then
-      dofile(colors_path)
-      vim.schedule(function()
-        vim.api.nvim_exec_autocmds('ColorScheme', {})
-      end)
-    else
-      vim.cmd.colorscheme({
-        args = { colors_name },
-        mods = { emsg_silent = true },
-      })
-    end
-  end
-
   ---Restore dark/light background and colorscheme from json so that nvim
   ---'remembers' the background and colorscheme when it is restarted.
   local function restore_colorscheme()
@@ -611,7 +590,10 @@ do
       vim.go.bg = c.bg
     end
     if c.colors_name and c.colors_name ~= vim.g.colors_name then
-      load_colorscheme(c.colors_name)
+      vim.cmd.colorscheme({
+        args = { c.colors_name },
+        mods = { emsg_silent = true },
+      })
     end
   end
 
