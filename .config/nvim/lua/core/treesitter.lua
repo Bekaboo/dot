@@ -30,7 +30,7 @@ local function enable_ts_hl(buf)
   -- to `vim.treesitter.start()` and improve startup time
   -- Don't re-enable in the same buffer, else buffers loaded from session can
   -- have blank highlighting
-  if vim.b[buf].ft == '' or not ts.is_active(buf) then
+  if vim.b[buf].ft == '' or ts.is_active(buf) then
     return
   end
   pcall(vim.treesitter.start, buf)
