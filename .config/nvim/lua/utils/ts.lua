@@ -4,7 +4,7 @@ local M = {}
 ---@param buf integer? default: current buffer
 ---@return boolean
 function M.is_active(buf)
-  return vim.treesitter.highlighter.active[vim._resolve_bufnr(buf or 0)] ~= nil
+  return vim.treesitter.highlighter.active[vim._resolve_bufnr(buf)] ~= nil
 end
 
 local ts_get_node = vim.treesitter.get_node
