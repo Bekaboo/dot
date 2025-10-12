@@ -85,8 +85,8 @@ return {
             },
           },
           menu = {
-            min_width = vim.go.pumwidth,
-            max_height = vim.go.pumheight,
+            min_width = vim.go.pumwidth > 0 and vim.go.pumwidth or nil, ---@diagnostic disable-line: assign-type-mismatch
+            max_height = vim.go.pumheight > 0 and vim.go.pumheight or nil, ---@diagnostic disable-line: assign-type-mismatch
             draw = {
               columns = not vim.g.has_nf and {
                 { 'label' },
