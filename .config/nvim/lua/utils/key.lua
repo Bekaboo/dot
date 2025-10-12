@@ -249,4 +249,22 @@ function M.with_cursorpos(fn)
   end
 end
 
+---Wrap a function so that current window view is kept after running it
+---@generic T
+---@param cb fun(): T?
+---@return fun(): T?
+function M.with_winview(cb)
+  return function()
+    local win = vim.api.nvim_get_current_win()
+    local view = vim.fn.winsaveview()
+    local result = { cb() }
+    if vim.api.nvim_win_is_valid(win) then
+      vim.api.nvim_win_call(win, function()
+        vim.fn.winrestview(view)
+      end)
+    end
+    return unpack(result)
+  end
+end
+
 return M
