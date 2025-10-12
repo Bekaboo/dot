@@ -234,6 +234,12 @@ local function setup(o)
     group = id,
     callback = update_hl_hex,
   })
+  vim.api.nvim_create_autocmd('OptionSet', {
+    desc = 'Update base colors.',
+    group = id,
+    pattern = 'background',
+    callback = update_hl_hex,
+  })
 
   vim.api.nvim_create_autocmd({
     'BufEnter',
