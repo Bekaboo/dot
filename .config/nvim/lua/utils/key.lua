@@ -212,7 +212,7 @@ end
 ---Wrap a function so that it runs with `lazyredraw=true`
 ---@generic T
 ---@param fn fun(): T?
----@return fun(): T[]
+---@return fun(): T?
 function M.with_lazyredraw(fn)
   return function()
     -- Avoid setting `lazyredraw` option and trigging `OptionSet` event
@@ -231,7 +231,7 @@ end
 ---function
 ---@generic T
 ---@param fn fun(): T?
----@return fun(): T[]
+---@return fun(): T?
 function M.with_cursorpos(fn)
   return function()
     local win = vim.api.nvim_get_current_win()
