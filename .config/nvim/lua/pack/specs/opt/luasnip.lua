@@ -7,8 +7,13 @@ return {
     postload = function()
       local ls = require('luasnip')
       local ls_types = require('luasnip.util.types')
+      local ls_vim_version = require('luasnip.util.vimversion')
       local ls_ft = require('luasnip.extras.filetype_functions')
       local utils = require('utils')
+
+      -- Cache `ge()` to fix performance issue:
+      -- https://github.com/L3MON4D3/LuaSnip/issues/1393
+      ls_vim_version.ge = utils.lua.cache(ls_vim_version.ge, {})
 
       ---Load snippets for a given filetype
       ---@param ft string?
