@@ -52,6 +52,9 @@ function! plugin#vscode#setup() abort
   " Use VSCode syntax highlighting
   syntax off
 
+  " Avoid colorcolumn artifacts
+  set colorcolumn=
+
   nnoremap K     <Cmd>call VSCodeNotify('editor.action.showHover')<CR>
   nnoremap gD    <Cmd>call <SID>editorAction('goToTypeDefinition')<CR>
   nnoremap gd    <Cmd>call <SID>editorAction('revealDefinition')<CR>
