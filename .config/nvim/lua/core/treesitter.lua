@@ -36,11 +36,6 @@ local function enable_ts_hl(buf)
   pcall(vim.treesitter.start, buf)
 end
 
--- Automatically start treesitter highlighting for buffers
-for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-  enable_ts_hl(buf)
-end
-
 vim.api.nvim_create_autocmd('FileType', {
   group = vim.api.nvim_create_augroup('my.ts.auto_start', {}),
   desc = 'Automatically start treesitter highlighting for buffers.',
@@ -71,10 +66,6 @@ local function enable_ts_folding(buf)
     wo.foldmethod = 'expr'
     ::continue::
   end
-end
-
-for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-  enable_ts_folding(buf)
 end
 
 vim.api.nvim_create_autocmd('FileType', {
