@@ -23,7 +23,7 @@ local lsp_start = vim.lsp.start
 ---@param opts table?
 ---@return integer? client_id id of attached client or nil if failed
 function M.start(config, opts)
-  if not config or vim.bo.bt == 'nofile' or vim.g.vscode then
+  if not config or vim.bo.bt == 'nofile' then
     return
   end
 
