@@ -3,7 +3,7 @@
 
 ---@type lsp.config
 return {
-  filetypes = { 'scala' },
+  filetypes = { 'scala', 'sbt', 'sc' },
   cmd = { 'metals' },
   root_markers = {
     'build.sbt',
