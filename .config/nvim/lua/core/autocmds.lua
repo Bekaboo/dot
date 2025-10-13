@@ -417,16 +417,16 @@ augroup('my.dynamic_cc', {
   {
     desc = 'Set `colorcolumn` to follow `textwidth` in new buffers.',
     callback = function(args)
-      if vim.bo[args.buf].textwidth == 0 then
+      if vim.bo[args.buf].tw == 0 then
         return
       end
 
       for _, win in ipairs(vim.fn.win_findbuf(args.buf)) do
-        if vim.wo[win].colorcolumn:find('+', 1, true) then
+        if vim.wo[win].cc == '' or vim.wo[win].cc:find('+', 1, true) then
           goto continue
         end
-        vim.b[args.buf].cc = vim.wo[win].colorcolumn
-        vim.wo[win][0].colorcolumn = '+1'
+        vim.b[args.buf].cc = vim.wo[win].cc
+        vim.wo[win][0].cc = '+1'
         ::continue::
       end
     end,
@@ -441,14 +441,16 @@ augroup('my.dynamic_cc', {
         return
       end
 
-      local cc_is_relative = vim.wo.colorcolumn:find('+', 1, true)
+      local cc_is_relative = vim.wo.cc:find('+', 1, true)
       local wins = vim.fn.win_findbuf(vim.api.nvim_get_current_buf())
 
       -- `textwidth` is set, make `colorcolumn` follow it
       if vim.v.option_new > 0 and not cc_is_relative then
-        vim.b.cc = vim.wo.colorcolumn
+        vim.b.cc = vim.wo.cc
         for _, win in ipairs(wins) do
-          vim.wo[win][0].colorcolumn = '+1'
+          if vim.wo[win].cc ~= '' then
+            vim.wo[win][0].cc = '+1'
+          end
         end
         return
       end
@@ -456,7 +458,9 @@ augroup('my.dynamic_cc', {
       -- `textwidth` is unset, restore `colorcolumn`
       if vim.v.option_new == 0 and cc_is_relative and vim.b.cc then
         for _, win in ipairs(wins) do
-          vim.wo[win][0].colorcolumn = vim.b.cc
+          if vim.wo.cc ~= '' then
+            vim.wo[win][0].cc = vim.b.cc
+          end
         end
         vim.b.cc = nil
       end

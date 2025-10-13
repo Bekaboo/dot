@@ -538,7 +538,8 @@ if s:supportevents('BufNew', 'OptionSet') && exists('*timer_start')
     endif
 
     for win in win_findbuf(a:buf)
-      if getwinvar(win, '&cc') =~# '+'
+      let l:cc = getwinvar(win, '&cc')
+      if l:cc ==# '' || l:cc =~# '+'
         continue
       endif
       call setbufvar(a:buf, 'cc', getwinvar(win, '&cc'))
@@ -557,7 +558,9 @@ if s:supportevents('BufNew', 'OptionSet') && exists('*timer_start')
     if v:option_new > 0 && &l:cc !~# '+'
       let b:cc = &l:cc
       for win in win_findbuf(bufnr())
-        silent! call setwinvar(win, '&cc', '+1')
+        if getwinvar(win, '&cc') !=# ''
+          silent! call setwinvar(win, '&cc', '+1')
+        endif
       endfor
       return
     endif
@@ -565,7 +568,9 @@ if s:supportevents('BufNew', 'OptionSet') && exists('*timer_start')
     " `textwidth` is unset, restore `colorcolumn`
     if v:option_new == 0 && &l:cc =~# '+' && exists('b:cc')
       for win in win_findbuf(bufnr())
-        silent! call setwinvar(win, '&cc', b:cc)
+        if getwinvar(win, '&cc') !=# ''
+          silent! call setwinvar(win, '&cc', b:cc)
+        endif
       endfor
       unlet b:cc
     endif
