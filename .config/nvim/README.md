@@ -540,56 +540,7 @@ and it should work out of the box.
 
 #### Third Party Plugins
 
-
-- **UI**
-    - [nvim-web-devicons](https://github.com/kyazdani42/nvim-web-devicons)
-- **Completion**
-    - [blink.cmp](https://github.com/Saghen/blink.cmp)
-    - [LuaSnip](https://github.com/L3MON4D3/LuaSnip)
-- **Markup**
-    - [vimtex](https://github.com/lervag/vimtex)
-    - [markdown-preview.nvim](https://github.com/iamcco/markdown-preview.nvim)
-    - [vim-table-mode](https://github.com/dhruvasagar/vim-table-mode)
-    - [otter.nvim](https://github.com/jmbuhr/otter.nvim)
-    - [molten-nvim](https://github.com/benlubas/molten-nvim)
-    - [img-clip.nvim](https://github.com/HakonHarnes/img-clip.nvim)
-- **Edit**
-    - [nvim-surround](https://github.com/kylechui/nvim-surround)
-    - [vim-sleuth](https://github.com/tpope/vim-sleuth)
-    - [ultimate-autopairs.nvim](https://github.com/altermo/ultimate-autopair.nvim)
-    - [vim-easy-align](https://github.com/junegunn/vim-easy-align)
-    - [vim-conjoin](https://github.com/flwyd/vim-conjoin)
-- **Tools**
-    - [fzf-lua](https://github.com/ibhagwan/fzf-lua)
-    - [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim)
-    - [nvim-colorizer.lua](https://github.com/NvChad/nvim-colorizer.lua)
-    - [vim-fugitive](https://github.com/tpope/vim-fugitive)
-        - [vim-rhubarb](https://github.com/tpope/vim-rhubarb) (dependency)
-        - [fugitive-gitlab.vim](https://github.com/shumphrey/fugitive-gitlab.vim) (dependency)
-    - [oil.nvim](https://github.com/stevearc/oil.nvim)
-    - [quicker.nvim](https://github.com/stevearc/quicker.nvim)
-    - [which-key.nvim](https://github.com/folke/which-key.nvim)
-    - [opencode.nvim](https://github.com/sudo-tee/opencode.nvim)
-        - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) (dependency)
-- **Debug**
-    - [nvim-dap](https://github.com/mfussenegger/nvim-dap)
-    - [nvim-dap-ui](https://github.com/rcarriga/nvim-dap-ui)
-        - [nvim-nio](https://github.com/nvim-neotest/nvim-nio) (dependency)
-    - [one-small-step-for-vimkind](https://github.com/jbyuki/one-small-step-for-vimkind)
-- **Build**
-    - [vim-test](https://github.com/vim-test/vim-test)
-    - [vim-projectionist](https://github.com/tpope/vim-projectionist)
-- **Treesitter**
-    - [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter)
-    - [nvim-treesitter-textobjects](https://github.com/nvim-treesitter/nvim-treesitter-textobjects)
-    - [nvim-treesitter-endwise](https://github.com/RRethy/nvim-treesitter-endwise)
-    - [nvim-treesitter-incremental-selection](https://github.com/shushtain/nvim-treesitter-incremental-selection)
-    - [ts-autotag.nvim](https://github.com/tronikelis/ts-autotag.nvim)
-    - [treesj](https://github.com/Wansmer/treesj)
-    - [cellular-automaton.nvim](https://github.com/Eandrju/cellular-automaton.nvim)
-- **Colorschemes**
-    - [everforest](https://github.com/sainnhe/everforest)
-    - [gruvbox-material](https://github.com/sainnhe/gruvbox-material)
+See [`nvim-pack-lock.json`](nvim-pack-lock.json).
 
 #### Builtin Plugins
 
