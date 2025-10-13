@@ -167,7 +167,7 @@ function M.on_events(event_specs, name, load)
         if vim.tbl_isempty(loaders) then
           vim.api.nvim_create_autocmd(spec.event, {
             once = true,
-            pattern = spec.pattern,
+            pattern = pat,
             group = vim.api.nvim_create_augroup(
               string.format(
                 'my.load.on_events.event.%s.pat.%s',
