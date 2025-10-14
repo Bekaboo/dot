@@ -6,7 +6,7 @@ local utils = require('utils')
 ---@param hl? string name of the highlight group
 ---@param restore? boolean restore highlight after the sign, default true
 local function make_hl(str, hl, restore)
-  return utils.stl.hl(str, hl, restore, true)
+  return utils.stl.hl(str, hl, restore)
 end
 
 ---@type table<integer, integer>
