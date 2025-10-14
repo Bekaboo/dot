@@ -151,9 +151,13 @@ function M.restart(client_or_id, opts)
   })
 end
 
+---@class lsp.range
+---@field start {line: integer, character: integer}
+---@field end {line: integer, character: integer}
+
 ---Check if `range1` contains `range2`
----@param range1 winbar.sources.lsp.range 0-based range
----@param range2 winbar.sources.lsp.range 0-based range
+---@param range1 lsp.range 0-based range
+---@param range2 lsp.range 0-based range
 ---@param strict boolean? only return true if `range1` fully contains `range2` (no overlapping boundaries), default false
 ---@return boolean
 function M.range_contains(range1, range2, strict)
@@ -209,7 +213,7 @@ function M.range_contains(range1, range2, strict)
 end
 
 ---Check if cursor is in range
----@param range winbar.sources.lsp.range 0-based range
+---@param range lsp.range 0-based range
 ---@param cursor integer[]? cursor position (line, character); (1, 0)-based
 ---@param strict boolean? only return true if `cursor` is fully contained in `range` (not on the boundary), default false
 ---@return boolean
