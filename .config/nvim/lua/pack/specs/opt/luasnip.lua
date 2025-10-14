@@ -163,7 +163,7 @@ return {
 
       ---Convert a range into lsp format range
       ---@param range integer[][] 0-based range
-      ---@return winbar.sources.lsp.range
+      ---@return lsp.range
       local function range_convert(range)
         local s = range[1]
         local e = range[2]

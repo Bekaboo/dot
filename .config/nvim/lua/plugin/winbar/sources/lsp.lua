@@ -15,13 +15,9 @@ setmetatable(lsp_buf_symbols, {
 
 ---@alias winbar.sources.lsp.client table
 
----@class winbar.sources.lsp.range
----@field start {line: integer, character: integer}
----@field end {line: integer, character: integer}
-
 ---@class winbar.sources.lsp.loc
 ---@field uri string
----@field range winbar.sources.lsp.range
+---@field range lsp.range
 
 ---@class winbar.sources.lsp.document_symbol
 ---@field name string
@@ -29,8 +25,8 @@ setmetatable(lsp_buf_symbols, {
 ---@field tags? table
 ---@field deprecated? boolean
 ---@field detail? string
----@field range? winbar.sources.lsp.range
----@field selectionRange? winbar.sources.lsp.range
+---@field range? lsp.range
+---@field selectionRange? lsp.range
 ---@field children? winbar.sources.lsp.document_symbol[]
 
 ---@class winbar.sources.lsp.symbol_info
