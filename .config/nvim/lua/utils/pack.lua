@@ -248,22 +248,22 @@ function M.build(spec, path, notify)
 
   -- Build can be a function, a vim command (starting with ':'), or a shell
   -- command
-  if vim.is_callable(spec.data.build) then
-    spec.data.build(spec, path)
-    goto done
-  end
+  local success = true
+  local err = ''
 
-  if
+  if vim.is_callable(spec.data.build) then
+    success, err = pcall(spec.data.build, spec, path)
+  elseif
     vim.startswith(spec.data.build --[[@as string]], ':')
   then
-    vim.cmd(spec
-      .data
-      .build --[[@as string]]
-      :gsub('^:', ''))
-    goto done
-  end
-
-  do
+    success, err = pcall(
+      vim.cmd,
+      spec
+        .data
+        .build --[[@as string]]
+        :gsub('^:', '')
+    )
+  else
     local o = vim
       .system(
         type(spec.data.build) == 'table' and spec.data.build
@@ -271,24 +271,20 @@ function M.build(spec, path, notify)
         { cwd = path }
       )
       :wait()
-
-    if o.code ~= 0 then
-      vim.notify(
-        string.format(
-          '[utils.pack] Error building plugin %s (exited with code %d): %s',
-          spec.src,
-          o.code,
-          o.stderr
-        ),
-        vim.log.levels.ERROR
-      )
-    end
+    success = o.code == 0
+    err = o.stderr
   end
 
-  ::done::
-  vim.notify(
-    string.format('[utils.pack] Successfully built plugin %s', spec.src)
-  )
+  if success then
+    vim.notify(
+      string.format('[utils.pack] Successfully built plugin %s', spec.src)
+    )
+  else
+    vim.notify(
+      string.format('[utils.pack] Error building plugin %s: %s', spec.src, err),
+      vim.log.levels.ERROR
+    )
+  end
 end
 
 local pack_add = vim.pack.add
