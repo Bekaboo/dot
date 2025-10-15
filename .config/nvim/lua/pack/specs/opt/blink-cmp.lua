@@ -68,7 +68,9 @@ return {
         end,
         fuzzy = {
           -- Don't error when rust fuzzy lib is unavailable
-          implementation = 'prefer_rust',
+          implementation = pcall(require, 'blink.cmp.fuzzy.rust')
+              and 'prefer_rust'
+            or 'lua',
         },
         completion = {
           list = {
