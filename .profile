@@ -23,6 +23,9 @@ export PATH="$HOME/.cargo/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.bin:$PATH"
 
+# Dotfile bare repo path
+export DOT_DIR="$HOME/.dot"
+
 if [ -r "$HOME/.envvars" ]; then
     . "$HOME/.envvars"
 fi
