@@ -20,6 +20,11 @@ fish_add_path --move \
     $HOME/.cargo/bin \
     $HOME/go/bin
 
+# Dotfile bare repo path
+if not type -q DOT_DIR
+    set -Ux DOT_DIR $HOME/.dot
+end
+
 if test -f $HOME/.envvars
     source $HOME/.envvars
 end
