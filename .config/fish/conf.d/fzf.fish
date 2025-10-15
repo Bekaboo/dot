@@ -17,12 +17,11 @@ if status is-login
         --scroll-off=999 \
         --multi \
         --ansi \
-        --gutter=' ' \
         --color=fg:-1,bg:-1,hl:bold:cyan \
         --color=fg+:-1,bg+:-1,hl+:bold:cyan \
         --color=border:white,preview-border:white \
         --color=marker:bold:cyan,prompt:bold:red,pointer:bold:red \
-        --color=gutter:-1,info:bold:red,spinner:cyan,header:white \
+        --color=gutter:grey,info:bold:red,spinner:cyan,header:white \
         --bind=ctrl-k:kill-line \
         --bind=alt-a:toggle-all \
         --bind=alt-up:first,alt-down:last \
