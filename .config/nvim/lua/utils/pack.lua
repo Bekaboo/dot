@@ -234,30 +234,26 @@ local built = {}
 ---comment
 ---@param spec pack.spec
 ---@param path string
----@param notify? boolean default to `true`
-function M.build(spec, path, notify)
+function M.build(spec, path)
   if not spec.data or not spec.data.build or built[spec.src] then
     return
   end
   built[spec.src] = true
 
-  notify = notify ~= false
-  if notify then
-    vim.notify(string.format('[utils.pack] Building %s', spec.src))
-  end
+  vim.notify(string.format('[utils.pack] Building %s', spec.src))
 
   -- Build can be a function, a vim command (starting with ':'), or a shell
   -- command
-  local success = true
-  local err = ''
+  local success ---@type boolean
+  local err ---@type string
 
   if vim.is_callable(spec.data.build) then
-    success, err = pcall(spec.data.build, spec, path)
+    success, err = pcall(spec.data.build --[[@as function]], spec, path)
   elseif
     vim.startswith(spec.data.build --[[@as string]], ':')
   then
     success, err = pcall(
-      vim.cmd,
+      vim.cmd --[[@as function]],
       spec
         .data
         .build --[[@as string]]
