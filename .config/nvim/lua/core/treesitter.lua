@@ -1,9 +1,5 @@
 local ts = require('utils.ts')
 
--- Async parsing can cause unpleasant color change shortly after opening a
--- medium-sized file e.g. C file with 1000+ lines
-vim.g._ts_force_sync_parsing = true
-
 -- Fix treesitter bug: when `vim.treesitter.start/stop` is called with a
 -- different `buf` from current buffer, it can affect current buffer's
 -- language tree
