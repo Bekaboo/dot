@@ -947,25 +947,9 @@ return {
           opts.col = 0
           return vim.api.nvim_open_win(buf, enter, opts)
         end,
-        hls = {
-          title = 'TelescopeTitle',
-          preview_title = 'TelescopeTitle',
-          -- Builtin preview only
-          cursor = 'Cursor',
-          cursorline = 'TelescopePreviewLine',
-          cursorlinenr = 'TelescopePreviewLine',
-          search = 'IncSearch',
-        },
         fzf_colors = {
-          ['hl'] = { 'fg', 'TelescopeMatching' },
-          ['fg+'] = { 'fg', 'TelescopeSelection' },
-          ['bg+'] = { 'bg', 'TelescopeSelection' },
-          ['hl+'] = { 'fg', 'TelescopeMatching' },
-          ['info'] = { 'fg', 'TelescopeCounter' },
-          ['prompt'] = { 'fg', 'TelescopePrefix' },
-          ['pointer'] = { 'fg', 'TelescopeSelectionCaret' },
-          ['marker'] = { 'fg', 'TelescopeMultiIcon' },
-          ['fg'] = { 'fg', 'TelescopeNormal' },
+          ['fg+'] = { 'fg', 'CursorLine' },
+          ['bg+'] = { 'bg', 'CursorLine' },
         },
         keymap = {
           -- Overrides default completion completely
@@ -1336,10 +1320,6 @@ return {
         utils.hl.set_default(0, 'FzfLuaSymStruct',        { link = 'Type'                })
         utils.hl.set_default(0, 'FzfLuaSymTypeParameter', { link = 'FzfLuaSymDefault'    })
         utils.hl.set_default(0, 'FzfLuaSymVariable',      { link = 'FzfLuaSymDefault'    })
-        utils.hl.set_default(0, 'TelescopeNormal',        { link = 'CursorLineNr'        })
-        utils.hl.set_default(0, 'TelescopeSelection',     { link = 'Visual'              })
-        utils.hl.set_default(0, 'TelescopePrefix',        { link = 'Operator'            })
-        utils.hl.set_default(0, 'TelescopeCounter',       { link = 'LineNr'              })
         utils.hl.set(0,         'FzfLuaNormal',           { link = 'NormalSpecial'       })
         utils.hl.set(0,         'FzfLuaBufFlagAlt',       { link = 'FzfLuaSymDefault'    })
         utils.hl.set(0,         'FzfLuaBufFlagCur',       { link = 'Operator'            })
@@ -1357,17 +1337,6 @@ return {
         utils.hl.set(0,         'FzfLuaBufName',          {})
         utils.hl.set(0,         'FzfLuaBufNr',            {})
         -- stylua: ignore end
-
-        local hl_norm = utils.hl.get(0, { name = 'Normal', link = false })
-        local hl_special = utils.hl.get(0, { name = 'Special', link = false })
-
-        utils.hl.set_default(0, 'TelescopeTitle', {
-          fg = hl_norm.bg,
-          bg = hl_special.fg,
-          ctermfg = hl_norm.ctermbg,
-          ctermbg = hl_special.ctermfg,
-          bold = true,
-        })
       end)
     end,
   },
