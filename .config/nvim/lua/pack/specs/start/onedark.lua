@@ -3,7 +3,9 @@ return {
   src = 'https://github.com/navarasu/onedark.nvim',
   data = {
     postload = function()
-      require('utils.hl').persist(function()
+      local hl = require('utils.hl')
+
+      hl.persist(function()
         if vim.g.colors_name and vim.g.colors_name ~= 'onedark' then
           return
         end
@@ -16,8 +18,9 @@ return {
         })
         require('onedark').load()
 
-        vim.api.nvim_set_hl(0, 'WinBar', { link = 'StatusLine' })
-        vim.api.nvim_set_hl(0, 'WinBarNC', { link = 'StatusLineNC' })
+        hl.set(0, 'WinBar', { link = 'StatusLine' })
+        hl.set(0, 'WinBarNC', { link = 'StatusLineNC' })
+        hl.set(0, 'FloatTitle', { link = 'NormalFloat', fg = 'Title' })
       end)
     end,
   },
