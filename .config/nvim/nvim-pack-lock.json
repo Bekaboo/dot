@@ -1,11 +1,11 @@
 {
   "plugins": {
     "LuaSnip": {
-      "rev": "7381330",
+      "rev": "21e9fec",
       "src": "https://github.com/L3MON4D3/LuaSnip"
     },
     "blink.cmp": {
-      "rev": "d918ebd",
+      "rev": "cb87357",
       "src": "https://github.com/saghen/blink.cmp"
     },
     "cellular-automaton.nvim": {
@@ -21,7 +21,7 @@
       "src": "https://github.com/shumphrey/fugitive-gitlab.vim"
     },
     "fzf-lua": {
-      "rev": "a13c5c5",
+      "rev": "db45bab",
       "src": "https://github.com/ibhagwan/fzf-lua"
     },
     "gitsigns.nvim": {
@@ -49,7 +49,7 @@
       "src": "https://github.com/NvChad/nvim-colorizer.lua"
     },
     "nvim-dap": {
-      "rev": "881f7dc",
+      "rev": "6782b09",
       "src": "https://github.com/mfussenegger/nvim-dap"
     },
     "nvim-dap-ui": {
@@ -69,7 +69,7 @@
       "src": "https://github.com/kylechui/nvim-surround"
     },
     "nvim-treesitter": {
-      "rev": "de003000",
+      "rev": "63fac0a5",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter",
       "version": "'main'"
     },
@@ -91,11 +91,11 @@
       "src": "https://github.com/kyazdani42/nvim-web-devicons"
     },
     "oil.nvim": {
-      "rev": "919e155",
+      "rev": "7194872",
       "src": "https://github.com/stevearc/oil.nvim"
     },
     "one-small-step-for-vimkind": {
-      "rev": "99c22f1",
+      "rev": "8fdbb4e",
       "src": "https://github.com/jbyuki/one-small-step-for-vimkind"
     },
     "onedark.nvim": {
@@ -163,7 +163,7 @@
       "src": "https://github.com/dhruvasagar/vim-table-mode"
     },
     "vim-test": {
-      "rev": "ad4b721",
+      "rev": "2c264d2",
       "src": "https://github.com/vim-test/vim-test"
     },
     "vimtex": {
