@@ -966,8 +966,6 @@ return {
           ['pointer'] = { 'fg', 'TelescopeSelectionCaret' },
           ['marker'] = { 'fg', 'TelescopeMultiIcon' },
           ['fg'] = { 'fg', 'TelescopeNormal' },
-          ['bg'] = '-1',
-          ['gutter'] = '-1',
         },
         keymap = {
           -- Overrides default completion completely
