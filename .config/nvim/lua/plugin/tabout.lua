@@ -40,12 +40,10 @@ end
 ---@param args table
 ---@return fallback_tbl
 function fallback_tbl:new(args)
-  args = args or {}
-  local fallback_tbl = {
-    __content = args.content or {},
-    __default = args.default or {},
-  }
-  return setmetatable(fallback_tbl, self)
+  return setmetatable({
+    __content = args and args.content or {},
+    __default = args and args.default or {},
+  }, self)
 end
 
 -- stylua: ignore start
