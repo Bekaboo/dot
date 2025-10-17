@@ -1,6 +1,6 @@
 # Set fzf environment variables only once on login for performance
 if status is-login
-    # Fzf envrionment variables
+    # Fzf environment variables
     #
     # Set gutter to space to hide gutter:
     # https://github.com/junegunn/fzf/blob/master/CHANGELOG.md#hiding-the-gutter-column
