@@ -721,35 +721,18 @@ setmetatable(_G._statusline, {
 vim.g.qf_disable_statusline = true
 
 utils.hl.persist(function()
-  local bg = utils.hl.get(0, {
-    name = 'StatusLine',
-    link = false,
-    winhl_link = false,
-  })
-
-  ---@param hlgroup_name string
-  ---@param attr table
-  ---@return nil
-  local function set_stl_hl(hlgroup_name, attr)
-    utils.hl.set_default(
-      0,
-      hlgroup_name,
-      vim.tbl_deep_extend('keep', attr, bg)
-    )
-  end
-
   -- stylua: ignore start
-  set_stl_hl('StatusLineGitBranch',       { fg = 'StatusLineGitChanged' })
-  set_stl_hl('StatusLineGitAdded',        { fg = 'GitSignsAdd',         ctermfg = 'GitSignsAdd'         })
-  set_stl_hl('StatusLineGitChanged',      { fg = 'GitSignsChange',      ctermfg = 'GitSignsChange'      })
-  set_stl_hl('StatusLineGitRemoved',      { fg = 'GitSignsDelete',      ctermfg = 'GitSignsDelete'      })
-  set_stl_hl('StatusLineDiagnosticHint',  { fg = 'DiagnosticSignHint',  ctermfg = 'DiagnosticSignHint'  })
-  set_stl_hl('StatusLineDiagnosticInfo',  { fg = 'DiagnosticSignInfo',  ctermfg = 'DiagnosticSignInfo'  })
-  set_stl_hl('StatusLineDiagnosticWarn',  { fg = 'DiagnosticSignWarn',  ctermfg = 'DiagnosticSignWarn'  })
-  set_stl_hl('StatusLineDiagnosticError', { fg = 'DiagnosticSignError', ctermfg = 'DiagnosticSignError' })
+  utils.hl.set(0, 'StatusLineGitBranch',       { link = 'StatusLineGitChanged' })
+  utils.hl.set(0, 'StatusLineGitAdded',        { link = 'GitSignsAdd'          })
+  utils.hl.set(0, 'StatusLineGitChanged',      { link = 'GitSignsChange'       })
+  utils.hl.set(0, 'StatusLineGitRemoved',      { link = 'GitSignsDelete'       })
+  utils.hl.set(0, 'StatusLineDiagnosticHint',  { link = 'DiagnosticSignHint'   })
+  utils.hl.set(0, 'StatusLineDiagnosticInfo',  { link = 'DiagnosticSignInfo'   })
+  utils.hl.set(0, 'StatusLineDiagnosticWarn',  { link = 'DiagnosticSignWarn'   })
+  utils.hl.set(0, 'StatusLineDiagnosticError', { link = 'DiagnosticSignError'  })
 
-  set_stl_hl('StatusLineHeader',          { fg = 'TabLine', bg = 'fg', ctermfg = 'TabLine', ctermbg = 'fg', reverse = true })
-  set_stl_hl('StatusLineHeaderModified',  { fg = 'Special', bg = 'fg', ctermfg = 'Special', ctermbg = 'fg', reverse = true })
+  utils.hl.set(0, 'StatusLineHeader',          { fg = 'TabLine', bg = 'fg', ctermfg = 'TabLine', ctermbg = 'fg', reverse = true })
+  utils.hl.set(0, 'StatusLineHeaderModified',  { fg = 'Special', bg = 'fg', ctermfg = 'Special', ctermbg = 'fg', reverse = true })
   -- stylua: ignore end
 end)
 
