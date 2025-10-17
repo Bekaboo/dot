@@ -722,17 +722,17 @@ vim.g.qf_disable_statusline = true
 
 utils.hl.persist(function()
   -- stylua: ignore start
-  utils.hl.set(0, 'StatusLineGitBranch',       { link = 'StatusLineGitChanged' })
-  utils.hl.set(0, 'StatusLineGitAdded',        { link = 'GitSignsAdd'          })
-  utils.hl.set(0, 'StatusLineGitChanged',      { link = 'GitSignsChange'       })
-  utils.hl.set(0, 'StatusLineGitRemoved',      { link = 'GitSignsDelete'       })
-  utils.hl.set(0, 'StatusLineDiagnosticHint',  { link = 'DiagnosticSignHint'   })
-  utils.hl.set(0, 'StatusLineDiagnosticInfo',  { link = 'DiagnosticSignInfo'   })
-  utils.hl.set(0, 'StatusLineDiagnosticWarn',  { link = 'DiagnosticSignWarn'   })
-  utils.hl.set(0, 'StatusLineDiagnosticError', { link = 'DiagnosticSignError'  })
+  utils.hl.set(0, 'StatusLineGitBranch',       { link = 'StatusLineGitChanged', default = true })
+  utils.hl.set(0, 'StatusLineGitAdded',        { link = 'GitSignsAdd',          default = true })
+  utils.hl.set(0, 'StatusLineGitChanged',      { link = 'GitSignsChange',       default = true })
+  utils.hl.set(0, 'StatusLineGitRemoved',      { link = 'GitSignsDelete',       default = true })
+  utils.hl.set(0, 'StatusLineDiagnosticHint',  { link = 'DiagnosticSignHint',   default = true })
+  utils.hl.set(0, 'StatusLineDiagnosticInfo',  { link = 'DiagnosticSignInfo',   default = true })
+  utils.hl.set(0, 'StatusLineDiagnosticWarn',  { link = 'DiagnosticSignWarn',   default = true })
+  utils.hl.set(0, 'StatusLineDiagnosticError', { link = 'DiagnosticSignError',  default = true })
 
-  utils.hl.set(0, 'StatusLineHeader',          { fg = 'TabLine', bg = 'fg', ctermfg = 'TabLine', ctermbg = 'fg', reverse = true })
-  utils.hl.set(0, 'StatusLineHeaderModified',  { fg = 'Special', bg = 'fg', ctermfg = 'Special', ctermbg = 'fg', reverse = true })
+  utils.hl.set(0, 'StatusLineHeader',          { fg = 'TabLine', bg = 'fg', ctermfg = 'TabLine', ctermbg = 'fg', reverse = true, default = true })
+  utils.hl.set(0, 'StatusLineHeaderModified',  { fg = 'Special', bg = 'fg', ctermfg = 'Special', ctermbg = 'fg', reverse = true, default = true })
   -- stylua: ignore end
 end)
 
