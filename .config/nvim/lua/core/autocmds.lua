@@ -473,7 +473,15 @@ do
 
   ---Set default value for `hl-NormalSpecial`
   hl.persist(function()
-    hl.set_default(0, 'NormalSpecial', hl.blend('Normal', 'CursorLine'))
+    hl.set(
+      0,
+      'NormalSpecial',
+      vim.tbl_deep_extend(
+        'force',
+        hl.blend('Normal', 'CursorLine'),
+        { default = true }
+      )
+    )
   end)
 
   augroup('my.special_buf_hl', {
