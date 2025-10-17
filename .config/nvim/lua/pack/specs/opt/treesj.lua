@@ -4,21 +4,14 @@ return {
   data = {
     cmds = { 'TSJToggle', 'TSJSplit', 'TSJJoin' },
     keys = {
-      { lhs = '<M-C-K>', opts = { desc = 'Join current treesitter node' } },
-      { lhs = '<M-C-Up>', opts = { desc = 'Join current treesitter node' } },
-      { lhs = '<M-NL>', opts = { desc = 'Split current treesitter node' } },
-      {
-        lhs = '<M-C-Down>',
-        opts = { desc = 'Split current treesitter node' },
-      },
-      {
-        lhs = 'g<M-NL>',
-        opts = { desc = 'Split current treesitter node recursively' },
-      },
-      {
-        lhs = 'g<M-C-Down>',
-        opts = { desc = 'Split current treesitter node recursively' },
-      },
+      -- stylua: ignore start
+      { lhs = 'gsk',        opts = { desc = 'Join current treesitter node' } },
+      { lhs = 'gs<Up>',     opts = { desc = 'Join current treesitter node' } },
+      { lhs = 'gsj',        opts = { desc = 'Split current treesitter node' } },
+      { lhs = 'gs<Down>',   opts = { desc = 'Split current treesitter node' } },
+      { lhs = 'gsJ',        opts = { desc = 'Split current treesitter node recursively' } },
+      { lhs = 'gs<S-Down>', opts = { desc = 'Split current treesitter node recursively' } },
+      -- stylua: ignore end
     },
     postload = function()
       local tsj = require('treesj')
@@ -58,12 +51,12 @@ return {
       end
 
       -- stylua: ignore start
-      vim.keymap.set('n', '<M-C-K>',     tsj.join,            { desc = 'Join current treesitter node' })
-      vim.keymap.set('n', '<M-C-Up>',    tsj.join,            { desc = 'Join current treesitter node' })
-      vim.keymap.set('n', '<M-NL>',      tsj.split,           { desc = 'Split current treesitter node' })
-      vim.keymap.set('n', '<M-C-Down>',  tsj.split,           { desc = 'Split current treesitter node' })
-      vim.keymap.set('n', 'g<M-NL>',     tsj_split_recursive, { desc = 'Split current treesitter node recursively' })
-      vim.keymap.set('n', 'g<M-C-Down>', tsj_split_recursive, { desc = 'Split current treesitter node recursively' })
+      vim.keymap.set('n', 'gsk',        tsj.join,            { desc = 'Join current treesitter node' })
+      vim.keymap.set('n', 'gs<Up>',     tsj.join,            { desc = 'Join current treesitter node' })
+      vim.keymap.set('n', 'gsj',        tsj.split,           { desc = 'Split current treesitter node' })
+      vim.keymap.set('n', 'gs<Down>',   tsj.split,           { desc = 'Split current treesitter node' })
+      vim.keymap.set('n', 'gsJ',        tsj_split_recursive, { desc = 'Split current treesitter node recursively' })
+      vim.keymap.set('n', 'gs<S-Down>', tsj_split_recursive, { desc = 'Split current treesitter node recursively' })
       -- stylua: ignore end
     end,
   },

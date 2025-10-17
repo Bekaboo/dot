@@ -122,6 +122,7 @@ return {
       })
 
       wk.add({
+        { 'gs', group = 'Text split/swap' },
         { '<Leader>g', group = 'Git' },
         { '<Leader>f', group = 'Find' },
         { '<Leader>fg', group = 'Git' },
