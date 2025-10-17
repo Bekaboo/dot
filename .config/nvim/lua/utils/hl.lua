@@ -162,16 +162,6 @@ function M.set(ns_id, name, attr)
   return nvim_set_hl(ns_id, name, M.normalize(attr))
 end
 
----Set default highlight attributes, normalize highlight attributes before setting
----@param ns_id integer namespace id
----@param name string
----@param attr vim.api.keyset.highlight highlight attributes
----@return nil
-function M.set_default(ns_id, name, attr)
-  attr.default = true
-  return vim.api.nvim_set_hl(ns_id, name, M.normalize(attr))
-end
-
 local todec = {
   ['0'] = 0,
   ['1'] = 1,
