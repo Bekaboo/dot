@@ -1,7 +1,5 @@
 vim.g.has_ui = #vim.api.nvim_list_uis() > 0
-vim.g.has_gui = vim.fn.has('gui_running') == 1
-vim.g.has_display = vim.g.has_ui and vim.env.DISPLAY ~= nil
-vim.g.has_nf = vim.env.TERM ~= 'linux' and vim.env.NVIM_NF and true or false
+vim.g.has_nf = vim.env.TERM ~= 'linux' and vim.env.NVIM_NF ~= nil
 
 vim.opt.exrc = true
 vim.opt.confirm = true
