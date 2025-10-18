@@ -950,6 +950,7 @@ return {
         fzf_colors = {
           ['fg+'] = { 'fg', 'CursorLine' },
           ['bg+'] = { 'bg', 'CursorLine' },
+          ['gutter'] = { 'bg', 'FzfLuaNormal' },
         },
         keymap = {
           -- Overrides default completion completely
