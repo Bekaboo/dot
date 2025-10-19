@@ -108,6 +108,7 @@ enableStackedLayout=true
 floatDefault=true
 floatedWindowsLayer=0
 ignoreClass=yakuake,krunner
+ignoreTitle=Settings
 keepFloatAbove=false
 monocleMaximize=false
 screenGapBetween=12
