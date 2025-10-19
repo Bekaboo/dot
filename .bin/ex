@@ -2,6 +2,20 @@
 # vim:ft=sh:et:ts=4:sw=4:sts=4:
 # Extract files from archive, wisely
 
+# Path to ignore when flatten single extracted dirs
+IGNORE_DIRS='__MACOSX .DS_Store .directory'
+
+# $1: path
+should_ignore() {
+    path=$(basename "$1")
+    for ignore_dir in $IGNORE_DIRS; do
+        if [ "$path" = "$ignore_dir" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
 # Check if a file/directory does not exist
 checkne() {
     if [ -e "$1" ]; then
@@ -18,7 +32,9 @@ flatten_single_dir() {
     sub_dir=""
 
     for item in "$extracted_dir"/* "$extracted_dir"/.*; do
-        if [ ! -e "$item" ]; then
+        # Ignore if `$item` is not expanded or is a file/directory that we want
+        # to ignore, e.g. `__MACOSX` directories
+        if [ ! -e "$item" ] || should_ignore "$item"; then
             continue
         fi
         # Extracted dir contains file or more than 1 sub-dir
