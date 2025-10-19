@@ -110,6 +110,7 @@ floatedWindowsLayer=0
 ignoreClass=yakuake,krunner
 ignoreTitle=Settings
 keepFloatAbove=false
+metaConfig=RaiseSurfaceCapacity=ResetSurfaceCapacity\nFocusDown=FocusNext
 monocleMaximize=false
 screenGapBetween=12
 screenGapBottom=12
