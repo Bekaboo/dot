@@ -105,7 +105,6 @@ enableBTreeLayout=true
 enableFloatingLayout=true
 enableQuarterLayout=true
 enableStackedLayout=true
-floatDefault=true
 ignoreClass=yakuake,krunner
 ignoreTitle=Settings
 keepFloatAbove=false
