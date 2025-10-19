@@ -29,7 +29,6 @@ fi
 
 # Layout
 yabai -m config layout bsp                   # use tiled layout
-yabai -m config window_placement first_child # new window at left
 
 # Set all padding and gaps to 8pt (default: 0)
 yabai -m config top_padding 8
