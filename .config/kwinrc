@@ -106,7 +106,6 @@ enableFloatingLayout=true
 enableQuarterLayout=true
 enableStackedLayout=true
 floatDefault=true
-floatedWindowsLayer=0
 ignoreClass=yakuake,krunner
 ignoreTitle=Settings
 keepFloatAbove=false
@@ -119,6 +118,7 @@ screenGapRight=12
 screenGapTop=12
 tileLayoutGap=12
 tileLayoutInitialRotationAngle=2
+tiledWindowsLayer=1
 unfitGreater=false
 unfitLess=false
 
