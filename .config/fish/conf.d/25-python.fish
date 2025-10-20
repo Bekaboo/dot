@@ -1,7 +1,3 @@
-if not status is-interactive
-    exit
-end
-
 function __python_venv \
     --on-variable PWD \
     --description 'Automatically activate or deactivate python virtualenvs'
