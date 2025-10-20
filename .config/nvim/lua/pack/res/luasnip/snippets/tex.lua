@@ -1054,6 +1054,8 @@ M.snippets = {
   us.sM({ trig = 'ul' }, { t('\\underline{'), i(1), t('}') }),
   us.sM({ trig = 'cd' }, { t('\\texttt{'), i(1), t('}') }),
   us.saM({ trig = '`' }, { t('\\texttt{'), i(1), t('}') }),
+  us.saM({ trig = '**' }, { t('\\textbf{'), i(1), t('}') }),
+  us.saM({ trig = '\\item*' }, { t('\\textbf{'), i(1), t('}') }),
   us.msiaM({ { trig = '-' }, { trig = '*' } }, t('\\item')),
 }
 
