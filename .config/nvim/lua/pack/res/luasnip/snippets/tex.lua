@@ -973,6 +973,53 @@ M.snippets = {
       }
     )
   ),
+  us.msM(
+    {
+      { trig = 'en' },
+      { trig = 'enu' },
+      { trig = 'enum' },
+    },
+    un.fmtad(
+      [[
+        \begin{enumerate}
+        <text>
+        \end{enumerate}
+      ]],
+      {
+        text = un.body(1, 1),
+      }
+    )
+  ),
+  us.msM(
+    {
+      { trig = 'it' },
+      { trig = 'itemize' },
+    },
+    un.fmtad(
+      [[
+        \begin{itemize}
+        <text>
+        \end{itemize}
+      ]],
+      {
+        text = un.body(1, 1),
+      }
+    )
+  ),
+  us.sM(
+    { trig = 'll' },
+    un.fmtad(
+      [[
+        \begin{<env>}
+        <text>
+        \end{<env>}
+      ]],
+      {
+        env = c(1, { t('itemize'), t('enumerate') }),
+        text = un.body(2, 1),
+      }
+    )
+  ),
   us.sM(
     { trig = 'aln' },
     un.fmtad(
