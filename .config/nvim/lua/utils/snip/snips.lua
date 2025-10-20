@@ -39,6 +39,10 @@ local snip_attr_map = {
     condition = conds.at_line_start,
     show_condition = conds.at_line_start,
   },
+  i = {
+    condition = conds.at_line_start_with_indent,
+    show_condition = conds.at_line_start_with_indent,
+  },
   S = {
     condition = -conds.at_line_start,
     show_condition = -conds.at_line_start,

@@ -1056,6 +1056,7 @@ M.snippets = {
     { { trig = 'tt' }, { trig = 'cd' } },
     { t('\\texttt{'), i(1), t('}') }
   ),
+  us.msiaM({ { trig = '-' }, { trig = '*' } }, t('\\item')),
 }
 
 return M
