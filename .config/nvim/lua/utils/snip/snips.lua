@@ -90,7 +90,7 @@ local function snip_attr_add_new_opt(snip_attr, opt_key, opt_val)
   snip_attr[opt_key] = opt_val
 end
 
-local SNIPS = setmetatable({}, {
+return setmetatable({}, {
   __index = function(self, snip_name)
     local snip_attr_str = snip_name:gsub('^m?s', '')
     local snip_attr = {}
@@ -112,5 +112,3 @@ local SNIPS = setmetatable({}, {
     return self[snip_name]
   end,
 })
-
-return SNIPS
