@@ -156,7 +156,7 @@ M.snippets = {
   ),
 
   us.sn(
-    { trig = 'nl', desc = 'SLF4J new logger' },
+    { trig = 'lg', desc = 'SLF4J new logger' },
     un.fmtad(
       'private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(<cls>.class);',
       {

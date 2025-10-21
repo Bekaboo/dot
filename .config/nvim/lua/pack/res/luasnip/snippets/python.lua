@@ -152,7 +152,7 @@ M.snippets = {
   ),
   us.sn(
     {
-      trig = 'nl',
+      trig = 'lg',
       desc = 'Create a new logger',
     },
     un.fmtad('logger = logging.getLogger(<name><e>)', {
