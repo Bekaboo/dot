@@ -162,7 +162,7 @@ M.snippets = {
   ),
   us.sn(
     {
-      trig = 'lg',
+      trig = 'll',
       desc = 'Logger log',
     },
     c(1, {

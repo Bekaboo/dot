@@ -499,7 +499,7 @@ M.math = {
       },
     }
   ),
-  us.sam({ trig = 'lg', priority = 999 }, {
+  us.sam({ trig = 'll', priority = 999 }, {
     t('\\lg'),
     t('\\left('),
     i(1),

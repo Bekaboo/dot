@@ -165,7 +165,7 @@ M.snippets = {
     )
   ),
   us.sn(
-    { trig = 'lg', desc = 'SLF4J log' },
+    { trig = 'll', desc = 'SLF4J log' },
     un.fmtad('log.<level>(<msg><args>);', {
       level = c(1, {
         i(nil, 'info'),
