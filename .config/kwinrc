@@ -106,7 +106,7 @@ enableFloatingLayout=true
 enableQuarterLayout=true
 enableStackedLayout=true
 ignoreClass=yakuake,krunner
-ignoreTitle=Settings,Open
+ignoreTitle=Settings,Open,Reminders
 keepFloatAbove=false
 metaConfig=RaiseSurfaceCapacity=ResetSurfaceCapacity\nFocusDown=FocusNext
 monocleMaximize=false
