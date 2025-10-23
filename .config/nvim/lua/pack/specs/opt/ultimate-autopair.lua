@@ -81,7 +81,7 @@ return {
         {
           '/*',
           '*/',
-          ft = { 'c', 'cpp', 'cuda', 'go' },
+          ft = { 'c', 'cpp', 'cuda', 'go', 'java', 'scala' },
           newline = true,
           space = true,
         },
