@@ -81,6 +81,7 @@ blurEnabled=true
 contrastEnabled=false
 dimscreenEnabled=true
 flexGridEnabled=true
+forceblurEnabled=true
 hidecursorEnabled=true
 kdesnapassistEnabled=true
 krohnkiteEnabled=true
