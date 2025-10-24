@@ -169,6 +169,16 @@ function _G._statusline.gitbranch()
     return ''
   end
 
+  -- Show git dir base name if is not a regular `.git` directory, e.g. a `.dot`
+  -- bare git dir for dotfiles
+  -- TODO: support falling back to non-standard git dirs for branch, git dir
+  -- and diff info in `utils.git`
+  local gitdir = vim.b.gitsigns_status_dict
+    and vim.b.gitsigns_status_dict.gitdir
+  if gitdir and gitdir ~= '.git' then
+    branch = string.format('%s/%s', vim.fs.basename(gitdir), branch)
+  end
+
   local sign_gitbranch = utils.stl.hl(
     utils.stl.escape(vim.trim(icons.GitBranch)),
     'StatusLineGitBranch'
