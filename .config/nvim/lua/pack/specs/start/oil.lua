@@ -824,7 +824,11 @@ return {
           ['<CR>'] = 'actions.select',
           ['<C-h>'] = 'actions.toggle_hidden',
           ['gh'] = 'actions.toggle_hidden',
-          ['gs'] = 'actions.change_sort',
+          -- Conflict with `gs...` keymaps defined in
+          -- `lua/pack/specs/opt/nvim-treesitter-textobjects.lua`
+          -- and `lua/pack/specs/opt/treesj.lua`, use `nowait` to avoid lagging
+          -- due to conflict
+          ['gs'] = { 'actions.change_sort', mode = 'n', nowait = true },
           ['gx'] = 'actions.open_external',
           ['<LocalLeader>y'] = 'actions.copy_to_system_clipboard',
           ['<LocalLeader>p'] = 'actions.paste_from_system_clipboard',
