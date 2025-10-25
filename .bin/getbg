@@ -36,8 +36,8 @@ getbg_gnome() {
 }
 
 getbg_kde() {
-    if plasma-get-current-colorscheme | grep -qi 'dark' ||
-        plasma-get-current-desktoptheme | grep -qi 'dark'; then
+    if plasma-get-current-colorscheme | grep -qi 'dark$' ||
+        plasma-get-current-desktoptheme | grep -qi 'dark$'; then
         echo dark
     else
         echo light
