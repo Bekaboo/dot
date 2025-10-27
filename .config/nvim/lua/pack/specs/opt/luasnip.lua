@@ -237,6 +237,7 @@ return {
 
       ---Get jump destination of current snippet
       ---@param direction -1|1
+      ---@return integer[]
       local function get_current_snip_dest(direction)
         local _, dest = ls.jump_destination(direction):get_buf_position()
         -- Destination is (1,0) indexed
