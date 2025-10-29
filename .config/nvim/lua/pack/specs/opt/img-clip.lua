@@ -5,14 +5,21 @@ return {
     load = function(spec, path)
       local load = require('utils.load')
 
-      load.on_events(
-        'UIEnter',
-        'img-clip',
-        vim.schedule_wrap(function()
-          load.load('img-clip.nvim')
+      local function load_img_clip()
+        if spec.data and spec.data.preload then
+          spec.data.preload(spec, path)
+        end
+        load.load('img-clip.nvim')
+        if spec.data and spec.data.postload then
           spec.data.postload(spec, path)
-        end)
-      )
+        end
+      end
+
+      if vim.v.vim_did_enter then
+        vim.schedule(load_img_clip)
+      else
+        load.on_events('UIEnter', 'img-clip', vim.schedule_wrap(load_img_clip))
+      end
     end,
     postload = function()
       local img_clip = require('img-clip')
