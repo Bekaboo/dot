@@ -6,7 +6,7 @@ return {
       local hl = require('utils.hl')
 
       hl.persist(function()
-        if vim.g.colors_name and vim.g.colors_name ~= 'onedark' then
+        if not vim.g.colors_name or vim.g.colors_name ~= 'onedark' then
           return
         end
 
