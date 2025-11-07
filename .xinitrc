@@ -31,20 +31,20 @@ if [ -d /etc/X11/xinit/xinitrc.d ] ; then
  unset f
 fi
 
-[ -f /etc/xprofile ] && source /etc/xprofile
-[ -f "$HOME/.xprofile" ] && source "$HOME/.xprofile"
+[ -f /etc/xprofile ] && . /etc/xprofile
+[ -f "$HOME/.xprofile" ] && . "$HOME/.xprofile"
 
 # make capslock (long press) another ctrl
-if command -v setxkbmap &> /dev/null; then
+if command -v setxkbmap >/dev/null 2>&1; then
   setxkbmap -option ctrl:nocaps,shift:both_capslock
 fi
 
 # set keyboard delay and repeat rate
-if command -v xset &> /dev/null; then
+if command -v xset >/dev/null 2>&1; then
     xset r rate 240 80
 fi
 
-if command -v startplasma-x11 &> /dev/null; then
+if command -v startplasma-x11 >/dev/null 2>&1; then
     export DESKTOP_SESSION=plasma
     exec startplasma-x11
 fi
