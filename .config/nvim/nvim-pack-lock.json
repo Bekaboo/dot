@@ -13,7 +13,7 @@
       "src": "https://github.com/Eandrju/cellular-automaton.nvim"
     },
     "everforest": {
-      "rev": "f518edb",
+      "rev": "bb42827",
       "src": "https://github.com/sainnhe/everforest"
     },
     "fugitive-gitlab.vim": {
@@ -29,7 +29,7 @@
       "src": "https://github.com/lewis6991/gitsigns.nvim"
     },
     "gruvbox-material": {
-      "rev": "89b8d86",
+      "rev": "e3681c7",
       "src": "https://github.com/sainnhe/gruvbox-material"
     },
     "img-clip.nvim": {
@@ -41,7 +41,7 @@
       "src": "https://github.com/iamcco/markdown-preview.nvim"
     },
     "molten-nvim": {
-      "rev": "c98f8c6",
+      "rev": "4fd7be6",
       "src": "https://github.com/benlubas/molten-nvim"
     },
     "nvim-colorizer.lua": {
@@ -69,7 +69,7 @@
       "src": "https://github.com/kylechui/nvim-surround"
     },
     "nvim-treesitter": {
-      "rev": "896e92a7",
+      "rev": "5eca61b3",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter",
       "version": "'main'"
     },
@@ -103,7 +103,7 @@
       "src": "https://github.com/navarasu/onedark.nvim"
     },
     "opencode.nvim": {
-      "rev": "aad6305",
+      "rev": "bdbd9ef",
       "src": "https://github.com/sudo-tee/opencode.nvim"
     },
     "otter.nvim": {
@@ -123,7 +123,7 @@
       "src": "https://github.com/Wansmer/treesj"
     },
     "ts-autotag.nvim": {
-      "rev": "cbba469",
+      "rev": "35f79f6",
       "src": "https://github.com/tronikelis/ts-autotag.nvim"
     },
     "ultimate-autopair.nvim": {
