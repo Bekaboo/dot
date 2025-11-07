@@ -72,8 +72,6 @@ Meta=org.kde.plasmashell,/PlasmaShell,org.kde.PlasmaShell,activateLauncherMenu
 
 [NightColor]
 Active=true
-EveningBeginFixed=2200
-MorningBeginFixed=0800
 NightTemperature=6000
 
 [Plugins]
