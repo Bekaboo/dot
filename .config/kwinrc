@@ -110,13 +110,17 @@ ignoreClass=yakuake,krunner
 ignoreTitle=Settings,Open,Reminders
 keepFloatAbove=false
 metaConfig=RaiseSurfaceCapacity=ResetSurfaceCapacity\nFocusDown=FocusNext
+monocleLayoutOrder=3
 monocleMaximize=false
 screenGapBetween=12
 screenGapBottom=12
 screenGapLeft=12
 screenGapRight=12
 screenGapTop=12
+spiralLayoutOrder=1
+threeColumnLayoutOrder=4
 tileLayoutGap=12
+tileLayoutOrder=2
 tiledWindowsLayer=1
 unfitGreater=false
 unfitLess=false
