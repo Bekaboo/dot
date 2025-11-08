@@ -318,25 +318,26 @@ require('utils.load').on_events(
       end
 
       -- Else close all focusable floating windows in current tab page
-      local win_closed = false
-      for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-        if
-          vim.fn.win_gettype(win) == 'popup'
-          and vim.api.nvim_win_get_config(win).focusable
-        then
-          vim.api.nvim_win_close(win, false) -- do not force
-          win_closed = true
-        end
-      end
+      local floats = vim
+        .iter(vim.api.nvim_tabpage_list_wins(0))
+        :filter(function(win)
+          return vim.fn.win_gettype(win) == 'popup'
+            and vim.api.nvim_win_get_config(win).focusable
+        end)
 
-      -- If no floating window is closed, fallback
-      if not win_closed then
+      -- If no floating window will be closed, fallback
+      if not floats:peek() then
         vim.api.nvim_feedkeys(
           vim.api.nvim_replace_termcodes(k, true, true, true),
           'n',
           false
         )
+        return
       end
+
+      floats:each(function(win)
+        vim.api.nvim_win_close(win, false)
+      end)
     end
 
     -- Close all floating windows
