@@ -13,7 +13,7 @@
       "src": "https://github.com/Eandrju/cellular-automaton.nvim"
     },
     "everforest": {
-      "rev": "bb42827",
+      "rev": "17f101d",
       "src": "https://github.com/sainnhe/everforest"
     },
     "fugitive-gitlab.vim": {
@@ -29,7 +29,7 @@
       "src": "https://github.com/lewis6991/gitsigns.nvim"
     },
     "gruvbox-material": {
-      "rev": "e3681c7",
+      "rev": "4bfc698",
       "src": "https://github.com/sainnhe/gruvbox-material"
     },
     "img-clip.nvim": {
@@ -69,7 +69,7 @@
       "src": "https://github.com/kylechui/nvim-surround"
     },
     "nvim-treesitter": {
-      "rev": "5eca61b3",
+      "rev": "d97d226c",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter",
       "version": "'main'"
     },
@@ -82,7 +82,7 @@
       "src": "https://github.com/shushtain/nvim-treesitter-incremental-selection"
     },
     "nvim-treesitter-textobjects": {
-      "rev": "2e5b873",
+      "rev": "a0bbde7",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter-textobjects",
       "version": "'main'"
     },
@@ -99,11 +99,11 @@
       "src": "https://github.com/jbyuki/one-small-step-for-vimkind"
     },
     "onedark.nvim": {
-      "rev": "de495fa",
+      "rev": "918e89e",
       "src": "https://github.com/navarasu/onedark.nvim"
     },
     "opencode.nvim": {
-      "rev": "bdbd9ef",
+      "rev": "6eb59ff",
       "src": "https://github.com/sudo-tee/opencode.nvim"
     },
     "otter.nvim": {
