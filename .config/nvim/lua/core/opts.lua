@@ -54,6 +54,11 @@ vim.opt.foldtext = ''
 vim.opt.foldmethod = 'indent'
 vim.opt.foldopen:remove('block') -- make `{`/`}` skip over folds
 
+-- Enable experimental extended UI with searchable message buffer
+require('vim._extui').enable({
+  enable = true,
+})
+
 -- Recognize numbered lists when formatting text and
 -- continue comments on new lines
 --

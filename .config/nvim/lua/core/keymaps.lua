@@ -323,6 +323,7 @@ require('utils.load').on_events(
         :filter(function(win)
           return vim.fn.win_gettype(win) == 'popup'
             and vim.api.nvim_win_get_config(win).focusable
+            and vim.bo[vim.fn.winbufnr(win)].ft ~= 'pager' -- don't close extui cmdline floating window
         end)
 
       -- If no floating window will be closed, fallback
