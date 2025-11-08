@@ -323,7 +323,11 @@ require('utils.load').on_events(
         :filter(function(win)
           return vim.fn.win_gettype(win) == 'popup'
             and vim.api.nvim_win_get_config(win).focusable
-            and vim.bo[vim.fn.winbufnr(win)].ft ~= 'pager' -- don't close extui cmdline floating window
+            -- Ignore extui cmdline/message floating window, see `:h vim._extui`
+            and not vim.tbl_contains(
+              { 'cmd', 'dialog', 'msg', 'pager' },
+              vim.bo[vim.fn.winbufnr(win)].ft
+            )
         end)
 
       -- If no floating window will be closed, fallback
