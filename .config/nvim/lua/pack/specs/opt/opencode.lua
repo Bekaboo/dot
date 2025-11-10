@@ -65,7 +65,7 @@ return {
       require('opencode').setup({
         default_global_keymaps = false,
         ui = {
-          icons = { preset = vim.g.has_nf and 'emoji' or 'text' },
+          icons = { preset = vim.g.has_nf and 'nerdfonts' or 'text' },
           input = { text = { wrap = true } },
         },
         context = {
