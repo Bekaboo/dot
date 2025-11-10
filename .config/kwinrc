@@ -107,7 +107,7 @@ enableStackedLayout=true
 floatInitWindowHeight=65
 floatInitWindowWidth=65
 ignoreClass=yakuake,krunner
-ignoreTitle=Settings,Open,Reminders
+ignoreTitle=Settings,Open,Reminders,Add Bluetooth Device
 keepFloatAbove=false
 metaConfig=RaiseSurfaceCapacity=ResetSurfaceCapacity\nFocusDown=FocusNext
 monocleLayoutOrder=3
