@@ -147,7 +147,6 @@ ElectricBorderMaximize=false
 ElectricBorderTiling=false
 FocusPolicy=FocusFollowsMouse
 FocusStealingPreventionLevel=0
-NextFocusPrefersMouse=true
 Placement=Centered
 RollOverDesktops=false
 
