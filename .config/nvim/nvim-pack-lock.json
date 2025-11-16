@@ -5,7 +5,7 @@
       "src": "https://github.com/L3MON4D3/LuaSnip"
     },
     "blink.cmp": {
-      "rev": "7d79733",
+      "rev": "b19413d",
       "src": "https://github.com/saghen/blink.cmp"
     },
     "cellular-automaton.nvim": {
@@ -13,7 +13,7 @@
       "src": "https://github.com/Eandrju/cellular-automaton.nvim"
     },
     "everforest": {
-      "rev": "17f101d",
+      "rev": "484dd56",
       "src": "https://github.com/sainnhe/everforest"
     },
     "fugitive-gitlab.vim": {
@@ -21,7 +21,7 @@
       "src": "https://github.com/shumphrey/fugitive-gitlab.vim"
     },
     "fzf-lua": {
-      "rev": "996b236",
+      "rev": "9fa87ea",
       "src": "https://github.com/ibhagwan/fzf-lua"
     },
     "gitsigns.nvim": {
@@ -69,7 +69,7 @@
       "src": "https://github.com/kylechui/nvim-surround"
     },
     "nvim-treesitter": {
-      "rev": "f46e3a09",
+      "rev": "0cfa5994",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter",
       "version": "'main'"
     },
@@ -82,7 +82,7 @@
       "src": "https://github.com/shushtain/nvim-treesitter-incremental-selection"
     },
     "nvim-treesitter-textobjects": {
-      "rev": "7024f86",
+      "rev": "227165a",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter-textobjects",
       "version": "'main'"
     },
@@ -103,7 +103,7 @@
       "src": "https://github.com/navarasu/onedark.nvim"
     },
     "opencode.nvim": {
-      "rev": "338efa8",
+      "rev": "d6721a7",
       "src": "https://github.com/sudo-tee/opencode.nvim"
     },
     "otter.nvim": {
