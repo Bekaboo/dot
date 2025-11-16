@@ -47,7 +47,7 @@ main() {
             if ! has_recent_conflict_bg; then
                 checkbg
             fi
-            sleep 60
+            sleep 600
         done
     ) &
 }
