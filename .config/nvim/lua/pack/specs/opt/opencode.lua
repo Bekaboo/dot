@@ -127,14 +127,15 @@ return {
       hl.persist(function()
         -- See `lua/core/autocmds.lua` for `hl-NormalSpecial` definition
         -- stylua: ignore start
-        hl.set(0, 'OpenCodeNormal',             { link = 'NormalSpecial', default = true })
-        hl.set(0, 'OpenCodeBackground',         { link = 'NormalSpecial', default = true })
-        hl.set(0, 'OpenCodeDiffAdd',            { link = 'DiffAdd',       default = true })
-        hl.set(0, 'OpencodeDiffDelete',         { link = 'DiffDelete',    default = true })
-        hl.set(0, 'OpencodeAgentBuild',         { link = 'Todo',          default = true })
-        hl.set(0, 'OpencodeInputLegend',        { link = 'SpecialKey',    default = true })
-        hl.set(0, 'OpenCodeSessionDescription', { bg = 'OpenCodeNormal',  fg = 'Comment', default = true })
-        hl.set(0, 'OpenCodeHint',               { bg = 'OpenCodeNormal',  fg = 'Comment', default = true })
+        hl.set(0, 'OpenCodeNormal',             { link = 'NormalSpecial' })
+        hl.set(0, 'OpenCodeBackground',         { link = 'NormalSpecial' })
+        hl.set(0, 'OpenCodeDiffAdd',            { link = 'DiffAdd' })
+        hl.set(0, 'OpencodeDiffDelete',         { link = 'DiffDelete' })
+        hl.set(0, 'OpencodeAgentBuild',         { link = 'Todo' })
+        hl.set(0, 'OpencodeInputLegend',        { link = 'SpecialKey' })
+        hl.set(0, 'OpenCodeSessionDescription', { bg = 'OpenCodeNormal',  fg = 'Comment' })
+        hl.set(0, 'OpenCodeHint',               { bg = 'OpenCodeNormal',  fg = 'Comment' })
+        hl.set(0, 'OpenCodeContextBar',         { bg = 'OpenCodeNormal',  fg = 'WinBar' })
         -- stylua: ignore end
       end)
     end,
