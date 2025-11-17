@@ -74,6 +74,12 @@ return {
           },
         },
         keymap = {
+          output_window = {
+            -- Avoid closing the window accidentally
+            -- Vim/nvim does not have the convention to use `<Esc>` to close
+            -- current window
+            ['<esc>'] = false,
+          },
           input_window = {
             ['<cr>'] = {
               'submit_input_prompt',
@@ -86,6 +92,7 @@ return {
             -- Must use lower-case '<tab>' to disable default keymaps
             -- https://github.com/sudo-tee/opencode.nvim/issues/61
             ['<tab>'] = false,
+            ['<esc>'] = false,
           },
         },
       })
