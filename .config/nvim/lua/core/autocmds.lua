@@ -210,7 +210,8 @@ do
         end
 
         local fs_utils = require('utils.fs')
-        local root_dir = fs_utils.root(file, fs_utils.root_markers)
+        local root_dir =
+          fs_utils.root(file, vim.b.root_markers or fs_utils.root_markers)
 
         if
           not root_dir
