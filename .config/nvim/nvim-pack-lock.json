@@ -5,7 +5,7 @@
       "src": "https://github.com/L3MON4D3/LuaSnip"
     },
     "blink.cmp": {
-      "rev": "73ea297",
+      "rev": "f132267",
       "src": "https://github.com/saghen/blink.cmp"
     },
     "cellular-automaton.nvim": {
@@ -21,7 +21,7 @@
       "src": "https://github.com/shumphrey/fugitive-gitlab.vim"
     },
     "fzf-lua": {
-      "rev": "123cc54",
+      "rev": "9a0704e",
       "src": "https://github.com/ibhagwan/fzf-lua"
     },
     "gitsigns.nvim": {
@@ -69,7 +69,7 @@
       "src": "https://github.com/kylechui/nvim-surround"
     },
     "nvim-treesitter": {
-      "rev": "bb83a676",
+      "rev": "c5871d9d",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter",
       "version": "'main'"
     },
@@ -91,7 +91,7 @@
       "src": "https://github.com/kyazdani42/nvim-web-devicons"
     },
     "oil.nvim": {
-      "rev": "7194872",
+      "rev": "01cb3a8",
       "src": "https://github.com/stevearc/oil.nvim"
     },
     "one-small-step-for-vimkind": {
@@ -99,11 +99,11 @@
       "src": "https://github.com/jbyuki/one-small-step-for-vimkind"
     },
     "onedark.nvim": {
-      "rev": "6c10964",
+      "rev": "213c23a",
       "src": "https://github.com/navarasu/onedark.nvim"
     },
     "opencode.nvim": {
-      "rev": "5658ce7",
+      "rev": "a604965",
       "src": "https://github.com/sudo-tee/opencode.nvim"
     },
     "otter.nvim": {
@@ -115,7 +115,7 @@
       "src": "https://github.com/nvim-lua/plenary.nvim"
     },
     "quicker.nvim": {
-      "rev": "12a2291",
+      "rev": "9983d4b",
       "src": "https://github.com/stevearc/quicker.nvim"
     },
     "treesj": {
@@ -159,11 +159,11 @@
       "src": "https://github.com/tpope/vim-sleuth"
     },
     "vim-table-mode": {
-      "rev": "e156dbb",
+      "rev": "bb02530",
       "src": "https://github.com/dhruvasagar/vim-table-mode"
     },
     "vim-test": {
-      "rev": "8db0f20",
+      "rev": "bbdc7f5",
       "src": "https://github.com/vim-test/vim-test"
     },
     "vimtex": {
