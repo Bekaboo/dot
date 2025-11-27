@@ -134,8 +134,7 @@ local function resolve_git_context_with_dotfiles_fallback(buf)
   if not vim.b[buf].git_work_tree then
     vim.b[buf].git_work_tree = utils.git.execute(
       buf,
-      { 'rev-parse', '--show-toplevel' },
-      nil
+      { 'rev-parse', '--show-toplevel' }
     ) or utils.git.execute(
       buf,
       vim.list_extend(
