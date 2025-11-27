@@ -2,17 +2,6 @@ if !exists('g:vscode')
   finish
 endif
 
-" LSP keymap settings
-function! s:editorAction(str)
-  if exists('b:vscode_controlled') && b:vscode_controlled
-    call VSCodeNotify('editor.action.' . a:str)
-  else
-    " Allow to function in help files
-    exe "normal! \<C-]>"
-  endif
-endfunction
-
-" Window and buffer keymap settings
 function! plugin#vscode#setup() abort
   " Use VSCode syntax highlighting, disable regex and treesitter highlighting
   " Also disable nvim's LSP client
