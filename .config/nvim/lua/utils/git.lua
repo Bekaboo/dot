@@ -38,7 +38,7 @@ function M.branch(buf, git_args)
       }),
       { stderr = false },
       function(err)
-        local buf_branch = err.stdout:gsub('\n.*', '')
+        local buf_branch = vim.trim(err.stdout)
         if buf_branch ~= '' then
           vim.schedule(function()
             if vim.api.nvim_buf_is_valid(buf) then
