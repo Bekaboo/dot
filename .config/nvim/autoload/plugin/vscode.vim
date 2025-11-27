@@ -25,7 +25,7 @@ function! plugin#vscode#setup() abort
 
   " Prevent nvim message from showing up after searching/undo
   " https://stackoverflow.com/questions/78611905/turn-off-neovim-messages-in-vscode
-  set cmdheight=10
+  set cmdheight=999
 
   " LSP keymaps
   nnoremap gD        <Cmd>call VSCodeNotify('editor.action.goToTypeDefinition')<CR>
