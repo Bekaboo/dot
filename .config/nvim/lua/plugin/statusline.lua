@@ -173,12 +173,6 @@ function _G._statusline.gitbranch()
     return ''
   end
 
-  local gitdir = vim.b.gitsigns_status_dict
-    and vim.b.gitsigns_status_dict.gitdir
-  if gitdir then
-    branch = string.format('%s/%s', vim.fs.basename(gitdir), branch)
-  end
-
   local sign_gitbranch = utils.stl.hl(
     utils.stl.escape(vim.trim(icons.GitBranch)),
     'StatusLineGitBranch'
