@@ -22,33 +22,31 @@ function M.branch(buf, git_args)
     return branch
   end
 
-  local dir = vim.fs.dirname(vim.api.nvim_buf_get_name(buf))
-  if dir then
-    pcall(
-      vim.system,
-      vim.list_extend({
-        'git',
-        unpack(git_args or {}),
-      }, {
-        '-C',
-        dir,
-        'rev-parse',
-        '--abbrev-ref',
-        'HEAD',
-      }),
-      { stderr = false },
-      function(err)
-        local buf_branch = vim.trim(err.stdout)
-        if buf_branch ~= '' then
-          vim.schedule(function()
-            if vim.api.nvim_buf_is_valid(buf) then
-              vim.b[buf].git_branch = buf_branch
-            end
-          end)
-        end
+  pcall(
+    vim.system,
+    vim.list_extend({
+      'git',
+      unpack(git_args or {}),
+    }, {
+      '-C',
+      vim.fs.dirname(vim.api.nvim_buf_get_name(buf)),
+      'rev-parse',
+      '--abbrev-ref',
+      'HEAD',
+    }),
+    { stderr = false },
+    function(err)
+      local buf_branch = vim.trim(err.stdout)
+      if buf_branch ~= '' then
+        vim.schedule(function()
+          if vim.api.nvim_buf_is_valid(buf) then
+            vim.b[buf].git_branch = buf_branch
+          end
+        end)
       end
-    )
-  end
+    end
+  )
+
   return vim.b[buf].git_branch
 end
 
