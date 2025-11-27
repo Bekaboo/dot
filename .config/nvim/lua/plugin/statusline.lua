@@ -165,12 +165,14 @@ function _G._statusline.gitbranch()
   ---@diagnostic disable-next-line: undefined-field
   local branch = vim.b.gitsigns_status_dict and vim.b.gitsigns_status_dict.head
     or utils.git.branch()
-  if branch == '' then
+    or utils.git.branch(
+      nil,
+      { '--git-dir', vim.env.DOT_DIR, '--work-tree', vim.env.HOME }
+    )
+  if not branch then
     return ''
   end
 
-  -- TODO: support falling back to non-standard git dirs for branch, git dir
-  -- and diff info in `utils.git`
   local gitdir = vim.b.gitsigns_status_dict
     and vim.b.gitsigns_status_dict.gitdir
   if gitdir then
