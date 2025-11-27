@@ -9,8 +9,9 @@ vim.api.nvim_create_autocmd('FileChangedShellPost', {
 
 ---Get the current branch name asynchronously
 ---@param buf integer? defaults to the current buffer
----@return string branch name
+---@param git_args string[]? extra args passed to `git` to find the git branch, useful when using a custom git worktree and git dir
 ---@return string? branch name
+function M.branch(buf, git_args)
   buf = vim._resolve_bufnr(buf)
   if not vim.api.nvim_buf_is_valid(buf) then
     return
@@ -25,7 +26,16 @@ vim.api.nvim_create_autocmd('FileChangedShellPost', {
   if dir then
     pcall(
       vim.system,
-      { 'git', '-C', dir, 'rev-parse', '--abbrev-ref', 'HEAD' },
+      vim.list_extend({
+        'git',
+        unpack(git_args or {}),
+      }, {
+        '-C',
+        dir,
+        'rev-parse',
+        '--abbrev-ref',
+        'HEAD',
+      }),
       { stderr = false },
       function(err)
         local buf_branch = err.stdout:gsub('\n.*', '')
