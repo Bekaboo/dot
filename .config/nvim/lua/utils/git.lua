@@ -10,10 +10,10 @@ vim.api.nvim_create_autocmd('FileChangedShellPost', {
 ---Get the current branch name asynchronously
 ---@param buf integer? defaults to the current buffer
 ---@return string branch name
-function M.branch(buf)
+---@return string? branch name
   buf = vim._resolve_bufnr(buf)
   if not vim.api.nvim_buf_is_valid(buf) then
-    return ''
+    return
   end
 
   local branch = vim.b[buf].git_branch
@@ -21,7 +21,6 @@ function M.branch(buf)
     return branch
   end
 
-  vim.b[buf].git_branch = ''
   local dir = vim.fs.dirname(vim.api.nvim_buf_get_name(buf))
   if dir then
     pcall(
@@ -30,11 +29,13 @@ function M.branch(buf)
       { stderr = false },
       function(err)
         local buf_branch = err.stdout:gsub('\n.*', '')
-        vim.schedule(function()
-          if vim.api.nvim_buf_is_valid(buf) then
-            vim.b[buf].git_branch = buf_branch
-          end
-        end)
+        if buf_branch ~= '' then
+          vim.schedule(function()
+            if vim.api.nvim_buf_is_valid(buf) then
+              vim.b[buf].git_branch = buf_branch
+            end
+          end)
+        end
       end
     )
   end
@@ -64,7 +65,7 @@ function M.diffstat(buf)
   vim.b[buf].git_diffstat = {}
   local path = vim.fs.normalize(vim.api.nvim_buf_get_name(buf))
   local dir = vim.fs.dirname(path)
-  if dir and M.branch(buf):find('%S') then
+  if dir and (M.branch(buf) or ''):find('%S') then
     pcall(vim.system, {
       'git',
       '-C',
