@@ -117,6 +117,48 @@ local modes = {
 }
 -- stylua: ignore end
 
+---Get buffer's current work tree and git dir, fallback to dotfiles bare repo
+---if no local git repo is found
+---@param buf integer? buffer handler, default to current buffer
+---@return string? git_dir
+---@return string? work_tree
+local function resolve_git_context_with_dotfiles_fallback(buf)
+  buf = vim._resolve_bufnr(buf)
+  if not vim.api.nvim_buf_is_valid(buf) then
+    return
+  end
+
+  local use_dot_repo_args =
+    { '--git-dir', vim.env.DOT_DIR, '--work-tree', vim.env.HOME }
+
+  if not vim.b[buf].git_work_tree then
+    vim.b[buf].git_work_tree = utils.git.execute(
+      buf,
+      { 'rev-parse', '--show-toplevel' },
+      nil
+    ) or utils.git.execute(
+      buf,
+      vim.list_extend(
+        vim.deepcopy(use_dot_repo_args),
+        { 'rev-parse', '--show-toplevel' }
+      )
+    )
+  end
+
+  if not vim.b[buf].git_dir then
+    vim.b[buf].git_dir = utils.git.execute(buf, { 'rev-parse', '--git-dir' })
+      or utils.git.execute(
+        buf,
+        vim.list_extend(
+          vim.deepcopy(use_dot_repo_args),
+          { 'rev-parse', '--git-dir' }
+        )
+      )
+  end
+
+  return vim.b[buf].git_work_tree, vim.b[buf].git_dir
+end
+
 ---Get string representation of the current mode
 ---@return string
 function _G._statusline.mode()
@@ -130,9 +172,19 @@ end
 ---Get diff stats for current buffer
 ---@return string
 function _G._statusline.gitdiff()
+  local work_tree, git_dir = resolve_git_context_with_dotfiles_fallback()
+  if not work_tree or not git_dir then
+    return ''
+  end
+
   -- Integration with gitsigns.nvim
   ---@diagnostic disable-next-line: undefined-field
-  local diff = vim.b.gitsigns_status_dict or utils.git.diffstat()
+  local diff = vim.b.gitsigns_status_dict
+    or utils.git.diffstat(
+      0,
+      { '--git-dir', git_dir, '--work-tree', work_tree }
+    )
+    or {}
   local added = diff.added or 0
   local changed = diff.changed or 0
   local removed = diff.removed or 0
@@ -162,14 +214,49 @@ end
 ---Get string representation of current git branch
 ---@return string
 function _G._statusline.gitbranch()
-  ---@diagnostic disable-next-line: undefined-field
+  local work_tree, git_dir = resolve_git_context_with_dotfiles_fallback()
+  if not work_tree or not git_dir then
+    return ''
+  end
+
+  local use_cur_repo_args = { '--git-dir', git_dir, '--work-tree', work_tree }
+
   local branch = vim.b.gitsigns_status_dict and vim.b.gitsigns_status_dict.head
-    or utils.git.branch()
-    or utils.git.branch(
-      nil,
-      { '--git-dir', vim.env.DOT_DIR, '--work-tree', vim.env.HOME }
+    or utils.git.execute(
+      0,
+      vim.list_extend(
+        vim.deepcopy(use_cur_repo_args),
+        { 'rev-parse', '--abbrev-ref', 'HEAD' }
+      )
     )
   if not branch then
+    return ''
+  end
+
+  -- Don't show git branch info if `status.showUntrackedFiles` is 'no'
+  -- and current file is not tracked
+  -- This prevents showing the dotfiles bare repo branch info in irrelevant
+  -- files
+  local show_untracked = utils.git.execute(
+    0,
+    vim.list_extend(vim.deepcopy(use_cur_repo_args), {
+      'config',
+      '--local',
+      '--get',
+      'status.showUntrackedFiles',
+    })
+  )
+  local tracked = utils.git.execute(
+    0,
+    vim.list_extend(
+      vim.deepcopy(use_cur_repo_args),
+      { 'ls-files', vim.api.nvim_buf_get_name(0) }
+    )
+  )
+  if
+    (not show_untracked or show_untracked == 'no')
+    and (not tracked or tracked == '')
+  then
     return ''
   end
 
