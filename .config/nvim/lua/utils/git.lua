@@ -30,7 +30,11 @@ function M.branch(buf)
       { stderr = false },
       function(err)
         local buf_branch = err.stdout:gsub('\n.*', '')
-        pcall(vim.api.nvim_buf_set_var, buf, 'git_branch', buf_branch)
+        vim.schedule(function()
+          if vim.api.nvim_buf_is_valid(buf) then
+            vim.b[buf].git_branch = buf_branch
+          end
+        end)
       end
     )
   end
