@@ -591,24 +591,36 @@ do
 end
 
 do
-  local colors_file =
-    vim.fs.joinpath(vim.fn.stdpath('state') --[[@as string]], 'colors.json')
+  local json = require('utils.json')
+
+  local colors_config_file =
+    vim.fs.joinpath(vim.fn.stdpath('state'), 'colors.json')
 
   ---Restore dark/light background and colorscheme from json so that nvim
   ---'remembers' the background and colorscheme when it is restarted.
   local function restore_colorscheme()
-    local c = require('utils.json').read(colors_file)
-    c.colors_name = c.colors_name or 'nano'
-    if c.bg then
-      vim.go.bg = c.bg
-    end
-    if c.colors_name and c.colors_name ~= vim.g.colors_name then
+    local colors_config = vim.tbl_deep_extend(
+      'keep',
+      json.read(colors_config_file),
+      { bg = 'dark', colors_name = 'nano' }
+    )
+
+    vim.go.bg = colors_config.bg
+
+    -- Colorschemes provided by plugins are not loaded before fully startup
+    if vim.v.vim_did_enter == 1 then
       vim.cmd.colorscheme({
-        args = { c.colors_name },
+        args = { colors_config.colors_name },
         mods = { emsg_silent = true },
       })
     end
   end
+
+  -- Nvim cannot reliably detect bg in some terminals, e.g. tmux, see:
+  -- https://github.com/neovim/neovim/issues/27725
+  -- Manually set bg early so that nvim will not try to detect and set bg by
+  -- itself in tmux
+  restore_colorscheme()
 
   augroup('my.colorscheme_restore', {
     'UIEnter',
@@ -634,28 +646,30 @@ do
         end
 
         vim.schedule(function()
-          local json_utils = require('utils.json')
+          local colors_config = json.read(colors_config_file)
 
-          local c = json_utils.read(colors_file)
-          if c.colors_name == vim.g.colors_name and c.bg == vim.go.bg then
+          if
+            colors_config.colors_name == vim.g.colors_name
+            and colors_config.bg == vim.go.bg
+          then
             return
           end
 
-          if c.colors_name ~= vim.g.colors_name then
-            c.colors_name = vim.g.colors_name
+          if colors_config.colors_name ~= vim.g.colors_name then
+            colors_config.colors_name = vim.g.colors_name
             if vim.fn.executable('setcolor') == 1 then
               vim.system({ 'setcolor', vim.g.colors_name })
             end
           end
 
-          if c.bg ~= vim.go.bg and vim.go.termguicolors then
-            c.bg = vim.go.bg
+          if colors_config.bg ~= vim.go.bg and vim.go.termguicolors then
+            colors_config.bg = vim.go.bg
             if vim.fn.executable('setbg') == 1 then
               vim.system({ 'setbg', vim.go.bg })
             end
           end
 
-          json_utils.write(colors_file, c)
+          json.write(colors_config_file, colors_config)
         end)
       end,
     },
