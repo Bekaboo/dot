@@ -191,7 +191,19 @@ local function get_tabout_pos()
   local leading = current_line:sub(1, cursor[2])
 
   -- Do not jump if the cursor is at the beginning of the current line
-  if leading:match('^%s*$') then
+  -- or behind a starting comment marker
+  if
+    ''
+    == vim.trim(
+      leading:gsub(
+        '^%s*'
+          .. utils.str.escape_magic(
+            vim.trim(vim.bo.commentstring:gsub('%%s.*', ''))
+          ),
+        ''
+      )
+    )
+  then
     return
   end
 
