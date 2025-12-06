@@ -116,4 +116,40 @@ function M.execute(buf, args)
   return vim.b[buf][cache_key]
 end
 
+---Get buffer's current work tree and git dir with fallback
+---@param buf integer? buffer handler, default to current buffer
+---@param fallback_args string[][] alternative git arguments to try
+---@return string? work_tree
+---@return string? git_dir
+function M.resolve_context(buf, fallback_args)
+  buf = vim._resolve_bufnr(buf)
+  if not vim.api.nvim_buf_is_valid(buf) then
+    return
+  end
+
+  local work_tree = M.execute(buf, { 'rev-parse', '--show-toplevel' })
+  for _, args in ipairs(fallback_args) do
+    if work_tree then
+      break
+    end
+    work_tree = M.execute(
+      buf,
+      vim.list_extend(vim.deepcopy(args), { 'rev-parse', '--show-toplevel' })
+    )
+  end
+
+  local git_dir = M.execute(buf, { 'rev-parse', '--git-dir' })
+  for _, args in ipairs(fallback_args) do
+    if git_dir then
+      break
+    end
+    git_dir = M.execute(
+      buf,
+      vim.list_extend(vim.deepcopy(args), { 'rev-parse', '--git-dir' })
+    )
+  end
+
+  return work_tree, git_dir
+end
+
 return M

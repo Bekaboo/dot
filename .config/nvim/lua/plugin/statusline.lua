@@ -117,49 +117,6 @@ local modes = {
 }
 -- stylua: ignore end
 
----Get buffer's current work tree and git dir, fallback to dotfiles bare repo
----if no local git repo is found
----@param buf integer? buffer handler, default to current buffer
----@return string? git_dir
----@return string? work_tree
-local function resolve_git_context_with_dotfiles_fallback(buf)
-  buf = vim._resolve_bufnr(buf)
-  if not vim.api.nvim_buf_is_valid(buf) then
-    return
-  end
-
-  local use_dot_repo_args =
-    { '--git-dir', vim.env.DOT_DIR, '--work-tree', vim.env.HOME }
-
-  if not vim.b[buf].stl_git_work_tree then
-    vim.b[buf].stl_git_work_tree = utils.git.execute(
-      buf,
-      { 'rev-parse', '--show-toplevel' }
-    ) or utils.git.execute(
-      buf,
-      vim.list_extend(
-        vim.deepcopy(use_dot_repo_args),
-        { 'rev-parse', '--show-toplevel' }
-      )
-    )
-  end
-
-  if not vim.b[buf].stl_git_dir then
-    -- Can reuse git dir detected by fugitive to save time
-    vim.b[buf].stl_git_dir = vim.b[buf].git_dir
-      or utils.git.execute(buf, { 'rev-parse', '--git-dir' })
-      or utils.git.execute(
-        buf,
-        vim.list_extend(
-          vim.deepcopy(use_dot_repo_args),
-          { 'rev-parse', '--git-dir' }
-        )
-      )
-  end
-
-  return vim.b[buf].stl_git_work_tree, vim.b[buf].stl_git_dir
-end
-
 ---Get string representation of the current mode
 ---@return string
 function _G._statusline.mode()
@@ -173,7 +130,10 @@ end
 ---Get diff stats for current buffer
 ---@return string
 function _G._statusline.gitdiff()
-  local work_tree, git_dir = resolve_git_context_with_dotfiles_fallback()
+  local work_tree, git_dir = utils.git.resolve_context(
+    0,
+    { { '--git-dir', vim.env.DOT_DIR, '--work-tree', vim.env.HOME } }
+  )
   if not work_tree or not git_dir then
     return ''
   end
@@ -215,7 +175,10 @@ end
 ---Get string representation of current git branch
 ---@return string
 function _G._statusline.gitbranch()
-  local work_tree, git_dir = resolve_git_context_with_dotfiles_fallback()
+  local work_tree, git_dir = utils.git.resolve_context(
+    0,
+    { { '--git-dir', vim.env.DOT_DIR, '--work-tree', vim.env.HOME } }
+  )
   if not work_tree or not git_dir then
     return ''
   end
