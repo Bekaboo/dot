@@ -145,7 +145,9 @@ local function resolve_git_context_with_dotfiles_fallback(buf)
   end
 
   if not vim.b[buf].stl_git_dir then
-    vim.b[buf].stl_git_dir = utils.git.execute(buf, { 'rev-parse', '--git-dir' })
+    -- Can reuse git dir detected by fugitive to save time
+    vim.b[buf].stl_git_dir = vim.b[buf].git_dir
+      or utils.git.execute(buf, { 'rev-parse', '--git-dir' })
       or utils.git.execute(
         buf,
         vim.list_extend(
