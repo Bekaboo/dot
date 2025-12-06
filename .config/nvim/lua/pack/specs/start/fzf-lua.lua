@@ -637,6 +637,39 @@ return {
         }))
       end
 
+      ---Wrap fzf git pickers with dotfiles fallback when not inside git repo
+      ---@param cb fun(opts: fzf-lua.config.GitBase?)
+      ---@return fun(opts: fzf-lua.config.GitBase?)
+      local function with_dotfiles_fallback(cb)
+        return function(opts)
+          local git_worktree, git_dir = utils.git.resolve_context(
+            0,
+            { { '--git-dir', vim.env.DOT_DIR, '--work-tree', vim.env.HOME } }
+          )
+          opts = vim.tbl_deep_extend('keep', opts or {}, {
+            git_worktree = git_worktree,
+            git_dir = git_dir,
+          })
+          return cb(opts)
+        end
+      end
+
+      -- Fallback to dotfiles bare repo if not inside a normal git repository
+      fzf.git_tags = with_dotfiles_fallback(fzf.git_tags)
+      fzf.git_stash = with_dotfiles_fallback(fzf.git_stash)
+      fzf.git_status = with_dotfiles_fallback(fzf.git_status)
+      fzf.git_commits = with_dotfiles_fallback(fzf.git_commits)
+      fzf.git_bcommits = with_dotfiles_fallback(fzf.git_bcommits)
+      fzf.git_branches = with_dotfiles_fallback(fzf.git_branches)
+      fzf.git_blame = with_dotfiles_fallback(fzf.git_blame)
+      fzf.git_tags = with_dotfiles_fallback(fzf.git_tags)
+      fzf.git_stash = with_dotfiles_fallback(fzf.git_stash)
+      fzf.git_status = with_dotfiles_fallback(fzf.git_status)
+      fzf.git_commits = with_dotfiles_fallback(fzf.git_commits)
+      fzf.git_bcommits = with_dotfiles_fallback(fzf.git_bcommits)
+      fzf.git_branches = with_dotfiles_fallback(fzf.git_branches)
+      fzf.git_blame = with_dotfiles_fallback(fzf.git_blame)
+
       ---Search symbols, fallback to treesitter nodes if no language server
       ---supporting symbol method is attached
       ---@diagnostic disable-next-line: inject-field
