@@ -12,7 +12,7 @@ vim.api.nvim_create_autocmd({ 'BufWrite', 'FileChangedShellPost' }, {
 ---@field removed? integer
 ---@field changed? integer
 
----Get the diff stats for the current buffer
+---Get the diff stats for the current buffer asynchronously
 ---@param buf integer? buffer handler, defaults to the current buffer
 ---@param args string[]? arguments passed to `git` command
 ---@return git.diffstat # diff stats
@@ -23,16 +23,14 @@ function M.diffstat(buf, args)
   end
 
   if
-    (vim.b[buf].git_diffstat_writetick or 0)
-      < (vim.b[buf].git_writetick or 1)
-    and vim.fn.executable('git') == 1
+    (vim.b[buf].git_diffstat_writetick or 0) < (vim.b[buf].git_writetick or 1)
   then
-    local now = vim.uv.hrtime()
     local bufname = vim.api.nvim_buf_get_name(buf)
     local dirname = vim.fs.dirname(bufname)
-
-    local o = vim
-      .system(vim.list_extend({ 'git', '-C', dirname, unpack(args or {}) }, {
+    local now = vim.uv.hrtime()
+    pcall(
+      vim.system,
+      vim.list_extend({ 'git', '-C', dirname, unpack(args or {}) }, {
         '--no-pager',
         'diff',
         '-U0',
@@ -40,38 +38,43 @@ function M.diffstat(buf, args)
         '--no-ext-diff',
         '--',
         bufname,
-      }))
-      :wait()
+      }),
+      { stderr = false },
+      vim.schedule_wrap(function(o)
+        if o.code ~= 0 or not vim.api.nvim_buf_is_valid(buf) then
+          return
+        end
 
-    if o.code == 0 then
-      local stat = { added = 0, removed = 0, changed = 0 }
-      for _, line in ipairs(vim.split(o.stdout, '\n')) do
-        if line:find('^@@ ') then
-          local num_lines_old, num_lines_new =
-            line:match('^@@ %-%d+,?(%d*) %+%d+,?(%d*)')
-          num_lines_old = tonumber(num_lines_old) or 1
-          num_lines_new = tonumber(num_lines_new) or 1
-          local num_lines_changed = math.min(num_lines_old, num_lines_new)
-          stat.changed = stat.changed + num_lines_changed
-          if num_lines_old > num_lines_new then
-            stat.removed = stat.removed + num_lines_old - num_lines_changed
-          else
-            stat.added = stat.added + num_lines_new - num_lines_changed
+        local stat = { added = 0, removed = 0, changed = 0 }
+        for _, line in ipairs(vim.split(o.stdout, '\n')) do
+          if line:find('^@@ ') then
+            local num_lines_old, num_lines_new =
+              line:match('^@@ %-%d+,?(%d*) %+%d+,?(%d*)')
+            num_lines_old = tonumber(num_lines_old) or 1
+            num_lines_new = tonumber(num_lines_new) or 1
+            local num_lines_changed = math.min(num_lines_old, num_lines_new)
+            stat.changed = stat.changed + num_lines_changed
+            if num_lines_old > num_lines_new then
+              stat.removed = stat.removed + num_lines_old - num_lines_changed
+            else
+              stat.added = stat.added + num_lines_new - num_lines_changed
+            end
           end
         end
-      end
 
-      if (vim.b[buf].git_diffstat_writetick or 0) < now then
-        vim.b[buf].git_diffstat = stat
-        vim.b[buf].git_diffstat_writetick = now
-      end
-    end
+        if (vim.b[buf].git_diffstat_writetick or 0) < now then
+          vim.b[buf].git_diffstat = stat
+          vim.b[buf].git_diffstat_writetick = now
+        end
+      end)
+    )
   end
 
-  return vim.b[buf].git_diffstat or {}
+  return vim.b[buf].git_diffstat
 end
 
----Execute git command and get output
+---Asynchronously execute git command and get output
+---NOTE: output can be out of date
 ---@param buf integer? buffer handler, defaults to the current buffer
 ---@param args string[] arguments passed to `git` command
 ---@return string?
@@ -86,22 +89,28 @@ function M.execute(buf, args)
 
   if
     (vim.b[buf][cache_key_writetick] or 0) < (vim.b[buf].git_writetick or 1)
-    and vim.fn.executable('git') == 1
   then
     local now = vim.uv.hrtime()
-    local o = vim
-      .system({
+    pcall(
+      vim.system,
+      {
         'git',
         '-C',
         vim.fs.dirname(vim.api.nvim_buf_get_name(buf)),
         unpack(args),
-      })
-      :wait()
+      },
+      { stderr = false },
+      vim.schedule_wrap(function(o)
+        if o.code ~= 0 or not vim.api.nvim_buf_is_valid(buf) then
+          return
+        end
 
-    if o.code == 0 and (vim.b[buf][cache_key_writetick] or 0) < now then
-      vim.b[buf][cache_key] = vim.trim(o.stdout)
-      vim.b[buf][cache_key_writetick] = now
-    end
+        if (vim.b[buf][cache_key_writetick] or 0) < now then
+          vim.b[buf][cache_key] = vim.trim(o.stdout)
+          vim.b[buf][cache_key_writetick] = now
+        end
+      end)
+    )
   end
 
   return vim.b[buf][cache_key]
