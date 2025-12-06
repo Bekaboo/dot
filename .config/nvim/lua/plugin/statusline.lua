@@ -131,8 +131,8 @@ local function resolve_git_context_with_dotfiles_fallback(buf)
   local use_dot_repo_args =
     { '--git-dir', vim.env.DOT_DIR, '--work-tree', vim.env.HOME }
 
-  if not vim.b[buf].git_work_tree then
-    vim.b[buf].git_work_tree = utils.git.execute(
+  if not vim.b[buf].stl_git_work_tree then
+    vim.b[buf].stl_git_work_tree = utils.git.execute(
       buf,
       { 'rev-parse', '--show-toplevel' }
     ) or utils.git.execute(
@@ -144,8 +144,8 @@ local function resolve_git_context_with_dotfiles_fallback(buf)
     )
   end
 
-  if not vim.b[buf].git_dir then
-    vim.b[buf].git_dir = utils.git.execute(buf, { 'rev-parse', '--git-dir' })
+  if not vim.b[buf].stl_git_dir then
+    vim.b[buf].stl_git_dir = utils.git.execute(buf, { 'rev-parse', '--git-dir' })
       or utils.git.execute(
         buf,
         vim.list_extend(
@@ -155,7 +155,7 @@ local function resolve_git_context_with_dotfiles_fallback(buf)
       )
   end
 
-  return vim.b[buf].git_work_tree, vim.b[buf].git_dir
+  return vim.b[buf].stl_git_work_tree, vim.b[buf].stl_git_dir
 end
 
 ---Get string representation of the current mode
