@@ -405,7 +405,7 @@ return {
                 if path.is_absolute(relpath) then
                   relpath = path.relative_to(relpath, fzf_utils.cwd())
                 end
-                vim.cmd('argadd ' .. string.gsub(relpath, ' ', [[\ ]]))
+                vim.cmd.argadd(vim.fn.fnameescape(relpath))
                 ::continue::
               end
               fzf.args(o)
