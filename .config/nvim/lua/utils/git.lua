@@ -15,7 +15,7 @@ vim.api.nvim_create_autocmd({ 'BufWrite', 'FileChangedShellPost' }, {
 ---Get the diff stats for the current buffer asynchronously
 ---@param buf integer? buffer handler, defaults to the current buffer
 ---@param args string[]? arguments passed to `git` command
----@return git.diffstat # diff stats
+---@return git.diffstat? # diff stats
 function M.diffstat(buf, args)
   buf = vim._resolve_bufnr(buf or 0)
   if not vim.api.nvim_buf_is_valid(buf) then
@@ -41,7 +41,7 @@ function M.diffstat(buf, args)
       }),
       { stderr = false },
       vim.schedule_wrap(function(o)
-        if o.code ~= 0 or not vim.api.nvim_buf_is_valid(buf) then
+        if not vim.api.nvim_buf_is_valid(buf) then
           return
         end
 
@@ -63,7 +63,7 @@ function M.diffstat(buf, args)
         end
 
         if (vim.b[buf].git_diffstat_writetick or 0) < now then
-          vim.b[buf].git_diffstat = stat
+          vim.b[buf].git_diffstat = o.code == 0 and stat or nil
           vim.b[buf].git_diffstat_writetick = now
         end
       end)
@@ -101,12 +101,12 @@ function M.execute(buf, args)
       },
       { stderr = false },
       vim.schedule_wrap(function(o)
-        if o.code ~= 0 or not vim.api.nvim_buf_is_valid(buf) then
+        if not vim.api.nvim_buf_is_valid(buf) then
           return
         end
 
         if (vim.b[buf][cache_key_writetick] or 0) < now then
-          vim.b[buf][cache_key] = vim.trim(o.stdout)
+          vim.b[buf][cache_key] = o.code == 0 and vim.trim(o.stdout) or nil
           vim.b[buf][cache_key_writetick] = now
         end
       end)
