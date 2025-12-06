@@ -163,7 +163,7 @@ return {
                     'let g:_fzf_n_items =%d | %s | unlet g:_fzf_n_items',
                     n_items,
                     vim.trim(
-                      require('fzf-lua.config').setup_opts.winopts.split
+                      require('fzf-lua.config').setup_opts.winopts.split --[[@as string]]
                     ),
                     n_items
                   ),
@@ -547,7 +547,7 @@ return {
           return
         end
         vim.cmd.split()
-        actions.fugitive_edit(selected)
+        actions.fugitive_edit(selected, {})
       end
 
       ---Edit a git commit object in vertical split with vim-fugitive
@@ -556,7 +556,7 @@ return {
           return
         end
         vim.cmd.vsplit()
-        actions.fugitive_edit(selected)
+        actions.fugitive_edit(selected, {})
       end
 
       ---Edit a git commit object in vertical split with vim-fugitive
@@ -565,7 +565,7 @@ return {
           return
         end
         vim.cmd.tabnew()
-        actions.fugitive_edit(selected)
+        actions.fugitive_edit(selected, {})
       end
 
       core.ACTION_DEFINITIONS[actions.toggle_dir] = {
@@ -639,6 +639,7 @@ return {
 
       ---Search symbols, fallback to treesitter nodes if no language server
       ---supporting symbol method is attached
+      ---@diagnostic disable-next-line: inject-field
       function fzf.symbols(opts)
         if
           vim.tbl_isempty(vim.lsp.get_clients({
@@ -693,6 +694,7 @@ return {
 
       -- Select dirs from `z`
       ---@param opts table?
+      ---@diagnostic disable-next-line: inject-field
       function fzf.z(opts)
         local has_z_plugin, z = pcall(require, 'plugin.z')
         if not has_z_plugin then
@@ -722,6 +724,7 @@ return {
 
       -- Select/remove sessions from the session plugin
       ---@param opts table?
+      ---@diagnostic disable-next-line: inject-field
       function fzf.sessions(opts)
         local has_session_plugin, session = pcall(require, 'plugin.session')
         if not has_session_plugin then
@@ -776,6 +779,7 @@ return {
 
       ---Fuzzy complete cmdline command/search history
       ---@param opts table?
+      ---@diagnostic disable-next-line: inject-field
       function fzf.complete_cmdline(opts)
         opts = opts or {}
         opts.query = vim.fn.getcmdline()
@@ -795,6 +799,7 @@ return {
 
       ---Fuzzy complete from registers in insert mode
       ---@param opts table?
+      ---@diagnostic disable-next-line: inject-field
       function fzf.complete_from_registers(opts)
         fzf.registers(vim.tbl_deep_extend('force', opts or {}, {
           actions = {
@@ -832,6 +837,7 @@ return {
         -- See https://github.com/ibhagwan/fzf-lua/issues/1739
         'default-prompt',
         -- Use nbsp in tty to avoid showing box chars
+        ---@diagnostic disable-next-line: assign-type-mismatch
         nbsp = not vim.go.termguicolors and '\xc2\xa0' or nil,
         dir_icon = vim.trim(icons.Folder),
         winopts = {
@@ -933,11 +939,12 @@ return {
               end
             end)
           end,
+          ---@diagnostic disable-next-line: missing-fields
           preview = {
             border = 'none',
-            hidden = 'hidden',
             layout = 'horizontal',
-            scrollbar = false,
+            hidden = true,
+            scrollbar = false, ---@diagnostic disable-line: assign-type-mismatch
           },
         },
         -- Open help window at top of screen with single border
@@ -948,9 +955,10 @@ return {
           return vim.api.nvim_open_win(buf, enter, opts)
         end,
         fzf_colors = {
+          ---@diagnostic disable-next-line: assign-type-mismatch
           ['fg+'] = { 'fg', 'CursorLine' },
-          ['bg+'] = { 'bg', 'CursorLine' },
-          ['gutter'] = { 'bg', 'CursorLine' },
+          ['bg+'] = { 'bg', 'CursorLine' }, ---@diagnostic disable-line: assign-type-mismatch
+          ['gutter'] = { 'bg', 'CursorLine' }, ---@diagnostic disable-line: assign-type-mismatch
         },
         keymap = {
           -- Overrides default completion completely
@@ -989,6 +997,7 @@ return {
         },
         defaults = {
           actions = {
+            ---@diagnostic disable-next-line: assign-type-mismatch
             ['ctrl-]'] = actions.switch_provider,
           },
         },
