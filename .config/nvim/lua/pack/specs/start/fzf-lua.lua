@@ -388,7 +388,6 @@ return {
       ---Search & select files then add them to arglist
       ---@return nil
       function actions.arg_search_add()
-        local opts = fzf.config.__resume_data.opts
         fzf.files({
           cwd_header = true,
           cwd_prompt = false,
@@ -404,11 +403,24 @@ return {
                   cmd = input
                 end
               end)
-              actions.vimcmd_file(cmd, selected, o)
-              fzf.args(opts)
+              -- Ported from https://github.com/ibhagwan/fzf-lua/blob/cae96b04f6cad98a3ad24349731df5e56b384c3c/lua/fzf-lua/actions.lua#L478-L491
+              for _, sel in ipairs(selected) do
+                local entry = path.entry_to_file(sel, o)
+                local relpath = entry.bufname or entry.path
+                assert(relpath, "entry doesn't contain filepath")
+                if not relpath then
+                  goto continue
+                end
+                if path.is_absolute(relpath) then
+                  relpath = path.relative_to(relpath, fzf_utils.cwd())
+                end
+                vim.cmd(cmd .. ' ' .. string.gsub(relpath, ' ', [[\ ]]))
+                ::continue::
+              end
+              fzf.args(o)
             end,
             ['esc'] = function()
-              fzf.args(opts)
+              fzf.args()
             end,
           },
           find_opts = [[-type f -not -path '*/\.git/*' -not -path '*/\.venv/*' -printf '%P\n']],
