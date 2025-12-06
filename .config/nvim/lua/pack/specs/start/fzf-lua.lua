@@ -394,15 +394,6 @@ return {
           prompt = 'Argadd> ',
           actions = {
             ['enter'] = function(selected, o)
-              local cmd = 'argadd'
-              vim.ui.input({
-                prompt = 'Argadd cmd: ',
-                default = cmd,
-              }, function(input)
-                if input then
-                  cmd = input
-                end
-              end)
               -- Ported from https://github.com/ibhagwan/fzf-lua/blob/cae96b04f6cad98a3ad24349731df5e56b384c3c/lua/fzf-lua/actions.lua#L478-L491
               for _, sel in ipairs(selected) do
                 local entry = path.entry_to_file(sel, o)
@@ -414,7 +405,7 @@ return {
                 if path.is_absolute(relpath) then
                   relpath = path.relative_to(relpath, fzf_utils.cwd())
                 end
-                vim.cmd(cmd .. ' ' .. string.gsub(relpath, ' ', [[\ ]]))
+                vim.cmd('argadd ' .. string.gsub(relpath, ' ', [[\ ]]))
                 ::continue::
               end
               fzf.args(o)
