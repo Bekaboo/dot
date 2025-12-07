@@ -64,6 +64,7 @@ return {
       { lhs = '<Leader>fgl', opts = { desc = 'Find git buffer logs' } },
       { lhs = '<Leader>fgb', opts = { desc = 'Find git branches' } },
       { lhs = '<Leader>fgB', opts = { desc = 'Find git blame' } },
+      { lhs = '<Leader>fgf', opts = { desc = 'Find git files' } },
       { lhs = '<Leader>gft', opts = { desc = 'Find git tags' } },
       { lhs = '<Leader>gfs', opts = { desc = 'Find git stash' } },
       { lhs = '<Leader>gfg', opts = { desc = 'Find git status' } },
@@ -71,6 +72,7 @@ return {
       { lhs = '<Leader>gfl', opts = { desc = 'Find git buffer logs' } },
       { lhs = '<Leader>gfb', opts = { desc = 'Find git branches' } },
       { lhs = '<Leader>gfB', opts = { desc = 'Find git blame' } },
+      { lhs = '<Leader>gff', opts = { desc = 'Find git files' } },
       { lhs = '<Leader>fh', opts = { desc = 'Find help files' } },
       { lhs = '<Leader>fk', opts = { desc = 'Find keymaps' } },
       { lhs = '<Leader>f-', opts = { desc = 'Find lines in buffer' } },
@@ -677,6 +679,7 @@ return {
       fzf.git_bcommits = with_dotfiles_fallback(fzf.git_bcommits)
       fzf.git_branches = with_dotfiles_fallback(fzf.git_branches)
       fzf.git_blame = with_dotfiles_fallback(fzf.git_blame)
+      fzf.git_files = with_dotfiles_fallback(fzf.git_files)
 
       ---Search symbols, fallback to treesitter nodes if no language server
       ---supporting symbol method is attached
@@ -1309,6 +1312,7 @@ return {
       vim.keymap.set('n', '<Leader>fgl', fzf.git_bcommits, { desc = 'Find git buffer logs' })
       vim.keymap.set('n', '<Leader>fgb', fzf.git_branches, { desc = 'Find git branches' })
       vim.keymap.set('n', '<Leader>fgB', fzf.git_blame, { desc = 'Find git blame' })
+      vim.keymap.set('n', '<Leader>fgf', fzf.git_files, { desc = 'Find git files' })
       vim.keymap.set('n', '<Leader>gft', fzf.git_tags, { desc = 'Find git tags' })
       vim.keymap.set('n', '<Leader>gfs', fzf.git_stash, { desc = 'Find git stash' })
       vim.keymap.set('n', '<Leader>gfg', fzf.git_status, { desc = 'Find git status' })
@@ -1316,6 +1320,7 @@ return {
       vim.keymap.set('n', '<Leader>gfl', fzf.git_bcommits, { desc = 'Find git buffer logs' })
       vim.keymap.set('n', '<Leader>gfb', fzf.git_branches, { desc = 'Find git branches' })
       vim.keymap.set('n', '<Leader>gfB', fzf.git_blame, { desc = 'Find git blame' })
+      vim.keymap.set('n', '<Leader>gff', fzf.git_files, { desc = 'Find git files' })
       vim.keymap.set('n', '<Leader>fh', fzf.help_tags, { desc = 'Find help tags' })
       vim.keymap.set('n', '<Leader>fk', fzf.keymaps, { desc = 'Find keymaps' })
       vim.keymap.set('n', '<Leader>f-', fzf.blines, { desc = 'Find lines in buffer' })
