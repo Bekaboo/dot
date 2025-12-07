@@ -15,6 +15,11 @@ return {
       },
     },
     cmds = 'Oil',
+    keys = {
+      mode = { 'n', 'x' },
+      lhs = '-',
+      opts = { desc = "Edit current file's directory" },
+    },
     ---Load oil on startup only when editing a directory
     init = function(spec, path)
       vim.g.loaded_fzf_file_explorer = 0
@@ -938,6 +943,15 @@ return {
           },
         },
       })
+
+      -- Override `-` to use `:Oil` to open parent dir, previously mapped in
+      -- `core.keymaps`
+      vim.keymap.set(
+        { 'n', 'x' },
+        '-',
+        vim.cmd.Oil,
+        { desc = "Edit current file's directory" }
+      )
 
       local groupid = vim.api.nvim_create_augroup('my.oil', {})
       vim.api.nvim_create_autocmd('BufEnter', {
