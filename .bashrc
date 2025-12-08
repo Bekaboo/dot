@@ -22,7 +22,7 @@ for ble_install_path in /usr/share ~/.local/share; do
 done
 
 # Prompt configuration
-PS1='\[\033[01;3'$( ((EUID)) && echo 5 || echo 1)'m\][\u@\h\[\033[01;37m\] \W\[\033[01;3'$( ((EUID)) && echo 5 || echo 1)'m\]]\$\[\033[00m\] '
+PS1='\[\033[01;3'$( ((EUID)) && echo 2 || echo 1)'m\]\u\[\033[01;37m\]@\[\033[01;3'$( ((EUID)) && echo 2 || echo 1)'m\]\h\[\033[01;37m\]:\[\033[01;34m\]\W\[\033[00m\]\$ '
 
 # OSC133 support
 # Source: https://codeberg.org/dnkl/foot/wiki#bash-2
