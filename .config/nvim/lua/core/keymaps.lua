@@ -491,6 +491,8 @@ require('utils.load').on_events(
     map('n', '<Leader>u', '<Cmd>packadd nvim.undotree|Undotree<CR>', {
       desc = 'Toggle undotree',
     })
+
+    map('n', '<Leader>U', vim.pack.update, { desc = 'Update plugins' })
   end)
 )
 
