@@ -34,7 +34,7 @@ return {
       img_clip.setup({
         default = {
           insert_mode_after_paste = false,
-          use_cursor_in_template = false,
+          use_cursor_in_template = true,
           dir_path = function()
             local bufname = vim.api.nvim_buf_get_name(0)
             local img_dir = (
@@ -81,6 +81,8 @@ return {
 \begin{figure}[H]
 $INDENT\centering
 $INDENT\includegraphics[width=1.0\textwidth]{$FILE_PATH}
+\label{fig:$LABEL}
+\caption{$CURSOR}
 \end{figure}
 ]]):gsub('$INDENT', indent())
             end,
