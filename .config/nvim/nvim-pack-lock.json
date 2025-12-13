@@ -5,7 +5,7 @@
       "src": "https://github.com/L3MON4D3/LuaSnip"
     },
     "blink.cmp": {
-      "rev": "7beba91",
+      "rev": "3033d27",
       "src": "https://github.com/saghen/blink.cmp"
     },
     "cellular-automaton.nvim": {
@@ -13,7 +13,7 @@
       "src": "https://github.com/Eandrju/cellular-automaton.nvim"
     },
     "everforest": {
-      "rev": "484dd56",
+      "rev": "b10ed9a",
       "src": "https://github.com/sainnhe/everforest"
     },
     "fugitive-gitlab.vim": {
@@ -21,7 +21,7 @@
       "src": "https://github.com/shumphrey/fugitive-gitlab.vim"
     },
     "fzf-lua": {
-      "rev": "cae96b0",
+      "rev": "bd69cba",
       "src": "https://github.com/ibhagwan/fzf-lua"
     },
     "gitsigns.nvim": {
@@ -29,11 +29,11 @@
       "src": "https://github.com/lewis6991/gitsigns.nvim"
     },
     "gruvbox-material": {
-      "rev": "4bfc698",
+      "rev": "cc47341",
       "src": "https://github.com/sainnhe/gruvbox-material"
     },
     "img-clip.nvim": {
-      "rev": "f33f3af",
+      "rev": "93fcf50",
       "src": "https://github.com/HakonHarnes/img-clip.nvim"
     },
     "markdown-preview.nvim": {
@@ -65,11 +65,11 @@
       "src": "https://github.com/nvim-neotest/nvim-nio"
     },
     "nvim-surround": {
-      "rev": "fcfa7e0",
+      "rev": "a0f5ab4",
       "src": "https://github.com/kylechui/nvim-surround"
     },
     "nvim-treesitter": {
-      "rev": "c5623d34",
+      "rev": "74b11981",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter",
       "version": "'main'"
     },
@@ -82,7 +82,7 @@
       "src": "https://github.com/shushtain/nvim-treesitter-incremental-selection"
     },
     "nvim-treesitter-textobjects": {
-      "rev": "dfbf959",
+      "rev": "af51903",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter-textobjects",
       "version": "'main'"
     },
@@ -103,11 +103,11 @@
       "src": "https://github.com/navarasu/onedark.nvim"
     },
     "opencode.nvim": {
-      "rev": "3cc6e77",
+      "rev": "6094564",
       "src": "https://github.com/sudo-tee/opencode.nvim"
     },
     "otter.nvim": {
-      "rev": "c44d645",
+      "rev": "50d2f22",
       "src": "https://github.com/jmbuhr/otter.nvim"
     },
     "plenary.nvim": {
@@ -119,7 +119,7 @@
       "src": "https://github.com/stevearc/quicker.nvim"
     },
     "treesj": {
-      "rev": "4770492",
+      "rev": "186084d",
       "src": "https://github.com/Wansmer/treesj"
     },
     "ts-autotag.nvim": {
@@ -167,7 +167,7 @@
       "src": "https://github.com/vim-test/vim-test"
     },
     "vimtex": {
-      "rev": "32bcb392",
+      "rev": "6e1229e2",
       "src": "https://github.com/lervag/vimtex"
     },
     "which-key.nvim": {
