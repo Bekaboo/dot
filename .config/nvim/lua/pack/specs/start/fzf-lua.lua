@@ -899,18 +899,20 @@ return {
               \ let g:_fzf_height = 10 |
               \ for winnr in range(winnr('$'), 1, -1) |
               \   if win_gettype(winnr) !=# 'autocmd' && win_gettype(winnr) !=# 'popup' |
-              \     let g:_fzf_qfclosed = win_gettype(winnr) |
-              \     let g:_fzf_qfwin = win_getid(winnr) |
+              \     let g:_fzf_lastwin = win_getid(winnr) |
+              \     let g:_fzf_lastwintype = win_gettype(winnr) |
               \     break |
               \   endif |
               \ endfor |
-              \ if g:_fzf_qfclosed ==# 'loclist' || g:_fzf_qfclosed ==# 'quickfix' |
+              \ if (g:_fzf_lastwintype ==# 'loclist' || g:_fzf_lastwintype ==# 'quickfix') &&
+              \     trim(win_execute(g:_fzf_lastwin, 'echo winnr("h")')) == g:_fzf_lastwin &&
+              \     trim(win_execute(g:_fzf_lastwin, 'echo winnr("l")')) == g:_fzf_lastwin |
+              \   let g:_fzf_qfclosed = g:_fzf_lastwintype |
+              \   let g:_fzf_qfwin = g:_fzf_lastwin |
               \   let g:_fzf_qfheight = nvim_win_get_height(g:_fzf_qfwin) |
               \   let g:_fzf_height = g:_fzf_qfheight - 1 |
               \   cclose |
               \   lclose |
-              \ else |
-              \   unlet g:_fzf_qfclosed |
               \ endif |
               \ let g:_fzf_height += g:_fzf_cmdheight + (g:_fzf_laststatus ? 1 : 0) |
               \ if exists('g:_fzf_n_items') && !exists('g:_fzf_qfclosed') |
