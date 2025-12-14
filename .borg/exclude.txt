@@ -133,6 +133,8 @@
 */.local/share/torbrowser
 */.local/share/tracker
 */.local/share/zeitgeist
+*/.local/lib
+*/.local/pipx
 */.localised
 */.m2/repository
 */.macromedia
