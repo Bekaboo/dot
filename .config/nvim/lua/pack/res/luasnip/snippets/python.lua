@@ -731,7 +731,63 @@ M.snippets = {
           body = un.body(3, 1, 'pass'),
         }
       ),
+      un.fmtad(
+        [[
+          @dataclass<opt>
+          class <name>:
+          <body>
+        ]],
+        {
+          opt = i(1, '(fronzen=True)'),
+          name = i(2, 'ClassName'),
+          body = un.body(3, 1, 'pass'),
+        }
+      ),
+      un.fmtad(
+        [[
+          class <name>(TypedDict):
+          <body>
+        ]],
+        {
+          name = i(1, 'ClassName'),
+          body = un.body(2, 1, 'pass'),
+        }
+      ),
     })
+  ),
+  us.sn(
+    {
+      trig = 'dc',
+      desc = 'Dataclass definition',
+    },
+    un.fmtad(
+      [[
+        @dataclass<opt>
+        class <name>:
+        <body>
+      ]],
+      {
+        opt = i(1, '(fronzen=True)'),
+        name = i(2, 'ClassName'),
+        body = un.body(3, 1, 'pass'),
+      }
+    )
+  ),
+  us.sn(
+    {
+      trig = 'td',
+      desc = 'TypedDict definition',
+    },
+    un.fmtad(
+      [[
+        class <name>(TypedDict):
+        <body>
+      ]],
+      {
+        name = i(1, 'ClassName'),
+        body = un.body(2, 1, 'pass'),
+      }
+    )
   ),
   us.msn(
     {
