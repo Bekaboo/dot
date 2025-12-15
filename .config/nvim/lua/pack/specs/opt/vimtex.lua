@@ -53,32 +53,21 @@ return {
       })
 
       -- Explicitly set view method for forward and inverse search
-      local viewer = (function()
-        if vim.fn.executable('xdg-mime') == 1 then
-          local o = vim
-            .system({ 'xdg-mime', 'query', 'default', 'application/pdf' })
-            :wait()
-          if o.stdout:find('zathura') then
-            return 'zathura'
+      if vim.fn.executable('xdg-mime') == 1 then
+        vim.system(
+          { 'xdg-mime', 'query', 'default', 'application/pdf' },
+          {},
+          function(o)
+            if o.stdout:find('zathura') then
+              vim.g.vimtex_view_method = 'zathura'
+              vim.g.vimtex_auto_sync_view_debounce = 0
+            elseif o.stdout:find('okular') then
+              vim.g.vimtex_view_general_viewer = 'okular'
+              vim.g.vimtex_view_general_options =
+                '--unique file:@pdf#src:@line@tex'
+            end
           end
-          if o.stdout:find('okular') then
-            return 'okular'
-          end
-        end
-        if vim.fn.executable('zathura') == 1 then
-          return 'zathura'
-        end
-        if vim.fn.executable('okular') == 1 then
-          return 'okular'
-        end
-      end)()
-
-      if viewer == 'zathura' then
-        vim.g.vimtex_view_method = 'zathura'
-        vim.g.vimtex_auto_sync_view_debounce = 0
-      elseif viewer == 'okular' then
-        vim.g.vimtex_view_general_viewer = 'okular'
-        vim.g.vimtex_view_general_options = '--unique file:@pdf#src:@line@tex'
+        )
       end
     end,
   },
