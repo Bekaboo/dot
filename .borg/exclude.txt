@@ -121,6 +121,8 @@
 */.komodoedit/*/pystdout.log
 */.komodoedit/*/running.lock
 */.komodoedit/*/startup-env.tmp
+*/.local/lib
+*/.local/pipx
 */.local/share/RecentDocuments
 */.local/share/Trash
 */.local/share/akonadi
@@ -133,8 +135,6 @@
 */.local/share/torbrowser
 */.local/share/tracker
 */.local/share/zeitgeist
-*/.local/lib
-*/.local/pipx
 */.localised
 */.m2/repository
 */.macromedia
