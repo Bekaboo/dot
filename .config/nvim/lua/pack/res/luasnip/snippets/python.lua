@@ -713,7 +713,7 @@ M.snippets = {
           <body>
         ]],
         {
-          name = i(1, 'ClassName'),
+          name = r(1, 'name'),
           args = i(2),
           idnt = un.idnt(1),
           body = un.body(3, 2, 'pass'),
@@ -725,7 +725,7 @@ M.snippets = {
           <body>
         ]],
         {
-          name = i(1, 'ClassName'),
+          name = r(1, 'name'),
           body = un.body(2, 1, 'pass'),
         }
       ),
@@ -737,7 +737,7 @@ M.snippets = {
         ]],
         {
           opt = i(1, '(fronzen=True)'),
-          name = i(2, 'ClassName'),
+          name = r(2, 'name'),
           body = un.body(3, 1, 'pass'),
         }
       ),
@@ -747,11 +747,18 @@ M.snippets = {
           <body>
         ]],
         {
-          name = i(1, 'ClassName'),
+          name = r(1, 'name'),
           body = un.body(2, 1, 'pass'),
         }
       ),
-    })
+    }),
+    {
+      common_opts = {
+        stored = {
+          name = i(nil, 'ClassName'),
+        },
+      }
+    }
   ),
   us.sn(
     {
