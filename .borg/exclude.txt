@@ -177,6 +177,7 @@
 */.pulse
 */.pulse-cookie
 */.purple/icons
+*/.pyenv
 */.recently-used
 */.recently-used.xbel
 */.rustup
