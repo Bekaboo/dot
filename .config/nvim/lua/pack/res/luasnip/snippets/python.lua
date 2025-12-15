@@ -824,9 +824,11 @@ M.snippets = {
       ),
     }),
     {
-      stored = {
-        expr = i(1),
-      },
+      common_opts = {
+        stored = {
+          expr = i(1),
+        },
+      }
     }
   ),
   us.msn(
