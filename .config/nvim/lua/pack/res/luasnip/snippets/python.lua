@@ -705,19 +705,33 @@ M.snippets = {
       { trig = 'class' },
       common = { desc = 'Class definition' },
     },
-    un.fmtad(
-      [[
-        class <name>:
-        <idnt>def __init__(self<args>):
-        <body>
-      ]],
-      {
-        name = i(1, 'ClassName'),
-        args = i(2),
-        idnt = un.idnt(1),
-        body = un.body(3, 2, 'pass'),
-      }
-    )
+    c(1, {
+      un.fmtad(
+        [[
+          class <name><inheritance>:
+          <idnt>def __init__(self<args>):
+          <body>
+        ]],
+        {
+          name = i(1, 'ClassName'),
+          inheritance = i(2),
+          args = i(3),
+          idnt = un.idnt(1),
+          body = un.body(4, 2, 'pass'),
+        }
+      ),
+      un.fmtad(
+        [[
+          class <name><inheritance>:
+          <body>
+        ]],
+        {
+          name = i(1, 'ClassName'),
+          inheritance = i(2),
+          body = un.body(3, 1, 'pass'),
+        }
+      ),
+    })
   ),
   us.msn(
     {
