@@ -736,7 +736,7 @@ M.snippets = {
           <body>
         ]],
         {
-          opt = i(1, '(fronzen=True)'),
+          opt = i(1, '(frozen=True)'),
           name = r(2, 'name'),
           body = un.body(3, 1, 'pass'),
         }
@@ -772,7 +772,7 @@ M.snippets = {
         <body>
       ]],
       {
-        opt = i(1, '(fronzen=True)'),
+        opt = i(1, '(frozen=True)'),
         name = i(2, 'ClassName'),
         body = un.body(3, 1, 'pass'),
       }
