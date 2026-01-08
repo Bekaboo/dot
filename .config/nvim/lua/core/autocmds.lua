@@ -578,11 +578,12 @@ do
           if bufname:match('://') then
             goto continue
           end
-          vim.uv.fs_stat(bufname, function(err, stat)
-            if err or not stat then
-              pcall(vim.api.nvim_buf_delete, buf, {})
-            end
-          end)
+          -- Don't use async fs_stat and delete the buffer in callback here,
+          -- else the buffer won't be deleted because nvim api cannot be called
+          -- in a fast event context, see `:h E5560`
+          if not vim.uv.fs_stat(bufname) then
+            pcall(vim.api.nvim_buf_delete, buf, {})
+          end
           ::continue::
         end
       end,
