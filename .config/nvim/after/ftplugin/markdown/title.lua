@@ -24,6 +24,7 @@ _G._title_lowercase_words = {
   ['if'] = true,
   ['in'] = true,
   ['is'] = true,
+  ['isn'] = true,
   ['nor'] = true,
   ['of'] = true,
   ['off'] = true,
