@@ -492,7 +492,26 @@ require('utils.load').on_events(
       desc = 'Toggle undotree',
     })
 
-    map('n', '<Leader>U', vim.pack.update, { desc = 'Update plugins' })
+    map('n', '<Leader>Pu', vim.pack.update, { desc = 'Update plugins' })
+    map('n', '<Leader>Pd', function()
+      ---@type string[]
+      local plug_src_list = vim
+        .iter(vim.pack.get())
+        :map(function(data)
+          return vim.fs.basename(data.path)
+        end)
+        :totable()
+
+      vim.ui.select(
+        plug_src_list,
+        { prompt = 'Plugin to delete: ' },
+        function(choice)
+          if choice then
+            vim.pack.del({ choice })
+          end
+        end
+      )
+    end, { desc = 'Delete plugin' })
   end)
 )
 
