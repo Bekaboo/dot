@@ -9,6 +9,7 @@ local i = ls.insert_node
 local c = ls.choice_node
 local d = ls.dynamic_node
 local r = ls.restore_node
+local f = ls.function_node
 
 M.snippets = {
   us.msns({
@@ -180,11 +181,20 @@ M.snippets = {
     c(1, {
       un.fmtad(
         [[
-          function <name>(<params>) {
+          <func> <name>(<params>) {
           <body>
           }
         ]],
         {
+          ---@param args string[][]
+          func = f(function(args)
+            for _, line in ipairs(args[1] or {}) do
+              if line:match('%f[%w]await%f[%W]') then
+                return 'async function'
+              end
+            end
+            return 'function'
+          end, 3),
           name = r(1, 'name'),
           params = r(2, 'params'),
           body = un.body(3, 1),
@@ -192,12 +202,21 @@ M.snippets = {
       ),
       un.fmtad(
         [[
-          const <name> = (<params>) =>> {
+          const <name> = <async>(<params>) =>> {
           <body>
           }
         ]],
         {
           name = r(1, 'name'),
+          ---@param args string[][]
+          async = f(function(args)
+            for _, line in ipairs(args[1] or {}) do
+              if line:match('%f[%w]await%f[%W]') then
+                return 'async '
+              end
+            end
+            return ''
+          end, 3),
           params = r(2, 'params'),
           body = un.body(3, 1),
         }

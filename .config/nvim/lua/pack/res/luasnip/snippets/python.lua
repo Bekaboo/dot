@@ -9,6 +9,7 @@ local i = ls.insert_node
 local c = ls.choice_node
 local d = ls.dynamic_node
 local r = ls.restore_node
+local f = ls.function_node
 
 M.snippets = {
   us.msns({
@@ -660,10 +661,19 @@ M.snippets = {
     },
     un.fmtad(
       [[
-        def <name>(<args>)<ret>:
+        <def> <name>(<args>)<ret>:
         <body>
       ]],
       {
+        ---@param args string[][]
+        def = f(function(args)
+          for _, line in ipairs(args[1] or {}) do
+            if line:match('%f[%w]await%f[%W]') then
+              return 'async def'
+            end
+          end
+          return 'def'
+        end, 4),
         name = i(1, 'func'),
         args = i(2),
         ret = i(3),
