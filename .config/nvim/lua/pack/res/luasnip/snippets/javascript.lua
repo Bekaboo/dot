@@ -212,6 +212,50 @@ M.snippets = {
       },
     }
   ),
+  us.msn(
+    {
+      { trig = 'afn' },
+      { trig = 'afun' },
+      { trig = 'afunc' },
+      { trig = 'ame' },
+      { trig = 'ameth' },
+      common = { desc = 'Async function definition' },
+    },
+    c(1, {
+      un.fmtad(
+        [[
+          async function <name>(<params>) {
+          <body>
+          }
+        ]],
+        {
+          name = r(1, 'name'),
+          params = r(2, 'params'),
+          body = un.body(3, 1),
+        }
+      ),
+      un.fmtad(
+        [[
+          const <name> = async (<params>) =>> {
+          <body>
+          }
+        ]],
+        {
+          name = r(1, 'name'),
+          params = r(2, 'params'),
+          body = un.body(3, 1),
+        }
+      ),
+    }),
+    {
+      common_opts = {
+        stored = {
+          name = i(nil, 'functionName'),
+          params = i(nil),
+        },
+      },
+    }
+  ),
   us.mssn(
     {
       { trig = 'mn' },

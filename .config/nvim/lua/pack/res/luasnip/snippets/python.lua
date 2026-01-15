@@ -671,6 +671,27 @@ M.snippets = {
       }
     )
   ),
+  us.msn(
+    {
+      { trig = 'afn' },
+      { trig = 'afun' },
+      { trig = 'afunc' },
+      { trig = 'adef' },
+      common = { desc = 'Async function definition' },
+    },
+    un.fmtad(
+      [[
+        async def <name>(<args>)<ret>:
+        <body>
+      ]],
+      {
+        name = i(1, 'func'),
+        args = i(2),
+        ret = i(3),
+        body = un.body(4, 1, 'pass'),
+      }
+    )
+  ),
   us.mssn(
     {
       { trig = 'mn' },
@@ -698,6 +719,24 @@ M.snippets = {
     un.fmtad(
       [[
         def <name>(self<args>):
+        <body>
+      ]],
+      {
+        name = i(1, 'method_name'),
+        args = i(2),
+        body = un.body(3, 1, 'pass'),
+      }
+    )
+  ),
+  us.msn(
+    {
+      { trig = 'ame' },
+      { trig = 'ameth' },
+      common = { desc = 'Async method definition' },
+    },
+    un.fmtad(
+      [[
+        async def <name>(self<args>):
         <body>
       ]],
       {
