@@ -704,16 +704,43 @@ M.snippets = {
   ),
   us.mssn(
     {
+      { trig = 'amn' },
+      { trig = 'amain' },
+      common = { desc = 'Async main function' },
+    },
+    un.fmtad(
+      [[
+        async def amain(<args>)<ret>:
+        <body>
+      ]],
+      {
+        args = i(1),
+        ret = i(2),
+        body = un.body(3, 1, 'pass'),
+      }
+    )
+  ),
+  us.mssn(
+    {
       { trig = 'mn' },
       { trig = 'main' },
       common = { desc = 'main function' },
     },
     un.fmtad(
       [[
-        def main(<args>)<ret>:
+        <def> main(<args>)<ret>:
         <body>
       ]],
       {
+        ---@param args string[][]
+        def = f(function(args)
+          for _, line in ipairs(args[1] or {}) do
+            if line:match('%f[%w]await%f[%W]') then
+              return 'async def'
+            end
+          end
+          return 'def'
+        end, 3),
         args = i(1),
         ret = i(2),
         body = un.body(3, 1, 'pass'),
