@@ -15,6 +15,7 @@ return {
       -- Buffer with this name already exists'
       local ot_activate = ot.activate
 
+      ---@diagnostic disable-next-line: duplicate-set-field
       function ot.activate(...)
         pcall(ot_activate, ...)
       end
