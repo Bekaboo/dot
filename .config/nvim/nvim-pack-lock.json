@@ -5,7 +5,7 @@
       "src": "https://github.com/L3MON4D3/LuaSnip"
     },
     "blink.cmp": {
-      "rev": "b1b7740",
+      "rev": "820f1dd",
       "src": "https://github.com/saghen/blink.cmp"
     },
     "cellular-automaton.nvim": {
@@ -21,7 +21,7 @@
       "src": "https://github.com/shumphrey/fugitive-gitlab.vim"
     },
     "fzf-lua": {
-      "rev": "578a11f",
+      "rev": "abe5eca",
       "src": "https://github.com/ibhagwan/fzf-lua"
     },
     "gitsigns.nvim": {
@@ -57,7 +57,7 @@
       "src": "https://github.com/rcarriga/nvim-dap-ui"
     },
     "nvim-metals": {
-      "rev": "40f7b9e",
+      "rev": "7ed47cd",
       "src": "https://github.com/scalameta/nvim-metals"
     },
     "nvim-nio": {
@@ -69,7 +69,7 @@
       "src": "https://github.com/kylechui/nvim-surround"
     },
     "nvim-treesitter": {
-      "rev": "15b3416c",
+      "rev": "d19def46",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter",
       "version": "'main'"
     },
@@ -91,7 +91,7 @@
       "src": "https://github.com/kyazdani42/nvim-web-devicons"
     },
     "oil.nvim": {
-      "rev": "6b59a6c",
+      "rev": "f55b25e",
       "src": "https://github.com/stevearc/oil.nvim"
     },
     "one-small-step-for-vimkind": {
@@ -167,7 +167,7 @@
       "src": "https://github.com/vim-test/vim-test"
     },
     "vimtex": {
-      "rev": "3abfa1ff",
+      "rev": "f7073680",
       "src": "https://github.com/lervag/vimtex"
     },
     "which-key.nvim": {
