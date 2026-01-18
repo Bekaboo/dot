@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Sun 16 Nov 2025 12:32:12 AM EST
+-- Last Updated: Sat 17 Jan 2026 09:14:34 PM PST
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -316,7 +316,7 @@ local hlgroups = {
   DiagnosticVirtualTextWarn = { fg = c_grey },
   -- }}}
 
-  -- Filetype {{{2
+  -- FileType {{{2
   -- Git
   gitHash = { fg = c_grey },
 

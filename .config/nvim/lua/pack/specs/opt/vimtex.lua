@@ -4,7 +4,7 @@ return {
   data = {
     cmds = 'VimtexInverseSearch',
     events = {
-      event = 'Filetype',
+      event = 'FileType',
       pattern = 'tex',
     },
     preload = function()

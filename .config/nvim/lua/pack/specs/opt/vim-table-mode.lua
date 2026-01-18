@@ -3,7 +3,7 @@ return {
   src = 'https://github.com/dhruvasagar/vim-table-mode',
   data = {
     events = {
-      event = 'Filetype',
+      event = 'FileType',
       pattern = 'markdown',
     },
     preload = function()
@@ -45,7 +45,7 @@ return {
 
       table_mode_toggle()
 
-      vim.api.nvim_create_autocmd({ 'Filetype', 'BufEnter' }, {
+      vim.api.nvim_create_autocmd({ 'FileType', 'BufEnter' }, {
         group = vim.api.nvim_create_augroup('my.vim-table-mode.toggle', {}),
         callback = function(args)
           table_mode_toggle(args.buf)

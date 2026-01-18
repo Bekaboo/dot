@@ -3,7 +3,7 @@ return {
   src = 'https://github.com/jmbuhr/otter.nvim',
   data = {
     events = {
-      event = 'Filetype',
+      event = 'FileType',
       pattern = 'markdown',
     },
     postload = function()

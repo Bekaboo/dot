@@ -4,7 +4,7 @@ return {
   data = {
     build = 'cd app && npm install && cd - && git restore .',
     events = {
-      event = 'Filetype',
+      event = 'FileType',
       pattern = 'markdown',
     },
     postload = function()

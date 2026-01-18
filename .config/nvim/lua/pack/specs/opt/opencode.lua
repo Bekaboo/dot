@@ -108,7 +108,7 @@ return {
       local group = vim.api.nvim_create_augroup('my.opencode.settings', {})
 
       vim.api.nvim_create_autocmd('FileType', {
-        desc = 'Filetype settings for opencode buffers.',
+        desc = 'FileType settings for opencode buffers.',
         pattern = 'opencode*',
         group = group,
         callback = function(args)

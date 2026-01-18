@@ -6,7 +6,7 @@ return {
     postload = function()
       local ap_utils = require('ultimate-autopair.utils')
 
-      ---Filetype options memoization
+      ---FileType options memoization
       ---@type table<string, table<string, string|integer|boolean|table>>
       local ft_opts = vim.defaulttable(function()
         return {}
