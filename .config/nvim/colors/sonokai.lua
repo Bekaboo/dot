@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Sat 17 Jan 2026 09:14:34 PM PST
+-- Last Updated: Sun 18 Jan 2026 06:19:57 PM PST
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -237,6 +237,7 @@ local hlgroups = {
   ['@markup.raw'] = { fg = c_yellow },
   ['@markup.strikethrough'] = { strikethrough = true },
   ['@module.builtin'] = { link = 'Special' },
+  ['@property.yaml'] = { link = 'Special' },
   ['@punctuation'] = { link = 'Delimiter' },
   ['@string.special'] = { link = 'Special' },
   ['@string.special.url'] = { link = 'htmlLink' },

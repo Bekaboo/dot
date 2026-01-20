@@ -240,7 +240,6 @@ local hlgroups = {
   ['@string'] = { link = 'String' },
   ['@string.escape'] = { fg = c_other },
   ['@string.special'] = { link = 'SpecialChar' },
-  ['@string.yaml'] = { link = 'Normal' },
   ['@character'] = { link = 'Character' },
   ['@character.special'] = { link = 'SpecialChar' },
   ['@boolean'] = { link = 'Boolean' },

@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Sat 17 Jan 2026 09:14:34 PM PST
+-- Last Updated: Sun 18 Jan 2026 06:19:57 PM PST
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -230,6 +230,7 @@ local hlgroups = {
   -- Treesitter syntax {{{2
   ['@variable.member'] = { link = 'Field' },
   ['@property'] = { link = 'Field' },
+  ['@property.yaml'] = { link = 'Special' },
   ['@annotation'] = { link = 'Operator' },
   ['@comment'] = { link = 'Comment' },
   ['@none'] = { link = 'None' },
