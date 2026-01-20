@@ -49,12 +49,28 @@ M.snippets = {
       trig = 'op',
       desc = 'open()',
     },
-    un.fmtad('<fd> = open(<q><file><q>, encoding=<q><encoding><q><kwargs>)', {
+    un.fmtad('<fd> = open(<q><file><q>, mode=<q><mode><q><encoding>)', {
       fd = i(1, 'fd'),
       q = un.qt('"'),
       file = i(2, 'file'),
-      encoding = i(3, 'utf-8'),
-      kwargs = i(4),
+      mode = i(3, 'w'),
+      ---@param ref_texts string[][]
+      encoding = d(4, function(ref_texts)
+        for _, line in ipairs(ref_texts[1] or {}) do
+          -- Binary mode doesn't take an encoding argument
+          if line:match('b') then
+            return sn(nil, i(1))
+          end
+        end
+        return sn(
+          nil,
+          un.fmtad(', encoding=<q><enc><q><kwargs>', {
+            q = un.qt('"'),
+            enc = i(1, 'utf-8'),
+            kwargs = i(2),
+          })
+        )
+      end, 3),
     })
   ),
   us.msn(
@@ -66,14 +82,30 @@ M.snippets = {
     },
     un.fmtad(
       [[
-        with open(<q><file><q>, encoding=<q><encoding><q><kwargs>) as <fd>:
+        with open(<q><file><q>, mode=<q><mode><q><encoding>) as <fd>:
         <body>
       ]],
       {
         q = un.qt('"'),
         file = i(1, 'file'),
-        encoding = i(2, 'utf-8'),
-        kwargs = i(3),
+        mode = i(2, 'w'),
+        ---@param ref_texts string[][]
+        encoding = d(3, function(ref_texts)
+          for _, line in ipairs(ref_texts[1] or {}) do
+            -- Binary mode doesn't take an encoding argument
+            if line:match('b') then
+              return sn(nil, i(1))
+            end
+          end
+          return sn(
+            nil,
+            un.fmtad(', encoding=<q><enc><q><kwargs>', {
+              q = un.qt('"'),
+              enc = i(1, 'utf-8'),
+              kwargs = i(2),
+            })
+          )
+        end, 2),
         fd = i(4, 'fd'),
         body = un.body(5, 1, 'pass'),
       }
