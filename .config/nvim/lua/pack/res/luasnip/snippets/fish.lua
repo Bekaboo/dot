@@ -397,6 +397,23 @@ M.snippets = {
   ),
   us.sn(
     {
+      trig = 'clean',
+      desc = 'cleanup function',
+    },
+    un.fmtad(
+      [[
+        function <cleanup> {
+        <body>
+        }
+      ]],
+      {
+        cleanup = i(1, 'cleanup'),
+        body = un.body(2, 1, 'kill (jobs -p) 2>/dev/null; wait'),
+      }
+    )
+  ),
+  us.sn(
+    {
       trig = 'trap',
       desc = 'trap command',
     },
