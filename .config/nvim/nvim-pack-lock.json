@@ -5,7 +5,7 @@
       "src": "https://github.com/L3MON4D3/LuaSnip"
     },
     "blink.cmp": {
-      "rev": "820f1dd",
+      "rev": "b137f63",
       "src": "https://github.com/saghen/blink.cmp"
     },
     "cellular-automaton.nvim": {
@@ -13,7 +13,7 @@
       "src": "https://github.com/Eandrju/cellular-automaton.nvim"
     },
     "everforest": {
-      "rev": "b90025c",
+      "rev": "b03a031",
       "src": "https://github.com/sainnhe/everforest"
     },
     "fugitive-gitlab.vim": {
@@ -21,7 +21,7 @@
       "src": "https://github.com/shumphrey/fugitive-gitlab.vim"
     },
     "fzf-lua": {
-      "rev": "696f8c0",
+      "rev": "6b5bb1c",
       "src": "https://github.com/ibhagwan/fzf-lua"
     },
     "gitsigns.nvim": {
@@ -29,7 +29,7 @@
       "src": "https://github.com/lewis6991/gitsigns.nvim"
     },
     "gruvbox-material": {
-      "rev": "e4359a2",
+      "rev": "790afe9",
       "src": "https://github.com/sainnhe/gruvbox-material"
     },
     "img-clip.nvim": {
@@ -69,7 +69,7 @@
       "src": "https://github.com/kylechui/nvim-surround"
     },
     "nvim-treesitter": {
-      "rev": "ec034813",
+      "rev": "511e5ccf",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter",
       "version": "'main'"
     },
@@ -107,7 +107,7 @@
       "src": "https://github.com/sudo-tee/opencode.nvim"
     },
     "otter.nvim": {
-      "rev": "8b48e2f",
+      "rev": "6b75433",
       "src": "https://github.com/jmbuhr/otter.nvim"
     },
     "plenary.nvim": {
