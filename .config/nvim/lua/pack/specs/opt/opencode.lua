@@ -64,6 +64,7 @@ return {
       -- Default configuration with all available options
       require('opencode').setup({
         default_global_keymaps = false,
+        default_mode = 'plan',
         ui = {
           icons = { preset = vim.g.has_nf and 'nerdfonts' or 'text' },
           input = { text = { wrap = true } },
