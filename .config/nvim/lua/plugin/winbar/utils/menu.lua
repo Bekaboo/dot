@@ -4,7 +4,7 @@ local M = {}
 --- - If `opts.win` is specified, return the winbar menu attached the window;
 --- - If `opts.win` is not specified, return all opened winbar menus
 ---@param opts {win: integer?}?
----@return (winbar.menu?)|table<integer, winbar.menu>
+---@return (my.winbar.menu?)|table<integer, my.winbar.menu>
 function M.get(opts)
   opts = opts or {}
   if opts.win then
@@ -14,7 +14,7 @@ function M.get(opts)
 end
 
 ---Get current menu
----@return winbar.menu?
+---@return my.winbar.menu?
 function M.get_current()
   return M.get({ win = vim.api.nvim_get_current_win() })
 end
@@ -45,7 +45,7 @@ function M.exec(method, opts)
   return results
 end
 
----@type winbar.menu?
+---@type my.winbar.menu?
 local last_hovered_menu = nil
 
 ---Update menu hover highlights given the mouse position
@@ -67,7 +67,7 @@ function M.update_hover_hl(mouse)
   last_hovered_menu = menu
 end
 
----@type winbar.menu?
+---@type my.winbar.menu?
 local last_previewed_menu = nil
 
 ---Update menu preview given the mouse position
@@ -89,7 +89,7 @@ function M.update_preview(mouse)
   last_previewed_menu = menu
 end
 
----@class winbar.menu.sel.opts
+---@class my.winbar.menu.sel.opts
 ---Text to be displayed at the top of the menu
 ---@field prompt? string
 ---Function to format each item in the menu.
@@ -97,13 +97,13 @@ end
 ---The second return value is a list of virtual text chunks to be displayed below the item. If
 ---nothing is returned for the second value, no virtual text will be displayed.
 ---@field format_item? fun(item: any): string, string[][]?
----@field preview? fun(self: winbar.symbol, item: any, idx: integer)
----@field preview_close? fun(self: winbar.symbol, item: any, idx: integer)
+---@field preview? fun(self: my.winbar.symbol, item: any, idx: integer)
+---@field preview_close? fun(self: my.winbar.symbol, item: any, idx: integer)
 
 ---`vim.ui.select()` replacement
 ---@generic T string|table
 ---@param items T[] list of items to be selected
----@param opts winbar.menu.sel.opts
+---@param opts my.winbar.menu.sel.opts
 ---@param on_choice fun(T?, integer?): nil
 function M.select(items, opts, on_choice)
   if not items then

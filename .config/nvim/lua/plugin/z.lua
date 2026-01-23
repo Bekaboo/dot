@@ -41,13 +41,13 @@ local function z_args_esc(args)
   )
 end
 
----@class z.cmd
+---@class my.z.cmd
 ---@field jump fun(trig?: string[]): string[]
 ---@field list fun(trig?: string[]): string[]
 ---@field add fun(dir: string): string[]
 
----@alias z.backend { cmd: z.cmd, exists: fun(): boolean }
----@type table<string, z.backend>
+---@alias my.z.backend { cmd: my.z.cmd, exists: fun(): boolean }
+---@type table<string, my.z.backend>
 local z_backends = {
   z = {
     exists = function()
@@ -85,7 +85,7 @@ local z_backends = {
   },
 }
 
----@type z.backend
+---@type my.z.backend
 local z = (function()
   for _, backend in pairs(z_backends) do
     if backend.exists() then

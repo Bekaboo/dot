@@ -1,4 +1,4 @@
----@type pack.spec
+---@type my.pack.spec
 return {
   src = 'https://github.com/L3MON4D3/LuaSnip',
   data = {
@@ -155,7 +155,7 @@ return {
 
       ---Convert a range into lsp format range
       ---@param range integer[][] 0-based range
-      ---@return lsp.range
+      ---@return my.lsp.range
       local function range_convert(range)
         local s = range[1]
         local e = range[2]

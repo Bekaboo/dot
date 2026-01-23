@@ -5,21 +5,21 @@ local utils = require('plugin.winbar.utils')
 local initialized = false
 local groupid = vim.api.nvim_create_augroup('my.winbar.sources.markdown', {})
 
----@class winbar.sources.markdown.symbol
+---@class my.winbar.sources.markdown.symbol
 ---@field name string
 ---@field level integer
 ---@field lnum integer
 local markdown_heading_symbol_t = {}
 markdown_heading_symbol_t.__index = markdown_heading_symbol_t
 
----@class winbar.sources.markdown.symbol.opts
+---@class my.winbar.sources.markdown.symbol.opts
 ---@field name? string
 ---@field level? integer
 ---@field lnum? integer
 
 ---Create a new markdown heading symbol object
----@param opts winbar.sources.markdown.symbol.opts?
----@return winbar.sources.markdown.symbol
+---@param opts my.winbar.sources.markdown.symbol.opts?
+---@return my.winbar.sources.markdown.symbol
 function markdown_heading_symbol_t:new(opts)
   return setmetatable(
     vim.tbl_deep_extend('force', {
@@ -31,15 +31,15 @@ function markdown_heading_symbol_t:new(opts)
   )
 end
 
----@class winbar.sources.markdown.symbol_parsed_list
+---@class my.winbar.sources.markdown.symbol_parsed_list
 ---@field end { lnum: integer, in_codeblock: boolean }
----@field symbols winbar.sources.markdown.symbol[]
+---@field symbols my.winbar.sources.markdown.symbol[]
 local markdown_heading_symbols_parsed_list_t = {}
 markdown_heading_symbols_parsed_list_t.__index =
   markdown_heading_symbols_parsed_list_t
 
 ---Create a new markdown heading symbols parsed object
----@param opts winbar.sources.markdown.symbol_parsed_list?
+---@param opts my.winbar.sources.markdown.symbol_parsed_list?
 function markdown_heading_symbols_parsed_list_t:new(opts)
   return setmetatable(
     vim.tbl_deep_extend('force', {
@@ -50,7 +50,7 @@ function markdown_heading_symbols_parsed_list_t:new(opts)
   )
 end
 
----@type winbar.sources.markdown.symbol_parsed_list[]
+---@type my.winbar.sources.markdown.symbol_parsed_list[]
 local markdown_heading_buf_symbols = {}
 setmetatable(markdown_heading_buf_symbols, {
   __index = function(_, k)
@@ -111,12 +111,12 @@ local function parse_buf(buf, lnum_end, incremental)
 end
 
 ---Convert a markdown heading symbol into a winbar symbol
----@param symbol winbar.sources.markdown.symbol markdown heading symbol
----@param symbols winbar.sources.markdown.symbol[] markdown heading symbols
+---@param symbol my.winbar.sources.markdown.symbol markdown heading symbol
+---@param symbols my.winbar.sources.markdown.symbol[] markdown heading symbols
 ---@param list_idx integer index of the symbol in the symbols list
 ---@param buf integer buffer handler
 ---@param win integer window handler
----@return winbar.symbol
+---@return my.winbar.symbol
 local function convert(symbol, symbols, list_idx, buf, win)
   local kind = 'MarkdownH' .. symbol.level
   return bar.winbar_symbol:new(setmetatable({
@@ -129,7 +129,7 @@ local function convert(symbol, symbols, list_idx, buf, win)
       heading_symbol = symbol,
     },
   }, {
-    ---@param self winbar.symbol
+    ---@param self my.winbar.symbol
     __index = function(self, k)
       parse_buf(buf, -1, true) -- Parse whole buffer before opening menu
       if k == 'children' then
@@ -289,7 +289,7 @@ end
 ---@param buf integer buffer handler
 ---@param win integer window handler
 ---@param cursor integer[] cursor position
----@return winbar.symbol[] symbols winbar symbols
+---@return my.winbar.symbol[] symbols winbar symbols
 local function get_symbols(buf, win, cursor)
   buf = vim._resolve_bufnr(buf)
   if

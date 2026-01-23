@@ -1,4 +1,4 @@
----@type pack.spec
+---@type my.pack.spec
 return {
   src = 'https://github.com/ibhagwan/fzf-lua',
   data = {

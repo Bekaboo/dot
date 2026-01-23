@@ -22,7 +22,7 @@ local function cc_resolve(cc)
 end
 
 ---Default options
----@class cc.opts
+---@class my.cc.opts
 local opts = {
   scope = function()
     return vim.fn.strdisplaywidth(vim.fn.getline('.'))
@@ -184,7 +184,7 @@ local function cc_update(winid)
 end
 
 ---Setup colorcolumn
----@param o cc.opts?
+---@param o my.cc.opts?
 local function setup(o)
   if vim.g.loaded_colorcolumn ~= nil then
     return

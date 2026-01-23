@@ -1,4 +1,4 @@
----@type pack.spec
+---@type my.pack.spec
 return {
   src = 'https://github.com/nvim-treesitter/nvim-treesitter-textobjects',
   -- 'main' branch uses `vim.treesitter` module and does not depend on

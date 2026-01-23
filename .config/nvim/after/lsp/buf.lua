@@ -1,4 +1,4 @@
----@type lsp.config
+---@type my.lsp.config
 return {
   filetypes = { 'proto' },
   cmd = { 'buf', 'beta', 'lsp' },

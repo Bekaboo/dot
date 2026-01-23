@@ -33,7 +33,7 @@ function M.command_map(trig, command, opts)
   end, vim.tbl_deep_extend('keep', { expr = true }, opts or {}))
 end
 
----@class key.def
+---@class my.key.def
 ---@field lhs string
 ---@field lhsraw string
 ---@field rhs string?
@@ -50,7 +50,7 @@ end
 ---Get keymap definition
 ---@param mode string
 ---@param lhs string
----@return key.def
+---@return my.key.def
 function M.get(mode, lhs)
   local lhs_keycode = vim.keycode(lhs)
   for _, map in ipairs(vim.api.nvim_buf_get_keymap(0, mode)) do
@@ -126,7 +126,7 @@ function M.feed(keys, modes, escape_ks)
   )
 end
 
----@param def key.def
+---@param def my.key.def
 ---@return function
 function M.fallback_fn(def)
   local modes = def.noremap and 'in' or 'im'

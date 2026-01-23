@@ -1,4 +1,4 @@
----@type pack.spec
+---@type my.pack.spec
 return {
   src = 'https://github.com/jbyuki/one-small-step-for-vimkind',
   data = {

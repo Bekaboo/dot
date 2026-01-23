@@ -128,9 +128,9 @@ function M.diff(paths)
     return #vim.tbl_keys(path_set)
   end)()
 
-  ---@alias ipath { [1]: string, [2]: integer }
+  ---@alias my.ipath { [1]: string, [2]: integer }
   ---Paths with index
-  ---@type ipath[]
+  ---@type my.ipath[]
   local ipaths = {}
   for i, path in ipairs(paths) do
     table.insert(ipaths, { path, i })
@@ -138,11 +138,11 @@ function M.diff(paths)
 
   ---Groups of paths with the same tail
   ---key:val = tail:ihead[]
-  ---@type table<string, ipath[]>
+  ---@type table<string, my.ipath[]>
   local groups = { [''] = ipaths }
 
   while #vim.tbl_keys(groups) < n_paths do
-    local g = {} ---@type table<string, ipath[]>
+    local g = {} ---@type table<string, my.ipath[]>
     for tail, iheads in pairs(groups) do
       for _, ihead in ipairs(iheads) do
         local head = ihead[1]

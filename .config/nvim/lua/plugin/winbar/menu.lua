@@ -4,34 +4,34 @@ local groupid = vim.api.nvim_create_augroup('my.winbar.menu', {})
 local configs = require('plugin.winbar.configs')
 
 ---Lookup table for winbar menus
----@type table<integer, winbar.menu>
+---@type table<integer, my.winbar.menu>
 _G._winbar.menus = {}
 
----@class winbar.menu.hl_info
+---@class my.winbar.menu.hl_info
 ---@field start integer byte-indexed, 0-indexed, start inclusive
 ---@field end integer byte-indexed, 0-indexed, end exclusive
 ---@field hlgroup string
 ---@field ns integer? namespace id, nil if using default namespace
 
----@class winbar.menu.entry
----@field separator winbar.symbol
+---@class my.winbar.menu.entry
+---@field separator my.winbar.symbol
 ---@field padding {left: integer, right: integer}
----@field components winbar.symbol[]
----@field menu winbar.menu? the menu the entry belongs to
+---@field components my.winbar.symbol[]
+---@field menu my.winbar.menu? the menu the entry belongs to
 ---@field idx integer? the index of the entry in the menu
 local winbar_menu_entry = {}
 winbar_menu_entry.__index = winbar_menu_entry
 
----@class winbar.menu.entry.opts
----@field separator winbar.symbol?
+---@class my.winbar.menu.entry.opts
+---@field separator my.winbar.symbol?
 ---@field padding {left: integer, right: integer}?
----@field components winbar.symbol[]?
----@field menu winbar.menu? the menu the entry belongs to
+---@field components my.winbar.symbol[]?
+---@field menu my.winbar.menu? the menu the entry belongs to
 ---@field idx integer? the index of the entry in the menu
 
 ---Create a winbar menu entry instance
----@param opts winbar.menu.entry.opts?
----@return winbar.menu.entry
+---@param opts my.winbar.menu.entry.opts?
+---@return my.winbar.menu.entry
 function winbar_menu_entry:new(opts)
   local entry = setmetatable(
     vim.tbl_deep_extend('force', {
@@ -56,9 +56,9 @@ end
 ---Concatenate inside a winbar menu entry to get the final string
 ---and highlight information of the entry
 ---@return string str
----@return winbar.menu.hl_info[] hl_info
+---@return my.winbar.menu.hl_info[] hl_info
 function winbar_menu_entry:cat()
-  local components_with_sep = {} ---@type winbar.symbol[]
+  local components_with_sep = {} ---@type my.winbar.symbol[]
   for component_idx, component in ipairs(self.components) do
     if component_idx > 1 then
       table.insert(components_with_sep, self.separator)
@@ -101,7 +101,7 @@ end
 
 ---Get the first clickable component in the winbar menu entry
 ---@param offset integer? offset from the beginning of the entry, default 0
----@return winbar.symbol?
+---@return my.winbar.symbol?
 ---@return {start: integer, end: integer}? range of the clickable component in the menu, byte-indexed, 0-indexed, start-inclusive, end-exclusive
 function winbar_menu_entry:first_clickable(offset)
   offset = offset or 0
@@ -118,7 +118,7 @@ end
 ---Get the component at the given position in the winbar menu
 ---@param col integer 0-indexed, byte-indexed
 ---@param look_ahead boolean? whether to look ahead for the next component if the given position does not contain a component
----@return winbar.symbol?
+---@return my.winbar.symbol?
 ---@return {start: integer, end: integer}? range of the component in the menu, byte-indexed, 0-indexed, start-inclusive, end-exclusive
 function winbar_menu_entry:get_component_at(col, look_ahead)
   local col_offset = self.padding.left
@@ -140,7 +140,7 @@ end
 
 ---Find the previous clickable component in the winbar menu entry
 ---@param col integer byte-indexed, 0-indexed column position
----@return winbar.symbol?
+---@return my.winbar.symbol?
 ---@return {start: integer, end: integer}? range of the clickable component in the menu, byte-indexed, 0-indexed, start-inclusive, end-exclusive
 function winbar_menu_entry:prev_clickable(col)
   local col_start = self.padding.left
@@ -158,7 +158,7 @@ end
 
 ---Find the next clickable component in the winbar menu entry
 ---@param col integer byte-indexed, 0-indexed column position
----@return winbar.symbol?
+---@return my.winbar.symbol?
 ---@return {start: integer, end: integer}? range of the clickable component in the menu, byte-indexed, 0-indexed, start-inclusive, end-exclusive
 function winbar_menu_entry:next_clickable(col)
   local col_start = self.padding.left
@@ -171,42 +171,42 @@ function winbar_menu_entry:next_clickable(col)
   end
 end
 
----@class winbar.menu
+---@class my.winbar.menu
 ---@field buf integer?
 ---@field win integer?
 ---@field is_opened boolean?
----@field entries winbar.menu.entry[]
+---@field entries my.winbar.menu.entry[]
 ---@field win_configs table window configuration, value can be a function
 ---@field _win_configs table evaluated window configuration
 ---@field cursor integer[]? initial cursor position
 ---@field prev_win integer? previous window, assigned when calling new() or automatically determined in open()
----@field sub_menu winbar.menu? submenu, assigned when calling new() or automatically determined when a new menu opens
----@field prev_menu winbar.menu? previous menu, assigned when calling new() or automatically determined in open()
+---@field sub_menu my.winbar.menu? submenu, assigned when calling new() or automatically determined when a new menu opens
+---@field prev_menu my.winbar.menu? previous menu, assigned when calling new() or automatically determined in open()
 ---@field clicked_at integer[]? last position where the menu was clicked, byte-indexed, 1,0-indexed
 ---@field prev_cursor integer[]? previous cursor position
----@field symbol_previewed winbar.symbol? symbol being previewed
+---@field symbol_previewed my.winbar.symbol? symbol being previewed
 ---@field scrollbar { thumb: integer, background: integer }? scrollbar window handlers
 local winbar_menu = {}
 winbar_menu.__index = winbar_menu
 
----@class winbar.menu.opts
+---@class my.winbar.menu.opts
 ---@field buf integer?
 ---@field win integer?
 ---@field is_opened boolean?
----@field entries winbar.menu.entry[]?
+---@field entries my.winbar.menu.entry[]?
 ---@field win_configs table? window configuration, value can be a function
 ---@field _win_configs table? evaluated window configuration
 ---@field cursor integer[]? initial cursor position
 ---@field prev_win integer? previous window, assigned when calling new() or automatically determined in open()
----@field sub_menu winbar.menu? submenu, assigned when calling new() or automatically determined when a new menu opens
----@field prev_menu winbar.menu? previous menu, assigned when calling new() or automatically determined in open()
+---@field sub_menu my.winbar.menu? submenu, assigned when calling new() or automatically determined when a new menu opens
+---@field prev_menu my.winbar.menu? previous menu, assigned when calling new() or automatically determined in open()
 ---@field clicked_at integer[]? last position where the menu was clicked, byte-indexed, 1,0-indexed
 ---@field prev_cursor integer[]? previous cursor position
----@field symbol_previewed winbar.symbol? symbol being previewed
+---@field symbol_previewed my.winbar.symbol? symbol being previewed
 
 ---Create a winbar menu instance
----@param opts winbar.menu.opts?
----@return winbar.menu
+---@param opts my.winbar.menu.opts?
+---@return my.winbar.menu
 function winbar_menu:new(opts)
   local menu = setmetatable(
     vim.tbl_deep_extend('force', {
@@ -242,7 +242,7 @@ function winbar_menu:del()
 end
 
 ---Retrieves the root menu (first menu opened from winbar)
----@return winbar.menu?
+---@return my.winbar.menu?
 function winbar_menu:root()
   local current = self
   while current and current.prev_menu do
@@ -278,7 +278,7 @@ end
 ---Get the component at the given position in the winbar menu
 ---@param pos integer[] 1,0-indexed, byte-indexed
 ---@param look_ahead boolean? whether to look ahead for the component at the given position
----@return winbar.symbol?
+---@return my.winbar.symbol?
 ---@return {start: integer, end: integer}? range of the component in the menu, byte-indexed, 0-indexed, start-inclusive, end-exclusive
 function winbar_menu:get_component_at(pos, look_ahead)
   if not self.entries or vim.tbl_isempty(self.entries) then
@@ -312,7 +312,7 @@ end
 
 ---"Click" the component in the winbar menu
 ---Side effects: update self.clicked_at, close sub-menus
----@param symbol winbar.symbol
+---@param symbol my.winbar.symbol
 ---@param min_width integer?
 ---@param n_clicks integer?
 ---@param button string?
@@ -382,7 +382,7 @@ function winbar_menu:make_buf()
   local max_sym_icon_len = math.max(
     0,
     unpack(
-      ---@param entry winbar.menu.entry
+      ---@param entry my.winbar.menu.entry
       vim.tbl_map(function(entry)
         local sym = entry.components[2]
         return (not sym or not sym.icon) and 0
@@ -414,7 +414,7 @@ function winbar_menu:make_buf()
 
   -- Get lines and highlights for each line
   local lines = {} ---@type string[]
-  local hl_info = {} ---@type winbar.menu.hl_info[][]
+  local hl_info = {} ---@type my.winbar.menu.hl_info[][]
   for _, entry in ipairs(self.entries) do
     local line, entry_hl_info = entry:cat()
     -- Pad lines with spaces to the width of the window
@@ -641,7 +641,7 @@ function winbar_menu:close_scrollbar()
 end
 
 ---Override menu options
----@param opts winbar.symbol.opts?
+---@param opts my.winbar.symbol.opts?
 ---@return nil
 function winbar_menu:override(opts)
   if not opts then
@@ -662,7 +662,7 @@ end
 
 ---Open the menu
 ---Side effect: change self.win and self.buf
----@param opts winbar.symbol.opts?
+---@param opts my.winbar.symbol.opts?
 ---@return nil
 function winbar_menu:open(opts)
   if self.is_opened then
@@ -796,7 +796,7 @@ function winbar_menu:quick_navigation(new_cursor)
 end
 
 ---Toggle the menu
----@param opts winbar.symbol.opts? menu options passed to self:open()
+---@param opts my.winbar.symbol.opts? menu options passed to self:open()
 ---@return nil
 function winbar_menu:toggle(opts)
   if self.is_opened then

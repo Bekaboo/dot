@@ -1,4 +1,4 @@
----@type pack.spec
+---@type my.pack.spec
 return {
   src = 'https://github.com/junegunn/vim-easy-align',
   data = {

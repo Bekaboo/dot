@@ -7,12 +7,12 @@ function M.is_active(buf)
   return vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].syntax ~= ''
 end
 
----@class syn.get_group.opts
+---@class my.syn.get_group.opts
 ---@field bufnr? integer
 ---@field depth? integer
 
 ---@param names string|string[]|fun(types: string|string[]): boolean type of node, or function to check node type
----@param opts? syn.get_group.opts
+---@param opts? my.syn.get_group.opts
 ---@return integer?
 function M.find_group(names, opts)
   opts = opts or {}

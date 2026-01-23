@@ -2,7 +2,7 @@ local utils = require('plugin.winbar.utils')
 local icons = utils.static.icons
 local M = {}
 
----@class winbar.config.opts
+---@class my.winbar.config.opts
 M.opts = {
   icons = {
     kinds = {
@@ -21,7 +21,7 @@ M.opts = {
     },
   },
   symbol = {
-    ---@type fun(symbol: winbar.symbol, min_width: integer?, n_clicks: integer?, button: string?, modifiers: string?)|false?
+    ---@type fun(symbol: my.winbar.symbol, min_width: integer?, n_clicks: integer?, button: string?, modifiers: string?)|false?
     on_click = function(symbol)
       -- Update current context highlights if the symbol
       -- is shown inside a menu
@@ -33,7 +33,7 @@ M.opts = {
 
       -- Determine menu configs
       local prev_win = nil ---@type integer?
-      local entries_source = nil ---@type winbar.symbol[]?
+      local entries_source = nil ---@type my.winbar.symbol[]?
       local init_cursor = nil ---@type integer[]?
       local win_configs = {}
       if symbol.bar then -- If symbol inside a winbar
@@ -89,7 +89,7 @@ M.opts = {
         prev_win = prev_win,
         cursor = init_cursor,
         win_configs = win_configs,
-        ---@param sym winbar.symbol
+        ---@param sym my.winbar.symbol
         entries = vim.tbl_map(function(sym)
           local menu_indicator_icon = configs.opts.icons.ui.menu.indicator
           local menu_indicator_on_click = nil
@@ -200,7 +200,7 @@ M.opts = {
       },
     },
     hover = true,
-    ---@type winbar.source[]|fun(buf: integer, win: integer): winbar.source[]
+    ---@type my.winbar.source[]|fun(buf: integer, win: integer): my.winbar.source[]
     sources = function(buf)
       local sources = require('plugin.winbar.sources')
       return vim.bo[buf].ft == 'markdown' and { sources.markdown }
@@ -291,8 +291,8 @@ M.opts = {
         end
       end,
     },
-    ---@alias winbar.menu.win_config any|fun(menu: winbar.menu):any
-    ---@type table<string, winbar.menu.win_config>
+    ---@alias my.winbar.menu.win_config any|fun(menu: my.winbar.menu):any
+    ---@type table<string, my.winbar.menu.win_config>
     ---@see vim.api.nvim_open_win
     win_configs = {
       style = 'minimal',
@@ -307,7 +307,7 @@ M.opts = {
             and menu.prev_menu.clicked_at[1] - vim.fn.line('w0')
           or 0
       end,
-      ---@param menu winbar.menu
+      ---@param menu my.winbar.menu
       col = function(menu)
         if menu.prev_menu then
           return menu.prev_menu._win_configs.width
@@ -482,7 +482,7 @@ M.opts = {
 }
 
 ---Set winbar options
----@param new_opts winbar.config.opts?
+---@param new_opts my.winbar.config.opts?
 function M.set(new_opts)
   M.opts = vim.tbl_deep_extend('force', M.opts, new_opts or {})
 end

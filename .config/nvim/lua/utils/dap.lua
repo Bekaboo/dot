@@ -1,11 +1,11 @@
 local M = {}
 
----@class dap.cache
+---@class my.dap.cache
 ---@field progs table<string, string> maps source file path to program path
 ---@field args table<string, string> maps source file path to arguments
 
 ---Create a new cache table for DAP program paths and arguments
----@return dap.cache
+---@return my.dap.cache
 function M.new_cache()
   return {
     progs = {},
@@ -15,7 +15,7 @@ end
 
 ---Returns a function that gets arguments for the current buffer, using cached
 ---arguments if arguments are provided before
----@param cache dap.cache
+---@param cache my.dap.cache
 ---@return fun(): string[]?
 function M.get_args(cache)
   return function()
@@ -39,7 +39,7 @@ end
 
 ---Return a function that gets the path to the executable for the current
 ---buffer, using cached executable path when possible
----@param cache dap.cache
+---@param cache my.dap.cache
 ---@return fun(): string?
 function M.get_prog(cache)
   return function()

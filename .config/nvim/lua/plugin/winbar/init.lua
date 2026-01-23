@@ -30,13 +30,13 @@ _G._winbar.callbacks = setmetatable({}, {
   end,
 })
 
----@type table<integer, table<integer, winbar.bar>>
+---@type table<integer, table<integer, my.winbar.bar>>
 _G._winbar.bars = setmetatable({}, {
   __index = function(self, buf)
     self[buf] = setmetatable({}, {
       __index = function(this, win)
         this[win] = bar.winbar:new({
-          sources = configs.eval(configs.opts.bar.sources, buf, win) --[=[@as winbar.source[]]=],
+          sources = configs.eval(configs.opts.bar.sources, buf, win) --[=[@as my.winbar.source[]]=],
         })
         return this[win]
       end,
@@ -46,7 +46,7 @@ _G._winbar.bars = setmetatable({}, {
 })
 
 ---Setup winbar
----@param opts winbar.config.opts?
+---@param opts my.winbar.config.opts?
 local function setup(opts)
   -- Allow following calls to `setup()` to change config options
   configs.set(opts)

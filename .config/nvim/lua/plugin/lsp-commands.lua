@@ -1,6 +1,6 @@
 local utils = require('utils')
 
----@class lsp.cmd.parsed_args : cmd.parsed_args
+---@class my.lsp.cmd.parsed_args : my.cmd.parsed_args
 ---@field apply boolean|nil
 ---@field async boolean|nil
 ---@field bufnr integer|nil
@@ -47,7 +47,7 @@ local utils = require('utils')
 ---@param fargs string[] list of arguments
 ---@param fn_name_alt string|nil alternative function name
 ---@return string|nil fn_name corresponding LSP / diagnostic function name
----@return lsp.cmd.parsed_args parsed the parsed arguments
+---@return my.lsp.cmd.parsed_args parsed the parsed arguments
 local function parse_cmdline_args(fargs, fn_name_alt)
   local fn_name = fn_name_alt or fargs[1] and table.remove(fargs, 1) or nil
   local parsed = utils.cmd.parse_cmdline_args(fargs)
@@ -57,7 +57,7 @@ end
 ---@type string<table, my.lsp.cmd.arg_handler>
 local subcommand_arg_handler = {
   ---LSP command argument handler for functions that receive a range
-  ---@param args lsp.cmd.parsed_args
+  ---@param args my.lsp.cmd.parsed_args
   ---@param tbl table information passed to the command
   ---@return table args
   range = function(args, tbl)
@@ -70,7 +70,7 @@ local subcommand_arg_handler = {
     return args
   end,
   ---Extract the first item from a table, expand it to absolute path if possible
-  ---@param args lsp.cmd.parsed_args
+  ---@param args my.lsp.cmd.parsed_args
   ---@return any
   item = function(args)
     for _, item in pairs(args) do -- luacheck: ignore 512
@@ -79,7 +79,7 @@ local subcommand_arg_handler = {
   end,
   ---Convert the args of the form '<id_1> (<name_1>) <id_2> (<name_2) ...' to
   ---list of client ids
-  ---@param args lsp.cmd.parsed_args
+  ---@param args my.lsp.cmd.parsed_args
   ---@return integer[]
   lsp_client_ids = function(args)
     local ids = {}
@@ -184,13 +184,13 @@ local subcommand_opt_vals = {
   },
 }
 
----@alias my.lsp.cmd.arg_handler fun(args: lsp.cmd.parsed_args, tbl: table): ...?
+---@alias my.lsp.cmd.arg_handler fun(args: my.lsp.cmd.parsed_args, tbl: table): ...?
 ---@alias my.lsp.cmd.params string[]
 ---@alias my.lsp.cmd.opts table
 ---@alias my.lsp.cmd.fn fun(...?): ...?
 ---@alias my.lsp.cmd.completion fun(arglead: string, cmdline: string, cursorpos: integer): string[]
 
----@class lsp.cmd.info
+---@class my.lsp.cmd.info
 ---@field arg_handler my.lsp.cmd.arg_handler?
 ---@field params my.lsp.cmd.params?
 ---@field opts my.lsp.cmd.opts?
@@ -199,7 +199,7 @@ local subcommand_opt_vals = {
 
 local subcommands = {
   ---LSP subcommands
-  ---@type table<string, lsp.cmd.info>
+  ---@type table<string, my.lsp.cmd.info>
   lsp = {
     info = {
       opts = {
@@ -303,14 +303,14 @@ local subcommands = {
       end,
     },
     references = {
-      ---@param args lsp.cmd.parsed_args
+      ---@param args my.lsp.cmd.parsed_args
       arg_handler = function(args)
         return args.context, args.options
       end,
       opts = { 'context', 'options.on_list' },
     },
     rename = {
-      ---@param args lsp.cmd.parsed_args
+      ---@param args my.lsp.cmd.parsed_args
       arg_handler = function(args)
         return args.new_name or args[1], args.options
       end,
@@ -321,7 +321,7 @@ local subcommands = {
       },
     },
     workspace_symbol = {
-      ---@param args lsp.cmd.parsed_args
+      ---@param args my.lsp.cmd.parsed_args
       arg_handler = function(args)
         return args.query, args.options
       end,
@@ -346,9 +346,9 @@ local subcommands = {
       },
     },
     auto_format = {
-      ---@param args lsp.cmd.parsed_args
+      ---@param args my.lsp.cmd.parsed_args
       ---@param tbl table information passed to the command
-      ---@return lsp.cmd.parsed_args args
+      ---@return my.lsp.cmd.parsed_args args
       ---@return table tbl
       arg_handler = function(args, tbl)
         args.format = subcommand_arg_handler.range(args, tbl).format
@@ -378,7 +378,7 @@ local subcommands = {
         ['local'] = subcommand_opt_vals.bool,
         ['global'] = subcommand_opt_vals.bool,
       },
-      ---@param args lsp.cmd.parsed_args
+      ---@param args my.lsp.cmd.parsed_args
       ---@param tbl table information passed to the command
       fn_override = function(args, tbl)
         local scope = vim[args.global and 'g' or 'b']
@@ -705,10 +705,10 @@ local subcommands = {
   },
 
   ---Diagnostic subcommands
-  ---@type table<string, lsp.cmd.info>
+  ---@type table<string, my.lsp.cmd.info>
   diagnostic = {
     config = {
-      ---@param args lsp.cmd.parsed_args
+      ---@param args my.lsp.cmd.parsed_args
       arg_handler = function(args)
         return args.opts, args.namespace
       end,
@@ -761,7 +761,7 @@ local subcommands = {
       },
     },
     disable = {
-      ---@param args lsp.cmd.parsed_args
+      ---@param args my.lsp.cmd.parsed_args
       arg_handler = function(args)
         return args.bufnr, args.namespace
       end,
@@ -774,7 +774,7 @@ local subcommands = {
       end,
     },
     enable = {
-      ---@param args lsp.cmd.parsed_args
+      ---@param args my.lsp.cmd.parsed_args
       arg_handler = function(args)
         return args.bufnr, args.namespace
       end,
@@ -791,7 +791,7 @@ local subcommands = {
       end,
     },
     get = {
-      ---@param args lsp.cmd.parsed_args
+      ---@param args my.lsp.cmd.parsed_args
       arg_handler = function(args)
         return args.bufnr, args.opts
       end,
@@ -893,7 +893,7 @@ local subcommands = {
       },
     },
     hide = {
-      ---@param args lsp.cmd.parsed_args
+      ---@param args my.lsp.cmd.parsed_args
       arg_handler = function(args)
         return args.namespace, args.bufnr
       end,
@@ -903,7 +903,7 @@ local subcommands = {
       },
     },
     is_enabled = {
-      ---@param args lsp.cmd.parsed_args
+      ---@param args my.lsp.cmd.parsed_args
       arg_handler = function(args)
         return args.bufnr, args.namespace
       end,
@@ -916,7 +916,7 @@ local subcommands = {
       end,
     },
     match = {
-      ---@param args lsp.cmd.parsed_args
+      ---@param args my.lsp.cmd.parsed_args
       arg_handler = function(args)
         return args.str,
           args.pat,
@@ -951,7 +951,7 @@ local subcommands = {
       },
     },
     reset = {
-      ---@param args lsp.cmd.parsed_args
+      ---@param args my.lsp.cmd.parsed_args
       arg_handler = function(args)
         return args.namespace, args.bufnr
       end,
@@ -961,7 +961,7 @@ local subcommands = {
       },
     },
     set = {
-      ---@param args lsp.cmd.parsed_args
+      ---@param args my.lsp.cmd.parsed_args
       arg_handler = function(args)
         return args.namespace, args.bufnr, args.diagnostics, args.opts
       end,
@@ -1018,7 +1018,7 @@ local subcommands = {
       },
     },
     show = {
-      ---@param args lsp.cmd.parsed_args
+      ---@param args my.lsp.cmd.parsed_args
       arg_handler = function(args)
         return args.namespace, args.bufnr, args.diagnostics, args.opts
       end,
@@ -1068,7 +1068,7 @@ local subcommands = {
 }
 
 ---Get meta command function
----@param subcommand_info_list lsp.cmd.info[] subcommands information
+---@param subcommand_info_list my.lsp.cmd.info[] subcommands information
 ---@param fn_scope table|fun(name: string): function scope of corresponding functions for subcommands
 ---@param fn_name_alt string|nil name of the function to call given no subcommand
 ---@return function meta_command_fn
@@ -1097,7 +1097,7 @@ end
 
 ---Get command completion function
 ---@param meta string meta command name
----@param subcommand_info_list lsp.cmd.info[] subcommands information
+---@param subcommand_info_list my.lsp.cmd.info[] subcommands information
 ---@return function completion_fn
 local function command_complete(meta, subcommand_info_list)
   ---Command completion function
@@ -1113,7 +1113,7 @@ local function command_complete(meta, subcommand_info_list)
           return cmd:find(arglead, 1, true) == 1
         end,
         vim.tbl_filter(function(key)
-          local args = subcommand_info_list[key] ---@type lsp.cmd.info|table|nil
+          local args = subcommand_info_list[key] ---@type my.lsp.cmd.info|table|nil
           return args
               and (args.arg_handler or args.params or args.opts or args.fn_override or args.completion)
               and true
@@ -1152,7 +1152,7 @@ end
 
 ---Setup commands
 ---@param meta string meta command name
----@param subcommand_info_list table<string, lsp.cmd.info> subcommands information
+---@param subcommand_info_list table<string, my.lsp.cmd.info> subcommands information
 ---@param fn_scope table|fun(name: string): function scope of corresponding functions for subcommands
 ---@return nil
 local function setup_commands(meta, subcommand_info_list, fn_scope)

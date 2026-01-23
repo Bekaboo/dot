@@ -1,6 +1,6 @@
 local M = {}
 
----@class cmd.parsed_args table
+---@class my.cmd.parsed_args table
 
 ---Parse arguments from the command line into a table
 ---@param fargs string[] list of arguments
@@ -45,11 +45,11 @@ end
 
 ---options command accepts, in the format of <optkey>=<candicate_optvals>
 ---or <optkey>
----@alias cmd.opts table
----@alias cmd.params string[]
+---@alias my.cmd.opts table
+---@alias my.cmd.params string[]
 
 ---Get option keys / option names from opts table
----@param opts cmd.opts
+---@param opts my.cmd.opts
 ---@return string[]
 function M.optkeys(opts)
   local optkeys = {}
@@ -65,7 +65,7 @@ end
 
 ---Returns a function that can be used to complete the options of a command
 ---An option must be in the format of --<opt> or --<opt>=<val>
----@param opts cmd.opts?
+---@param opts my.cmd.opts?
 ---@return fun(arglead: string, cmdline: string, cursorpos: integer): string[]
 function M.complete_opts(opts)
   ---@param arglead string leading portion of the argument being completed
@@ -109,7 +109,7 @@ function M.complete_opts(opts)
 end
 
 ---Returns a function that can be used to complete the arguments of a command
----@param params cmd.params?
+---@param params my.cmd.params?
 ---@return fun(arglead: string, cmdline: string, cursorpos: integer): string[]
 function M.complete_params(params)
   return function(arglead, _, _)
@@ -121,8 +121,8 @@ end
 
 ---Returns a function that can be used to complete the arguments and options
 ---of a command
----@param params cmd.params?
----@param opts cmd.opts?
+---@param params my.cmd.params?
+---@param opts my.cmd.opts?
 ---@return fun(arglead: string, cmdline: string, cursorpos: integer): string[]
 function M.complete(params, opts)
   return function(arglead, cmdline, cursorpos)

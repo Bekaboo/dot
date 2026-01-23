@@ -1,4 +1,4 @@
----@type lsp.config
+---@type my.lsp.config
 return {
   filetypes = { 'vim' },
   cmd = { 'vim-language-server', '--stdio' },

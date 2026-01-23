@@ -2,7 +2,7 @@
 -- diagnostics from the linter (`buf lint`), so use efm-langserver to extract
 -- and publish the diagnostics from `buf lint` command
 
----@type lsp.config
+---@type my.lsp.config
 return {
   filetypes = { 'proto' },
   cmd = { 'efm-langserver' },

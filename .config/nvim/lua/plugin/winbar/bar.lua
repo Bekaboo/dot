@@ -11,12 +11,12 @@ local function str_sanitize(str)
   return str and vim.gsplit(str, '\n')()
 end
 
----@class winbar.symbol.range
+---@class my.winbar.symbol.range
 ---@field start {line: integer, character: integer}
 ---@field end {line: integer, character: integer}
 
----@class winbar.symbol
----@field _ winbar.symbol
+---@class my.winbar.symbol
+---@field _ my.winbar.symbol
 ---@field name string
 ---@field icon string
 ---@field name_hl string?
@@ -24,22 +24,22 @@ end
 ---@field win integer? the source window the symbol is shown in
 ---@field buf integer? the source buffer the symbol is defined in
 ---@field view table? original view of the source window
----@field bar winbar.bar? the winbar the symbol belongs to, if the symbol is shown inside a winbar
----@field menu winbar.menu? menu associated with the winbar symbol, if the symbol is shown inside a winbar
----@field entry winbar.menu.entry? the winbar entry the symbol belongs to, if the symbol is shown inside a menu
----@field children winbar.symbol[]? children of the symbol
----@field siblings winbar.symbol[]? siblings of the symbol
+---@field bar my.winbar.bar? the winbar the symbol belongs to, if the symbol is shown inside a winbar
+---@field menu my.winbar.menu? menu associated with the winbar symbol, if the symbol is shown inside a winbar
+---@field entry my.winbar.menu.entry? the winbar entry the symbol belongs to, if the symbol is shown inside a menu
+---@field children my.winbar.symbol[]? children of the symbol
+---@field siblings my.winbar.symbol[]? siblings of the symbol
 ---@field bar_idx integer? index of the symbol in the winbar
 ---@field entry_idx integer? index of the symbol in the menu entry
 ---@field sibling_idx integer? index of the symbol in its siblings
----@field range winbar.symbol.range?
----@field on_click fun(this: winbar.symbol, min_width: integer?, n_clicks: integer?, button: string?, modifiers: string?)|false|nil force disable on_click when false
+---@field range my.winbar.symbol.range?
+---@field on_click fun(this: my.winbar.symbol, min_width: integer?, n_clicks: integer?, button: string?, modifiers: string?)|false|nil force disable on_click when false
 ---@field callback_idx integer? idx of the on_click callback in `_G.winbar.callbacks[buf][win]`, use this to index callback function because `bar_idx` could change after truncate
 ---@field swap table<string, any>? swapped data of the symbol
 ---@field swapped table<string, true>? swapped fields of the symbol
 ---@field min_width integer? minimum width when truncated
 ---@field cache table caches string representation, length, etc. for the symbol
----@field opts winbar.symbol.opts? options passed to `winbar_symbol_t:new()` when the symbols is created
+---@field opts my.winbar.symbol.opts? options passed to `winbar_symbol_t:new()` when the symbols is created
 ---@field data table? any other relavent data
 local winbar_symbol = {}
 
@@ -63,19 +63,19 @@ function winbar_symbol:__newindex(k, v)
 end
 
 ---Create a new winbar symbol instance with merged options
----@param opts winbar.symbol.opts
----@return winbar.symbol
+---@param opts my.winbar.symbol.opts
+---@return my.winbar.symbol
 function winbar_symbol:merge(opts)
   return winbar_symbol:new(
     setmetatable(
       vim.tbl_deep_extend('force', self._, opts),
       getmetatable(self._)
-    ) --[[@as winbar.symbol.opts]]
+    ) --[[@as my.winbar.symbol.opts]]
   )
 end
 
----@class winbar.symbol.opts
----@field _ winbar.symbol?
+---@class my.winbar.symbol.opts
+---@field _ my.winbar.symbol?
 ---@field name string?
 ---@field icon string?
 ---@field name_hl string?
@@ -83,23 +83,23 @@ end
 ---@field win integer? the source window the symbol is shown in
 ---@field buf integer? the source buffer the symbol is defined in
 ---@field view table? original view of the source window
----@field bar winbar.bar? the winbar the symbol belongs to, if the symbol is shown inside a winbar
----@field menu winbar.menu? menu associated with the winbar symbol, if the symbol is shown inside a winbar
----@field entry winbar.menu.entry? the winbar entry the symbol belongs to, if the symbol is shown inside a menu
----@field children winbar.symbol[]? children of the symbol
----@field siblings winbar.symbol[]? siblings of the symbol
+---@field bar my.winbar.bar? the winbar the symbol belongs to, if the symbol is shown inside a winbar
+---@field menu my.winbar.menu? menu associated with the winbar symbol, if the symbol is shown inside a winbar
+---@field entry my.winbar.menu.entry? the winbar entry the symbol belongs to, if the symbol is shown inside a menu
+---@field children my.winbar.symbol[]? children of the symbol
+---@field siblings my.winbar.symbol[]? siblings of the symbol
 ---@field bar_idx integer? index of the symbol in the winbar
 ---@field entry_idx integer? index of the symbol in the menu entry
 ---@field sibling_idx integer? index of the symbol in its siblings
----@field range winbar.symbol.range?
----@field on_click fun(this: winbar.symbol, min_width: integer?, n_clicks: integer?, button: string?, modifiers: string?)|false|nil force disable on_click when false
+---@field range my.winbar.symbol.range?
+---@field on_click fun(this: my.winbar.symbol, min_width: integer?, n_clicks: integer?, button: string?, modifiers: string?)|false|nil force disable on_click when false
 ---@field swap table<string, any>? swapped data of the symbol
 ---@field swapped table<string, true>? swapped fields of the symbol
 ---@field cache table? caches string representation, length, etc. for the symbol
 
 ---Create a winbar symbol instance, with drop-down menu support
----@param opts winbar.symbol.opts?
----@return winbar.symbol
+---@param opts my.winbar.symbol.opts?
+---@return my.winbar.symbol
 function winbar_symbol:new(opts)
   if opts then
     for k, v in pairs(opts) do
@@ -267,32 +267,32 @@ function winbar_symbol:restore()
   self.swapped = nil
 end
 
----@class winbar.bar.opts
+---@class my.winbar.bar.opts
 ---@field buf integer?
 ---@field win integer?
----@field sources winbar.source[]?
----@field separator winbar.symbol?
----@field extends winbar.symbol?
+---@field sources my.winbar.source[]?
+---@field separator my.winbar.symbol?
+---@field extends my.winbar.symbol?
 ---@field padding {left: integer, right: integer}?
 
----@class winbar.bar
+---@class my.winbar.bar
 ---@field buf integer
 ---@field win integer
----@field sources winbar.source[]
----@field separator winbar.symbol
+---@field sources my.winbar.source[]
+---@field separator my.winbar.symbol
 ---@field padding {left: integer, right: integer}
----@field extends winbar.symbol
----@field components winbar.symbol[]
+---@field extends my.winbar.symbol
+---@field components my.winbar.symbol[]
 ---@field string_cache string
 ---@field in_pick_mode boolean?
----@field symbol_on_hover winbar.symbol?
+---@field symbol_on_hover my.winbar.symbol?
 ---@field last_update_request_time number? timestamp of the last update request in ms, see :h uv.now()
 local winbar = {}
 winbar.__index = winbar
 
 ---Create a winbar instance
----@param opts winbar.bar.opts?
----@return winbar.bar
+---@param opts my.winbar.bar.opts?
+---@return my.winbar.bar
 function winbar:new(opts)
   local bar = setmetatable(
     vim.tbl_deep_extend('force', {
@@ -566,7 +566,7 @@ function winbar:pick(idx)
     end
 
     ---Clickable symbols
-    ---@type winbar.symbol[]
+    ---@type my.winbar.symbol[]
     local clickables = vim.tbl_filter(function(component)
       return component.on_click
     end, self.components)
@@ -631,7 +631,7 @@ end
 ---Get the component at the given position in the winbar
 ---@param col integer 0-indexed, byte-indexed
 ---@param look_ahead boolean? whether to look ahead for the next component if the given position does not contain a component
----@return winbar.symbol?
+---@return my.winbar.symbol?
 ---@return {start: integer, end: integer}? range of the component in the menu, byte-indexed, 0-indexed, start-inclusive, end-exclusive
 function winbar:get_component_at(col, look_ahead)
   local col_offset = self.padding.left

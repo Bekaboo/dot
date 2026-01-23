@@ -1,4 +1,4 @@
----@type pack.spec
+---@type my.pack.spec
 return {
   src = 'https://github.com/NvChad/nvim-colorizer.lua',
   data = {

@@ -50,20 +50,20 @@ vim.api.nvim_create_autocmd('UIEnter', {
   once = true,
   desc = 'Show the intro message on entering the UI.',
   callback = function()
-    ---@class intro.chunk
+    ---@class my.intro.chunk
     ---@field text string
     ---@field hl string
     ---@field len integer? byte-indexed text length
     ---@field width integer? display width of text
 
-    ---@class intro.line
-    ---@field chunks intro.chunk[]
+    ---@class my.intro.line
+    ---@field chunks my.intro.chunk[]
     ---@field text string?
     ---@field width integer?
     ---@field offset integer?
 
     ---Lines of text and highlight groups to display as intro message
-    ---@type intro.line[]
+    ---@type my.intro.line[]
     local lines = {
       {
         chunks = {

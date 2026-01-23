@@ -7,7 +7,7 @@ vim.api.nvim_create_autocmd({ 'BufWrite', 'FileChangedShellPost' }, {
   end,
 })
 
----@class git.diffstat
+---@class my.git.diffstat
 ---@field add? integer
 ---@field removed? integer
 ---@field changed? integer
@@ -15,7 +15,7 @@ vim.api.nvim_create_autocmd({ 'BufWrite', 'FileChangedShellPost' }, {
 ---Get the diff stats for the current buffer asynchronously
 ---@param buf integer? buffer handler, defaults to the current buffer
 ---@param args string[]? arguments passed to `git` command
----@return git.diffstat? # diff stats
+---@return my.git.diffstat? # diff stats
 function M.diffstat(buf, args)
   buf = vim._resolve_bufnr(buf or 0)
   if not vim.api.nvim_buf_is_valid(buf) then

@@ -1,6 +1,6 @@
 local M = {}
 
----@class pack.structured_spec.data
+---@class my.pack.structured_spec.data
 ---Mark plugin as optional
 ---
 ---Plugins marked as optional will not be installed, managed or enabled unless
@@ -10,8 +10,8 @@ local M = {}
 ---Useful for optional dependencies and plugins that are only used under
 ---specific conditions
 ---@field optional? boolean
----@field deps? pack.spec|pack.spec[] Dependencies of the plugin, always loaded **before** the main plugin
----@field exts? pack.spec|pack.spec[] Extensions of the plugin, always loaded **after** the main plugin
+---@field deps? my.pack.spec|my.pack.spec[] Dependencies of the plugin, always loaded **before** the main plugin
+---@field exts? my.pack.spec|my.pack.spec[] Extensions of the plugin, always loaded **after** the main plugin
 ---Build command for the plugin, useful for plugins that need
 ---compilation/building steps, can be a string, a list of string, or a function
 ---
@@ -23,16 +23,16 @@ local M = {}
 ---
 ---If a function is provided, the function is called with the plugin spec and
 ---path to build the plugin
----@field build? string|string[]|fun(spec: pack.spec, path: string)
----@field init? fun(spec: pack.spec, path: string) Function to call at startup to setup the plugin
+---@field build? string|string[]|fun(spec: my.pack.spec, path: string)
+---@field init? fun(spec: my.pack.spec, path: string) Function to call at startup to setup the plugin
 ---Custom loader for the plugin
 ---
 ---When specified, `preload` and `postload` will not execute unless explicitly
 ---called in `loader`. The loader is fully responsible for loading the plugin
 ---and handling pre/post-load callbacks
----@field load? fun(spec: pack.spec, path: string)
----@field preload? fun(spec: pack.spec, path: string) Function to execute before loading the plugin
----@field postload? fun(spec: pack.spec, path: string) Function to execute after loading the plugin
+---@field load? fun(spec: my.pack.spec, path: string)
+---@field preload? fun(spec: my.pack.spec, path: string) Function to execute before loading the plugin
+---@field postload? fun(spec: my.pack.spec, path: string) Function to execute after loading the plugin
 ---Mark the plugin as lazy-loaded
 ---
 ---Unlike non-lazy plugins that are loaded on startup, lazy-loaded plugins can
@@ -43,18 +43,18 @@ local M = {}
 ---Plugins that are both explicitly registered as stand-alone and as deps/exts
 ---have `asdeps=false`
 ---@field asdeps? boolean
----@field keys? load.key.spec|load.key.spec[] Keys that lazy-load the plugin
----@field events? load.event.spec|load.event.spec[] Events that lazy-load the plugin
----@field cmds? load.cmd.spec|load.cmd.spec[] Commands that lazy-load the plugin
+---@field keys? my.load.key.spec|my.load.key.spec[] Keys that lazy-load the plugin
+---@field events? my.load.event.spec|my.load.event.spec[] Events that lazy-load the plugin
+---@field cmds? my.load.cmd.spec|my.load.cmd.spec[] Commands that lazy-load the plugin
 
 ---Extended pack spec with lazy-loading
----@class pack.structured_spec : vim.pack.Spec
----@field data? pack.structured_spec.data
+---@class my.pack.structured_spec : vim.pack.Spec
+---@field data? my.pack.structured_spec.data
 
----@alias pack.spec string|pack.structured_spec|vim.pack.Spec
+---@alias my.pack.spec string|my.pack.structured_spec|vim.pack.Spec
 
 ---Merged plugin specs indexed by plugin src
----@type table<string, pack.structured_spec>
+---@type table<string, my.pack.structured_spec>
 local specs_registry = {}
 
 ---Loaded plugins
@@ -72,13 +72,13 @@ function M.root()
 end
 
 ---Get install path of a plugin given spec
----@param spec pack.spec
+---@param spec my.pack.spec
 function M.path(spec)
   return vim.fs.joinpath(M.root(), vim.fs.basename(spec.name or spec.src))
 end
 
 ---Load a plugin with init, pre/post hooks, dependencies etc.
----@param spec pack.spec
+---@param spec my.pack.spec
 ---@param path string
 function M.load(spec, path)
   if type(spec) == 'string' then
@@ -102,7 +102,7 @@ function M.load(spec, path)
       spec.data.deps = { spec.data.deps }
     end
     for _, dep in
-      ipairs(spec.data.deps --[=[@as pack.spec[]]=])
+      ipairs(spec.data.deps --[=[@as my.pack.spec[]]=])
     do
       local dep_spec = specs_registry[type(dep) == 'string' and dep or dep.src]
       M.load(dep_spec, M.path(dep_spec))
@@ -132,7 +132,7 @@ function M.load(spec, path)
       spec.data.exts = { spec.data.exts }
     end
     for _, ext in
-      ipairs(spec.data.exts --[=[@as pack.spec[]]=])
+      ipairs(spec.data.exts --[=[@as my.pack.spec[]]=])
     do
       local ext_spec = specs_registry[type(ext) == 'string' and ext or ext.src]
       M.load(ext_spec, M.path(ext_spec))
@@ -141,7 +141,7 @@ function M.load(spec, path)
 end
 
 ---Lazy-load plugin for given plugin spec
----@param spec pack.spec
+---@param spec my.pack.spec
 ---@param path string
 function M.lazy_load(spec, path)
   spec.data = spec.data or {}
@@ -172,17 +172,17 @@ function M.lazy_load(spec, path)
   end
 end
 
----@class (partial) pack.structured_spec.opts : pack.structured_spec
+---@class (partial) my.pack.structured_spec.opts : my.pack.structured_spec
 
 ---Add specified plugin spec with lazy-loading
----@param specs pack.spec|pack.spec[]
----@param default pack.structured_spec.opts? Default options to merge with the plugin spec table if the plugin is not registered
+---@param specs my.pack.spec|my.pack.spec[]
+---@param default my.pack.structured_spec.opts? Default options to merge with the plugin spec table if the plugin is not registered
 function M.register(specs, default)
   if not vim.islist(specs) then
-    specs = { specs } ---@cast specs pack.spec[]
+    specs = { specs } ---@cast specs my.pack.spec[]
   end
 
-  ---@cast specs pack.structured_spec[]
+  ---@cast specs my.pack.structured_spec[]
   for i, spec in ipairs(specs) do
     if type(spec) == 'string' then
       specs[i] = { src = spec }
@@ -250,7 +250,7 @@ local built = {}
 
 ---Build plugin, e.g. build c/rust lib, install node dependencies, etc.
 ---comment
----@param spec pack.spec
+---@param spec my.pack.spec
 ---@param path string
 function M.build(spec, path)
   if not spec.data or not spec.data.build or built[spec.src] then
@@ -305,7 +305,7 @@ local pack_add = vim.pack.add
 
 ---Wrapper of `vim.pack.add()` that handles lazy-loading, dependencies, etc.
 ---via the `data` field
----@param specs pack.spec|pack.spec[]
+---@param specs my.pack.spec|my.pack.spec[]
 function M.add(specs)
   M.register(specs)
 

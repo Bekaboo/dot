@@ -1,6 +1,6 @@
 local utils = require('utils')
 
----@class fallback_tbl each key shares a default / fallback pattern table
+---@class my.fallback_tbl each key shares a default / fallback pattern table
 ---that can be used for pattern matching if corresponding key is not present
 ---or non patterns stored in the key are matched
 ---@field __content table closing patterns for each filetype
@@ -38,7 +38,7 @@ end
 
 ---Create a new shared table
 ---@param args table
----@return fallback_tbl
+---@return my.fallback_tbl
 function fallback_tbl:new(args)
   return setmetatable({
     __content = args and args.content or {},
