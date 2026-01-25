@@ -1,4 +1,4 @@
-local hl = require('utils.hl')
+local hl = require('my.utils.hl')
 
 ---Resolve the colorcolumn value
 ---@param cc string|nil

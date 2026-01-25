@@ -10,13 +10,13 @@ package.path = package.path:gsub('%./%?%.lua;?', '')
 -- https://github.com/neovim/neovim/commit/2257ade3dc2daab5ee12d27807c0b3bcf103cd29
 vim.loader.enable()
 
-require('core.opts')
-require('core.keymaps')
-require('core.autocmds')
-require('core.pack')
+require('my.core.opts')
+require('my.core.keymaps')
+require('my.core.autocmds')
+require('my.core.pack')
 
-local load = require('utils.load')
+local load = require('my.utils.load')
 
-load.on_events('FileType', 'core.treesitter')
-load.on_events('DiagnosticChanged', 'core.diagnostic')
-load.on_events('FileType', 'core.lsp')
+load.on_events('FileType', 'my.core.treesitter')
+load.on_events('DiagnosticChanged', 'my.core.diagnostic')
+load.on_events('FileType', 'my.core.lsp')

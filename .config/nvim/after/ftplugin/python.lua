@@ -1,4 +1,4 @@
-local utils = require('utils')
+local utils = require('my.utils')
 
 ---Autocorrect `orig` to `correction` in normal zone
 ---@param orig string

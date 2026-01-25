@@ -8,4 +8,4 @@
 -- So we treat `main.tex` as a root marker to properly detect the root dir of
 -- some tex projects.
 vim.b.root_markers =
-  vim.list_extend({ 'main.tex' }, require('utils.fs').root_markers)
+  vim.list_extend({ 'main.tex' }, require('my.utils.fs').root_markers)

@@ -2,15 +2,15 @@
 
 -- vscode-neovim
 if vim.g.vscode then
-  vim.fn['plugin#vscode#setup']()
+  vim.fn['my#plugin#vscode#setup']()
   return
 end
 
-local load = require('utils.load')
+local load = require('my.utils.load')
 
 -- expandtab
 load.on_events('InsertEnter', 'plugin.expandtab', function()
-  require('plugin.expandtab').setup()
+  require('my.plugin.expandtab').setup()
 end)
 
 -- jupytext
@@ -18,7 +18,7 @@ load.on_events(
   { event = 'BufReadCmd', pattern = '*.ipynb' },
   'plugin.jupytext',
   function()
-    require('plugin.jupytext').setup()
+    require('my.plugin.jupytext').setup()
   end
 )
 
@@ -27,13 +27,13 @@ load.on_events(
   { 'Syntax', 'FileType', 'LspAttach', 'DiagnosticChanged' },
   'plugin.lsp-commands',
   function()
-    require('plugin.lsp-commands').setup()
+    require('my.plugin.lsp-commands').setup()
   end
 )
 
 -- readline
 load.on_events({ 'CmdlineEnter', 'InsertEnter' }, 'plugin.readline', function()
-  require('plugin.readline').setup()
+  require('my.plugin.readline').setup()
 end)
 
 -- winbar
@@ -42,11 +42,11 @@ load.on_events('FileType', 'plugin.winbar', function()
     return
   end
 
-  require('plugin.winbar').setup({
+  require('my.plugin.winbar').setup({
     bar = { hover = false },
   })
 
-  local winbar_api = require('plugin.winbar.api')
+  local winbar_api = require('my.plugin.winbar.api')
   vim.keymap.set(
     'n',
     '<Leader>;',
@@ -75,7 +75,7 @@ local function load_ui(name)
     return
   end
   vim.g[loaded_flag] = true
-  vim.opt[name] = string.format("%%!v:lua.require'plugin.%s'()", name)
+  vim.opt[name] = string.format("%%!v:lua.require'my.plugin.%s'()", name)
 end
 
 load_ui('tabline')
@@ -84,7 +84,7 @@ load_ui('statuscolumn')
 
 -- term
 load.on_events('TermOpen', 'plugin.term', function(args)
-  local term = require('plugin.term')
+  local term = require('my.plugin.term')
   term.setup()
   vim.keymap.set('n', '.', term.rerun, {
     buffer = args.buf,
@@ -98,24 +98,24 @@ if vim.g.has_ui then
     { event = 'UIEnter' },
     'plugin.tmux',
     vim.schedule_wrap(function()
-      require('plugin.tmux').setup()
+      require('my.plugin.tmux').setup()
     end)
   )
 end
 
 -- tabout
 load.on_events('InsertEnter', 'plugin.tabout', function()
-  require('plugin.tabout').setup()
+  require('my.plugin.tabout').setup()
 end)
 
 -- z
 if vim.g.loaded_z == nil then
   vim.keymap.set('n', '<Leader>z', function()
-    require('plugin.z').select()
+    require('my.plugin.z').select()
   end, { desc = 'Open a directory from z' })
 
   local function setup()
-    require('plugin.z').setup()
+    require('my.plugin.z').setup()
   end
 
   load.on_events('UIEnter', 'plugin.z', vim.schedule_wrap(setup))
@@ -125,21 +125,21 @@ end
 
 -- addasync
 load.on_events('InsertEnter', 'plugin.addaync', function()
-  require('plugin.addasync').setup()
+  require('my.plugin.addasync').setup()
 end)
 
 -- session
 if vim.g.loaded_session == nil then
   vim.keymap.set('n', '<Leader>w', function()
-    require('plugin.session').select(true)
+    require('my.plugin.session').select(true)
   end, { desc = 'Load session (workspace) interactively' })
 
   vim.keymap.set('n', '<Leader>W', function()
-    require('plugin.session').load(nil, true)
+    require('my.plugin.session').load(nil, true)
   end, { desc = 'Load session (workspace) for cwd' })
 
   local function setup()
-    require('plugin.session').setup({
+    require('my.plugin.session').setup({
       autoload = { enabled = false },
       autoremove = { enabled = false },
     })

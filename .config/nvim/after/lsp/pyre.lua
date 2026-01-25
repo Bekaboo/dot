@@ -56,6 +56,6 @@ return {
       return
     end
     -- Pyre lsp requires a watchman config under project root directory
-    require('utils.json').write(wm_config, {})
+    require('my.utils.json').write(wm_config, {})
   end,
 }

@@ -140,7 +140,7 @@ vim.api.nvim_create_autocmd('Syntax', {
   end,
 })
 
-local hl = require('utils.hl')
+local hl = require('my.utils.hl')
 
 hl.persist(function()
   hl.set(0, 'CodeBlock', { link = 'CursorLine', default = true })
