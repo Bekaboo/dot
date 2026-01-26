@@ -106,7 +106,7 @@ enableQuarterLayout=true
 enableStackedLayout=true
 floatInitWindowHeight=65
 floatInitWindowWidth=65
-ignoreClass=yakuake,krunner
+ignoreClass=yakuake,krunner,python3
 ignoreTitle=Settings,Open,Reminders,Add Bluetooth Device
 keepFloatAbove=false
 metaConfig=RaiseSurfaceCapacity=ResetSurfaceCapacity\nFocusDown=FocusNext
