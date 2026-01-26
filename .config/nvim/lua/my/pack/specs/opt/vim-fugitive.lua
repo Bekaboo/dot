@@ -90,18 +90,6 @@ return {
         pattern = 'FugitiveIndex',
         group = group,
         callback = function(args)
-          vim.keymap.set(
-            { 'n', 'x' },
-            'S',
-            's',
-            { buffer = args.buf, remap = true }
-          )
-          vim.keymap.set(
-            { 'n', 'x' },
-            'x',
-            'X',
-            { buffer = args.buf, remap = true }
-          )
           vim.keymap.set({ 'n', 'x' }, '[g', '[c', {
             desc = 'Go to previous hunk',
             buffer = args.buf,
