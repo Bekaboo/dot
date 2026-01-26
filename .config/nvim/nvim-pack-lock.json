@@ -21,7 +21,7 @@
       "src": "https://github.com/shumphrey/fugitive-gitlab.vim"
     },
     "fzf-lua": {
-      "rev": "6b5bb1c",
+      "rev": "d59f857c76eb474ec00debcf043f14fd001805cc",
       "src": "https://github.com/ibhagwan/fzf-lua"
     },
     "gitsigns.nvim": {
@@ -33,7 +33,7 @@
       "src": "https://github.com/sainnhe/gruvbox-material"
     },
     "img-clip.nvim": {
-      "rev": "93fcf50",
+      "rev": "b6ddfb97b5600d99afe3452d707444afda658aca",
       "src": "https://github.com/HakonHarnes/img-clip.nvim"
     },
     "markdown-preview.nvim": {
@@ -69,7 +69,7 @@
       "src": "https://github.com/kylechui/nvim-surround"
     },
     "nvim-treesitter": {
-      "rev": "511e5ccf",
+      "rev": "568ede7e79172a0fe7c9d631454a97ad968deaf2",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter",
       "version": "'main'"
     },
@@ -78,11 +78,11 @@
       "src": "https://github.com/RRethy/nvim-treesitter-endwise"
     },
     "nvim-treesitter-incremental-selection": {
-      "rev": "6982b6a",
+      "rev": "896a87b0d1808412b3f1956e4c3b01753b72cb82",
       "src": "https://github.com/shushtain/nvim-treesitter-incremental-selection"
     },
     "nvim-treesitter-textobjects": {
-      "rev": "4d55f63",
+      "rev": "52bda74e087034408e2d563cb4499c1601038f9d",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter-textobjects",
       "version": "'main'"
     },
@@ -103,7 +103,7 @@
       "src": "https://github.com/navarasu/onedark.nvim"
     },
     "opencode.nvim": {
-      "rev": "5e9142a",
+      "rev": "6f8663622d055ac96bbbebfb44dff6125badb74d",
       "src": "https://github.com/sudo-tee/opencode.nvim"
     },
     "otter.nvim": {
