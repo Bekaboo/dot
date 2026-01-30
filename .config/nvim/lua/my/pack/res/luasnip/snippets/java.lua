@@ -325,15 +325,17 @@ M.snippets = {
     },
     un.fmtad(
       [[
-        for (<init>; <cond>; <update>) {
+        for (<type> <i> = <init>; <cond>; <inc>) {
         <body>
         }
       ]],
       {
-        init = i(1),
-        cond = i(2),
-        update = i(3),
-        body = un.body(4, 1),
+        type = i(1, 'int'),
+        i = i(2, 'i'),
+        init = i(3, '0'),
+        cond = i(4),
+        inc = i(5),
+        body = un.body(6, 1),
       }
     )
   ),
