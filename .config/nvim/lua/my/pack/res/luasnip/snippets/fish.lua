@@ -90,10 +90,14 @@ M.snippets = {
       }
     )
   ),
-  us.sn(
+  us.msn(
     {
-      trig = 'for',
-      desc = 'for loop',
+      { trig = 'for' },
+      { trig = 'fr' },
+      { trig = 'forr' },
+      { trig = 'forange' },
+      { trig = 'forrange' },
+      common = { desc = 'for loop' },
     },
     un.fmtad(
       [[
@@ -105,6 +109,26 @@ M.snippets = {
         var = i(1, 'item'),
         items = i(2, '$items'),
         body = un.body(3, 1),
+      }
+    )
+  ),
+  us.msn(
+    {
+      { trig = 'fi' },
+      { trig = 'fori' },
+      common = { desc = 'for i loop' },
+    },
+    un.fmtad(
+      [[
+        for <idx> in (seq <s> <e>)
+        <body>
+        end
+      ]],
+      {
+        idx = i(1, 'i'),
+        s = i(2, '1'),
+        e = i(3, '10'),
+        body = un.body(4, 1),
       }
     )
   ),

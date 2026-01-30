@@ -115,10 +115,14 @@ M.snippets = {
       }
     )
   ),
-  us.sn(
+  us.msn(
     {
-      trig = 'for',
-      desc = 'for loop',
+      { trig = 'for' },
+      { trig = 'fr' },
+      { trig = 'forr' },
+      { trig = 'forange' },
+      { trig = 'forrange' },
+      common = { desc = 'for loop' },
     },
     un.fmtad(
       [[
@@ -131,6 +135,41 @@ M.snippets = {
         items = d(2, function()
           return is_bash() and sn(nil, i(1, '${items[@]}'))
             or sn(nil, i(1, '$items'))
+        end),
+        body = un.body(3, 1, ':'),
+      }
+    )
+  ),
+  us.msn(
+    {
+      { trig = 'fi' },
+      { trig = 'fori' },
+      common = { desc = 'for i loop' },
+    },
+    un.fmtad(
+      [[
+        for <idx> in <seq>; do
+        <body>
+        done
+      ]],
+      {
+        idx = i(1, 'i'),
+        seq = d(2, function()
+          return is_bash()
+              and sn(
+                nil,
+                un.fmtad('{<s>..<e>}', {
+                  s = i(1, '1'),
+                  e = i(2, '10'),
+                })
+              )
+            or sn(
+              nil,
+              un.fmtad('$(seq <s> <e>)', {
+                s = i(1, '1'),
+                e = i(2, '10'),
+              })
+            )
         end),
         body = un.body(3, 1, ':'),
       }
