@@ -134,6 +134,28 @@ M.snippets = {
   ),
   us.msn(
     {
+      { trig = 'f_' },
+      { trig = 'f-' },
+      { trig = 'for_' },
+      { trig = 'for-' },
+      common = { desc = 'for _ loop' },
+    },
+    un.fmtad(
+      [[
+        for <idx> in (seq <s> <e>)
+        <body>
+        end
+      ]],
+      {
+        idx = i(1, '_'),
+        s = i(2, '1'),
+        e = i(3, '10'),
+        body = un.body(4, 1),
+      }
+    )
+  ),
+  us.msn(
+    {
       { trig = 'wh' },
       { trig = 'while' },
       common = { desc = 'while loop' },

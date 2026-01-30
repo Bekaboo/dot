@@ -410,6 +410,41 @@ M.snippets = {
   ),
   us.msn(
     {
+      { trig = 'f_' },
+      { trig = 'f-' },
+      { trig = 'for_' },
+      { trig = 'for-' },
+      common = { desc = 'for _ ... loop' },
+    },
+    c(1, {
+      un.fmtad(
+        [[
+          for (let <idx> = 0; <idx> << <len>; <idx>++) {
+            <body>
+          }
+        ]],
+        {
+          idx = i(1, '_'),
+          len = i(2, 'array.length'),
+          body = un.body(3, 1),
+        }
+      ),
+      un.fmtad(
+        [[
+          for (let <idx> = <len>; <idx> >>= 0; <idx>--) {
+            <body>
+          }
+        ]],
+        {
+          idx = i(1, '_'),
+          len = i(2, 'array.length - 1'),
+          body = un.body(3, 1),
+        }
+      ),
+    })
+  ),
+  us.msn(
+    {
       { trig = 'fo' },
       { trig = 'fof' },
       { trig = 'forof' },

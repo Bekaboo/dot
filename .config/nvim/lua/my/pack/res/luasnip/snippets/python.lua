@@ -656,7 +656,7 @@ M.snippets = {
     {
       { trig = 'fi' },
       { trig = 'fori' },
-      common = { desc = 'for ... in range(...) loop' },
+      common = { desc = 'for i in range(...) loop' },
     },
     un.fmtad(
       [[
@@ -665,6 +665,26 @@ M.snippets = {
       ]],
       {
         var = i(1, 'i'),
+        range = i(2),
+        body = un.body(3, 1, 'pass'),
+      }
+    )
+  ),
+  us.msn(
+    {
+      { trig = 'f_' },
+      { trig = 'f-' },
+      { trig = 'for_' },
+      { trig = 'for-' },
+      common = { desc = 'for _ in range(...) loop' },
+    },
+    un.fmtad(
+      [[
+        for <var> in range(<range>):
+        <body>
+      ]],
+      {
+        var = i(1, '_'),
         range = i(2),
         body = un.body(3, 1, 'pass'),
       }

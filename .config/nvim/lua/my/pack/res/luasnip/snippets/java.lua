@@ -341,6 +341,30 @@ M.snippets = {
   ),
   us.msn(
     {
+      { trig = 'f_' },
+      { trig = 'f-' },
+      { trig = 'for_' },
+      { trig = 'for-' },
+      common = { desc = 'for _ loop' },
+    },
+    un.fmtad(
+      [[
+        for (<type> <i> = <init>; <cond>; <inc>) {
+        <body>
+        }
+      ]],
+      {
+        type = i(1, 'int'),
+        i = i(2, '_'),
+        init = i(3, '0'),
+        cond = i(4),
+        inc = i(5),
+        body = un.body(6, 1),
+      }
+    )
+  ),
+  us.msn(
+    {
       { trig = 'fr' },
       { trig = 'forr' },
       { trig = 'forange' },

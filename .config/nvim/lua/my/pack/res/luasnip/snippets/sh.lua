@@ -177,6 +177,43 @@ M.snippets = {
   ),
   us.msn(
     {
+      { trig = 'f_' },
+      { trig = 'f-' },
+      { trig = 'for_' },
+      { trig = 'for-' },
+      common = { desc = 'for _ loop' },
+    },
+    un.fmtad(
+      [[
+        for <idx> in <seq>; do
+        <body>
+        done
+      ]],
+      {
+        idx = i(1, '_'),
+        seq = d(2, function()
+          return is_bash()
+              and sn(
+                nil,
+                un.fmtad('{<s>..<e>}', {
+                  s = i(1, '1'),
+                  e = i(2, '10'),
+                })
+              )
+            or sn(
+              nil,
+              un.fmtad('$(seq <s> <e>)', {
+                s = i(1, '1'),
+                e = i(2, '10'),
+              })
+            )
+        end),
+        body = un.body(3, 1, ':'),
+      }
+    )
+  ),
+  us.msn(
+    {
       { trig = 'wh' },
       { trig = 'while' },
       common = { desc = 'while loop' },
