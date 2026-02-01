@@ -5,7 +5,7 @@
       "src": "https://github.com/L3MON4D3/LuaSnip"
     },
     "blink.cmp": {
-      "rev": "b137f63",
+      "rev": "fab799d086fd63fa5b389007f63767b23885ebf8",
       "src": "https://github.com/saghen/blink.cmp"
     },
     "cellular-automaton.nvim": {
@@ -21,7 +21,7 @@
       "src": "https://github.com/shumphrey/fugitive-gitlab.vim"
     },
     "fzf-lua": {
-      "rev": "d59f857c76eb474ec00debcf043f14fd001805cc",
+      "rev": "b4b1f05957a77f7662de834328827890c1a8c02b",
       "src": "https://github.com/ibhagwan/fzf-lua"
     },
     "gitsigns.nvim": {
@@ -45,11 +45,11 @@
       "src": "https://github.com/benlubas/molten-nvim"
     },
     "nvim-colorizer.lua": {
-      "rev": "81e676d",
+      "rev": "338409dd8a6ed74767bad3eb5269f1b903ffb3cf",
       "src": "https://github.com/NvChad/nvim-colorizer.lua"
     },
     "nvim-dap": {
-      "rev": "085386b",
+      "rev": "e47878dcf1ccc30136b30d19ab19fe76946d61cd",
       "src": "https://github.com/mfussenegger/nvim-dap"
     },
     "nvim-dap-ui": {
@@ -69,7 +69,7 @@
       "src": "https://github.com/kylechui/nvim-surround"
     },
     "nvim-treesitter": {
-      "rev": "568ede7e79172a0fe7c9d631454a97ad968deaf2",
+      "rev": "4967fa48b0fe7a7f92cee546c76bb4bb61bb14d5",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter",
       "version": "'main'"
     },
@@ -82,7 +82,7 @@
       "src": "https://github.com/shushtain/nvim-treesitter-incremental-selection"
     },
     "nvim-treesitter-textobjects": {
-      "rev": "52bda74e087034408e2d563cb4499c1601038f9d",
+      "rev": "a0e182ae21fda68c59d1f36c9ed45600aef50311",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter-textobjects",
       "version": "'main'"
     },
@@ -103,11 +103,11 @@
       "src": "https://github.com/navarasu/onedark.nvim"
     },
     "opencode.nvim": {
-      "rev": "6f8663622d055ac96bbbebfb44dff6125badb74d",
+      "rev": "2dba73d61d2c0f00f67eba51ba4110d94dd97e75",
       "src": "https://github.com/sudo-tee/opencode.nvim"
     },
     "otter.nvim": {
-      "rev": "6b75433",
+      "rev": "8cf628c4d7531de3d8dd4e78f5ce6f9519d432b2",
       "src": "https://github.com/jmbuhr/otter.nvim"
     },
     "plenary.nvim": {
@@ -163,7 +163,7 @@
       "src": "https://github.com/dhruvasagar/vim-table-mode"
     },
     "vim-test": {
-      "rev": "8f68254",
+      "rev": "c569b3620d0e53572efc95159f66ace5e7b06b48",
       "src": "https://github.com/vim-test/vim-test"
     },
     "vimtex": {
