@@ -107,7 +107,7 @@ enableStackedLayout=true
 floatInitWindowHeight=65
 floatInitWindowWidth=65
 ignoreClass=yakuake,krunner,python3
-ignoreTitle=Settings,Open,Reminders,Add Bluetooth Device
+ignoreTitle=Settings,Open,Reminders,Add Bluetooth Device,Picture-in-Picture
 keepFloatAbove=false
 metaConfig=RaiseSurfaceCapacity=ResetSurfaceCapacity\nFocusDown=FocusNext
 monocleLayoutOrder=3
