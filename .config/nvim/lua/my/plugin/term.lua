@@ -9,7 +9,7 @@ local function validate_term_buf(buf)
     return true
   end
   vim.notify(
-    string.format('[term] buffer %d is not a terminal buffer', buf),
+    string.format('[my.plugin.term] buffer %d is not a terminal buffer', buf),
     vim.log.levels.WARN
   )
   return false
@@ -28,7 +28,7 @@ function M.set_cmd(cmd, buf)
   end
   if vim.fn.executable(cmd) == 0 then
     vim.notify(
-      string.format('[term] command `%s` is not executable', cmd),
+      string.format('[my.plugin.term] command `%s` is not executable', cmd),
       vim.log.levels.WARN
     )
     return
@@ -52,7 +52,9 @@ function M.set_path(path, buf)
     path = vim.fn.getcwd(0)
   end
   if not vim.fn.isdirectory(path) then
-    vim.notify(string.format("[term] path '%s' is not a directory", path))
+    vim.notify(
+      string.format("[my.plugin.term] path '%s' is not a directory", path)
+    )
     return
   end
   vim.cmd.file(

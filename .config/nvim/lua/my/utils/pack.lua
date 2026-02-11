@@ -262,7 +262,7 @@ function M.build(spec, path)
   end
   built[spec.src] = true
 
-  vim.notify(string.format('[utils.pack] Building %s', spec.src))
+  vim.notify(string.format('[my.utils.pack] Building %s', spec.src))
 
   -- Build can be a function, a vim command (starting with ':'), or a shell
   -- command
@@ -295,11 +295,15 @@ function M.build(spec, path)
 
   if success then
     vim.notify(
-      string.format('[utils.pack] Successfully built plugin %s', spec.src)
+      string.format('[my.utils.pack] Successfully built plugin %s', spec.src)
     )
   else
     vim.notify(
-      string.format('[utils.pack] Error building plugin %s: %s', spec.src, err),
+      string.format(
+        '[my.utils.pack] Error building plugin %s: %s',
+        spec.src,
+        err
+      ),
       vim.log.levels.ERROR
     )
   end

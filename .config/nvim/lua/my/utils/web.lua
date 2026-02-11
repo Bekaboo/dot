@@ -18,7 +18,7 @@ function M.get(url, dest, on_exit)
 
   vim.notify(
     string.format(
-      "[utils.web] cannot fetch from '%s': `curl` or `wget` is not executable",
+      "[my.utils.web] cannot fetch from '%s': `curl` or `wget` is not executable",
       url
     ),
     vim.log.levels.WARN

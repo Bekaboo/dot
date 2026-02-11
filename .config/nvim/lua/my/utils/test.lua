@@ -5,7 +5,7 @@ local M = {}
 function M.get_test_cmd()
   if vim.fn.exists(':TestNearest') ~= 2 then
     vim.notify(
-      '[utils.test] vim-test is required to determine test command',
+      '[my.utils.test] vim-test is required to determine test command',
       vim.log.levels.WARN
     )
     return
