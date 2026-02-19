@@ -2,6 +2,8 @@ return {
   ['pytest.ini|Pipfile|pyproject.toml|requirements.txt|setup.cfg|setup.py|tox.ini|*.py'] = {
     ['*.py'] = {
       alternate = {
+        -- Test file in the same dir as the implementation file
+        'test_{basename}.py',
         -- Test file in `tests` subdir
         'tests/test_{basename}.py',
         'tests/{dirname}/test_{basename}.py',
@@ -17,6 +19,10 @@ return {
         'tests/{dirname|tail|dirname}/test_{dirname|basename}.py',
       },
       type = 'source',
+    },
+    ['test_*.py'] = {
+      alternate = '{}.py', -- source file in same dir,
+      type = 'test',
     },
     ['tests/**/test_*.py'] = {
       alternate = {
