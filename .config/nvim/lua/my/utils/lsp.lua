@@ -156,60 +156,33 @@ end
 ---@field end {line: integer, character: integer}
 
 ---Check if `range1` contains `range2`
----@param range1 my.lsp.range 0-based range
----@param range2 my.lsp.range 0-based range
+---@param r1 my.lsp.range 0-based range
+---@param r2 my.lsp.range 0-based range
 ---@param strict boolean? only return true if `range1` fully contains `range2` (no overlapping boundaries), default false
 ---@return boolean
-function M.range_contains(range1, range2, strict)
-  local start_line1 = range1.start.line
-  local start_char1 = range1.start.character
-  local end_line1 = range1['end'].line
-  local end_char1 = range1['end'].character
-  local start_line2 = range2.start.line
-  local start_char2 = range2.start.character
-  local end_line2 = range2['end'].line
-  local end_char2 = range2['end'].character
-  -- stylua: ignore start
+function M.range_contains(r1, r2, strict)
   return (
-        start_line2 > start_line1
-        or (start_line2 == start_line1
-          and (
-            start_char2 > start_char1
-            or not strict and start_char2 == start_char1
-          )
-        )
-      )
+    r2.start.line > r1.start.line
+    or (
+      r2.start.line == r1.start.line
       and (
-        start_line2 < end_line1
-        or (
-          start_line2 == end_line1
-          and (
-            start_char2 < end_char1
-            or not strict and start_char2 == end_char1
-          )
+        r2.start.character > r1.start.character
+        or not strict and r2.start.character == r1.start.character
+      )
+    )
+  )
+    and (r2.start.line < r1['end'].line or (r2.start.line == r1['end'].line and (r2.start.character < r1['end'].character or not strict and r2.start.character == r1['end'].character)))
+    and (r2['end'].line > r1.start.line or (r2['end'].line == r1.start.line and (r2['end'].character > r1.start.character or not strict and r2['end'].character == r1.start.character)))
+    and (
+      r2['end'].line < r1['end'].line
+      or (
+        r2['end'].line == r1['end'].line
+        and (
+          r2['end'].character < r1['end'].character
+          or not strict and r2['end'].character == r1['end'].character
         )
       )
-      and (
-        end_line2 > start_line1
-        or (
-          end_line2 == start_line1
-          and (
-            end_char2 > start_char1
-            or not strict and end_char2 == start_char1
-          )
-        )
-      )
-      and (
-        end_line2 < end_line1
-        or (
-          end_line2 == end_line1
-          and (
-            end_char2 < end_char1
-            or not strict and end_char2 == end_char1
-          )
-        )
-      )
-  -- stylua: ignore end
+    )
 end
 
 ---Check if cursor is in range
