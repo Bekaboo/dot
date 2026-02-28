@@ -1,6 +1,6 @@
 local M = {}
 
----@type my.lsp.client_config
+---@type my.lsp.config
 ---@diagnostic disable-next-line: missing-fields
 M.default_config = {
   root_markers = require('my.utils.fs').root_markers,
@@ -10,16 +10,12 @@ M.default_config = {
 ---@field requires? string[] additional executables required to start the language server
 ---@field buf_support? boolean whether the language server works on buffers without corresponding files
 
----@class (partial) my.lsp.client_config : vim.lsp.ClientConfig
----@field requires? string[] additional executables required to start the language server
----@field buf_support? boolean whether the language server works on buffers without corresponding files
-
 -- Avoid recursion after overriding
 local lsp_start = vim.lsp.start
 
 ---Wrapper of `vim.lsp.start()`, starts and attaches LSP client for
 ---the current buffer
----@param config my.lsp.client_config
+---@param config my.lsp.config
 ---@param opts table?
 ---@return integer? client_id id of attached client or nil if failed
 function M.start(config, opts)
@@ -140,7 +136,7 @@ function M.restart(client_or_id, opts)
           return
         end
         vim.api.nvim_buf_call(buf, function()
-          ---@cast config my.lsp.client_config
+          ---@cast config my.lsp.config
           local id = M.start(config)
           if id and opts and opts.on_restart then
             opts.on_restart(id)
