@@ -190,22 +190,24 @@ function M.range_contains_cursor(range, cursor, strict)
   cursor = cursor or vim.api.nvim_win_get_cursor(0)
   local line = cursor[1] - 1
   local char = cursor[2]
-  local start_line = range.start.line
-  local start_char = range.start.character
-  local end_line = range['end'].line
-  local end_char = range['end'].character
   return (
-    line > start_line
+    line > range.start.line
     or (
-      line == start_line
-      and (char > start_char or not strict and char == start_char)
+      line == range.start.line
+      and (
+        char > range.start.character
+        or not strict and char == range.start.character
+      )
     )
   )
     and (
-      line < end_line
+      line < range['end'].line
       or (
-        line == end_line
-        and (char < end_char or not strict and char == end_char)
+        line == range['end'].line
+        and (
+          char < range['end'].character
+          or not strict and char == range['end'].character
+        )
       )
     )
 end
