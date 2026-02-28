@@ -133,9 +133,6 @@ tolerance=36
 [TabBox]
 HighlightWindows=false
 
-[Tiling]
-padding=4
-
 [Wayland]
 InputMethod[$e]=/usr/share/applications/fcitx5-wayland-launcher.desktop
 
