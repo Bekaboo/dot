@@ -33,8 +33,7 @@ setcolor_alacritty() {
             [ -e "$1-dark.toml" ] && ln -sf "$1-dark.toml" "$dark_theme_path"
             [ -e "$1-light.toml" ] && ln -sf "$1-light.toml" "$light_theme_path"
         fi
-        touch "$dark_theme_path"
-        touch "$light_theme_path"
+        touch ../alacritty.toml
     )
 }
 
