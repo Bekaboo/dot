@@ -169,6 +169,10 @@
 		-e '/^\\[Main View\\]/,/^$/d' \
 		-e '/^\\[Nav Panel\\]/,/^$/d' \
 		-e '/ChangeColors=/d'
+[filter "klassyrc"]
+	smudge = cat
+	clean = sed \
+		-e '/LookAndFeelSet=/d'
 [filter "lfs"]
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f

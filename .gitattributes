@@ -2,3 +2,4 @@
 .config/kglobalshortcutsrc filter=kglobalshortcutsrc
 .config/kwinrc filter=kwinrc
 .config/okularpartrc filter=okularpartrc
+.config/klassy/klassyrc filter=klassyrc
