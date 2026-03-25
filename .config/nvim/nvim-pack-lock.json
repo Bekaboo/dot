@@ -1,7 +1,7 @@
 {
   "plugins": {
     "LuaSnip": {
-      "rev": "dae4f5a",
+      "rev": "642b0c595e11608b4c18219e93b88d7637af27bc",
       "src": "https://github.com/L3MON4D3/LuaSnip"
     },
     "blink.cmp": {
@@ -22,11 +22,11 @@
       "src": "https://github.com/shumphrey/fugitive-gitlab.vim"
     },
     "fzf-lua": {
-      "rev": "54669c347fe94d5be41322bd5526095f3e528713",
+      "rev": "3b01dc83a893749f5ae4639f1aa0af523821840a",
       "src": "https://github.com/ibhagwan/fzf-lua"
     },
     "gitsigns.nvim": {
-      "rev": "7c4faa3540d0781a28588cafbd4dd187a28ac6e3",
+      "rev": "0a80125bace82d82847d40bc2c38a22d62c6dc2d",
       "src": "https://github.com/lewis6991/gitsigns.nvim"
     },
     "gruvbox-material": {
@@ -46,7 +46,7 @@
       "src": "https://github.com/benlubas/molten-nvim"
     },
     "nvim-colorizer.lua": {
-      "rev": "ef211089af881bea206c7aa3f2693a81feee7e90",
+      "rev": "32fcc38ab7e559f24763f6b3d9c37658ebf407d6",
       "src": "https://github.com/NvChad/nvim-colorizer.lua"
     },
     "nvim-dap": {
@@ -54,11 +54,11 @@
       "src": "https://github.com/mfussenegger/nvim-dap"
     },
     "nvim-dap-ui": {
-      "rev": "cf91d5e",
+      "rev": "f5b6673f374626515401c5bc51b005f784a4f252",
       "src": "https://github.com/rcarriga/nvim-dap-ui"
     },
     "nvim-metals": {
-      "rev": "7ed47cd",
+      "rev": "48b9d29a4e1370495db4d4b5ccbc17b285bc98eb",
       "src": "https://github.com/scalameta/nvim-metals"
     },
     "nvim-nio": {
@@ -70,7 +70,7 @@
       "src": "https://github.com/kylechui/nvim-surround"
     },
     "nvim-treesitter": {
-      "rev": "2b50ab5ccbcd9e5708deb351308edd738adbf84c",
+      "rev": "6620ae1c44dfa8623b22d0cbf873a9e8d073b849",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter",
       "version": "'main'"
     },
@@ -83,7 +83,7 @@
       "src": "https://github.com/shushtain/nvim-treesitter-incremental-selection"
     },
     "nvim-treesitter-textobjects": {
-      "rev": "4e91b5d0394329a229725b021a8ea217099826ef",
+      "rev": "93d60a475f0b08a8eceb99255863977d3a25f310",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter-textobjects",
       "version": "'main'"
     },
@@ -104,11 +104,11 @@
       "src": "https://github.com/navarasu/onedark.nvim"
     },
     "opencode.nvim": {
-      "rev": "73fea61a663aab6357f58b790e35682b19a94158",
+      "rev": "281e026d7c4f267580cfd06adf09ffd5dbd54a66",
       "src": "https://github.com/sudo-tee/opencode.nvim"
     },
     "otter.nvim": {
-      "rev": "8cf628c4d7531de3d8dd4e78f5ce6f9519d432b2",
+      "rev": "4796602953348e19fb24916557af7b89e188751f",
       "src": "https://github.com/jmbuhr/otter.nvim"
     },
     "plenary.nvim": {
@@ -164,7 +164,7 @@
       "src": "https://github.com/dhruvasagar/vim-table-mode"
     },
     "vim-test": {
-      "rev": "e4d4fa7f5ce354e7df473550080d9e78207ef4a0",
+      "rev": "8fe182032e4c7c933e2e598fe402d24cbf782b8d",
       "src": "https://github.com/vim-test/vim-test"
     },
     "vimtex": {
