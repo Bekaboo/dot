@@ -20,6 +20,13 @@ fish_add_path --move \
     $HOME/.cargo/bin \
     $HOME/go/bin
 
+# Portable apps
+if test -d "$HOME/Apps"
+    for dir in $HOME/Apps/*
+        fish_add_path --move $dir
+    end
+end
+
 # Dotfile bare repo path
 if not type -q DOT_DIR
     set -Ux DOT_DIR $HOME/.dot
