@@ -421,7 +421,7 @@ return {
               fzf.args(opts)
             end,
           },
-          find_opts = [[-type f -not -path '*/\.git/*' -not -path '*/\.venv/*' -printf '%P\n']],
+          find_opts = [[. -type f -not -path '*/\.git/*' -not -path '*/\.venv/*']],
           fd_opts = [[--color=never --type f --type l --hidden --follow --exclude .git]],
           rg_opts = [[--color=never --files --hidden --follow -g '!.git']],
         })
@@ -1139,7 +1139,7 @@ return {
           fzf_opts = {
             ['--info'] = 'inline-right',
           },
-          find_opts = [[-type f -not -path '*/\.git/*' -not -path '*/\.venv/*' -printf '%P\n']],
+          find_opts = [[. -type f -not -path '*/\.git/*' -not -path '*/\.venv/*']],
           fd_opts = [[--color=never --type f --type l --hidden --follow --exclude .git --exclude .venv]],
           rg_opts = [[--no-messages --color=never --files --hidden --follow -g '!.git' -g '!.venv']],
         },
