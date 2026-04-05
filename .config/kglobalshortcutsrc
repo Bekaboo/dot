@@ -402,6 +402,8 @@ _launch=none
 _launch=Alt+F2\tSearch\tAlt+Space\tMeta+Space
 
 [services][org.kde.spectacle.desktop]
+CurrentMonitorScreenShot=
+OpenWithoutScreenshot=
 RecordRegion=none
 RecordWindow=none
 _launch=Print
