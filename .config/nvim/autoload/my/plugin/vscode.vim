@@ -2,7 +2,7 @@ if !exists('g:vscode')
   finish
 endif
 
-function! plugin#vscode#setup() abort
+function! my#plugin#vscode#setup() abort
   " Use VSCode syntax highlighting, disable regex and treesitter highlighting
   " Also disable nvim's LSP client
   syntax off
