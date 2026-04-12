@@ -133,6 +133,10 @@
 	wu   = log --diff-filter=U
 	ww   = show
 	wx   = log --diff-filter=X
+	; Find a file or directory across all git commits
+	ff   = log --oneline --graph --all --follow --
+	; Find text across all git commits
+	gr   = log --oneline --graph --all -S
 [merge]
 	tool = vimdiff
 [mergetool]
