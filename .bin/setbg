@@ -511,7 +511,6 @@ main() {
         case "$arg" in
         light | dark)
             bg="$arg"
-            shift
             ;;
         *)
             usage

@@ -362,7 +362,6 @@ main() {
             ;;
         *)
             color="$arg"
-            shift
             ;;
         esac
     done
