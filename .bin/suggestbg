@@ -2,20 +2,38 @@
 # vim:ft=sh:et:ts=4:sw=4:sts=4:
 # Check sunrise/sunset and echo suggested background accordingly
 
-# If `sunwait` is not installed, use current time to determine if it's day or night
-if ! has sunwait; then
+# Use current time to determine if it's day or night
+bg_by_clock() {
     current_hour=$(date +%H)
     current_hour="${current_hour#0}"
     [ "$current_hour" -gt 6 ] && [ "$current_hour" -lt 18 ] &&
         echo light ||
         echo dark
     exit
+}
+
+# Use `sunwait` and current location to determine if it's day or night
+# $1: latitude, follows the format 0.0000[NS]
+# $2: longitude, follows the format 0.0000[EW]
+bg_by_sun() {
+    latitude=$1
+    longitude=$2
+
+    [ "$(sunwait poll "$latitude" "$longitude")" = "DAY" ] &&
+        echo light ||
+        echo dark
+}
+
+# If `sunwait` is not installed, use current time to determine if it's day or night
+if ! has sunwait; then
+    bg_by_clock
 fi
 
-# Use `sunwait` to determine if it's day or night
-#
-# shellcheck disable=SC2046 # we want to split result from `whereami` of the
-# form 'latitude longitude', e.g. '55.6013N 83.7034W'
-[ "$(sunwait poll $(whereami))" = "DAY" ] &&
-    echo light ||
-    echo dark
+location=$(whereami)
+if [ -z "$location" ]; then
+    bg_by_clock
+fi
+
+# shellcheck disable=SC2086 # we want to split location of the form
+# 'latitude longitude' by space, e.g. '55.6013N 83.7034W'
+bg_by_sun $location

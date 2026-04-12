@@ -2,36 +2,106 @@
 # vim:ft=sh:et:ts=4:sw=4:sts=4:
 # Get current location in the format of 'latitude longitude'
 
+STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+CACHE_FILE="$STATE_HOME/location"
 LOC_URL=http://ipinfo.io/loc
 
-if has curl; then
-    coords=$(curl -s "$LOC_URL")
-elif has wget; then
-    coords=$(wget -qO- "$LOC_URL")
-else
-    # shellcheck disable=SC2016
-    echo '`curl` or `wget` not found, cannot get location' >&2
-    exit 1
-fi
+usage() {
+    cat <<EOF
+Usage: ${0##*/} [OPTIONS]
 
-if [ -z "$coords" ] || ! (echo "$coords" | grep -Eq '^([+-]?[0-9]+\.[0-9]+,?){2}$'); then
-    echo "Failed to get location from $LOC_URL: $coords" >&2
-    exit 1
-fi
+Get current location in the format of 'latitude longitude'
 
-latitude=${coords%,*}
-longitude=${coords#*,}
+Options:
+  -h, --help      Show this help message and exit
+      --no-cache  Don't use cached location, else will read from cache file
+                  $CACHE_FILE if no internet connection
+EOF
+}
+
+get_coords_from_internet() {
+    if has curl; then
+        coords=$(curl -s "$LOC_URL")
+    elif has wget; then
+        coords=$(wget -qO- "$LOC_URL")
+    else
+        # shellcheck disable=SC2016
+        echo '`curl` or `wget` not found, cannot get location' >&2
+        return 1
+    fi
+
+    if [ -z "$coords" ] || ! (echo "$coords" | grep -Eq '^([+-]?[0-9]+\.[0-9]+,?){2}$'); then
+        echo "Failed to get location from $LOC_URL: $coords" >&2
+        return 1
+    fi
+
+    echo "$coords"
+}
+
+get_coords_from_cache() {
+    if [ ! -r "$CACHE_FILE" ]; then
+        return 1
+    fi
+    cat "$CACHE_FILE"
+}
+
+save_coords_to_cache() {
+    echo "$1" > "$CACHE_FILE"
+}
 
 # Convert latitude and longitude format from [+-]0.0000 to
 # 0.0000[NS] (latitude) or 0.0000[EW] (longitude)
-case "$latitude" in
--*) latitude="${latitude#-}S" ;;
-*) latitude="${latitude}N" ;;
-esac
+format_coords() {
+    coords=$1
+    if [ -z "$coords" ] || ! (echo "$coords" | grep -Eq '^([+-]?[0-9]+\.[0-9]+,?){2}$'); then
+        echo "Cannot parse coords $coords: unexpected format" >&2
+        return 1
+    fi
 
-case "$longitude" in
--*) longitude="${longitude#-}W" ;;
-*) longitude="${longitude}E" ;;
-esac
+    latitude=${coords%,*}
+    longitude=${coords#*,}
 
-echo "$latitude" "$longitude"
+    case "$latitude" in
+    -*) latitude="${latitude#-}S" ;;
+    *) latitude="${latitude}N" ;;
+    esac
+
+    case "$longitude" in
+    -*) longitude="${longitude#-}W" ;;
+    *) longitude="${longitude}E" ;;
+    esac
+
+    echo "$latitude" "$longitude"
+}
+
+main() {
+    use_cache=1
+    while [ $# -gt 0 ]; do
+        case "$1" in
+        -h | --help)
+            usage
+            exit
+            ;;
+        --no-cache)
+            use_cache=0
+            shift
+            ;;
+        *)
+            echo "Unkown argument: $1" >&2
+            usage
+            exit 1
+            ;;
+        esac
+    done
+
+    coords=$(get_coords_from_internet)
+    if [ -n "$coords" ]; then
+        save_coords_to_cache "$coords"
+    elif [ "$use_cache" -eq 1 ]; then
+        coords=$(get_coords_from_cache)
+    fi
+
+    format_coords "$coords"
+}
+
+main "$@"
