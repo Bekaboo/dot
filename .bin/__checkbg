@@ -33,17 +33,6 @@ main() {
             member=PrepareForSleep" | while read -r x; do
             case "$x" in
             *"boolean false"*)
-                # Wait until the screen is unlocked (screen saver is inactive)
-                # Use timeout to prevent infinite hanging
-                timeout=60
-                while qdbus org.freedesktop.ScreenSaver /ScreenSaver GetActive | grep -q true; do
-                    if [ $timeout -le 0 ]; then
-                        break
-                    fi
-                    timeout=$((timeout - 1))
-                    sleep 1
-                done
-
                 if ! has_recent_conflict_bg; then
                     checkbg
                 fi
