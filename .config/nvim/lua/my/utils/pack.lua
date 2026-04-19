@@ -257,10 +257,23 @@ local built = {}
 ---@param spec my.pack.spec
 ---@param path string
 function M.build(spec, path)
+  -- Prevent building a plugin for multiple times during dependency resolution
   if not spec.data or not spec.data.build or built[spec.src] then
     return
   end
   built[spec.src] = true
+
+  -- Check whether the plugin is already built, if yes, don't re-build the
+  -- plugin
+  local built_file = vim.fs.joinpath(
+    vim.fn.stdpath('state'),
+    string.format('built_%s', spec.name or spec.src)
+  )
+  local built_info = require('my.utils.json').read(built_file)
+  local stat = vim.uv.fs_stat(path)
+  if stat and stat.ino == built_info.ino then
+    return
+  end
 
   vim.notify(string.format('[my.utils.pack] Building %s', spec.src))
 
@@ -294,6 +307,11 @@ function M.build(spec, path)
   end
 
   if success then
+    -- Mark the plugin as successfully built
+    require('my.utils.json').write(
+      built_file,
+      vim.tbl_deep_extend('force', built_info, { ino = stat and stat.ino })
+    )
     vim.notify(
       string.format('[my.utils.pack] Successfully built plugin %s', spec.src)
     )
@@ -340,6 +358,7 @@ function M.add(specs)
   -- first, then plugin specs under `opt` is collected and managed
   pcall(pack_add, specs, {
     load = function(args)
+      M.build(args.spec, args.path)
       M.lazy_load(args.spec, args.path)
     end,
   })
