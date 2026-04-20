@@ -123,10 +123,12 @@ setbg_nvim() {
         return 1
     fi
 
-    if ! has nvim-socks; then
-        echo "Error: script 'nvim-socks' not found, skip setting backgroud for nvim" >&2
-        return 1
-    fi
+    for dep in nvim-socks timeout; do
+        if ! has "$dep"; then
+            echo "Error: '$dep' not found, skip setting backgroud for nvim" >&2
+            return 1
+        fi
+    done
 
     for sock in $(timeout 1 nvim-socks); do
         # Notice: Don't use `--remote-send "<Cmd>...<CR>"` to send the command
@@ -499,6 +501,11 @@ usage() {
 }
 
 main() {
+    if ! has flock; then
+        echo "Error: 'flock' not found" >&2
+        return 1
+    fi
+
     lockfile="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/setbg.lock"
     exec 9>"$lockfile"
     if ! flock -n 9; then
