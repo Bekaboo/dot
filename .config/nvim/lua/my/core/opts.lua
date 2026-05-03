@@ -339,14 +339,9 @@ vim.env.FZF_DEFAULT_OPTS = (vim.env.FZF_DEFAULT_OPTS or '')
 
 -- Disable plugins shipped with nvim
 vim.g.loaded_2html_plugin = 0
-vim.g.loaded_gzip = 0
 vim.g.loaded_matchit = 0
 vim.g.loaded_spellfile_plugin = 0
-vim.g.loaded_tar = 0
-vim.g.loaded_tarPlugin = 0
 vim.g.loaded_tutor_mode_plugin = 0
-vim.g.loaded_zip = 0
-vim.g.loaded_zipPlugin = 0
 
 -- Lazy-load some runtime files
 vim.g.loaded_remote_plugins = 0
