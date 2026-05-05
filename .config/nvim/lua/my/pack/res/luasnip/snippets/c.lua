@@ -12,24 +12,6 @@ local r = ls.restore_node
 
 M.snippets = {
   us.sn({
-    trig = '/',
-    priority = 999,
-    desc = 'Block comment',
-  }, {
-    t('/* '),
-    i(1),
-    t(' */'),
-  }),
-  us.sN({
-    trig = '//',
-    desc = 'Multi-line block comment',
-  }, {
-    t({ '/*', '' }),
-    t(' * '),
-    i(1),
-    t({ '', ' */' }),
-  }),
-  us.sn({
     trig = 'ret',
     desc = 'return statement',
   }, {
