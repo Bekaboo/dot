@@ -29,6 +29,29 @@ M.snippets = {
   }, t('break')),
   us.sn(
     {
+      trig = 'fp',
+      desc = 'fprintf()',
+    },
+    c(1, {
+      un.fmtad('fprintf(<file>, "<str>\\n"<args>);', {
+        file = r(1, 'file'),
+        str = r(2, 'str'),
+        args = r(3, 'args'),
+      }),
+      un.fmtad('fprintf(<file>, "<str>"<args>);', {
+        file = r(1, 'file'),
+        str = r(2, 'str'),
+        args = r(3, 'args'),
+      }),
+    }),
+    {
+      stored = {
+        file = i(nil, 'stderr'),
+      },
+    }
+  ),
+  us.sn(
+    {
       trig = 'pr',
       desc = 'printf()',
     },
@@ -41,7 +64,22 @@ M.snippets = {
         str = r(1, 'str'),
         args = r(2, 'args'),
       }),
-    })
+      un.fmtad('fprintf(<file>, "<str>\\n"<args>);', {
+        file = r(1, 'file'),
+        str = r(2, 'str'),
+        args = r(3, 'args'),
+      }),
+      un.fmtad('fprintf(<file>, "<str>"<args>);', {
+        file = r(1, 'file'),
+        str = r(2, 'str'),
+        args = r(3, 'args'),
+      }),
+    }),
+    {
+      stored = {
+        file = i(nil, 'stderr'),
+      },
+    }
   ),
   us.sn(
     {
