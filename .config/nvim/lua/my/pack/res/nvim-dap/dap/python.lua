@@ -42,8 +42,11 @@ M.config = {
     -- https://www.reddit.com/r/neovim/comments/14f820c/comment/jp6fr8f/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
     console = 'integratedTerminal',
     justMyCode = function()
-      return vim.fn.confirm('Allow debugpy to step into external functions?', '&Yes\n&No', 2)
-        ~= 1
+      return vim.fn.confirm(
+        'Allow debugpy to step into external functions?',
+        '&Yes\n&No',
+        2
+      ) ~= 1
     end,
     args = utils.dap.get_args(cache),
     pythonPath = function()
@@ -61,8 +64,11 @@ M.config = {
     request = 'launch',
     console = 'integratedTerminal',
     justMyCode = function()
-      return vim.fn.confirm('Allow debugpy to step into external functions?', '&Yes\n&No', 2)
-        ~= 1
+      return vim.fn.confirm(
+        'Allow debugpy to step into external functions?',
+        '&Yes\n&No',
+        2
+      ) ~= 1
     end,
     module = function()
       -- Example test command: python3 -m pytest -s tests/test_xxx.py::test_xxx
@@ -102,8 +108,11 @@ M.config = {
     request = 'attach',
     console = 'integratedTerminal',
     justMyCode = function()
-      return vim.fn.confirm('Allow debugpy to step into external functions?', '&Yes\n&No', 2)
-        ~= 1
+      return vim.fn.confirm(
+        'Allow debugpy to step into external functions?',
+        '&Yes\n&No',
+        2
+      ) ~= 1
     end,
   },
 }
