@@ -89,6 +89,8 @@ M.math = {
   us.samW({ trig = '->', priority = 998 }, t('\\to ')),
   us.samW({ trig = '<-', priority = 998 }, t('\\gets ')),
   us.samW({ trig = '=>', priority = 998 }, t('\\implies ')),
+  us.samW({ trig = '!=>' }, t('\\nRightarrow ')),
+  us.samW({ trig = '\\neq >' }, t('\\nRightarrow ')),
   us.samW({ trig = '|>' }, t('\\mapsto ')),
   us.samW({ trig = '><' }, t('\\bowtie ')),
   us.samW({ trig = '**' }, t('\\cdot ')),
