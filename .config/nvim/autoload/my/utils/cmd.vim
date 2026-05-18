@@ -5,10 +5,10 @@
 " param: notify boolean? notify when python3 provider or the `shlex` package
 "        is unavailable, default `true`
 " return: string[]
-function! utils#cmd#split(str, ...) abort
+function! my#utils#cmd#split(str, ...) abort
   let notify = get(a:, 1, v:false)
 
-  " Python3 provider is lazy-loaded, see `lua/core/opts.lua`, so first try
+  " Python3 provider is lazy-loaded, see `lua/my/core/opts.lua`, so first try
   " loading python3 provider to get python3 support
   if !has('python3')
     unlet g:loaded_python3_provider
