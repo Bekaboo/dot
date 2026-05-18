@@ -6,7 +6,7 @@ return {
     keys = {
       {
         lhs = '<Leader>tk',
-        opts = { desc = 'Run the first test class in current file' },
+        opts = { desc = 'Run the test class nearest to cursor' },
       },
       {
         lhs = '<Leader>tf',
@@ -14,7 +14,7 @@ return {
       },
       {
         lhs = '<Leader>tt',
-        opts = { desc = 'Run the test neartest to cursor' },
+        opts = { desc = 'Run the test nearest to cursor' },
       },
       { lhs = '<Leader>tr', opts = { desc = 'Run the last test' } },
       { lhs = '<Leader>ts', opts = { desc = 'Run the whole test suite' } },
@@ -90,7 +90,7 @@ return {
       )
 
       -- stylua: ignore start
-      vim.keymap.set('n', '<Leader>tk', '<Cmd>TestClass<CR>',   { desc = 'Run the first test class in current file' })
+      vim.keymap.set('n', '<Leader>tk', '<Cmd>TestClass<CR>',   { desc = 'Run the test class nearest to cursor' })
       vim.keymap.set('n', '<Leader>tf', '<Cmd>TestFile<CR>',    { desc = 'Run all tests in current file' })
       vim.keymap.set('n', '<Leader>tt', '<Cmd>TestNearest<CR>', { desc = 'Run the test neartest to cursor' })
       vim.keymap.set('n', '<Leader>tr', '<Cmd>TestLast<CR>',    { desc = 'Run the last test' })
