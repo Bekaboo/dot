@@ -19,6 +19,7 @@ return {
       { lhs = '<Leader>tr', opts = { desc = 'Run the last test' } },
       { lhs = '<Leader>ts', opts = { desc = 'Run the whole test suite' } },
       { lhs = '<Leader>to', opts = { desc = 'Go to last visited test file' } },
+      { lhs = '<Leader>tg', opts = { desc = 'Select test strategy' } },
     },
     cmds = {
       'TestClass',
@@ -27,12 +28,15 @@ return {
       'TestSuite',
       'TestFile',
       'TestLast',
+      'TestStrategy',
     },
     postload = function()
-      local strategies = vim.g['test#custom_strategies'] or {}
+      local utils = require('my.utils')
+
+      local custom_strategies = vim.g['test#custom_strategies'] or {}
 
       ---Modify & confirm test command before running
-      strategies.confirm = function(cmd)
+      custom_strategies.confirm = function(cmd)
         vim.ui.input(
           { prompt = 'Test command: ', default = cmd },
           function(input)
@@ -48,7 +52,7 @@ return {
       end
 
       ---Yank instead of run the test command
-      strategies.yank = function(cmd)
+      custom_strategies.yank = function(cmd)
         vim.fn.setreg('"', cmd)
         vim.fn.setreg(vim.v.register, cmd)
         vim.notify(
@@ -60,13 +64,82 @@ return {
         )
       end
 
-      vim.g['test#custom_strategies'] = strategies
+      vim.g['test#custom_strategies'] = custom_strategies
 
       vim.g['test#strategy'] = 'dispatch'
       vim.g['test#confirm#strategy'] = 'dispatch'
 
+      ---Get a list of all test strategies (including custom strategies defined by user)
+      ---@return string[]
+      local function get_strategies()
+        -- Load strategy definitions in vim-test so that `getcompletion`
+        -- returns a full list of shipped strategies
+        vim.cmd.runtime('autoload/test/strategy.vim')
+
+        return utils.lua.dedup(
+          vim.list_extend(
+            vim.tbl_keys(vim.g['test#custom_strategies']) or {},
+            vim
+              .iter(vim.fn.getcompletion('test#strategy#', 'function'))
+              :map(
+                ---@param compl string
+                ---@return string
+                function(compl)
+                  return compl:match('test#strategy#(%w+)')
+                end
+              )
+              :totable()
+          )
+        )
+      end
+
+      ---Select a strategy interactively
+      ---@return nil
+      local function select_strategy()
+        vim.ui.select(
+          get_strategies(),
+          { prompt = 'Select a strategy: ' },
+          function(strategy)
+            if not strategy then
+              return
+            end
+            vim.g['test#strategy'] = strategy
+          end
+        )
+      end
+
+      vim.api.nvim_create_user_command('TestStrategy', function(opts)
+        if opts.args == '' then
+          select_strategy()
+          return
+        end
+
+        local strategy = opts.args
+        local strategies = get_strategies()
+        if not vim.tbl_contains(strategies, strategy) then
+          vim.notify(
+            string.format(
+              "[vim-test] strategy '%s' invalid, must be one of: %s",
+              strategy,
+              table.concat(strategies, ', ')
+            ),
+            vim.log.levels.WARN
+          )
+          return
+        end
+
+        vim.g['test#strategy'] = strategy
+      end, {
+        nargs = '?',
+        count = -1,
+        desc = 'Set global test strategy.',
+        complete = function()
+          return get_strategies()
+        end,
+      })
+
       -- Lazy-load test configs for each filetype
-      require('my.utils.load').ft_auto_load_once(
+      utils.load.ft_auto_load_once(
         'my.pack.res.vim-test.tests',
         function(ft, configs)
           if not configs then
@@ -77,12 +150,7 @@ return {
           -- the test global variable.
           -- Also see: https://www.reddit.com/r/neovim/comments/jwd0qx/how_do_i_define_vim_variable_in_lua/
           vim
-            .iter(
-              require('my.utils.lua').unnest(
-                { test = { [ft] = configs } },
-                '#'
-              )
-            )
+            .iter(utils.lua.unnest({ test = { [ft] = configs } }, '#'))
             :each(function(name, val)
               vim.g[name] = val
             end)
@@ -90,12 +158,13 @@ return {
       )
 
       -- stylua: ignore start
-      vim.keymap.set('n', '<Leader>tk', '<Cmd>TestClass<CR>',   { desc = 'Run the test class nearest to cursor' })
-      vim.keymap.set('n', '<Leader>tf', '<Cmd>TestFile<CR>',    { desc = 'Run all tests in current file' })
-      vim.keymap.set('n', '<Leader>tt', '<Cmd>TestNearest<CR>', { desc = 'Run the test neartest to cursor' })
-      vim.keymap.set('n', '<Leader>tr', '<Cmd>TestLast<CR>',    { desc = 'Run the last test' })
-      vim.keymap.set('n', '<Leader>ts', '<Cmd>TestSuite<CR>',   { desc = 'Run the whole test suite' })
-      vim.keymap.set('n', '<Leader>to', '<Cmd>TestVisit<CR>',   { desc = 'Go to last visited test file' })
+      vim.keymap.set('n', '<Leader>tk', '<Cmd>TestClass<CR>',    { desc = 'Run the test class nearest to cursor' })
+      vim.keymap.set('n', '<Leader>tf', '<Cmd>TestFile<CR>',     { desc = 'Run all tests in current file' })
+      vim.keymap.set('n', '<Leader>tt', '<Cmd>TestNearest<CR>',  { desc = 'Run the test neartest to cursor' })
+      vim.keymap.set('n', '<Leader>tr', '<Cmd>TestLast<CR>',     { desc = 'Run the last test' })
+      vim.keymap.set('n', '<Leader>ts', '<Cmd>TestSuite<CR>',    { desc = 'Run the whole test suite' })
+      vim.keymap.set('n', '<Leader>to', '<Cmd>TestVisit<CR>',    { desc = 'Go to last visited test file' })
+      vim.keymap.set('n', '<Leader>tg', '<Cmd>TestStrategy<CR>', { desc = 'Select test strategy' })
       -- stylua: ignore end
     end,
   },
