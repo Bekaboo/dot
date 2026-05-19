@@ -132,6 +132,7 @@ return {
         { '<Leader>fS', group = 'LSP' },
         { '<Leader>G', group = 'Debug' },
         { '<Leader>t', group = 'Test' },
+        { '<Leader>ty', group = 'Yank' },
         { '<Leader>P', group = 'Plugin' },
         { '<Leader><Tab>', group = 'Table mode' },
         { '<Leader><Tab>d', group = 'Delete' },

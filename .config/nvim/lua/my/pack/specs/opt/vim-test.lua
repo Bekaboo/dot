@@ -20,6 +20,26 @@ return {
       { lhs = '<Leader>ts', opts = { desc = 'Run the whole test suite' } },
       { lhs = '<Leader>to', opts = { desc = 'Go to last visited test file' } },
       { lhs = '<Leader>tg', opts = { desc = 'Select test strategy' } },
+      {
+        lhs = '<Leader>tyk',
+        opts = { desc = 'Yank command to run test class' },
+      },
+      {
+        lhs = '<Leader>tyf',
+        opts = { desc = 'Yank command to run test file' },
+      },
+      {
+        lhs = '<Leader>tyy',
+        opts = { desc = 'Yank command to run nearest test function' },
+      },
+      {
+        lhs = '<Leader>tyr',
+        opts = { desc = 'Yank command to run the last test' },
+      },
+      {
+        lhs = '<Leader>tys',
+        opts = { desc = 'Yank command to run the whole test suite' },
+      },
     },
     cmds = {
       'TestClass',
@@ -29,6 +49,7 @@ return {
       'TestFile',
       'TestLast',
       'TestStrategy',
+      'TestYank',
     },
     postload = function()
       local utils = require('my.utils')
@@ -138,6 +159,42 @@ return {
         end,
       })
 
+      local test_scopes = { 'nearest', 'class', 'file', 'suite', 'last' }
+
+      vim.api.nvim_create_user_command('TestYank', function(opts)
+        local scope = opts.fargs[1]
+        if not scope or scope == '' then
+          scope = 'nearest'
+        end
+
+        if not vim.tbl_contains(test_scopes, scope) then
+          vim.notify(
+            string.format(
+              "[vim-test] test scope '%s' invalid, must be one of: %s",
+              scope,
+              table.concat(test_scopes, ', ')
+            )
+          )
+          return
+        end
+
+        table.remove(opts.fargs, 1)
+        opts.fargs[#opts.fargs + 1] = '-strategy=yank'
+
+        if scope == 'last' then
+          vim.fn['test#run_last'](opts.fargs)
+        else
+          vim.fn['test#run'](scope, opts.fargs)
+        end
+      end, {
+        nargs = '*',
+        count = -1,
+        desc = 'Yank test command.',
+        complete = function()
+          return test_scopes
+        end,
+      })
+
       -- Lazy-load test configs for each filetype
       utils.load.ft_auto_load_once(
         'my.pack.res.vim-test.tests',
@@ -164,7 +221,12 @@ return {
       vim.keymap.set('n', '<Leader>tr', '<Cmd>TestLast<CR>',     { desc = 'Run the last test' })
       vim.keymap.set('n', '<Leader>ts', '<Cmd>TestSuite<CR>',    { desc = 'Run the whole test suite' })
       vim.keymap.set('n', '<Leader>to', '<Cmd>TestVisit<CR>',    { desc = 'Go to last visited test file' })
-      vim.keymap.set('n', '<Leader>tg', '<Cmd>TestStrategy<CR>', { desc = 'Select test strategy' })
+      vim.keymap.set('n', '<Leader>tg',  '<Cmd>TestStrategy<CR>', { desc = 'Select test strategy' })
+      vim.keymap.set('n', '<Leader>tyk', '<Cmd>TestYank class<CR>',   { desc = 'Yank command to run test class' })
+      vim.keymap.set('n', '<Leader>tyf', '<Cmd>TestYank file<CR>',    { desc = 'Yank command to run test file' })
+      vim.keymap.set('n', '<Leader>tyy', '<Cmd>TestYank nearest<CR>', { desc = 'Yank command to run nearest test function' })
+      vim.keymap.set('n', '<Leader>tyr', '<Cmd>TestYank last<CR>',    { desc = 'Yank command to run the last test' })
+      vim.keymap.set('n', '<Leader>tys', '<Cmd>TestYank suite<CR>',   { desc = 'Yank command to run the whole test suite' })
       -- stylua: ignore end
     end,
   },
