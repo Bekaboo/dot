@@ -217,10 +217,7 @@ function _G._statusline.gitbranch()
       { 'ls-files', vim.api.nvim_buf_get_name(0) }
     )
   )
-  if
-    (not show_untracked or show_untracked == 'no')
-    and (not tracked or tracked == '')
-  then
+  if show_untracked == 'no' and (not tracked or tracked == '') then
     return ''
   end
 
