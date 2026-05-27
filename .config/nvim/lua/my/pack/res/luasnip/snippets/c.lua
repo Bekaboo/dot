@@ -503,10 +503,11 @@ M.snippets = {
       }
     )
   ),
-  us.ssn(
+  us.mssn(
     {
-      trig = 'ifndd',
-      desc = '#ifndef...define preproc',
+      { trig = 'ifndd' },
+      { trig = 'grd' },
+      common = { desc = '#ifndef...define preproc' },
     },
     un.fmtad(
       [[
