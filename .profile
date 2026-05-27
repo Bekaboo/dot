@@ -7,7 +7,7 @@ has() {
 }
 
 # macOS homebrew install paths
-export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+export PATH="/opt/homebrew/opt/llvm/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 if has brew; then
     eval "$(brew shellenv)"
 fi

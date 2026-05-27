@@ -5,7 +5,7 @@ end
 
 # Setup paths
 # macOS homebrew
-fish_add_path /opt/homebrew/bin /usr/local/bin
+fish_add_path /opt/homebrew/opt/llvm/bin /opt/homebrew/bin /usr/local/bin
 if type -q brew
     eval (brew shellenv)
 end
