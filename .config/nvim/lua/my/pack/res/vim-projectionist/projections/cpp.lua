@@ -1,7 +1,9 @@
 return {
   ['*.{cc,cpp,h,hh,hpp}'] = {
     ['*.h'] = {
-      alternate = { '{}.cpp', '{}.cc' },
+      -- Also add '{}.c' here because all '.h' files are recognized as cpp
+      -- header in nvim
+      alternate = { '{}.cpp', '{}.cc', '{}.c' },
       type = 'header',
     },
     ['*.cc'] = {
