@@ -261,6 +261,87 @@ M.snippets = {
       }
     )
   ),
+  us.mssn(
+    {
+      { trig = 'ife' },
+      { trig = 'ifel' },
+      { trig = 'ifelse' },
+      common = { desc = '#if...#else preproc' },
+    },
+    un.fmtad(
+      [[
+        #if <cond>
+        <body>
+        #else
+        <else_body>
+        #endif // <cond>
+      ]],
+      {
+        cond = i(1),
+        body = un.body(2, 0),
+        else_body = i(3),
+      }
+    )
+  ),
+  us.mssn(
+    {
+      { trig = 'ifei' },
+      { trig = 'ifeif' },
+      { trig = 'ifeli' },
+      { trig = 'ifelif' },
+      { trig = 'ifelsei' },
+      { trig = 'ifelseif' },
+      common = { desc = '#if...#elif preproc' },
+    },
+    un.fmtad(
+      [[
+        #if <cond>
+        <body>
+        #elif <cond_else>
+        <body_else>
+        #endif // <cond>
+      ]],
+      {
+        cond = i(1),
+        body = un.body(2, 0),
+        cond_else = i(3),
+        body_else = i(4),
+      }
+    )
+  ),
+  us.mssn(
+    {
+      { trig = 'el' },
+      { trig = 'else' },
+      common = { desc = '#else preproc' },
+    },
+    un.fmtad(
+      [[
+        #else
+        <body>
+      ]],
+      { body = un.body(1, 0) }
+    )
+  ),
+  us.mssn(
+    {
+      { trig = 'eli' },
+      { trig = 'elif' },
+      { trig = 'elsei' },
+      { trig = 'elseif' },
+      common = { desc = '#elif preproc' },
+    },
+    un.fmtad(
+      [[
+        #elif <cond_else>
+        <body_else>
+      ]],
+      {
+        cond_else = i(1),
+        body_else = i(2),
+      }
+    )
+  ),
   us.ssn(
     {
       trig = 'ifd',
