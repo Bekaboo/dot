@@ -29,7 +29,12 @@ return {
         end
       end
 
-      key.amend('x', 'in', lsp_range_sel_wrap(tsis.decrement_node))
+      key.amend(
+        'x',
+        'in',
+        lsp_range_sel_wrap(tsis.decrement_node),
+        { desc = 'Select inside node' }
+      )
       key.amend(
         'x',
         'an',
@@ -39,7 +44,8 @@ return {
             tsis.init_selection()
           end
           tsis.increment_node()
-        end)
+        end),
+        { desc = 'Select around node' }
       )
 
       vim.api.nvim_create_autocmd('ModeChanged', {
