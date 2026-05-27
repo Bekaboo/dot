@@ -9,6 +9,7 @@ local i = ls.insert_node
 local c = ls.choice_node
 local d = ls.dynamic_node
 local r = ls.restore_node
+local f = ls.function_node
 
 M.snippets = {
   us.sn({
@@ -81,21 +82,138 @@ M.snippets = {
       },
     }
   ),
+  us.ssn(
+    {
+      trig = 'dbg',
+      desc = 'Define DEBUG macro',
+    },
+    un.fmtad(
+      [[
+      #ifndef <dbg_flag>
+      #define <dbg_flag> <default>
+      #endif // ifndef <dbg_flag>
+    ]],
+      {
+        dbg_flag = i(1, 'DEBUG'),
+        default = i(2, '0'),
+      }
+    )
+  ),
+  us.ssn(
+    {
+      trig = 'nl',
+      desc = 'Define log macro',
+    },
+    un.fmtad(
+      [[
+        #define <log>(fmt, ...)<spacing> \
+        <idnt>printf("[%s:%d %s] " fmt, __FILE__, __LINE__, \
+        <idnt>       __func__ __VA_OPT__(, ) __VA_ARGS__)
+      ]],
+      {
+        log = i(1, 'log'),
+        ---@param args string[][]
+        spacing = f(function(args)
+          local logger_name = args[1][1]
+          return string.rep(
+            ' ',
+            vim.bo.shiftwidth
+              + #'printf("[%s:%d %s] " fmt, __FILE__, __LINE__,'
+              - #(string.format('#define %s(fmt, ...)', logger_name))
+          )
+        end, { 1 }),
+        idnt = un.idnt(1),
+      }
+    )
+  ),
+  us.ssn(
+    {
+      trig = 'ndl',
+      desc = 'Define dbg_log macro',
+    },
+    un.fmtad(
+      [[
+        #if <dbg_flag>
+        #define <dbg_log>(...) <log>(__VA_ARGS__)
+        #else
+        #define <dbg_log>(...) ((void)0)
+        #endif // <dbg_flag>
+      ]],
+      {
+        dbg_flag = i(1, 'DEBUG'),
+        dbg_log = i(2, 'dbg_log'),
+        log = i(3, 'log'),
+      }
+    )
+  ),
+  us.sn(
+    {
+      trig = 'll',
+      desc = 'log()',
+    },
+    c(1, {
+      un.fmtad('<log>("<str>\\n"<args>);', {
+        log = r(1, 'log'),
+        str = r(2, 'str'),
+        args = r(3, 'args'),
+      }),
+      un.fmtad('<log>("<str>"<args>);', {
+        log = r(1, 'log'),
+        str = r(2, 'str'),
+        args = r(3, 'args'),
+      }),
+    }),
+    {
+      stored = {
+        log = i(nil, 'log'),
+      },
+    }
+  ),
   us.sn(
     {
       trig = 'dp',
       desc = 'dbg_printf()',
     },
     c(1, {
-      un.fmtad('dbg_printf("<str>\\n"<args>);', {
-        str = r(1, 'str'),
-        args = r(2, 'args'),
+      un.fmtad('<dbg_printf>("<str>\\n"<args>);', {
+        dbg_printf = r(1, 'dbg_printf'),
+        str = r(2, 'str'),
+        args = r(3, 'args'),
       }),
-      un.fmtad('dbg_printf("<str>"<args>);', {
-        str = r(1, 'str'),
-        args = r(2, 'args'),
+      un.fmtad('<dbg_printf>("<str>"<args>);', {
+        dbg_printf = r(1, 'dbg_printf'),
+        str = r(2, 'str'),
+        args = r(3, 'args'),
       }),
-    })
+    }),
+    {
+      stored = {
+        dbg_printf = i(nil, 'dbg_printf'),
+      },
+    }
+  ),
+  us.sn(
+    {
+      trig = 'dl',
+      desc = 'dbg_log()',
+    },
+    c(1, {
+      un.fmtad('<dbg_log>("<str>\\n"<args>);', {
+        dbg_log = r(1, 'dbg_log'),
+        str = r(2, 'str'),
+        args = r(3, 'args'),
+      }),
+      un.fmtad('<dbg_log>("<str>"<args>);', {
+        dbg_log = r(1, 'dbg_log'),
+        str = r(2, 'str'),
+        args = r(3, 'args'),
+      }),
+    }),
+    {
+      stored = {
+        dbg_log = i(nil, 'dbg_log'),
+      },
+    }
   ),
   us.sn(
     {
@@ -118,13 +236,20 @@ M.snippets = {
       desc = 'dbg_assert()',
     },
     c(1, {
-      un.fmtad('dbg_assert(<expr>);', {
-        expr = r(1, 'expr'),
+      un.fmtad('<dbg_assert>(<expr>);', {
+        dbg_assert = r(1, 'dbg_assert'),
+        expr = r(2, 'expr'),
       }),
-      un.fmtad('dbg_assert((<expr>) && "<msg>\\n");', {
-        expr = r(1, 'expr'),
-        msg = r(2, 'msg'),
+      un.fmtad('<dbg_assert>((<expr>) && "<msg>\\n");', {
+        dbg_assert = r(1, 'dbg_assert'),
+        expr = r(2, 'expr'),
+        msg = r(3, 'msg'),
       }),
+      {
+        stored = {
+          dbg_assert = i(nil, 'dbg_assert'),
+        },
+      },
     })
   ),
   us.sn(
@@ -182,13 +307,14 @@ M.snippets = {
       trig = 'dpck',
       desc = 'Inspect through dbg_printf()',
     },
-    un.fmtad('dbg_printf("<expr_escaped>: <placeholder>\\n", <expr>);', {
-      expr = i(1),
-      expr_escaped = d(2, function(texts)
+    un.fmtad('<dbg_printf>("<expr_escaped>: <placeholder>\\n", <expr>);', {
+      dbg_printf = i(1, 'dbg_printf'),
+      expr = i(2),
+      expr_escaped = d(3, function(texts)
         local str = vim.fn.escape(texts[1][1], '\\"')
         return sn(nil, i(1, str))
-      end, { 1 }),
-      placeholder = c(3, {
+      end, { 2 }),
+      placeholder = c(4, {
         i(nil, '%d'),
         i(nil, '0x%x'),
         i(nil, '%lu'),
@@ -207,8 +333,9 @@ M.snippets = {
       trig = 'dpl',
       desc = 'Print a line using dbg_printf()',
     },
-    un.fmtad('dbg_printf("<line>\\n");', {
-      line = c(1, {
+    un.fmtad('<dbg_printf>("<line>\\n");', {
+      dbg_printf = i(1, 'dbg_printf'),
+      line = c(2, {
         i(nil, '----------------------------------------'),
         i(nil, '........................................'),
         i(nil, '========================================'),
