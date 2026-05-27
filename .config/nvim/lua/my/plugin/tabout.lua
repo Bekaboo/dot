@@ -59,9 +59,7 @@ local closing_patterns = fallback_tbl:new({
     '"',
     "'",
     '`',
-    ',',
     ';',
-    '%.',
   },
   content = {
     c = { '%*/' },
@@ -109,8 +107,7 @@ local closing_patterns = fallback_tbl:new({
 local opening_pattern_lookup_tbl = {
   ["'"]               = "'",
   ['"']               = '"',
-  [',']               = '.',
-  [';']               = '.',
+  [';']               = ';',
   ['`']               = '`',
   ['|']               = '|',
   ['}']               = '{',
