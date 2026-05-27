@@ -185,18 +185,6 @@ function _G._statusline.gitbranch()
 
   local use_cur_repo_args = { '--git-dir', git_dir, '--work-tree', work_tree }
 
-  local branch = vim.b.gitsigns_status_dict and vim.b.gitsigns_status_dict.head
-    or utils.git.execute(
-      0,
-      vim.list_extend(
-        vim.deepcopy(use_cur_repo_args),
-        { 'rev-parse', '--abbrev-ref', 'HEAD' }
-      )
-    )
-  if not branch then
-    return ''
-  end
-
   -- Don't show git branch info if `status.showUntrackedFiles` is 'no'
   -- and current file is not tracked
   -- This prevents showing the dotfiles bare repo branch info in irrelevant
@@ -218,6 +206,18 @@ function _G._statusline.gitbranch()
     )
   )
   if show_untracked == 'no' and (not tracked or tracked == '') then
+    return ''
+  end
+
+  local branch = vim.b.gitsigns_status_dict and vim.b.gitsigns_status_dict.head
+    or utils.git.execute(
+      0,
+      vim.list_extend(
+        vim.deepcopy(use_cur_repo_args),
+        { 'rev-parse', '--abbrev-ref', 'HEAD' }
+      )
+    )
+  if not branch then
     return ''
   end
 
