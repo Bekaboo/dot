@@ -202,6 +202,24 @@ return {
       local utils = require('my.utils')
       local icons = require('my.utils.static.icons')
 
+      ---HACK: fzf-lua intentionally avoids triggering events when restoring
+      ---cursor to last win after closing the fzf window, which prevents winbar
+      ---from restoring icon colors in current window after regaining focus, so
+      ---we need to override the win close function to make winbar icon color
+      ---work. See:
+      --- - `lua/my/plugin/winbar/hlgroups.lua`
+      --- - https://github.com/ibhagwan/fzf-lua/blob/114da56bb1b14b4aec073123fc1ef9346469967e/lua/fzf-lua/utils.lua#L1220-L1223
+      ---@param func function
+      ---@return ... any
+      ---@diagnostic disable-next-line: duplicate-set-field
+      function fzf_utils.eventignore(func)
+        local ret = { pcall(func) }
+        if not ret[1] then
+          error(ret[2])
+        end
+        return select(2, unpack(ret))
+      end
+
       local _arg_del = actions.arg_del
       local _vimcmd_buf = actions.vimcmd_buf
 
