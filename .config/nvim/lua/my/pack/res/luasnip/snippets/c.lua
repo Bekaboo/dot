@@ -102,16 +102,16 @@ M.snippets = {
   us.ssn(
     {
       trig = 'nl',
-      desc = 'Define log macro',
+      desc = 'Define log_msg macro',
     },
     un.fmtad(
       [[
-        #define <log>(fmt, ...)<spacing> \
+        #define <log_msg>(fmt, ...)<spacing> \
         <idnt>printf("[%s:%d %s] " fmt, __FILE__, __LINE__, \
         <idnt>       __func__ __VA_OPT__(, ) __VA_ARGS__)
       ]],
       {
-        log = i(1, 'log'),
+        log_msg = i(1, 'log_msg'),
         ---@param args string[][]
         spacing = f(function(args)
           local logger_name = args[1][1]
@@ -134,7 +134,7 @@ M.snippets = {
     un.fmtad(
       [[
         #if <dbg_flag>
-        #define <dbg_log>(...) <log>(__VA_ARGS__)
+        #define <dbg_log>(...) <log_msg>(__VA_ARGS__)
         #else
         #define <dbg_log>(...) ((void)0)
         #endif // <dbg_flag>
@@ -142,30 +142,30 @@ M.snippets = {
       {
         dbg_flag = i(1, 'DEBUG'),
         dbg_log = i(2, 'dbg_log'),
-        log = i(3, 'log'),
+        log_msg = i(3, 'log_msg'),
       }
     )
   ),
   us.sn(
     {
       trig = 'll',
-      desc = 'log()',
+      desc = 'log_msg()',
     },
     c(1, {
-      un.fmtad('<log>("<str>\\n"<args>);', {
-        log = r(1, 'log'),
+      un.fmtad('<log_msg>("<str>\\n"<args>);', {
+        log_msg = r(1, 'log_msg'),
         str = r(2, 'str'),
         args = r(3, 'args'),
       }),
-      un.fmtad('<log>("<str>"<args>);', {
-        log = r(1, 'log'),
+      un.fmtad('<log_msg>("<str>"<args>);', {
+        log_msg = r(1, 'log_msg'),
         str = r(2, 'str'),
         args = r(3, 'args'),
       }),
     }),
     {
       stored = {
-        log = i(nil, 'log'),
+        log_msg = i(nil, 'log_msg'),
       },
     }
   ),
