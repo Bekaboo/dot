@@ -122,13 +122,13 @@ augroup('my.yank_highlight', {
   },
 })
 
-augroup('my.auto_save', {
+augroup('my.auto_write', {
   { 'BufLeave', 'WinLeave', 'FocusLost' },
   {
     nested = true,
-    desc = 'Autosave on focus change.',
+    desc = 'Automatically write buffers on focus change.',
     callback = function(args)
-      -- Don't auto-save non-file buffers
+      -- Don't auto-write non-file buffers
       vim.uv.fs_stat(args.file, function(err, stat)
         if err or not stat or stat.type ~= 'file' then
           return
