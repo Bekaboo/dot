@@ -211,7 +211,6 @@ vim.api.nvim_create_autocmd('UIEnter', {
 
 vim.api.nvim_create_autocmd({
   'BufAdd',
-  'BufModifiedSet',
   'BufReadPre',
   'CursorMoved',
   'InsertEnter',
@@ -225,6 +224,17 @@ vim.api.nvim_create_autocmd({
 }, {
   once = true,
   group = groupid,
+  desc = 'Clear the intro on user action.',
+  callback = function()
+    disable_intro()
+    clear_intro()
+  end,
+})
+
+vim.api.nvim_create_autocmd('OptionSet', {
+  once = true,
+  group = groupid,
+  pattern = 'modified',
   desc = 'Clear the intro on user action.',
   callback = function()
     disable_intro()
