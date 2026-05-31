@@ -4,7 +4,16 @@ local icons = require('my.utils.static.icons')
 vim.diagnostic.config({
   severity_sort = true,
   jump = {
-    float = true,
+    on_jump = function(diag, buf)
+      if not diag then
+        return
+      end
+      vim.diagnostic.open_float({
+        bufnr = buf,
+        focus = false,
+        scope = 'cursor',
+      })
+    end,
   },
   float = {
     source = true,
