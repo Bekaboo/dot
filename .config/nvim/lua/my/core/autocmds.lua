@@ -114,7 +114,7 @@ augroup('my.yank_highlight', {
   {
     desc = 'Highlight the selection on yank.',
     callback = function()
-      pcall(vim.highlight.on_yank, {
+      pcall(vim.hl.hl_op, {
         higroup = 'Visual',
         timeout = 200,
       })
