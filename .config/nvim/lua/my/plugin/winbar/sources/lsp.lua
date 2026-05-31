@@ -316,9 +316,9 @@ local function attach(buf)
     -- simply filter the events table discard the `pattern` key
     vim
       .iter(configs.opts.bar.update_events.buf)
-      ---@param event my.winbar.update_event
-      ---@return string
       :map(
+        ---@param event my.winbar.event
+        ---@return string
         function(event)
           return type(event) == 'table' and event.event or event
         end
