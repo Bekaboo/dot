@@ -65,9 +65,12 @@ local function setup(opts)
   end
 
   local groupid = vim.api.nvim_create_augroup('my.winbar', {})
-  if not vim.tbl_isempty(configs.opts.bar.attach_events) then
-    vim.api.nvim_create_autocmd(configs.opts.bar.attach_events, {
+  for _, event in ipairs(configs.opts.bar.attach_events) do
+    local event_name = type(event) == 'table' and event.event or event
+    local event_pattern = type(event) == 'table' and event.pattern or nil
+    vim.api.nvim_create_autocmd(event_name, {
       group = groupid,
+      pattern = event_pattern,
       callback = function(args)
         -- Try attaching winbar to all windows containing the buffer
         -- Notice that we cannot simply let `win=0` here since the current
@@ -80,9 +83,12 @@ local function setup(opts)
     })
   end
 
-  if not vim.tbl_isempty(configs.opts.bar.update_events.win) then
-    vim.api.nvim_create_autocmd(configs.opts.bar.update_events.win, {
+  for _, event in ipairs(configs.opts.bar.update_events.win) do
+    local event_name = type(event) == 'table' and event.event or event
+    local event_pattern = type(event) == 'table' and event.pattern or nil
+    vim.api.nvim_create_autocmd(event_name, {
       group = groupid,
+      pattern = event_pattern,
       callback = function(args)
         if args.event == 'WinResized' then
           for _, win in ipairs(vim.v.event.windows or {}) do
@@ -99,9 +105,12 @@ local function setup(opts)
     })
   end
 
-  if not vim.tbl_isempty(configs.opts.bar.update_events.buf) then
-    vim.api.nvim_create_autocmd(configs.opts.bar.update_events.buf, {
+  for _, event in ipairs(configs.opts.bar.update_events.buf) do
+    local event_name = type(event) == 'table' and event.event or event
+    local event_pattern = type(event) == 'table' and event.pattern or nil
+    vim.api.nvim_create_autocmd(event_name, {
       group = groupid,
+      pattern = event_pattern,
       callback = function(args)
         utils.bar.exec('update', { buf = args.buf })
       end,
@@ -109,9 +118,12 @@ local function setup(opts)
     })
   end
 
-  if not vim.tbl_isempty(configs.opts.bar.update_events.global) then
-    vim.api.nvim_create_autocmd(configs.opts.bar.update_events.global, {
+  for _, event in ipairs(configs.opts.bar.update_events.global) do
+    local event_name = type(event) == 'table' and event.event or event
+    local event_pattern = type(event) == 'table' and event.pattern or nil
+    vim.api.nvim_create_autocmd(event_name, {
       group = groupid,
+      pattern = event_pattern,
       callback = function()
         utils.bar.exec('update')
       end,

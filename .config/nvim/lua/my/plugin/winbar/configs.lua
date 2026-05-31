@@ -171,6 +171,12 @@ M.opts = {
           }))
         )
     end,
+    ---@alias my.winbar.event my.winbar.structured_event|vim.api.keyset.events
+    ---
+    ---@class my.winbar.structured_event
+    ---@field event vim.api.keyset.events name of he event
+    ---@field pattern string pattern of the event
+    ---@type my.winbar.event[]
     attach_events = {
       'BufEnter',
       'BufWinEnter',
@@ -183,13 +189,19 @@ M.opts = {
     -- cancelled, this improves the performance when the user is holding
     -- down a key (e.g. 'j') to scroll the window
     update_debounce = 16,
+    ---@type table<string, my.winbar.event[]>
     update_events = {
       win = {
         'CursorMoved',
         'WinResized',
       },
       buf = {
-        'BufModifiedSet',
+        -- Neovim v0.13 removes `BufModifiedSet`, use `OptionSet` with
+        -- `pattern=modified` instead
+        {
+          event = 'OptionSet',
+          pattern = 'modified',
+        },
         'FileChangedShellPost',
         'TextChanged',
         'InsertLeave',
