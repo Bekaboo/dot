@@ -601,6 +601,9 @@ vim.api.nvim_create_autocmd('DiagnosticChanged', {
   desc = 'Update diagnostics cache for the status line.',
   -- Use `vim.schedule_wrap` to avoid statusline flicker in nvim v0.13
   callback = vim.schedule_wrap(function(args)
+    if not vim.api.nvim_buf_is_valid(args.buf) then
+      return
+    end
     vim.b[args.buf].diag_cnt_cache = vim.diagnostic.count(args.buf)
     vim.b[args.buf].diag_str_cache = nil
     pcall(vim.cmd.redrawstatus, {
