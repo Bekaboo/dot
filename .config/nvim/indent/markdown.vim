@@ -22,7 +22,7 @@ endfunction
 " non-blank line
 " Returns the line number, the index of the match, and the substring that
 " matches the pattern
-function! s:prev_match(lnum, pattern) abort
+function! s:prevnonblank_match(lnum, pattern) abort
   let l:lnum = prevnonblank(a:lnum - 1)
   let l:indent = indent(l:lnum)
   while l:lnum >= 1
@@ -43,14 +43,34 @@ function! s:prev_match(lnum, pattern) abort
   return [0, -1, '']
 endfunction
 
+" Check if the given string represents an item in an unordered list
+" Returns 0/1
+function! s:is_unordered_list(str) abort
+  return a:str =~# '^\s*[-*+]\s\+'
+endfunction
+
+" Check if the given string represents an item in an ordered list
+" Returns the number of the ordered list item if the string represents one,
+" 0 otherwise
+function! s:is_ordered_list(str) abort
+  return str2nr(matchstr(a:str, '\(^\s*\)\@<=\d\+\(\.\ \)\@='))
+endfunction
+
+" Check if the given string represents an item in an ordered/unordered list
+" Returns a positive integer if true, 0 otherwise
+function! s:is_list(str) abort
+  return s:is_ordered_list(a:str) || s:is_unordered_list(a:str)
+endfunction
+
 function! GetMarkdownIndent() abort
   let l:line = getline(v:lnum)
-  let l:prev_lnum = prevnonblank(v:lnum - 1)
-  let l:prev_line = getline(l:prev_lnum)
-  let l:sw = shiftwidth()
-  let l:default = indent(v:lnum)
-  if l:prev_lnum == 0
-      return l:default
+  let l:indent = indent(v:lnum)
+  let l:prevnonblank_lnum = prevnonblank(v:lnum - 1)
+  let l:prevnonblank_line = getline(l:prevnonblank_lnum)
+  let l:prevnonblank_indent = indent(l:prevnonblank_lnum)
+
+  if l:prevnonblank_lnum == 0
+      return l:indent
   endif
 
   " Treesitter indent in insert mode is laggy, but we need it to get correct
@@ -58,7 +78,7 @@ function! GetMarkdownIndent() abort
   " If the code block does not have a language, we should not use
   " nvim-treesitter's indent expr because it always return 0 (no indentation)
   if s:in_codeblock()
-    let l:ts_indent = l:default
+    let l:ts_indent = l:indent
     " nvim-treesitter's new default branch 'main' does not have
     " `nvim_treesitter#indent()`
     try
@@ -69,26 +89,30 @@ function! GetMarkdownIndent() abort
     return l:ts_indent
   endif
 
-  " Indent unordered list bullet points
-  if l:line =~# '^\s*[-*+]\s\+$'
-    return l:default / l:sw * l:sw
-  endif
+  " Current line is not a list item and prev line is non-empty, check if
+  " prev line is a list item and align to it accordingly
+  if l:prevnonblank_lnum == v:lnum - 1 && ! s:is_list(l:line)
+    " Indent unordered list bullet points
+    if s:is_unordered_list(l:prevnonblank_line)
+      return l:prevnonblank_indent + 2
+    endif
 
-  " Indent ordered list items
-  let l:order = str2nr(matchstr(l:line, '\(^\s*\)\@<=\d\+\(\.\ \)\@='))
-  if l:order > 0
-    let [l:prev_heading_lnum, l:_, l:_] = s:prev_match(v:lnum, '^#')
-    let [l:prev_item_lnum, l:_, l:prev_item_order] =
-          \ s:prev_match(v:lnum, '^\d\+\.\@=')
-    if s:in_normalzone(l:prev_item_lnum, 1) &&
-          \ l:prev_heading_lnum < l:prev_item_lnum
-      return str2nr(l:order) > l:prev_item_order
-            \ ? indent(l:prev_item_lnum)
-            \ : indent(l:prev_item_lnum) + l:sw
+    " Indent ordered list items
+    let l:order = s:is_ordered_list(l:prevnonblank_line)
+    if l:order > 0
+      let [l:prevnonblank_heading_lnum, l:_, l:_] = s:prevnonblank_match(v:lnum, '^#')
+      let [l:prevnonblank_item_lnum, l:_, l:prevnonblank_item_order] =
+            \ s:prevnonblank_match(v:lnum, '^\d\+\.\@=')
+      if ! s:in_codeblock() && l:prevnonblank_heading_lnum < l:prevnonblank_item_lnum
+        return str2nr(l:order) > l:prevnonblank_item_order
+              \ ? indent(l:prevnonblank_item_lnum)
+              \ : indent(l:prevnonblank_item_lnum) + (float2nr(log10(l:order)) + 1) + 2
+      endif
     endif
   endif
 
-  " Only align multi-line list items if adjacent previous line is non-empty
+  " If previous line is empty, should use normal indent instead of aligning
+  " with the first line of the list item
   " ---------------------------------------------
   " 1234. aaa-bbb
   "       ccc <- should align with the 'aaa'
@@ -97,20 +121,23 @@ function! GetMarkdownIndent() abort
   "
   "     eee <- should not align with 'ddd'
   " ---------------------------------------------
-  if l:line =~# '^\s*$' && l:prev_lnum == v:lnum - 1 &&
-        \ s:in_normalzone(l:prev_lnum, 1)
-    " Align unordered list multi-line items
-    let l:prev_line_char_pos = match(l:prev_line, '\(^\s*[-*+]\s\+\)\@<=\S')
-    if l:prev_line_char_pos >= 0
-      return l:prev_line_char_pos
-    endif
-    " Align ordered list multi-line items
-    let l:ordered_list_extra_indent =
-          \ match(l:prev_line, '\(^\s*\d\+\.\s*\)\@<=\S')
-    if l:ordered_list_extra_indent >= 0
-      return l:ordered_list_extra_indent
+  if trim(getline(v:lnum - 1)) ==# ""
+    " Find the first prev list item line reversely to decide the indent
+    " of current line
+    let l:curr_lnum = l:prevnonblank_lnum
+
+    while l:curr_lnum > 0
+      let l:curr_line = getline(l:curr_lnum)
+      if trim(l:curr_line) ==# "" || s:is_list(l:curr_line)
+        break
+      endif
+      let l:curr_lnum -= 1
+    endwhile
+
+    if s:is_list(l:curr_line) && l:indent > indent(l:curr_lnum)
+      return indent(l:curr_lnum) + shiftwidth()
     endif
   endif
 
-  return l:default
+  return l:indent
 endfunction
