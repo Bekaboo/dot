@@ -4,7 +4,7 @@ return setmetatable({
   source = nil, ---@module 'my.plugin.winbar.utils.source'
 }, {
   __index = function(_, key)
-    return vim.F.npcall(require, 'my.plugin.winbar.utils.' .. key)
+    return vim.npcall(require, 'my.plugin.winbar.utils.' .. key)
       or require('my.utils.' .. key)
   end,
 })

@@ -25,7 +25,7 @@ return {
           return opt_val
         end
 
-        opt_val = vim.F.npcall(vim.filetype.get_option, ft, opt) or vim.bo[opt]
+        opt_val = vim.npcall(vim.filetype.get_option, ft, opt) or vim.bo[opt]
         opts[opt] = opt_val
         return opt_val
       end

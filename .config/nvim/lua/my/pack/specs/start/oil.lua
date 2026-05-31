@@ -570,7 +570,7 @@ return {
         end
 
         -- Follow symlinks
-        local path = vim.F.npcall(
+        local path = vim.npcall(
           vim.uv.fs_realpath,
           vim.fs.joinpath(dir, fname)
         ) or ''

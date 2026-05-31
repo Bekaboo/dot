@@ -37,7 +37,7 @@ local function refresh(buf)
     return
   end
 
-  local query = vim.F.npcall(
+  local query = vim.npcall(
     vim.treesitter.query.parse,
     ft,
     [[

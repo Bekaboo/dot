@@ -232,7 +232,7 @@ return {
         return chunks
       end
 
-      local otk = vim.F.npcall(require, 'otter.keeper')
+      local otk = vim.npcall(require, 'otter.keeper')
 
       ---@type table<string, true>
       local not_runnable = {

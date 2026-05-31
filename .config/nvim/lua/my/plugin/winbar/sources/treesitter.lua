@@ -159,7 +159,7 @@ local function get_symbols(buf, win, cursor)
   local symbols = {} ---@type my.winbar.symbol[]
 
   -- Prevent errors when getting node from filetypes without a parser
-  local node = vim.F.npcall(vim.treesitter.get_node, {
+  local node = vim.npcall(vim.treesitter.get_node, {
     ft = vim.filetype.match({ buf = buf }),
     bufnr = buf,
     pos = {
