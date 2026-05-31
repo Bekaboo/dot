@@ -110,7 +110,7 @@ do
 end
 
 augroup('my.yank_highlight', {
-  'TextYankPost',
+  { 'TextYankPost', 'TextPutPost' },
   {
     desc = 'Highlight the selection on yank.',
     callback = function()
