@@ -21,9 +21,13 @@ fish_add_path --move \
     $HOME/go/bin
 
 # Portable apps
-if test -d "$HOME/Apps"
-    for dir in $HOME/Apps/*
+for apps_dir in $HOME/Apps $HOME/.local/apps
+    if not test -d $apps_dir
+        continue
+    end
+    for dir in $apps_dir/*
         fish_add_path --move $dir
+        fish_add_path --move $dir/bin
     end
 end
 

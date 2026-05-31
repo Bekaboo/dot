@@ -24,11 +24,15 @@ export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.bin:$PATH"
 
 # Portable apps
-if [ -d "$HOME/Apps" ]; then
-    for dir in "$HOME"/Apps/*; do
+for apps_dir in "$HOME/Apps" "$HOME/.local/apps"; do
+    if [ ! -d "$apps_dir" ]; then
+        continue
+    fi
+    for dir in "$apps_dir"/*; do
         export PATH="$dir:$PATH"
+        export PATH="$dir/bin:$PATH"
     done
-fi
+done
 
 # Dotfile bare repo path
 export DOT_DIR="$HOME/.dot"
