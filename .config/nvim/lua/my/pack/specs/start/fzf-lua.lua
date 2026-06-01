@@ -923,8 +923,8 @@ return {
               \   endif |
               \ endfor |
               \ if (g:_fzf_lastwintype ==# 'loclist' || g:_fzf_lastwintype ==# 'quickfix') &&
-              \     trim(win_execute(g:_fzf_lastwin, 'echo winnr("h")')) == g:_fzf_lastwin &&
-              \     trim(win_execute(g:_fzf_lastwin, 'echo winnr("l")')) == g:_fzf_lastwin |
+              \     win_getid(str2nr(trim(win_execute(g:_fzf_lastwin, 'echo winnr("h")')))) == g:_fzf_lastwin &&
+              \     win_getid(str2nr(trim(win_execute(g:_fzf_lastwin, 'echo winnr("l")')))) == g:_fzf_lastwin |
               \   let g:_fzf_qfclosed = g:_fzf_lastwintype |
               \   let g:_fzf_qfwin = g:_fzf_lastwin |
               \   let g:_fzf_qfheight = nvim_win_get_height(g:_fzf_qfwin) |
