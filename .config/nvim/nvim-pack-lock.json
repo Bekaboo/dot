@@ -22,7 +22,7 @@
       "src": "https://github.com/shumphrey/fugitive-gitlab.vim"
     },
     "fzf-lua": {
-      "rev": "fea9eedc6894c44d44cbb772a5cd11c93b82d7a1",
+      "rev": "d340ade20dfe4ef87e6f9a63b9905be91965b5dc",
       "src": "https://github.com/ibhagwan/fzf-lua"
     },
     "gitsigns.nvim": {
@@ -124,7 +124,7 @@
       "src": "https://github.com/Wansmer/treesj"
     },
     "ts-autotag.nvim": {
-      "rev": "35f79f6",
+      "rev": "07bcd146fa22558adf0d900e4a2601b6d142c805",
       "src": "https://github.com/tronikelis/ts-autotag.nvim"
     },
     "ultimate-autopair.nvim": {
