@@ -778,7 +778,7 @@ vim.g.qf_disable_statusline = true
 
 utils.hl.persist(function()
   -- stylua: ignore start
-  utils.hl.set(0, 'StatusLineGitBranch',       { link = 'StatusLineGitChanged', default = true })
+  utils.hl.set(0, 'StatusLineGitBranch',       { link = 'Comment',              default = true })
   utils.hl.set(0, 'StatusLineGitAdded',        { link = 'GitSignsAdd',          default = true })
   utils.hl.set(0, 'StatusLineGitChanged',      { link = 'GitSignsChange',       default = true })
   utils.hl.set(0, 'StatusLineGitRemoved',      { link = 'GitSignsDelete',       default = true })
