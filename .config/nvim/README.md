@@ -77,7 +77,7 @@ Currently only tested on Linux (X11/Wayland/TTY) and Android (Termux).
     - [intro message](plugin/intro.lua)
 - [VSCode-Neovim](https://github.com/vscode-neovim/vscode-neovim) integration, makes you feel at home in VSCode when you
   occasionally need it
-- Massive [TeX math snippets](lua/my/configs/luasnip/snippets/tex.lua)
+- Massive [TeX math snippets](lua/my/pack/res/luasnip/snippets/tex.lua)
 - Jupyter Notebook integration: edit notebooks like markdown files, run code in
   cells with simple commands and shortcuts
 - Optimization for large files, open any file larger than 100 MB and edit like
@@ -125,7 +125,7 @@ parser using `:TSInstall` or `:TSUninstall`.
 
 To make the change permanent, add or remove corresponding parsers in the
 `ensure_installed` field in the call to nvim-treesitter's `setup()` function,
-see [lua/my/configs/nvim-treesitter.lua](lua/my/configs/nvim-treesitter.lua).
+see [lua/my/pack/specs/opt/nvim-treesitter.lua](lua/my/pack/specs/opt/nvim-treesitter.lua).
 
 ### LSP
 
@@ -212,7 +212,7 @@ Like LSP, debug adapters are installed manually or via system package manager.
 
 1. [Installation](#dap-installation): install the debug adapter
 2. [Configuration](#dap-configuration): configs for each language so that
-   [lua/my/configs/nvim-dap.lua](lua/my/configs/nvim-dap.lua) knows how to launch
+   [lua/my/pack/specs/opt/nvim-dap.lua](lua/my/pack/specs/opt/nvim-dap.lua) knows how to launch
    a debug session for each filetype
 3. [Activation](#dap-activation): use debug adapter to debug source files
 
@@ -265,7 +265,7 @@ Install the following debug adapters manually:
 
 #### DAP Configuration
 
-Configuration for each filetypes: [lua/my/configs/nvim-dap/dap](lua/my/configs/nvim-dap/dap).
+Configuration for each filetypes: [lua/my/pack/res/nvim-dap/dap](lua/my/pack/res/nvim-dap/dap).
 
 #### DAP Activation
 
@@ -457,7 +457,7 @@ See [lua/my/core/opts.lua](lua/my/core/opts.lua).
 
 ### Keymaps
 
-See [lua/my/core/keymaps.lua](lua/my/core/keymaps.lua), or see [module config files](lua/my/configs) for
+See [lua/my/core/keymaps.lua](lua/my/core/keymaps.lua), or see [module config files](lua/my/pack/specs) for
 corresponding plugin keymaps.
 
 ### Colorschemes
@@ -489,15 +489,15 @@ See
 ### DAP Configurations
 
 See
-- [lua/my/configs/nvim-dap/dap](lua/my/configs/nvim-dap/dap)
-- [lua/my/configs/nvim-dap.lua](lua/my/configs/nvim-dap.lua)
-- [lua/my/configs/nvim-dap-ui.lua](lua/my/configs/nvim-dap-ui.lua).
+- [lua/my/pack/specs/opt/nvim-dap.lua](lua/my/pack/specs/opt/nvim-dap.lua)
+- [lua/my/pack/res/nvim-dap/dap](lua/my/pack/res/nvim-dap/dap)
+- [lua/my/pack/specs/opt/nvim-dap-ui.lua](lua/my/pack/specs/opt/nvim-dap-ui.lua).
 
 ### Snippets
 
 This configuration use [LuaSnip](https://github.com/L3MON4D3/LuaSnip) as the
 snippet engine, custom snippets for different filetypes are defined under
-[lua/my/configs/luasnip/snippets](lua/my/configs/luasnip/snippets).
+[lua/my/pack/res/luasnip/snippets](lua/my/pack/res/luasnip/snippets).
 
 ### Enabling VSCode Integration
 
