@@ -139,6 +139,7 @@ end
 ---Save current session
 ---@param session? string path to session file to save to
 ---@param notify? boolean whether to print notify message after saving the session
+---@return string path to the saved session
 function M.save(session, notify)
   if not session then
     session = vim.g._session_loaded or M.get()
@@ -156,6 +157,8 @@ function M.save(session, notify)
         .. string.format("'%s'", vim.fn.fnamemodify(session, ':~:.'))
     )
   end
+
+  return session
 end
 
 ---Remove given session file
@@ -271,6 +274,18 @@ function M.select(notify)
       finish()
     end)
   end)
+end
+
+---Restart nvim and restore current session
+---@param args string? extra args passed to `:restart`
+function M.restart(args)
+  local session = M.save(nil, false)
+  local cmd = string.format(
+    'source %s %s',
+    vim.fn.fnameescape(session),
+    args and '|' .. args or ''
+  )
+  vim.cmd.restart(cmd)
 end
 
 ---Session completion function
@@ -436,6 +451,13 @@ function M.setup(opts)
     M.select(true)
   end, {
     desc = 'Interactively select and load session.',
+  })
+
+  vim.api.nvim_create_user_command('Restart', function(args)
+    M.restart(args.args)
+  end, {
+    desc = 'Restart nvim and restore current session',
+    nargs = '*',
   })
 end
 
