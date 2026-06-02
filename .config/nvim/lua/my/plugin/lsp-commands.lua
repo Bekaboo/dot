@@ -138,6 +138,19 @@ local subcommand_completions = {
     end
     return vim.tbl_keys(client_names)
   end,
+  ---Get completion for enabled LSP configs
+  ---@return integer[]
+  lsp_enabled_config_names = function(arglead)
+    if arglead ~= '' and not vim.endswith(arglead, '=') then
+      return {}
+    end
+    return vim
+      .iter(vim.lsp.get_configs({ enabled = true }))
+      :map(function(config) ---@param config vim.lsp.Config
+        return config.name
+      end)
+      :totable()
+  end,
 }
 
 ---@type table<string, string[]|fun(): any[]>
@@ -201,6 +214,16 @@ local subcommands = {
   ---LSP subcommands
   ---@type table<string, my.lsp.cmd.info>
   lsp = {
+    -- Builtin `:lsp` commands in nvim v0.13 provides
+    -- `:lsp {enable,disable,restart,stop}`
+    enable = {},
+    disable = {
+      ---@param config_names string[]
+      fn_override = function(config_names)
+        vim.lsp.enable(config_names, false)
+      end,
+      completion = subcommand_completions.lsp_enabled_config_names,
+    },
     info = {
       opts = {
         'filter',
