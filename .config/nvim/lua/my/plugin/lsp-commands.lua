@@ -1131,12 +1131,9 @@ local function command_complete(meta, subcommand_info_list)
   return function(arglead, cmdline, cursorpos)
     -- If subcommand is not specified, complete with subcommands
     if cmdline:sub(1, cursorpos):match('^%A*' .. meta .. '%s+%S*$') then
-      return vim.tbl_filter(
-        function(cmd)
-          return cmd:find(arglead, 1, true) == 1
-        end,
-        vim.tbl_keys(subcommand_info_list)
-      )
+      return vim.tbl_filter(function(cmd)
+        return cmd:find(arglead, 1, true) == 1
+      end, vim.tbl_keys(subcommand_info_list))
     end
     -- If subcommand is specified, complete with its options or params
     local subcommand_match_camel = cmdline:match('^%s*' .. meta .. '(%w+)')
