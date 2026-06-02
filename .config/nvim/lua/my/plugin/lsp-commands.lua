@@ -1179,8 +1179,6 @@ end
 ---@param fn_scope table|fun(name: string): function scope of corresponding functions for subcommands
 ---@return nil
 local function setup_commands(meta, subcommand_info_list, fn_scope)
-  -- metacommand -> MetaCommand abbreviation
-  utils.key.command_abbrev(meta:lower(), meta)
   -- Format: MetaCommand sub_command opts ...
   vim.api.nvim_create_user_command(
     meta,
