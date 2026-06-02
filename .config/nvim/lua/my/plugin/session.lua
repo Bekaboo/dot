@@ -288,10 +288,10 @@ function M.restart(args)
   vim.cmd.restart(cmd)
 end
 
----Session completion function
+---Session completion function that returns a list of available sessions
 ---@param arglead string
 ---@return string[] list of session names
-local function cmp(arglead)
+local function cmp_sessions(arglead)
   return vim
     .iter(M.list())
     :map(function(session)
@@ -303,10 +303,11 @@ local function cmp(arglead)
     :totable()
 end
 
----Session command function
+---Wrapper that creates a command function taking args as dir path and convert
+---to corresponding session file path
 ---@param cb fun(path?: string)
 ---@return function
-local function cmd(cb)
+local function cmd_dir2session(cb)
   return function(args)
     if args.args == '' then
       cb()
@@ -407,45 +408,49 @@ function M.setup(opts)
   -- Create user commands
   vim.api.nvim_create_user_command(
     'SessionLoad',
-    cmd(function(path)
+    cmd_dir2session(function(path)
       M.load(path, true)
     end),
     {
       desc = 'Load session.',
       nargs = '?',
-      complete = cmp,
+      complete = cmp_sessions,
     }
   )
 
   vim.api.nvim_create_user_command(
     'SessionSave',
-    cmd(function(path)
+    cmd_dir2session(function(path)
       M.save(path, true)
     end),
     {
       desc = 'Save current state to given session.',
       nargs = '?',
-      complete = cmp,
+      complete = cmp_sessions,
     }
   )
 
   vim.api.nvim_create_user_command(
     'Mksession',
-    cmd(function(path)
+    cmd_dir2session(function(path)
       M.save(path, true)
     end),
     {
       desc = 'Save current state to given session.',
       nargs = '?',
-      complete = cmp,
+      complete = cmp_sessions,
     }
   )
 
-  vim.api.nvim_create_user_command('SessionRemove', cmd(M.remove), {
-    desc = 'Remove session.',
-    nargs = '?',
-    complete = cmp,
-  })
+  vim.api.nvim_create_user_command(
+    'SessionRemove',
+    cmd_dir2session(M.remove),
+    {
+      desc = 'Remove session.',
+      nargs = '?',
+      complete = cmp_sessions,
+    }
+  )
 
   vim.api.nvim_create_user_command('SessionSelect', function()
     M.select(true)
