@@ -265,7 +265,7 @@ end
 function M.restart(args)
   local session = M.save()
   local cmd = string.format(
-    'source %s %s',
+    'sil! source %s %s',
     vim.fn.fnameescape(session),
     args and '|' .. args or ''
   )
