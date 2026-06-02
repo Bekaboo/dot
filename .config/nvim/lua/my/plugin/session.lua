@@ -138,9 +138,8 @@ end
 
 ---Save current session
 ---@param session? string path to session file to save to
----@param notify? boolean whether to print notify message after saving the session
 ---@return string path to the saved session
-function M.save(session, notify)
+function M.save(session)
   if not session then
     session = vim.g._session_loaded or M.get()
   end
@@ -150,13 +149,6 @@ function M.save(session, notify)
     bang = true,
     mods = { silent = true, emsg_silent = true },
   })
-
-  if notify then
-    vim.notify(
-      '[my.plugin.session] saved current session to '
-        .. string.format("'%s'", vim.fn.fnamemodify(session, ':~:.'))
-    )
-  end
 
   return session
 end
@@ -172,22 +164,13 @@ end
 
 ---Load current session
 ---@param session? string path to session file to load from
----@param notify? boolean
-function M.load(session, notify)
+---@return string? path to the loaded session
+function M.load(session)
   if not session then
     session = M.get()
   end
 
   if not vim.uv.fs_stat(session) then
-    if notify then
-      vim.notify(
-        string.format(
-          "[my.plugin.session] session '%s' does not exist",
-          session
-        ),
-        vim.log.levels.WARN
-      )
-    end
     return
   end
 
@@ -225,6 +208,8 @@ function M.load(session, notify)
     vim.g._session_loaded = session
     vim.api.nvim_exec_autocmds('SessionLoadPost', {})
   end)
+
+  return session
 end
 
 ---List all session files
@@ -259,8 +244,7 @@ function M.no_auto(cb)
 end
 
 ---Interactively select and load a session file using `vim.ui.select()`
----@param notify? boolean
-function M.select(notify)
+function M.select()
   M.no_auto(function(finish)
     vim.ui.select(M.list(), {
       prompt = 'Load session: ',
@@ -269,7 +253,7 @@ function M.select(notify)
       end,
     }, function(choice)
       if choice then
-        M.load(choice, notify)
+        M.load(choice)
       end
       finish()
     end)
@@ -279,7 +263,7 @@ end
 ---Restart nvim and restore current session
 ---@param args string? extra args passed to `:restart`
 function M.restart(args)
-  local session = M.save(nil, false)
+  local session = M.save()
   local cmd = string.format(
     'source %s %s',
     vim.fn.fnameescape(session),
@@ -409,7 +393,15 @@ function M.setup(opts)
   vim.api.nvim_create_user_command(
     'SessionLoad',
     cmd_dir2session(function(path)
-      M.load(path, true)
+      if not M.load(path) then
+        vim.notify(
+          string.format(
+            "[my.plugin.session] failed to load session at '%s'",
+            path
+          ),
+          vim.log.levels.WARN
+        )
+      end
     end),
     {
       desc = 'Load session.',
@@ -421,7 +413,11 @@ function M.setup(opts)
   vim.api.nvim_create_user_command(
     'SessionSave',
     cmd_dir2session(function(path)
-      M.save(path, true)
+      local session = M.save(path)
+      vim.notify(
+        '[my.plugin.session] saved current session to '
+          .. string.format("'%s'", vim.fn.fnamemodify(session, ':~:.'))
+      )
     end),
     {
       desc = 'Save current state to given session.',
@@ -433,7 +429,11 @@ function M.setup(opts)
   vim.api.nvim_create_user_command(
     'Mksession',
     cmd_dir2session(function(path)
-      M.save(path, true)
+      local session = M.save(path)
+      vim.notify(
+        '[my.plugin.session] saved current session to '
+          .. string.format("'%s'", vim.fn.fnamemodify(session, ':~:.'))
+      )
     end),
     {
       desc = 'Save current state to given session.',
@@ -452,9 +452,7 @@ function M.setup(opts)
     }
   )
 
-  vim.api.nvim_create_user_command('SessionSelect', function()
-    M.select(true)
-  end, {
+  vim.api.nvim_create_user_command('SessionSelect', M.select, {
     desc = 'Interactively select and load session.',
   })
 
