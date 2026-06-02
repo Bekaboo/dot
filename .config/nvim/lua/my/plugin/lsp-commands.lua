@@ -1135,13 +1135,7 @@ local function command_complete(meta, subcommand_info_list)
         function(cmd)
           return cmd:find(arglead, 1, true) == 1
         end,
-        vim.tbl_filter(function(key)
-          local args = subcommand_info_list[key] ---@type my.lsp.cmd.info|table|nil
-          return args
-              and (args.arg_handler or args.params or args.opts or args.fn_override or args.completion)
-              and true
-            or false
-        end, vim.tbl_keys(subcommand_info_list))
+        vim.tbl_keys(subcommand_info_list)
       )
     end
     -- If subcommand is specified, complete with its options or params
