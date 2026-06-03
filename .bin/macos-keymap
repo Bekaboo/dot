@@ -27,26 +27,6 @@
 #
 # To restore, just set key mapping to empty list:
 # `hidutil property --set '{"UserKeyMapping":[]}'`
-#
-# To swap option with command, use mapping:
-# [
-#     {
-#         "HIDKeyboardModifierMappingDst": 30064771302,
-#         "HIDKeyboardModifierMappingSrc": 30064771303
-#     },
-#     {
-#         "HIDKeyboardModifierMappingDst": 30064771299,
-#         "HIDKeyboardModifierMappingSrc": 30064771298
-#     },
-#     {
-#         "HIDKeyboardModifierMappingDst": 30064771303,
-#         "HIDKeyboardModifierMappingSrc": 30064771302
-#     },
-#     {
-#         "HIDKeyboardModifierMappingDst": 30064771298,
-#         "HIDKeyboardModifierMappingSrc": 30064771299
-#     }
-# ]
 
 usage() {
     cat <<EOF
@@ -60,7 +40,11 @@ Arguments:
     mapping      Keymap to set for the maching keyboard
 
     If no vendor id or product are provided, the built-in keyboard is used.
-    If no mapping is provided, remap capslock to control.
+
+    If no mapping is provided, remap:
+        - capslock to control
+        - command  to option
+        - option   to command
 
 Options:
     -h, --help    Show this help message and exit
@@ -89,6 +73,22 @@ keymap() {
                 {
                     "HIDKeyboardModifierMappingDst": 30064771300,
                     "HIDKeyboardModifierMappingSrc": 30064771129
+                },
+                {
+                    "HIDKeyboardModifierMappingDst": 30064771302,
+                    "HIDKeyboardModifierMappingSrc": 30064771303
+                },
+                {
+                    "HIDKeyboardModifierMappingDst": 30064771299,
+                    "HIDKeyboardModifierMappingSrc": 30064771298
+                },
+                {
+                    "HIDKeyboardModifierMappingDst": 30064771303,
+                    "HIDKeyboardModifierMappingSrc": 30064771302
+                },
+                {
+                    "HIDKeyboardModifierMappingDst": 30064771298,
+                    "HIDKeyboardModifierMappingSrc": 30064771299
                 }
             ]'}
 
