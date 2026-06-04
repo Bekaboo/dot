@@ -50,7 +50,7 @@ cmd + shift - backspace : yabai -m window --minimize
 cmd - delete    : osascript -e 'tell application "System Events" to perform action "AXPress" of (first button whose subrole is "AXCloseButton") of (first window whose subrole is "AXStandardWindow") of (first process whose frontmost is true)'
 
 # Toggle space layout
-cmd + shift + alt - b : yabai -m space --layout bsp
+cmd + shift + alt - 2 : yabai -m space --layout bsp
 cmd + shift + alt - f : yabai -m space --layout float
 cmd + shift + alt - m : yabai -m space --layout stack # memo: monocle layout
 cmd + shift + alt - r : yabai -m space --rotate 270
