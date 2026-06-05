@@ -149,6 +149,141 @@ function M.restart(client_or_id, opts)
   })
 end
 
+---Reimplementation of `vim.lsp.buf.rename()`, s.t.
+---	- It prefers using LSP clients supporting `textDocument/prepareRename`
+---	  method (gives better result)
+---	- It stops on the first client that successfully renames the symbol instead
+---	  of calling multiple LSP clients for a single rename.
+---@param new_name string? if not provided, the user will be prompted for a new name
+---@param opts? vim.lsp.buf.rename.Opts additional options
+---@return nil
+function M.rename(new_name, opts)
+  opts = opts or {}
+  local bufnr = vim._resolve_bufnr(opts.bufnr)
+  local win = vim.api.nvim_get_current_win()
+  local clients = vim.lsp.get_clients({
+    bufnr = bufnr,
+    name = opts.name,
+    method = 'textDocument/rename',
+  })
+  if opts.filter then
+    clients = vim.tbl_filter(opts.filter, clients)
+  end
+  if vim.tbl_isempty(clients) then
+    vim.notify('[LSP] No rename capability.', vim.log.levels.WARN)
+    return
+  end
+  -- Sort clients s.t. clients with `textDocument/prepareRename` support is
+  -- tried first
+  table.sort(clients, function(a, b)
+    local a_prepare = a:supports_method('textDocument/prepareRename')
+    local b_prepare = b:supports_method('textDocument/prepareRename')
+    if a_prepare ~= b_prepare then
+      return a_prepare
+    end
+    return false
+  end)
+
+  local cword = vim.fn.expand('<cword>')
+
+  local function get_text_at_range(range, enc)
+    local r = vim.range.lsp(bufnr, range, enc)
+    return vim.api.nvim_buf_get_text(
+      bufnr,
+      r.start_row,
+      r.start_col,
+      r.end_row,
+      r.end_col,
+      {}
+    )[1]
+  end
+
+  local idx, client
+
+  ---Tries the next client in the list for renaming.
+  ---If the client supports prepareRename, validates the position first and falls back
+  ---to subsequent clients on failure. Stops after the first successful rename.
+  ---@return nil
+  local function try_next()
+    idx, client = next(clients, idx)
+    if not idx or not client then
+      return
+    end
+
+    ---Sends the rename request to the current client.
+    ---	- On success, applies the edit and stops.
+    ---	- On failure, tries the next client.
+    ---@param name string The new name to rename to
+    ---@return nil
+    local function do_rename(name)
+      local params =
+        vim.lsp.util.make_position_params(win, client.offset_encoding) --[[@as lsp.RenameParams]]
+      params.newName = name
+      client:request('textDocument/rename', params, function(err, result, ctx)
+        if err or not result then
+          try_next() -- rename failed, try next client
+          return
+        end
+        local handler = client.handlers['textDocument/rename']
+          or vim.lsp.handlers['textDocument/rename']
+        handler(nil, result, ctx)
+      end, bufnr)
+    end
+
+    if client:supports_method('textDocument/prepareRename') then
+      local params =
+        vim.lsp.util.make_position_params(win, client.offset_encoding)
+      client:request(
+        'textDocument/prepareRename',
+        params,
+        function(err, result)
+          if err or not result then
+            try_next()
+            return
+          end
+
+          if new_name then
+            do_rename(new_name)
+            return
+          end
+
+          local prompt_opts = { prompt = 'New Name: ' }
+          if result.placeholder then
+            prompt_opts.default = result.placeholder
+          elseif result.start then
+            prompt_opts.default =
+              get_text_at_range(result, client.offset_encoding)
+          elseif result.range then
+            prompt_opts.default =
+              get_text_at_range(result.range, client.offset_encoding)
+          else
+            prompt_opts.default = cword
+          end
+
+          vim.ui.input(prompt_opts, function(input)
+            if input and #input > 0 then
+              do_rename(input)
+            end
+          end)
+        end,
+        bufnr
+      )
+    else
+      if new_name then
+        do_rename(new_name)
+        return
+      end
+      vim.ui.input({ prompt = 'New Name: ', default = cword }, function(input)
+        if input and #input > 0 then
+          do_rename(input)
+        end
+      end)
+    end
+  end
+
+  try_next()
+end
+
 ---@class my.lsp.range
 ---@field start {line: integer, character: integer}
 ---@field end {line: integer, character: integer}

@@ -2,8 +2,9 @@ local lsp = require('my.utils.lsp')
 
 vim.lsp.config('*', lsp.default_config)
 
--- Override to perform additional checks on starting language servers
+-- Override default LSP functions for enhancements
 vim.lsp.start = lsp.start
+vim.lsp.buf.rename = lsp.rename
 
 for _, dir in ipairs(vim.api.nvim__get_runtime({ 'lsp' }, true, {})) do
   for config_file in vim.fs.dir(dir) do
