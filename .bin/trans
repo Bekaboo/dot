@@ -41,6 +41,7 @@ die() {
     exit 1
 }
 
+# $@: args from command line
 parse_args() {
     api_base="${TRANSLATE_API_BASE:-}"
     api_key="${TRANSLATE_API_KEY:-}"
@@ -136,6 +137,7 @@ build_system_prompt() {
     fi
 }
 
+# $1: system prompt
 call_api() {
     payload=$(jq -nc \
         --arg model "$model" \
@@ -166,6 +168,7 @@ call_api() {
     printf '%s\n' "$translation"
 }
 
+# $1: system prompt
 call_api_stream() {
     payload=$(jq -nc \
         --arg model "$model" \
