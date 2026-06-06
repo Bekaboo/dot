@@ -14,6 +14,7 @@
 #   TRANSLATE_API_KEY   API key
 #   TRANSLATE_MODEL     Model name
 #   TRANSLATE_TO        Default target language
+#   TRANSLATE_PAIR      Default language pair
 
 set -eu
 
@@ -28,6 +29,7 @@ Options:
     -k, --key KEY      API key              (default: \$TRANSLATE_API_KEY,  e.g. \$DEEPSEEK_API_KEY)
     -m, --model NAME   Model name           (default: \$TRANSLATE_MODEL,    e.g. deepseek-chat)
     -t, --to LANG      Target language      (default: \$TRANSLATE_TO,       e.g. Chinese)
+    -p, --pair LANGS   Language pair        (default: \$TRANSLATE_PAIR,     e.g. English:Chinese)
     -s, --stream       Stream the response
     -h, --help         Show this help message and exit
 EOF
@@ -44,6 +46,7 @@ parse_args() {
     model="${TRANSLATE_MODEL:-}"
     target_lang="${TRANSLATE_TO:-}"
 
+    pair="${TRANSLATE_PAIR:-}"
     stream=0
 
     while [ $# -gt 0 ]; do
@@ -62,6 +65,10 @@ parse_args() {
                 ;;
             -b | --base)
                 api_base="$2"
+                shift 2
+                ;;
+            -p | --pair)
+                pair="$2"
                 shift 2
                 ;;
             -s | --stream)
@@ -89,7 +96,17 @@ parse_args() {
     if [ -z "$api_base" ]; then die "No API base URL set. Use -b or set TRANSLATE_API_BASE."; fi
     if [ -z "$api_key" ]; then die "No API key found, set TRANSLATE_API_KEY."; fi
     if [ -z "$model" ]; then die "No model set. Use -m or set TRANSLATE_MODEL."; fi
-    if [ -z "$target_lang" ]; then die "No target language set. Use -t or set TRANSLATE_TO."; fi
+    if [ -z "$pair" ] && [ -z "$target_lang" ]; then
+        die "No target language set. Use -t or set TRANSLATE_TO, or use -p for a language pair."
+    fi
+
+    if [ -n "$pair" ]; then
+        pair_lang1="${pair%%:*}"
+        pair_lang2="${pair##*:}"
+        if [ -z "$pair_lang1" ] || [ -z "$pair_lang2" ] || [ "$pair_lang1" = "$pair_lang2" ]; then
+            die "Invalid language pair '$pair'. Use format: LANG1:LANG2 (e.g. English:Chinese)"
+        fi
+    fi
 
     if [ $# -gt 0 ]; then
         text="$*"
@@ -106,7 +123,11 @@ parse_args() {
 }
 
 build_system_prompt() {
-    printf '%s' "You are a translator. Translate the following text to $target_lang. Output only the translation, nothing else."
+    if [ -n "$pair" ]; then
+        printf '%s' "You are a translator. If the text is mainly in $pair_lang1, translate to $pair_lang2. If it's mainly in $pair_lang2, translate to $pair_lang1. Output only the translation, nothing else."
+    else
+        printf '%s' "You are a translator. Translate the following text to $target_lang. Output only the translation, nothing else."
+    fi
 }
 
 call_api() {
