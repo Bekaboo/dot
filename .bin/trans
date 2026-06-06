@@ -54,49 +54,17 @@ parse_args() {
 
     while [ $# -gt 0 ]; do
         case "$1" in
-            -t | --to)
-                target_lang="$2"
-                shift 2
-                ;;
-            -m | --model)
-                model="$2"
-                shift 2
-                ;;
-            -k | --key)
-                api_key="$2"
-                shift 2
-                ;;
-            -b | --base)
-                api_base="$2"
-                shift 2
-                ;;
-            -p | --pair)
-                pair="$2"
-                shift 2
-                ;;
-            -s | --stream)
-                stream=1
-                shift
-                ;;
-            -h | --help)
-                usage
-                exit 0
-                ;;
-            --)
-                shift
-                break
-                ;;
-            -)
-                use_stdin=1
-                shift
-                ;;
-            -*)
-                usage >&2
-                exit 1
-                ;;
-            *)
-                break
-                ;;
+            -t | --to) target_lang="$2"; shift 2 ;;
+            -m | --model) model="$2"; shift 2 ;;
+            -k | --key) api_key="$2"; shift 2 ;;
+            -b | --base) api_base="$2"; shift 2 ;;
+            -p | --pair) pair="$2"; shift 2 ;;
+            -s | --stream) stream=1; shift ;;
+            -h | --help) usage; exit 0 ;;
+            --) shift; break ;;
+            -) use_stdin=1; shift ;;
+            -*) usage >&2; exit 1 ;;
+            *) break ;;
         esac
     done
 
