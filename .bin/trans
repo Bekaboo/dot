@@ -5,7 +5,7 @@
 #
 # Usage:
 #   trans [options] [text...]
-#   echo "hello" | trans
+#   echo "hello" | trans -
 #   trans --to zh "hello world"
 #   trans --stream "hello world"
 #
@@ -31,6 +31,7 @@ Options:
     -t, --to LANG      Target language      (default: \$TRANSLATE_TO,       e.g. Chinese)
     -p, --pair LANGS   Language pair        (default: \$TRANSLATE_PAIR,     e.g. English:Chinese)
     -s, --stream       Stream the response
+    -                  Read text from stdin
     -h, --help         Show this help message and exit
 EOF
 }
@@ -48,6 +49,7 @@ parse_args() {
 
     pair="${TRANSLATE_PAIR:-}"
     stream=0
+    use_stdin=0
 
     while [ $# -gt 0 ]; do
         case "$1" in
@@ -83,6 +85,10 @@ parse_args() {
                 shift
                 break
                 ;;
+            -)
+                use_stdin=1
+                shift
+                ;;
             -*)
                 usage >&2
                 exit 1
@@ -108,12 +114,12 @@ parse_args() {
         fi
     fi
 
-    if [ $# -gt 0 ]; then
-        text="$*"
-    elif [ ! -t 0 ]; then
+    if [ "$use_stdin" -eq 1 ]; then
         text=$(cat)
+    elif [ $# -gt 0 ]; then
+        text="$*"
     else
-        die "No text provided. Pass as arguments or pipe via stdin."
+        die "No text provided. Pass as arguments or use - to read from stdin."
     fi
     text=$(printf '%s' "$text" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
 

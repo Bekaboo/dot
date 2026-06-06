@@ -51,7 +51,7 @@ main() {
     popup_y=$(tmux display-message -p -F '#{copy_cursor_y}')
 
     tmux display-popup -x "$popup_x" -y "$popup_y" -w "$popup_w" -h "$popup_h" \
-        -E "$SHELL -lc 'tmux show-buffer -b $BUF | trans -s; tmux delete-buffer -b $BUF' 2>&1 | less"
+        -E "$SHELL -lc 'tmux show-buffer -b $BUF | trans -s -; tmux delete-buffer -b $BUF' 2>&1 | less"
 }
 
 main "$@"
