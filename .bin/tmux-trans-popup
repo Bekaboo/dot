@@ -1,0 +1,57 @@
+#!/bin/sh
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
+# Load text from stdin and translate given text in a tmux popup window
+
+BUF="tmp-trans-popup"
+
+W_PAD=4
+W_MIN=20
+H_PAD=3
+H_MIN=4
+DEFAULT_TERM_W=80
+DEFAULT_TERM_H=24
+
+get_popup_w() {
+    # $1: content width (longest line length)
+    term_w=$(tmux display-message -p -F '#{window_width}')
+    [ -z "$term_w" ] && term_w=$DEFAULT_TERM_W
+
+    popup_w=$(($1 + W_PAD))
+    [ "$popup_w" -lt "$W_MIN" ] && popup_w=$W_MIN
+    [ "$popup_w" -gt "$term_w" ] && popup_w="$term_w"
+    printf '%s' "$popup_w"
+}
+
+get_popup_h() {
+    # $1: content height (number of lines)
+    term_h=$(tmux display-message -p -F '#{window_height}')
+    [ -z "$term_h" ] && term_h=$DEFAULT_TERM_H
+
+    popup_h=$(($1 + H_PAD))
+    [ "$popup_h" -lt "$H_MIN" ] && popup_h=$H_MIN
+    [ "$popup_h" -gt "$term_h" ] && popup_h="$term_h"
+    printf '%s' "$popup_h"
+}
+
+main() {
+    tmux load-buffer -b "$BUF" -
+
+    content=$(tmux show-buffer -b "$BUF")
+    [ -z "$content" ] && tmux delete-buffer -b "$BUF"
+
+    doc_w=$(printf '%s\n' "$content" | expand | wc -L)
+    [ -z "$doc_w" ] && doc_w=0
+
+    doc_h=$(printf '%s\n' "$content" | wc -l)
+    [ -z "$doc_h" ] && doc_h=0
+
+    popup_w=$(get_popup_w "$doc_w")
+    popup_h=$(get_popup_h "$doc_h")
+    popup_x=$(tmux display-message -p -F '#{copy_cursor_x}')
+    popup_y=$(tmux display-message -p -F '#{copy_cursor_y}')
+
+    tmux display-popup -x "$popup_x" -y "$popup_y" -w "$popup_w" -h "$popup_h" \
+        -E "$SHELL -lc 'tmux show-buffer -b $BUF | trans -s; tmux delete-buffer -b $BUF' 2>&1 | less"
+}
+
+main "$@"
