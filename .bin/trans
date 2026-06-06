@@ -1,0 +1,182 @@
+#!/usr/bin/env sh
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
+#
+# Translate text using any OpenAI-compatible API.
+#
+# Usage:
+#   trans [options] [text...]
+#   echo "hello" | trans
+#   trans --to zh "hello world"
+#   trans --stream "hello world"
+#
+# Environment:
+#   TRANSLATE_API_BASE  API base URL
+#   TRANSLATE_API_KEY   API key
+#   TRANSLATE_MODEL     Model name
+#   TRANSLATE_TO        Default target language
+
+set -eu
+
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [options] [text...]
+
+Translate text using any OpenAI-compatible API.
+
+Options:
+    -b, --base URL     API base URL         (default: \$TRANSLATE_API_BASE, e.g. https://api.deepseek.com)
+    -k, --key KEY      API key              (default: \$TRANSLATE_API_KEY,  e.g. \$DEEPSEEK_API_KEY)
+    -m, --model NAME   Model name           (default: \$TRANSLATE_MODEL,    e.g. deepseek-chat)
+    -t, --to LANG      Target language      (default: \$TRANSLATE_TO,       e.g. Chinese)
+    -s, --stream       Stream the response
+    -h, --help         Show this help message and exit
+EOF
+}
+
+die() {
+    printf '%s\n' "$*" >&2
+    exit 1
+}
+
+parse_args() {
+    api_base="${TRANSLATE_API_BASE:-}"
+    api_key="${TRANSLATE_API_KEY:-}"
+    model="${TRANSLATE_MODEL:-}"
+    target_lang="${TRANSLATE_TO:-}"
+
+    stream=0
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -t | --to)
+                target_lang="$2"
+                shift 2
+                ;;
+            -m | --model)
+                model="$2"
+                shift 2
+                ;;
+            -k | --key)
+                api_key="$2"
+                shift 2
+                ;;
+            -b | --base)
+                api_base="$2"
+                shift 2
+                ;;
+            -s | --stream)
+                stream=1
+                shift
+                ;;
+            -h | --help)
+                usage
+                exit 0
+                ;;
+            --)
+                shift
+                break
+                ;;
+            -*)
+                usage >&2
+                exit 1
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+
+    if [ -z "$api_base" ]; then die "No API base URL set. Use -b or set TRANSLATE_API_BASE."; fi
+    if [ -z "$api_key" ]; then die "No API key found, set TRANSLATE_API_KEY."; fi
+    if [ -z "$model" ]; then die "No model set. Use -m or set TRANSLATE_MODEL."; fi
+    if [ -z "$target_lang" ]; then die "No target language set. Use -t or set TRANSLATE_TO."; fi
+
+    if [ $# -gt 0 ]; then
+        text="$*"
+    elif [ ! -t 0 ]; then
+        text=$(cat)
+    else
+        die "No text provided. Pass as arguments or pipe via stdin."
+    fi
+    text=$(printf '%s' "$text" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+
+    if [ -z "$text" ]; then
+        die "Empty input."
+    fi
+}
+
+build_system_prompt() {
+    printf '%s' "You are a translator. Translate the following text to $target_lang. Output only the translation, nothing else."
+}
+
+call_api() {
+    payload=$(jq -nc \
+        --arg model "$model" \
+        --arg system "$1" \
+        --arg text "$text" \
+        '{
+            model: $model,
+            messages: [
+                {role: "system", content: $system},
+                {role: "user",   content: $text}
+            ],
+            temperature: 0.3
+        }')
+
+    if ! response=$(curl -sS --fail-with-body \
+        "$api_base/chat/completions" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $api_key" \
+        -d "$payload"); then
+        die "API request failed: $response"
+    fi
+
+    translation=$(printf '%s' "$response" | jq -r '.choices[0].message.content // empty')
+    if [ -z "$translation" ]; then
+        error=$(printf '%s' "$response" | jq -r '.error.message // empty')
+        die "Translation failed: ${error:-unknown error}"
+    fi
+    printf '%s\n' "$translation"
+}
+
+call_api_stream() {
+    payload=$(jq -nc \
+        --arg model "$model" \
+        --arg system "$1" \
+        --arg text "$text" \
+        '{
+            model: $model,
+            messages: [
+                {role: "system", content: $system},
+                {role: "user",   content: $text}
+            ],
+            temperature: 0.3,
+            stream: true
+        }')
+
+    curl -sSN \
+        "$api_base/chat/completions" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $api_key" \
+        -d "$payload" \
+        --no-buffer | while IFS= read -r line; do
+            case "$line" in
+                "data: [DONE]" | "data:[DONE]") break ;;
+                data:\ \{* | data:\{*)
+                    printf '%s' "$line" | sed 's/^data:[[:space:]]*//' | jq -rj '.choices[0].delta.content // empty' 2>/dev/null
+                    ;;
+        esac
+    done
+    printf '\n'
+}
+
+main() {
+    parse_args "$@"
+    if [ "$stream" -eq 1 ]; then
+        call_api_stream "$(build_system_prompt)"
+    else
+        call_api "$(build_system_prompt)"
+    fi
+}
+
+main "$@"
