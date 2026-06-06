@@ -94,6 +94,7 @@ return {
             -- https://github.com/sudo-tee/opencode.nvim/issues/61
             ['<tab>'] = false,
             ['<esc>'] = false,
+            ['~'] = false,
           },
         },
       })
