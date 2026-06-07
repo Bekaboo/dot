@@ -1,5 +1,6 @@
 {
 	"$schema": "https://opencode.ai/config.json",
+	"autoupdate": false,
 	"model": "deepseek/deepseek-v4-pro",
 	"small_model": "deepseek/deepseek-v4-flash"
 }
