@@ -1,0 +1,3 @@
+- You are using a new shell to run each command. So envs exported with export xxx=xxx will not work in your next command.
+- Do NOT use special/unicode characters that cannot be typed directly on a standard keyboard (e.g. →, —, •, «», etc.). Use plain ASCII alternatives instead (e.g. `->`, `--`, `*`, `<<>>`).
+- Do NOT use markdown bold (`**text**`) in your output, unless truly necessary.
