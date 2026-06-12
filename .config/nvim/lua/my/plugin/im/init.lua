@@ -1,6 +1,8 @@
----Setup input method (fcitx5) auto switch
+local M = {}
+
+---Setup input method auto switch
 ---@return nil
-local function setup()
+function M.setup()
   if vim.g.loaded_im ~= nil then
     return
   end
@@ -10,9 +12,8 @@ local function setup()
     return
   end
 
-  local fcitx_cmd = vim.fn.executable('fcitx5-remote') == 1 and 'fcitx5-remote'
-    or vim.fn.executable('fcitx-remote') == 1 and 'fcitx-remote'
-  if not fcitx_cmd then
+  local backend = require('my.plugin.im.backends').detect()
+  if not backend then
     return
   end
 
@@ -46,58 +47,9 @@ local function setup()
   -- considered as input modes, because in these cases one will not want to
   -- insert CJK, even if the input method is activated in the current buffer.
 
-  ---Check if we are in 'input modes'.
-  ---@return boolean
-  local function inside_input_mode()
-    local mode = vim.fn.mode()
-    return (
-      mode:find('^[itRss\x13]')
-      or mode:find('^c') and vim.fn.getcmdtype():find('[/?@-]')
-    )
-        and true
-      or false
-  end
-
-  ---Callback to invoke when (possibly) enter input mode
-  ---@param buf integer buffer handler
-  ---@return nil
-  local function on_input_enter(buf)
-    if not inside_input_mode() then
-      return
-    end
-    vim.g._im_input_enter = buf
-    if vim.b[buf]._im_restore then
-      vim.b[buf]._im_restore = nil
-      vim.system({ fcitx_cmd, '-o' })
-    end
-  end
-
-  ---Callback to invoke when (possibly) leave input mode
-  ---@param buf integer handler
-  ---@return nil
-  local function on_input_leave(buf)
-    if inside_input_mode() then
-      return
-    end
-    vim.system({ fcitx_cmd }, {}, function(obj)
-      if obj.code ~= 0 or tonumber(obj.stdout) == 2 then
-        vim.system({ fcitx_cmd, '-c' })
-        -- `vim.g._im_input_enter` may not be set, in which case it
-        -- should just be the current buffer
-        vim.g._im_input_enter = vim.g._im_input_enter or buf
-        vim.schedule(function()
-          local b = vim.g._im_input_enter
-          if vim.api.nvim_buf_is_valid(b) then
-            vim.b[b]._im_restore = true
-          end
-        end)
-      end
-    end)
-  end
-
   local buf = vim.api.nvim_get_current_buf()
-  on_input_leave(buf)
-  on_input_enter(buf)
+  backend:on_input_leave(buf)
+  backend:on_input_enter(buf)
 
   local groupid = vim.api.nvim_create_augroup('IMSwitch', {})
   vim.api.nvim_create_autocmd('ModeChanged', {
@@ -105,7 +57,7 @@ local function setup()
     group = groupid,
     pattern = '*:[ictRss\x13]*',
     callback = function(info)
-      on_input_enter(info.buf)
+      backend:on_input_enter(info.buf)
     end,
   })
   vim.api.nvim_create_autocmd('ModeChanged', {
@@ -113,11 +65,9 @@ local function setup()
     group = groupid,
     pattern = '[ictRss\x13]*:*',
     callback = function(info)
-      on_input_leave(info.buf)
+      backend:on_input_leave(info.buf)
     end,
   })
 end
 
-return {
-  setup = setup,
-}
+return M
