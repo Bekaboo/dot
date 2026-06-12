@@ -13,6 +13,16 @@ load.on_events('InsertEnter', 'plugin.expandtab', function()
   require('my.plugin.expandtab').setup()
 end)
 
+-- fcitx5
+vim.api.nvim_create_autocmd('ModeChanged', {
+  once = true,
+  pattern = '*:[ictRss\x13]*',
+  group = vim.api.nvim_create_augroup('IMSetup', {}),
+  callback = function()
+    require('my.plugin.fcitx5').setup()
+  end,
+})
+
 -- jupytext
 load.on_events(
   { event = 'BufReadCmd', pattern = '*.ipynb' },
