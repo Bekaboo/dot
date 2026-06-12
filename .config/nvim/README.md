@@ -550,8 +550,8 @@ See [`nvim-pack-lock.json`](nvim-pack-lock.json).
 - [expandtab](lua/my/plugin/expandtab.lua)
     - Always use spaces for alignment, even if `'expandtab'` is not set, see
       `:h 'tabstop'` point 5
-- [fcitx5](lua/my/plugin/fcitx5.lua)
-    - Switches and restores fcitx5 state in each buffer asynchronously
+- [im](lua/my/plugin/im.lua)
+    - Switches and restores input method state in each buffer asynchronously
 - [jupytext](lua/my/plugin/jupytext.lua)
     - Edits jupyter notebook like markdown files
     - Writes into jupyter notebook asynchronously, which gives a smoother

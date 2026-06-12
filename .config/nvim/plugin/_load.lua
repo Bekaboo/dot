@@ -19,7 +19,7 @@ vim.api.nvim_create_autocmd('ModeChanged', {
   pattern = '*:[ictRss\x13]*',
   group = vim.api.nvim_create_augroup('IMSetup', {}),
   callback = function()
-    require('my.plugin.fcitx5').setup()
+    require('my.plugin.im').setup()
   end,
 })
 
