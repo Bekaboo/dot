@@ -1,8 +1,11 @@
 local M = {}
 
 ---Setup input method auto switch
+---@param opts my.im.config.opts?
 ---@return nil
-function M.setup()
+function M.setup(opts)
+  require('my.plugin.im.configs').set(opts)
+
   if vim.g.loaded_im ~= nil then
     return
   end

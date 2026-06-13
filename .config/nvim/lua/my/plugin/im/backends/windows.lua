@@ -1,4 +1,4 @@
-local utils = require('my.plugin.im.utils')
+local configs = require('my.plugin.im.configs')
 local base = require('my.plugin.im.backends').base
 
 ---Windows input method backend via im-select
@@ -27,7 +27,7 @@ end
 ---@param buf integer
 ---@return nil
 function backend:on_input_enter(buf)
-  if not utils.inside_input_mode() then
+  if not configs.opts.inside_input_mode() then
     return
   end
   vim.g._im_input_enter = buf
@@ -42,7 +42,7 @@ end
 ---@param buf integer
 ---@return nil
 function backend:on_input_leave(buf)
-  if utils.inside_input_mode() then
+  if configs.opts.inside_input_mode() then
     return
   end
   local english_locale = self.english_locale
