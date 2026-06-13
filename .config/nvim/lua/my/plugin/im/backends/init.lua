@@ -13,6 +13,7 @@ local M = {
   base = base,
   fcitx = nil, ---@module 'my.plugin.im.backends.fcitx'
   macos = nil, ---@module 'my.plugin.im.backends.macos'
+  windows = nil, ---@module 'my.plugin.im.backends.windows'
 }
 
 local backends_path = vim.fs.joinpath(
