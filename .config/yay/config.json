@@ -23,7 +23,7 @@
 	"removemake": "ask",
 	"sudobin": "sudo",
 	"sudoflags": "-E",
-	"version": "12.5.0",
+	"version": "12.6.0",
 	"requestsplitn": 150,
 	"completionrefreshtime": 7,
 	"maxconcurrentdownloads": 0,
