@@ -340,7 +340,7 @@ function M.on_keys(key_specs, name, load)
       -- for such plugin, the one that is not used as the initial trigger can
       -- has wrong definition
       for _, s in ipairs(keys[name] or {}) do
-        local buf = s.opts and (s.opts.buffer == true and 0 or s.opts.buffer)
+        local buf = s.opts and (s.opts.buf == true and 0 or s.opts.buf)
         if buf then
           for _, mode in
             ipairs(s.mode --[=[@as string[]]=])

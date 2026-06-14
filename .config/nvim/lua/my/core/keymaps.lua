@@ -24,7 +24,7 @@ require('my.utils.load').on_events(
         modes = { modes }
       end
 
-      if not opts or not opts.buffer then -- global keymaps
+      if not opts or not opts.buf then -- global keymaps
         for _, mode in ipairs(modes) do
           if not keymaps[mode] then
             keymaps[mode] = {}
@@ -37,7 +37,7 @@ require('my.utils.load').on_events(
           end
         end
       else -- buffer-local keymaps
-        local buf = type(opts.buffer) == 'number' and opts.buffer or 0 --[[@as integer]]
+        local buf = type(opts.buf) == 'number' and opts.buf or 0 --[[@as integer]]
         if not buf_keymaps[buf] then
           buf_keymaps[buf] = {}
         end
