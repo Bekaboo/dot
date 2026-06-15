@@ -14,6 +14,12 @@ export IM_STATUS_DIR="$TEST_DIR/im-status"
 
 # Install mock executables in TEST_DIR (already on PATH).
 install_mocks() {
+    cat >"$TEST_DIR/uname" <<'MOCK'
+#!/bin/sh
+printf 'Linux\n'
+MOCK
+    chmod +x "$TEST_DIR/uname"
+
     cat >"$TEST_DIR/fcitx5-remote" <<'MOCK'
 #!/bin/sh
 case "$1" in
