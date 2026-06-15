@@ -9,12 +9,12 @@ TESTED_SCRIPT="$(get_tested_script)"
 
 init_env
 
-export FCITX_STATE="$TMPDIR/im-state"
-export IM_STATUS_DIR="$TMPDIR/im-status"
+export FCITX_STATE="$TEST_DIR/im-state"
+export IM_STATUS_DIR="$TEST_DIR/im-status"
 
-# Install mock executables in TMPDIR (already on PATH).
+# Install mock executables in TEST_DIR (already on PATH).
 install_mocks() {
-    cat >"$TMPDIR/fcitx5-remote" <<'MOCK'
+    cat >"$TEST_DIR/fcitx5-remote" <<'MOCK'
 #!/bin/sh
 case "$1" in
     -c) echo "0" > "$(dirname "$0")/im-state" ;;
@@ -22,9 +22,9 @@ case "$1" in
     *)  cat "$(dirname "$0")/im-state" ;;
 esac
 MOCK
-    chmod +x "$TMPDIR/fcitx5-remote"
+    chmod +x "$TEST_DIR/fcitx5-remote"
 
-    cat >"$TMPDIR/tmux" <<'MOCK'
+    cat >"$TEST_DIR/tmux" <<'MOCK'
 #!/bin/sh
 STATUS_DIR="$(dirname "$0")/im-status"
 case "$1" in
@@ -61,7 +61,7 @@ case "$1" in
         ;;
 esac
 MOCK
-    chmod +x "$TMPDIR/tmux"
+    chmod +x "$TEST_DIR/tmux"
 }
 
 install_mocks
