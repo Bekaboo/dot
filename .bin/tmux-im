@@ -1,90 +1,112 @@
 #!/bin/sh
 # vim:ft=sh:et:ts=4:sw=4:sts=4:
-# Save/restore input method state for tmux panes
+# Save/restore input method state for tmux panes using @im_status
 
-CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/tmux/im"
-mkdir -p "$CACHE_DIR"
-
-state_file() {
-    printf '%s\n' "$CACHE_DIR/$(printf '%s' "$1" | tr '/' '_')"
-}
-
-im_off() {
-    sf="$(state_file "$1")"
+im_save() {
+    pane_id="$1"
     case "$(uname)" in
     Linux*)
-        cmd=""
         for c in fcitx5-remote fcitx-remote; do
             if command -v "$c" >/dev/null 2>&1; then
-                cmd="$c"
-                break
+                status="$("$c" 2>/dev/null)" || true
+                if [ "$status" = "2" ]; then
+                    tmux set -pt "$pane_id" @im_status CJK
+                else
+                    tmux set -pt "$pane_id" @im_status ABC
+                fi
+                return 0
             fi
         done
-        [ -z "$cmd" ] && return 0
-        status="$("$cmd" 2>/dev/null)" || true
-        if [ "$status" = "2" ]; then
-            printf '1\n' >"$sf"
-            "$cmd" -c 2>/dev/null || true
-        fi
         ;;
     Darwin*)
-        if ! command -v macism >/dev/null 2>&1; then
-            return 0
-        fi
-        ascii="${TMUX_IM_ASCII_SOURCE:-com.apple.keylayout.ABC}"
-        current="$(macism 2>/dev/null)" || true
-        if [ -n "$current" ] && [ "$current" != "$ascii" ]; then
-            printf '%s\n' "$current" >"$sf"
-            macism "$ascii" 2>/dev/null || true
+        if command -v macism >/dev/null 2>&1; then
+            ascii="${TMUX_IM_ASCII_SOURCE:-com.apple.keylayout.ABC}"
+            current="$(macism 2>/dev/null)" || true
+            if [ -n "$current" ] && [ "$current" != "$ascii" ]; then
+                tmux set -pt "$pane_id" @im_status CJK
+            else
+                tmux set -pt "$pane_id" @im_status ABC
+            fi
         fi
         ;;
     MINGW* | CYGWIN* | MSYS*)
-        if ! command -v im-select >/dev/null 2>&1; then
-            return 0
-        fi
-        locale="${TMUX_IM_ENGLISH_LOCALE:-1033}"
-        current="$(im-select 2>/dev/null)" || true
-        if [ -n "$current" ] && [ "$current" != "$locale" ]; then
-            printf '%s\n' "$current" >"$sf"
-            im-select "$locale" 2>/dev/null || true
+        if command -v im-select >/dev/null 2>&1; then
+            locale="${TMUX_IM_ENGLISH_LOCALE:-1033}"
+            current="$(im-select 2>/dev/null)" || true
+            if [ -n "$current" ] && [ "$current" != "$locale" ]; then
+                tmux set -pt "$pane_id" @im_status CJK
+            else
+                tmux set -pt "$pane_id" @im_status ABC
+            fi
         fi
         ;;
     esac
 }
 
 im_on() {
-    sf="$(state_file "$1")"
-    [ ! -f "$sf" ] && return 0
-    saved="$(cat "$sf")"
-    rm -f "$sf"
+    pane_id="$1"
     case "$(uname)" in
     Linux*)
-        if [ "$saved" = "1" ]; then
-            for c in fcitx5-remote fcitx-remote; do
-                if command -v "$c" >/dev/null 2>&1; then
-                    "$c" -o 2>/dev/null || true
-                    return 0
-                fi
-            done
-        fi
+        for c in fcitx5-remote fcitx-remote; do
+            if command -v "$c" >/dev/null 2>&1; then
+                "$c" -o 2>/dev/null || true
+                return 0
+            fi
+        done
         ;;
     Darwin*)
         if command -v macism >/dev/null 2>&1; then
-            macism "$saved" 2>/dev/null || true
+            layout="$(tmux show -pt "$pane_id" @im_status 2>/dev/null)" || true
+            if [ -n "$layout" ] && [ "$layout" != "ABC" ]; then
+                macism "$layout" 2>/dev/null || true
+            fi
         fi
         ;;
     MINGW* | CYGWIN* | MSYS*)
         if command -v im-select >/dev/null 2>&1; then
-            im-select "$saved" 2>/dev/null || true
+            locale="$(tmux show -pt "$pane_id" @im_status 2>/dev/null)" || true
+            if [ -n "$locale" ] && [ "$locale" != "ABC" ]; then
+                im-select "$locale" 2>/dev/null || true
+            fi
         fi
         ;;
     esac
 }
 
+im_force_off() {
+    case "$(uname)" in
+    Linux*)
+        for c in fcitx5-remote fcitx-remote; do
+            if command -v "$c" >/dev/null 2>&1; then
+                "$c" -c 2>/dev/null || true
+                return 0
+            fi
+        done
+        ;;
+    Darwin*)
+        if command -v macism >/dev/null 2>&1; then
+            macism "${TMUX_IM_ASCII_SOURCE:-com.apple.keylayout.ABC}" 2>/dev/null || true
+        fi
+        ;;
+    MINGW* | CYGWIN* | MSYS*)
+        if command -v im-select >/dev/null 2>&1; then
+            im-select "${TMUX_IM_ENGLISH_LOCALE:-1033}" 2>/dev/null || true
+        fi
+        ;;
+    esac
+}
+
+clear_status() {
+    pane_id="$1"
+    tmux set -ptu "$pane_id" @im_status 2>/dev/null || true
+}
+
 main() {
     case "$1" in
-    off) im_off "${2:-_global}" ;;
-    on) im_on "${2:-_global}" ;;
+    save) im_save "$2" ;;
+    on) im_on "$2" ;;
+    force-off) im_force_off ;;
+    clear-status) clear_status "$2" ;;
     esac
 }
 
