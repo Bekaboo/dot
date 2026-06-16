@@ -47,9 +47,14 @@ function M.setup()
   -- considered as input modes, because in these cases one will not want to
   -- insert CJK, even if the input method is activated in the current buffer.
 
+  local utils = require('my.plugin.im.utils')
+
   local buf = vim.api.nvim_get_current_buf()
-  backend:on_input_leave(buf)
-  backend:on_input_enter(buf)
+  if utils.inside_input_mode() then
+    backend:on_input_enter(buf)
+  else
+    backend:on_input_leave(buf)
+  end
 
   local groupid = vim.api.nvim_create_augroup('IMSwitch', {})
   vim.api.nvim_create_autocmd('ModeChanged', {
@@ -57,7 +62,9 @@ function M.setup()
     group = groupid,
     pattern = '*:[ictRss\x13]*',
     callback = function(info)
-      backend:on_input_enter(info.buf)
+      if utils.inside_input_mode() then
+        backend:on_input_enter(info.buf)
+      end
     end,
   })
   vim.api.nvim_create_autocmd('ModeChanged', {
@@ -65,7 +72,9 @@ function M.setup()
     group = groupid,
     pattern = '[ictRss\x13]*:*',
     callback = function(info)
-      backend:on_input_leave(info.buf)
+      if not utils.inside_input_mode() then
+        backend:on_input_leave(info.buf)
+      end
     end,
   })
 end

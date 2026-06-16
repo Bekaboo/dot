@@ -1,4 +1,3 @@
-local utils = require('my.plugin.im.utils')
 local base = require('my.plugin.im.backends').base
 
 ---macOS input method backend via custom utility `macos-im-switch`, see
@@ -28,9 +27,6 @@ end
 ---@param buf integer
 ---@return nil
 function backend:on_input_enter(buf)
-  if not utils.inside_input_mode() then
-    return
-  end
   vim.g._im_input_enter = buf
   if vim.b[buf]._im_restore then
     vim.b[buf]._im_restore = nil
@@ -43,9 +39,6 @@ end
 ---@param buf integer
 ---@return nil
 function backend:on_input_leave(buf)
-  if utils.inside_input_mode() then
-    return
-  end
   vim.system({ 'macos-im-switch', 'current' }, {}, function(obj)
     -- Failed to get current input method, switch to ASCII source anyway
     if obj.code ~= 0 then
