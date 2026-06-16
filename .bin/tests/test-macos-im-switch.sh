@@ -5,7 +5,7 @@
 HERE="$(dirname -- "$(readlink -f -- "$0")")/"
 . "$HERE/utils.sh"
 
-init_env
+TESTED_BIN="$(get_tested_bin)"
 
 if [ ! -x "$TESTED_BIN" ]; then
     printf 'ERROR: %s not found or not executable\n' "$TESTED_BIN" >&2
