@@ -20,9 +20,9 @@ EOF
 }
 
 get_coords_from_internet() {
-    if has curl; then
+    if command -v curl >/dev/null 2>&1; then
         coords=$(curl -s "$LOC_URL")
-    elif has wget; then
+    elif command -v wget >/dev/null 2>&1; then
         coords=$(wget -qO- "$LOC_URL")
     else
         # shellcheck disable=SC2016

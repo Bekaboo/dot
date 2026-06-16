@@ -19,7 +19,7 @@ main() {
 
     # Now we can safely access /dev/tty
     # Save current terminal settings
-    if has stty; then
+    if command -v stty >/dev/null 2>&1; then
         oldstty=$(stty -g </dev/tty 2>/dev/null)
         # Set raw mode
         stty raw -echo </dev/tty 2>/dev/null

@@ -3,7 +3,7 @@
 
 ARGS="$*"
 
-if has nvim; then
+if command -v nvim >/dev/null 2>&1; then
     VIM_COMMAND='nvim -E --headless'
 else
     VIM_COMMAND='vim -E'

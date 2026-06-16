@@ -10,7 +10,7 @@ DEFAULT_BG='dark'
 # Convert a color name to capital style
 # gruvbox-material -> Gruvbox Material
 get_cap_theme_name() {
-    if ! has awk || ! has sed; then
+    if ! command -v awk >/dev/null 2>&1 || ! command -v sed >/dev/null 2>&1; then
         return 1
     fi
     theme_name=$(echo "$1" |
@@ -80,7 +80,7 @@ setcolor_kitty() {
         touch "$no_preference_theme_path"
         touch "$current_theme_path"
 
-        if has kitty; then
+        if command -v kitty >/dev/null 2>&1; then
             for pid in $(pgrep kitty); do
                 # Don't use `kill -SIGUSR1`, will cause error: 'kill: SIGUSR1: invalid signal specification'
                 # Source: https://unix.stackexchange.com/questions/630281/why-doesnt-kill-s-sigusr1-work-inside-script-but-works-on-command-line-re
@@ -103,7 +103,7 @@ setcolor_termux() {
             [ -e "$1-dark.properties" ] && ln -sf "$1-dark.properties" "$dark_color_path"
             [ -e "$1-light.properties" ] && ln -sf "$1-light.properties" "$light_color_path"
         fi
-        if has termux-reload-settings; then
+        if command -v termux-reload-settings >/dev/null 2>&1; then
             termux-reload-settings
         fi
     )
@@ -143,12 +143,12 @@ setcolor_highlight() {
 
 # $1: name of the colorscheme
 setcolor_nvim() {
-    if [ -z "$1" ] || ! has nvim; then
+    if [ -z "$1" ] || ! command -v nvim >/dev/null 2>&1; then
         return 1
     fi
 
     for dep in nvim-socks timeout; do
-        if ! has "$dep"; then
+        if ! command -v "$dep" >/dev/null 2>&1; then
             echo "Error: '$dep' not found, skip setting colors for nvim" >&2
             return 1
         fi
@@ -174,7 +174,7 @@ setcolor_nvim() {
         nvim_clients="$nvim_clients $!"
     done
 
-    if ! has jq; then
+    if ! command -v jq >/dev/null 2>&1; then
         echo "Warning: 'jq' not executable, skip writing to nvim's colorscheme file" >&2
     else
         colors_json="$STATE_HOME/nvim/colors.json"
@@ -217,7 +217,7 @@ get_new_profile_name() {
 # $1: name of the app
 # $2: colorscheme name
 konsole_switch_profile_colorscheme() {
-    if ! has kreadconfig5 || ! has kwriteconfig5; then
+    if ! command -v kreadconfig5 >/dev/null 2>&1 || ! command -v kwriteconfig5 >/dev/null 2>&1; then
         return 1
     fi
     rc="$CONFIG_HOME/${1}rc"
@@ -256,7 +256,7 @@ setcolor_fish() {
             [ -e "${theme_name} Dark.theme" ] && ln -sf "${theme_name} Dark.theme" "$dark_theme_path"
             [ -e "${theme_name} Light.theme" ] && ln -sf "${theme_name} Light.theme" "$light_theme_path"
         fi
-        has fish &&
+        command -v fish >/dev/null 2>&1 &&
             fish -c 'set -U __fish_reload_theme (head -c 16 /dev/urandom | sha256sum)'
     )
 }
@@ -289,7 +289,7 @@ setcolor_plasma() {
     fi
     # gruvbox-material -> GruvboxMaterial
     new_theme_name=$(get_cap_theme_name "$1" | sed 's/ //g')
-    if has plasma-apply-desktoptheme; then
+    if command -v plasma-apply-desktoptheme >/dev/null 2>&1; then
         current_theme=$(plasma-get-current-desktoptheme)
         bg=$(echo "$current_theme" | grep -o 'Light\|Dark')
         new_theme="$new_theme_name${bg:-$DEFAULT_BG}"
@@ -297,7 +297,7 @@ setcolor_plasma() {
             plasma-apply-desktoptheme "$new_theme" >/dev/null 2>&1
         fi
     fi
-    if has plasma-apply-colorscheme; then
+    if command -v plasma-apply-colorscheme >/dev/null 2>&1; then
         current_scheme=$(plasma-get-current-colorscheme)
         bg=$(echo "$current_scheme" | grep -o 'Light\|Dark')
         new_scheme="$new_theme_name${bg:-$DEFAULT_BG}"
@@ -308,7 +308,7 @@ setcolor_plasma() {
     # Also change the wallpaper for different color schemes
     wallpaper=$(get_plasma_wallpaper "$1")
     if [ -e "$wallpaper" ]; then
-        if has dbus-send; then # Change normal wallpaper
+        if command -v dbus-send >/dev/null 2>&1; then # Change normal wallpaper
             dbus-send --session --dest=org.kde.plasmashell \
                 --type=method_call /PlasmaShell \
                 org.kde.PlasmaShell.evaluateScript "string:
@@ -320,7 +320,7 @@ setcolor_plasma() {
                     d.writeConfig('Image', 'file://$wallpaper');
                 }" >/dev/null 2>&1
         fi
-        if has kwriteconfig5; then # Change lockscreen wallpaper
+        if command -v kwriteconfig5 >/dev/null 2>&1; then # Change lockscreen wallpaper
             kwriteconfig5 --file "$CONFIG_HOME/kscreenlockerrc" \
                 --group Greeter \
                 --group Wallpaper \
@@ -331,7 +331,7 @@ setcolor_plasma() {
     fi
     # Change splash screen
     splash=$(get_plasma_splash "$1")
-    if has kwriteconfig5 && has basename; then
+    if command -v kwriteconfig5 >/dev/null 2>&1 && command -v basename >/dev/null 2>&1; then
         if [ -e "$splash" ]; then
             kwriteconfig5 --file "$CONFIG_HOME/ksplashrc" \
                 --group KSplash --key Theme "$(basename "$splash")"
@@ -349,7 +349,7 @@ usage() {
 
 # $1: name of the fish theme
 main() {
-    if ! has flock; then
+    if ! command -v flock >/dev/null 2>&1; then
         echo "Error: 'flock' not found" >&2
         return 1
     fi

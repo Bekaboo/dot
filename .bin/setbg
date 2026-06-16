@@ -75,7 +75,7 @@ setbg_kitty() {
         touch "$no_preference_theme_path"
         touch "$current_theme_path"
 
-        if has kitty; then
+        if command -v kitty >/dev/null 2>&1; then
             for pid in $(pgrep kitty); do
                 # Don't use `kill -SIGUSR1`, will cause error: 'kill: SIGUSR1: invalid signal specification'
                 # Source: https://unix.stackexchange.com/questions/630281/why-doesnt-kill-s-sigusr1-work-inside-script-but-works-on-command-line-re
@@ -119,12 +119,12 @@ setbg_highlight() {
 
 # $1: 'light' or 'dark'
 setbg_nvim() {
-    if [ -z "$1" ] || ! has nvim; then
+    if [ -z "$1" ] || ! command -v nvim >/dev/null 2>&1; then
         return 1
     fi
 
     for dep in nvim-socks timeout; do
-        if ! has "$dep"; then
+        if ! command -v "$dep" >/dev/null 2>&1; then
             echo "Error: '$dep' not found, skip setting backgroud for nvim" >&2
             return 1
         fi
@@ -150,7 +150,7 @@ setbg_nvim() {
         nvim_clients="$nvim_clients $!"
     done
 
-    if ! has jq; then
+    if ! command -v jq >/dev/null 2>&1; then
         echo "Warning: 'jq' not executable, skip writing to nvim's colorscheme file" >&2
     else
         colors_json="$STATE_HOME/nvim/colors.json"
@@ -180,16 +180,16 @@ setbg_macos() {
     # Make sure apps' background sync with system background, see:
     # - https://www.reddit.com/r/MacOS/comments/atty3g/dark_mode_is_broken_on_my_mac/
     # - https://medium.com/@n1kk/how-to-tweak-macos-mojave-dark-mode-per-app-a5fab0574691
-    if has defaults; then
+    if command -v defaults >/dev/null 2>&1; then
         defaults delete -g NSRequiresAquaSystemAppearance 2>/dev/null
     fi
 
     # Ref: https://brettterpstra.com/2018/09/26/shell-tricks-toggling-dark-mode-from-terminal/
-    if has osascript; then
+    if command -v osascript >/dev/null 2>&1; then
         # Key does not exist if auto-switch is disabled and is 1 if auto-switch
         # is enabled, saved for later restoration to keep auto-switch behavior
         # after setting bg, see https://apple.stackexchange.com/a/391814
-        if has defaults; then
+        if command -v defaults >/dev/null 2>&1; then
             auto_switch=$(defaults read -g AppleInterfaceStyleSwitchesAutomatically 2>/dev/null)
         fi
 
@@ -214,14 +214,14 @@ setbg_plasma() {
     if [ -z "$1" ]; then
         return 1
     fi
-    if has plasma-apply-desktoptheme; then
+    if command -v plasma-apply-desktoptheme >/dev/null 2>&1; then
         current_theme=$(plasma-get-current-desktoptheme)
         new_theme=$(get_theme_variant "$current_theme" "$1")
         if [ "$current_theme" != "$new_theme" ]; then
             plasma-apply-desktoptheme "$new_theme" >/dev/null 2>&1
         fi
     fi
-    if has plasma-apply-colorscheme; then
+    if command -v plasma-apply-colorscheme >/dev/null 2>&1; then
         current_scheme=$(plasma-get-current-colorscheme)
         new_scheme=$(get_theme_variant "$current_scheme" "$1")
         if [ "$current_scheme" != "$new_scheme" ]; then
@@ -232,7 +232,7 @@ setbg_plasma() {
 
 # $1: 'light' or 'dark'
 setbg_gnome() {
-    if [ -z "$1" ] || ! has gsettings; then
+    if [ -z "$1" ] || ! command -v gsettings >/dev/null 2>&1; then
         return 1
     fi
 
@@ -252,7 +252,7 @@ setbg_gnome() {
 # $1: path to config file
 # $2: 'light' or 'dark'
 get_new_profile_name() {
-    if ! has kreadconfig5; then
+    if ! command -v kreadconfig5 >/dev/null 2>&1; then
         return 1
     fi
 
@@ -273,7 +273,7 @@ get_new_profile_name() {
 # $1: name of the app
 # $2: 'light' or 'dark'
 konsole_switch_profile_bg() {
-    if ! has kreadconfig5 || ! has kwriteconfig5; then
+    if ! command -v kreadconfig5 >/dev/null 2>&1 || ! command -v kwriteconfig5 >/dev/null 2>&1; then
         return 1
     fi
     rc="$CONFIG_HOME/${1}rc"
@@ -307,7 +307,7 @@ setbg_termux() {
             [ -e "$themes_dir/$1.properties" ] &&
                 ln -sf "$themes_dir/$1.properties" "$theme_path"
         fi
-        if has termux-reload-settings; then
+        if command -v termux-reload-settings >/dev/null 2>&1; then
             termux-reload-settings
         fi
     )
@@ -315,7 +315,7 @@ setbg_termux() {
 
 # $1: 'light' or 'dark'
 setbg_okular() {
-    if [ -z "$1" ] || ! has okular || ! has kwriteconfig5; then
+    if [ -z "$1" ] || ! command -v okular >/dev/null 2>&1 || ! command -v kwriteconfig5 >/dev/null 2>&1; then
         return 1
     fi
     case "$1" in
@@ -366,7 +366,7 @@ setbg_vscode() {
         return 1
     fi
 
-    if ! has jq; then
+    if ! command -v jq >/dev/null 2>&1; then
         echo "Error: 'jq' not executable, skip writing to vscode's settings file" >&2
         return 1
     fi
@@ -413,7 +413,7 @@ setbg_fish() {
             light) [ -e "Light.theme" ] && ln -sf "Light.theme" "$theme_path" ;;
             esac
         fi
-        has fish &&
+        command -v fish >/dev/null 2>&1 &&
             fish -c 'set -U __fish_reload_theme (head -c 16 /dev/urandom | sha256sum)'
     )
 }
@@ -501,7 +501,7 @@ usage() {
 }
 
 main() {
-    if ! has flock; then
+    if ! command -v flock >/dev/null 2>&1; then
         echo "Error: 'flock' not found" >&2
         return 1
     fi

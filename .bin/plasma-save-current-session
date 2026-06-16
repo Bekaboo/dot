@@ -2,9 +2,9 @@
 # vim:ft=sh:et:ts=4:sw=4:sts=4:
 
 # Find available qdbus command
-if has qdbus; then
+if command -v qdbus >/dev/null 2>&1; then
     qdbus_cmd="qdbus"
-elif has qdbus6; then
+elif command -v qdbus6 >/dev/null 2>&1; then
     qdbus_cmd="qdbus6"
 else
     echo "Error: neither qdbus nor qdbus6 found" >&2

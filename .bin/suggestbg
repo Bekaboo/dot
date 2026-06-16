@@ -25,7 +25,7 @@ bg_by_sun() {
 }
 
 # If `sunwait` is not installed, use current time to determine if it's day or night
-if ! has sunwait; then
+if ! command -v sunwait >/dev/null 2>&1; then
     bg_by_clock
 fi
 

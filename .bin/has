@@ -1,6 +1,0 @@
-#!/usr/bin/env sh
-# vim:ft=sh:et:ts=4:sw=4:sts=4:
-#
-# Check if a command exists
-
-command -v "$1" >/dev/null 2>&1

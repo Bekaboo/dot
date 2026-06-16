@@ -5,8 +5,8 @@
 # flexible preview window layout, and image preview with ueberzugpp
 
 # Get terminal size
-lines=$(has tput && tput lines || echo "${LINES:-24}")
-cols=$(has tput && tput cols || echo "${COLUMNS:-80}")
+lines=$(command -v tput >/dev/null 2>&1 && tput lines || echo "${LINES:-24}")
+cols=$(command -v tput >/dev/null 2>&1 && tput cols || echo "${COLUMNS:-80}")
 
 # Normalize percentage to number
 normalize_fzf_geometry() {
@@ -22,7 +22,7 @@ normalize_fzf_geometry() {
 get_fzf_long_opt_no_space() {
     # $1: long option name
     # $2: default value of the option if not set
-    if ! has grep; then
+    if ! command -v grep >/dev/null 2>&1; then
         echo "$2"
         return 1
     fi
@@ -144,7 +144,7 @@ main() {
     fi
 
     # Setup ueberzugpp if available
-    if has ueberzugpp && [ "$FZF_PREVIEW_DISABLE_UB" != 'true' ] && [ "$preview_disabled" != 'true' ]; then
+    if command -v ueberzugpp >/dev/null 2>&1 && [ "$FZF_PREVIEW_DISABLE_UB" != 'true' ] && [ "$preview_disabled" != 'true' ]; then
         ub_pid_file="/tmp/.$(uuidgen)"
         ueberzugpp layer --silent --no-stdin --use-escape-codes --pid-file "$ub_pid_file" >/dev/null 2>&1
 

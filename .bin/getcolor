@@ -16,7 +16,7 @@ getbg_linux() {
 }
 
 getbg_kde() {
-    if ! has plasma-get-current-colorscheme; then
+    if ! command -v plasma-get-current-colorscheme >/dev/null 2>&1; then
         # shellcheck disable=SC2016
         echo 'Cannot get KDE colorscheme: `plasma-get-current-colorscheme` not available' >&2
         return 1
