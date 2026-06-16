@@ -51,6 +51,31 @@ esac
 MOCK
     chmod +x "$TEST_DIR/macos-im-switch"
 
+    cat >"$TEST_DIR/im-select" <<'MOCK'
+#!/bin/sh
+STATE="$(dirname "$0")/im-state"
+ENGLISH_LOCALE="${TMUX_IM_ENGLISH_LOCALE:-1033}"
+CJK_LOCALE="1055"
+case "$1" in
+    "")
+        state="$(cat "$STATE" 2>/dev/null)"
+        if [ "$state" = "2" ]; then
+            echo "$CJK_LOCALE"
+        else
+            echo "$ENGLISH_LOCALE"
+        fi
+        ;;
+    *)
+        if [ "$1" = "$ENGLISH_LOCALE" ]; then
+            echo "0" > "$STATE"
+        else
+            echo "2" > "$STATE"
+        fi
+        ;;
+esac
+MOCK
+    chmod +x "$TEST_DIR/im-select"
+
     cat >"$TEST_DIR/tmux" <<'MOCK'
 #!/bin/sh
 STATUS_DIR="$(dirname "$0")/im-status"
