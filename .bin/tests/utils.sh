@@ -8,11 +8,14 @@ init_env() {
     export TEST_DIR
     trap 'rm -rf "$TEST_DIR"' EXIT
     export PATH="$TEST_DIR:$PATH"
+
+    TESTED_BIN="$(get_tested_bin)"
+    export TESTED_BIN
 }
 
-# Print the path to the script-under-test, derived from the calling
+# Print the path to the binary under test, derived from the calling
 # test's filename: test-foo.sh -> <testdir>/../foo
-get_tested_script() {
+get_tested_bin() {
     dir="$(dirname -- "$(readlink -f -- "$0")")/"
     target="${0##*/}"
     target="${target#test-}"

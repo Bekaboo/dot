@@ -5,8 +5,6 @@
 HERE="$(dirname -- "$(readlink -f -- "$0")")/"
 . "$HERE/utils.sh"
 
-TESTED_SCRIPT="$(get_tested_script)"
-
 init_env
 
 export FCITX_STATE="$TEST_DIR/im-state"
@@ -104,14 +102,14 @@ simulate_switch() {
     from="$1"
     to="$2"
     # focus-out from
-    sh "$TESTED_SCRIPT" save "$from"
-    sh "$TESTED_SCRIPT" force-off
+    sh "$TESTED_BIN" save "$from"
+    sh "$TESTED_BIN" force-off
     # focus-in to
     status="$(get_im_status "$to")"
     if [ "$status" = "CJK" ]; then
-        sh "$TESTED_SCRIPT" on "$to"
+        sh "$TESTED_BIN" on "$to"
     else
-        sh "$TESTED_SCRIPT" force-off
+        sh "$TESTED_BIN" force-off
     fi
 }
 
@@ -121,17 +119,17 @@ simulate_kill_focused() {
     # focus-out does NOT fire; IM may be leaked.
     status="$(get_im_status "$target")"
     if [ "$status" = "CJK" ]; then
-        sh "$TESTED_SCRIPT" on "$target"
+        sh "$TESTED_BIN" on "$target"
     else
-        sh "$TESTED_SCRIPT" force-off
+        sh "$TESTED_BIN" force-off
     fi
-    sh "$TESTED_SCRIPT" clear-status "$killed"
+    sh "$TESTED_BIN" clear-status "$killed"
 }
 
 test_save_cjk() {
     desc "Save IM=CJK"
     set_im 2
-    sh "$TESTED_SCRIPT" save %0
+    sh "$TESTED_BIN" save %0
     assert_im 2 || return 1
     assert_status %0 CJK || return 1
 }
@@ -139,7 +137,7 @@ test_save_cjk() {
 test_save_abc() {
     desc "Save IM=off"
     set_im 1
-    sh "$TESTED_SCRIPT" save %1
+    sh "$TESTED_BIN" save %1
     assert_im 1 || return 1
     assert_status %1 ABC || return 1
 }
@@ -147,20 +145,20 @@ test_save_abc() {
 test_force_off() {
     desc "Force-off turns IM off"
     set_im 2
-    sh "$TESTED_SCRIPT" force-off
+    sh "$TESTED_BIN" force-off
     assert_im 0 || return 1
 }
 
 test_on_activates() {
     desc "On activates IM"
     set_im 0
-    sh "$TESTED_SCRIPT" on %0
+    sh "$TESTED_BIN" on %0
     assert_im 2 || return 1
 }
 
 test_clear_status() {
     desc "Clear-status removes @im_status"
-    sh "$TESTED_SCRIPT" clear-status %0
+    sh "$TESTED_BIN" clear-status %0
     assert_status %0 "<unset>" || return 1
 }
 
@@ -168,10 +166,10 @@ test_pane_switching() {
     desc "Switch A(CJK) -> B(ABC) -> A -> C(unset)"
 
     set_im 2
-    sh "$TESTED_SCRIPT" save %0
+    sh "$TESTED_BIN" save %0
     assert_status %0 CJK || return 1
     set_im 1
-    sh "$TESTED_SCRIPT" save %1
+    sh "$TESTED_BIN" save %1
     assert_status %1 ABC || return 1
     assert_status %2 "<unset>" || return 1
 
@@ -198,10 +196,10 @@ test_kill_focused_cjk_arrive_abc() {
     desc "Kill A(CJK focused), B(ABC) gets focus"
 
     set_im 2
-    sh "$TESTED_SCRIPT" save %0
+    sh "$TESTED_BIN" save %0
     assert_status %0 CJK || return 1
     set_im 1
-    sh "$TESTED_SCRIPT" save %1
+    sh "$TESTED_BIN" save %1
     assert_status %1 ABC || return 1
 
     simulate_kill_focused %0 %1
@@ -213,8 +211,8 @@ test_kill_focused_cjk_arrive_cjk() {
     desc "Kill A(CJK focused), B(CJK) gets focus"
 
     set_im 2
-    sh "$TESTED_SCRIPT" save %0
-    sh "$TESTED_SCRIPT" save %1
+    sh "$TESTED_BIN" save %0
+    sh "$TESTED_BIN" save %1
     assert_status %0 CJK || return 1
     assert_status %1 CJK || return 1
 
@@ -227,16 +225,16 @@ test_copymode() {
     desc "Copy-mode enter/exit with CJK"
 
     set_im 2
-    sh "$TESTED_SCRIPT" save %0
+    sh "$TESTED_BIN" save %0
     assert_status %0 CJK || return 1
-    sh "$TESTED_SCRIPT" force-off
+    sh "$TESTED_BIN" force-off
     assert_im 0 || return 1
 
     status="$(get_im_status %0)"
     if [ "$status" = "CJK" ]; then
-        sh "$TESTED_SCRIPT" on %0
+        sh "$TESTED_BIN" on %0
     else
-        sh "$TESTED_SCRIPT" force-off
+        sh "$TESTED_BIN" force-off
     fi
     assert_im 2 || return 1
 }
