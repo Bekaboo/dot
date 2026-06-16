@@ -104,7 +104,7 @@ main() {
     case "$1" in
     save) im_save "$2" ;;
     on) im_on "$2" ;;
-    force-off) im_force_off ;;
+    off) im_force_off ;;
     esac
 }
 
