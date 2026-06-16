@@ -1,7 +1,8 @@
 local configs = require('my.plugin.im.configs')
 local base = require('my.plugin.im.backends').base
 
----macOS input method backend via macism
+---macOS input method backend via custom utility `macos-im-switch`, see
+---`~/.bin/src/macos_im_switch/`
 ---@class my.im.backend.macos: my.im.backend
 ---@field ascii_source string
 ---@field cjk_source string?
@@ -21,7 +22,7 @@ end
 
 ---@return boolean
 function backend:detect() -- luacheck: no unused args
-  return vim.fn.has('mac') == 1 and vim.fn.executable('macism') == 1
+  return vim.fn.has('mac') == 1 and vim.fn.executable('macos-im-switch') == 1
 end
 
 ---@param buf integer
@@ -34,7 +35,7 @@ function backend:on_input_enter(buf)
   if vim.b[buf]._im_restore then
     vim.b[buf]._im_restore = nil
     if self.cjk_source then
-      vim.system({ 'macism', self.cjk_source })
+      vim.system({ 'macos-im-switch', 'set', self.cjk_source })
     end
   end
 end
@@ -45,10 +46,10 @@ function backend:on_input_leave(buf)
   if configs.opts.inside_input_mode() then
     return
   end
-  local ascii_source = self.ascii_source
-  vim.system({ 'macism' }, {}, function(obj)
+  vim.system({ 'macos-im-switch', 'current' }, {}, function(obj)
+    -- Failed to get current input method, switch to ASCII source anyway
     if obj.code ~= 0 then
-      vim.system({ 'macism', ascii_source })
+      vim.system({ 'macos-im-switch', 'set', self.ascii_source })
       vim.g._im_input_enter = vim.g._im_input_enter or buf
       vim.schedule(function()
         local b = vim.g._im_input_enter
@@ -58,10 +59,12 @@ function backend:on_input_leave(buf)
       end)
       return
     end
+    -- Successfully get current input method, skip if current is already ASCII
+    -- source to avoid showing IM switch indicator
     local current = vim.trim(obj.stdout)
-    if current ~= ascii_source then
+    if current ~= self.ascii_source then
       self.cjk_source = self.cjk_source or current
-      vim.system({ 'macism', ascii_source })
+      vim.system({ 'macos-im-switch', 'set', self.ascii_source })
       vim.g._im_input_enter = vim.g._im_input_enter or buf
       vim.schedule(function()
         local b = vim.g._im_input_enter
