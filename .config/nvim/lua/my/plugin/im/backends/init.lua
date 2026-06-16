@@ -8,7 +8,6 @@ base.__index = base
 
 ---@class my.im.backends
 ---@field base my.im.backend
----@field detect fun(): my.im.backend?
 local M = {
   base = base,
   fcitx = nil, ---@module 'my.plugin.im.backends.fcitx'
