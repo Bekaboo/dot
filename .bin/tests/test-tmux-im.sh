@@ -16,12 +16,6 @@ IM_STATUS_DIR="$TEST_DIR/im-status"
 
 # Install mock executables in TEST_DIR (already on PATH).
 install_mocks() {
-    cat >"$TEST_DIR/uname" <<'MOCK'
-#!/bin/sh
-printf 'Linux\n'
-MOCK
-    chmod +x "$TEST_DIR/uname"
-
     cat >"$TEST_DIR/fcitx5-remote" <<'MOCK'
 #!/bin/sh
 case "$1" in
@@ -31,6 +25,31 @@ case "$1" in
 esac
 MOCK
     chmod +x "$TEST_DIR/fcitx5-remote"
+
+    cat >"$TEST_DIR/macos-im-switch" <<'MOCK'
+#!/bin/sh
+STATE="$(dirname "$0")/im-state"
+CJK_SOURCE="com.apple.inputmethod.SCIM.ITABC"
+ABC_SOURCE="com.apple.keylayout.ABC"
+case "$1" in
+    current)
+        state="$(cat "$STATE" 2>/dev/null)"
+        if [ "$state" = "2" ]; then
+            echo "$CJK_SOURCE"
+        else
+            echo "$ABC_SOURCE"
+        fi
+        ;;
+    set)
+        if [ "$2" = "$ABC_SOURCE" ]; then
+            echo "0" > "$STATE"
+        else
+            echo "2" > "$STATE"
+        fi
+        ;;
+esac
+MOCK
+    chmod +x "$TEST_DIR/macos-im-switch"
 
     cat >"$TEST_DIR/tmux" <<'MOCK'
 #!/bin/sh
@@ -167,7 +186,10 @@ test_force_off() {
 
 test_on_activates() {
     desc "On activates IM"
-    set_im 0
+    set_im 2
+    sh "$TESTED_BIN" save %0
+    sh "$TESTED_BIN" force-off
+    assert_im 0 || return 1
     sh "$TESTED_BIN" on %0
     assert_im 2 || return 1
 }
