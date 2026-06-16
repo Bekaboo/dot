@@ -24,6 +24,7 @@ im_save() {
             current="$(macism 2>/dev/null)" || true
             if [ -n "$current" ] && [ "$current" != "$ascii" ]; then
                 tmux set -pt "$pane_id" @im_status CJK
+                tmux set -pt "$pane_id" @im_source "$current"
             else
                 tmux set -pt "$pane_id" @im_status ABC
             fi
@@ -35,6 +36,7 @@ im_save() {
             current="$(im-select 2>/dev/null)" || true
             if [ -n "$current" ] && [ "$current" != "$locale" ]; then
                 tmux set -pt "$pane_id" @im_status CJK
+                tmux set -pt "$pane_id" @im_source "$current"
             else
                 tmux set -pt "$pane_id" @im_status ABC
             fi
@@ -56,17 +58,19 @@ im_on() {
         ;;
     Darwin*)
         if command -v macism >/dev/null 2>&1; then
-            layout="$(tmux show -pt "$pane_id" @im_status 2>/dev/null)" || true
-            if [ -n "$layout" ] && [ "$layout" != "ABC" ]; then
-                macism "$layout" 2>/dev/null || true
+            source="$(tmux show -pt "$pane_id" @im_source 2>/dev/null)" || true
+            source="${source#@im_source }"
+            if [ -n "$source" ]; then
+                macism "$source" 2>/dev/null || true
             fi
         fi
         ;;
     MINGW* | CYGWIN* | MSYS*)
         if command -v im-select >/dev/null 2>&1; then
-            locale="$(tmux show -pt "$pane_id" @im_status 2>/dev/null)" || true
-            if [ -n "$locale" ] && [ "$locale" != "ABC" ]; then
-                im-select "$locale" 2>/dev/null || true
+            source="$(tmux show -pt "$pane_id" @im_source 2>/dev/null)" || true
+            source="${source#@im_source }"
+            if [ -n "$source" ]; then
+                im-select "$source" 2>/dev/null || true
             fi
         fi
         ;;
@@ -99,6 +103,7 @@ im_force_off() {
 clear_status() {
     pane_id="$1"
     tmux set -ptu "$pane_id" @im_status 2>/dev/null || true
+    tmux set -ptu "$pane_id" @im_source 2>/dev/null || true
 }
 
 main() {

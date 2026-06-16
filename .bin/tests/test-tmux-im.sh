@@ -37,31 +37,33 @@ MOCK
 STATUS_DIR="$(dirname "$0")/im-status"
 case "$1" in
     set)
-        pane=""; value=""; opt=""
+        pane=""; var=""; value=""; opt=""
         shift
         while [ $# -gt 0 ]; do
             case "$1" in
                 -pt|-ptu) opt="$1"; shift; pane="$1"; shift ;;
                 -t)      shift; pane="$1"; shift ;;
+                @*)      var="$1"; shift ;;
                 *)       value="$1"; shift ;;
             esac
         done
         if [ "$opt" = "-ptu" ]; then
-            rm -f "$STATUS_DIR/$pane"
-        elif [ -n "$pane" ]; then
-            echo "$value" > "$STATUS_DIR/$pane"
+            rm -f "$STATUS_DIR/$pane.${var#@}"
+        elif [ -n "$pane" ] && [ -n "$var" ]; then
+            echo "$value" > "$STATUS_DIR/$pane.${var#@}"
         fi
         ;;
     show)
-        pane=""
+        pane=""; var=""
         shift
         while [ $# -gt 0 ]; do
             case "$1" in
                 -pt|-t) shift; pane="$1"; shift ;;
+                @*)     var="$1"; shift ;;
                 *)      shift ;;
             esac
         done
-        [ -f "$STATUS_DIR/$pane" ] && cat "$STATUS_DIR/$pane"
+        [ -f "$STATUS_DIR/$pane.${var#@}" ] && echo "$var $(cat "$STATUS_DIR/$pane.${var#@}")"
         ;;
     *)
         echo "tmux mock: unknown command: $*" >&2
@@ -82,7 +84,8 @@ setup() {
 
 set_im() { echo "$1" >"$FCITX_STATE"; }
 get_im() { cat "$FCITX_STATE"; }
-get_im_status() { cat "$IM_STATUS_DIR/$1" 2>/dev/null || echo "<unset>"; }
+get_im_status() { cat "$IM_STATUS_DIR/$1.im_status" 2>/dev/null || echo "<unset>"; }
+get_im_source() { cat "$IM_STATUS_DIR/$1.im_source" 2>/dev/null || echo "<unset>"; }
 
 assert_im() {
     actual="$(get_im)"
@@ -100,6 +103,15 @@ assert_status() {
         return 1
     fi
     pass "@im_status($1) = $actual"
+}
+
+assert_source() {
+    actual="$(get_im_source "$1")"
+    if [ "$actual" != "$2" ]; then
+        fail "pane $1 @im_source expected $2, got $actual"
+        return 1
+    fi
+    pass "@im_source($1) = $actual"
 }
 
 simulate_switch() {
@@ -161,9 +173,12 @@ test_on_activates() {
 }
 
 test_clear_status() {
-    desc "Clear-status removes @im_status"
+    desc "Clear-status removes @im_status and @im_source"
+    sh "$TESTED_BIN" save %0
+    tmux set -pt %0 @im_source "com.example.input"
     sh "$TESTED_BIN" clear-status %0
     assert_status %0 "<unset>" || return 1
+    assert_source %0 "<unset>" || return 1
 }
 
 test_pane_switching() {
