@@ -4,7 +4,7 @@
 # Print the path to the binary under test, derived from the calling
 # test's filename: test-foo.sh -> <testdir>/../foo
 get_tested_bin() {
-    dir="$(dirname -- "$(readlink -f -- "$0")")/"
+    dir="$(cd "$(dirname "$0")" && pwd)/"
     target="${0##*/}"
     target="${target#test-}"
     target="${target%.sh}"

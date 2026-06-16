@@ -2,7 +2,7 @@
 # Tests for tmux-im: simulates pane switching scenarios.
 # Run: sh test-tmux-im.sh
 
-HERE="$(dirname -- "$(readlink -f -- "$0")")/"
+HERE="$(cd "$(dirname "$0")" && pwd)/"
 . "$HERE/utils.sh"
 
 TESTED_BIN="$(get_tested_bin)"
