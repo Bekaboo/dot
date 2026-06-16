@@ -595,7 +595,7 @@ M.snippets = {
     { trig = 'hr' },
     { trig = 'here' },
     common = { desc = 'Get script dir' },
-  }, t('"$(dirname -- "$(readlink -f -- "$0")")/"')),
+  }, t('"$(cd "$(dirname "$0")" && pwd)/"')),
   us.msn(
     {
       { trig = 'bs' },
