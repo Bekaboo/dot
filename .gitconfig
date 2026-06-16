@@ -62,6 +62,11 @@
 	ma   = merge --abort
 	mc   = merge --continue
 	mt   = mergetool
+	fp   = format-patch
+	fpu  = format-patch @{upstream}..HEAD
+	am3  = am --3way
+	ama  = am -abort
+	amc  = am -continue
 	p    = push
 	pf   = push --force
 	pu   = push -u
