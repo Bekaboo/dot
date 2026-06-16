@@ -19,9 +19,9 @@ im_save() {
         done
         ;;
     Darwin*)
-        if command -v macism >/dev/null 2>&1; then
+        if command -v macos-im-switch >/dev/null 2>&1; then
             ascii="${TMUX_IM_ASCII_SOURCE:-com.apple.keylayout.ABC}"
-            current="$(macism 2>/dev/null)" || true
+            current="$(macos-im-switch current 2>/dev/null)" || true
             if [ -n "$current" ] && [ "$current" != "$ascii" ]; then
                 tmux set -pt "$pane_id" @im_status CJK
                 tmux set -pt "$pane_id" @im_source "$current"
@@ -57,11 +57,11 @@ im_on() {
         done
         ;;
     Darwin*)
-        if command -v macism >/dev/null 2>&1; then
+        if command -v macos-im-switch >/dev/null 2>&1; then
             source="$(tmux show -pt "$pane_id" @im_source 2>/dev/null)" || true
             source="${source#@im_source }"
             if [ -n "$source" ]; then
-                macism "$source" 2>/dev/null || true
+                macos-im-switch set "$source" 2>/dev/null || true
             fi
         fi
         ;;
@@ -88,8 +88,8 @@ im_force_off() {
         done
         ;;
     Darwin*)
-        if command -v macism >/dev/null 2>&1; then
-            macism "${TMUX_IM_ASCII_SOURCE:-com.apple.keylayout.ABC}" 2>/dev/null || true
+        if command -v macos-im-switch >/dev/null 2>&1; then
+            macos-im-switch set "${TMUX_IM_ASCII_SOURCE:-com.apple.keylayout.ABC}" 2>/dev/null || true
         fi
         ;;
     MINGW* | CYGWIN* | MSYS*)
