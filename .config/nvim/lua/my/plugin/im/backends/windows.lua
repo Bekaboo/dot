@@ -45,10 +45,9 @@ function backend:on_input_leave(buf)
   if configs.opts.inside_input_mode() then
     return
   end
-  local english_locale = self.english_locale
   vim.system({ 'im-select' }, {}, function(obj)
     if obj.code ~= 0 then
-      vim.system({ 'im-select', english_locale })
+      vim.system({ 'im-select', self.english_locale })
       vim.g._im_input_enter = vim.g._im_input_enter or buf
       vim.schedule(function()
         local b = vim.g._im_input_enter
@@ -59,9 +58,9 @@ function backend:on_input_leave(buf)
       return
     end
     local current = vim.trim(obj.stdout)
-    if current ~= english_locale then
+    if current ~= self.english_locale then
       self.cjk_locale = self.cjk_locale or current
-      vim.system({ 'im-select', english_locale })
+      vim.system({ 'im-select', self.english_locale })
       vim.g._im_input_enter = vim.g._im_input_enter or buf
       vim.schedule(function()
         local b = vim.g._im_input_enter
