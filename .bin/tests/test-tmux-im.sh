@@ -11,8 +11,8 @@ TEST_DIR="$(mktemp -d)"
 trap 'rm -rf "$TEST_DIR"' EXIT
 export PATH="$TEST_DIR:$PATH"
 
-export FCITX_STATE="$TEST_DIR/im-state"
-export IM_STATUS_DIR="$TEST_DIR/im-status"
+FCITX_STATE="$TEST_DIR/im-state"
+IM_STATUS_DIR="$TEST_DIR/im-status"
 
 # Install mock executables in TEST_DIR (already on PATH).
 install_mocks() {
