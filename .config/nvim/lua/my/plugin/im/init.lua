@@ -1,6 +1,51 @@
 local M = {}
 
 ---Setup input method auto switch
+---This is how it works:
+---We track *per-buffer* input method status in buffer-local variable
+---`b:im_active`, this allows us to use IM in "input mode" in some buffers
+---without affecting other buffers.
+---
+---Since we can only toggle input method when we change mode or entering
+---another buffer, we only update and read `b:im_active` under these three
+---events:
+--- - ModeChanged
+--- - BufEnter
+--- - BufLeave
+---
+---More specifically,
+---
+---Maintenance of `b:im_active`: the flag is updated when:
+--- - Mode is changed from input mode to non-input mode. In this case, we save
+---   IM status in input mode before we toggle IM off in non-input mode so
+---   that we can restore IM status later when we re-enter input mode in the
+---   same buffer.
+--- - Leaving a buffer, but only when current mode is input mode. Saving
+---   IM status when mode is non-input mode is pointless because the IM status
+---   should always be off in this case.
+---
+---Input method switching strategy: `b:im_active` is read and input method
+---status is changed accordingly when:
+--- - Mode is changed to input mode. In this case, we read saved `b:im_active`
+---   to check if IM was previously activated in input status and decide if we
+---   want to toggle IM back on.
+--- - Mode is changes to non-input mode. In this case, we turn off input
+---   method unconditionally.
+--- - Entering a buffer, and only when current mode is input mode. Reading
+---   `b:im_active` is useless if current mode is non-input mode as IM status
+---   should always be off.
+--- - Leaving a buffer. In this case, we turn off input method unconditionally.
+---   If the new buffer we are leaving for has input method active, input
+---   method will later be turned on by the BufEnter or ModeChanged event in
+---   the new buffer.
+---
+---
+---(*) "input modes" are modes where the input method should be activated,
+---including insert mode, replace mode, terminal mode, select mode, and
+---command mode when command type is '/', '?', '@', or '-'.
+---Notice that command mode when command type is ':', '>', or '=' is not
+---considered as input modes, because in these cases one will not want to
+---insert CJK, even if the input method is activated in the current buffer.
 ---@return nil
 function M.setup()
   if vim.g.loaded_im ~= nil then
@@ -16,52 +61,6 @@ function M.setup()
   if not backend then
     return
   end
-
-  -- This is how it works:
-  -- We track *per-buffer* input method status in buffer-local variable
-  -- `b:im_active`, this allows us to use IM in "input mode" in some buffers
-  -- without affecting other buffers.
-  --
-  -- Since we can only toggle input method when we change mode or entering
-  -- another buffer, we only update and read `b:im_active` under these three
-  -- events:
-  -- - ModeChanged
-  -- - BufEnter
-  -- - BufLeave
-  --
-  -- More specifically,
-  --
-  -- Maintenance of `b:im_active`: the flag is updated when:
-  -- - Mode is changed from input mode to non-input mode. In this case, we save
-  --   IM status in input mode before we toggle IM off in non-input mode so
-  --   that we can restore IM status later when we re-enter input mode in the
-  --   same buffer.
-  -- - Leaving a buffer, but only when current mode is input mode. Saving
-  --   IM status when mode is non-input mode is pointless because the IM status
-  --   should always be off in this case.
-  --
-  -- Input method switching strategy: `b:im_active` is read and input method
-  -- status is set when:
-  -- - Mode is changed to input mode. In this case, we read saved `b:im_active`
-  --   to check if IM was previously activated in input status and decide if we
-  --   want to toggle IM back on.
-  -- - Mode is changes to non-input mode. In this case, we turn off input
-  --   method unconditionally.
-  -- - Entering a buffer, and only when current mode is input mode. Reading
-  --   `b:im_active` is useless if current mode is non-input mode as IM status
-  --   should always be off.
-  -- - Leaving a buffer. In this case, we turn off input method unconditionally.
-  --   If the new buffer we are leaving for has input method on, input method
-  --   will later be turned on by the BufEnter or ModeChanged event in the new
-  --   buffer.
-  --
-  --
-  -- (*) "Input modes" are modes where the input method should be activated,
-  -- including insert mode, replace mode, terminal mode, select mode, and
-  -- command mode when command type is '/', '?', '@', or '-'.
-  -- Notice that command mode when command type is ':', '>', or '=' is not
-  -- considered as input modes, because in these cases one will not want to
-  -- insert CJK, even if the input method is activated in the current buffer.
 
   local utils = require('my.plugin.im.utils')
 
