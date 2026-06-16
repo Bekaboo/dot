@@ -591,6 +591,12 @@ M.snippets = {
       )
     end)
   ),
+  us.sn(
+    { trig = 'has', desc = 'Check if a command exists' },
+    un.fmtad('command -v <cmd> >>/dev/null 2>>&1', {
+      cmd = i(1, 'cmd'),
+    })
+  ),
   us.msn({
     { trig = 'hr' },
     { trig = 'here' },

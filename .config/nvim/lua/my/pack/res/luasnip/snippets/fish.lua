@@ -485,6 +485,10 @@ M.snippets = {
       }),
     })
   ),
+  us.sn(
+    { trig = 'has', desc = 'Check if a command or variable exists' },
+    t('type -q ')
+  ),
   us.msn({
     { trig = 'hr' },
     { trig = 'here' },
