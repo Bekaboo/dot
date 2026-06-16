@@ -25,40 +25,38 @@ end
 
 ---@param buf integer
 ---@return nil
-function backend:on_input_enter(buf)
-  vim.g._im_input_enter = buf
-  if vim.b[buf]._im_restore then
-    vim.b[buf]._im_restore = nil
-    if self.cjk_locale then
-      vim.system({ 'im-select', self.cjk_locale })
-    end
+function backend:try_turn_on(buf)
+  if vim.b[buf].im_active and self.cjk_locale then
+    vim.system({ 'im-select', self.cjk_locale })
+  end
+end
+
+---@return nil
+function backend:turn_off()
+  if self.english_locale then
+    vim.system({ 'im-select', self.english_locale })
   end
 end
 
 ---@param buf integer
 ---@return nil
-function backend:on_input_leave(buf)
+function backend:save_status(buf)
   vim.system({ 'im-select' }, {}, function(obj)
     if obj.code ~= 0 then
-      vim.system({ 'im-select', self.english_locale })
-      vim.g._im_input_enter = vim.g._im_input_enter or buf
-      vim.schedule(function()
-        local b = vim.g._im_input_enter
-        if vim.api.nvim_buf_is_valid(b) then
-          vim.b[b]._im_restore = true
-        end
-      end)
       return
     end
-    local current = vim.trim(obj.stdout)
-    if current ~= self.english_locale then
-      self.cjk_locale = self.cjk_locale or current
-      vim.system({ 'im-select', self.english_locale })
-      vim.g._im_input_enter = vim.g._im_input_enter or buf
+    local current_locale = vim.trim(obj.stdout)
+    if current_locale ~= self.english_locale then
+      self.cjk_locale = self.cjk_locale or current_locale
       vim.schedule(function()
-        local b = vim.g._im_input_enter
-        if vim.api.nvim_buf_is_valid(b) then
-          vim.b[b]._im_restore = true
+        if vim.api.nvim_buf_is_valid(buf) then
+          vim.b[buf].im_active = true
+        end
+      end)
+    else
+      vim.schedule(function()
+        if vim.api.nvim_buf_is_valid(buf) then
+          vim.b[buf].im_active = nil
         end
       end)
     end

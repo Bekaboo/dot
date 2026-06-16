@@ -1,8 +1,9 @@
 ---Base class for input method backends
 ---@class my.im.backend
 ---@field detect fun(self: my.im.backend): boolean
----@field on_input_enter fun(self: my.im.backend, buf: integer)
----@field on_input_leave fun(self: my.im.backend, buf: integer)
+---@field try_turn_on fun(self: my.im.backend, buf: integer): nil Try turning input method on for buffer given by `buf` if it is previously active in the same buffer
+---@field turn_off fun(self: my.im.backend): nil Turns input method off unconditionally
+---@field save_status fun(self: my.im.backend, buf: integer): nil Save current input method status in `b:im_status`
 local base = {}
 base.__index = base
 

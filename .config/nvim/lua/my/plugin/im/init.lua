@@ -18,29 +18,45 @@ function M.setup()
   end
 
   -- This is how it works:
-  -- - vim.b[{buf}]._im_restore is set when the input method is temporarily
-  --   disabled for the buffer {buf} and should be restored when entering
-  --   'input modes' (*).
-  -- - vim.g._im_input_enter records the last buffer where we entered
-  --   'input modes'.
+  -- We track *per-buffer* input method status in buffer-local variable
+  -- `b:im_active`, this allows us to use IM in "input mode" in some buffers
+  -- without affecting other buffers.
   --
-  -- When we enter 'input modes', flag `vim.g._im_input_enter` is set to
-  -- `<abuf>`, and if `_im_restore` is set for `<abuf>`, we clear it and
-  -- restore/activate the input method.
+  -- Since we can only toggle input method when we change mode or entering
+  -- another buffer, we only update and read `b:im_active` under these three
+  -- events:
+  -- - ModeChanged
+  -- - BufEnter
+  -- - BufLeave
   --
-  -- When we leave 'input modes', we check if input method is activated, and if
-  -- so, we disable it and set `_im_restore` for buffer recorded in
-  -- `_im_input_enter`. Notice that `_im_input_enter` is not necessarily the
-  -- same as `<abuf>` or current buffer, e.g. when we enter an normal buffer in
-  -- a normal window from a terminal buffer in terminal window using a key
-  -- mapped to `<Cmd>wincmd h/j/k/l/...<CR>`, we switch to non-input mode
-  -- (normal mode) from input mode (terminal mode) AFTER entering the normal
-  -- buffer, however, we want to set `_im_restore` flag for the terminal
-  -- buffer instead of the current (normal) buffer. That's why we need to
-  -- keep track of the last buffer where we entered 'input modes' in
-  -- `_im_input_enter`.
+  -- More specifically,
   --
-  -- (*) 'input modes' are modes where the input method should be activated,
+  -- Maintenance of `b:im_active`: the flag is updated when:
+  -- - Mode is changed from input mode to non-input mode. In this case, we save
+  --   IM status in input mode before we toggle IM off in non-input mode so
+  --   that we can restore IM status later when we re-enter input mode in the
+  --   same buffer.
+  -- - Leaving a buffer, but only when current mode is input mode. Saving
+  --   IM status when mode is non-input mode is pointless because the IM status
+  --   should always be off in this case.
+  --
+  -- Input method switching strategy: `b:im_active` is read and input method
+  -- status is set when:
+  -- - Mode is changed to input mode. In this case, we read saved `b:im_active`
+  --   to check if IM was previously activated in input status and decide if we
+  --   want to toggle IM back on.
+  -- - Mode is changes to non-input mode. In this case, we turn off input
+  --   method unconditionally.
+  -- - Entering a buffer, and only when current mode is input mode. Reading
+  --   `b:im_active` is useless if current mode is non-input mode as IM status
+  --   should always be off.
+  -- - Leaving a buffer. In this case, we turn off input method unconditionally.
+  --   If the new buffer we are leaving for has input method on, input method
+  --   will later be turned on by the BufEnter or ModeChanged event in the new
+  --   buffer.
+  --
+  --
+  -- (*) "Input modes" are modes where the input method should be activated,
   -- including insert mode, replace mode, terminal mode, select mode, and
   -- command mode when command type is '/', '?', '@', or '-'.
   -- Notice that command mode when command type is ':', '>', or '=' is not
@@ -51,29 +67,60 @@ function M.setup()
 
   local buf = vim.api.nvim_get_current_buf()
   if utils.inside_input_mode() then
-    backend:on_input_enter(buf)
-  else
-    backend:on_input_leave(buf)
+    backend:try_turn_on(buf)
   end
 
-  local groupid = vim.api.nvim_create_augroup('IMSwitch', {})
+  local groupid = vim.api.nvim_create_augroup('my.im', {})
+
+  local prev_is_input_mode = utils.inside_input_mode()
   vim.api.nvim_create_autocmd('ModeChanged', {
-    desc = 'Try to re-activate input method when entering input modes.',
+    desc = 'Update `b:im_active` when switching from input mode to non-input mode.',
     group = groupid,
-    pattern = '*:[ictRss\x13]*',
-    callback = function(info)
+    callback = function(args)
+      if prev_is_input_mode and not utils.inside_input_mode() then
+        backend:save_status(args.buf)
+      end
+      prev_is_input_mode = utils.inside_input_mode()
+    end,
+  })
+
+  vim.api.nvim_create_autocmd('BufLeave', {
+    desc = 'Update `b:im_active` when switching away from current buffer.',
+    group = groupid,
+    callback = function(args)
+      -- If current mode is input mode, save current IM status and deactivate
+      -- IM. Don't save IM status if not currently in input mode as IM should
+      -- always be off in this case.
       if utils.inside_input_mode() then
-        backend:on_input_enter(info.buf)
+        backend:save_status(args.buf)
       end
     end,
   })
+
   vim.api.nvim_create_autocmd('ModeChanged', {
-    desc = 'Deactivate input method when leaving input modes.',
+    desc = 'Disable input method after existing input mode.',
     group = groupid,
-    pattern = '[ictRss\x13]*:*',
-    callback = function(info)
+    callback = function()
       if not utils.inside_input_mode() then
-        backend:on_input_leave(info.buf)
+        backend:turn_off()
+      end
+    end,
+  })
+
+  vim.api.nvim_create_autocmd('BufLeave', {
+    desc = 'Disable input method after leaving current buf.',
+    group = groupid,
+    callback = function()
+      backend:turn_off()
+    end,
+  })
+
+  vim.api.nvim_create_autocmd({ 'ModeChanged', 'BufEnter' }, {
+    desc = 'Restore input method status when entering input mode or a buffer.',
+    group = groupid,
+    callback = function(args)
+      if utils.inside_input_mode() then
+        backend:try_turn_on(args.buf)
       end
     end,
   })

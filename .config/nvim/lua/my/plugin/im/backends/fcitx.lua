@@ -25,25 +25,34 @@ end
 
 ---@param buf integer
 ---@return nil
-function backend:on_input_enter(buf)
-  vim.g._im_input_enter = buf
-  if vim.b[buf]._im_restore then
-    vim.b[buf]._im_restore = nil
+function backend:try_turn_on(buf)
+  if vim.b[buf].im_active then
     vim.system({ self.cmd, '-o' })
   end
 end
 
+---@return nil
+function backend:turn_off()
+  vim.system({ self.cmd, '-c' })
+end
+
 ---@param buf integer
 ---@return nil
-function backend:on_input_leave(buf)
+function backend:save_status(buf)
   vim.system({ self.cmd }, {}, function(obj)
-    if obj.code ~= 0 or tonumber(obj.stdout) == 2 then
-      vim.system({ self.cmd, '-c' })
-      vim.g._im_input_enter = vim.g._im_input_enter or buf
+    if obj.code ~= 0 then
+      return
+    end
+    if tonumber(obj.stdout) == 2 then
       vim.schedule(function()
-        local b = vim.g._im_input_enter
-        if vim.api.nvim_buf_is_valid(b) then
-          vim.b[b]._im_restore = true
+        if vim.api.nvim_buf_is_valid(buf) then
+          vim.b[buf].im_active = true
+        end
+      end)
+    else
+      vim.schedule(function()
+        if vim.api.nvim_buf_is_valid(buf) then
+          vim.b[buf].im_active = nil
         end
       end)
     end
