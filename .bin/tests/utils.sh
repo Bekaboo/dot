@@ -1,18 +1,6 @@
 #!/bin/sh
 # General test utilities. Source first in test scripts.
 
-# Create workspace (call once at script start).
-# Exports TEST_DIR, prepends TEST_DIR to PATH.
-init_env() {
-    TEST_DIR="${TEST_DIR:-$(mktemp -d)}"
-    export TEST_DIR
-    trap 'rm -rf "$TEST_DIR"' EXIT
-    export PATH="$TEST_DIR:$PATH"
-
-    TESTED_BIN="$(get_tested_bin)"
-    export TESTED_BIN
-}
-
 # Print the path to the binary under test, derived from the calling
 # test's filename: test-foo.sh -> <testdir>/../foo
 get_tested_bin() {

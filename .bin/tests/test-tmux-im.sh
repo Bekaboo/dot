@@ -5,7 +5,11 @@
 HERE="$(dirname -- "$(readlink -f -- "$0")")/"
 . "$HERE/utils.sh"
 
-init_env
+TESTED_BIN="$(get_tested_bin)"
+
+TEST_DIR="$(mktemp -d)"
+trap 'rm -rf "$TEST_DIR"' EXIT
+export PATH="$TEST_DIR:$PATH"
 
 export FCITX_STATE="$TEST_DIR/im-state"
 export IM_STATUS_DIR="$TEST_DIR/im-status"
