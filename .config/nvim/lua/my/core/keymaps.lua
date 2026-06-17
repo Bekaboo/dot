@@ -479,6 +479,18 @@ require('my.utils.load').on_events(
     map({ 'n', 'x' }, 'g}', goto_paragraph_lastline, { noremap = false, desc = 'Go to the last line of paragraph' })
     -- stylua: ignore end
 
+    -- Jump to git conflict markers
+    -- stylua: ignore start
+    map({ 'n', 'x', 'o' }, '[<', function() vim.fn.search('^<\\{7}', 'sb') end, { desc = 'Go to previous git conflict start' })
+    map({ 'n', 'x', 'o' }, ']<', function() vim.fn.search('^<\\{7}', 's') end,  { desc = 'Go to next git conflict start' })
+    map({ 'n', 'x', 'o' }, '[>', function() vim.fn.search('^>\\{7}', 'sb') end, { desc = 'Go to previous git conflict end' })
+    map({ 'n', 'x', 'o' }, ']>', function() vim.fn.search('^>\\{7}', 's') end,  { desc = 'Go to next git conflict end' })
+    map({ 'n', 'x', 'o' }, '[x', function() vim.fn.search('^=\\{7}', 'sb') end, { desc = 'Go to previous git conflict mid' })
+    map({ 'n', 'x', 'o' }, ']x', function() vim.fn.search('^=\\{7}', 's') end,  { desc = 'Go to next git conflict mid' })
+    map({ 'n', 'x', 'o' }, '[|', function() vim.fn.search('^|\\{7}', 'sb') end, { desc = 'Go to previous git conflict base' })
+    map({ 'n', 'x', 'o' }, ']|', function() vim.fn.search('^|\\{7}', 's') end,  { desc = 'Go to next git conflict base' })
+    -- stylua: ignore end
+
     -- Fzf keymaps
     map('n', '<Leader>.', '<Cmd>FZF<CR>', { desc = 'Find files' })
     map('n', '<Leader>ff', '<Cmd>FZF<CR>', { desc = 'Find files' })

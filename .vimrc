@@ -877,6 +877,35 @@ omap <silent>       g{ :silent! exe 'normal V' . v:count1 . 'g{'<CR>
 omap <silent>       g} :silent! exe 'normal V' . v:count1 . 'g}'<CR>
 " }}}2
 
+" Jump to git conflict markers {{{2
+nnoremap <silent> [<  :call search('^<\{7}',  'sb')<CR>
+nnoremap <silent> ]<  :call search('^<\{7}',  's')<CR>
+nnoremap <silent> [>  :call search('^>\{7}',  'sb')<CR>
+nnoremap <silent> ]>  :call search('^>\{7}',  's')<CR>
+nnoremap <silent> [x  :call search('^=\{7}',  'sb')<CR>
+nnoremap <silent> ]x  :call search('^=\{7}',  's')<CR>
+nnoremap <silent> [\| :call search('^\|\{7}', 'sb')<CR>
+nnoremap <silent> ]\| :call search('^\|\{7}', 's')<CR>
+
+xnoremap <silent> [<  :<C-u>exe 'norm! gv'<Bar>exe search('^<\{7}',  'sb')<CR>
+xnoremap <silent> ]<  :<C-u>exe 'norm! gv'<Bar>exe search('^<\{7}',  's')<CR>
+xnoremap <silent> [>  :<C-u>exe 'norm! gv'<Bar>exe search('^>\{7}',  'sb')<CR>
+xnoremap <silent> ]>  :<C-u>exe 'norm! gv'<Bar>exe search('^>\{7}',  's')<CR>
+xnoremap <silent> [x  :<C-u>exe 'norm! gv'<Bar>exe search('^=\{7}',  'sb')<CR>
+xnoremap <silent> ]x  :<C-u>exe 'norm! gv'<Bar>exe search('^=\{7}',  's')<CR>
+xnoremap <silent> [\| :<C-u>exe 'norm! gv'<Bar>exe search('^\|\{7}', 'sb')<CR>
+xnoremap <silent> ]\| :<C-u>exe 'norm! gv'<Bar>exe search('^\|\{7}', 's')<CR>
+
+onoremap <silent> [<  :<C-u>call search('^<\{7}',  'sb')<CR>
+onoremap <silent> ]<  :<C-u>call search('^<\{7}',  's')<CR>
+onoremap <silent> [>  :<C-u>call search('^>\{7}',  'sb')<CR>
+onoremap <silent> ]>  :<C-u>call search('^>\{7}',  's')<CR>
+onoremap <silent> [x  :<C-u>call search('^=\{7}',  'sb')<CR>
+onoremap <silent> ]x  :<C-u>call search('^=\{7}',  's')<CR>
+onoremap <silent> [\| :<C-u>call search('^\|\{7}', 'sb')<CR>
+onoremap <silent> ]\| :<C-u>call search('^\|\{7}', 's')<CR>
+" }}}2
+
 " Text objects {{{2
 " Current buffer (file)
 xmap <silent> af :<C-u>silent! keepjumps normal! ggVG<CR>
