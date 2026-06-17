@@ -131,7 +131,7 @@
 	wc   = log --diff-filter=C
 	wd   = log --diff-filter=D
 	wm   = log --diff-filter=M
-	wp   = log --diff-filter=B
+	wb   = log --diff-filter=B
 	wr   = log --diff-filter=R
 	wt   = log --diff-filter=T
 	wu   = log --diff-filter=U
