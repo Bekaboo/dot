@@ -147,7 +147,9 @@
 [mergetool]
 	keepBackup = false
 [mergetool "vimdiff"]
-	cmd = nvim -d $LOCAL $MERGED $REMOTE +'wincmd l'
+	cmd = command -v nvim 2>/dev/null && \
+		nvim -d $LOCAL $MERGED $REMOTE +'wincmd l' || \
+		vim -d $LOCAL $MERGED $REMOTE +'wincmd l'
 [pull]
 	rebase = true
 [diff]
