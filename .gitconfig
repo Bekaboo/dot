@@ -128,15 +128,7 @@
 	tc   = tag --contains
 	w    = show --stat
 	wa   = log --diff-filter=A
-	wc   = log --diff-filter=C
-	wd   = log --diff-filter=D
-	wm   = log --diff-filter=M
-	wb   = log --diff-filter=B
-	wr   = log --diff-filter=R
-	wt   = log --diff-filter=T
-	wu   = log --diff-filter=U
 	ww   = show
-	wx   = log --diff-filter=X
 	; Find a file or directory across all git commits
 	; To match files in sub-directories, use '**', e.g. '**/init.lua'
 	ff   = log --oneline --all --follow
