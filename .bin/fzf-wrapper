@@ -105,7 +105,7 @@ main() {
     PATH=$(printf '%s' "$PATH" | tr ':' '\n' | sed "s|^$script_dir\$|$tmp_dir|" | tr '\n' ':' | sed 's/:$//')
 
     # Calculate adaptive height
-    cursor=$(getcursorpos)
+    cursor=$(cursorpos)
     cursor_row=${cursor%;*}
     fzf_height=$((lines - cursor_row - 1))
     min_height=$(get_fzf_long_opt_no_space min-height 10)
