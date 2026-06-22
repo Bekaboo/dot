@@ -43,7 +43,7 @@ Target: **LuaJIT** (Neovim's embedded runtime). Do not use Lua 5.2+ features (`g
 
 ### Module convention
 
-Always return a table from a Lua file. Never return a bare function.
+Always return a table from a Lua file. Never return a bare function for extensibility.
 
 ```lua
 -- Bad
@@ -75,6 +75,15 @@ return {
 }
 ```
 
+Plugins under `lua/my/pack/specs/{start,opt}/` are required at different times:
+
+- Plugins specs under `lua/my/pack/specs/start/` will be required immediately on startup
+- Plugins specs under `lua/my/pack/specs/opt/` will be required after a short time after `UIEnter`, unless a file is provided to nvim in cmdline
+
+Tip: Consider adding new plugins under `lua/my/pack/specs/opt` first to optimize startup speed
+
+Pitfall: Notice that the `start` and `opt` directories only controls when a plugin spec is required and manged by `vim.pack`, this is different from plugin's actual loading time controlled by `keys`, `cmds`, `events`, `init`, etc.
+
 ### `init.lua` entry points
 
 Submodules use `init.lua` as the entry point. This file `require()`s sibling modules and returns a table with the public API (often just a `setup()` function).
@@ -93,7 +102,7 @@ return { setup = setup }
 
 ### Resource files
 
-Non-code resource files (snippets, DAP configs, test strategies, projectionist configs) live under `lua/my/pack/res/`, organized by the plugin they serve. These files return plain Lua tables -- they do NOT define M modules.
+Non-code resource files (snippets, DAP configs, test strategies, projectionist configs) live under `lua/my/pack/res/`, organized by the plugin they serve.
 
 ### Lazy-loading
 
