@@ -347,24 +347,23 @@ vim.g.loaded_tutor_mode_plugin = 0
 vim.g.loaded_remote_plugins = 0
 vim.g.loaded_python3_provider = 0
 
+---Load runtime files, including remote plugin and (Python3) providers
+---@return nil
+local function load_runtime()
+  vim.g.loaded_remote_plugins = nil
+  vim.g.loaded_python3_provider = nil
+  vim.cmd.runtime('plugin/rplugin.vim')
+  vim.cmd.runtime('provider/python3.vim')
+end
+
 require('my.utils.load').on_events(
   { 'FileType', 'BufReadPre', 'BufWritePost' },
   'my.load_runtime',
-  function()
-    vim.g.loaded_python3_provider = nil
-    vim.g.loaded_remote_plugins = nil
-    vim.cmd.runtime('provider/python3.vim')
-    vim.cmd.runtime('plugin/rplugin.vim')
-  end
+  load_runtime
 )
 
 require('my.utils.load').on_cmds(
   'UpdateRemotePlugins',
   'my.load_runtime',
-  function()
-    vim.g.loaded_python3_provider = nil
-    vim.g.loaded_remote_plugins = nil
-    vim.cmd.runtime('provider/python3.vim')
-    vim.cmd.runtime('plugin/rplugin.vim')
-  end
+  load_runtime
 )
