@@ -315,7 +315,10 @@ setbg_termux() {
 
 # $1: 'light' or 'dark'
 setbg_okular() {
-    if [ -z "$1" ] || ! command -v okular >/dev/null 2>&1 || ! command -v kwriteconfig5 >/dev/null 2>&1; then
+    if [ -z "$1" ] || \
+        ! command -v okular >/dev/null 2>&1 || \
+        ! command -v kwriteconfig5 >/dev/null 2>&1 || \
+        ! command -v qdbus >/dev/null 2>&1; then
         return 1
     fi
     case "$1" in
@@ -331,7 +334,7 @@ setbg_okular() {
 
 # $1: 'light' or 'dark'
 setbg_zathura() {
-    if [ -z "$1" ]; then
+    if [ -z "$1" ] || ! command -v qdbus >/dev/null 2>&1; then
         return
     fi
 
