@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      BSD
--- Last Updated: Sat 17 Jan 2026 09:14:34 PM PST
+-- Last Updated: Tue 23 Jun 2026 10:05:28 AM HKT
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -172,6 +172,7 @@ local hlgroups = {
   SpellLocal = { link = 'SpellBad' },
   SpellRare = { link = 'SpellBad' },
   StatusLine = { fg = c_foreground, bg = c_special },
+  StatusLineGitBranch = { fg = c_whitespace },
   StatusLineNC = { fg = c_background, bg = c_whitespace },
   Substitute = { link = 'Search' },
   TabLine = { fg = c_background, bg = c_constant },
