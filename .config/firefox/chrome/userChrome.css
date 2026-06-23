@@ -227,8 +227,21 @@ otherwise will change height when tabs overflow [FIXED] */
 /* square the urlbar results list items */
 .urlbarView-row,
 .urlbarView-row-inner,
+.urlbarView-row-body,
 .urlbarView-favicon,
-.urlbarView-type-icon {
+.urlbarView-type-icon,
+.urlbarView-action,
+.urlbarView-result-menu,
+.urlbarView-row[type="tip"] > .urlbarView-row-inner,
+.urlbarView-row[type="dynamic"] > .urlbarView-row-inner {
+  border-radius: 0 !important;
+}
+
+/* square urlbar dropdown panel and its inner wrappers */
+.urlbarView,
+.urlbarView-body-inner,
+.urlbarView-body-outer,
+.urlbarView-results {
   border-radius: 0 !important;
 }
 
@@ -268,6 +281,13 @@ otherwise will change height when tabs overflow [FIXED] */
   --urlbar-border-radius: 0 !important;
   --urlbar-inner-border-radius: 0 !important;
   --toolbar-field-border-radius: 0 !important;
+  --urlbarView-result-button-size: 0 !important;
+  --urlbarView-icon-border-radius: 0 !important;
+  --border-radius-small: 0 !important;
+  --border-radius-medium: 0 !important;
+  --border-radius-xsmall: 0 !important;
+  --border-radius-circle: 0 !important;
+  --border-radius-large: 0 !important;
 }
 
 
