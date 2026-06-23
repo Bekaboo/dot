@@ -341,6 +341,23 @@ url(about:preferences#search), url(about:preferences#privacy), url(about:prefere
 
 /* FIREFOX VIEW PAGE ----------------------------------------------------------------------------------------- */
 @-moz-document url(about:firefoxview), url(about:firefoxview-next) {
+
+  /* override design-token border-radius variables so they cascade
+     into web component shadow DOM (fxview-tab-row, card-container,
+     opentabs-tab-row, fxview-empty-state) */
+  :root, :host {
+    --border-radius-small: 0 !important;
+    --border-radius-medium: 0 !important;
+    --border-radius-xsmall: 0 !important;
+    --border-radius-circle: 0 !important;
+    --card-border-radius: 0 !important;
+    --button-border-radius: 0 !important;
+    --input-text-border-radius: 0 !important;
+  }
+
+  /* square the pinned media button in open-tabs view */
+  .fxview-tab-row-pinned-media-button {border-radius: 0 !important;}
+
   .tabpickup-steps {border-radius: 0 !important;}
   .twisty {border-radius: 0 !important;}
   .closed-tab-li-main {border-radius: 0 !important;}
