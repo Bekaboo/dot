@@ -133,6 +133,24 @@ login-filter {
 @-moz-document url(about:preferences), url(about:preferences#general), url(about:preferences#home),
 url(about:preferences#search), url(about:preferences#privacy), url(about:preferences#sync),
 url(about:preferences#moreFromMozilla), url(about:addons){
+
+  /* override design-token border-radius variables (affects shadow DOM components) */
+  :root, :host {
+    --border-radius-small: 0 !important;
+    --border-radius-medium: 0 !important;
+    --border-radius-xsmall: 0 !important;
+    --card-border-radius: 0 !important;
+    --button-border-radius: 0 !important;
+  }
+
+  /* square all web components that read border-radius from host variables */
+  moz-toggle { --toggle-border-radius: 0 !important; }
+  moz-card { --card-border-radius: 0 !important; }
+  moz-select { --button-border-radius: 0 !important; }
+
+  /* square the "Find in Settings" search box */
+  #searchInput { --input-text-border-radius: 0 !important; }
+
   /* square checkboxes */
   .checkbox-check {border-radius: 0 !important;}
   #automaticallySubmitCrashesBox {border-radius: 0 !important;}
@@ -171,7 +189,6 @@ url(about:preferences#moreFromMozilla), url(about:addons){
   /* more from mozilla page */
   .qr-code-box {border-radius: 0 !important;}
   .qr-code-box-image {border-radius: 0 !important;}
-
 
   /* enterprise policies infobox */
   #policies-container {border-radius: 0 !important;}
