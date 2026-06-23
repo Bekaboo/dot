@@ -73,8 +73,20 @@ login-filter {
 /* NEW TAB PAGE ---------------------------------------------------------------------------------------------- */
 
 @-moz-document url(about:home), url(about:newtab), url(about:privatebrowsing) {
-    /* square the search box  corners */
-    body .search-handoff-button {border-radius: 0 !important;}
+    /* override design-token border-radius variables and force
+       border-radius on all elements so they cascade into web
+       component shadow DOM (weather, feature callouts,
+       content tiles, onboarding, pocket cards). */
+    *:not(input[type="radio"]) {
+      border-radius: 0 !important;
+      --border-radius-small: 0 !important;
+      --border-radius-medium: 0 !important;
+      --border-radius-xsmall: 0 !important;
+      --border-radius-circle: 0 !important;
+      --card-border-radius: 0 !important;
+      --button-border-radius: 0 !important;
+      --input-text-border-radius: 0 !important;
+    }
 
     /* square the settings button and checkboxes / buttons / selectors inside its menu */
     .personalize-button {border-radius: 0 !important;}
