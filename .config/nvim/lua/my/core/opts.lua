@@ -27,7 +27,6 @@ vim.opt.smoothscroll = true
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
 vim.opt.completeopt = 'menuone'
-vim.opt.selection = 'old'
 vim.opt.tabclose = 'uselast'
 
 -- Defer shada reading

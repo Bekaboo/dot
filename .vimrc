@@ -43,7 +43,6 @@ silent! set clipboard^=unnamedplus
 silent! set formatoptions+=normj
 silent! set formatoptions-=t
 silent! set nrformats+=blank
-silent! set selection=old
 silent! set tabclose=uselast
 
 " Enable 'exrc' only when 'secure' is working
