@@ -6,6 +6,7 @@
 
 - Do NOT use special/unicode characters that cannot be typed directly on a standard keyboard (e.g. →, —, •, «», etc.). Use plain ASCII alternatives instead (e.g. `->`, `--`, `*`, `<<>>`).
 - Do NOT use markdown bold (`**text**`) in your output, unless truly necessary.
+- Always wrap special characters, filenames, variable/function/class/module names, and command names in backticks (e.g. `\r\n`, `main()`, `$DOT_DIR`).
 
 ## Markdown
 
