@@ -9,13 +9,9 @@ function cursorpos --description 'Get current cursor position'
 
     stty raw -echo
     printf '\033[6n' >/dev/tty
-
     # Read stdin byte-by-byte until 'R' terminator via a single perl process
     # (avoids spawning dd per char, which is slow on macOS)
-    set -l response (perl -e 'while(sysread(STDIN,$c,1)){$_.=$c;last if$c eq"R"}print')
+    perl -e 'while(sysread(STDIN,$c,1)){$_.=$c;last if$c eq"R"}print"$1\n"if/(\d+;\d+)/' </dev/tty
 
-    # Restore terminal settings
     stty $tty_settings
-
-    string replace -r '^[^\[]*\[' '' -- $response
 end
