@@ -11,7 +11,7 @@ function cursorpos --description 'Get current cursor position'
     printf '\033[6n' >/dev/tty
     # Read stdin byte-by-byte until 'R' terminator via a single perl process
     # (avoids spawning dd per char, which is slow on macOS)
-    perl -e 'while(sysread(STDIN,$c,1)){$_.=$c;last if$c eq"R"}print"$1\n"if/(\d+;\d+)/' </dev/tty
+    perl -e 'while(sysread(STDIN,$c,1)){$_.=$c;last if$c eq"R"}print"$1\r\n"if/(\d+;\d+)/' </dev/tty
 
     stty $tty_settings
 end
