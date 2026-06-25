@@ -16,17 +16,20 @@ local M = {
   windows = nil, ---@module 'my.plugin.im.backends.windows'
 }
 
-local backends_path = vim.fs.joinpath(
-  vim.fn.stdpath('config'),
-  'lua/my/plugin/im/backends'
-)
+local backends_path =
+  vim.fs.joinpath(vim.fn.stdpath('config'), 'lua/my/plugin/im/backends')
 
 ---Pick the first available backend and return an instance of it
 ---@return my.im.backend?
 function M.detect()
   for name, type in vim.fs.dir(backends_path) do
-    if type == 'file' and vim.endswith(name, '.lua') and name ~= 'init.lua' then
-      local module = require('my.plugin.im.backends.' .. name:gsub('%.lua$', ''))
+    if
+      type == 'file'
+      and vim.endswith(name, '.lua')
+      and name ~= 'init.lua'
+    then
+      local module =
+        require('my.plugin.im.backends.' .. name:gsub('%.lua$', ''))
       local instance = module.backend:new()
       if instance:detect() then
         return instance
