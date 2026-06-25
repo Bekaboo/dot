@@ -46,7 +46,7 @@ get_coords_from_cache() {
 }
 
 save_coords_to_cache() {
-    echo "$1" > "$CACHE_FILE"
+    echo "$1" >"$CACHE_FILE"
 }
 
 # Convert latitude and longitude format from [+-]0.0000 to
