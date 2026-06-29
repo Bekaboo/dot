@@ -23,8 +23,10 @@ return {
     ---Load oil on startup only when editing a directory
     init = function(spec, path)
       vim.g.loaded_fzf_file_explorer = 0
+      vim.g.loaded_nvim_dir_plugin = 0
       vim.g.loaded_netrw = 0
       vim.g.loaded_netrwPlugin = 0
+
       vim.api.nvim_create_autocmd('BufEnter', {
         nested = true,
         -- Use `vim.schedule()` here to wait session to be loaded and
