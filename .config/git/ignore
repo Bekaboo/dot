@@ -5,3 +5,6 @@
 
 .claude/*
 !.claude/*.md
+
+# Coding agent (qoder, claude code, etc.) personal preferences files
+*.local.md
