@@ -7,5 +7,8 @@ set -Ux FISH_AI_KEYMAP_2 alt-/ # autocomplete or fix previous command
 
 # Switch fish-ai config based on FISH_AI_CONFIG envvar
 if test -n "$FISH_AI_CONFIG"
-    ln -s $HOME/.config/fish-ai.$FISH_AI_CONFIG.ini $HOME/.config/fish-ai.ini
+    set -l src_config $HOME/.config/fish-ai.$FISH_AI_CONFIG.ini
+    if test -e "$src_config"
+        ln -sf "$src_config" $HOME/.config/fish-ai.ini
+    end
 end
