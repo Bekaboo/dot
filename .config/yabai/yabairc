@@ -50,12 +50,15 @@ yabai -m config focus_follows_mouse autofocus # focus follows mouse
 yabai -m config mouse_drop_action swap        # swap windows when one dropped on another
 
 # Ignore the following apps (should always open in floating windows)
+# To get info (e.g. app, title) of a window, use: `sleep 2; yabai -m query --windows --window`
+# Ref: https://github.com/asmvik/yabai/issues/2336#issuecomment-2192088647
 yabai -m rule --add app='^Calculator' manage=off
 yabai -m rule --add app='^Mail' manage=off
 yabai -m rule --add app='^System' manage=off
 yabai -m rule --add app='^Thunderbird' manage=off
 yabai -m rule --add app='^zoom.us' manage=off
 yabai -m rule --add title='^Extension:' manage=off # web browser extension
+yabai -m rule --add app='阿里钉' title='Window' manage=off # iDingTalk popup windows, e.g. shared image
 
 # Don't make floating windows always above tiled windows
 # https://github.com/koekeishiya/yabai/issues/2170
