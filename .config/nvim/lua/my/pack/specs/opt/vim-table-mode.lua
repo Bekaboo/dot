@@ -61,7 +61,7 @@ return {
           if
             vim.bo[args.buf].ft == 'markdown'
             and vim.api.nvim_get_current_line():match('^%s*|')
-            and not require('my.utils.ts').find_node('fence')
+            and not require('my.utils.ctx').codeblock()
           then
             vim.cmd.TableModeRealign({
               mods = { emsg_silent = true },
