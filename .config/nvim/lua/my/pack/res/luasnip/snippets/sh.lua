@@ -8,6 +8,7 @@ local ls = require('luasnip')
 local sn = ls.snippet_node
 local t = ls.text_node
 local i = ls.insert_node
+local f = ls.function_node
 local c = ls.choice_node
 local d = ls.dynamic_node
 
@@ -593,8 +594,19 @@ M.snippets = {
   ),
   us.sn(
     { trig = 'has', desc = 'Check if a command exists' },
-    un.fmtad('command -v <cmd> >>/dev/null 2>>&1', {
-      cmd = i(1, 'cmd'),
+    c(1, {
+      un.fmtad('command -v <cmd> >>/dev/null 2>>&1', {
+        cmd = i(1, 'cmd'),
+      }),
+      un.fmtad('<brak_l> -z "${<var>+x}" <brak_r>', {
+        brak_l = f(function()
+          return is_bash() and '[[' or '['
+        end),
+        brak_r = f(function()
+          return is_bash() and ']]' or ']'
+        end),
+        var = i(1, 'var'),
+      }),
     })
   ),
   us.msn({

@@ -487,7 +487,10 @@ M.snippets = {
   ),
   us.sn(
     { trig = 'has', desc = 'Check if a command or variable exists' },
-    t('type -q ')
+    c(1, {
+      sn(nil, { t('type -q '), i(1, 'cmd') }),
+      sn(nil, { t('set -q '), i(1, 'var') }),
+    })
   ),
   us.msn({
     { trig = 'hr' },
