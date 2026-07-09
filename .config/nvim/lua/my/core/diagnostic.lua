@@ -18,10 +18,6 @@ vim.diagnostic.config({
   float = {
     source = true,
   },
-  virtual_text = {
-    spacing = 4,
-    prefix = vim.trim(icons.AngleLeft),
-  },
   signs = {
     text = {
       [vim.diagnostic.severity.ERROR] = icons.DiagnosticSignError,
