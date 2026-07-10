@@ -5,7 +5,7 @@ local settings = {
     -- https://docs.basedpyright.com/latest/configuration/language-server-settings/
     typeCheckingMode = 'standard',
     autoSearchPaths = true,
-    useLibraryCodeForTypes = true,
+    useLibraryCodeForTypes = false,
     diagnosticMode = 'openFilesOnly',
   },
 }
