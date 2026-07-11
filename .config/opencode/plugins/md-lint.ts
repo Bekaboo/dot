@@ -1,63 +1,51 @@
 import type { Plugin } from "@opencode-ai/plugin";
 
-const HEADING_RE = /^(#{1,6})\s+(.*)$/;
+const configPath = `${process.env.HOME}/.markdownlint-cli2.cjs`;
 
-function checkMd(content: string, filePath: string): string[] {
-  const issues: string[] = [];
-  const lines = content.split("\n");
+export const MdLintPlugin: Plugin = async ({ client }) => ({
+  "tool.execute.after": async (input, output) => {
+    if (input.tool !== "write" && input.tool !== "edit") return;
 
-  for (let i = 0; i < lines.length; i++) {
-    const m = lines[i].match(HEADING_RE);
-    if (!m) continue;
+    const filePath: string | undefined = input.args?.filePath;
+    if (!filePath?.endsWith(".md")) return;
 
-    const level = m[1];
-    const title = m[2];
-
-    if (/^\d+\.\s/.test(title)) {
-      issues.push(`${filePath}:${i + 1}: numbered heading "${title.trim()}"`);
+    let before: string;
+    try {
+      before = await Bun.file(filePath).text();
+    } catch {
+      return;
     }
 
-    if (i + 1 < lines.length && lines[i + 1] !== "") {
-      issues.push(
-        `${filePath}:${i + 1}: missing blank line after "${level} ${title}"`,
-      );
+    const process = Bun.spawn(
+      ["markdownlint-cli2", "--config", configPath, "--fix", filePath],
+      { stdout: "pipe", stderr: "pipe" },
+    );
+    const [stdout, stderr, exitCode] = await Promise.all([
+      new Response(process.stdout).text(),
+      new Response(process.stderr).text(),
+      process.exited,
+    ]);
+
+    const after = await Bun.file(filePath).text();
+    const details = [stdout, stderr].filter(Boolean).join("\n").trim();
+
+    let feedback = "";
+    if (before !== after) {
+      feedback =
+        "markdownlint-cli2 automatically fixed Markdown formatting. Review the updated file before finishing.";
+    } else if (exitCode !== 0) {
+      feedback = `markdownlint-cli2 found unresolved issues:\n${details}`;
     }
-  }
 
-  return issues;
-}
+    if (!feedback) return;
+    output.output = `${output.output}\n\n${feedback}`;
 
-export const MdLintPlugin: Plugin = async ({ client }) => {
-  return {
-    "tool.execute.after": async (input, _output) => {
-      if (input.tool !== "write" && input.tool !== "edit") return;
-      const fp: string | undefined = input.args?.filePath;
-      if (!fp || !fp.endsWith(".md")) return;
-
-      let content: string | null = null;
-
-      if (input.tool === "write" && input.args?.content) {
-        content = input.args.content as string;
-      } else {
-        try {
-          content = await Bun.file(fp).text();
-        } catch {
-          return;
-        }
-      }
-
-      if (!content) return;
-
-      const issues = checkMd(content, fp);
-      if (issues.length === 0) return;
-
-      await client.app.log({
-        body: {
-          service: "md-lint",
-          level: "warn",
-          message: issues.join("\n"),
-        },
-      });
-    },
-  };
-};
+    await client.app.log({
+      body: {
+        service: "md-lint",
+        level: exitCode === 0 ? "info" : "warn",
+        message: feedback,
+      },
+    });
+  },
+});
