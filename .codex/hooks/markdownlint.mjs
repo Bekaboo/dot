@@ -4,9 +4,17 @@ import { isAbsolute, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
 const event = JSON.parse(readFileSync(0, "utf8"));
-const patch = event.tool_input?.command ?? "";
-const paths = [...patch.matchAll(/^\*\*\* (?:Add|Update) File: (.+)$/gm)]
-  .map((match) => match[1].trim())
+const toolInput = event.tool_input ?? {};
+const patch = typeof toolInput.command === "string" ? toolInput.command : "";
+const directPaths = [
+  toolInput.file_path,
+  toolInput.filePath,
+  toolInput.path,
+].filter((path) => typeof path === "string");
+const patchPaths = [...patch.matchAll(/^\*\*\* (?:Add|Update) File: (.+)$/gm)].map(
+  (match) => match[1].trim(),
+);
+const paths = [...new Set([...directPaths, ...patchPaths])]
   .filter((path) => path.endsWith(".md"))
   .map((path) => (isAbsolute(path) ? path : resolve(event.cwd, path)))
   .filter(existsSync);

@@ -19,9 +19,9 @@ function fixture(name, content) {
   return cwd;
 }
 
-function runHook(cwd, patch) {
+function runHook(cwd, toolInput) {
   const inputPath = join(cwd, "hook-input.json");
-  writeFileSync(inputPath, JSON.stringify({ cwd, tool_input: { command: patch } }));
+  writeFileSync(inputPath, JSON.stringify({ cwd, tool_input: toolInput }));
   const result = Bun.spawnSync(["node", hookPath], {
     stdin: Bun.file(inputPath),
     stdout: "pipe",
@@ -37,7 +37,7 @@ function runHook(cwd, patch) {
 describe("Markdown PostToolUse hook", () => {
   test("fixes a relative Markdown path and reports context", () => {
     const cwd = fixture("bad.md", "### 2. Bad\nBody.\n");
-    const result = runHook(cwd, "*** Update File: bad.md");
+    const result = runHook(cwd, { command: "*** Update File: bad.md" });
 
     expect(result.status).toBe(0);
     expect(readFileSync(join(cwd, "bad.md"), "utf8")).toBe(
@@ -50,7 +50,7 @@ describe("Markdown PostToolUse hook", () => {
 
   test("is silent when Markdown is already clean", () => {
     const cwd = fixture("clean.md", "### Clean\n\nBody.\n");
-    const result = runHook(cwd, "*** Update File: clean.md");
+    const result = runHook(cwd, { command: "*** Update File: clean.md" });
 
     expect(result.status).toBe(0);
     expect(result.stdout).toBe("");
@@ -63,7 +63,7 @@ describe("Markdown PostToolUse hook", () => {
       "*** Update File: missing.md",
       "*** Update File: bad.txt",
     ].join("\n");
-    const result = runHook(cwd, patch);
+    const result = runHook(cwd, { command: patch });
 
     expect(result.status).toBe(0);
     expect(result.stdout).toBe("");
@@ -71,4 +71,20 @@ describe("Markdown PostToolUse hook", () => {
       "### 2. Bad\nBody.\n",
     );
   });
+
+  test.each(["file_path", "filePath", "path"])(
+    "fixes Markdown from the %s field",
+    (field) => {
+      const cwd = fixture(`${field}.md`, "### 2. Bad\nBody.\n");
+      const result = runHook(cwd, { [field]: `${field}.md` });
+
+      expect(result.status).toBe(0);
+      expect(readFileSync(join(cwd, `${field}.md`), "utf8")).toBe(
+        "### Bad\n\nBody.\n",
+      );
+      expect(
+        JSON.parse(result.stdout).hookSpecificOutput.additionalContext,
+      ).toContain(`${field}.md`);
+    },
+  );
 });
