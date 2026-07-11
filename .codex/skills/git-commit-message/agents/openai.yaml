@@ -1,0 +1,4 @@
+interface:
+  display_name: "Git Commit Message"
+  short_description: "Create readable multiline Git commit messages"
+  default_prompt: "Use $git-commit-message to commit the current changes with a well-formatted message."

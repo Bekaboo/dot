@@ -1,0 +1,1 @@
+../../../.config/opencode/skills/git-commit-message/SKILL.md
