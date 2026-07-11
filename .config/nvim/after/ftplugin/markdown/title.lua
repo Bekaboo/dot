@@ -156,24 +156,20 @@ vim.api.nvim_buf_create_user_command(
     end
     if args.bang or vim.tbl_contains(parsed_args, 'toggle') then
       scope.md_fmt_title = not scope.md_fmt_title
-      return
-    end
-    if args.fargs[1] == '&' or vim.tbl_contains(parsed_args, 'reset') then
+    elseif args.fargs[1] == '&' or vim.tbl_contains(parsed_args, 'reset') then
       scope.md_fmt_title = true
-      return
-    end
-    if args.fargs[1] == '?' or vim.tbl_contains(parsed_args, 'status') then
-      vim.notify(tostring(scope.md_fmt_title))
-      return
-    end
-    if vim.tbl_contains(parsed_args, 'enable') then
+    elseif vim.tbl_contains(parsed_args, 'enable') then
       scope.md_fmt_title = true
-      return
-    end
-    if vim.tbl_contains(parsed_args, 'disable') then
+    elseif vim.tbl_contains(parsed_args, 'disable') then
       scope.md_fmt_title = false
-      return
     end
+    vim.notify(
+      string.format(
+        '[markdown.title] Markdown title auto-format %s %s',
+        scope.md_fmt_title and 'enabled' or 'disabled',
+        scope == vim.g and 'globally' or 'locally'
+      )
+    )
   end,
   {
     nargs = '*',
