@@ -25,6 +25,10 @@ All standard git subcommands work. Prefix them with:
 git --git-dir="$DOT_DIR" --work-tree="$HOME" <subcommand>
 ```
 
+## Migratability
+
+Do not introduce machine-specific absolute paths such as `/home/user/...` or `/Users/user/...` into tracked dotfiles. These dotfiles are reused across hosts. In command strings interpreted by a shell, prefer `~` or `$HOME` so paths stay portable.
+
 ## Commit message style
 
 Follow conventional commits format. Recent examples:
