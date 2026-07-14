@@ -1540,7 +1540,7 @@ function! s:running_tui() abort
   for cmd in s:fg_cmds()
     if cmd =~# '\v(sudo.*\s+)?(.*sh\s+-c\s+)?(.*python.*)?\S*
         \<(n?vim?|vimdiff|emacs(client)?|lem|nano|h(eli)?x|kak|
-        \tmux|vifm|yazi|ranger|lazygit|h?top|gdb|fzf|nmtui|opencode|claude|codex|
+        \tmux|vifm|yazi|ranger|lazygit|h?top|gdb|fzf|nmtui|opencode|claude|codex|qodercli|
         \sudoedit|crontab|asciinema|w3m|python3?\s+-m|ssh)>($|\s+)'
       return 1
     endif
