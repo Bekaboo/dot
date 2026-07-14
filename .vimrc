@@ -37,6 +37,7 @@ silent! set ttimeoutlen=0
 silent! set autoindent
 silent! set shortmess-=S
 silent! set sessionoptions+=globals
+silent! set path+=**
 silent! set viminfo=!,'100,<50,s10,h
 silent! set diffopt+=algorithm:histogram,indent-heuristic
 silent! set clipboard^=unnamedplus
