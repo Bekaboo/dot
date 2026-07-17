@@ -71,9 +71,9 @@
 	pu   = push -u
 	puf  = push -u --force
 	pfu  = push -u --force
-	pk   = cherry-pick
-	pka  = cherry-pick --abort
-	pkc  = cherry-pick --continue
+	cp   = cherry-pick
+	cpa  = cherry-pick --abort
+	cpc  = cherry-pick --continue
 	pl   = pull
 	r    = remote
 	ra   = remote add
