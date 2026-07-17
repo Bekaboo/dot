@@ -12,3 +12,8 @@
 
 - Always add a blank line after each markdown heading (`#`, `##`, `###`, etc.) when writing to .md files, unless the heading is the last line of the document.
 - Do NOT number markdown headings (e.g. `## 1. Foo` or `### 2. Bar`). Use plain headings like `## Foo` or `### Bar` instead.
+
+## Code style
+
+- Do not use `else` or `elseif` after a branch that unconditionally returns. Use a separate `if` instead.
+- Prefer early returns over lengthy `if`-`else` structures.
