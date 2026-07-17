@@ -54,7 +54,19 @@ return {
     deps = {
       -- Enable :GBrowse command in GitHub/Gitlab repos
       'https://github.com/tpope/vim-rhubarb',
-      'https://github.com/shumphrey/fugitive-gitlab.vim',
+      {
+        src = 'https://github.com/shumphrey/fugitive-gitlab.vim',
+        data = {
+          postload = function()
+            -- Alibaba's GitLab-compatible service uses a different web host and
+            -- omits the `/-/` component found in current GitLab URLs.
+            vim.g.fugitive_gitlab_domains = {
+              ['gitlab.alibaba-inc.com'] = 'https://code.alibaba-inc.com',
+            }
+            vim.g.fugitive_gitlab_oldstyle_urls = true
+          end,
+        },
+      },
     },
     postload = function()
       vim.cmd([[
