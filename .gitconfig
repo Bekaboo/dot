@@ -166,6 +166,9 @@
 						print \
 					}'; \
 	}; fn"
+	; Match commit messages in all local branches
+	; Usage: git gm <pattern>
+	gm   = log --oneline --graph --decorate --branches --grep
 [merge]
 	tool = vimdiff
 [mergetool]
