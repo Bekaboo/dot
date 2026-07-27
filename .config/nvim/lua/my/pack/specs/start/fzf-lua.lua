@@ -65,6 +65,9 @@ return {
       { lhs = '<Leader>fgb', opts = { desc = 'Find git branches' } },
       { lhs = '<Leader>fgB', opts = { desc = 'Find git blame' } },
       { lhs = '<Leader>fgf', opts = { desc = 'Find git files' } },
+      { lhs = '<Leader>fgF', opts = { desc = 'Find git commits containing file' } },
+      { lhs = '<Leader>fgr', opts = { desc = 'Grep git commit changes' } },
+      { lhs = '<Leader>fgm', opts = { desc = 'Grep git commit messages' } },
       { lhs = '<Leader>gft', opts = { desc = 'Find git tags' } },
       { lhs = '<Leader>gfs', opts = { desc = 'Find git stash' } },
       { lhs = '<Leader>gfg', opts = { desc = 'Find git status' } },
@@ -73,6 +76,9 @@ return {
       { lhs = '<Leader>gfb', opts = { desc = 'Find git branches' } },
       { lhs = '<Leader>gfB', opts = { desc = 'Find git blame' } },
       { lhs = '<Leader>gff', opts = { desc = 'Find git files' } },
+      { lhs = '<Leader>gfF', opts = { desc = 'Find git commits containing file' } },
+      { lhs = '<Leader>gfr', opts = { desc = 'Grep git commit changes' } },
+      { lhs = '<Leader>gfm', opts = { desc = 'Grep git commit messages' } },
       { lhs = '<Leader>fh', opts = { desc = 'Find help files' } },
       { lhs = '<Leader>fk', opts = { desc = 'Find keymaps' } },
       { lhs = '<Leader>f-', opts = { desc = 'Find lines in buffer' } },
@@ -198,6 +204,7 @@ return {
       local core = require('fzf-lua.core')
       local path = require('fzf-lua.path')
       local config = require('fzf-lua.config')
+      local fzf_libuv = require('fzf-lua.libuv')
       local fzf_utils = require('fzf-lua.utils')
       local utils = require('my.utils')
       local icons = require('my.utils.static.icons')
@@ -596,6 +603,24 @@ return {
         actions.fugitive_edit(selected, {})
       end
 
+      ---@class my.fzf.git_search_opts: fzf-lua.config.GitCommits
+      ---@field search? string
+      ---@field __resume_key? function
+
+      ---@class my.fzf.git_search_resolved_opts: fzf-lua.config.Resolved
+      ---@field search? string
+      ---@field __ACT_TO? fun(opts: my.fzf.git_search_opts)
+
+      ---Toggle a Git search between regex and fuzzy modes
+      ---@param _ string[]
+      ---@param opts my.fzf.git_search_opts
+      function actions.toggle_git_search_mode(_, opts)
+        opts.__ACT_TO({
+          resume = true,
+          __resume_key = opts.__resume_key,
+        })
+      end
+
       core.ACTION_DEFINITIONS[actions.toggle_dir] = {
         function(o)
           -- When using `fd` the flag is '--type d', but for `find` the flag is
@@ -605,6 +630,11 @@ return {
           local escape = require('fzf-lua.utils').lua_regex_escape
           return o.cmd and o.cmd:match(escape(flag)) and 'Exclude dirs'
             or 'Include dirs'
+        end,
+      }
+      core.ACTION_DEFINITIONS[actions.toggle_git_search_mode] = {
+        function(opts)
+          return opts.is_live and 'Fuzzy Search' or 'Regex Search'
         end,
       }
       core.ACTION_DEFINITIONS[actions.change_cwd] = { 'Change cwd', pos = 1 }
@@ -643,6 +673,8 @@ return {
       config._action_to_helpstr[actions.fugitive_split] = 'fugitive-split'
       config._action_to_helpstr[actions.fugitive_vsplit] = 'fugitive-vsplit'
       config._action_to_helpstr[actions.fugitive_tabedit] = 'fugitive-tabedit'
+      config._action_to_helpstr[actions.toggle_git_search_mode] =
+        'regex<->fuzzy'
 
       -- Use different prompts for document and workspace diagnostics
       -- by overriding `fzf.diagnostics_workspace()` and `fzf.diagnostics_document()`
@@ -665,21 +697,180 @@ return {
         }))
       end
 
+      ---Add the dotfiles fallback to Git picker options
+      ---@param opts fzf-lua.config.GitBase?
+      ---@return fzf-lua.config.GitBase
+      local function with_dotfiles_fallback_opts(opts)
+        opts = opts or {}
+        ---@cast opts fzf-lua.config.GitBase
+        local git_worktree, git_dir = utils.git.resolve_context(0, {
+          { '--git-dir', vim.env.DOT_DIR, '--work-tree', vim.env.HOME },
+        })
+        return vim.tbl_deep_extend('keep', opts, {
+          git_worktree = git_worktree,
+          git_dir = git_dir,
+        })
+      end
+
       ---Wrap fzf git pickers with dotfiles fallback when not inside git repo
       ---@param cb fun(opts: fzf-lua.config.GitBase?)
       ---@return fun(opts: fzf-lua.config.GitBase?)
       local function with_dotfiles_fallback(cb)
         return function(opts)
-          local git_worktree, git_dir = utils.git.resolve_context(
-            0,
-            { { '--git-dir', vim.env.DOT_DIR, '--work-tree', vim.env.HOME } }
-          )
-          opts = vim.tbl_deep_extend('keep', opts or {}, {
-            git_worktree = git_worktree,
-            git_dir = git_dir,
-          })
-          return cb(opts)
+          return cb(with_dotfiles_fallback_opts(opts))
         end
+      end
+
+      ---Find commits containing a file matching a pathspec
+      ---@param opts fzf-lua.config.GitCommits?
+      ---@diagnostic disable-next-line: inject-field
+      function fzf.git_ff(opts)
+        vim.ui.input({ prompt = 'Git file pathspec: ' }, function(pathspec)
+          if not pathspec or pathspec == '' then
+            return
+          end
+          pathspec = vim.fn.shellescape(pathspec)
+          fzf.git_commits(
+            vim.tbl_deep_extend('force', vim.deepcopy(opts or {}), {
+              cmd = 'git ff --no-patch --color=always -- ' .. pathspec,
+              preview = 'git show --color {1} -- ' .. pathspec,
+              prompt = 'GitFF> ',
+            })
+          )
+        end)
+      end
+
+      ---Normalize Git search options
+      ---@param opts my.fzf.git_search_opts
+      ---@param cb fun(opts?: my.fzf.git_search_opts)
+      ---@return my.fzf.git_search_resolved_opts?
+      local function normalize_git_search_opts(opts, cb)
+        opts.__resume_key = cb
+        opts = config.normalize_opts(opts, 'git.commits')
+        if not opts then
+          return
+        end
+
+        ---@diagnostic disable-next-line: cast-type-mismatch, cast-local-type
+        ---@cast opts my.fzf.git_search_resolved_opts
+        local git_root = path.git_root(opts)
+        if not opts.cwd or not git_root then
+          opts.cwd = git_root
+        end
+        if not opts.cwd then
+          return
+        end
+
+        -- Adapted from fzf-lua's `git_preview()` helper to
+        -- normalize a shell-command preview with git context and pager settings
+        if type(opts.preview) == 'string' then
+          opts.preview = path.git_cwd(opts.preview --[[@as string]], opts)
+
+          local preview_pager = opts.preview_pager
+          if type(preview_pager) == 'function' then
+            preview_pager = preview_pager()
+          end
+          if preview_pager then
+            opts.preview = string.format(
+              '%s | %s',
+              opts.preview,
+              fzf_utils._if_win_normalize_vars(preview_pager)
+            )
+          end
+
+          -- Fish does not forward `$COLUMNS` to the pager in this pipeline.
+          if vim.o.shell:match('fish$') then
+            opts.preview = 'sh -c '
+              .. fzf_libuv.shellescape(opts.preview --[[@as string]])
+          end
+        end
+        opts.actions['ctrl-g'] = actions.toggle_git_search_mode
+        return opts
+      end
+
+      ---Open a fuzzy Git commit search over the last regex result set
+      ---@param opts my.fzf.git_search_opts
+      ---@param cb fun(opts?: my.fzf.git_search_opts)
+      ---@param name string
+      ---@param get_cmd fun(query: string): string
+      local function fuzzy_git_search(opts, cb, name, get_cmd)
+        local resolved_opts = normalize_git_search_opts(opts, cb)
+        if not resolved_opts then
+          return
+        end
+        resolved_opts.__ACT_TO = cb
+        resolved_opts.prompt = string.format('%s [fuzzy]> ', name)
+
+        local query = fzf_libuv.shellescape(resolved_opts.search or '')
+        local cmd = path.git_cwd(get_cmd(query), resolved_opts)
+        cmd = string.format('test -z %s || %s', query, cmd)
+        return core.fzf_exec(cmd, resolved_opts)
+      end
+
+      ---Open a live regex Git commit search
+      ---@param opts my.fzf.git_search_opts
+      ---@param cb fun(opts?: my.fzf.git_search_opts)
+      ---@param name string
+      ---@param get_cmd fun(query: string): string
+      local function live_git_search(opts, cb, name, get_cmd)
+        local resolved_opts = normalize_git_search_opts(opts, cb)
+        if not resolved_opts then
+          return
+        end
+        resolved_opts.__ACT_TO = function(call_opts)
+          return fuzzy_git_search(call_opts, cb, name, get_cmd)
+        end
+        resolved_opts.prompt = string.format('%s [regex]> ', name)
+
+        -- A live query is the regex used to produce the result set, whereas
+        -- a normal query fuzzy-filters an existing result set.
+        resolved_opts.__resume_set = function(what, value, picker_opts)
+          if what == 'query' then
+            config.resume_set('search', value, {
+              __resume_key = picker_opts.__resume_key,
+            })
+            fzf_utils.map_set(config, '__resume_data.last_query', value)
+            fzf_utils.map_set(config, '__resume_data.opts.query', value)
+            picker_opts.last_query = value
+            return
+          end
+          config.resume_set(what, value, {
+            __resume_key = picker_opts.__resume_key,
+          })
+        end
+        resolved_opts.__resume_get = function(what, picker_opts)
+          return config.resume_get(what == 'query' and 'search' or what, {
+            __resume_key = picker_opts.__resume_key,
+          })
+        end
+        resolved_opts.query = resolved_opts.search or ''
+
+        local query = core.fzf_query_placeholder
+        local cmd = path.git_cwd(get_cmd(query), resolved_opts)
+        cmd = string.format('test -z %s || %s', query, cmd)
+        return core.fzf_live(cmd, resolved_opts)
+      end
+
+      ---Find commits containing changed lines matching a live query
+      ---@diagnostic disable-next-line: inject-field
+      function fzf.git_gr(opts)
+        return live_git_search(opts, fzf.git_gr, 'GitGR', function(query)
+          return string.format(
+            'git log --oneline --all --color=always -G %s',
+            query
+          )
+        end)
+      end
+
+      ---Find commits with messages matching a live query
+      ---@diagnostic disable-next-line: inject-field
+      function fzf.git_gm(opts)
+        return live_git_search(opts, fzf.git_gm, 'GitGM', function(query)
+          return string.format(
+            'git log --oneline --branches --color=always --extended-regexp --grep %s',
+            query
+          )
+        end)
       end
 
       -- Fallback to dotfiles bare repo if not inside a normal git repository
@@ -698,6 +889,9 @@ return {
       fzf.git_branches = with_dotfiles_fallback(fzf.git_branches)
       fzf.git_blame = with_dotfiles_fallback(fzf.git_blame)
       fzf.git_files = with_dotfiles_fallback(fzf.git_files)
+      fzf.git_ff = with_dotfiles_fallback(fzf.git_ff)
+      fzf.git_gr = with_dotfiles_fallback(fzf.git_gr)
+      fzf.git_gm = with_dotfiles_fallback(fzf.git_gm)
 
       ---Search symbols, fallback to treesitter nodes if no language server
       ---supporting symbol method is attached
@@ -1333,6 +1527,9 @@ return {
       vim.keymap.set('n', '<Leader>fgb', fzf.git_branches, { desc = 'Find git branches' })
       vim.keymap.set('n', '<Leader>fgB', fzf.git_blame, { desc = 'Find git blame' })
       vim.keymap.set('n', '<Leader>fgf', fzf.git_files, { desc = 'Find git files' })
+      vim.keymap.set('n', '<Leader>fgF', fzf.git_ff, { desc = 'Find git commits containing file' })
+      vim.keymap.set('n', '<Leader>fgr', fzf.git_gr, { desc = 'Grep git commit changes' })
+      vim.keymap.set('n', '<Leader>fgm', fzf.git_gm, { desc = 'Grep git commit messages' })
       vim.keymap.set('n', '<Leader>gft', fzf.git_tags, { desc = 'Find git tags' })
       vim.keymap.set('n', '<Leader>gfs', fzf.git_stash, { desc = 'Find git stash' })
       vim.keymap.set('n', '<Leader>gfg', fzf.git_status, { desc = 'Find git status' })
@@ -1341,6 +1538,9 @@ return {
       vim.keymap.set('n', '<Leader>gfb', fzf.git_branches, { desc = 'Find git branches' })
       vim.keymap.set('n', '<Leader>gfB', fzf.git_blame, { desc = 'Find git blame' })
       vim.keymap.set('n', '<Leader>gff', fzf.git_files, { desc = 'Find git files' })
+      vim.keymap.set('n', '<Leader>gfF', fzf.git_ff, { desc = 'Find git commits containing file' })
+      vim.keymap.set('n', '<Leader>gfr', fzf.git_gr, { desc = 'Grep git commit changes' })
+      vim.keymap.set('n', '<Leader>gfm', fzf.git_gm, { desc = 'Grep git commit messages' })
       vim.keymap.set('n', '<Leader>fh', fzf.help_tags, { desc = 'Find help tags' })
       vim.keymap.set('n', '<Leader>fk', fzf.keymaps, { desc = 'Find keymaps' })
       vim.keymap.set('n', '<Leader>f-', fzf.blines, { desc = 'Find lines in buffer' })
