@@ -135,8 +135,37 @@
 	; Find a file or directory across all git commits
 	; To match files in sub-directories, use '**', e.g. '**/init.lua'
 	ff   = log --oneline --all --follow
-	; Find text across all git commits
-	gr   = log --oneline --all -S
+	; Grep text across all git commits, support path filtering
+	; Usage: git gr <text> [path ...]
+	gr   = "!fn() { \
+		pattern=$1; \
+		shift; \
+		git log --all -p --color=always -S\"$pattern\" --format='@@@ %h %s' -- \"$@\" | \
+			GIT_GR_PATTERN=\"$pattern\" awk ' \
+				BEGIN { pattern = ENVIRON[\"GIT_GR_PATTERN\"] } \
+				/^@@@ / { header = substr($0, 5); shown = 0; next } \
+				{ plain = $0; gsub(/\\033\\[[0-9;]*m/, \"\", plain) } \
+				plain ~ /^diff --git / { old_file = \"\"; file = \"\"; file_shown = 0; next } \
+				plain ~ /^--- / { \
+					old_file = substr(plain, 5); \
+					sub(/^a\\//, \"\", old_file); \
+					next \
+				} \
+				plain ~ /^\\+\\+\\+ / { \
+					file = substr(plain, 5); \
+					sub(/^b\\//, \"\", file); \
+					if (file == \"/dev/null\") { file = old_file } \
+					next \
+				} \
+				(substr(plain, 1, 1) == \"+\" || substr(plain, 1, 1) == \"-\") && \
+					substr(plain, 1, 3) != \"+++\" && \
+					substr(plain, 1, 3) != \"---\" && \
+					index(plain, pattern) { \
+						if (!shown) { print header; shown = 1 } \
+						if (!file_shown) { print file \":\"; file_shown = 1 } \
+						print \
+					}'; \
+	}; fn"
 [merge]
 	tool = vimdiff
 [mergetool]
