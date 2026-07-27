@@ -200,7 +200,7 @@ return {
       end
 
       ---@class my.fzf: fzf-lua
-      ---@field git_ff fun(opts?: fzf-lua.config.GitCommits)
+      ---@field git_ff fun(opts?: my.fzf.git_search_opts)
       ---@field git_gr fun(opts?: my.fzf.git_search_opts)
       ---@field git_gm fun(opts?: my.fzf.git_search_opts)
       ---@type my.fzf
@@ -612,17 +612,18 @@ return {
         actions.fugitive_edit(selected)
       end
 
-      ---@class my.fzf.git_search_opts: fzf-lua.config.GitCommits
+      ---@class (partial) my.fzf.git_search_opts: fzf-lua.config.GitCommits
       ---@field search? string
       ---@field __resume_key? function
 
       ---@class my.fzf.git_search_resolved_opts: fzf-lua.config.Resolved
       ---@field search? string
+      ---@field search_mode? string
       ---@field __ACT_TO? fun(opts: my.fzf.git_search_opts)
 
-      ---Toggle a Git search between regex and fuzzy modes
+      ---Toggle a Git search between source-query and fuzzy modes
       ---@param _ string[]
-      ---@param opts my.fzf.git_search_opts
+      ---@param opts my.fzf.git_search_resolved_opts
       function actions.toggle_git_search_mode(_, opts)
         opts.__ACT_TO({
           resume = true,
@@ -643,7 +644,8 @@ return {
       }
       core.ACTION_DEFINITIONS[actions.toggle_git_search_mode] = {
         function(opts)
-          return opts.is_live and 'Fuzzy Search' or 'Regex Search'
+          return opts.is_live and 'Fuzzy Search'
+            or string.format('%s Search', opts.search_mode or 'Source')
         end,
       }
       core.ACTION_DEFINITIONS[actions.change_cwd] = { 'Change cwd', pos = 1 }
@@ -683,7 +685,7 @@ return {
       config._action_to_helpstr[actions.fugitive_vsplit] = 'fugitive-vsplit'
       config._action_to_helpstr[actions.fugitive_tabedit] = 'fugitive-tabedit'
       config._action_to_helpstr[actions.toggle_git_search_mode] =
-        'regex<->fuzzy'
+        'git-source-query<->fuzzy'
 
       -- Use different prompts for document and workspace diagnostics
       -- by overriding `fzf.diagnostics_workspace()` and `fzf.diagnostics_document()`
@@ -730,30 +732,12 @@ return {
         end
       end
 
-      ---Find commits containing a file matching a pathspec
-      ---@param opts fzf-lua.config.GitCommits?
-      ---@diagnostic disable-next-line: inject-field
-      function fzf.git_ff(opts)
-        vim.ui.input({ prompt = 'Git file pathspec: ' }, function(pathspec)
-          if not pathspec or pathspec == '' then
-            return
-          end
-          pathspec = vim.fn.shellescape(pathspec)
-          fzf.git_commits(
-            vim.tbl_deep_extend('force', vim.deepcopy(opts or {}), {
-              cmd = 'git ff --no-patch --color=always -- ' .. pathspec,
-              preview = 'git show --color {1} -- ' .. pathspec,
-              prompt = 'GitFF> ',
-            })
-          )
-        end)
-      end
-
       ---Normalize Git search options
       ---@param opts my.fzf.git_search_opts
       ---@param cb fun(opts?: my.fzf.git_search_opts)
+      ---@param preview? string|fun(opts: my.fzf.git_search_resolved_opts): string
       ---@return my.fzf.git_search_resolved_opts?
-      local function normalize_git_search_opts(opts, cb)
+      local function normalize_git_search_opts(opts, cb, preview)
         opts.__resume_key = cb
         opts = config.normalize_opts(opts, 'git.commits')
         if not opts then
@@ -768,6 +752,12 @@ return {
         end
         if not opts.cwd then
           return
+        end
+        if type(preview) == 'function' then
+          preview = preview(opts)
+        end
+        if preview then
+          opts.preview = preview
         end
 
         -- Adapted from fzf-lua's `git_preview()` helper to
@@ -797,17 +787,33 @@ return {
         return opts
       end
 
-      ---Open a fuzzy Git commit search over the last regex result set
+      ---Open a fuzzy Git commit search over the last source-query result set
       ---@param opts my.fzf.git_search_opts
       ---@param cb fun(opts?: my.fzf.git_search_opts)
       ---@param name string
+      ---@param search_mode string
       ---@param get_cmd fun(query: string): string
-      local function fuzzy_git_search(opts, cb, name, get_cmd)
-        local resolved_opts = normalize_git_search_opts(opts, cb)
+      ---@param get_preview? fun(query: string): string
+      local function fuzzy_git_search(
+        opts,
+        cb,
+        name,
+        search_mode,
+        get_cmd,
+        get_preview
+      )
+        local preview = get_preview
+          and function(resolved_opts)
+            return get_preview(
+              fzf_libuv.shellescape(resolved_opts.search or '')
+            )
+          end
+        local resolved_opts = normalize_git_search_opts(opts, cb, preview)
         if not resolved_opts then
           return
         end
         resolved_opts.__ACT_TO = cb
+        resolved_opts.search_mode = search_mode
         resolved_opts.prompt = string.format('%s [fuzzy]> ', name)
 
         local query = fzf_libuv.shellescape(resolved_opts.search or '')
@@ -816,22 +822,41 @@ return {
         return core.fzf_exec(cmd, resolved_opts)
       end
 
-      ---Open a live regex Git commit search
+      ---Open a live Git commit search
       ---@param opts my.fzf.git_search_opts
       ---@param cb fun(opts?: my.fzf.git_search_opts)
       ---@param name string
+      ---@param search_mode string
       ---@param get_cmd fun(query: string): string
-      local function live_git_search(opts, cb, name, get_cmd)
-        local resolved_opts = normalize_git_search_opts(opts, cb)
+      ---@param get_preview? fun(query: string): string
+      local function live_git_search(
+        opts,
+        cb,
+        name,
+        search_mode,
+        get_cmd,
+        get_preview
+      )
+        local preview = get_preview and get_preview('{q}')
+        local resolved_opts = normalize_git_search_opts(opts, cb, preview)
         if not resolved_opts then
           return
         end
         resolved_opts.__ACT_TO = function(call_opts)
-          return fuzzy_git_search(call_opts, cb, name, get_cmd)
+          return fuzzy_git_search(
+            call_opts,
+            cb,
+            name,
+            search_mode,
+            get_cmd,
+            get_preview
+          )
         end
-        resolved_opts.prompt = string.format('%s [regex]> ', name)
+        resolved_opts.search_mode = search_mode
+        resolved_opts.prompt =
+          string.format('%s [%s]> ', name, search_mode:lower())
 
-        -- A live query is the regex used to produce the result set, whereas
+        -- A live query is the source query used to produce the result set, whereas
         -- a normal query fuzzy-filters an existing result set.
         resolved_opts.__resume_set = function(what, value, picker_opts)
           if what == 'query' then
@@ -860,26 +885,61 @@ return {
         return core.fzf_live(cmd, resolved_opts)
       end
 
+      ---Find commits containing a file matching a live pathspec glob
+      ---@diagnostic disable-next-line: inject-field
+      function fzf.git_ff(opts)
+        local function pathspec(query)
+          return string.format("'*'%s'*'", query)
+        end
+        return live_git_search(
+          opts,
+          fzf.git_ff,
+          'GitFF',
+          'Glob',
+          function(query)
+            return string.format(
+              'git ff --no-patch --color=always -- %s',
+              pathspec(query)
+            )
+          end,
+          function(query)
+            return string.format('git show --color {1} -- %s', pathspec(query))
+          end
+        )
+      end
+
       ---Find commits containing changed lines matching a live query
       ---@diagnostic disable-next-line: inject-field
       function fzf.git_gr(opts)
-        return live_git_search(opts, fzf.git_gr, 'GitGR', function(query)
-          return string.format(
-            'git log --oneline --all --color=always -G %s',
-            query
-          )
-        end)
+        return live_git_search(
+          opts,
+          fzf.git_gr,
+          'GitGR',
+          'Regex',
+          function(query)
+            return string.format(
+              'git log --oneline --all --color=always -G %s',
+              query
+            )
+          end
+        )
       end
 
       ---Find commits with messages matching a live query
       ---@diagnostic disable-next-line: inject-field
       function fzf.git_gm(opts)
-        return live_git_search(opts, fzf.git_gm, 'GitGM', function(query)
-          return string.format(
-            'git log --oneline --branches --color=always --extended-regexp --grep %s',
-            query
-          )
-        end)
+        return live_git_search(
+          opts,
+          fzf.git_gm,
+          'GitGM',
+          'Regex',
+          function(query)
+            return string.format(
+              'git log --oneline --branches --color=always --extended-regexp --grep %s',
+              query
+            )
+          end
+        )
       end
 
       -- Fallback to dotfiles bare repo if not inside a normal git repository
