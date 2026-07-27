@@ -135,12 +135,12 @@
 	; Find a file or directory across all git commits
 	; To match files in sub-directories, use '**', e.g. '**/init.lua'
 	ff   = log --oneline --stat --all --follow
-	; Grep text across all git commits, support path filtering
-	; Usage: git gr <text> [path ...]
+	; Grep regex across all git commits, support path filtering
+	; Usage: git gr <regex> [path ...]
 	gr   = "!fn() { \
 		pattern=$1; \
 		shift; \
-		git log --all -p --color=always -S\"$pattern\" --format='@@@ %h %s' -- \"$@\" | \
+		git log --all -p --color=always -G\"$pattern\" --format='@@@ %h %s' -- \"$@\" | \
 			GIT_GR_PATTERN=\"$pattern\" awk ' \
 				BEGIN { pattern = ENVIRON[\"GIT_GR_PATTERN\"] } \
 				/^@@@ / { header = substr($0, 5); shown = 0; next } \
@@ -160,7 +160,7 @@
 				(substr(plain, 1, 1) == \"+\" || substr(plain, 1, 1) == \"-\") && \
 					substr(plain, 1, 3) != \"+++\" && \
 					substr(plain, 1, 3) != \"---\" && \
-					index(plain, pattern) { \
+					substr(plain, 2) ~ pattern { \
 						if (!shown) { print header; shown = 1 } \
 						if (!file_shown) { print file \":\"; file_shown = 1 } \
 						print \
