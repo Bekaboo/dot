@@ -199,6 +199,12 @@ return {
         return
       end
 
+      ---@class my.fzf: fzf-lua
+      ---@field git_ff fun(opts?: fzf-lua.config.GitCommits)
+      ---@field git_gr fun(opts?: my.fzf.git_search_opts)
+      ---@field git_gm fun(opts?: my.fzf.git_search_opts)
+      ---@type my.fzf
+      ---@diagnostic disable-next-line: assign-type-mismatch
       local fzf = require('fzf-lua')
       local actions = require('fzf-lua.actions')
       local core = require('fzf-lua.core')
@@ -582,7 +588,8 @@ return {
           return
         end
         vim.cmd.split()
-        actions.fugitive_edit(selected, {})
+        ---@diagnostic disable-next-line: missing-parameter
+        actions.fugitive_edit(selected)
       end
 
       ---Edit a git commit object in vertical split with vim-fugitive
@@ -591,7 +598,8 @@ return {
           return
         end
         vim.cmd.vsplit()
-        actions.fugitive_edit(selected, {})
+        ---@diagnostic disable-next-line: missing-parameter
+        actions.fugitive_edit(selected)
       end
 
       ---Edit a git commit object in vertical split with vim-fugitive
@@ -600,7 +608,8 @@ return {
           return
         end
         vim.cmd.tabnew()
-        actions.fugitive_edit(selected, {})
+        ---@diagnostic disable-next-line: missing-parameter
+        actions.fugitive_edit(selected)
       end
 
       ---@class my.fzf.git_search_opts: fzf-lua.config.GitCommits
@@ -1006,7 +1015,7 @@ return {
 
         -- Register action descriptions
         actions.load_session = action(function(p)
-          session.load(p, true)
+          session.load(p)
         end)
         core.ACTION_DEFINITIONS[actions.load_session] = { 'load session' }
         config._action_to_helpstr[actions.load_session] = 'load-session'
