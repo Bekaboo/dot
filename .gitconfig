@@ -15,6 +15,7 @@
 	bf   = branch --force
 	bdf  = branch -d --force
 	bdr  = push -d
+	bc   = branch --contains
 	bl   = branch -v
 	bla  = branch -v --all
 	bu   = branch -u
