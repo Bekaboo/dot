@@ -86,22 +86,23 @@ return {
         command! -bang -nargs=? -range=-1 -complete=customlist,fugitive#LogComplete GlLog let g:fugitive_prevbuf=bufnr() | exe fugitive#LogCommand(<line1>,<count>,+"<range>",<bang>0,"<mods>",<q-args>, "l")
       ]])
 
-      ---Open Gitgr output in a scratch buffer
+      ---Open Git command output in a scratch buffer
       ---@param result table
       ---@param win integer
       ---@param mods vim.api.keyset.cmd_mods
-      local function open_git_gr_output(result, win, mods)
+      ---@param command string
+      local function open_git_output(result, win, mods, command)
         if result.exit_status ~= 0 then
           local message = table.concat(result.stderr or {}, '\n')
           vim.notify(
-            '[vim-fugitive] Gitgr failed: ' .. message,
+            ('[vim-fugitive] %s failed: %s'):format(command, message),
             vim.log.levels.ERROR
           )
           return
         end
 
         local buf = vim.api.nvim_create_buf(false, true)
-        vim.api.nvim_buf_set_name(buf, 'Gitgr://' .. buf)
+        vim.api.nvim_buf_set_name(buf, ('%s://%d'):format(command, buf))
         vim.api.nvim_buf_set_lines(buf, 0, -1, false, result.stdout or {})
         vim.api.nvim_buf_call(buf, function()
           vim.bo.buftype = 'nowrite'
@@ -152,7 +153,7 @@ return {
           },
           source_buf,
           vim.schedule_wrap(function(result)
-            open_git_gr_output(result, win, args.smods)
+            open_git_output(result, win, args.smods, 'Gitgr')
           end)
         )
       end
@@ -163,6 +164,43 @@ return {
       })
       vim.api.nvim_create_user_command('Ggr', git_gr_cmd, {
         desc = 'Alias for Gitgr',
+        range = true,
+      })
+
+      ---Show the line log for the selected range in the current file
+      ---@param args vim.api.keyset.create_user_command.command_args
+      local function git_ll_cmd(args)
+        local source_buf = vim.api.nvim_get_current_buf()
+        local path = vim.fn.FugitivePath(
+          vim.api.nvim_buf_get_name(source_buf),
+          '',
+          source_buf
+        )
+        if path == '' then
+          vim.notify(
+            '[vim-fugitive] current buffer is not a file in a Git repository',
+            vim.log.levels.WARN
+          )
+          return
+        end
+
+        local line_range = ('%d,%d:%s'):format(args.line1, args.line2, path)
+        local win = vim.api.nvim_get_current_win()
+        vim.fn.FugitiveExecute(
+          { 'll', line_range },
+          source_buf,
+          vim.schedule_wrap(function(result)
+            open_git_output(result, win, args.smods, 'Gll')
+          end)
+        )
+      end
+
+      vim.api.nvim_create_user_command('Gitll', git_ll_cmd, {
+        desc = 'Show line log for selected range',
+        range = true,
+      })
+      vim.api.nvim_create_user_command('Gll', git_ll_cmd, {
+        desc = 'Alias for Gitll',
         range = true,
       })
 
