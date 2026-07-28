@@ -149,6 +149,10 @@ function Foo:detect() -- luacheck: no unused args
 
 Use LuaLS annotations on all module tables and functions:
 
+Always prefer the most precise available type. Use generated API types,
+including nested field types, instead of broad types such as `table` or `any`
+when an accurate type is available.
+
 ```lua
 ---@class my.utils.fs
 local M = {}
