@@ -170,7 +170,7 @@ return {
       vim.keymap.set('n', '<Leader>gg',       '<Cmd>Git<CR>',                                  { desc = 'Git summary' })
       vim.keymap.set('n', '<Leader>gd',       '<Cmd>Gdiff<CR>',                                { desc = 'Git diff current file' })
       vim.keymap.set('n', '<Leader>gw',       '<Cmd>Git show<CR>',                             { desc = 'Git show latest commit' })
-      vim.keymap.set('n', '<Leader>gb',       '<Cmd>Git branch -v<CR>',                        { desc = 'Git list local branches' })
+      vim.keymap.set('n', '<Leader>gb',       '<Cmd>Git branch<CR>',                           { desc = 'Git list local branches' })
       vim.keymap.set('n', '<Leader>gc',       '<Cmd>Git commit<CR>',                           { desc = 'Git commit' })
       vim.keymap.set('n', '<Leader>gP',       '<Cmd>Git push<CR>',                             { desc = 'Git push' })
       vim.keymap.set('n', '<Leader>gD',       '<Cmd>Git diff<CR>',                             { desc = 'Git diff entire repo' })
