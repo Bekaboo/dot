@@ -86,6 +86,86 @@ return {
         command! -bang -nargs=? -range=-1 -complete=customlist,fugitive#LogComplete GlLog let g:fugitive_prevbuf=bufnr() | exe fugitive#LogCommand(<line1>,<count>,+"<range>",<bang>0,"<mods>",<q-args>, "l")
       ]])
 
+      ---Open Gitgr output in a scratch buffer
+      ---@param result table
+      ---@param win integer
+      ---@param mods vim.api.keyset.cmd_mods
+      local function open_git_gr_output(result, win, mods)
+        if result.exit_status ~= 0 then
+          local message = table.concat(result.stderr or {}, '\n')
+          vim.notify(
+            '[vim-fugitive] Gitgr failed: ' .. message,
+            vim.log.levels.ERROR
+          )
+          return
+        end
+
+        local buf = vim.api.nvim_create_buf(false, true)
+        vim.api.nvim_buf_set_name(buf, 'Gitgr://' .. buf)
+        vim.api.nvim_buf_set_lines(buf, 0, -1, false, result.stdout or {})
+        vim.api.nvim_buf_call(buf, function()
+          vim.bo.buftype = 'nowrite'
+          vim.bo.filetype = 'git'
+          vim.bo.modifiable = false
+          vim.bo.readonly = true
+          vim.b.git_dir = result.git_dir
+        end)
+
+        require('my.utils.win').open_with_mods(buf, mods, win)
+      end
+
+      ---Command callback to search for a selected literal block across all Git
+      ---commits
+      ---@param args vim.api.keyset.create_user_command.command_args
+      local function git_gr_cmd(args)
+        local lines =
+          vim.api.nvim_buf_get_lines(0, args.line1 - 1, args.line2, false)
+        local has_nonempty_line = false
+
+        for _, line in ipairs(lines) do
+          if line ~= '' then
+            has_nonempty_line = true
+            break
+          end
+        end
+
+        if not has_nonempty_line then
+          vim.notify(
+            '[vim-fugutive] no non-empty lines to grep',
+            vim.log.levels.WARN
+          )
+          return
+        end
+
+        local pattern = table.concat(lines, '\n')
+        local source_buf = vim.api.nvim_get_current_buf()
+        local win = vim.api.nvim_get_current_win()
+        vim.fn.FugitiveExecute(
+          {
+            'log',
+            '--all',
+            '-p',
+            '--color=never',
+            '-S' .. pattern,
+            '--format=@@@ %h %s',
+            '--',
+          },
+          source_buf,
+          vim.schedule_wrap(function(result)
+            open_git_gr_output(result, win, args.smods)
+          end)
+        )
+      end
+
+      vim.api.nvim_create_user_command('Gitgr', git_gr_cmd, {
+        desc = 'Search selected literal block across all Git commits',
+        range = true,
+      })
+      vim.api.nvim_create_user_command('Ggr', git_gr_cmd, {
+        desc = 'Alias for Gitgr',
+        range = true,
+      })
+
       -- stylua: ignore start
       vim.keymap.set('n', '<Leader>gg',       '<Cmd>Git<CR>',                                  { desc = 'Git summary' })
       vim.keymap.set('n', '<Leader>gd',       '<Cmd>Gdiff<CR>',                                { desc = 'Git diff current file' })
