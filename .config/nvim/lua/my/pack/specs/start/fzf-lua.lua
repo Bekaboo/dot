@@ -885,9 +885,58 @@ return {
         return core.fzf_live(cmd, resolved_opts)
       end
 
+      ---Enable NUL-delimited multiline records for a Git search
+      ---@param opts? my.fzf.git_search_opts
+      ---@return my.fzf.git_search_opts
+      local function multiline_git_search_opts(opts)
+        return vim.tbl_deep_extend(
+          'force',
+          opts or {} --[[@as my.fzf.git_search_opts]],
+          { multiline = 2, _multiline = true }
+        )
+      end
+
+      local git_ff_awk = fzf_libuv.shellescape([[
+        function flush_record() {
+          if (record != "") printf "%s%c", record, 0
+        }
+        /^@@@ / {
+          flush_record()
+          record = substr($0, 5)
+          next
+        }
+        / \| / {
+          record = record "\n  " $0
+        }
+        END {
+          flush_record()
+        }
+      ]])
+
+      local git_gr_awk = fzf_libuv.shellescape([[
+        function flush_record() {
+          if (record != "") printf "%s%c", record, 0
+        }
+        /^[0-9a-f]+ / {
+          flush_record()
+          record = $0
+          next
+        }
+        NF {
+          record = record "\n  " $0
+        }
+        END {
+          flush_record()
+        }
+      ]])
+
       ---Find commits containing a file matching a live pathspec glob
       ---@diagnostic disable-next-line: inject-field
       function fzf.git_ff(opts)
+        opts = multiline_git_search_opts(opts)
+        ---Wrap a query in wildcards to form a Git pathspec
+        ---@param query string
+        ---@return string
         local function pathspec(query)
           return string.format("'*'%s'*'", query)
         end
@@ -898,8 +947,10 @@ return {
           'Glob',
           function(query)
             return string.format(
-              'git ff --no-patch --color=always -- %s',
-              pathspec(query)
+              'git ff --color=always --format=%s -- %s | awk %s',
+              fzf_libuv.shellescape('@@@ %h %s'),
+              pathspec(query),
+              git_ff_awk
             )
           end,
           function(query)
@@ -911,16 +962,14 @@ return {
       ---Find commits containing changed lines matching a live query
       ---@diagnostic disable-next-line: inject-field
       function fzf.git_gr(opts)
+        opts = multiline_git_search_opts(opts)
         return live_git_search(
           opts,
           fzf.git_gr,
           'GitGR',
           'Regex',
           function(query)
-            return string.format(
-              'git log --oneline --all --color=always -G %s',
-              query
-            )
+            return string.format('git gr %s | awk %s', query, git_gr_awk)
           end
         )
       end
