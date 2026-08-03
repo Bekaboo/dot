@@ -22,7 +22,7 @@
       "src": "https://github.com/shumphrey/fugitive-gitlab.vim"
     },
     "fzf-lua": {
-      "rev": "532d463f5c83595192fe740572d8fd6902b2217a",
+      "rev": "28440c741e927592877514fba3db21eb188caec8",
       "src": "https://github.com/ibhagwan/fzf-lua"
     },
     "gitsigns.nvim": {
@@ -70,7 +70,7 @@
       "src": "https://github.com/kylechui/nvim-surround"
     },
     "nvim-treesitter": {
-      "rev": "7248feaca45e4d944591497964bc19afa89ad1c6",
+      "rev": "7b6cc8949f9999c5ed91436cbe24aa5f99c42025",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter",
       "version": "'main'"
     },
@@ -88,7 +88,7 @@
       "version": "'main'"
     },
     "nvim-web-devicons": {
-      "rev": "0ca28b61a04fe7426cefbdd52c2647ef0e335b5f",
+      "rev": "2ae6958df7ced50baac5035cec0c15799eedfbf7",
       "src": "https://github.com/kyazdani42/nvim-web-devicons"
     },
     "oil.nvim": {
@@ -104,7 +104,7 @@
       "src": "https://github.com/navarasu/onedark.nvim"
     },
     "opencode.nvim": {
-      "rev": "c8dc57b5606d6acac2891b139ec434c2a3d9382d",
+      "rev": "cdf00c5f4ac8161d3ec66bfcb8af140b30b42c6a",
       "src": "https://github.com/sudo-tee/opencode.nvim"
     },
     "otter.nvim": {
@@ -168,7 +168,7 @@
       "src": "https://github.com/vim-test/vim-test"
     },
     "vimtex": {
-      "rev": "6368e31fdaf766ff908a2c06e9ee14fc66dec409",
+      "rev": "853eb587873a7061a083655578be56dd8027b834",
       "src": "https://github.com/lervag/vimtex"
     },
     "which-key.nvim": {
