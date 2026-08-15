@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dotfile Management"
+  short_description: "Manage bare-repo dotfiles safely"
+  default_prompt: "Use $dotfile-management to inspect and manage these dotfiles with the bare Git repository."
