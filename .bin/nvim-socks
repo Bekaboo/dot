@@ -4,9 +4,14 @@
 RUN_DIR=$(dirname "$(nvim --clean --headless +"lua io.write(vim.fn.stdpath('run'))" +qa!)")
 APPNAME=${NVIM_APPNAME:-nvim}
 
-fd_cmd=$(command -v fd >/dev/null 2>&1 && echo fd || echo fdfind)
-if command -v "$fd_cmd" >/dev/null 2>&1; then
-    "$fd_cmd" -a --base-directory "$RUN_DIR" -t s -g "$APPNAME.*.0"
-else
-    find "$RUN_DIR" -type s -name "$APPNAME.*.0"
-fi
+# Nvim can leave unused sockets on system.
+# Only return sockets that still have an owning process using lsof so callers
+# do not fan out to stale paths.
+lsof -Fn -U 2>/dev/null |
+    sed -n 's/^n//p' |
+    grep -E "/$APPNAME\.[0-9]+\.0$" |
+    while IFS= read -r sock; do
+        case "$sock" in
+        "$RUN_DIR"/*) printf '%s\n' "$sock" ;;
+        esac
+    done
