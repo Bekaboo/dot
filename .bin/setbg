@@ -138,12 +138,13 @@ setbg_nvim() {
         # the command string "f &bg ..." to the buffer, see:
         # https://github.com/neovim/neovim/issues/31238
         #
-        # A live nvim process can stop servicing RPC requests. Use timeout 1
-        # and kill the nvim client if it does not exit within the threshold.
-        timeout 1 nvim --clean --headless --server "$sock" \
-            --remote-expr "execute(\"if &bg !=# '$1' && &tgc \
+        # Enqueue the update so colorscheme redraw does not delay the RPC
+        # response. Keep a short timeout because a live nvim process can stop
+        # servicing RPC requests.
+        timeout 2 nvim --clean --headless --server "$sock" \
+            --remote-expr "timer_start(0, { _ -> execute(\"if &bg !=# '$1' && &tgc \
                 | let g:script_set_bg=1 | set bg=$1 | unlet g:script_set_bg \
-                | endif\")" \
+                | endif\") })" \
             +qa! >/dev/null 2>&1 &
 
         nvim_clients="$nvim_clients $!"
