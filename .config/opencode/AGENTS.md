@@ -17,3 +17,5 @@
 
 - Do not use `else` or `elseif` after a branch that unconditionally returns. Use a separate `if` instead.
 - Prefer early returns over lengthy `if`-`else` structures.
+- Keep imports/includes at the top of the file. Avoid lazy, inline, or conditional imports unless they are genuinely required.
+- Keep error handling simple. Do not add unnecessary `try`-`catch` blocks, fallback logic, or defensive recovery for unexpected states; just let crash if unexpected error occurs.
