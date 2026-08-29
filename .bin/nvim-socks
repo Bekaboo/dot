@@ -9,6 +9,7 @@ APPNAME=${NVIM_APPNAME:-nvim}
 # do not fan out to stale paths.
 lsof -Fn -U 2>/dev/null |
     sed -n 's/^n//p' |
+    sed 's/ type=[A-Z]*$//' |
     grep -E "/$APPNAME\.[0-9]+\.0$" |
     while IFS= read -r sock; do
         case "$sock" in
