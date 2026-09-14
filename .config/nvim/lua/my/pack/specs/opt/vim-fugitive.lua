@@ -86,6 +86,57 @@ return {
         command! -bang -nargs=? -range=-1 -complete=customlist,fugitive#LogComplete GlLog let g:fugitive_prevbuf=bufnr() | exe fugitive#LogCommand(<line1>,<count>,+"<range>",<bang>0,"<mods>",<q-args>, "l")
       ]])
 
+      -- Make `:GBrowse!` copy the link to the exact commit instead of link to
+      -- the git branch in `:Git show` buffers
+      vim.api.nvim_create_user_command('GBrowse', function(a)
+        local obj = a.args
+        if obj == '' then
+          local result = vim.fn.FugitiveResult(vim.api.nvim_get_current_buf())
+          if type(result.args) == 'table' and result.args[1] == 'show' then
+            local rev
+            for i = 2, #result.args do
+              if result.args[i]:sub(1, 1) ~= '-' then
+                rev = result.args[i]
+                break
+              end
+            end
+            obj = vim.fn.FugitiveExecute({
+              'rev-parse',
+              '--verify',
+              '--quiet',
+              ('%s^{commit}'):format(rev or 'HEAD'),
+              '--',
+            }, result.git_dir).stdout[1] or ''
+          end
+        end
+        local ret = vim.fn['fugitive#BrowseCommand'](
+          a.line1,
+          a.count,
+          a.range,
+          a.bang and 1 or 0,
+          a.mods,
+          obj
+        )
+        if type(ret) ~= 'string' or ret == '' then
+          return
+        end
+        -- `fugitive#BrowseCommand()` returns an ex command to execute;
+        -- echo `echoerr` messages cleanly instead of raising a Lua error
+        local err = ret:match('^echoerr%s+(.+)$')
+        if err then
+          vim.api.nvim_echo({ { vim.fn.eval(err), 'ErrorMsg' } }, true, {})
+          return
+        end
+        vim.cmd(ret)
+      end, {
+        bang = true,
+        bar = true,
+        range = -1,
+        nargs = '*',
+        complete = 'customlist,fugitive#CompleteObject',
+        desc = 'Browse the current file, blob, tree, commit, or tag on the remote',
+      })
+
       ---Open Git command output in a scratch buffer
       ---@param result table
       ---@param win integer
