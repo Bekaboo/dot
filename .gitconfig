@@ -70,7 +70,7 @@
 	ama  = am --abort
 	amc  = am --continue
 	p    = push
-	pf   = push --force
+	pf   = push --force-with-lease
 	pu   = push -u
 	puf  = push -u --force
 	pfu  = push -u --force
