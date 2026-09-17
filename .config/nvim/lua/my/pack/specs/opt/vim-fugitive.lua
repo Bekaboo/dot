@@ -86,35 +86,56 @@ return {
         command! -bang -nargs=? -range=-1 -complete=customlist,fugitive#LogComplete GlLog let g:fugitive_prevbuf=bufnr() | exe fugitive#LogCommand(<line1>,<count>,+"<range>",<bang>0,"<mods>",<q-args>, "l")
       ]])
 
-      -- Make `:GBrowse!` copy the link to the exact commit instead of link to
-      -- the git branch in `:Git show` buffers
-      vim.api.nvim_create_user_command('GBrowse', function(a)
-        local obj = a.args
-        if obj == '' then
-          local result = vim.fn.FugitiveResult(vim.api.nvim_get_current_buf())
-          if type(result.args) == 'table' and result.args[1] == 'show' then
-            local rev
-            for i = 2, #result.args do
-              if result.args[i]:sub(1, 1) ~= '-' then
-                rev = result.args[i]
-                break
-              end
-            end
-            obj = vim.fn.FugitiveExecute({
-              'rev-parse',
-              '--verify',
-              '--quiet',
-              ('%s^{commit}'):format(rev or 'HEAD'),
-              '--',
-            }, result.git_dir).stdout[1] or ''
+      ---Resolve the commit of a git command output buffer, e.g.
+      ---Returns the full sha of `HEAD~1` for command `:Git show --stat HEAD~1`,
+      ---or the full sha of `HEAD` for `:Git log`, by reversely traversing
+      ---the args and try to resolve them to a git commit one-by-one.
+      ---@param fugitive_result table temp state returned by `FugitiveResult()`, which contains the git command that produced the given git temp buffer
+      ---@return string? commit full sha of the commit shown in the buffer
+      local function resolve_fugitive_result_commit(fugitive_result)
+        if type(fugitive_result.args) ~= 'table' then
+          return
+        end
+        -- Candidate args, `HEAD` as last resort
+        local args = { 'HEAD' }
+        for _, arg in ipairs(fugitive_result.args) do
+          if arg == '--' then
+            break
+          end
+          if not vim.startswith(arg, '-') then
+            table.insert(args, arg)
           end
         end
+        for arg in vim.iter(args):rev() do
+          local commit = vim.fn.FugitiveExecute({
+            'rev-parse',
+            '--verify',
+            '--quiet',
+            ('%s^{commit}'):format(arg),
+            '--',
+          }, fugitive_result.git_dir).stdout[1]
+          -- Failed `rev-parse` outputs nothing, i.e. `stdout` is `{''}`
+          if commit and commit ~= '' then
+            return commit
+          end
+        end
+      end
+
+      -- Make `:GBrowse!` copy the link to the exact commit instead of link
+      -- to the git branch in git command output buffers
+      vim.api.nvim_create_user_command('GBrowse', function(args)
+        local obj = args.args
+        if obj == '' then
+          obj = resolve_fugitive_result_commit(
+            vim.fn.FugitiveResult(vim.api.nvim_get_current_buf())
+          ) or ''
+        end
         local ret = vim.fn['fugitive#BrowseCommand'](
-          a.line1,
-          a.count,
-          a.range,
-          a.bang and 1 or 0,
-          a.mods,
+          args.line1,
+          args.count,
+          args.range,
+          args.bang and 1 or 0,
+          args.mods,
           obj
         )
         if type(ret) ~= 'string' or ret == '' then
@@ -347,6 +368,64 @@ return {
           vim.opt_local.number = false
           vim.opt_local.signcolumn = 'no'
           vim.opt_local.relativenumber = false
+        end,
+      })
+
+      -- Turn `:Git show [rev]` buffers into real fugitive object buffers so
+      -- that fugitive operations (`y<C-G>`, `:GBrowse`, etc.) work in them;
+      -- shim `y<C-G>` for other output buffers centered on a commit
+      vim.api.nvim_create_autocmd('FileType', {
+        pattern = 'git',
+        group = group,
+        -- Let the `edit` below trigger nested buffer read autocmds
+        nested = true,
+        callback = function(args)
+          local result = vim.fn.FugitiveResult(args.buf)
+          local commit = resolve_fugitive_result_commit(result)
+          if not commit then
+            return
+          end
+          local cmd_args = result.args
+          -- Only redirect plain `:Git show` and `:Git show <rev>` where the
+          -- shown object is a commit or a blob, whose object buffers show
+          -- the same content as the command output
+          if
+            cmd_args[1] == 'show'
+            and (
+              #cmd_args == 1
+              or (#cmd_args == 2 and cmd_args[2]:sub(1, 1) ~= '-')
+            )
+          then
+            local rev = #cmd_args == 2 and cmd_args[2] or 'HEAD'
+            local obj_type = vim.fn.FugitiveExecute({
+              'cat-file',
+              '-t',
+              rev,
+            }, result.git_dir).stdout[1]
+            if obj_type == 'commit' or obj_type == 'blob' then
+              -- Use the explicit fugitive URL instead of `:Gedit` since
+              -- the temp buffer's `b:git_dir` may not agree with
+              -- `result.git_dir`
+              vim.cmd.edit(
+                vim.fn.fnameescape(
+                  vim.fn['fugitive#Find'](rev, result.git_dir)
+                )
+              )
+              -- Delete the temp buffer after the FileType autocmds finish,
+              -- deleting it right away breaks other FileType autocmds
+              vim.schedule(function()
+                if vim.api.nvim_buf_is_valid(args.buf) then
+                  vim.api.nvim_buf_delete(args.buf, {})
+                end
+              end)
+              return
+            end
+          end
+          -- Other commit-centered buffers (e.g. `:Git show --stat`,
+          -- `:Git stash show`) have no object buffer equivalent
+          vim.keymap.set('n', 'y<C-G>', function()
+            vim.fn.setreg(vim.v.register, commit)
+          end, { buffer = args.buf, desc = 'Yank shown commit sha' })
         end,
       })
 
