@@ -13,3 +13,21 @@ function vim.b.should_join_line(line)
     and not line:match('^%s*[-*#]%s+')
     and not line:match('^%s*%d+%.%s+')
 end
+
+-- Map `[[`/`]]` in both normal & visual mode
+-- (default shipped `ftplugin/markdown.lua` only maps in normal node)
+vim.keymap.set({ 'n', 'x' }, ']]', function()
+  require('vim.treesitter._headings').jump({ count = 1 })
+end, {
+  buf = 0,
+  silent = false,
+  desc = 'Jump to next section',
+})
+
+vim.keymap.set({ 'n', 'x' }, '[[', function()
+  require('vim.treesitter._headings').jump({ count = -1 })
+end, {
+  buf = 0,
+  silent = false,
+  desc = 'Jump to previous section',
+})
