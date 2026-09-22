@@ -267,7 +267,14 @@ $INDENTcaption: [$LABEL$CURSOR],
         args = vim.tbl_extend('force', {}, args, {
           default = default_file_name(),
         })
-        return img_clip_input(args)
+
+        local img_name = img_clip_input(args)
+        -- User cancels pasting
+        if img_name == '' then
+          return nil
+        end
+
+        return img_name
       end
 
       ---@type table<string, any>
