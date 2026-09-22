@@ -23,7 +23,143 @@ return {
     end,
     postload = function()
       local img_clip = require('img-clip')
+      local img_clip_clipboard = require('img-clip.clipboard')
+      local img_clip_config = require('img-clip.config')
+      local img_clip_utils = require('img-clip.util')
       local utils = require('my.utils')
+
+      ---Parse the first local file URI from clipboard output
+      ---@param output string
+      ---@return string?
+      local function parse_file_uri(output)
+        for line in output:gmatch('[^\n]+') do
+          line = line:gsub('\r$', ''):gsub('%z+$', '')
+          if line:match('^file:///') then
+            local ok, path = pcall(vim.uri_to_fname, line)
+            if ok then
+              return path
+            end
+          end
+        end
+      end
+
+      ---Get a copied file path from the macOS clipboard
+      ---@return string?
+      local function macos_clipboard_path()
+        local result = vim
+          .system({
+            'osascript',
+            '-e',
+            'on run',
+            '-e',
+            'POSIX path of (the clipboard as \194\171class furl\194\187)',
+            '-e',
+            'end run',
+          }, { text = true })
+          :wait()
+
+        if result.code ~= 0 or not result.stdout then
+          return nil
+        end
+
+        return result.stdout:match('^([^\r\n]+)')
+      end
+
+      ---Get clipboard target types for a Linux clipboard command
+      ---@param command string
+      ---@return table<string, boolean>
+      local function linux_clipboard_types(command)
+        local args
+        if command == 'wl-paste' then
+          args = { 'wl-paste', '--list-types' }
+        else
+          args = { 'xclip', '-selection', 'clipboard', '-t', 'TARGETS', '-o' }
+        end
+
+        local types = {}
+        local result = vim.system(args, { text = true }):wait()
+        if result.code ~= 0 or not result.stdout then
+          return types
+        end
+
+        for target in result.stdout:gmatch('[^\r\n]+') do
+          types[target] = true
+        end
+        return types
+      end
+
+      ---Get a copied file path from a Linux clipboard
+      ---@param command string
+      ---@return string?
+      local function linux_clipboard_path(command)
+        local types = linux_clipboard_types(command)
+        for _, target in ipairs({
+          'x-special/gnome-copied-files',
+          'text/uri-list',
+        }) do
+          if types[target] then
+            local args
+            if command == 'wl-paste' then
+              args = { 'wl-paste', '--type', target }
+            else
+              args = {
+                'xclip',
+                '-selection',
+                'clipboard',
+                '-t',
+                target,
+                '-o',
+              }
+            end
+
+            local result = vim.system(args, { text = true }):wait()
+            if result.code == 0 and result.stdout then
+              local path = parse_file_uri(result.stdout)
+              if path then
+                return path
+              end
+            end
+          end
+        end
+      end
+
+      ---Get the original image name from a copied file
+      ---@return string?
+      local function clipboard_image_name()
+        local command = img_clip_clipboard.get_clip_cmd()
+        local path
+        if command == 'pngpaste' then
+          path = macos_clipboard_path()
+        elseif command == 'wl-paste' or command == 'xclip' then
+          path = linux_clipboard_path(command)
+        end
+
+        if not path or path:find('%c') then
+          return nil
+        end
+
+        local stat = vim.uv.fs_stat(path)
+        if
+          not stat
+          or stat.type ~= 'file'
+          or not img_clip_utils.is_image_path(path)
+        then
+          return nil
+        end
+
+        local name = vim.fn.fnamemodify(path, ':t:r')
+        if name == '' or name:find('%c') then
+          return nil
+        end
+
+        return name
+      end
+
+      ---Get the default name for a pasted image
+      ---@return string
+      local function default_file_name()
+        return clipboard_image_name() or os.date('%Y-%m-%d-%H-%M-%S') --[[@as string]]
+      end
 
       ---Get indentation string
       ---@return string
@@ -115,6 +251,24 @@ $INDENTcaption: [$LABEL$CURSOR],
           },
         },
       })
+
+      local img_clip_input = img_clip_utils.input
+
+      ---Hijack `img-clip.util.input()` to add the resolved image name to the
+      ---filename prompt
+      ---@param args table<string, any>
+      ---@return string?
+      ---@diagnostic disable-next-line: duplicate-set-field
+      img_clip_utils.input = function(args)
+        if args.prompt ~= 'File name: ' or args.default ~= nil then
+          return img_clip_input(args)
+        end
+
+        args = vim.tbl_extend('force', {}, args, {
+          default = default_file_name(),
+        })
+        return img_clip_input(args)
+      end
 
       ---@type table<string, any>
       local filetypes = require('img-clip.config').opts.filetypes
