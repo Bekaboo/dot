@@ -945,6 +945,31 @@ return {
               )
             end,
           },
+          ['gY'] = {
+            mode = 'n',
+            buffer = true,
+            desc = 'Yank the relative filepath (to project root) of the entry under the cursor to a register',
+            callback = function()
+              local entry = oil.get_cursor_entry()
+              local dir = oil.get_current_dir()
+              if not entry or not dir then
+                return
+              end
+              local entry_path = vim.fs.joinpath(dir, entry.name)
+              local root_path = require('my.utils.fs').root(entry_path)
+              entry_path = root_path and vim.fs.relpath(root_path, entry_path)
+                or entry_path
+              vim.fn.setreg('"', entry_path)
+              vim.fn.setreg(vim.v.register, entry_path)
+              vim.notify(
+                string.format(
+                  "[oil.nvim] yanked '%s' to register '%s'",
+                  entry_path,
+                  vim.v.register
+                )
+              )
+            end,
+          },
         },
         keymaps_help = {
           border = 'solid',
