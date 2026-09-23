@@ -25,6 +25,7 @@ Never modify a reference when the user asks for a new file. During edits, preser
 - Use one font family. Default to `11-12 pt` body, `10 pt` hints, `16-18 pt` section headings, and `22-24 pt` title.
 - Keep repeated semantic elements identical in font, color, stroke, size, and alignment unless a declared quantity controls size.
 - Align related rows and columns to shared anchors; use consistent gaps, row heights, and margins.
+- Arrange components so the main relationships can use straight horizontal or vertical connectors.
 - Keep group frames thin, close to their contents, and clear of neighboring groups.
 - Use color as a secondary cue; structure and labels must remain understandable without it.
 
@@ -44,7 +45,8 @@ Default accents: blue `#DCE8F5/#87A9C9/#294B6B`, sage `#E4EAD8/#A7B890/#435437`,
 - Produce native `.drawio` mxGraph XML, not Mermaid, CSV, or a flattened raster.
 - Include root cells `id="0"` and `id="1"`; place normal elements under `parent="1"` unless layers are intentional.
 - Give each `mxCell` a unique ID and each edge an `mxGeometry relative="1"` child with explicit arrow styling.
-- Use native connectors instead of text glyphs; keep edge labels separate and route connectors to reduce crossings.
+- Use native orthogonal connectors instead of text glyphs. Align connection points and move components before adding waypoints; when a turn is needed, use the fewest right-angle bends.
+- Keep connectors off unrelated shapes and labels. Separate parallel or opposing arrows, avoid crossings and long detours, and omit redundant connectors. Keep edge labels clear of lines and arrowheads.
 - Keep text editable, labels concise, and line styles semantically consistent.
 - Use native math rendering for equations rather than ASCII approximations.
 - Use icons sparingly; prefer editable vectors and verify licenses for external assets.
@@ -54,7 +56,7 @@ Default accents: blue `#DCE8F5/#87A9C9/#294B6B`, sage `#E4EAD8/#A7B890/#435437`,
 
 - Parse XML with `xmllint` or an equivalent parser; check root cells, unique IDs, edge geometry, and arrow usage.
 - Verify labels, symbols, units, relationship direction, quantitative encodings, and cross-view mappings.
-- Check repeated styles, alignment, spacing, crossings, clipping, and overlaps.
+- Inspect the exported figure at its intended size for unnecessary bends, crossings, overlapping arrows, obscured labels, clipping, and uneven spacing; adjust component placement and connector anchors until the relationships are easy to trace.
 - Export and inspect a preview when possible; if export fails, complete structural validation and report it only when preview delivery was requested.
 
 Deliver the editable `.drawio` file and briefly state material assumptions or validation limits.
