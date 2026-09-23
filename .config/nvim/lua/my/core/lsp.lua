@@ -6,11 +6,13 @@ vim.lsp.config('*', lsp.default_config)
 vim.lsp.start = lsp.start
 vim.lsp.buf.rename = lsp.rename
 
+local configs = {}
 for _, dir in ipairs(vim.api.nvim__get_runtime({ 'lsp' }, true, {})) do
   for config_file in vim.fs.dir(dir) do
-    vim.lsp.enable(vim.fn.fnamemodify(config_file, ':r'))
+    table.insert(configs, vim.fn.fnamemodify(config_file, ':r'))
   end
 end
+vim.lsp.enable(configs)
 
 -- Show notification if no references, definition, declaration,
 -- implementation or type definition is found
