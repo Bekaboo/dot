@@ -55,8 +55,14 @@ return {
             return
           end
 
+          -- If the autocmd is already deleted, it means that another event has
+          -- triggered this callback and loaded oil.nvim, thus we should early
+          -- return and avoid re-loading it
+          if not pcall(vim.api.nvim_del_autocmd, args.id) then
+            return
+          end
+
           require('my.utils.pack').load(spec, path)
-          return true
         end),
       })
     end,
