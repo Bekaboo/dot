@@ -158,7 +158,8 @@ return {
       ---Get the default name for a pasted image
       ---@return string
       local function default_file_name()
-        return clipboard_image_name() or os.date('%Y-%m-%d-%H-%M-%S') --[[@as string]]
+        local name = clipboard_image_name() or os.date('%Y-%m-%d-%H-%M-%S') --[[@as string]]
+        return ('%s.%s'):format(name, img_clip_config.get_opt('extension'))
       end
 
       ---Get indentation string
@@ -278,7 +279,7 @@ $INDENTcaption: [$LABEL$CURSOR],
       end
 
       ---@type table<string, any>
-      local filetypes = require('img-clip.config').opts.filetypes
+      local filetypes = img_clip_config.opts.filetypes
 
       ---Setup keymaps for img-clip
       ---@param buf integer?
