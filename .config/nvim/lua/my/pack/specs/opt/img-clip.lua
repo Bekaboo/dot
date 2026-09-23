@@ -34,7 +34,7 @@ return {
       local function parse_file_uri(output)
         for line in output:gmatch('[^\n]+') do
           line = line:gsub('\r$', ''):gsub('%z+$', '')
-          if line:match('^file:///') then
+          if vim.startswith(line, 'file:') then
             local ok, path = pcall(vim.uri_to_fname, line)
             if ok then
               return path
@@ -261,7 +261,7 @@ $INDENTcaption: [$LABEL$CURSOR],
       ---@return string?
       ---@diagnostic disable-next-line: duplicate-set-field
       img_clip_utils.input = function(args)
-        if args.prompt ~= 'File name: ' or args.default ~= nil then
+        if args.default ~= nil then
           return img_clip_input(args)
         end
 
