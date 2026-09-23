@@ -922,10 +922,10 @@ return {
               vim.system({ response, entry_path })
             end,
           },
-          ['gy'] = {
+          ['gY'] = {
             mode = 'n',
             buffer = true,
-            desc = 'Yank the filepath of the entry under the cursor to a register',
+            desc = 'Yank the full filepath of the entry under the cursor to a register',
             callback = function()
               local entry = oil.get_cursor_entry()
               local dir = oil.get_current_dir()
@@ -945,7 +945,7 @@ return {
               )
             end,
           },
-          ['gY'] = {
+          ['gy'] = {
             mode = 'n',
             buffer = true,
             desc = 'Yank the relative filepath (to project root) of the entry under the cursor to a register',
