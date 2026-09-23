@@ -121,14 +121,32 @@ return {
         end
       end
 
-      -- Make `:GBrowse!` copy the link to the exact commit instead of link
-      -- to the git branch in git command output buffers
+      ---Resolve the object under the cursor in a git command output buffer
+      ---@param fugitive_result table temp state returned by `FugitiveResult()`
+      ---@return string? object fugitive object under the cursor
+      local function resolve_fugitive_result_cursor_object(fugitive_result)
+        if fugitive_result.filetype ~= 'git' then
+          return
+        end
+        local cfile = vim.fn['fugitive#Cfile']()
+        if cfile == '' then
+          return
+        end
+        local object = vim.fn['fugitive#Object'](cfile)
+        if object ~= '' then
+          return object
+        end
+      end
+
+      -- Make `:GBrowse!` copy the link to the object under the cursor in git
+      -- command output buffers, falling back to the command's exact commit
       vim.api.nvim_create_user_command('GBrowse', function(args)
         local obj = args.args
         if obj == '' then
-          obj = resolve_fugitive_result_commit(
-            vim.fn.FugitiveResult(vim.api.nvim_get_current_buf())
-          ) or ''
+          local result = vim.fn.FugitiveResult(vim.api.nvim_get_current_buf())
+          obj = resolve_fugitive_result_cursor_object(result)
+            or resolve_fugitive_result_commit(result)
+            or ''
         end
         local ret = vim.fn['fugitive#BrowseCommand'](
           args.line1,
@@ -424,8 +442,13 @@ return {
           -- Other commit-centered buffers (e.g. `:Git show --stat`,
           -- `:Git stash show`) have no object buffer equivalent
           vim.keymap.set('n', 'y<C-G>', function()
-            vim.fn.setreg(vim.v.register, commit)
-          end, { buffer = args.buf, desc = 'Yank shown commit sha' })
+            local object = resolve_fugitive_result_cursor_object(result)
+              or commit
+            vim.fn.setreg(vim.v.register, object)
+          end, {
+            buffer = args.buf,
+            desc = 'Yank object under cursor',
+          })
         end,
       })
 
