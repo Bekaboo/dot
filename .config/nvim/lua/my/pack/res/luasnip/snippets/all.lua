@@ -25,7 +25,7 @@ M.snippets = {
       i(nil, os.date()),
       i(nil, os.date('%Y-%m-%d')), -- ISO
       i(nil, os.date('%Y%m%d')),
-      i(nil, os.date("%Y%m%d_%H%M%S")),
+      i(nil, os.date('%Y%m%d_%H%M%S')),
       i(nil, os.date('%m.%d.%Y')),
     })
   ),
