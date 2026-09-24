@@ -13,8 +13,10 @@ local specs_opt_path = vim.fs.joinpath(config_path, 'lua/my/pack/specs/opt')
 ---@return vim.pack.Spec[]
 local function collect_specs(path)
   local specs = {} ---@type vim.pack.Spec[]
+  local namespace = 'my.pack.specs.' .. vim.fs.basename(path)
   for spec in vim.fs.dir(path) do
-    table.insert(specs, dofile(vim.fs.joinpath(path, spec)))
+    local name = vim.fn.fnamemodify(spec, ':r')
+    table.insert(specs, require(string.format('%s.%s', namespace, name)))
   end
   return specs
 end
