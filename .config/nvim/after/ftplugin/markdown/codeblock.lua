@@ -120,7 +120,18 @@ local function refresh(buf)
   end)
 end
 
-refresh()
+local schedule_refresh = vim.schedule_wrap(refresh)
+local buf = vim.api.nvim_get_current_buf()
+if vim.v.vim_did_enter == 1 then
+  schedule_refresh(buf)
+else
+  vim.api.nvim_create_autocmd('UIEnter', {
+    once = true,
+    callback = function()
+      schedule_refresh(buf)
+    end,
+  })
+end
 
 local groupid = vim.api.nvim_create_augroup(ns_name, {})
 
@@ -141,7 +152,10 @@ vim.api.nvim_create_autocmd('Syntax', {
   pattern = ft,
   desc = 'Refresh codeblocks and headlines.',
   callback = function(args)
-    refresh(args.buf)
+    if vim.v.vim_did_enter == 0 then
+      return
+    end
+    schedule_refresh(args.buf)
   end,
 })
 
@@ -149,9 +163,10 @@ vim.api.nvim_create_autocmd('BufEnter', {
   group = groupid,
   desc = 'Refresh codeblocks and headlines.',
   callback = function(args)
-    if vim.bo[args.buf].ft == ft then
-      refresh(args.buf)
+    if vim.v.vim_did_enter == 0 or vim.bo[args.buf].ft ~= ft then
+      return
     end
+    schedule_refresh(args.buf)
   end,
 })
 
