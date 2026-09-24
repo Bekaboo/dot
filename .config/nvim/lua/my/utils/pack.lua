@@ -232,11 +232,19 @@ function M.register(specs, default)
 
     -- Then register self
     local existing_spec = specs_registry[spec.src]
-    local asdeps = existing_spec
-      and existing_spec.data
-      and existing_spec.data.asdeps
-      and spec.data
-      and spec.data.asdeps
+
+    -- Dependency-only specs inherit `asdeps` from `default`; combine repeated
+    -- registrations with AND so any standalone registration takes precedence
+    local asdeps = spec.data and spec.data.asdeps
+    if asdeps == nil and default and default.data then
+      asdeps = default.data.asdeps
+    end
+    asdeps = asdeps == true
+    if existing_spec then
+      asdeps = asdeps
+        and existing_spec.data ~= nil
+        and existing_spec.data.asdeps == true
+    end
 
     specs_registry[spec.src] =
       vim.tbl_deep_extend('force', existing_spec or default or {}, spec)
