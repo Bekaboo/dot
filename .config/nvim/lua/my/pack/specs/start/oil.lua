@@ -48,8 +48,10 @@ return {
 
             -- Only load oil.nvim if the buffer is a non-existing file
             -- (e.g. scp:// or oil:// paths) or is an existing directory
-            local stat = vim.uv.fs_stat(bufname)
-            if stat and stat.type ~= 'directory' then
+            if
+              not bufname:match('://')
+              and (vim.uv.fs_stat(bufname) or {}).type ~= 'directory'
+            then
               return false
             end
 
@@ -73,7 +75,12 @@ return {
           -- multiple unloaded dir buffers when after loading a session file
           for _, buf in ipairs(vim.api.nvim_list_bufs()) do
             if is_uninitialized_dir_buf(buf) then
-              vim.api.nvim_buf_call(buf, vim.cmd.edit)
+              vim.api.nvim_buf_call(buf, function()
+                -- Use `bang=true` to avoid prompts asking for whether to save
+                -- changes for temp buffers e.g. otter.nvim's buffers when
+                -- `vim.opt.confirm` is set
+                vim.cmd.edit({ bang = true })
+              end)
             end
           end
         end),
