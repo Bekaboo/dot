@@ -33,15 +33,11 @@ return {
         -- buffer attributes, e.g. buffer name, to be updated before
         -- checking if the buffer is a directory buffer
         callback = vim.schedule_wrap(function(args)
-          ---Checks if the given buffer is a **visible** directory buffer
+          ---Checks if the given buffer is an uninitialized directory buffer
           ---@param buf integer
           ---@return boolean
-          local function is_visible_dir_buf(buf)
-            if
-              not vim.api.nvim_buf_is_valid(buf)
-              or vim.fn.bufwinid(buf) == -1
-              or vim.bo[buf].bt ~= ''
-            then
+          local function is_uninitialized_dir_buf(buf)
+            if not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].bt ~= '' then
               return false
             end
 
@@ -60,7 +56,7 @@ return {
             return true
           end
 
-          if not is_visible_dir_buf(args.buf) then
+          if not is_uninitialized_dir_buf(args.buf) then
             return
           end
 
@@ -73,10 +69,10 @@ return {
 
           require('my.utils.pack').load(spec, path)
 
-          -- Try loading all visible directory buffers cuz we can have multiple
-          -- unloaded dir buffers when after loading a session file
+          -- Try initialize all visible directory buffers cuz we can have
+          -- multiple unloaded dir buffers when after loading a session file
           for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-            if is_visible_dir_buf(buf) then
+            if is_uninitialized_dir_buf(buf) then
               vim.api.nvim_buf_call(buf, vim.cmd.edit)
             end
           end
