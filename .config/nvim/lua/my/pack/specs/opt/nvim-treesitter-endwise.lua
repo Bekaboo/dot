@@ -4,9 +4,13 @@ return {
   data = {
     events = 'InsertEnter',
     postload = function()
-      -- Manually trigger `FileType` event to make nvim-treesitter-endwise
-      -- attach to current file when loaded
-      vim.api.nvim_exec_autocmds('FileType', {})
+      local endwise = require('nvim-treesitter-endwise')
+      local lang = vim.treesitter.language.get_lang(vim.bo.ft)
+      if not endwise.is_supported(lang) then
+        return
+      end
+
+      require('nvim-treesitter.endwise').attach(0)
     end,
   },
 }
