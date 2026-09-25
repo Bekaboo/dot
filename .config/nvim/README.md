@@ -598,6 +598,9 @@ See [`nvim-pack-lock.json`](nvim-pack-lock.json).
 - [session](lua/my/plugin/session.lua)
     - Automatically load (disabled), save, and remove sessions for projects
     - Use `Session...` commands to manipulate sessions
+- [trans](lua/my/plugin/trans.lua)
+    - Provides `:Translate` command to open a popup to translate selected text
+    - Requires script [`~/.bin/trans`](../../.bin/trans) in `$PATH`
 
 Like many vim builtin plugins, these plugins can be disabled by setting the
 `g:loaded_...` flag before loading them.

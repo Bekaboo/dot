@@ -118,6 +118,26 @@ load.on_events('InsertEnter', 'plugin.tabout', function()
   require('my.plugin.tabout').setup()
 end)
 
+-- trans
+if vim.g.loaded_trans == nil then
+  local trans = require('my.plugin.trans')
+
+  vim.keymap.set('x', '<C-t>', function()
+    trans.translate({
+      text = table.concat(
+        vim.fn.getregion(vim.fn.getpos('v'), vim.fn.getpos('.'), {
+          type = vim.fn.mode(),
+        }),
+        '\n'
+      ),
+    })
+  end, { desc = 'Translate selected text' })
+
+  load.on_cmds('Translate', 'plugin.trans', function()
+    trans.setup()
+  end)
+end
+
 -- z
 if vim.g.loaded_z == nil then
   vim.keymap.set('n', '<Leader>z', function()
