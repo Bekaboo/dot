@@ -138,24 +138,78 @@ return {
         end
       end
 
-      ---Resolve the object under the cursor, then fall back to the result's
-      ---commit
+      ---Resolve a symbolic ref whose displayed name is under the cursor
+      ---@param fugitive_result table temp state returned by `FugitiveResult()`
+      ---@return string? ref symbolic ref represented by the current line
+      local function resolve_fugitive_result_cursor_ref(fugitive_result)
+        if fugitive_result.filetype ~= 'git' then
+          return
+        end
+
+        local line = vim.api.nvim_get_current_line()
+        local cursor_col = vim.api.nvim_win_get_cursor(0)[2] + 1
+        local refs = vim.fn.FugitiveExecute({
+          'for-each-ref',
+          '--format=%(refname)%09%(refname:short)',
+          'refs/heads/',
+          'refs/remotes/',
+          'refs/tags/',
+        }, fugitive_result.git_dir).stdout
+        local candidates = {}
+
+        for _, ref_line in ipairs(refs) do
+          local full_ref, short_ref = ref_line:match('^(.-)\t(.*)$')
+          if full_ref then
+            candidates[full_ref] = true
+            candidates[short_ref] = true
+            candidates[full_ref:sub(6)] = true
+
+            local local_name = full_ref:match('^refs/heads/(.*)$')
+              or full_ref:match('^refs/tags/(.*)$')
+            if local_name then
+              candidates[local_name] = true
+            end
+          end
+        end
+
+        local sorted_candidates = vim.tbl_keys(candidates)
+        table.sort(sorted_candidates, function(a, b)
+          return #a > #b
+        end)
+        for _, candidate in ipairs(sorted_candidates) do
+          local init = 1
+          while true do
+            local first, last = line:find(candidate, init, true)
+            if not first then
+              break
+            end
+            if cursor_col >= first and cursor_col <= last then
+              return candidate
+            end
+            init = first + 1
+          end
+        end
+      end
+
+      ---Resolve the semantic target under the cursor, then fall back to the
+      ---result's commit
       ---@param fugitive_result table temp state returned by `FugitiveResult()`
       ---@param fallback? string previously resolved fallback commit
-      ---@return string? object fugitive object under the cursor
-      local function resolve_fugitive_result_object(fugitive_result, fallback)
-        return resolve_fugitive_result_cursor_object(fugitive_result)
+      ---@return string? target symbolic ref or fugitive object under the cursor
+      local function resolve_fugitive_result_target(fugitive_result, fallback)
+        return resolve_fugitive_result_cursor_ref(fugitive_result)
+          or resolve_fugitive_result_cursor_object(fugitive_result)
           or fallback
           or resolve_fugitive_result_commit(fugitive_result)
       end
 
-      -- Make `:GBrowse!` copy the link to the object under the cursor in git
-      -- command output buffers, falling back to the command's exact commit
+      -- Make `:GBrowse!` copy the link to the semantic target under the cursor
+      -- in Git output buffers, falling back to the command's exact commit
       vim.api.nvim_create_user_command('GBrowse', function(args)
-        local obj = args.args
-        if obj == '' then
+        local target = args.args
+        if target == '' then
           local result = vim.fn.FugitiveResult(vim.api.nvim_get_current_buf())
-          obj = resolve_fugitive_result_object(result) or ''
+          target = resolve_fugitive_result_target(result) or ''
         end
         local ret = vim.fn['fugitive#BrowseCommand'](
           args.line1,
@@ -163,7 +217,7 @@ return {
           args.range,
           args.bang and 1 or 0,
           args.mods,
-          obj
+          target
         )
         if type(ret) ~= 'string' or ret == '' then
           return
@@ -450,25 +504,25 @@ return {
           end
           -- Other commit-centered buffers (e.g. `:Git show --stat`,
           -- `:Git stash show`) have no object buffer equivalent
-          local function resolve_object()
-            return resolve_fugitive_result_object(result, commit)
+          local function resolve_target()
+            return resolve_fugitive_result_target(result, commit)
           end
-          local function yank_object()
-            vim.fn.setreg(vim.v.register, resolve_object())
+          local function yank_target()
+            vim.fn.setreg(vim.v.register, resolve_target())
           end
-          vim.keymap.set('n', '<Plug>fugitive:y<C-G>', yank_object, {
+          vim.keymap.set('n', '<Plug>fugitive:y<C-G>', yank_target, {
             buffer = args.buf,
           })
           vim.keymap.set('n', 'y<C-G>', '<Plug>fugitive:y<C-G>', {
             buffer = args.buf,
-            desc = 'Yank object under cursor',
+            desc = 'Yank Git target under cursor',
             remap = true,
           })
           vim.keymap.set('c', '<C-R><C-G>', function()
-            return vim.fn.fnameescape(resolve_object())
+            return vim.fn.fnameescape(resolve_target())
           end, {
             buffer = args.buf,
-            desc = 'Insert object under cursor',
+            desc = 'Insert Git target under cursor',
             expr = true,
             replace_keycodes = false,
           })
