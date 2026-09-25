@@ -56,6 +56,7 @@ parse_args() {
         case "$1" in
         -t | --to)
             target_lang="$2"
+            pair=''  # `--to` takes precedence over `--pair`
             shift 2
             ;;
         -m | --model)
