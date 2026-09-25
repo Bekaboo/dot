@@ -17,19 +17,65 @@ local has_quantified_captures = vim.fn.has('nvim-0.11.0') == 1
 
 local dash_string = '-'
 
+---@class my.ft.markdown.codeblock.range
+---@field start_row integer
+---@field end_row integer
+
+---Merge overlapping or adjacent buffer ranges.
+---@param ranges my.ft.markdown.codeblock.range[]
+---@return my.ft.markdown.codeblock.range[] merged
+local function merge_ranges(ranges)
+  table.sort(ranges, function(a, b)
+    return a.start_row < b.start_row
+  end)
+
+  ---@type my.ft.markdown.codeblock.range[]
+  local merged = {}
+  for _, range in ipairs(ranges) do
+    local previous = merged[#merged]
+    if previous and range.start_row <= previous.end_row then
+      previous.end_row = math.max(previous.end_row, range.end_row)
+    else
+      table.insert(merged, range)
+    end
+  end
+
+  return merged
+end
+
+---Get the merged row ranges visible in normal windows for a buffer.
+---@param buf integer
+---@return my.ft.markdown.codeblock.range[] ranges visible, non-overlapping ranges.
+---@return string range_id cache key containing the editor width and ranges.
+local function get_visible_ranges(buf)
+  ---@type my.ft.markdown.codeblock.range[]
+  local ranges = {}
+
+  for _, win in ipairs(vim.fn.win_findbuf(buf)) do
+    if vim.api.nvim_win_is_valid(win) and vim.fn.win_gettype(win) == '' then
+      local start_row, end_row = unpack(vim.api.nvim_win_call(win, function()
+        return { vim.fn.line('w0') - 1, vim.fn.line('w$') }
+      end))
+      table.insert(ranges, { start_row = start_row, end_row = end_row })
+    end
+  end
+
+  local merged = merge_ranges(ranges)
+
+  local range_ids = vim.tbl_map(function(range)
+    return string.format('%d:%d', range.start_row, range.end_row)
+  end, merged)
+
+  return merged,
+    string.format('%d:%s', vim.go.columns, table.concat(range_ids, ','))
+end
+
 ---@param buf? integer
 local function refresh(buf)
   buf = vim._resolve_bufnr(buf)
-  if
-    not vim.api.nvim_buf_is_valid(buf)
-    or vim.bo.ft ~= ft
-    or vim.b[buf].codeblock_refresh_changed_tick == vim.b[buf].changedtick
-  then
+  if not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].ft ~= ft then
     return
   end
-
-  vim.b[buf].codeblock_refresh_changed_tick = vim.b[buf].changedtick
-  vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
 
   if
     vim.b[buf].bigfile
@@ -38,6 +84,18 @@ local function refresh(buf)
     or vim.iter(vim.fn.win_findbuf(buf)):any(function(win)
       return vim.fn.win_gettype(win) ~= ''
     end)
+  then
+    return
+  end
+
+  local ranges, range_id = get_visible_ranges(buf)
+  if vim.tbl_isempty(ranges) then
+    return
+  end
+
+  if
+    vim.b[buf].codeblock_refresh_changed_tick == vim.b[buf].changedtick
+    and vim.b[buf].codeblock_refresh_range_id == range_id
   then
     return
   end
@@ -64,54 +122,80 @@ local function refresh(buf)
     return
   end
 
+  vim.b[buf].codeblock_refresh_changed_tick = vim.b[buf].changedtick
+  vim.b[buf].codeblock_refresh_range_id = range_id
+  vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
+
   vim.api.nvim_buf_call(buf, function()
-    for _, match, metadata in query:iter_matches(syntax_tree[1]:root(), buf) do
-      for id, node in pairs(match) do
-        if has_quantified_captures then
-          node = node[#node]
-        end
-
-        local capture = query.captures[id]
-        local start_row, _, end_row, _ = unpack(
-          vim.tbl_extend(
-            'force',
-            { node:range() },
-            (metadata[id] or {}).range or {}
-          )
+    for _, range in ipairs(ranges) do
+      for _, match, metadata in
+        query:iter_matches(
+          syntax_tree[1]:root(),
+          buf,
+          range.start_row,
+          range.end_row
         )
+      do
+        for id, node in pairs(match) do
+          if has_quantified_captures then
+            node = node[#node]
+          end
 
-        if capture == 'dash' and dash_string then
-          pcall(vim.api.nvim_buf_set_extmark, buf, ns, start_row, 0, {
-            virt_text = {
-              { dash_string:rep(vim.go.columns), 'Dash' },
-            },
-            virt_text_pos = 'overlay',
-            hl_mode = 'combine',
-          })
-        end
+          local capture = query.captures[id]
+          local start_row, _, end_row, _ = unpack(
+            vim.tbl_extend(
+              'force',
+              { node:range() },
+              (metadata[id] or {}).range or {}
+            )
+          )
 
-        if capture == 'codeblock' then
-          pcall(vim.api.nvim_buf_set_extmark, buf, ns, start_row, 0, {
-            end_col = 0,
-            end_row = end_row,
-            hl_group = 'CodeBlock',
-            hl_eol = true,
-          })
+          if capture == 'dash' and dash_string then
+            pcall(vim.api.nvim_buf_set_extmark, buf, ns, start_row, 0, {
+              virt_text = {
+                { dash_string:rep(vim.go.columns), 'Dash' },
+              },
+              virt_text_pos = 'overlay',
+              hl_mode = 'combine',
+            })
+          end
 
-          local start_line =
-            vim.api.nvim_buf_get_lines(buf, start_row, start_row + 1, false)[1]
-          local _, padding = start_line:find('^ +')
-          local codeblock_padding = math.max((padding or 0), 0)
+          if capture == 'codeblock' then
+            local visible_start_row = math.max(start_row, range.start_row)
+            local visible_end_row = math.min(end_row, range.end_row)
+            pcall(
+              vim.api.nvim_buf_set_extmark,
+              buf,
+              ns,
+              visible_start_row,
+              0,
+              {
+                end_col = 0,
+                end_row = visible_end_row,
+                hl_group = 'CodeBlock',
+                hl_eol = true,
+              }
+            )
 
-          if codeblock_padding > 0 then
-            for i = start_row, end_row - 1 do
-              pcall(vim.api.nvim_buf_set_extmark, buf, ns, i, 0, {
-                virt_text = {
-                  { string.rep(' ', codeblock_padding - 2), 'Normal' },
-                },
-                virt_text_win_col = 0,
-                priority = 1,
-              })
+            local start_line = vim.api.nvim_buf_get_lines(
+              buf,
+              start_row,
+              start_row + 1,
+              false
+            )[1]
+            local _, padding = start_line:find('^ +')
+            local codeblock_padding = math.max((padding or 0), 0)
+
+            if codeblock_padding > 0 then
+              for i = visible_start_row, visible_end_row - 1 do
+                pcall(vim.api.nvim_buf_set_extmark, buf, ns, i, 0, {
+                  virt_text = {
+                    { string.rep(' ', codeblock_padding - 2), 'Normal' },
+                  },
+                  virt_text_win_col = 0,
+                  priority = 1,
+                })
+              end
             end
           end
         end
@@ -159,7 +243,7 @@ vim.api.nvim_create_autocmd('Syntax', {
   end,
 })
 
-vim.api.nvim_create_autocmd('BufEnter', {
+vim.api.nvim_create_autocmd({ 'BufEnter', 'BufWinEnter' }, {
   group = groupid,
   desc = 'Refresh codeblocks and headlines.',
   callback = function(args)
@@ -167,6 +251,31 @@ vim.api.nvim_create_autocmd('BufEnter', {
       return
     end
     schedule_refresh(args.buf)
+  end,
+})
+
+vim.api.nvim_create_autocmd('WinScrolled', {
+  group = groupid,
+  desc = 'Refresh visible codeblocks and headlines.',
+  callback = function(args)
+    local win = tonumber(args.match)
+    if not win or not vim.api.nvim_win_is_valid(win) then
+      return
+    end
+
+    schedule_refresh(vim.api.nvim_win_get_buf(win))
+  end,
+})
+
+vim.api.nvim_create_autocmd('WinResized', {
+  group = groupid,
+  desc = 'Refresh visible codeblocks and headlines.',
+  callback = function()
+    for _, win in ipairs(vim.v.event.windows or {}) do
+      if vim.api.nvim_win_is_valid(win) then
+        schedule_refresh(vim.api.nvim_win_get_buf(win))
+      end
+    end
   end,
 })
 
