@@ -10,7 +10,7 @@
       "version": "1.0.0 - 2.0.0"
     },
     "cellular-automaton.nvim": {
-      "rev": "1606e9d",
+      "rev": "1606e9d5d04ff254023c3f3c62842d065708d6d3",
       "src": "https://github.com/Eandrju/cellular-automaton.nvim"
     },
     "everforest": {
@@ -38,7 +38,7 @@
       "src": "https://github.com/HakonHarnes/img-clip.nvim"
     },
     "markdown-preview.nvim": {
-      "rev": "a923f5f",
+      "rev": "a923f5fc5ba36a3b17e289dc35dc17f66d0548ee",
       "src": "https://github.com/iamcco/markdown-preview.nvim"
     },
     "molten-nvim": {
@@ -75,7 +75,7 @@
       "version": "'main'"
     },
     "nvim-treesitter-endwise": {
-      "rev": "8fe8a95",
+      "rev": "8fe8a95630f4f2c72a87ba1927af649e0bfaa244",
       "src": "https://github.com/RRethy/nvim-treesitter-endwise"
     },
     "nvim-treesitter-incremental-selection": {
@@ -96,7 +96,7 @@
       "src": "https://github.com/stevearc/oil.nvim"
     },
     "one-small-step-for-vimkind": {
-      "rev": "1af6ffb",
+      "rev": "1af6ffb9b5229a856e8090fa2f690e0931a5aace",
       "src": "https://github.com/jbyuki/one-small-step-for-vimkind"
     },
     "onedark.nvim": {
@@ -132,15 +132,15 @@
       "src": "https://github.com/altermo/ultimate-autopair.nvim"
     },
     "vim-conjoin": {
-      "rev": "14ad4e6",
+      "rev": "14ad4e6321b43f9518a2dc99ed705895eef8800b",
       "src": "https://github.com/flwyd/vim-conjoin"
     },
     "vim-dispatch": {
-      "rev": "a2ff28a",
+      "rev": "a2ff28abdb2d89725192db5b8562977d392a4d3f",
       "src": "https://github.com/tpope/vim-dispatch"
     },
     "vim-easy-align": {
-      "rev": "9815a55",
+      "rev": "9815a55dbcd817784458df7a18acacc6f82b1241",
       "src": "https://github.com/junegunn/vim-easy-align"
     },
     "vim-fugitive": {
@@ -148,19 +148,19 @@
       "src": "https://github.com/tpope/vim-fugitive"
     },
     "vim-projectionist": {
-      "rev": "5ff7bf7",
+      "rev": "5ff7bf79a6ef741036d2038a226bcb5f8b1cd296",
       "src": "https://github.com/tpope/vim-projectionist"
     },
     "vim-rhubarb": {
-      "rev": "5496d7c",
+      "rev": "5496d7c94581c4c9ad7430357449bb57fc59f501",
       "src": "https://github.com/tpope/vim-rhubarb"
     },
     "vim-sleuth": {
-      "rev": "be69bff",
+      "rev": "be69bff86754b1aa5adcbb527d7fcd1635a84080",
       "src": "https://github.com/tpope/vim-sleuth"
     },
     "vim-table-mode": {
-      "rev": "bb02530",
+      "rev": "bb025308a45c67c7c8f0763ba37bc2ee3f534df0",
       "src": "https://github.com/dhruvasagar/vim-table-mode"
     },
     "vim-test": {
@@ -172,7 +172,7 @@
       "src": "https://github.com/lervag/vimtex"
     },
     "which-key.nvim": {
-      "rev": "3aab214",
+      "rev": "3aab2147e74890957785941f0c1ad87d0a44c15a",
       "src": "https://github.com/folke/which-key.nvim"
     }
   }

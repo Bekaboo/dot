@@ -10,6 +10,8 @@ local M = {}
 ---Useful for optional dependencies and plugins that are only used under
 ---specific conditions
 ---@field optional? boolean
+---Whether the plugin should be enabled
+---@field enabled? boolean
 ---@field deps? my.pack.spec|my.pack.spec[] Dependencies of the plugin, always loaded **before** the main plugin
 ---@field exts? my.pack.spec|my.pack.spec[] Extensions of the plugin, always loaded **after** the main plugin
 ---Build command for the plugin, useful for plugins that need
@@ -30,9 +32,9 @@ local M = {}
 ---When specified, `preload` and `postload` will not execute unless explicitly
 ---called in `loader`. The loader is fully responsible for loading the plugin
 ---and handling pre/post-load callbacks
----@field load? fun(spec: my.pack.spec, path: string)
----@field preload? fun(spec: my.pack.spec, path: string) Function to execute before loading the plugin
----@field postload? fun(spec: my.pack.spec, path: string) Function to execute after loading the plugin
+---@field load? fun(spec: my.pack.spec, path: string, ...)
+---@field preload? fun(spec: my.pack.spec, path: string, ...) Function to execute before loading the plugin
+---@field postload? fun(spec: my.pack.spec, path: string, ...) Function to execute after loading the plugin
 ---Mark the plugin as lazy-loaded
 ---
 ---Unlike non-lazy plugins that are loaded on startup, lazy-loaded plugins can
@@ -53,7 +55,7 @@ local M = {}
 
 ---@alias my.pack.spec string|my.pack.structured_spec|vim.pack.Spec
 
----Merged plugin specs indexed by plugin src
+---Merged plugin specs indexed by plugin source
 ---@type table<string, my.pack.structured_spec>
 local specs_registry = {}
 
@@ -65,6 +67,34 @@ local loaded = {}
 ---@type table<string, boolean>
 local initialized = {}
 
+local module_src_prefix = 'module://'
+
+---Check whether a plugin is a built-in Lua module
+---@param spec my.pack.spec
+---@return boolean
+function M.is_builtin(spec)
+  local src = type(spec) == 'string' and spec or spec.src
+  return vim.startswith(src, module_src_prefix)
+end
+
+---Get the Lua module path for a built-in plugin
+---@param spec my.pack.spec
+---@return string
+local function builtin_module(spec)
+  local src = type(spec) == 'string' and spec or spec.src
+  return src:sub(#module_src_prefix + 1)
+end
+
+---Get the registry key for a plugin spec
+---@param spec my.pack.spec
+---@return string
+local function spec_key(spec)
+  if type(spec) == 'string' then
+    return spec
+  end
+  return spec.src
+end
+
 ---Get plugin installation root dir
 ---@return string
 function M.root()
@@ -73,26 +103,35 @@ end
 
 ---Get install path of a plugin given spec
 ---@param spec my.pack.spec
+---@return string
 function M.path(spec)
+  if type(spec) == 'string' then
+    return vim.fs.joinpath(M.root(), vim.fs.basename(spec))
+  end
+  if M.is_builtin(spec) then
+    return vim.fn.stdpath('config') --[[@as string]]
+  end
   return vim.fs.joinpath(M.root(), vim.fs.basename(spec.name or spec.src))
 end
 
 ---Load a plugin with init, pre/post hooks, dependencies etc.
 ---@param spec my.pack.spec
 ---@param path string
-function M.load(spec, path)
+---@param ... any Trigger arguments
+function M.load(spec, path, ...)
   if type(spec) == 'string' then
     spec = { src = spec }
   end
 
-  if spec.data and spec.data.optional then
+  if spec.data and (spec.data.optional or spec.data.enabled == false) then
     return
   end
 
-  if loaded[spec.src] then
+  local key = spec_key(spec)
+  if loaded[key] then
     return
   end
-  loaded[spec.src] = true
+  loaded[key] = true
 
   spec.data = spec.data or {}
 
@@ -104,25 +143,31 @@ function M.load(spec, path)
     for _, dep in
       ipairs(spec.data.deps --[=[@as my.pack.spec[]]=])
     do
-      local dep_spec = specs_registry[type(dep) == 'string' and dep or dep.src]
+      local dep_spec = specs_registry[spec_key(dep)]
       M.load(dep_spec, M.path(dep_spec))
     end
+  end
+
+  if M.is_builtin(spec) then
+    require(builtin_module(spec))
   end
 
   -- Custom per-spec load function takes full control of loading that plugin,
   -- including running pre/post-loading hooks as only the custom loader
   -- knows when the plugin can be considered as 'loaded'
   if spec.data.load then
-    spec.data.load(spec, path)
+    spec.data.load(spec, path, ...)
   else
     if spec.data.preload then
-      spec.data.preload(spec, path)
+      spec.data.preload(spec, path, ...)
     end
 
-    pcall(vim.cmd.packadd, vim.fs.basename(path))
+    if not M.is_builtin(spec) then
+      pcall(vim.cmd.packadd, vim.fs.basename(path))
+    end
 
     if spec.data.postload then
-      spec.data.postload(spec, path)
+      spec.data.postload(spec, path, ...)
     end
   end
 
@@ -134,7 +179,7 @@ function M.load(spec, path)
     for _, ext in
       ipairs(spec.data.exts --[=[@as my.pack.spec[]]=])
     do
-      local ext_spec = specs_registry[type(ext) == 'string' and ext or ext.src]
+      local ext_spec = specs_registry[spec_key(ext)]
       M.load(ext_spec, M.path(ext_spec))
     end
   end
@@ -145,10 +190,14 @@ end
 ---@param path string
 function M.lazy_load(spec, path)
   spec.data = spec.data or {}
+  if spec.data.enabled == false then
+    return
+  end
+  local key = spec_key(spec)
 
-  if spec.data.init and not initialized[spec.src] then
+  if spec.data.init and not initialized[key] then
     spec.data.init(spec, path)
-    initialized[spec.src] = true
+    initialized[key] = true
   end
 
   ---Whether the plugin is lazy-loaded
@@ -161,13 +210,9 @@ function M.lazy_load(spec, path)
       goto continue
     end
     lazy = true
-    require('my.utils.load')['on_' .. trig](
-      spec.data[trig],
-      spec.src,
-      function()
-        M.load(spec, path)
-      end
-    )
+    require('my.utils.load')['on_' .. trig](spec.data[trig], key, function(...)
+      M.load(spec, path, ...)
+    end)
     ::continue::
   end
 
@@ -195,7 +240,8 @@ function M.register(specs, default)
 
   -- Set default fields in the spec, prepare for merging and registration
   for _, spec in ipairs(specs) do
-    local existing_spec = specs_registry[spec.src]
+    local key = spec_key(spec)
+    local existing_spec = specs_registry[key]
 
     -- A plugin can flagged as an optional dependency of other plugins
     -- Optional plugins will not be installed and configured unless there's
@@ -231,7 +277,8 @@ function M.register(specs, default)
     end
 
     -- Then register self
-    local existing_spec = specs_registry[spec.src]
+    local key = spec_key(spec)
+    local existing_spec = specs_registry[key]
 
     -- Dependency-only specs inherit `asdeps` from `default`; combine repeated
     -- registrations with AND so any standalone registration takes precedence
@@ -246,12 +293,12 @@ function M.register(specs, default)
         and existing_spec.data.asdeps == true
     end
 
-    specs_registry[spec.src] =
+    specs_registry[key] =
       vim.tbl_deep_extend('force', existing_spec or default or {}, spec)
 
     -- `asdeps` in the existing and new spec should be `AND`ed together
-    if specs_registry[spec.src].data then
-      specs_registry[spec.src].data.asdeps = asdeps
+    if specs_registry[key].data then
+      specs_registry[key].data.asdeps = asdeps
     end
   end
 end
@@ -337,6 +384,10 @@ end
 
 local pack_add = vim.pack.add
 
+---Built-in plugins whose lazy-loading handlers are already registered
+---@type table<string, boolean>
+local builtin_added = {}
+
 ---Wrapper of `vim.pack.add()` that handles lazy-loading, dependencies, etc.
 ---via the `data` field
 ---@param specs my.pack.spec|my.pack.spec[]
@@ -356,20 +407,30 @@ function M.add(specs)
 
   specs = {}
   for _, spec in pairs(specs_registry) do
-    if not spec.data or not spec.data.optional then
-      table.insert(specs, spec)
+    if not spec.data or spec.data.enabled ~= false then
+      if M.is_builtin(spec) then
+        local key = spec_key(spec)
+        if not builtin_added[key] then
+          builtin_added[key] = true
+          M.lazy_load(spec, M.path(spec))
+        end
+      elseif not spec.data or not spec.data.optional then
+        table.insert(specs, spec)
+      end
     end
   end
 
   -- `vim.pack.add()` throws error if previous confirm is denied
   -- This happens if installation of plugins under `start` is denied
   -- first, then plugin specs under `opt` is collected and managed
-  pcall(pack_add, specs, {
-    load = function(args)
-      M.build(args.spec, args.path)
-      M.lazy_load(args.spec, args.path)
-    end,
-  })
+  if not vim.tbl_isempty(specs) then
+    pcall(pack_add, specs, {
+      load = function(args)
+        M.build(args.spec, args.path)
+        M.lazy_load(args.spec, args.path)
+      end,
+    })
+  end
 end
 
 return M
