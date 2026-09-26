@@ -215,7 +215,11 @@ function _G._statusline.gitbranch()
     return ''
   end
 
-  local branch = vim.b.gitsigns_status_dict and vim.b.gitsigns_status_dict.head
+  local branch = vim.b.gitsigns_status_dict
+      -- `vim.b.gitsigns_status_dict.head` is an empty string in detached mode
+      -- in dotfile bare repo
+      and vim.b.gitsigns_status_dict.head ~= ''
+      and vim.b.gitsigns_status_dict.head
     -- Use `--abbrev-ref` for branch name. In detached mode, this gives 'HEAD'
     -- as the abbrev ref which is useless, then fallback to actual commit id
     -- with `--short`
