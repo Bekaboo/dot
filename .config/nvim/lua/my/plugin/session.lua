@@ -189,7 +189,7 @@ function M.load(session)
   end
 
   -- Avoid intro message flickering before loading session,
-  -- see `plugin/intro.lua` and `:h :intro`
+  -- see `my.plugin.intro` and `:h :intro`
   vim.opt.shortmess:append('I')
   for _, win in ipairs(vim.api.nvim_list_wins()) do
     if vim.fn.win_id2win(win) ~= 1 then

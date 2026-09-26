@@ -74,7 +74,7 @@ Currently only tested on Linux (X11/Wayland/TTY) and Android (Termux).
     - [statusline](lua/my/plugin/statusline.lua)
     - [statuscolumn](lua/my/plugin/statuscolumn.lua)
     - [colorschemes](colors)
-    - [intro message](plugin/intro.lua)
+    - [intro message](lua/my/plugin/intro.lua)
 - [VSCode-Neovim](https://github.com/vscode-neovim/vscode-neovim) integration, makes you feel at home in VSCode when you
   occasionally need it
 - Massive [TeX math snippets](lua/my/pack/res/luasnip/snippets/tex.lua)
@@ -544,7 +544,7 @@ See [`nvim-pack-lock.json`](nvim-pack-lock.json).
 
 #### Builtin Plugins
 
-- [colorcolumn](plugin/colorcolumn.lua)
+- [colorcolumn](lua/my/plugin/colorcolumn.lua)
     - Shows color column dynamically based on current line width
     - Released as [deadcolumn.nvim](https://github.com/Bekaboo/deadcolumn.nvim)
 - [expandtab](lua/my/plugin/expandtab.lua)
@@ -556,7 +556,7 @@ See [`nvim-pack-lock.json`](nvim-pack-lock.json).
     - Edits jupyter notebook like markdown files
     - Writes into jupyter notebook asynchronously, which gives a smoother
       experience than [jupytext.vim](https://github.com/goerz/jupytext)
-- [intro](plugin/intro.lua)
+- [intro](lua/my/plugin/intro.lua)
     - Shows a custom intro message on startup
 - [lsp-commands](lua/my/plugin/lsp-commands.lua)
     - Sets up LSP and diagnostic commands `:LspXXX` and `:DiagnosticXXX`

@@ -1,5 +1,5 @@
 if vim.g.loaded_intro ~= nil then
-  return
+  return {}
 end
 vim.g.loaded_intro = true
 
@@ -25,7 +25,7 @@ end
 
 if not should_show_intro() then
   disable_intro()
-  return
+  return {}
 end
 
 -- Set eventignore to avoid triggering plugin lazy-loading handlers
@@ -256,3 +256,5 @@ vim.api.nvim_create_autocmd('OptionSet', {
 
 -- Restore &eventignore before exit
 vim.go.eventignore = eventignore
+
+return {}

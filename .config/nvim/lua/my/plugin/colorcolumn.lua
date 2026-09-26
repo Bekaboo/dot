@@ -269,4 +269,4 @@ local function setup(o)
   })
 end
 
-setup()
+return { setup = setup }
