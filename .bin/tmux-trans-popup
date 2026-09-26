@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # vim:ft=sh:et:ts=4:sw=4:sts=4:
 # Load text from stdin and translate given text in a tmux popup window
 
@@ -33,24 +33,44 @@ get_popup_h() {
     printf '%s' "$popup_h"
 }
 
+read_indent() {
+    source_line=''
+    IFS= read -r source_line <&3 || true
+    indent=${source_line%%[!$' \t']*}
+}
+
+restore_indentation() {
+    exec 3< "$1"
+    read_indent
+    at_line_start=1
+
+    while IFS= read -r -n 1 char; do
+        if [ "$at_line_start" -eq 1 ]; then
+            case "$char" in
+            ' ' | $'\t') continue ;;
+            esac
+            printf '%s' "$indent"
+            at_line_start=0
+        fi
+
+        if [ -z "$char" ]; then
+            printf '\n'
+            read_indent
+            at_line_start=1
+            continue
+        fi
+        printf '%s' "$char"
+    done
+}
+
 translate() {
     source_file=$(mktemp "${TMPDIR:-/tmp}/tmux-trans-popup.XXXXXX") || exit 1
-    translated_file=$(mktemp "${TMPDIR:-/tmp}/tmux-trans-popup.XXXXXX") || exit 1
-    trap 'rm -f "$source_file" "$translated_file"; tmux delete-buffer -b "$BUF"' EXIT HUP INT TERM
+    trap 'rm -f "$source_file"; tmux delete-buffer -b "$BUF"' EXIT HUP INT TERM
     tmux save-buffer -b "$BUF" "$source_file"
-    trans -s - < "$source_file" > "$translated_file"
 
-    awk '
-        NR == FNR {
-            match($0, /^[ \t]*/)
-            indents[FNR] = substr($0, 1, RLENGTH)
-            next
-        }
-        {
-            sub(/^[ \t]*/, "")
-            print indents[FNR] $0
-        }
-    ' "$source_file" "$translated_file"
+    # Both processes only read the source file.
+    # shellcheck disable=SC2094
+    trans -s - < "$source_file" | restore_indentation "$source_file"
 }
 
 main() {
