@@ -1,5 +1,11 @@
 local utils = require('my.utils')
 local icons = require('my.utils.static.icons')
+
+if vim.g.loaded_statusline ~= nil then
+  return {}
+end
+vim.g.loaded_statusline = true
+
 local groupid = vim.api.nvim_create_augroup('my.statusline', {})
 
 _G._statusline = {}
@@ -791,5 +797,7 @@ utils.hl.persist(function()
   utils.hl.set(0, 'StatusLineHeaderModified',  { fg = 'Special', bg = 'fg', ctermfg = 'Special', ctermbg = 'fg', reverse = true, default = true })
   -- stylua: ignore end
 end)
+
+vim.opt.statusline = "%!v:lua.require'my.plugin.statusline'()"
 
 return _G._statusline

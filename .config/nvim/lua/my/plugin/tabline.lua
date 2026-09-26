@@ -1,5 +1,10 @@
 local utils = require('my.utils')
 
+if vim.g.loaded_tabline ~= nil then
+  return {}
+end
+vim.g.loaded_tabline = true
+
 _G._tabline = {}
 
 ---Get tab display name given tabpage id and number
@@ -156,5 +161,7 @@ vim.api.nvim_create_autocmd('TabClosed', {
     vim.g['Tabname' .. args.file] = nil
   end,
 })
+
+vim.opt.tabline = "%!v:lua.require'my.plugin.tabline'()"
 
 return _G._tabline

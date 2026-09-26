@@ -1,6 +1,11 @@
 local ffi = require('ffi')
 local utils = require('my.utils')
 
+if vim.g.loaded_statuscolumn ~= nil then
+  return {}
+end
+vim.g.loaded_statuscolumn = true
+
 ---Wrapper around `utils.stl.hl()` that forces apply hlgroup even in tty
 ---@param str? string sign symbol
 ---@param hl? string name of the highlight group
@@ -296,5 +301,7 @@ vim.api.nvim_create_autocmd('BufDelete', {
     lnumw_cache[args.buf] = nil
   end,
 })
+
+vim.opt.statuscolumn = "%!v:lua.require'my.plugin.statuscolumn'()"
 
 return _G._statuscolumn
