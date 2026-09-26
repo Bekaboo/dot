@@ -103,10 +103,6 @@
       "rev": "df4792accde9db0043121f32628bcf8e645d9aea",
       "src": "https://github.com/navarasu/onedark.nvim"
     },
-    "opencode.nvim": {
-      "rev": "471650b83a58653cea44638dbce6215ebc6f7dae",
-      "src": "https://github.com/sudo-tee/opencode.nvim"
-    },
     "otter.nvim": {
       "rev": "0b38ccef44a805e8b378f5f6ce38aad0642c9366",
       "src": "https://github.com/jmbuhr/otter.nvim"
