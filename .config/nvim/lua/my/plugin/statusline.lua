@@ -216,6 +216,9 @@ function _G._statusline.gitbranch()
   end
 
   local branch = vim.b.gitsigns_status_dict and vim.b.gitsigns_status_dict.head
+    -- Use `--abbrev-ref` for branch name. In detached mode, this gives 'HEAD'
+    -- as the abbrev ref which is useless, then fallback to actual commit id
+    -- with `--short`
     or utils.git.execute(
       0,
       vim.list_extend(
@@ -223,6 +226,16 @@ function _G._statusline.gitbranch()
         { 'rev-parse', '--abbrev-ref', 'HEAD' }
       )
     )
+  if branch == 'HEAD' then
+    branch = utils.git.execute(
+      0,
+      vim.list_extend(
+        vim.deepcopy(use_cur_repo_args),
+        { 'rev-parse', '--short', 'HEAD' }
+      )
+    )
+  end
+
   if not branch then
     return ''
   end
