@@ -114,6 +114,7 @@ local function open_float(lines, source_win, source_pos)
   vim.bo[buf].swapfile = false
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   vim.bo[buf].modifiable = false
+  vim.bo[buf].filetype = vim.bo[vim.api.nvim_win_get_buf(source_win)].filetype
 
   local winopts = eval_winopts(lines, source_win, source_pos)
   local win = vim.api.nvim_open_win(buf, true, winopts)
