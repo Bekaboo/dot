@@ -122,19 +122,40 @@ local function open_float(lines, source_win, source_pos)
   return buf, win
 end
 
+---Restore each source line's indentation in translated lines
+---@param lines string[]
+---@param source_indents string[]
+local function restore_indentation(lines, source_indents)
+  for index, line in ipairs(lines) do
+    local indent = source_indents[index]
+    if indent then
+      lines[index] = indent .. line:gsub('^[ \t]*', '', 1)
+    end
+  end
+end
+
 ---Update the translation contents and floating-window size
 ---@param buf integer
 ---@param win integer
 ---@param output string
+---@param source_indents string[]
 ---@param source_win integer
 ---@param source_pos [integer, integer]
-local function update_float(buf, win, output, source_win, source_pos)
+local function update_float(
+  buf,
+  win,
+  output,
+  source_indents,
+  source_win,
+  source_pos
+)
   if not vim.api.nvim_buf_is_valid(buf) then
     return
   end
 
   local lines = output == '' and { '' }
     or vim.split(output:gsub('\r\n', '\n'), '\n', { plain = true })
+  restore_indentation(lines, source_indents)
   vim.bo[buf].modifiable = true
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   vim.bo[buf].modifiable = false
@@ -172,6 +193,12 @@ function M.translate(opts)
 
   local source_win = vim.api.nvim_get_current_win()
   local source_pos = vim.api.nvim_win_get_cursor(source_win)
+  local source_indents = vim
+    .iter(vim.split(text:gsub('\r\n', '\n'), '\n', { plain = true }))
+    :map(function(line)
+      return line:match('^[ \t]*') or ''
+    end)
+    :totable()
   local float_buf, float_win = open_float({ '' }, source_win, source_pos)
   local output = ''
   local stdout_err
@@ -190,7 +217,14 @@ function M.translate(opts)
         end
         output = output .. data
         vim.schedule(function()
-          update_float(float_buf, float_win, output, source_win, source_pos)
+          update_float(
+            float_buf,
+            float_win,
+            output,
+            source_indents,
+            source_win,
+            source_pos
+          )
         end)
       end,
     },
@@ -214,7 +248,14 @@ function M.translate(opts)
         vim.notify('[trans] returned no translation', vim.log.levels.WARN)
         return
       end
-      update_float(float_buf, float_win, output, source_win, source_pos)
+      update_float(
+        float_buf,
+        float_win,
+        output,
+        source_indents,
+        source_win,
+        source_pos
+      )
     end)
   )
 end
