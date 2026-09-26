@@ -189,6 +189,15 @@ return {
             init = first + 1
           end
         end
+
+        -- A plain `git branch` line has no target besides its ref. Treat the
+        -- whole line as that ref, including the worktree marker and indent.
+        -- Verbose branch output still requires the cursor to select either
+        -- the ref above or another object such as its commit below.
+        local line_ref = line:match('^[*+ ]%s*(%S+)%s*$')
+        if line_ref and candidates[line_ref] then
+          return line_ref
+        end
       end
 
       ---Resolve the semantic target under the cursor, then fall back to the
