@@ -251,25 +251,6 @@ require('my.utils.load').on_events(
     map('i', '<C-g>=', '<C-g>u<Esc>[s1z=`]a<C-G>u', { desc = 'Add misspelled word before cursor' })
     -- stylua: ignore end
 
-    -- Only clear highlights and message area and don't redraw if search
-    -- highlighting is on to avoid flickering
-    -- Use `:sil! dif` to suppress error
-    -- 'E11: Invalid in command-line window; <CR> executes, CTRL-C quits'
-    -- in command window
-    --
-    -- Don't use `map()` here because `<C-l>` is already defined as nvim's
-    -- default keymap before loading this config and we want to override it
-    vim.keymap.set(
-      { 'n', 'x' },
-      '<C-l>',
-      [['<Cmd>ec|noh|sil! dif<CR>' . (v:hlsearch ? '' : '<C-l>')]],
-      {
-        expr = true,
-        replace_keycodes = false,
-        desc = 'Clear and redraw screen',
-      }
-    )
-
     -- Edit current file's directory
     map(
       { 'n', 'x' },
