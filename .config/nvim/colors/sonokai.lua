@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Mon 28 Jul 2025 02:19:38 AM PDT
+-- Last Updated: Sun 18 Jan 2026 06:19:57 PM PST
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -17,7 +17,6 @@ local c_bg1
 local c_bg2
 local c_bg3
 local c_bg4
-local c_bg5
 local c_diff_red
 local c_diff_green
 local c_diff_blue
@@ -33,12 +32,11 @@ local c_grey_dim
 local c_none
 
 if vim.go.bg == 'dark' then
-  c_bg0         = { '#222328',   234    }
-  c_bg1         = { '#2c2e34',   235    }
-  c_bg2         = { '#33353f',   236    }
-  c_bg3         = { '#363944',   236    }
-  c_bg4         = { '#3b3e48',   237    }
-  c_bg5         = { '#414550',   237    }
+  c_bg0         = { '#2c2e34',   235    }
+  c_bg1         = { '#33353f',   236    }
+  c_bg2         = { '#363944',   236    }
+  c_bg3         = { '#3b3e48',   237    }
+  c_bg4         = { '#414550',   237    }
   c_diff_red    = { '#55393d',   52     }
   c_diff_green  = { '#40463e',   22     }
   c_diff_blue   = { '#354157',   17     }
@@ -53,12 +51,11 @@ if vim.go.bg == 'dark' then
   c_grey_dim    = { '#595f6f',   240    }
   c_none        = { 'NONE',      'NONE' }
 else
-  c_bg0         = { '#f8f8f8',   231    }
-  c_bg1         = { '#f3f3f3',   15     }
-  c_bg2         = { '#e7e7e7',   251    }
-  c_bg3         = { '#e3e3e3',   252    }
-  c_bg4         = { '#d4d4d4',   253    }
-  c_bg5         = { '#cbcbcb',   254    }
+  c_bg0         = { '#f3f3f3',   15     }
+  c_bg1         = { '#e7e7e7',   251    }
+  c_bg2         = { '#e3e3e3',   252    }
+  c_bg3         = { '#d4d4d4',   253    }
+  c_bg4         = { '#cbcbcb',   254    }
   c_diff_red    = { '#ffc1ce',   204    }
   c_diff_green  = { '#cde2b7',   40     }
   c_diff_blue   = { '#afd5e0',   17     }
@@ -78,7 +75,7 @@ end
 
 -- Terminal colors {{{
 -- stylua: ignore start
-vim.g.terminal_color_0  = c_bg2[1]
+vim.g.terminal_color_0  = c_bg1[1]
 vim.g.terminal_color_1  = c_red[1]
 vim.g.terminal_color_2  = c_green[1]
 vim.g.terminal_color_3  = c_yellow[1]
@@ -102,15 +99,15 @@ vim.g.terminal_color_17 = c_orange[1]
 -- Highlight groups {{{1
 local hlgroups = {
   -- UI {{{2
-  ColorColumn = { bg = c_bg2 },
+  ColorColumn = { bg = c_bg1 },
   Conceal = { fg = c_fg },
   CurSearch = { link = 'IncSearch' },
-  Cursor = { fg = c_bg1, bg = c_fg },
+  Cursor = { fg = c_bg0, bg = c_fg },
   CursorColumn = { link = 'CursorLine' },
   CursorIM = { link = 'Cursor' },
-  CursorLine = { bg = c_bg2 },
+  CursorLine = { bg = c_bg1 },
   CursorLineNr = { fg = c_fg, bold = true },
-  DebugPC = { bg = c_green, fg = c_bg1 },
+  DebugPC = { bg = c_green, fg = c_bg0 },
   DiffAdd = { bg = c_diff_green },
   DiffAdded = { fg = c_green },
   DiffChange = { bg = c_diff_blue },
@@ -120,59 +117,59 @@ local hlgroups = {
   DiffNewFile = { fg = c_orange },
   DiffOldFile = { fg = c_yellow },
   DiffRemoved = { fg = c_red },
-  DiffText = { bg = c_blue, fg = c_bg1 },
+  DiffText = { bg = c_blue, fg = c_bg0 },
   Directory = { fg = c_green },
-  EndOfBuffer = { fg = c_bg5 },
+  EndOfBuffer = { fg = c_bg4 },
   ErrorMsg = { fg = c_red },
-  FloatBorder = { bg = c_bg3, fg = c_grey },
+  FloatBorder = { bg = c_bg2, fg = c_grey },
   FloatFooter = { link = 'FloatTitle' },
-  FloatTitle = { bg = c_bg3, fg = c_red, bold = true },
+  FloatTitle = { bg = c_bg2, fg = c_red, bold = true },
   FoldColumn = { fg = c_grey_dim },
-  Folded = { bg = c_bg2, fg = c_grey },
+  Folded = { bg = c_bg1, fg = c_grey },
   Ignore = { fg = c_grey },
-  IncSearch = { bg = c_red, fg = c_bg1 },
+  IncSearch = { bg = c_red, fg = c_bg0 },
   LineNr = { fg = c_grey_dim },
-  MatchParen = { bg = c_bg5 },
+  MatchParen = { bg = c_bg4 },
   ModeMsg = { bold = true },
   MoreMsg = { fg = c_blue, bold = true },
   MsgSeparator = { link = 'StatusLine' },
   NonText = { fg = c_grey },
-  Normal = { bg = c_bg1, fg = c_fg },
-  NormalFloat = { bg = c_bg3, fg = c_fg },
+  Normal = { bg = c_bg0, fg = c_fg },
+  NormalFloat = { bg = c_bg2, fg = c_fg },
   NormalNC = { link = 'Normal' },
-  Pmenu = { bg = c_bg3, fg = c_fg },
-  PmenuExtra = { fg = c_grey, bg = c_bg3 },
+  Pmenu = { bg = c_bg2, fg = c_fg },
+  PmenuExtra = { fg = c_grey, bg = c_bg2 },
   PmenuExtraSel = { link = 'PmenuSel' },
-  PmenuKind = { fg = c_green, bg = c_bg3 },
+  PmenuKind = { fg = c_green, bg = c_bg2 },
   PmenuKindSel = { link = 'PmenuSel' },
-  PmenuSbar = { bg = c_bg3 },
-  PmenuSel = { bg = c_blue, fg = c_bg1 },
+  PmenuSbar = { bg = c_bg2 },
+  PmenuSel = { bg = c_blue, fg = c_bg0 },
   PmenuThumb = { bg = c_grey },
   Question = { fg = c_yellow },
-  QuickFixLine = { bg = c_blue, fg = c_bg1 },
-  Search = { bg = c_green, fg = c_bg1 },
+  QuickFixLine = { bg = c_blue, fg = c_bg0 },
+  Search = { bg = c_green, fg = c_bg0 },
   SignColumn = { fg = c_purple },
   SpellBad = { underdashed = true },
   SpellCap = { underdashed = true },
   SpellLocal = { underdashed = true },
   SpellRare = { underdashed = true },
-  StatusLine = { bg = c_bg4, fg = c_fg },
-  StatusLineNC = { bg = c_bg2, fg = c_grey },
-  Substitute = { bg = c_yellow, fg = c_bg1 },
-  TabLine = { bg = c_bg5, fg = c_fg },
-  TabLineFill = { bg = c_bg2, fg = c_grey },
-  TabLineSel = { bg = c_red, fg = c_bg1 },
-  TermCursor = { bg = c_orange, fg = c_bg1 },
+  StatusLine = { bg = c_bg3, fg = c_fg },
+  StatusLineNC = { bg = c_bg1, fg = c_grey },
+  Substitute = { bg = c_yellow, fg = c_bg0 },
+  TabLine = { bg = c_bg4, fg = c_fg },
+  TabLineFill = { bg = c_bg1, fg = c_grey },
+  TabLineSel = { bg = c_red, fg = c_bg0 },
+  TermCursor = { bg = c_orange, fg = c_bg0 },
   Title = { bold = true, fg = c_red },
   Underlined = { underline = true },
-  VertSplit = { fg = c_bg5 },
-  Visual = { bg = c_bg4 },
+  VertSplit = { fg = c_bg4 },
+  Visual = { bg = c_bg3 },
   VisualNOS = { link = 'Visual' },
   WarningMsg = { fg = c_yellow },
-  Whitespace = { fg = c_bg4 },
+  Whitespace = { fg = c_bg3 },
   WildMenu = { link = 'Pmenu' },
-  WinBar = { bg = c_bg0 },
-  WinBarNC = { bg = c_bg0, fg = c_grey },
+  WinBar = { bg = c_bg3 },
+  WinBarNC = { bg = c_bg1, fg = c_grey },
   WinSeparator = { link = 'VertSplit' },
   lCursor = { link = 'Cursor' },
   -- }}}2
@@ -188,7 +185,7 @@ local hlgroups = {
   Exception = { fg = c_red },
   Float = { link = 'Number' },
   Function = { fg = c_green },
-  Identifier = {},
+  Identifier = { fg = c_fg },
   Keyword = { fg = c_red },
   Number = { fg = c_purple },
   Operator = { fg = c_red },
@@ -197,13 +194,17 @@ local hlgroups = {
   SpecialKey = { fg = c_purple },
   Statement = { fg = c_red },
   String = { fg = c_yellow },
-  Todo = { bg = c_blue, fg = c_bg1, bold = true },
+  Todo = { bg = c_blue, fg = c_bg0, bold = true },
   Type = { fg = c_blue },
   Typedef = { fg = c_red },
   -- }}}2
 
   -- Treesitter syntax {{{2
   ['@attribute.builtin'] = { link = 'Special' },
+  ['@comment.error'] = { bg = c_red, fg = c_bg0, bold = true },
+  ['@comment.note'] = { bg = c_green, fg = c_bg0, bold = true },
+  ['@comment.todo'] = { bg = c_blue, fg = c_bg0, bold = true },
+  ['@comment.warning'] = { bg = c_yellow, fg = c_bg0, bold = true },
   ['@conceal'] = { fg = c_grey },
   ['@constructor.lua'] = {},
   ['@diff.delta'] = { link = 'DiffChanged' },
@@ -222,6 +223,8 @@ local hlgroups = {
   ['@markup.heading.4.marker.markdown'] = { link = '@conceal' },
   ['@markup.heading.5.marker.markdown'] = { link = '@conceal' },
   ['@markup.heading.6.marker.markdown'] = { link = '@conceal' },
+  ['@markup.heading.1.delimiter.vimdoc'] = { link = 'helpSectionDelim' },
+  ['@markup.heading.2.delimiter.vimdoc'] = { link = 'helpSectionDelim' },
   ['@markup.italic'] = { italic = true },
   ['@markup.link'] = { fg = c_purple, underline = true },
   ['@markup.link.label'] = { link = 'SpecialChar' },
@@ -234,6 +237,7 @@ local hlgroups = {
   ['@markup.raw'] = { fg = c_yellow },
   ['@markup.strikethrough'] = { strikethrough = true },
   ['@module.builtin'] = { link = 'Special' },
+  ['@property.yaml'] = { link = 'Special' },
   ['@punctuation'] = { link = 'Delimiter' },
   ['@string.special'] = { link = 'Special' },
   ['@string.special.url'] = { link = 'htmlLink' },
@@ -249,7 +253,7 @@ local hlgroups = {
   -- LSP semantic {{{2
   ['@lsp.mod.deprecated'] = { link = 'DiagnosticDeprecated' },
   ['@lsp.type.class'] = { link = '@type' },
-  ['@lsp.type.comment'] = { link = '@comment' },
+  ['@lsp.type.comment'] = {}, -- avoid interfere with `@comment.note/todo/warning/error`
   ['@lsp.type.decorator'] = { link = '@function' },
   ['@lsp.type.enum'] = { link = '@type' },
   ['@lsp.type.enumMember'] = { link = '@property' },
@@ -259,7 +263,6 @@ local hlgroups = {
   ['@lsp.type.interface'] = { link = '@type' },
   ['@lsp.type.keyword'] = { link = '@keyword' },
   ['@lsp.type.macro'] = { link = '@const.macro' },
-  ['@lsp.type.method'] = { link = '@method' },
   ['@lsp.type.modifier'] = { link = '@type.qualifier' },
   ['@lsp.type.namespace'] = { link = '@module' },
   ['@lsp.type.number'] = { link = '@number' },
@@ -277,9 +280,9 @@ local hlgroups = {
   -- LSP {{{2
   LspCodeLens = { fg = c_grey },
   LspInfoBorder = { link = 'FloatBorder' },
-  LspInlayHint = { bg = c_bg3, fg = c_grey },
+  LspInlayHint = { bg = c_bg2, fg = c_grey },
   LspReferenceRead = { link = 'LspReferenceText' },
-  LspReferenceText = { bg = c_bg3 },
+  LspReferenceText = { bg = c_bg2 },
   LspReferenceWrite = { link = 'LspReferenceWrite' },
   LspSignatureActiveParameter = { link = 'Search' },
   -- }}}
@@ -314,7 +317,7 @@ local hlgroups = {
   DiagnosticVirtualTextWarn = { fg = c_grey },
   -- }}}
 
-  -- Filetype {{{2
+  -- FileType {{{2
   -- Git
   gitHash = { fg = c_grey },
 
@@ -415,7 +418,7 @@ local hlgroups = {
   -- Plugins {{{2
   -- gitsigns
   GitSignsAdd = { fg = c_green },
-  GitSignsAddInline = { bg = c_green, fg = c_bg1 },
+  GitSignsAddInline = { bg = c_green, fg = c_bg0 },
   GitSignsAddNr = { fg = c_green },
   GitSignsChange = { fg = c_blue },
   GitSignsChangeNr = { fg = c_blue },
@@ -423,7 +426,7 @@ local hlgroups = {
   GitSignsDelete = { fg = c_red },
   GitSignsDeleteNr = { fg = c_red },
   GitSignsDeletePreview = { bg = c_diff_red },
-  GitSignsDeleteInline = { bg = c_red, fg = c_bg1 },
+  GitSignsDeleteInline = { bg = c_red, fg = c_bg0 },
 
   -- fugitive
   fugitiveHash = { link = 'gitHash' },
@@ -436,18 +439,18 @@ local hlgroups = {
   fugitiveUntrackedModifier = { fg = c_grey, bold = true },
 
   -- telescope
-  TelescopeBorder = { bg = c_bg2, fg = c_fg },
+  TelescopeBorder = { bg = c_bg1, fg = c_fg },
   TelescopeMatching = { fg = c_red, bold = true },
-  TelescopeNormal = { bg = c_bg2, fg = c_fg },
-  TelescopePromptBorder = { bg = c_bg4, fg = c_fg },
-  TelescopePromptNormal = { bg = c_bg4, fg = c_fg },
+  TelescopeNormal = { bg = c_bg1, fg = c_fg },
+  TelescopePromptBorder = { bg = c_bg3, fg = c_fg },
+  TelescopePromptNormal = { bg = c_bg3, fg = c_fg },
   TelescopeResultsClass = { link = 'Structure' },
   TelescopeResultsField = { link = '@variable.member' },
   TelescopeResultsMethod = { link = 'Function' },
   TelescopeResultsStruct = { link = 'Structure' },
   TelescopeResultsVariable = { link = '@variable' },
   TelescopeSelection = { link = 'Visual' },
-  TelescopeTitle = { bg = c_purple, fg = c_bg1 },
+  TelescopeTitle = { bg = c_purple, fg = c_bg0 },
 
   -- nvim-dap-ui
   DapUIBreakpointsCurrentLine = { bold = true, fg = c_red },
@@ -476,11 +479,12 @@ local hlgroups = {
   DapUIWatchesValue = { fg = c_fg },
 
   -- lazy.nvim
-  LazyProgressTodo = { fg = c_bg5 },
+  LazyProgressTodo = { fg = c_bg4 },
 
   -- statusline
-  StatusLineHeader = { bg = c_purple, fg = c_bg1 },
-  StatusLineHeaderModified = { bg = c_yellow, fg = c_bg1 },
+  StatusLineGitBranch = { bg = c_bg3, fg = c_blue },
+  StatusLineHeader = { bg = c_purple, fg = c_bg0 },
+  StatusLineHeaderModified = { bg = c_yellow, fg = c_bg0 },
   -- }}}
 }
 -- }}}1

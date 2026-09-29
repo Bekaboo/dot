@@ -3,7 +3,6 @@ silent! set confirm
 silent! set notimeout
 silent! set hidden
 silent! set foldlevelstart=99
-silent! set textwidth=79
 silent! set colorcolumn=+1
 silent! set helpheight=10
 silent! set laststatus=2
@@ -38,13 +37,13 @@ silent! set ttimeoutlen=0
 silent! set autoindent
 silent! set shortmess-=S
 silent! set sessionoptions+=globals
+silent! set path+=**
 silent! set viminfo=!,'100,<50,s10,h
 silent! set diffopt+=algorithm:histogram,indent-heuristic
 silent! set clipboard^=unnamedplus
 silent! set formatoptions+=normj
 silent! set formatoptions-=t
 silent! set nrformats+=blank
-silent! set selection=old
 silent! set tabclose=uselast
 
 " Enable 'exrc' only when 'secure' is working
@@ -241,34 +240,21 @@ call s:command_abbrev('mkdir', '!mkdir')
 call s:command_abbrev('touch', '!touch')
 call s:command_abbrev('chmod', '!chmod')
 
-abbrev ture  true
-abbrev Ture  True
-abbrev flase false
-abbrev fasle false
-abbrev Flase False
-abbrev Fasle False
-
 runtime ftplugin/man.vim
 call s:command_abbrev('man', 'Man')
 " }}}
 
 """ Autocmds {{{1
-" Check if an event or a list of events are supported
-" param: events string|string[] event or list of events
+" Check if given events are supported
+" param: string... event names
 " return: 0/1
-function! s:supportevents(events) abort
-  if type(a:events) == v:t_string
-    return exists('##' . a:events)
-  endif
-  if type(a:events) == v:t_list
-    for event in a:events
-      if !exists('##' . event)
-        return 0
-      endif
-    endfor
-    return 1
-  endif
-  return 0
+function! s:supportevents(...) abort
+  for event in a:000
+    if !exists('##' . event)
+      return 0
+    endif
+  endfor
+  return 1
 endfunction
 
 " https://github.com/vim/vim/commit/eb93f3f0e2b2ae65c5c3f55be3e62d64e3066f35
@@ -278,7 +264,7 @@ function! s:has_autocmd_once() abort
 endfunction
 
 " Autosave on focus lost, window/buf leave, etc. {{{2
-if s:supportevents(['BufLeave', 'WinLeave', 'FocusLost'])
+if s:supportevents('BufLeave', 'WinLeave', 'FocusLost')
   function! s:auto_save(buf, file) abort
     if getbufvar(a:buf, '&bt', '') ==# ''
       silent! update
@@ -296,25 +282,6 @@ if s:supportevents(['BufLeave', 'WinLeave', 'FocusLost'])
   augroup END
 endif
 " }}}2
-
-" Open quickfix/location list automatically when set with commands {{{2
-if s:supportevents('QuickFixCmdPost') && exists('*timer_start')
-  function! s:defer_open_qflist(type) abort
-    if expand(a:type) =~# '^l'
-      call timer_start(0, {-> execute('bel lwindow')})
-    else
-      call timer_start(0, {-> execute('bot cwindow')})
-    endif
-  endfunction
-
-  augroup QuickFixAutoOpen
-    au!
-    au QuickFixCmdPost * if len(getqflist()) > 1 |
-          \ call s:defer_open_qflist(expand('<amatch>')) |
-          \ endif
-  augroup END
-endif
-" }}} 2
 
 " Make all windows the same height/width on vim resized {{{2
 if s:supportevents('VimResized')
@@ -354,12 +321,12 @@ endif
 " }}}2
 
 " Automatically setting cwd to the root directory {{{2
-if s:supportevents([
+if s:supportevents(
       \ 'BufReadPost',
       \ 'BufWinEnter',
       \ 'WinEnter',
       \ 'FileChangedShellPost'
-      \ ])
+      \ )
   " Compute project directory for given path.
   " param: fpath string
   " param: a:1 patterns string[]? root patterns
@@ -435,7 +402,7 @@ endif
 " Restore and switch background from viminfo file,
 " for this autocmd to work properly, 'viminfo' option must contain '!'
 if ($COLORTERM ==# 'truecolor' || has('gui_running'))
-      \ && s:supportevents(['VimEnter', 'OptionSet', 'ColorScheme'])
+      \ && s:supportevents('VimEnter', 'OptionSet', 'ColorScheme')
 
   " Restore &background and colorscheme from viminfo file
   function! s:theme_restore() abort
@@ -485,7 +452,7 @@ if s:supportevents('FocusLost')
   augroup END
 endif
 
-if s:supportevents(['CursorMoved', 'ModeChanged'])
+if s:supportevents('CursorMoved', 'ModeChanged')
   augroup FixVirtualEditCursorPos
     au!
     " Record cursor position in visual mode if virtualedit is set and
@@ -503,7 +470,7 @@ endif
 " }}}2
 
 " Consistent &iskeyword in Ex command-line {{{2
-if s:supportevents(['CmdlineEnter', 'CmdlineLeave'])
+if s:supportevents('CmdlineEnter', 'CmdlineLeave')
   augroup FixCmdLineIskeyword
     au!
     au CmdlineEnter [:>/?=@] let g:_isk_lisp_buf = str2nr(expand('<abuf>')) |
@@ -560,6 +527,63 @@ if s:supportevents('SessionLoadPost') &&
   augroup END
 endif
 " }}}2
+
+" Make `colorcolumn` follow `textwidth` automatically {{{2
+if s:supportevents('BufNew', 'OptionSet') && exists('*timer_start')
+  " Set `colorcolumn` to follow `textwidth` in new buffers
+  " param: buf int buf number of the newly created buffer
+  function! s:init_cc(buf) abort
+    if !bufexists(a:buf) || getbufvar(a:buf, '&tw') == 0
+      return
+    endif
+
+    for win in win_findbuf(a:buf)
+      let l:cc = getwinvar(win, '&cc')
+      if l:cc ==# '' || l:cc =~# '+'
+        continue
+      endif
+      call setbufvar(a:buf, 'cc', getwinvar(win, '&cc'))
+      call setwinvar(win, '&cc', '+1')
+    endfor
+  endfunction
+
+  " Set `colorcolumn` to follow `textwidth` when `textwidth` is set
+  " Restore `colorcolumn` when `textwidth` is unset
+  function! s:update_cc() abort
+    if v:option_command ==# 'setglobal'
+      return
+    endif
+
+    " `textwidth` is set, make `colorcolumn` follow it
+    if v:option_new > 0 && &l:cc !~# '+'
+      let b:cc = &l:cc
+      for win in win_findbuf(bufnr())
+        if getwinvar(win, '&cc') !=# ''
+          silent! call setwinvar(win, '&cc', '+1')
+        endif
+      endfor
+      return
+    endif
+
+    " `textwidth` is unset, restore `colorcolumn`
+    if v:option_new == 0 && &l:cc =~# '+' && exists('b:cc')
+      for win in win_findbuf(bufnr())
+        if getwinvar(win, '&cc') !=# ''
+          silent! call setwinvar(win, '&cc', b:cc)
+        endif
+      endfor
+      unlet b:cc
+    endif
+  endfunction
+
+  augroup DynamicCC
+    autocmd!
+    autocmd BufNew,BufEnter * let g:_cc_abuf = str2nr(expand('<abuf>')) |
+          \ call timer_start(0, {-> s:init_cc(g:_cc_abuf)})
+    autocmd OptionSet textwidth call s:update_cc()
+  augroup END
+endif
+" }}}2
 " }}}1
 
 """ Keymaps {{{1
@@ -575,8 +599,19 @@ inoremap <C-r> <C-r><C-p>
 " Search within visual selection with `<M-/>` or `<M-?>`, see:
 " - https://stackoverflow.com/a/3264324/16371328
 " - https://www.reddit.com/r/neovim/comments/1kv7som/comment/mu7lo52/ {{{2
-xnoremap <Esc>/  <C-\><C-n>`</\%V
-xnoremap <Esc>?  <C-\><C-n>`>?\%V
+xnoremap <Esc>/  <C-\><C-n>`</\%V\(\)<Left><Left>
+xnoremap <Esc>?  <C-\><C-n>`>?\%V\(\)<Left><Left>
+
+" Remove trailing spaces
+function! s:remove_trailing_whitespaces() abort
+  normal! m`
+  let lz = &lazyredraw
+  set lazyredraw
+  keeppatterns silent %s/\s\+$//e
+  let &lazyredraw = lz
+  normal! ``
+endfunction
+nnoremap <silent> d<Space> :call <SID>remove_trailing_whitespaces()<CR>
 
 " Select previously changed/yanked text, useful for selecting pasted text
 nnoremap gz `[v`]
@@ -594,27 +629,54 @@ snoremap <C-h> <C-o>"_s
 
 " Yank paragraphs as single lines, useful for yanking hard-wrapped
 " paragraphs in nvim and paste it in browsers or other editors {{{2
-if s:supportevents(['TextYankPost', 'ModeChanged'])
-  " param: reg string register name
+if s:supportevents('TextYankPost', 'ModeChanged') && exists('*timer_start')
+  " Buffer-local rules to decide if a line should be joined with previous lines
+  "
+  " In text/markdown files, don't join title/first line of list item with
+  " previous lines when yanking with joined paragraphs
+  augroup YankJoinedParagraphsFt
+    au!
+    au FileType text let b:should_join_line = {
+          \ line -> line !=# '' && line !~# '^\s*\([-*]\s\+\|\d\+\.\)'
+          \ }
+    au FileType markdown,quarto,rmd let b:should_join_line = {
+          \ line -> line !=# '' && line !~# '^\s*\([-*#]\s\+\|\d\+\.\)'
+          \ }
+  augroup END
+
+  " param: line string
+  " return: 0/1
+  function! s:should_join_line(line) abort
+    " Buffer-local rules
+    if exists('b:should_join_line')
+      return call(b:should_join_line, [a:line])
+    endif
+    return a:line !=# ''
+  endfunction
+
   function! s:join_paragraphs_in_reg(reg) abort
     let joined_lines = []
-    let joined_line = v:null
 
     for line in v:event.regcontents
-      if line !=# ''
-        let joined_line = joined_line is v:null ? '' : joined_line . ' '
-        let joined_line .= trim(line)
+      " Start a new paragraph if line is an empty line so that the original
+      " paragraphs are kept
+      if line ==# ''
+        call add(joined_lines, '')
+      endif
+
+      if !s:should_join_line(line)
+        call add(joined_lines, line)
         continue
       endif
-      if joined_line isnot v:null
-        call add(joined_lines, joined_line)
+
+      let last_line = empty(joined_lines) ? v:null : remove(joined_lines, len(joined_lines) - 1)
+      let trimmed = trim(line)
+      if type(last_line) == v:t_none || last_line ==# ''
+        call add(joined_lines, trimmed)
+      else
+        call add(joined_lines, printf('%s %s', last_line, trimmed))
       endif
-      call add(joined_lines, line)
-      let joined_line = v:null
     endfor
-    if joined_line isnot v:null
-      call add(joined_lines, joined_line)
-    endif
 
     call setreg(a:reg, joined_lines, v:event.regtype)
   endfunction
@@ -629,7 +691,8 @@ if s:supportevents(['TextYankPost', 'ModeChanged'])
       " trigger in order:
       " 1. `ModeChanged` with pattern 'n:no'
       " 2. `TextYankPost`
-      " 3. `ModeChanged` with pattern 'no:n'
+      " 3. `ModeChanged` with pattern 'no:n' (or 'V:n', if using custom text
+      "    object, e.g. `af`, `az`)
       "
       " If joined paragraph yank is canceled, e.g. with `gy<Esc>` in normal
       " mode, the following events will  trigger in order:
@@ -640,7 +703,8 @@ if s:supportevents(['TextYankPost', 'ModeChanged'])
       " single line after changing from operator pending mode 'no' to normal
       " mode 'n' to prevent it from affecting normal yanking e.g. with `y`
       if mode() =~# '^n'
-        au ModeChanged no:n ++once sil! au! YankJoinedParagraphs
+        au ModeChanged *:n ++once call timer_start(0,
+              \ {-> execute('sil! au! YankJoinedParagraphs')})
       endif
     augroup END
 
@@ -673,37 +737,15 @@ nnoremap <silent> [b :exec v:count1 . 'bp'<CR>
 
 " Switching between quickfix/location list items {{{2
 nnoremap <silent> [q :exec v:count1 . 'cp'<CR>
-nnoremap <silent> [l :exec v:count1 . 'lp'<CR>
-nnoremap <silent> ]p :exec v:count1 . 'lne'<CR>
-nnoremap <silent> ]l :exec v:count1 . 'cne'<CR>
+nnoremap <silent> ]q :exec v:count1 . 'cn'<CR>
 nnoremap <silent> [Q :exec v:count1 . 'cfir'<CR>
-nnoremap <silent> [L :exec v:count1 . 'lfir'<CR>
 nnoremap <silent> ]Q :exec (v:count ? v:count : '') . 'cla'<CR>
+
+nnoremap <silent> [l :exec v:count1 . 'lp'<CR>
+nnoremap <silent> ]l :exec v:count1 . 'lne'<CR>
+nnoremap <silent> [L :exec v:count1 . 'lfir'<CR>
 nnoremap <silent> ]L :exec (v:count ? v:count : '') . 'lla'<CR>
 " }}}
-
-" Tabpages {{{2
-" param: tab_action tab switch command 'tabnext'|'tabprev'
-" param: a:1 default_count number? default to v:count
-" return: 0
-function! TabSwitch(tab_action, ...) abort
-  let cnt = get(a:, 1, v:count)
-  let num_tabs = tabpagenr('$')
-  if num_tabs >= cnt
-    exe printf('silent! %s %s', a:tab_action, cnt == 0 ? '' : string(cnt))
-    return
-  endif
-  tablast
-  for _ in range(cnt - num_tabs)
-    tabnew
-  endfor
-endfunction
-
-nnoremap <silent> gt :<C-u>call TabSwitch('tabnext')<CR>
-nnoremap <silent> gT :<C-u>call TabSwitch('tabprev')<CR>
-xnoremap <silent> gt :<C-u>call TabSwitch('tabnext')<CR>
-xnoremap <silent> gT :<C-u>call TabSwitch('tabprev')<CR>
-" }}}2
 
 " Spell {{{2
 inoremap <C-g>+ <Esc>[szg`]a
@@ -833,6 +875,35 @@ xmap <silent><expr> g{ <SID>paragraph_first_line()
 xmap <silent><expr> g} <SID>paragraph_last_line()
 omap <silent>       g{ :silent! exe 'normal V' . v:count1 . 'g{'<CR>
 omap <silent>       g} :silent! exe 'normal V' . v:count1 . 'g}'<CR>
+" }}}2
+
+" Jump to git conflict markers {{{2
+nnoremap <silent> [<  :call search('^<\{7}',  'sb')<CR>
+nnoremap <silent> ]<  :call search('^<\{7}',  's')<CR>
+nnoremap <silent> [>  :call search('^>\{7}',  'sb')<CR>
+nnoremap <silent> ]>  :call search('^>\{7}',  's')<CR>
+nnoremap <silent> [x  :call search('^=\{7}',  'sb')<CR>
+nnoremap <silent> ]x  :call search('^=\{7}',  's')<CR>
+nnoremap <silent> [\| :call search('^\|\{7}', 'sb')<CR>
+nnoremap <silent> ]\| :call search('^\|\{7}', 's')<CR>
+
+xnoremap <silent> [<  :<C-u>exe 'norm! gv'<Bar>exe search('^<\{7}',  'sb')<CR>
+xnoremap <silent> ]<  :<C-u>exe 'norm! gv'<Bar>exe search('^<\{7}',  's')<CR>
+xnoremap <silent> [>  :<C-u>exe 'norm! gv'<Bar>exe search('^>\{7}',  'sb')<CR>
+xnoremap <silent> ]>  :<C-u>exe 'norm! gv'<Bar>exe search('^>\{7}',  's')<CR>
+xnoremap <silent> [x  :<C-u>exe 'norm! gv'<Bar>exe search('^=\{7}',  'sb')<CR>
+xnoremap <silent> ]x  :<C-u>exe 'norm! gv'<Bar>exe search('^=\{7}',  's')<CR>
+xnoremap <silent> [\| :<C-u>exe 'norm! gv'<Bar>exe search('^\|\{7}', 'sb')<CR>
+xnoremap <silent> ]\| :<C-u>exe 'norm! gv'<Bar>exe search('^\|\{7}', 's')<CR>
+
+onoremap <silent> [<  :<C-u>call search('^<\{7}',  'sb')<CR>
+onoremap <silent> ]<  :<C-u>call search('^<\{7}',  's')<CR>
+onoremap <silent> [>  :<C-u>call search('^>\{7}',  'sb')<CR>
+onoremap <silent> ]>  :<C-u>call search('^>\{7}',  's')<CR>
+onoremap <silent> [x  :<C-u>call search('^=\{7}',  'sb')<CR>
+onoremap <silent> ]x  :<C-u>call search('^=\{7}',  's')<CR>
+onoremap <silent> [\| :<C-u>call search('^\|\{7}', 'sb')<CR>
+onoremap <silent> ]\| :<C-u>call search('^\|\{7}', 's')<CR>
 " }}}2
 
 " Text objects {{{2
@@ -1225,8 +1296,10 @@ map! <Esc>[3;3~ <C-w>
 
 noremap! <C-d>  <Del>
 cnoremap <C-b>  <Left>
-cnoremap <C-f>  <Right>
-cnoremap <C-o>  <C-f>
+
+cnoremap <expr> <C-f> exists('+cedit') && &cedit ==# "\x06" && <SID>end_of_line()
+      \ ? "\x06"
+      \ : "\<Right>"
 
 inoremap <expr> <C-b>  <SID>i_ctrl_b()
 inoremap <expr> <C-f>  <SID>i_ctrl_f()
@@ -1235,7 +1308,7 @@ noremap! <expr> <Esc>b <SID>ic_meta_b()
 noremap! <expr> <C-a>  <SID>ic_ctrl_a()
 noremap! <expr> <C-e>  <SID>ic_ctrl_e()
 
-if s:supportevents(['TextChangedI', 'CmdlineChanged']) && s:has_autocmd_once()
+if s:supportevents('TextChangedI', 'CmdlineChanged') && s:has_autocmd_once()
   " `ic_small_del()` requires support for `TextChangedI`, `CmdlineChanged`
   " events and the `++once` argument (patch-8.1.1113)
   function! s:ic_ctrl_w() abort
@@ -1466,9 +1539,9 @@ endfunction
 function! s:running_tui() abort
   for cmd in s:fg_cmds()
     if cmd =~# '\v(sudo.*\s+)?(.*sh\s+-c\s+)?(.*python.*)?\S*
-        \(n?vim?|vimdiff|emacs(client)?|lem|nano|h(eli)?x|kak|
-        \tmux|vifm|yazi|ranger|lazygit|h?top|gdb|fzf|nmtui|opencode|
-        \sudoedit|crontab|asciinema|w3m|python3?\s+-m)($|\s+)'
+        \<(n?vim?|vimdiff|emacs(client)?|lem|nano|h(eli)?x|kak|
+        \tmux|vifm|yazi|ranger|lazygit|h?top|gdb|fzf|nmtui|opencode|claude|codex|qodercli|
+        \sudoedit|crontab|asciinema|w3m|python3?\s+-m|ssh)>($|\s+)'
       return 1
     endif
   endfor
@@ -1732,7 +1805,7 @@ if $TMUX !=# '' && $TMUX_PANE !=# '' && has('patch-8.1.1140')
   " in a vim/nvim session
   if s:tmux_get_pane_opt('@is_vim') ==# ''
     call s:tmux_set_pane_opt('@is_vim', 'yes')
-    if s:supportevents(['VimResume', 'VimLeave', 'VimSuspend'])
+    if s:supportevents('VimResume', 'VimLeave', 'VimSuspend')
       augroup TmuxNavSetIsVim
         au!
         au VimResume           * :call s:tmux_set_pane_opt('@is_vim', 'yes')
@@ -1747,8 +1820,11 @@ endif
 noremap  <nowait> <Esc> <Esc>
 noremap! <nowait> <Esc> <C-\><C-n>
 if exists(':tmap') == 2
+  " Wisely exit terminal mode with <Esc>
   tnoremap       <nowait> <Esc> <Esc>
   tnoremap <expr><nowait> <Esc> <SID>running_tui() ? '<Esc>' : '<C-\><C-n>'
+  " Force-send <Esc> to the terminal regardless of the running app
+  tnoremap <C-\><Esc> <Esc>
 endif
 " }}}1
 

@@ -10,8 +10,12 @@ CloseButtonIconColorInactive=AsSelected
 [ButtonSizing]
 FullHeightButtonSpacingLeft=0
 FullHeightButtonSpacingRight=0
-FullHeightButtonWidthMarginRight=8
+FullHeightButtonWidthMarginLeft=10
+FullHeightButtonWidthMarginRight=20
 IntegratedRoundedRectangleBottomPadding=0
+
+[Global]
+RefreshedConfig=6.5.3
 
 [ShadowStyle]
 ShadowSize=ShadowSmall
@@ -32,3 +36,5 @@ WindowCornerRadius=0
 [WindowOutlineStyle]
 WindowOutlineAccentColorOpacityActive=100
 WindowOutlineContrastOpacityInactive=0
+WindowOutlineStyleActive=WindowOutlineAccentColor
+WindowOutlineThickness=1.85

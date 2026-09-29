@@ -9,6 +9,7 @@
   "extensions.experimental.affinity": {
     "asvetliakov.vscode-neovim": 1
   },
+  "extensions.ignoreRecommendations": true,
   "files.autoSave": "onFocusChange",
   "git.openRepositoryInParentFolders": "always",
   "security.workspace.trust.enabled": false,

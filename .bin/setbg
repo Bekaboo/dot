@@ -7,40 +7,44 @@ STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 DEFAULT_COLOR='macro'
 DEFAULT_BG='dark'
 
+# $1: name of the old theme
+# $2: 'light' or 'dark'
 get_theme_variant() {
-    # $1: name of the old theme
-    # $2: 'light' or 'dark'
     case "$2" in
-    light) echo "$1" | sed 's/dark\|light/light/' | sed 's/Dark\|Light/Light/' ;;
-    dark) echo "$1" | sed 's/dark\|light/dark/' | sed 's/Dark\|Light/Dark/' ;;
+    light) echo "$1" | sed 's/dark$/light/' | sed 's/Dark$/Light/' ;;
+    dark) echo "$1" | sed 's/light$/dark/' | sed 's/Light$/Dark/' ;;
     esac
 }
 
+# $1: 'light' or 'dark'
 setbg_alacritty() {
-    # $1: 'light' or 'dark'
     (
         cd "$CONFIG_HOME/alacritty" || return
         theme_path="theme.toml"
         themes_dir="themes"
         # If $1 is empty, only need to ensure symlink to color theme file exists
         if [ -z "$1" ]; then
-            ln -s "$themes_dir/$DEFAULT_BG.toml" "$theme_path" 2>/dev/null
+            [ -e "$themes_dir/$DEFAULT_BG.toml" ] &&
+                ln -s "$themes_dir/$DEFAULT_BG.toml" "$theme_path" 2>/dev/null
         else
-            ln -sf "$themes_dir/$1.toml" "$theme_path"
+            [ -e "$themes_dir/$1.toml" ] &&
+                ln -sf "$themes_dir/$1.toml" "$theme_path"
         fi
     )
 }
 
+# $1: 'light' or 'dark'
 setbg_foot() {
-    # $1: 'light' or 'dark'
     (
         cd "$CONFIG_HOME/foot" || return
         theme_path="theme.ini"
         themes_dir="themes"
         if [ -z "$1" ]; then
-            ln -s "$themes_dir/$DEFAULT_BG.ini" "$theme_path" 2>/dev/null
+            [ -e "$themes_dir/$DEFAULT_BG.ini" ] &&
+                ln -s "$themes_dir/$DEFAULT_BG.ini" "$theme_path" 2>/dev/null
         else
-            ln -sf "$themes_dir/$1.ini" "$theme_path"
+            [ -e "$themes_dir/$1.ini" ] &&
+                ln -sf "$themes_dir/$1.ini" "$theme_path"
         fi
     )
 
@@ -49,8 +53,8 @@ setbg_foot() {
     [ -e "$config_path" ] && touch "$config_path"
 }
 
+# $1: 'light' or 'dark'
 setbg_kitty() {
-    # $1: 'light' or 'dark'
     (
         cd "$CONFIG_HOME/kitty" || return
 
@@ -60,18 +64,18 @@ setbg_kitty() {
         # `{dark,light,no-preference}-theme.auto.conf` when OS switches to
         # dark/light mode, see: https://sw.kovidgoyal.net/kitty/kittens/themes/#change-color-themes-automatically-when-the-os-switches-between-light-and-dark
         if [ -z "$1" ]; then
-            ln -s "$DEFAULT_BG-theme.auto.conf" "$no_preference_theme_path" 2>/dev/null
-            ln -s "$DEFAULT_BG-theme.auto.conf" "$current_theme_path" 2>/dev/null
+            [ -e "$DEFAULT_BG-theme.auto.conf" ] && ln -s "$DEFAULT_BG-theme.auto.conf" "$no_preference_theme_path" 2>/dev/null
+            [ -e "$DEFAULT_BG-theme.auto.conf" ] && ln -s "$DEFAULT_BG-theme.auto.conf" "$current_theme_path" 2>/dev/null
         else
-            ln -sf "$1-theme.auto.conf" "$no_preference_theme_path"
-            ln -sf "$1-theme.auto.conf" "$current_theme_path"
+            [ -e "$1-theme.auto.conf" ] && ln -sf "$1-theme.auto.conf" "$no_preference_theme_path"
+            [ -e "$1-theme.auto.conf" ] && ln -sf "$1-theme.auto.conf" "$current_theme_path"
         fi
 
         # Touch main theme files for kitty to pick up the changes
         touch "$no_preference_theme_path"
         touch "$current_theme_path"
 
-        if has kitty; then
+        if command -v kitty >/dev/null 2>&1; then
             for pid in $(pgrep kitty); do
                 # Don't use `kill -SIGUSR1`, will cause error: 'kill: SIGUSR1: invalid signal specification'
                 # Source: https://unix.stackexchange.com/questions/630281/why-doesnt-kill-s-sigusr1-work-inside-script-but-works-on-command-line-re
@@ -81,60 +85,72 @@ setbg_kitty() {
     )
 }
 
+# $1: 'light' or 'dark'
 setbg_wezterm() {
-    # $1: 'light' or 'dark'
     (
         cd "$CONFIG_HOME/wezterm" || return
         theme_path="theme.toml"
         themes_dir="colors"
         if [ -z "$1" ]; then
-            ln -s "$themes_dir/$DEFAULT_BG.toml" "$theme_path" 2>/dev/null
+            [ -e "$themes_dir/$DEFAULT_BG.toml" ] &&
+                ln -s "$themes_dir/$DEFAULT_BG.toml" "$theme_path" 2>/dev/null
         else
-            ln -sf "$themes_dir/$1.toml" "$theme_path"
+            [ -e "$themes_dir/$1.toml" ] &&
+                ln -sf "$themes_dir/$1.toml" "$theme_path"
         fi
     )
 }
 
+# $1: 'light' or 'dark'
 setbg_highlight() {
-    # $1: 'light' or 'dark'
     (
         cd "$HOME/.highlight" || return
         themes_dir="themes"
         theme_path="highlight.theme"
         if [ -z "$1" ]; then
-            ln -s "$themes_dir/$DEFAULT_BG.theme" "$theme_path" 2>/dev/null
+            [ -e "$themes_dir/$DEFAULT_BG.theme" ] &&
+                ln -s "$themes_dir/$DEFAULT_BG.theme" "$theme_path" 2>/dev/null
         else
-            ln -sf "$themes_dir/$1.theme" "$theme_path"
+            [ -e "$themes_dir/$1.theme" ] &&
+                ln -sf "$themes_dir/$1.theme" "$theme_path"
         fi
     )
 }
 
+# $1: 'light' or 'dark'
 setbg_nvim() {
-    # $1: 'light' or 'dark'
-    if [ -z "$1" ] || ! has nvim; then
+    if [ -z "$1" ] || ! command -v nvim >/dev/null 2>&1; then
         return 1
     fi
 
-    if ! has nvim-socks; then
-        echo "Error: script 'nvim-socks' not found, skip setting backgroud for nvim" >&2
-        return 1
-    fi
+    for dep in nvim-socks timeout; do
+        if ! command -v "$dep" >/dev/null 2>&1; then
+            echo "Error: '$dep' not found, skip setting backgroud for nvim" >&2
+            return 1
+        fi
+    done
 
-    for sock in $(nvim-socks); do
+    for sock in $(timeout 1 nvim-socks); do
         # Notice: Don't use `--remote-send "<Cmd>...<CR>"` to send the command
         # here because of nvim's bug where the string following `<Cmd>` will be
         # interpreted as normal keys (not as part of a command) if nvim is in
         # operator-pending/replace mode. This makes nvim unexpectedly insert
         # the command string "f &bg ..." to the buffer, see:
         # https://github.com/neovim/neovim/issues/31238
-        nvim --clean --headless --server "$sock" \
-            --remote-expr "execute(\"if &bg !=# '$1' && &tgc \
+        #
+        # Enqueue the update so colorscheme redraw does not delay the RPC
+        # response. Keep a short timeout because a live nvim process can stop
+        # servicing RPC requests.
+        timeout 2 nvim --clean --headless --server "$sock" \
+            --remote-expr "timer_start(0, { _ -> execute(\"if &bg !=# '$1' && &tgc \
                 | let g:script_set_bg=1 | set bg=$1 | unlet g:script_set_bg \
-                | endif\")" \
+                | endif\") })" \
             +qa! >/dev/null 2>&1 &
+
+        nvim_clients="$nvim_clients $!"
     done
 
-    if ! has jq; then
+    if ! command -v jq >/dev/null 2>&1; then
         echo "Warning: 'jq' not executable, skip writing to nvim's colorscheme file" >&2
     else
         colors_json="$STATE_HOME/nvim/colors.json"
@@ -149,11 +165,14 @@ setbg_nvim() {
         fi
     fi
 
-    wait
+    if [ -n "$nvim_clients" ]; then
+        # shellcheck disable=SC2086
+        wait $nvim_clients
+    fi
 }
 
+# $1: 'light' or 'dark'
 setbg_macos() {
-    # $1: 'light' or 'dark'
     if [ -z "$1" ]; then
         return 1
     fi
@@ -161,16 +180,16 @@ setbg_macos() {
     # Make sure apps' background sync with system background, see:
     # - https://www.reddit.com/r/MacOS/comments/atty3g/dark_mode_is_broken_on_my_mac/
     # - https://medium.com/@n1kk/how-to-tweak-macos-mojave-dark-mode-per-app-a5fab0574691
-    if has defaults; then
+    if command -v defaults >/dev/null 2>&1; then
         defaults delete -g NSRequiresAquaSystemAppearance 2>/dev/null
     fi
 
     # Ref: https://brettterpstra.com/2018/09/26/shell-tricks-toggling-dark-mode-from-terminal/
-    if has osascript; then
+    if command -v osascript >/dev/null 2>&1; then
         # Key does not exist if auto-switch is disabled and is 1 if auto-switch
         # is enabled, saved for later restoration to keep auto-switch behavior
         # after setting bg, see https://apple.stackexchange.com/a/391814
-        if has defaults; then
+        if command -v defaults >/dev/null 2>&1; then
             auto_switch=$(defaults read -g AppleInterfaceStyleSwitchesAutomatically 2>/dev/null)
         fi
 
@@ -190,19 +209,19 @@ EOF
     fi
 }
 
+# $1: 'light' or 'dark'
 setbg_plasma() {
-    # $1: 'light' or 'dark'
     if [ -z "$1" ]; then
         return 1
     fi
-    if has plasma-apply-desktoptheme; then
+    if command -v plasma-apply-desktoptheme >/dev/null 2>&1; then
         current_theme=$(plasma-get-current-desktoptheme)
         new_theme=$(get_theme_variant "$current_theme" "$1")
         if [ "$current_theme" != "$new_theme" ]; then
             plasma-apply-desktoptheme "$new_theme" >/dev/null 2>&1
         fi
     fi
-    if has plasma-apply-colorscheme; then
+    if command -v plasma-apply-colorscheme >/dev/null 2>&1; then
         current_scheme=$(plasma-get-current-colorscheme)
         new_scheme=$(get_theme_variant "$current_scheme" "$1")
         if [ "$current_scheme" != "$new_scheme" ]; then
@@ -211,9 +230,9 @@ setbg_plasma() {
     fi
 }
 
+# $1: 'light' or 'dark'
 setbg_gnome() {
-    # $1: 'light' or 'dark'
-    if [ -z "$1" ] || ! has gsettings; then
+    if [ -z "$1" ] || ! command -v gsettings >/dev/null 2>&1; then
         return 1
     fi
 
@@ -230,10 +249,10 @@ setbg_gnome() {
     esac
 }
 
+# $1: path to config file
+# $2: 'light' or 'dark'
 get_new_profile_name() {
-    # $1: path to config file
-    # $2: 'light' or 'dark'
-    if ! has kreadconfig5; then
+    if ! command -v kreadconfig5 >/dev/null 2>&1; then
         return 1
     fi
 
@@ -251,10 +270,10 @@ get_new_profile_name() {
     echo "$new_profile_name"
 }
 
+# $1: name of the app
+# $2: 'light' or 'dark'
 konsole_switch_profile_bg() {
-    # $1: name of the app
-    # $2: 'light' or 'dark'
-    if ! has kreadconfig5 || ! has kwriteconfig5; then
+    if ! command -v kreadconfig5 >/dev/null 2>&1 || ! command -v kwriteconfig5 >/dev/null 2>&1; then
         return 1
     fi
     rc="$CONFIG_HOME/${1}rc"
@@ -267,34 +286,39 @@ konsole_switch_profile_bg() {
     fi
 }
 
+# $1: 'light' or 'dark'
 setbg_konsole_yakuake() {
-    # $1: 'light' or 'dark'
     konsole_switch_profile_bg konsole "$1"
     konsole_switch_profile_bg yakuake "$1"
     konsole_switch_profile_bg dolphin "$1"
     konsole_switch_profile_bg kate "$1"
 }
 
+# $1: 'light' or 'dark'
 setbg_termux() {
-    # $1: 'light' or 'dark'
     (
         cd "$HOME/.termux" || return
         theme_path="colors.properties"
         themes_dir="colors"
         if [ -z "$1" ]; then
-            ln -s "$themes_dir/$DEFAULT_BG.properties" "$theme_path" 2>/dev/null
+            [ -e "$themes_dir/$DEFAULT_BG.properties" ] &&
+                ln -s "$themes_dir/$DEFAULT_BG.properties" "$theme_path" 2>/dev/null
         else
-            ln -sf "$themes_dir/$1.properties" "$theme_path"
+            [ -e "$themes_dir/$1.properties" ] &&
+                ln -sf "$themes_dir/$1.properties" "$theme_path"
         fi
-        if has termux-reload-settings; then
+        if command -v termux-reload-settings >/dev/null 2>&1; then
             termux-reload-settings
         fi
     )
 }
 
+# $1: 'light' or 'dark'
 setbg_okular() {
-    # $1: 'light' or 'dark'
-    if [ -z "$1" ] || ! has okular || ! has kwriteconfig5; then
+    if [ -z "$1" ] ||
+        ! command -v okular >/dev/null 2>&1 ||
+        ! command -v kwriteconfig5 >/dev/null 2>&1 ||
+        ! command -v qdbus >/dev/null 2>&1; then
         return 1
     fi
     case "$1" in
@@ -308,14 +332,44 @@ setbg_okular() {
         "$changecolors"
 }
 
+# $1: 'light' or 'dark'
+setbg_zathura() {
+    if [ -z "$1" ] || ! command -v qdbus >/dev/null 2>&1; then
+        return
+    fi
+
+    case "$1" in
+    dark) should_recolor=true ;;
+    light) should_recolor=false ;;
+    *) return ;;
+    esac
+    zathura_recolor_cmd=$(printf 'set recolor %s' "$should_recolor")
+
+    # https://blog.akaisuisei.org/communicating-with-zathura-via-dbus.html
+    qdbus | grep 'org\.pwmt\.zathura\.PID-' | while read -r dest; do
+        qdbus "$dest" /org/pwmt/zathura org.pwmt.zathura.ExecuteCommand \
+            "$zathura_recolor_cmd" >/dev/null 2>&1 &
+    done
+
+    # Persist bg settings, main config `$XDG_CONFIG_HOME/zathura/zathurarc`
+    # needs to include local config `zathuralocalrc`
+    zathuralocalrc="$CONFIG_HOME/zathura/zathuralocalrc"
+    if grep -qE '^\s*set\s+recolor\s+.*' "$zathuralocalrc" 2>/dev/null; then
+        sed -i'' "s/^\s*set\s\+recolor\s\+.*/set recolor $should_recolor/" \
+            "$zathuralocalrc"
+    else
+        printf '\nset recolor %s\n' "$should_recolor" >>"$zathuralocalrc"
+    fi
+}
+
+# $1: 'light' or 'dark'
 setbg_vscode() {
-    # $1: 'light' or 'dark'
     rc="$CONFIG_HOME/Code/User/settings.json"
     if [ -z "$1" ] || [ ! -e "$rc" ]; then
         return 1
     fi
 
-    if ! has jq; then
+    if ! command -v jq >/dev/null 2>&1; then
         echo "Error: 'jq' not executable, skip writing to vscode's settings file" >&2
         return 1
     fi
@@ -346,27 +400,28 @@ setbg_vscode() {
     fi
 }
 
+# $1: 'light' or 'dark'
 setbg_fish() {
-    # $1: 'light' or 'dark'
     (
         cd "$CONFIG_HOME/fish/themes" || return
         theme_path="Current.theme"
         if [ -z "$1" ]; then
             case "$DEFAULT_BG" in
-            dark) ln -s "Dark.theme" "$theme_path" 2>/dev/null ;;
-            light) ln -s "Light.theme" "$theme_path" 2>/dev/null ;;
+            dark) [ -e "Dark.theme" ] && ln -s "Dark.theme" "$theme_path" 2>/dev/null ;;
+            light) [ -e "Light.theme" ] && ln -s "Light.theme" "$theme_path" 2>/dev/null ;;
             esac
         else
             case "$1" in
-            dark) ln -sf "Dark.theme" "$theme_path" ;;
-            light) ln -sf "Light.theme" "$theme_path" ;;
+            dark) [ -e "Dark.theme" ] && ln -sf "Dark.theme" "$theme_path" ;;
+            light) [ -e "Light.theme" ] && ln -sf "Light.theme" "$theme_path" ;;
             esac
         fi
-        has fish &&
-            fish -c 'set -U __fish_reload_theme (head -c 16 /dev/urandom)'
+        command -v fish >/dev/null 2>&1 &&
+            fish -c 'set -U __fish_reload_theme (head -c 16 /dev/urandom | sha256sum)'
     )
 }
 
+# $1: 'light' or 'dark'
 setbg_libreoffice() {
     if [ -z "$1" ]; then
         return 1
@@ -419,27 +474,28 @@ setbg_libreoffice() {
 # Record the last timestamp when this script is called with 'conflict' bg
 # (different bg from suggested bg, see `suggestbg`) so that we can check the log
 # and avoid automatically setting the background if the user has already
-# manually set the background, see `__checkbg_watch_awake` and
-# `~/.config/autostart/__checkbg_watch_awake.desktop`
+# manually set the background, see `__checkbg` and
+# `~/.config/autostart/__checkbg.desktop`
 #
 # $1: bg, 'light' or 'dark'
-write_conflict_log() {
-    timestamp_dir="$STATE_HOME/setbg"
-    timestamp_file="$timestamp_dir/timestamp"
-    if [ ! -d "$timestamp_dir" ]; then
-        mkdir -p "$timestamp_dir" || return 1
+write_conflict() {
+    conflict_file="$STATE_HOME/setbg/conflict"
+    conflict_file_dir="$(dirname "$conflict_file")"
+
+    if [ ! -d "$conflict_file_dir" ]; then
+        mkdir -p "$conflict_file_dir"
     fi
 
     # Non-conflict bg
     if [ -z "$1" ] || [ "$1" = "$(suggestbg)" ]; then
-        if [ -e "$timestamp_file" ]; then
-            rm "$timestamp_file" || return 1
+        if [ -e "$conflict_file" ]; then
+            rm "$conflict_file"
         fi
         return
     fi
 
     # Conflict bg
-    date +%s >"$timestamp_file" # seconds since the epoch (1970-01-01 00:00 UTC)
+    date +%s >"$conflict_file" # seconds since the epoch (1970-01-01 00:00 UTC)
 }
 
 usage() {
@@ -448,18 +504,31 @@ usage() {
 }
 
 main() {
+    if ! command -v flock >/dev/null 2>&1; then
+        echo "Error: 'flock' not found" >&2
+        return 1
+    fi
+
+    lockfile="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/setbg.lock"
+    exec 9>"$lockfile"
+    if ! flock -n 9; then
+        echo "Waiting for existing instance (lock: '$lockfile')" >&2
+        flock 9
+    fi
+
     bg=''
     for arg in "$@"; do
         case "$arg" in
         light | dark)
             bg="$arg"
-            shift
             ;;
         *)
             usage
             ;;
         esac
     done
+
+    trap 'kill $(jobs -p) 2>/dev/null; wait' EXIT INT TERM HUP
 
     # Called by `syncbg` to sync apps' background with system/desktop
     # background, don't set system background
@@ -488,14 +557,19 @@ main() {
     setbg_foot "$bg" &
     setbg_highlight "$bg" &
     setbg_nvim "$bg" &
+    nvim_pid=$!
     setbg_konsole_yakuake "$bg" &
     setbg_termux "$bg" &
     setbg_okular "$bg" &
+    setbg_zathura "$bg" &
     setbg_vscode "$bg" &
     setbg_fish "$bg" &
     setbg_libreoffice "$bg" &
-    write_conflict_log "$bg" &
+    write_conflict "$bg" &
+    wait "$nvim_pid"
+    nvim_status=$?
     wait
+    return "$nvim_status"
 }
 
 main "$@"

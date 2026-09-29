@@ -2,7 +2,7 @@
 # vim:ft=sh:et:ts=4:sw=4:sts=4:
 
 main() {
-    if ! has plasma-apply-desktoptheme; then
+    if ! command -v plasma-apply-desktoptheme >/dev/null 2>&1; then
         echo "plasma-apply-desktoptheme not found" >&2
         return 1
     fi

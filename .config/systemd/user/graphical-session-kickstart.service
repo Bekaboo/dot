@@ -1,0 +1,12 @@
+[Unit]
+Description=Kickstart graphical-session.target for TTY-started Plasma sessions
+Wants=graphical-session.target
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/true
+
+[Install]
+WantedBy=default.target

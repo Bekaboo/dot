@@ -2,7 +2,7 @@ if vim.g.loaded_markdown_title ~= nil then
   return
 end
 
-local utils = require('utils')
+local utils = require('my.utils')
 
 if vim.g.md_fmt_title == nil then
   vim.g.md_fmt_title = true
@@ -24,6 +24,7 @@ _G._title_lowercase_words = {
   ['if'] = true,
   ['in'] = true,
   ['is'] = true,
+  ['isn'] = true,
   ['nor'] = true,
   ['of'] = true,
   ['off'] = true,
@@ -40,6 +41,7 @@ _G._title_lowercase_words = {
   ['was'] = true,
   ['were'] = true,
   ['with'] = true,
+  ['without'] = true,
   ['yet'] = true,
 }
 
@@ -88,8 +90,14 @@ local function format_title()
     return
   end
 
-  local word = line:sub(1, cursor[2]):match('[%w_]+$')
+  local prefix = line:sub(1, cursor[2])
+  local word = prefix:match('[%w_]+$')
   if word == nil then
+    return
+  end
+
+  -- Don't capitalize after apostrophe, e.g. "We're", "I'm", etc.
+  if prefix:sub(#prefix - #word - 1, #prefix - #word):match("%S'") then
     return
   end
 
@@ -129,14 +137,17 @@ end
 
 local buf = vim.api.nvim_get_current_buf()
 vim.api.nvim_create_autocmd('TextChangedI', {
-  group = vim.api.nvim_create_augroup('MarkdownAutoFormatTitle' .. buf, {}),
+  group = vim.api.nvim_create_augroup(
+    string.format('my.ft.markdown.format_title.buf.%d', buf),
+    {}
+  ),
   buffer = buf,
   callback = format_title,
 })
 
 vim.api.nvim_buf_create_user_command(
   buf,
-  'MarkdownAutoFormatTitle',
+  'MarkdownSetAutoFormatTitle',
   function(args)
     local parsed_args = utils.cmd.parse_cmdline_args(args.fargs)
     local scope = vim[parsed_args.global and 'g' or 'b']
@@ -145,24 +156,20 @@ vim.api.nvim_buf_create_user_command(
     end
     if args.bang or vim.tbl_contains(parsed_args, 'toggle') then
       scope.md_fmt_title = not scope.md_fmt_title
-      return
-    end
-    if args.fargs[1] == '&' or vim.tbl_contains(parsed_args, 'reset') then
+    elseif args.fargs[1] == '&' or vim.tbl_contains(parsed_args, 'reset') then
       scope.md_fmt_title = true
-      return
-    end
-    if args.fargs[1] == '?' or vim.tbl_contains(parsed_args, 'status') then
-      vim.notify(tostring(scope.md_fmt_title))
-      return
-    end
-    if vim.tbl_contains(parsed_args, 'enable') then
+    elseif vim.tbl_contains(parsed_args, 'enable') then
       scope.md_fmt_title = true
-      return
-    end
-    if vim.tbl_contains(parsed_args, 'disable') then
+    elseif vim.tbl_contains(parsed_args, 'disable') then
       scope.md_fmt_title = false
-      return
     end
+    vim.notify(
+      string.format(
+        '[markdown.title] Markdown title auto-format %s %s',
+        scope.md_fmt_title and 'enabled' or 'disabled',
+        scope == vim.g and 'globally' or 'locally'
+      )
+    )
   end,
   {
     nargs = '*',

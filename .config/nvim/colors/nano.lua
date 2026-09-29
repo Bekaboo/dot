@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Thu Aug  7 16:00:08 2025
+-- Last Updated: Sun 18 Jan 2026 06:19:57 PM PST
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -78,7 +78,7 @@ if vim.go.bg == 'dark' then
   vim.g.terminal_color_5  = c_strong[1]
   vim.g.terminal_color_6  = c_salient[1]
   vim.g.terminal_color_7  = c_faded[1]
-  vim.g.terminal_color_8  = c_faded[1]
+  vim.g.terminal_color_8  = c_faint[1]
   vim.g.terminal_color_9  = c_popout[1]
   vim.g.terminal_color_10 = c_pine[1]
   vim.g.terminal_color_11 = c_critical[1]
@@ -95,7 +95,7 @@ else
   vim.g.terminal_color_5  = c_strong[1]
   vim.g.terminal_color_6  = c_salient[1]
   vim.g.terminal_color_7  = c_faded[1]
-  vim.g.terminal_color_8  = c_faded[1]
+  vim.g.terminal_color_8  = c_faint[1]
   vim.g.terminal_color_9  = c_critical[1]
   vim.g.terminal_color_10 = c_pine[1]
   vim.g.terminal_color_11 = c_popout[1]
@@ -190,7 +190,7 @@ local hlgroups = {
   Boolean = { link = 'Constant' },
   Array = { fg = c_critical },
   Float = { link = 'Number' },
-  Identifier = {},
+  Identifier = { fg = c_foreground },
   Builtin = { fg = c_foreground },
   Field = { link = 'None' },
   Enum = { fg = c_faded },
@@ -224,12 +224,13 @@ local hlgroups = {
   Underlined = { underline = true },
   Ignore = { fg = c_subtle },
   Error = { fg = c_popout },
-  Todo = { fg = c_background, bg = c_popout, bold = true },
+  Todo = { fg = c_foreground, bg = c_highlight, bold = true },
   -- }}}2
 
   -- Treesitter syntax {{{2
   ['@variable.member'] = { link = 'Field' },
   ['@property'] = { link = 'Field' },
+  ['@property.yaml'] = { link = 'Special' },
   ['@annotation'] = { link = 'Operator' },
   ['@comment'] = { link = 'Comment' },
   ['@none'] = { link = 'None' },
@@ -239,6 +240,8 @@ local hlgroups = {
   ['@punctuation.delimiter'] = { link = 'Delimiter' },
   ['@punctuation.bracket'] = { link = 'Bracket' },
   ['@markup.list'] = { link = 'Delimiter' },
+  ['@markup.list.checked'] = { link = 'DiagnosticOk' },
+  ['@markup.list.unchecked'] = { link = '@markup.link.markdown_inline' },
   ['@string'] = { link = 'String' },
   ['@string.escape'] = { fg = c_critical },
   ['@string.regexp'] = { fg = c_popout },
@@ -267,15 +270,15 @@ local hlgroups = {
   ['@keyword.import'] = { link = 'Include' },
   ['@keyword.exception'] = { link = 'Exception' },
   ['@type'] = { link = 'Type' },
-  ['@type.Builtin'] = { link = 'Type' },
+  ['@type.builtin'] = { link = 'Type' },
   ['@type.qualifier'] = { link = 'Type' },
   ['@type.definition'] = { link = 'Typedef' },
   ['@keyword.storage'] = { link = 'StorageClass' },
   ['@attribute'] = { link = 'Label' },
   ['@variable'] = { link = 'Identifier' },
-  ['@variable.Builtin'] = { link = 'Builtin' },
+  ['@variable.builtin'] = { link = 'Builtin' },
   ['@constant'] = { link = 'Constant' },
-  ['@constant.Builtin'] = { link = 'Constant' },
+  ['@constant.builtin'] = { link = 'Constant' },
   ['@constant.macro'] = { link = 'Macro' },
   ['@module'] = { link = 'Namespace' },
   ['@markup.heading'] = { link = 'Title' },
@@ -296,18 +299,20 @@ local hlgroups = {
   ['@markup.heading.4.marker.markdown'] = { link = 'markdownH4Delimiter' },
   ['@markup.heading.5.marker.markdown'] = { link = 'markdownH5Delimiter' },
   ['@markup.heading.6.marker.markdown'] = { link = 'markdownH6Delimiter' },
-  ['@comment.todo'] = { link = 'Todo' },
-  ['@comment.todo.unchecked'] = { link = 'Todo' },
-  ['@comment.todo.checked'] = { link = 'Done' },
-  ['@comment.info'] = { link = 'SpecialComment' },
-  ['@comment.warning'] = { link = 'WarningMsg' },
-  ['@comment.error'] = { link = 'ErrorMsg' },
+  ['@markup.heading.1.delimiter.vimdoc'] = { link = 'helpSectionDelim' },
+  ['@markup.heading.2.delimiter.vimdoc'] = { link = 'helpSectionDelim' },
+  ['@comment.todo'] = { fg = c_foreground, bg = c_highlight, bold = true },
+  ['@comment.note'] = { fg = c_salient, bg = c_highlight, bold = true },
+  ['@comment.warning'] = { fg = c_popout, bg = c_highlight, bold = true },
+  ['@comment.error'] = { fg = c_critical, bg = c_highlight, bold = true },
   ['@diff.delta'] = { link = 'DiffChanged' },
   ['@diff.minus'] = { link = 'DiffRemoved' },
   ['@diff.plus'] = { link = 'DiffAdded' },
   ['@tag'] = { link = 'Tag' },
   ['@tag.attribute'] = { link = 'Identifier' },
   ['@tag.delimiter'] = { link = 'Delimiter' },
+  ['@text.todo.unchecked'] = { link = 'DiagnosticWarn' },
+  ['@text.todo.checked'] = { link = 'DiagnosticOk' },
   ['@markup.strong'] = { bold = true },
   ['@markup.strike'] = { strikethrough = true },
   ['@markup.emphasis'] = { fg = c_popout, bold = true },
@@ -322,7 +327,7 @@ local hlgroups = {
   ['@lsp.type.struct'] = { link = 'Structure' },
   ['@lsp.type.macro'] = { link = 'Macro' },
   ['@lsp.type.method'] = { link = 'Function' },
-  ['@lsp.type.comment'] = { link = 'Comment' },
+  ['@lsp.type.comment'] = {}, -- avoid interfere with `@comment.note/todo/warning/error`
   ['@lsp.type.function'] = { link = 'Function' },
   ['@lsp.type.property'] = { link = 'Field' },
   ['@lsp.type.variable'] = { link = 'Variable' },
@@ -379,7 +384,7 @@ local hlgroups = {
   },
   -- }}}2
 
-  -- Filetype {{{2
+  -- FileType {{{2
   -- HTML
   htmlArg = { fg = c_foreground },
   htmlBold = { bold = true },

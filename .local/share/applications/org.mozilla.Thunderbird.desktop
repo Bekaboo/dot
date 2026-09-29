@@ -1,0 +1,27 @@
+[Desktop Entry]
+Actions=ComposeMessage;OpenAddressBook;
+Categories=Network;Email;
+Comment=Send and receive mail with Thunderbird
+Exec=MOZ_ENABLE_WAYLAND=0 thunderbird %u
+GenericName=Mail Client
+Icon=org.mozilla.Thunderbird
+MimeType=message/rfc822;x-scheme-handler/mailto;text/calendar;text/vcard;text/x-vcard;x-scheme-handler/webcal;x-scheme-handler/webcals;x-scheme-handler/mid;
+Name=Thunderbird
+NoDisplay=false
+Path=
+PrefersNonDefaultGPU=false
+StartupNotify=true
+StartupWMClass=thunderbird
+Terminal=false
+TerminalOptions=
+Type=Application
+X-KDE-SubstituteUID=false
+X-KDE-Username=
+
+[Desktop Action ComposeMessage]
+Exec=MOZ_ENABLE_WAYLAND=0 thunderbird -compose
+Name=Write new message
+
+[Desktop Action OpenAddressBook]
+Exec=MOZ_ENABLE_WAYLAND=0 thunderbird -addressbook
+Name=Open address book

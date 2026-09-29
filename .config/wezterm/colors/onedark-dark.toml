@@ -1,0 +1,34 @@
+[colors]
+ansi = [
+    '#181a1f',
+    '#e86671',
+    '#98c379',
+    '#e5c07b',
+    '#61afef',
+    '#c678dd',
+    '#56b6c2',
+    '#abb2bf',
+]
+brights = [
+    '#5c6370',
+    '#e86671',
+    '#98c379',
+    '#e5c07b',
+    '#61afef',
+    '#c678dd',
+    '#56b6c2',
+    '#abb2bf',
+]
+foreground = '#abb2bf'
+background = '#282c34'
+cursor_bg = '#abb2bf'
+cursor_border = '#abb2bf'
+cursor_fg = '#282c34'
+selection_bg = '#3b3f4c'
+selection_fg = '#abb2bf'
+
+[colors.indexed]
+
+[metadata]
+name = 'Onedark Dark'
+author = 'Bekaboo'

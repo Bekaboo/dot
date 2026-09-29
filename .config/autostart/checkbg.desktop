@@ -1,6 +1,0 @@
-[Desktop Entry]
-Exec=checkbg
-Icon=application-x-shellscript
-Name=checkbg
-Type=Application
-X-KDE-AutostartScript=true

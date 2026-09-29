@@ -1,0 +1,6 @@
+[Desktop Entry]
+Exec=__synccolor
+Icon=application-x-shellscript
+Name=__synccolor
+Type=Application
+X-KDE-AutostartScript=true

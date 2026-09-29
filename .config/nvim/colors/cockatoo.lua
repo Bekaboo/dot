@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      GPL-3.0
--- Last Updated: Mon 28 Jul 2025 02:19:38 AM PDT
+-- Last Updated: Sat 17 Jan 2026 09:14:34 PM PST
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -250,7 +250,7 @@ local hlgroups = {
   Boolean = { fg = c_ochre },
   Array = { fg = c_orange },
   Float = { link = 'Number' },
-  Identifier = {},
+  Identifier = { fg = c_smoke },
   Builtin = { fg = c_pink },
   Field = { fg = c_pigeon },
   Enum = { fg = c_ochre },
@@ -284,7 +284,7 @@ local hlgroups = {
   Underlined = { underline = true },
   Ignore = { fg = c_iron },
   Error = { fg = c_scarlet },
-  Todo = { fg = c_black, bg = c_beige, bold = true },
+  Todo = { fg = c_beige },
   -- }}}2
 
   -- Treesitter syntax {{{2
@@ -327,15 +327,15 @@ local hlgroups = {
   ['@keyword.import'] = { link = 'Include' },
   ['@keyword.exception'] = { link = 'Exception' },
   ['@type'] = { link = 'Type' },
-  ['@type.Builtin'] = { link = 'Type' },
+  ['@type.builtin'] = { link = 'Type' },
   ['@type.qualifier'] = { link = 'Type' },
   ['@type.definition'] = { link = 'Typedef' },
   ['@keyword.storage'] = { link = 'StorageClass' },
   ['@attribute'] = { link = 'Label' },
   ['@variable'] = { link = 'Identifier' },
-  ['@variable.Builtin'] = { link = 'Builtin' },
+  ['@variable.builtin'] = { link = 'Builtin' },
   ['@constant'] = { link = 'Constant' },
-  ['@constant.Builtin'] = { link = 'Constant' },
+  ['@constant.builtin'] = { link = 'Constant' },
   ['@constant.macro'] = { link = 'Macro' },
   ['@module'] = { link = 'Namespace' },
   ['@markup.link.label.symbol'] = { link = 'Identifier' },
@@ -359,10 +359,10 @@ local hlgroups = {
   ['@markup.heading.4.marker.markdown'] = { link = 'markdownH4Delimiter' },
   ['@markup.heading.5.marker.markdown'] = { link = 'markdownH5Delimiter' },
   ['@markup.heading.6.marker.markdown'] = { link = 'markdownH6Delimiter' },
+  ['@markup.heading.1.delimiter.vimdoc'] = { link = 'helpSectionDelim' },
+  ['@markup.heading.2.delimiter.vimdoc'] = { link = 'helpSectionDelim' },
   ['@comment.todo'] = { link = 'Todo' },
-  ['@comment.todo.unchecked'] = { link = 'Todo' },
-  ['@comment.todo.checked'] = { link = 'Done' },
-  ['@comment.info'] = { link = 'SpecialComment' },
+  ['@comment.note'] = { link = 'SpecialComment' },
   ['@comment.warning'] = { link = 'WarningMsg' },
   ['@comment.error'] = { link = 'ErrorMsg' },
   ['@diff.delta'] = { link = 'DiffChanged' },
@@ -385,8 +385,7 @@ local hlgroups = {
   ['@lsp.type.struct'] = { link = 'Structure' },
   ['@lsp.type.macro'] = { link = 'Macro' },
   ['@lsp.type.method'] = { link = 'Function' },
-  ['@lsp.type.comment'] = { link = 'Comment' },
-  ['@lsp.type.function'] = { link = 'Function' },
+  ['@lsp.type.comment'] = {}, -- avoid interfere with `@comment.note/todo/warning/error`
   ['@lsp.type.property'] = { link = 'Field' },
   ['@lsp.type.variable'] = { link = 'Variable' },
   ['@lsp.type.decorator'] = { link = 'Label' },
@@ -442,7 +441,7 @@ local hlgroups = {
   },
   -- }}}2
 
-  -- Filetype {{{2
+  -- FileType {{{2
   -- HTML
   htmlArg = { fg = c_pigeon },
   htmlBold = { bold = true },

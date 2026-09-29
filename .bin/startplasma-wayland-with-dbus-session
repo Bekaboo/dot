@@ -5,5 +5,21 @@
 # - https://wiki.archlinux.org/title/KDE#From_the_console
 # - https://invent.kde.org/plasma/plasma-workspace/-/merge_requests/128
 
+# Import env vars for systemd services. The KDE portal backend doesn't need a
+# real display -- use offscreen so it can run without a Wayland socket.
+export QT_QPA_PLATFORM=offscreen
+systemctl --user import-environment XDG_RUNTIME_DIR QT_QPA_PLATFORM
+
+# graphical-session.target refuses manual start, pull it in using user systemd
+# start graphical-session-kickstart.service so that xdg-desktop-portal and its
+# backends can run.
+# Without it, Firefox and other GTK apps can't detect system colorscheme
+# changes, along with other integration losses, e.g. Firefox won't use
+# Dolphin/KDE file picker to save to picking files.
+systemctl --user start graphical-session-kickstart.service
+
+# Reset for Plasma itself -- the desktop needs the real Wayland backend.
+export QT_QPA_PLATFORM=wayland
+
 drs=$([ -z "$DBUS_SESSION_BUS_ADDRESS" ] && echo dbus-run-session)
 exec $drs startplasma-wayland

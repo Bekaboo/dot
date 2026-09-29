@@ -1,14 +1,19 @@
 set selection-clipboard clipboard
+set recolor-lightcolor "#21272c"
+set recolor-keephue true
 
 map d       scroll half-down
 map u       scroll half-up
 map <C-l>   reload
 map <C-r>   reload
 map <A-d>   recolor
-map |       toggle_page_mode
-map \\      cycle_first_column
+map \\      toggle_page_mode
+map |       cycle_first_column
+
+include zathuralocalrc
 
 # Some useful keymaps:
 # o     - populate command line with ":open "
 # O     - populate command line with ":open <recent-path>"
 # <A-o> - open system file chooser
+# <Tab> - show table of contents

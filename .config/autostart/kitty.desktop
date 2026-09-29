@@ -1,0 +1,6 @@
+[Desktop Entry]
+Exec=kitty -1 --start-as hidden
+Icon=kitty
+Name=kitty (single instance daemon)
+Type=Application
+X-KDE-AutostartScript=true

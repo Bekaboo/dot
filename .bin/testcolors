@@ -18,9 +18,9 @@ reset_output() {
 
 # Get terminal width, default to 80 if unable to determine
 get_width() {
-    if has tput; then
+    if command -v tput >/dev/null 2>&1; then
         tput cols
-    elif has stty; then
+    elif command -v stty >/dev/null 2>&1; then
         stty size | cut -d' ' -f2
     else
         echo 80

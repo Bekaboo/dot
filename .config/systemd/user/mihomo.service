@@ -1,0 +1,13 @@
+[Unit]
+Description=Mihomo Proxy
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/mihomo -d %h/.config/mihomo
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

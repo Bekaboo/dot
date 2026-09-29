@@ -4,14 +4,13 @@
 CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
-DEFAULT_COLOR='macro'
+DEFAULT_COLOR='nano'
 DEFAULT_BG='dark'
 
 # Convert a color name to capital style
 # gruvbox-material -> Gruvbox Material
 get_cap_theme_name() {
-    # $1: name of the fish theme
-    if ! has awk || ! has sed; then
+    if ! command -v awk >/dev/null 2>&1 || ! command -v sed >/dev/null 2>&1; then
         return 1
     fi
     theme_name=$(echo "$1" |
@@ -20,35 +19,36 @@ get_cap_theme_name() {
     echo "$theme_name"
 }
 
+# $1: name of the colorscheme
 setcolor_alacritty() {
-    # $1: name of the colorscheme
     (
         cd "$CONFIG_HOME/alacritty/themes" || return
         dark_theme_path="dark.toml"
         light_theme_path="light.toml"
         # If $1 is empty, only need to ensure symlink to color theme files exists
         if [ -z "$1" ]; then
-            ln -s "$DEFAULT_COLOR-dark.toml" "$dark_theme_path" 2>/dev/null
-            ln -s "$DEFAULT_COLOR-light.toml" "$light_theme_path" 2>/dev/null
+            [ -e "$DEFAULT_COLOR-dark.toml" ] && ln -s "$DEFAULT_COLOR-dark.toml" "$dark_theme_path" 2>/dev/null
+            [ -e "$DEFAULT_COLOR-light.toml" ] && ln -s "$DEFAULT_COLOR-light.toml" "$light_theme_path" 2>/dev/null
         else
-            ln -sf "$1-dark.toml" "$dark_theme_path"
-            ln -sf "$1-light.toml" "$light_theme_path"
+            [ -e "$1-dark.toml" ] && ln -sf "$1-dark.toml" "$dark_theme_path"
+            [ -e "$1-light.toml" ] && ln -sf "$1-light.toml" "$light_theme_path"
         fi
+        touch ../alacritty.toml
     )
 }
 
+# $1: name of the colorscheme
 setcolor_foot() {
-    # $1: name of the colorscheme
     (
         cd "$CONFIG_HOME/foot/themes" || return
         dark_theme_path="dark.ini"
         light_theme_path="light.ini"
         if [ -z "$1" ]; then
-            ln -s "$DEFAULT_COLOR-dark.ini" "$dark_theme_path" 2>/dev/null
-            ln -s "$DEFAULT_COLOR-light.ini" "$light_theme_path" 2>/dev/null
+            [ -e "$DEFAULT_COLOR-dark.ini" ] && ln -s "$DEFAULT_COLOR-dark.ini" "$dark_theme_path" 2>/dev/null
+            [ -e "$DEFAULT_COLOR-light.ini" ] && ln -s "$DEFAULT_COLOR-light.ini" "$light_theme_path" 2>/dev/null
         else
-            ln -sf "$1-dark.ini" "$dark_theme_path"
-            ln -sf "$1-light.ini" "$light_theme_path"
+            [ -e "$1-dark.ini" ] && ln -sf "$1-dark.ini" "$dark_theme_path"
+            [ -e "$1-light.ini" ] && ln -sf "$1-light.ini" "$light_theme_path"
         fi
     )
 
@@ -56,8 +56,8 @@ setcolor_foot() {
     [ -e "$config_path" ] && touch "$config_path"
 }
 
+# $1: name of the colorscheme
 setcolor_kitty() {
-    # $1: name of the colorscheme
     (
         cd "$CONFIG_HOME/kitty" || return
 
@@ -69,18 +69,18 @@ setcolor_kitty() {
         dark_theme_path="dark-theme.auto.conf"
         light_theme_path="light-theme.auto.conf"
         if [ -z "$1" ]; then
-            ln -s "themes/$DEFAULT_COLOR-dark.conf" "$dark_theme_path" 2>/dev/null
-            ln -s "themes/$DEFAULT_COLOR-light.conf" "$light_theme_path" 2>/dev/null
+            [ -e "themes/$DEFAULT_COLOR-dark.conf" ] && ln -s "themes/$DEFAULT_COLOR-dark.conf" "$dark_theme_path" 2>/dev/null
+            [ -e "themes/$DEFAULT_COLOR-light.conf" ] && ln -s "themes/$DEFAULT_COLOR-light.conf" "$light_theme_path" 2>/dev/null
         else
-            ln -sf "themes/$1-dark.conf" "$dark_theme_path"
-            ln -sf "themes/$1-light.conf" "$light_theme_path"
+            [ -e "themes/$1-dark.conf" ] && ln -sf "themes/$1-dark.conf" "$dark_theme_path"
+            [ -e "themes/$1-light.conf" ] && ln -sf "themes/$1-light.conf" "$light_theme_path"
         fi
 
         # Touch main theme files for kitty to pick up the changes
         touch "$no_preference_theme_path"
         touch "$current_theme_path"
 
-        if has kitty; then
+        if command -v kitty >/dev/null 2>&1; then
             for pid in $(pgrep kitty); do
                 # Don't use `kill -SIGUSR1`, will cause error: 'kill: SIGUSR1: invalid signal specification'
                 # Source: https://unix.stackexchange.com/questions/630281/why-doesnt-kill-s-sigusr1-work-inside-script-but-works-on-command-line-re
@@ -90,83 +90,91 @@ setcolor_kitty() {
     )
 }
 
+# $1: name of the colorscheme
 setcolor_termux() {
-    # $1: name of the colorscheme
     (
         cd "$HOME/.termux/colors" || return
         dark_color_path="dark.properties"
         light_color_path="light.properties"
         if [ -z "$1" ]; then
-            ln -s "$DEFAULT_COLOR-dark.properties" "$dark_color_path" 2>/dev/null
-            ln -s "$DEFAULT_COLOR-light.properties" "$light_color_path" 2>/dev/null
+            [ -e "$DEFAULT_COLOR-dark.properties" ] && ln -s "$DEFAULT_COLOR-dark.properties" "$dark_color_path" 2>/dev/null
+            [ -e "$DEFAULT_COLOR-light.properties" ] && ln -s "$DEFAULT_COLOR-light.properties" "$light_color_path" 2>/dev/null
         else
-            ln -sf "$1-dark.properties" "$dark_color_path"
-            ln -sf "$1-light.properties" "$light_color_path"
+            [ -e "$1-dark.properties" ] && ln -sf "$1-dark.properties" "$dark_color_path"
+            [ -e "$1-light.properties" ] && ln -sf "$1-light.properties" "$light_color_path"
         fi
-        if has termux-reload-settings; then
+        if command -v termux-reload-settings >/dev/null 2>&1; then
             termux-reload-settings
         fi
     )
 }
 
+# $1: name of the colorscheme
 setcolor_wezterm() {
-    # $1: name of the colorscheme
     (
         cd "$CONFIG_HOME/wezterm/colors" || return
         dark_theme_path="dark.toml"
         light_theme_path="light.toml"
         if [ -z "$1" ]; then
-            ln -s "$DEFAULT_COLOR-dark.toml" "$dark_theme_path" 2>/dev/null
-            ln -s "$DEFAULT_COLOR-light.toml" "$light_theme_path" 2>/dev/null
+            [ -e "$DEFAULT_COLOR-dark.toml" ] && ln -s "$DEFAULT_COLOR-dark.toml" "$dark_theme_path" 2>/dev/null
+            [ -e "$DEFAULT_COLOR-light.toml" ] && ln -s "$DEFAULT_COLOR-light.toml" "$light_theme_path" 2>/dev/null
         else
-            ln -sf "$1-dark.toml" "$dark_theme_path"
-            ln -sf "$1-light.toml" "$light_theme_path"
+            [ -e "$1-dark.toml" ] && ln -sf "$1-dark.toml" "$dark_theme_path"
+            [ -e "$1-light.toml" ] && ln -sf "$1-light.toml" "$light_theme_path"
         fi
     )
 }
 
+# $1: name of the colorscheme
 setcolor_highlight() {
-    # $1: name of the colorscheme
     (
         cd "$HOME/.highlight/themes" || return
         dark_theme_path="dark.theme"
         light_theme_path="light.theme"
         if [ -z "$1" ]; then
-            ln -s "$DEFAULT_COLOR-dark.theme" "$dark_theme_path" 2>/dev/null
-            ln -s "$DEFAULT_COLOR-light.theme" "$light_theme_path" 2>/dev/null
+            [ -e "$DEFAULT_COLOR-dark.theme" ] && ln -s "$DEFAULT_COLOR-dark.theme" "$dark_theme_path" 2>/dev/null
+            [ -e "$DEFAULT_COLOR-light.theme" ] && ln -s "$DEFAULT_COLOR-light.theme" "$light_theme_path" 2>/dev/null
         else
-            ln -sf "$1-dark.theme" "$dark_theme_path"
-            ln -sf "$1-light.theme" "$light_theme_path"
+            [ -e "$1-dark.theme" ] && ln -sf "$1-dark.theme" "$dark_theme_path"
+            [ -e "$1-light.theme" ] && ln -sf "$1-light.theme" "$light_theme_path"
         fi
     )
 }
 
+# $1: name of the colorscheme
 setcolor_nvim() {
-    # $1: name of the colorscheme
-    if [ -z "$1" ] || ! has nvim; then
+    if [ -z "$1" ] || ! command -v nvim >/dev/null 2>&1; then
         return 1
     fi
 
-    if ! has nvim-socks; then
-        echo "Error: script 'nvim-socks' not found, skip setting colors for nvim" >&2
-        return 1
-    fi
+    for dep in nvim-socks timeout; do
+        if ! command -v "$dep" >/dev/null 2>&1; then
+            echo "Error: '$dep' not found, skip setting colors for nvim" >&2
+            return 1
+        fi
+    done
 
-    for sock in $(nvim-socks); do
+    for sock in $(timeout 1 nvim-socks); do
         # Notice: Don't use `--remote-send "<Cmd>...<CR>"` to send the command
         # here because of nvim's bug where the string following `<Cmd>` will be
         # interpreted as normal keys (not as part of a command) if nvim is in
         # operator-pending/replace mode. This makes nvim unexpectedly insert
         # the command string "f &bg ..." to the buffer, see:
         # https://github.com/neovim/neovim/issues/31238
-        nvim --clean --headless --server "$sock" \
+        #
+        # Sometimes nvim leaves unused sockets on system. Sending remote expr
+        # to these sockets will freeze our nvim client, so use timeout 1 and
+        # kill the nvim client if it does not exit within the threshold.
+        timeout 1 nvim --clean --headless --server "$sock" \
             --remote-expr "execute(\"if get(g:, 'colors_name', '') !=# '$1' | \
                 let g:script_set_colors=1 | silent! colors $1 | \
                 unlet g:script_set_colors | endif\")" \
             +qa! >/dev/null 2>&1 &
+
+        nvim_clients="$nvim_clients $!"
     done
 
-    if ! has jq; then
+    if ! command -v jq >/dev/null 2>&1; then
         echo "Warning: 'jq' not executable, skip writing to nvim's colorscheme file" >&2
     else
         colors_json="$STATE_HOME/nvim/colors.json"
@@ -181,12 +189,15 @@ setcolor_nvim() {
         fi
     fi
 
-    wait
+    if [ -n "$nvim_clients" ]; then
+        # shellcheck disable=SC2086
+        wait $nvim_clients
+    fi
 }
 
+# $1: path to config file
+# $2: name of the colorscheme
 get_new_profile_name() {
-    # $1: path to config file
-    # $2: name of the colorscheme
     current_profile=$(kreadconfig5 --file "$1" \
         --group 'Desktop Entry' --key 'DefaultProfile')
     current_profile_name=${current_profile%\.profile}
@@ -203,10 +214,10 @@ get_new_profile_name() {
     echo "$new_profile_name"
 }
 
+# $1: name of the app
+# $2: colorscheme name
 konsole_switch_profile_colorscheme() {
-    # $1: name of the app
-    # $2: colorscheme name
-    if ! has kreadconfig5 || ! has kwriteconfig5; then
+    if ! command -v kreadconfig5 >/dev/null 2>&1 || ! command -v kwriteconfig5 >/dev/null 2>&1; then
         return 1
     fi
     rc="$CONFIG_HOME/${1}rc"
@@ -219,8 +230,8 @@ konsole_switch_profile_colorscheme() {
     fi
 }
 
+# $1: name of the colorscheme
 setcolor_konsole_yakuake() {
-    # $1: name of the colorscheme
     if [ -z "$1" ]; then
         return 1
     fi
@@ -230,23 +241,23 @@ setcolor_konsole_yakuake() {
     konsole_switch_profile_colorscheme kate "$1"
 }
 
+# $1: name of the colorscheme
 setcolor_fish() {
-    # $1: name of the colorscheme
     (
         cd "$CONFIG_HOME/fish/themes" || return
         dark_theme_path="Dark.theme"
         light_theme_path="Light.theme"
         default_theme_name=$(get_cap_theme_name "$DEFAULT_COLOR")
         if [ -z "$1" ]; then
-            ln -s "${default_theme_name} Dark.theme" "$dark_theme_path" 2>/dev/null
-            ln -s "${default_theme_name} Light.theme" "$light_theme_path" 2>/dev/null
+            [ -e "${default_theme_name} Dark.theme" ] && ln -s "${default_theme_name} Dark.theme" "$dark_theme_path" 2>/dev/null
+            [ -e "${default_theme_name} Light.theme" ] && ln -s "${default_theme_name} Light.theme" "$light_theme_path" 2>/dev/null
         else
             theme_name=$(get_cap_theme_name "$1")
-            ln -sf "${theme_name} Dark.theme" "$dark_theme_path"
-            ln -sf "${theme_name} Light.theme" "$light_theme_path"
+            [ -e "${theme_name} Dark.theme" ] && ln -sf "${theme_name} Dark.theme" "$dark_theme_path"
+            [ -e "${theme_name} Light.theme" ] && ln -sf "${theme_name} Light.theme" "$light_theme_path"
         fi
-        has fish &&
-            fish -c 'set -U __fish_reload_theme (head -c 16 /dev/urandom)'
+        command -v fish >/dev/null 2>&1 &&
+            fish -c 'set -U __fish_reload_theme (head -c 16 /dev/urandom | sha256sum)'
     )
 }
 
@@ -258,6 +269,7 @@ get_plasma_wallpaper() {
     everforest | gruvbox-material) echo "$DATA_HOME/wallpapers/Foggy Forest" ;;
     sonokai) echo "$DATA_HOME/wallpapers/Lofoten Sunset" ;;
     stata) echo "$DATA_HOME/wallpapers/Binary Heart" ;;
+    onedark) echo "$DATA_HOME/wallpapers/Nord Mountains" ;;
     *) echo "" ;;
     esac
 }
@@ -270,14 +282,14 @@ get_plasma_splash() {
     esac
 }
 
+# $1: name of the colorscheme
 setcolor_plasma() {
-    # $1: name of the colorscheme
     if [ -z "$1" ]; then
         return 1
     fi
     # gruvbox-material -> GruvboxMaterial
     new_theme_name=$(get_cap_theme_name "$1" | sed 's/ //g')
-    if has plasma-apply-desktoptheme; then
+    if command -v plasma-apply-desktoptheme >/dev/null 2>&1; then
         current_theme=$(plasma-get-current-desktoptheme)
         bg=$(echo "$current_theme" | grep -o 'Light\|Dark')
         new_theme="$new_theme_name${bg:-$DEFAULT_BG}"
@@ -285,7 +297,7 @@ setcolor_plasma() {
             plasma-apply-desktoptheme "$new_theme" >/dev/null 2>&1
         fi
     fi
-    if has plasma-apply-colorscheme; then
+    if command -v plasma-apply-colorscheme >/dev/null 2>&1; then
         current_scheme=$(plasma-get-current-colorscheme)
         bg=$(echo "$current_scheme" | grep -o 'Light\|Dark')
         new_scheme="$new_theme_name${bg:-$DEFAULT_BG}"
@@ -296,7 +308,7 @@ setcolor_plasma() {
     # Also change the wallpaper for different color schemes
     wallpaper=$(get_plasma_wallpaper "$1")
     if [ -e "$wallpaper" ]; then
-        if has dbus-send; then # Change normal wallpaper
+        if command -v dbus-send >/dev/null 2>&1; then # Change normal wallpaper
             dbus-send --session --dest=org.kde.plasmashell \
                 --type=method_call /PlasmaShell \
                 org.kde.PlasmaShell.evaluateScript "string:
@@ -308,7 +320,7 @@ setcolor_plasma() {
                     d.writeConfig('Image', 'file://$wallpaper');
                 }" >/dev/null 2>&1
         fi
-        if has kwriteconfig5; then # Change lockscreen wallpaper
+        if command -v kwriteconfig5 >/dev/null 2>&1; then # Change lockscreen wallpaper
             kwriteconfig5 --file "$CONFIG_HOME/kscreenlockerrc" \
                 --group Greeter \
                 --group Wallpaper \
@@ -319,7 +331,7 @@ setcolor_plasma() {
     fi
     # Change splash screen
     splash=$(get_plasma_splash "$1")
-    if has kwriteconfig5 && has basename; then
+    if command -v kwriteconfig5 >/dev/null 2>&1 && command -v basename >/dev/null 2>&1; then
         if [ -e "$splash" ]; then
             kwriteconfig5 --file "$CONFIG_HOME/ksplashrc" \
                 --group KSplash --key Theme "$(basename "$splash")"
@@ -335,7 +347,20 @@ usage() {
     exit
 }
 
+# $1: name of the fish theme
 main() {
+    if ! command -v flock >/dev/null 2>&1; then
+        echo "Error: 'flock' not found" >&2
+        return 1
+    fi
+
+    lockfile="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/setcolor.lock"
+    exec 9>"$lockfile"
+    if ! flock -n 9; then
+        echo "Waiting for existing instance (lock: '$lockfile')" >&2
+        flock 9
+    fi
+
     color=''
     for arg in "$@"; do
         case "$arg" in
@@ -344,10 +369,18 @@ main() {
             ;;
         *)
             color="$arg"
-            shift
             ;;
         esac
     done
+
+    trap 'kill $(jobs -p) 2>/dev/null; wait' EXIT INT TERM HUP
+
+    # Sync app's colorscheme with system/desktop colorscheme, don't set system
+    # colorscheme
+    if [ -z "$SETCOLOR_SKIP_SYSTEM" ]; then
+        setcolor_plasma "$color" &
+        wait
+    fi
     setcolor_alacritty "$color" &
     setcolor_foot "$color" &
     setcolor_kitty "$color" &
@@ -357,7 +390,6 @@ main() {
     setcolor_highlight "$color" &
     setcolor_nvim "$color" &
     setcolor_fish "$color" &
-    setcolor_plasma "$color" &
     wait
 }
 

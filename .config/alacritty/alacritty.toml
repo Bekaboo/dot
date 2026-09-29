@@ -1,7 +1,5 @@
 [general]
 import = [
-    'themes/macro-dark.toml',
-    'themes/dark.toml',
     'theme.toml',
     'main.toml',
     'local.toml',

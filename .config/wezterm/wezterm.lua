@@ -52,8 +52,6 @@ local function get_bg()
 end
 
 -- Default themes
-load_theme_file('colors/macro-dark')
-load_theme_file('colors/dark')
 load_theme_file('theme')
 
 -- Load theme based on system background

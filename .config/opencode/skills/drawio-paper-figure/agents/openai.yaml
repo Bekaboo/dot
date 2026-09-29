@@ -1,0 +1,4 @@
+interface:
+  display_name: "Draw.io Paper Figure"
+  short_description: "Create and refine editable academic figures"
+  default_prompt: "Use $drawio-paper-figure to create or refine this publication-ready editable draw.io figure."

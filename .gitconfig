@@ -15,9 +15,12 @@
 	bf   = branch --force
 	bdf  = branch -d --force
 	bdr  = push -d
+	bc   = branch --contains
 	bl   = branch -v
+	bla  = branch -v --all
 	bu   = branch -u
 	brn  = branch -m
+	bn   = checkout -b
 	bs   = bisect
 	bsb  = bisect bad
 	bsg  = bisect good
@@ -32,6 +35,7 @@
 	clr  = clone --recursive
 	cm   = commit -m
 	co   = checkout
+	cob  = checkout -b
 	cof  = checkout --force
 	; Checkout specified commit without changing the working tree and branch
 	; pointer, aka "soft checkout"
@@ -46,6 +50,8 @@
 	; Show git commit history for a single line/range, see
 	; https://stackoverflow.com/a/50473741
 	ll   = log -L
+	; Show git log with changes
+	lp   = log -p
 	lr   = reflog
 	; `$GIT_PREFIX` contains the relative path from repo root to current working
 	; directory with trailing slash
@@ -58,14 +64,19 @@
 	ma   = merge --abort
 	mc   = merge --continue
 	mt   = mergetool
+	fp   = format-patch
+	fpu  = format-patch @{upstream}..HEAD
+	am3  = am --3way
+	ama  = am --abort
+	amc  = am --continue
 	p    = push
-	pf   = push --force
+	pf   = push --force-with-lease
 	pu   = push -u
 	puf  = push -u --force
 	pfu  = push -u --force
-	pk   = cherry-pick
-	pka  = cherry-pick --abort
-	pkc  = cherry-pick --continue
+	cp   = cherry-pick
+	cpa  = cherry-pick --abort
+	cpc  = cherry-pick --continue
 	pl   = pull
 	r    = remote
 	ra   = remote add
@@ -120,27 +131,60 @@
 	tc   = tag --contains
 	w    = show --stat
 	wa   = log --diff-filter=A
-	wc   = log --diff-filter=C
-	wd   = log --diff-filter=D
-	wm   = log --diff-filter=M
-	wp   = log --diff-filter=B
-	wr   = log --diff-filter=R
-	wt   = log --diff-filter=T
-	wu   = log --diff-filter=U
 	ww   = show
-	wx   = log --diff-filter=X
+	wt   = worktree
+	wta  = worktree add
+	; Find a file or directory across all git commits
+	; To match files in sub-directories, use '**', e.g. '**/init.lua'
+	ff   = log --oneline --stat --all --follow
+	; Grep regex across all git commits, support path filtering
+	; Usage: git gr <regex> [path ...]
+	gr   = "!fn() { \
+		pattern=$1; \
+		shift; \
+		git log --all -p --color=always -G\"$pattern\" --format='@@@ %h %s' -- \"$@\" | \
+			GIT_GR_PATTERN=\"$pattern\" awk ' \
+				BEGIN { pattern = ENVIRON[\"GIT_GR_PATTERN\"] } \
+				/^@@@ / { header = substr($0, 5); shown = 0; next } \
+				{ plain = $0; gsub(/\\033\\[[0-9;]*m/, \"\", plain) } \
+				plain ~ /^diff --git / { old_file = \"\"; file = \"\"; file_shown = 0; next } \
+				plain ~ /^--- / { \
+					old_file = substr(plain, 5); \
+					sub(/^a\\//, \"\", old_file); \
+					next \
+				} \
+				plain ~ /^\\+\\+\\+ / { \
+					file = substr(plain, 5); \
+					sub(/^b\\//, \"\", file); \
+					if (file == \"/dev/null\") { file = old_file } \
+					next \
+				} \
+				(substr(plain, 1, 1) == \"+\" || substr(plain, 1, 1) == \"-\") && \
+					substr(plain, 1, 3) != \"+++\" && \
+					substr(plain, 1, 3) != \"---\" && \
+					substr(plain, 2) ~ pattern { \
+						if (!shown) { print header; shown = 1 } \
+						if (!file_shown) { print file \":\"; file_shown = 1 } \
+						print \
+					}'; \
+	}; fn"
+	; Match commit messages with extended regex in all local branches
+	; Usage: git gm <regex>
+	gm   = log --oneline --graph --decorate --branches --extended-regexp --grep
 [merge]
 	tool = vimdiff
 [mergetool]
 	keepBackup = false
 [mergetool "vimdiff"]
-	cmd = nvim -d $LOCAL $REMOTE $MERGED -c '$wincmd w' -c 'wincmd J'
+	cmd = command -v nvim 2>/dev/null && \
+		nvim -d $LOCAL $MERGED $REMOTE +'wincmd l' || \
+		vim -d $LOCAL $MERGED $REMOTE +'wincmd l'
 [pull]
 	rebase = true
 [diff]
 	algorithm = histogram
 	indentHeuristic = true
-[filter "vscode-theme"]
+[filter "vscode-settings"]
 	smudge = cat
 	clean = sed \
 		-e '/[cC]olorTheme/d' \
@@ -158,6 +202,17 @@
 		-e '/^\\[Activities\\]/,/^$/d' \
 		-e '/^\\[SubSession:.*\\]/,/^$/d' \
 		-e '/^\\[Tiling\\]\\[[[:alnum:]-]\\+\\]/,/^$/d'
+[filter "okularpartrc"]
+	smudge = cat
+	clean = sed \
+		-e '/^\\[PageView\\]/,/^$/d' \
+		-e '/^\\[Main View\\]/,/^$/d' \
+		-e '/^\\[Nav Panel\\]/,/^$/d' \
+		-e '/ChangeColors=/d'
+[filter "klassyrc"]
+	smudge = cat
+	clean = sed \
+		-e '/LookAndFeelSet=/d'
 [filter "lfs"]
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f

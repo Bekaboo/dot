@@ -19,7 +19,6 @@ cmd + shift - h     : yabai -m window --swap west
 cmd + shift - j     : yabai -m window --swap south
 cmd + shift - k     : yabai -m window --swap north
 cmd + shift - l     : yabai -m window --swap east
-cmd - return        : yabai -m window --swap last
 
 # Resize windows
 cmd + alt - h     : yabai -m window --resize left:-40:0;  yabai -m window --resize right:-40:0
@@ -50,7 +49,7 @@ cmd + shift - backspace : yabai -m window --minimize
 cmd - delete    : osascript -e 'tell application "System Events" to perform action "AXPress" of (first button whose subrole is "AXCloseButton") of (first window whose subrole is "AXStandardWindow") of (first process whose frontmost is true)'
 
 # Toggle space layout
-cmd + shift + alt - b : yabai -m space --layout bsp
+cmd + shift + alt - 2 : yabai -m space --layout bsp
 cmd + shift + alt - f : yabai -m space --layout float
 cmd + shift + alt - m : yabai -m space --layout stack # memo: monocle layout
 cmd + shift + alt - r : yabai -m space --rotate 270

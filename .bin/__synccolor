@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
+# Poll and sync apps' colorscheme with system colorscheme
+
+PREV_COLOR_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/synccolor_prev_color"
+
+while true; do
+    cur_color=$(getcolor)
+    prev_color=$(cat "$PREV_COLOR_FILE" 2>/dev/null)
+    if [ "$cur_color" != "$prev_color" ]; then
+        SETCOLOR_SKIP_SYSTEM=1 setcolor "$cur_color" && echo "$cur_color" >"$PREV_COLOR_FILE"
+    fi
+    sleep 1
+done

@@ -1,0 +1,24 @@
+#!/usr/bin/env sh
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
+# Get cursor position or return 1;1 if not available
+# Adapted from: https://unix.stackexchange.com/a/183121
+# 1. Switches terminal to raw mode (byte-by-byte, no echo) for reading ANSI response
+# 2. Sends the ANSI escape sequence CSI 6 n (Device Status Report) to the terminal.
+# 3. The terminal responds by writing the cursor position back to stdin in the format \033[row;colR.
+# 4. Uses perl to read and parse terminal response containing cursor position
+
+main() {
+    # Now we can safely access /dev/tty
+    # Save current terminal settings
+    tty_settings=$(stty -g)
+
+    stty raw -echo
+    printf '\033[6n' >/dev/tty
+    # Read stdin byte-by-byte until 'R' terminator via a single perl process
+    # (avoids spawning dd per char, which is slow on macOS)
+    perl -e 'while(sysread(STDIN,$c,1)){$_.=$c;last if$c eq"R"}print"$1\r\n"if/(\d+;\d+)/' </dev/tty
+
+    stty "$tty_settings" </dev/tty 2>/dev/null
+}
+
+main "$@"

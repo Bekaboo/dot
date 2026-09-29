@@ -2,7 +2,18 @@
 " command, see
 " - `:h dispatch-:Dispatch`
 " - `$VIMRUNTIME/compiler/pytest.vim`
-CompilerSet makeprg=python3\ -m\ pytest
+
+" Pytest can be run with different commands, see
+" https://github.com/vim-test/vim-test/blob/8c76f6c0953edaa13a37c29ac9c6a7bb56ddce89/autoload/test/python/pytest.vim#L54-L64
+"
+" Set `makeprg` based on different conditions so that vim-dispatch can detect
+" them and use this compiler for `errorformat`
+if     filereadable('Pipfile')     | CompilerSet makeprg=pipenv\ run\ pytest
+elseif filereadable('poetry.lock') | CompilerSet makeprg=poetry\ run\ pytest
+elseif filereadable('pdm.lock')    | CompilerSet makeprg=pdm\ run\ pytest
+elseif filereadable('uv.lock')     | CompilerSet makeprg=uv\ run\ pytest
+else                               | CompilerSet makeprg=python3\ -m\ pytest
+endif
 
 " Remove '%+G...' formats to avoid including general messages without
 " corresponding file locations in quickfix

@@ -64,19 +64,20 @@ Currently only tested on Linux (X11/Wayland/TTY) and Android (Termux).
 
 ## Features
 
-- Modular design
-    - Install and manage packages in groups
-    - Make it easy to use different set of configuration for different use
-      cases
+- Simple & modular design
+    - Builtin `vim.pack()` as plugin manager
+    - Manage each plugin in separate files under
+      [`lua/my/pack/specs/start`](lua/my/pack/specs/start) or
+      [`lua/my/pack/specs/opt`](lua/my/pack/specs/opt)
 - Clean and uncluttered UI, including customized versions of:
-    - [winbar](lua/plugin/winbar)
-    - [statusline](lua/plugin/statusline.lua)
-    - [statuscolumn](lua/plugin/statuscolumn.lua)
+    - [winbar](lua/my/plugin/winbar)
+    - [statusline](lua/my/plugin/statusline.lua)
+    - [statuscolumn](lua/my/plugin/statuscolumn.lua)
     - [colorschemes](colors)
-    - [intro message](plugin/intro.lua)
+    - [intro message](lua/my/plugin/intro.lua)
 - [VSCode-Neovim](https://github.com/vscode-neovim/vscode-neovim) integration, makes you feel at home in VSCode when you
   occasionally need it
-- Massive [TeX math snippets](lua/snippets/shared/math.lua)
+- Massive [TeX math snippets](lua/my/pack/res/luasnip/snippets/tex.lua)
 - Jupyter Notebook integration: edit notebooks like markdown files, run code in
   cells with simple commands and shortcuts
 - Optimization for large files, open any file larger than 100 MB and edit like
@@ -87,19 +88,31 @@ Currently only tested on Linux (X11/Wayland/TTY) and Android (Termux).
 
 ### Basic
 
-- [Neovim](https://github.com/neovim/neovim) 0.11, for exact version see [nvim-version.txt](nvim-version.txt)
+- [Neovim](https://github.com/neovim/neovim) 0.12, for exact version see [nvim-version.txt](nvim-version.txt)
 - [Git](https://git-scm.com/)
 - [GCC](https://gcc.gnu.org/) or [Clang](https://clang.llvm.org/) for building treesitter parsers and some libs
 - [Fd](https://github.com/sharkdp/fd), [Ripgrep](https://github.com/BurntSushi/ripgrep), and [Fzf](https://github.com/junegunn/fzf) for fuzzy search
-- [Pandoc](https://pandoc.org/), [custom scripts](../../.bin) and [TexLive](https://www.tug.org/texlive/) (for ArchLinux users, it is `texlive-core` and `texlive-extra`) for markdown → PDF conversion (`:MarkdownToPDF`)
 - [Node.js](https://nodejs.org/en) for installing dependencies for [markdown-preview.nvim](https://github.com/iamcco/markdown-preview.nvim)
-- [Pynvim](https://github.com/neovim/pynvim) for accessing some Python utility functions, e.g. [`shlex.split()`](https://docs.python.org/3/library/shlex.html#shlex.split), see `split()` in [`lua/utils/cmd.lua`](lua/utils/cmd.lua).
+- [Pynvim](https://github.com/neovim/pynvim) for accessing some Python utility functions, e.g. [`shlex.split()`](https://docs.python.org/3/library/shlex.html#shlex.split), see `split()` in [`lua/my/utils/cmd.lua`](lua/my/utils/cmd.lua).
 - [Pynvim](https://github.com/neovim/pynvim), [Jupyter Client](https://github.com/jupyter/jupyter_client), and [IPython Kernel](https://github.com/ipython/ipykernel) for Python support
 - [Jupytext](https://github.com/mwouts/jupytext) for editing Jupyter notebooks
+- [Rust](https://www.rust-lang.org/) tool chain for building [blink.cmp](https://github.com/Saghen/blink.cmp)'s fuzzy-matching lib
 - A decent terminal emulator
 - A nerd font, e.g. [JetbrainsMono Nerd Font](https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/JetBrainsMono).
   This is optional as nerd icons are disabled by default, to enable it, set the
   environment variable `$NVIM_NF`, see [environment variables](#environment-variables)
+
+### Build Neovim-Nightly From Source on Android Termux
+
+```sh
+pkg i build-essential cmake luajit ninja git
+git clone --filter=blob:none https://github.com/neovim/neovim.git && cd neovim
+make CMAKE_BUILD_TYPE=RelWithDebInfo \
+    DEPS_CMAKE_FLAGS='-DUSE_BUNDLED_LUAJIT=OFF -DUSE_BUNDLED_LUA=OFF'
+make CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX='$HOME/.local'" install
+```
+
+Neovim will be installed under `~/.local/bin`, make sure it is in your `$PATH`.
 
 ### Tree-sitter
 
@@ -112,7 +125,7 @@ parser using `:TSInstall` or `:TSUninstall`.
 
 To make the change permanent, add or remove corresponding parsers in the
 `ensure_installed` field in the call to nvim-treesitter's `setup()` function,
-see [lua/configs/nvim-treesitter.lua](lua/configs/nvim-treesitter.lua).
+see [lua/my/pack/specs/opt/nvim-treesitter.lua](lua/my/pack/specs/opt/nvim-treesitter.lua).
 
 ### LSP
 
@@ -189,7 +202,7 @@ happen, you have to call `vim.lsp.enable('<language-server>')`, e.g. for clangd:
 vim.lsp.enable('clangd') -- requires `after/lsp/clangd.lua`
 ```
 
-This is already done in [lua/core/lsp.lua](lua/core/lsp.lua), where all LSP
+This is already done in [lua/my/core/lsp.lua](lua/my/core/lsp.lua), where all LSP
 configurations located in runtime directory will be automatically loaded and
 enabled on `FileType` event.
 
@@ -199,7 +212,7 @@ Like LSP, debug adapters are installed manually or via system package manager.
 
 1. [Installation](#dap-installation): install the debug adapter
 2. [Configuration](#dap-configuration): configs for each language so that
-   [lua/configs/nvim-dap.lua](lua/configs/nvim-dap.lua) knows how to launch
+   [lua/my/pack/specs/opt/nvim-dap.lua](lua/my/pack/specs/opt/nvim-dap.lua) knows how to launch
    a debug session for each filetype
 3. [Activation](#dap-activation): use debug adapter to debug source files
 
@@ -252,7 +265,7 @@ Install the following debug adapters manually:
 
 #### DAP Configuration
 
-Configuration for each filetypes: [lua/dap-configs](lua/dap-configs).
+Configuration for each filetypes: [lua/my/pack/res/nvim-dap/dap](lua/my/pack/res/nvim-dap/dap).
 
 #### DAP Activation
 
@@ -314,7 +327,7 @@ or continue a debug session.
     2. If the building process failed, go to corresponding project directory
        under `g:package_path` and manually run the build command from there.
        The build commands are declared in module specification files under
-       [lua/plugins](lua/plugins)
+       [lua/my/plugins](lua/my/plugins)
     3. Ensure you are on the same version of nvim as specified in
        [nvim-version.txt](nvim-version.txt) if you encounter any issue related to treesitter
 
@@ -326,16 +339,14 @@ or continue a debug session.
 
 If you encounter any issue, please try the following steps:
 
-1. Run `:Lazy restore` once to ensure that all packages are properly
-   installed
-2. Run `:checkhealth` to check potential dependency issues
-3. Check `:version` to make sure you are on the same (of above) version of
+1. Run `:checkhealth` to check potential dependency issues
+2. Check `:version` to make sure you are on the same (of above) version of
    neovim as specified in [nvim-version.txt](nvim-version.txt)
-4. Try removing the following paths then restart neovim:
+3. Try removing the following paths then restart neovim:
     - `:echo stdpath('cache')`
     - `:echo stdpath('state')`
     - `:echo stdpath('data')`
-5. If still not working, please open an issue and I will be happy to help
+4. If still not working, please open an issue and I will be happy to help
 
 ## Performance
 
@@ -387,114 +398,66 @@ paths:
 │   │   ├── autocmds.lua
 │   │   ├── opts.lua            # options and general settings
 │   │   ├── keymaps.lua
-│   │   └── plugins.lua         # bootstraps plugin manager and specifies which plugins to include
-│   ├── plugins                 # all plugin specifications and configs go here
-│   │   ├── ui.lua              # ui elements, e.g. icons
-│   │   ├── completion.lua      # auto-completion
-│   │   ├── debug.lua           # debug adapter (DAP) support
-│   │   ├── edit.lua            # general editing enhancements, e.g. auto-pair, surround, align, etc.
-│   │   ├── langs.lua           # language-specific plugins
-│   │   ├── llm.lua             # completion and code generators using LLMs
-│   │   ├── markup.lua          # enhancement for markdown and tex editing
-│   │   ├── tools.lua           # tools like fuzzy finder, git integration, etc.
-│   │   ├── treesitter.lua      # treesitter related plugins
-│   │   └── colorschemes.lua    # third-party themes
-│   ├── configs                 # configs for each plugin
-│   ├── snippets                # snippets
-│   ├── plugin                  # the actual implementation of custom plugins
+│   │   └── pack.lua            # load and manage 3rd-party plugin specs with `vim.pack`
+│   ├── pack                    # 3rd-party plugin specs and configs
+│   │   ├── specs               # specs for installing and configuring plugins, see `vim.pack.Spec`
+│   │   └── res                 # dynamically loaded resources
+│   ├── plugin                  # the actual implementation of custom lua plugins
 │   └── utils
 └── syntax                      # syntax files
 ```
 
 ## Tweaking this Configuration
 
-### Managing Plugins with Groups
+### Installing New Plugins
 
-In order to enable or disable a module, one need to change the table in
-[lua/core/plugins.lua](lua/core/plugins.lua) passed to `enable_plugins()`, for example
+To install plugin `foo`, just create a new file `foo.lua` under
+[`lua/my/pack/specs/opt`](lua/my/pack/specs/opt) or
+[`lua/my/pack/specs/start`](lua/my/pack/specs/start).
 
-```lua
-enable_plugins({
-  'treesitter',
-  'edit',
-  -- ...
-})
-```
+- Plugins specs under [`lua/my/pack/specs/start`](lua/my/pack/specs/start) will be
+  required immediately on startup
+- Plugins specs under [`lua/my/pack/specs/opt`](lua/my/pack/specs/opt) will be
+  required after a short time after `UIEnter`, unless a file is provided to
+  nvim in cmdline
 
-### Installing Packages to an Existing Module
+Notice that the `start` and `opt` directories only controls when a plugin spec
+is required and manged by `vim.pack`, this is different from plugin's actual
+loading time. A plugin can be managed on startup but lazy-loaded, see
+[`lua/my/utils/load.lua`](lua/my/utils/load.lua) and
+[`lua/my/utils/pack.lua`](lua/my/utils/pack.lua).
 
-To install plugin `foo` under module `bar`, just insert the corresponding
-specification to the big table `lua/plugins/bar.lua` returns, for instance,
+E.g.
 
-`lua/plugins/bar.lua`:
-
-```lua
-return {
-  -- ...
-  {
-    'foo/foo',
-    dependencies = 'foo_dep',
-  },
-}
-```
-
-### Installing Packages to a New Module
-
-To install plugin `foo` under module `bar`, one should first
-create module `bar` under [lua/plugins](lua/plugins):
-
-```
-.
-└── lua
-    └── plugins
-        └── bar.lua
-```
-
-a module should return a big table containing all specifications of plugins
-under that module, for instance:
+`lua/my/pack/specs/start/foo.lua`:
 
 ```lua
 return {
-  {
-    'goolord/alpha-nvim',
-    cond = function()
-      return vim.fn.argc() == 0 and
-          vim.o.lines >= 36 and vim.o.columns >= 80
-    end,
-    dependencies = 'nvim-web-devicons',
-  },
-
-  {
-    'romgrk/barbar.nvim',
-    dependencies = 'nvim-web-devicons',
-    config = function() require('bufferline').setup() end,
+  src = 'https://github.com/bar/foo',
+  version = ...,
+  data = {
+     ...
   },
 }
-```
-
-After creating the new module `bar`, enable it in
-[lua/core/plugins.lua](lua/core/plugins.lua):
-
-```lua
-enable_plugins({
-  -- ...
-  'bar',
-  -- ...
-})
 ```
 
 ### General Settings and Options
 
-See [lua/core/opts.lua](lua/core/opts.lua).
+See [lua/my/core/opts.lua](lua/my/core/opts.lua).
 
 ### Environment Variables
 
 - `$NVIM_NO3RD`: disable third-party plugins if set
 - `$NVIM_NF`: enable nerd font icons if set
+- `$DOT_DIR`: path to the bare repo for dotfiles, e.g. `$HOME/.dot`, used in
+  [gitsigns.nvim config](lua/my/pack/specs/opt/gitsigns.lua) and
+  [vim-fugitive config](lua/my/pack/specs/opt/vim-fugitive.lua) to fallback to
+  the dotfiles bare repo when current buffer does not correspond to a file in a
+  regular git repo.
 
 ### Keymaps
 
-See [lua/core/keymaps.lua](lua/core/keymaps.lua), or see [module config files](lua/configs) for
+See [lua/my/core/keymaps.lua](lua/my/core/keymaps.lua), or see [module config files](lua/my/pack/specs) for
 corresponding plugin keymaps.
 
 ### Colorschemes
@@ -506,19 +469,19 @@ Neovim is configured to restore the previous background and colorscheme
 settings on startup, so there is no need to set them up in the config file
 explicitly.
 
-To disable the auto-restore feature, remove the `ColorSchemeRestore` augroup
-in [lua/core/autocmds.lua](lua/core/autocmds.lua).
+To disable the auto-restore feature, remove the `my.colorscheme_restore` augroup
+in [lua/my/core/autocmds.lua](lua/my/core/autocmds.lua).
 
 To tweak a colorscheme, edit corresponding colorscheme files under [colors](colors).
 
 ### Auto Commands
 
-See [lua/core/autocmds.lua](lua/core/autocmds.lua).
+See [lua/my/core/autocmds.lua](lua/my/core/autocmds.lua).
 
 ### LSP Server Configurations
 
 See
-- [lua/plugin/lsp.lua](lua/plugin/lsp.lua) for custom lsp setups
+- [lua/my/plugin/lsp.lua](lua/my/plugin/lsp.lua) for custom lsp setups
 - [after/lsp](after/lsp) for configs for each language server
 - `lsp.lua` files under [after/ftplugin](after/ftplugin) for language servers
   enabled for each filetype
@@ -526,22 +489,22 @@ See
 ### DAP Configurations
 
 See
-- [lua/configs/dap-configs](lua/configs/dap-configs)
-- [lua/configs/nvim-dap.lua](lua/configs/nvim-dap.lua)
-- [lua/configs/nvim-dap-ui.lua](lua/configs/nvim-dap-ui.lua).
+- [lua/my/pack/specs/opt/nvim-dap.lua](lua/my/pack/specs/opt/nvim-dap.lua)
+- [lua/my/pack/res/nvim-dap/dap](lua/my/pack/res/nvim-dap/dap)
+- [lua/my/pack/specs/opt/nvim-dap-ui.lua](lua/my/pack/specs/opt/nvim-dap-ui.lua).
 
 ### Snippets
 
-This configuration use [LuaSnip](https://github.com/L3MON4D3/LuaSnip) as the snippet engine,
-custom snippets for different filetypes
-are defined under [lua/snippets](lua/snippets).
+This configuration use [LuaSnip](https://github.com/L3MON4D3/LuaSnip) as the
+snippet engine, custom snippets for different filetypes are defined under
+[lua/my/pack/res/luasnip/snippets](lua/my/pack/res/luasnip/snippets).
 
 ### Enabling VSCode Integration
 
 VSCode integration takes advantages of the modular design, allowing to use
 a different set of plugins when neovim is launched by VSCode, relevant code is
 in [autoload/plugin/vscode.vim](autoload/plugin/vscode.vim) and
-[lua/core/plugins.lua](lua/core/plugins.lua).
+[lua/my/core/pack.lua](lua/my/core/pack.lua).
 
 To make VSCode integration work, please install [VSCode-Neovim](https://github.com/vscode-neovim/vscode-neovim) in VSCode
 and configure it correctly.
@@ -559,7 +522,7 @@ and it should work out of the box.
 - DAP support powered by [nvim-dap](https://github.com/mfussenegger/nvim-dap) and [nvim-dap-ui](https://github.com/rcarriga/nvim-dap-ui)<br>
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/f6c7e6ce-283b-43d7-8bc3-e8b24513a03b" width=75%>
 
-- Jupyter Notebook integration using [jupytext](lua/plugin/jupytext.lua) and [molten-nvim](https://github.com/benlubas/molten-nvim)<br>
+- Jupyter Notebook integration using [jupytext](lua/my/plugin/jupytext.lua) and [molten-nvim](https://github.com/benlubas/molten-nvim)<br>
     <img src="https://github.com/Bekaboo/nvim/assets/76579810/ce212348-8b89-4a03-a222-ab74f0338a7d" width=75%>
 
 - Winbar with IDE-like drop-down menus using [dropbar.nvim](https://github.com/Bekaboo/dropbar.nvim)<br>
@@ -577,93 +540,45 @@ and it should work out of the box.
 
 #### Third Party Plugins
 
-
-- **UI**
-    - [nvim-web-devicons](https://github.com/kyazdani42/nvim-web-devicons)
-- **Completion**
-    - [blink.cmp](https://github.com/Saghen/blink.cmp)
-    - [LuaSnip](https://github.com/L3MON4D3/LuaSnip)
-- **Markup**
-    - [vimtex](https://github.com/lervag/vimtex)
-    - [markdown-preview.nvim](https://github.com/iamcco/markdown-preview.nvim)
-    - [vim-table-mode](https://github.com/dhruvasagar/vim-table-mode)
-    - [otter.nvim](https://github.com/jmbuhr/otter.nvim)
-    - [molten-nvim](https://github.com/benlubas/molten-nvim)
-    - [img-clip.nvim](https://github.com/HakonHarnes/img-clip.nvim)
-- **Edit**
-    - [nvim-surround](https://github.com/kylechui/nvim-surround)
-    - [vim-sleuth](https://github.com/tpope/vim-sleuth)
-    - [ultimate-autopairs.nvim](https://github.com/altermo/ultimate-autopair.nvim)
-    - [vim-easy-align](https://github.com/junegunn/vim-easy-align)
-    - [vim-conjoin](https://github.com/flwyd/vim-conjoin)
-- **Tools**
-    - [fzf-lua](https://github.com/ibhagwan/fzf-lua)
-    - [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim)
-        - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) (dependency)
-    - [git-conflict](https://github.com/akinsho/git-conflict.nvim)
-    - [nvim-colorizer.lua](https://github.com/NvChad/nvim-colorizer.lua)
-    - [vim-fugitive](https://github.com/tpope/vim-fugitive)
-        - [vim-rhubarb](https://github.com/tpope/vim-rhubarb) (dependency)
-        - [fugitive-gitlab.vim](https://github.com/shumphrey/fugitive-gitlab.vim) (dependency)
-    - [oil.nvim](https://github.com/stevearc/oil.nvim)
-    - [quicker.nvim](https://github.com/stevearc/quicker.nvim)
-    - [which-key.nvim](https://github.com/folke/which-key.nvim)
-- **Debug**
-    - [nvim-dap](https://github.com/mfussenegger/nvim-dap)
-    - [nvim-dap-ui](https://github.com/rcarriga/nvim-dap-ui)
-        - [nvim-nio](https://github.com/nvim-neotest/nvim-nio) (dependency)
-    - [one-small-step-for-vimkind](https://github.com/jbyuki/one-small-step-for-vimkind)
-- **Build**
-    - [vim-test](https://github.com/vim-test/vim-test)
-    - [vim-projectionist](https://github.com/tpope/vim-projectionist)
-- **Treesitter**
-    - [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter)
-    - [nvim-treesitter-textobjects](https://github.com/nvim-treesitter/nvim-treesitter-textobjects)
-    - [nvim-treesitter-endwise](https://github.com/RRethy/nvim-treesitter-endwise)
-    - [ts-autotag.nvim](https://github.com/tronikelis/ts-autotag.nvim)
-    - [treesj](https://github.com/Wansmer/treesj)
-    - [cellular-automaton.nvim](https://github.com/Eandrju/cellular-automaton.nvim)
-- **Colorschemes**
-    - [everforest](https://github.com/sainnhe/everforest)
-    - [gruvbox-material](https://github.com/sainnhe/gruvbox-material)
-- **Langs**
-    - [vim-python-pep8-indent](https://github.com/Vimjas/vim-python-pep8-indent)
+See [`nvim-pack-lock.json`](nvim-pack-lock.json).
 
 #### Builtin Plugins
 
-- [colorcolumn](plugin/colorcolumn.lua)
+- [colorcolumn](lua/my/plugin/colorcolumn.lua)
     - Shows color column dynamically based on current line width
     - Released as [deadcolumn.nvim](https://github.com/Bekaboo/deadcolumn.nvim)
-- [expandtab](lua/plugin/expandtab.lua)
+- [expandtab](lua/my/plugin/expandtab.lua)
     - Always use spaces for alignment, even if `'expandtab'` is not set, see
       `:h 'tabstop'` point 5
-- [jupytext](lua/plugin/jupytext.lua)
+- [im](lua/my/plugin/im.lua)
+    - Switches and restores input method state in each buffer asynchronously
+- [jupytext](lua/my/plugin/jupytext.lua)
     - Edits jupyter notebook like markdown files
     - Writes into jupyter notebook asynchronously, which gives a smoother
       experience than [jupytext.vim](https://github.com/goerz/jupytext)
-- [intro](plugin/intro.lua)
+- [intro](lua/my/plugin/intro.lua)
     - Shows a custom intro message on startup
-- [lsp-commands](lua/plugin/lsp-commands.lua)
+- [lsp-commands](lua/my/plugin/lsp-commands.lua)
     - Sets up LSP and diagnostic commands `:LspXXX` and `:DiagnosticXXX`
-- [readline](lua/plugin/readline.lua)
+- [readline](lua/my/plugin/readline.lua)
     - Readline-like keybindings in insert and command mode
-- [statuscolumn](lua/plugin/statuscolumn.lua)
+- [statuscolumn](lua/my/plugin/statuscolumn.lua)
     - Custom statuscolumn, with git signs on the right of line numbers
-- [statusline](lua/plugin/statusline.lua)
+- [statusline](lua/my/plugin/statusline.lua)
     - Custom statusline inspired by [nano-emacs](https://github.com/rougier/nano-emacs)
-- [tabline](lua/plugin/tabline.lua)
+- [tabline](lua/my/plugin/tabline.lua)
     - Simple tabline that shows the current working directory of each tab
     - Use `:[count]TabRename [name]` to rename tabs
-- [tabout](lua/plugin/tabout.lua)
+- [tabout](lua/my/plugin/tabout.lua)
     - Tab out and in with `<Tab>` and `<S-Tab>`
-- [term](lua/plugin/term.lua)
+- [term](lua/my/plugin/term.lua)
     - Some nice setup for terminal buffers
-- [tmux](lua/plugin/tmux.lua)
+- [tmux](lua/my/plugin/tmux.lua)
     - Integration with tmux, provides unified keymaps for navigation, resizing,
       and many other window operations
 - [vscode](autoload/plugin/vscode.vim)
     - Integration with [VSCode-Neovim](https://github.com/vscode-neovim/vscode-neovim)
-- [winbar](lua/plugin/winbar)
+- [winbar](lua/my/plugin/winbar)
     - A winbar with drop-down menus and multiple backends
     - Released as [dropbar.nvim](https://github.com/Bekaboo/dropbar.nvim)
 - [markdown-title](after/ftplugin/markdown/title.lua)
@@ -672,22 +587,20 @@ and it should work out of the box.
       feature
 - [markdown-codeblock](after/ftplugin/markdown/codeblock.lua)
     - Add shadings to markdown code blocks
-- [z](lua/plugin/z.lua)
+- [z](lua/my/plugin/z.lua)
     - Jump between frequently visited directories with `:Z` command using
       [z.lua](https://github.com/skywind3000/z.lua),
       [z.fish](https://github.com/jethrokuan/z), or
       [zoxide](https://https://github.com/ajeetdsouza/zoxide)
-- [addasync](lua/plugin/addasync.lua)
+- [addasync](lua/my/plugin/addasync.lua)
     - Automatically add `async` to python/javascript/typescript functions
       containing `await`
-- [aider](lua/plugin/aider/)
-    - Integration with [aider](https://aider.chat/)
-    - Opens aider automatically when [AI comments](https://aider.chat/docs/usage/watch.html#ai-comments)
-      are detected
-    - Use keymaps to add files/selections to aider
-- [session](lua/plugin/session.lua)
+- [session](lua/my/plugin/session.lua)
     - Automatically load (disabled), save, and remove sessions for projects
     - Use `Session...` commands to manipulate sessions
+- [trans](lua/my/plugin/trans.lua)
+    - Provides `:Translate` command to open a popup to translate selected text
+    - Requires script [`~/.bin/trans`](../../.bin/trans) in `$PATH`
 
 Like many vim builtin plugins, these plugins can be disabled by setting the
 `g:loaded_...` flag before loading them.

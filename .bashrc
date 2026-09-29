@@ -22,7 +22,7 @@ for ble_install_path in /usr/share ~/.local/share; do
 done
 
 # Prompt configuration
-PS1='\[\033[01;3'$( ((EUID)) && echo 5 || echo 1)'m\][\u@\h\[\033[01;37m\] \W\[\033[01;3'$( ((EUID)) && echo 5 || echo 1)'m\]]\$\[\033[00m\] '
+PS1='\[\033[01;3'$( ((EUID)) && echo 2 || echo 1)'m\]\u\[\033[01;37m\]@\[\033[01;3'$( ((EUID)) && echo 2 || echo 1)'m\]\h\[\033[01;37m\]:\[\033[01;34m\]\W\[\033[00m\]\$ '
 
 # OSC133 support
 # Source: https://codeberg.org/dnkl/foot/wiki#bash-2
@@ -46,22 +46,13 @@ bind 'set keyseq-timeout 1'
 
 # Common aliases
 alias cl='clear'
-alias cp='cp -i'
-alias mv='mv -i'
 alias x='trash'
+alias xr='trash-restore'
 alias g='git'
 alias d='dot'
-alias grep='grep --color=auto'
-alias ls='ls --color=auto -h'
 alias ll='ls -lhA'
-alias lc='wc -l'
-alias df='df -h'
-alias free='free -mh'
-alias tree='tree -N'
-alias vs='vim-startuptime'
-alias sudoe='sudo -E'
-alias plasma-save-session="qdbus org.kde.ksmserver /KSMServer saveCurrentSession"
-alias clean-tmp="find /tmp -ctime +7 -exec rm -rf {} +"
+alias kc='kubectl'
+alias tf='terraform'
 
 # Fzf keybindings and completion
 [[ -r /usr/share/fzf/key-bindings.bash ]] && . /usr/share/fzf/key-bindings.bash
@@ -165,17 +156,26 @@ clear() {
 
 # Manage dotfiles
 dot() {
-    git --git-dir="$HOME/.dot" --work-tree="$HOME" "$@"
+    git --git-dir="$DOT_DIR" --work-tree="$HOME" "$@"
 }
 
-# Create remote branches (e.g. origin/master) on git fetch like normal repos
-# See https://stackoverflow.com/questions/36410044/fetch-from-origin-in-bare-repository-in-git-does-not-create-remote-branch
-dot config --local remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+if has git && [ -d "$DOT_DIR" ]; then
+    # Create remote branches (e.g. origin/master) on git fetch like normal repos
+    # See https://stackoverflow.com/questions/36410044/fetch-from-origin-in-bare-repository-in-git-does-not-create-remote-branch
+    dot config --local remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
 
-# Set the path to the root of the working tree, make vim-fugitive's
-# `:Gdiffsplit` work
-dot config --local core.worktree "$HOME"
-dot config --local status.showUntrackedFiles no
+    # Set the path to the root of the working tree, make vim-fugitive's
+    # `:Gdiffsplit` work
+    dot config --local core.worktree "$HOME"
+
+    # Fix error: 'warning: core.bare and core.worktree do not make sense' when
+    # using fugitive in nvim to stage files managed by dotfiles bare repo
+    # https://stackoverflow.com/questions/11856690/setting-the-work-tree-of-each-bare-repo
+    dot config --local core.bare false
+
+    # Don't list untracked files on `dot status`
+    dot config --local status.showUntrackedFiles no
+fi
 
 # Complete `dot` command with `git` subcommands, also fix git completion on macOS
 for git_cmp in \
@@ -190,6 +190,11 @@ done
 # List current directory on directory change, see `__post_cd` below
 __autols() {
     local -r output=$(ls -C --color)
+
+    if [[ -z "$output" ]]; then
+        return
+    fi
+
     local max_lines=4
     local num_lines=4
 

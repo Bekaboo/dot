@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+# vim:ft=sh:et:ts=4:sw=4:sts=4:
+# Show term 16 colors
+
+# First row: colors 0-7
+for i in $(seq 0 7); do
+    printf "\033[4%sm %2s \033[0m" "$i" "$i"
+done
+printf "\n"
+
+# Second row: colors 8-15
+for i in $(seq 8 15); do
+    printf '\033[%dm %2d \033[0m' "$((100 + i - 8))" "$i"
+done
+printf '\n'

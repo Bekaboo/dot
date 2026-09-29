@@ -1,0 +1,8 @@
+[General]
+# Make thunderbird autostart work on KDE 6
+# KDE uses a new systemd approach to launch apps on startup, which breaks some
+# autostart apps
+# See:
+# - https://www.reddit.com/r/archlinux/comments/ves6mh/comment/inf2mwq/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+# - https://blog.davidedmundson.co.uk/blog/plasma-and-the-systemd-startup/
+systemdBoot=false

@@ -71,6 +71,10 @@ keymap() {
     # Use provided mapping or default mapping
     mapping=${3:-'[
                 {
+                    "HIDKeyboardModifierMappingDst": 30064771300,
+                    "HIDKeyboardModifierMappingSrc": 30064771129
+                },
+                {
                     "HIDKeyboardModifierMappingDst": 30064771302,
                     "HIDKeyboardModifierMappingSrc": 30064771303
                 },
@@ -81,10 +85,6 @@ keymap() {
                 {
                     "HIDKeyboardModifierMappingDst": 30064771303,
                     "HIDKeyboardModifierMappingSrc": 30064771302
-                },
-                {
-                    "HIDKeyboardModifierMappingDst": 30064771300,
-                    "HIDKeyboardModifierMappingSrc": 30064771129
                 },
                 {
                     "HIDKeyboardModifierMappingDst": 30064771298,

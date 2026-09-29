@@ -19,16 +19,16 @@ main() {
     root_path="${1:-.}"
 
     # Set grep command based on available tools
-    if has rg; then
+    if command -v rg >/dev/null 2>&1; then
         grep_cmd="rg --no-messages --hidden --follow --smart-case --column --line-number --no-heading --color=always"
-    elif has grep; then
+    elif command -v grep >/dev/null 2>&1; then
         grep_cmd="grep -i -r -n -H -I --color=always"
     fi
 
     # Set editor
-    if has nvim; then
+    if command -v nvim >/dev/null 2>&1; then
         editor='nvim'
-    elif has vim; then
+    elif command -v vim >/dev/null 2>&1; then
         editor='vim'
     fi
 

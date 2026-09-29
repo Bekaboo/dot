@@ -3,7 +3,7 @@
 -- Author:       Bekaboo <kankefengjing@gmail.com>
 -- Maintainer:   Bekaboo <kankefengjing@gmail.com>
 -- License:      BSD
--- Last Updated: Mon 28 Jul 2025 02:19:38 AM PDT
+-- Last Updated: Tue 23 Jun 2026 10:05:28 AM HKT
 
 -- Clear hlgroups and set colors_name {{{
 vim.cmd.hi('clear')
@@ -172,6 +172,7 @@ local hlgroups = {
   SpellLocal = { link = 'SpellBad' },
   SpellRare = { link = 'SpellBad' },
   StatusLine = { fg = c_foreground, bg = c_special },
+  StatusLineGitBranch = { fg = c_whitespace },
   StatusLineNC = { fg = c_background, bg = c_whitespace },
   Substitute = { link = 'Search' },
   TabLine = { fg = c_background, bg = c_constant },
@@ -199,7 +200,7 @@ local hlgroups = {
   Number = { fg = c_number },
   Boolean = { fg = c_variable, bold = true },
   Float = { link = 'Number' },
-  Identifier = {},
+  Identifier = { fg = c_foreground },
   Function = { fg = c_generic, bold = true },
   Statement = { fg = c_keyword, bold = true },
   Conditional = { fg = c_keyword, bold = true },
@@ -240,7 +241,6 @@ local hlgroups = {
   ['@string'] = { link = 'String' },
   ['@string.escape'] = { fg = c_other },
   ['@string.special'] = { link = 'SpecialChar' },
-  ['@string.yaml'] = { link = 'Normal' },
   ['@character'] = { link = 'Character' },
   ['@character.special'] = { link = 'SpecialChar' },
   ['@boolean'] = { link = 'Boolean' },
@@ -267,14 +267,24 @@ local hlgroups = {
   ['@markup.raw'] = { link = 'String' },
   ['@markup.link'] = { fg = c_variable, underline = true },
   ['@markup.link.url'] = { fg = c_special, underline = true },
+  ['@markup.heading.1.delimiter.vimdoc'] = { link = 'helpSectionDelim' },
+  ['@markup.heading.2.delimiter.vimdoc'] = { link = 'helpSectionDelim' },
   ['@markup.list'] = { fg = c_keyword },
   ['@markup.strong'] = { bold = true },
   ['@markup.emphasis'] = { italic = true },
   ['@markup.strikethrough'] = { strikethrough = true },
   ['@markup.underline'] = { underline = true },
+  ['@comment.todo'] = { fg = c_background, bg = c_keyword, bold = true },
+  ['@comment.note'] = { fg = c_background, bg = c_special, bold = true },
+  ['@comment.warning'] = { fg = c_background, bg = c_warn, bold = true },
+  ['@comment.error'] = { fg = c_background, bg = c_error, bold = true },
   ['@tag'] = { fg = c_keyword },
   ['@tag.attribute'] = { fg = c_variable },
   ['@tag.delimiter'] = { fg = c_foreground },
+  -- }}}2
+
+  -- LSP semantic {{{2
+  ['@lsp.type.comment'] = {}, -- avoid interfere with `@comment.note/todo/warning/error`
   -- }}}2
 
   -- LSP {{{2
@@ -315,7 +325,7 @@ local hlgroups = {
   DiagnosticUnnecessary = { undercurl = true, sp = c_special },
   -- }}}2
 
-  -- Filetype {{{2
+  -- FileType {{{2
   -- Markdown
   markdownBold = { bold = true },
   markdownBoldItalic = { bold = true, italic = true },

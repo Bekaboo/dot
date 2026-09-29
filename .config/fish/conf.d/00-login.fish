@@ -5,7 +5,7 @@ end
 
 # Setup paths
 # macOS homebrew
-fish_add_path /opt/homebrew/bin /usr/local/bin
+fish_add_path /opt/homebrew/opt/llvm/bin /opt/homebrew/bin /usr/local/bin
 if type -q brew
     eval (brew shellenv)
 end
@@ -19,6 +19,22 @@ fish_add_path --move \
     $HOME/.local/bin \
     $HOME/.cargo/bin \
     $HOME/go/bin
+
+# Portable apps
+for apps_dir in $HOME/Apps $HOME/.local/apps
+    if not test -d $apps_dir
+        continue
+    end
+    for dir in $apps_dir/*
+        fish_add_path --move $dir
+        fish_add_path --move $dir/bin
+    end
+end
+
+# Dotfile bare repo path
+if not type -q DOT_DIR
+    set -Ux DOT_DIR $HOME/.dot
+end
 
 if test -f $HOME/.envvars
     source $HOME/.envvars
@@ -38,26 +54,6 @@ for editor in nvim vim vi
     end
 end
 
-if test "$TERM" = linux
-    echo -en "\e]P00D0C0C" #black
-    echo -en "\e]P1C4746E" #darkred
-    echo -en "\e]P28A9A7B" #darkgreen
-    echo -en "\e]P3D2B788" #brown
-    echo -en "\e]P48BA4B0" #darkblue
-    echo -en "\e]P5A292A3" #darkmagenta
-    echo -en "\e]P68EA4A2" #darkcyan
-    echo -en "\e]P7B4B3A7" #lightgrey
-    echo -en "\e]P87F827F" #darkgrey
-    echo -en "\e]P9E46876" #red
-    echo -en "\e]PA87A987" #green
-    echo -en "\e]PBDCA561" #yellow
-    echo -en "\e]PC7FB4CA" #blue
-    echo -en "\e]PD938AA9" #magenta
-    echo -en "\e]PE7AA89F" #cyan
-    echo -en "\e]PFB4B8B4" #white
-    clear #for background artifacting
-end
-
 # Ensure color theme files are correctly linked
 type -q setbg; and setbg &
 type -q setcolors; and setcolors &
@@ -66,5 +62,6 @@ type -q setcolors; and setcolors &
 if type -q proot-distro
     and test -n "$PROOT_DISTRO"
     and test -n "$PROOT_USER"
+    and test -n "$TERMUX_VERSION"
     exec proot-distro login $PROOT_DISTRO --user $PROOT_USER --termux-home
 end

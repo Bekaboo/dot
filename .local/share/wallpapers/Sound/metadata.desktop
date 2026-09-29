@@ -1,0 +1,26 @@
+[Desktop Entry]
+Name=Sound
+Comment=Sound Wallpapers
+
+X-KDE-PluginInfo-Author=Bekaboo
+X-KDE-PluginInfo-Email=kankefengjing@gmail.com
+X-KDE-PluginInfo-Name=Sound
+X-KDE-PluginInfo-Version=0.0
+X-KDE-PluginInfo-Website=
+X-KDE-PluginInfo-Category=
+X-KDE-PluginInfo-Depends=
+X-KDE-PluginInfo-License=
+X-KDE-PluginInfo-EnabledByDefault=true
+X-Plasma-API=5.0
+
+[Settings]
+FallbackTheme=default
+
+[Wallpaper]
+defaultWallpaperTheme=Sound
+defaultFileSuffix=.png
+defaultWidth=3840
+defaultHeight=2160
+
+[Branding]
+homepage=

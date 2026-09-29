@@ -1,0 +1,34 @@
+[colors]
+ansi = [
+    '#fafafa',
+    '#e45649',
+    '#50a14f',
+    '#986801',
+    '#4078f2',
+    '#a626a4',
+    '#0184bc',
+    '#383a42',
+]
+brights = [
+    '#c9c9c9',
+    '#e45649',
+    '#50a14f',
+    '#986801',
+    '#4078f2',
+    '#a626a4',
+    '#0184bc',
+    '#383a42',
+]
+foreground = '#383a42'
+background = '#fafafa'
+cursor_bg = '#383a42'
+cursor_border = '#383a42'
+cursor_fg = '#fafafa'
+selection_bg = '#dcdcdc'
+selection_fg = '#383a42'
+
+[colors.indexed]
+
+[metadata]
+name = 'Onedark Light'
+author = 'Bekaboo'

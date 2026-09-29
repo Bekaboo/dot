@@ -7,7 +7,7 @@ has() {
 }
 
 # macOS homebrew install paths
-export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+export PATH="/opt/homebrew/opt/llvm/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 if has brew; then
     eval "$(brew shellenv)"
 fi
@@ -22,6 +22,20 @@ export PATH="$HOME/go/bin:$PATH"
 export PATH="$HOME/.cargo/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.bin:$PATH"
+
+# Portable apps
+for apps_dir in "$HOME/Apps" "$HOME/.local/apps"; do
+    if [ ! -d "$apps_dir" ]; then
+        continue
+    fi
+    for dir in "$apps_dir"/*; do
+        export PATH="$dir:$PATH"
+        export PATH="$dir/bin:$PATH"
+    done
+done
+
+# Dotfile bare repo path
+export DOT_DIR="$HOME/.dot"
 
 if [ -r "$HOME/.envvars" ]; then
     . "$HOME/.envvars"
@@ -45,6 +59,9 @@ export BAT_THEME=ansi
 # shellcheck disable=SC2089
 # we want to include '' (single quotes) in `--preview` option because opts are
 # parsed twice when passing to fzf
+#
+# Set gutter to space to hide gutter:
+# https://github.com/junegunn/fzf/blob/master/CHANGELOG.md#hiding-the-gutter-column
 export FZF_DEFAULT_OPTS="--reverse \
     --preview='fzf-file-previewer {}' \
     --preview-window=right,55%,border-none,nocycle \
@@ -62,18 +79,12 @@ export FZF_DEFAULT_OPTS="--reverse \
     --color=fg+:-1,bg+:-1,hl+:bold:cyan \
     --color=border:white,preview-border:white \
     --color=marker:bold:cyan,prompt:bold:red,pointer:bold:red \
-    --color=gutter:-1,info:bold:red,spinner:cyan,header:white \
+    --color=gutter:grey,info:bold:red,spinner:cyan,header:white \
     --bind=ctrl-k:kill-line \
     --bind=alt-a:toggle-all \
     --bind=alt-up:first,alt-down:last \
     --bind=shift-up:preview-up,shift-down:preview-down \
     --bind=alt-v:preview-half-page-up,ctrl-v:preview-half-page-down"
-
-if has tput && [ "$(tput colors)" -lt 256 ]; then
-    # shellcheck disable=SC2090
-    export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
-        --no-unicode --marker='+ ' --pointer='> '"
-fi
 
 fd=$(has fd && echo fd || echo fdfind)
 
@@ -168,19 +179,24 @@ has setbg && ( setbg & ) 2>/dev/null
 has setcolors && ( setcolors & ) 2>/dev/null
 
 # Automatically login to proot distro on termux
-if has proot-distro && [ -n "$PROOT_DISTRO" ] && [ -n "$PROOT_USER" ]; then
+if has proot-distro &&
+    [ -n "$PROOT_DISTRO" ] &&
+    [ -n "$PROOT_USER" ] &&
+    [ -n "$TERMUX_VERSION" ]; then
     exec proot-distro login "$PROOT_DISTRO" --user "$PROOT_USER" --termux-home
 fi
 
 # Greeting message
-if [ -z "$GREETED" ]; then
+if [ ! -e "${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/greeted" ]; then
+    touch "${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/greeted"
+
     if has fastfetch; then
         fetch=fastfetch
     elif has neofetch; then
         fetch=neofetch
     fi
+
     if [ -n "$fetch" ]; then
-        export GREETED=1
         # Run in pseudo-terminal to prevent terminal state issues
         # (tmux error: 'not a terminal', etc)
         # macOS `script` does not accept `-c` flag

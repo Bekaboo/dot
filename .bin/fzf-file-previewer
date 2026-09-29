@@ -4,7 +4,7 @@
 which_exe() {
     # $@: list of commands to test
     for cmd in "$@"; do
-        if has "$cmd"; then
+        if command -v "$cmd" >/dev/null 2>&1; then
             echo "$cmd"
             return
         fi
@@ -25,19 +25,19 @@ fzf_file_previewer() {
     fi
 
     # Clear possible ueberzugpp image preview
-    if [ -S "$UB_SOCK" ] && has ueberzugpp; then
+    if [ -S "$UB_SOCK" ] && command -v ueberzugpp >/dev/null 2>&1; then
         ueberzugpp cmd -s "$UB_SOCK" -a remove -i fzf-file-preview-ub 2>/dev/null
     fi
 
     # Preview directories
     if [ -d "$1" ]; then
-        if has tree; then
+        if command -v tree >/dev/null 2>&1; then
             tree_output=$(tree -N -L 4 -C -- "$1")
             info=$(echo "$tree_output" | tail -n 1)
             printf "\033[1m%s\033[0m\n\n" "$info"
             printf "%s\n" "$tree_output" | tail -n +2
         else
-            if has find && has wc; then
+            if command -v find >/dev/null 2>&1 && command -v wc >/dev/null 2>&1; then
                 num_files=$(find "$fpath" -type f | wc -l)
                 num_dirs=$(find "$fpath" -type d | wc -l)
                 printf "\033[1m%d directories, %d files\033[0m\n" \
@@ -53,7 +53,7 @@ fzf_file_previewer() {
         case "$(file -b --mime -- "$1")" in
         image/*)
             # ueberzugpp is up and fzf is called from wrapper
-            if [ -S "$UB_SOCK" ] && has ueberzugpp; then
+            if [ -S "$UB_SOCK" ] && command -v ueberzugpp >/dev/null 2>&1; then
                 if [ "$((FZF_MARGIN_RIGHT + FZF_MARGIN_LEFT + \
                 FZF_PADDING_RIGHT + FZF_PADDING_LEFT))" -lt \
                     "$FZF_TERM_COLUMNS" ]; then
@@ -113,7 +113,7 @@ fzf_file_previewer() {
             ;;
 
         application/pdf*)
-            if has pdftotext; then
+            if command -v pdftotext >/dev/null 2>&1; then
                 pdftotext -l 10 -nopgbrk -nodiag -q "$1" -
                 return
             else
@@ -122,9 +122,9 @@ fzf_file_previewer() {
             ;;
 
         application/zip*)
-            if has unzip; then
+            if command -v unzip >/dev/null 2>&1; then
                 unzip -l "$fpath"
-            elif has zip; then
+            elif command -v zip >/dev/null 2>&1; then
                 zip -sf -- "$1"
             else
                 echo 'unzip and zip not found' >&2
@@ -132,7 +132,7 @@ fzf_file_previewer() {
             ;;
 
         application/x-tar* | application/gzip*)
-            if has tar; then
+            if command -v tar >/dev/null 2>&1; then
                 tar --ignore-command-error -tf "$1" 2>/dev/null
             else
                 echo 'tar not found' >&2
@@ -140,10 +140,10 @@ fzf_file_previewer() {
             ;;
 
         text/html*)
-            if has w3m; then
+            if command -v w3m >/dev/null 2>&1; then
                 w3m -dump "$fpath"
                 return
-            elif has html2text; then
+            elif command -v html2text >/dev/null 2>&1; then
                 html2text -- "$1"
                 return
             fi
@@ -153,7 +153,7 @@ fzf_file_previewer() {
             # Use glow for markdown files
             case "$1" in
             *.md)
-                if has glow; then
+                if command -v glow >/dev/null 2>&1; then
                     glow -w="$FZF_PREVIEW_COLUMNS" -- "$1"
                     return
                 fi
@@ -161,7 +161,7 @@ fzf_file_previewer() {
             esac
 
             # Use bat, highlight or cat for remaining files
-            if has bat; then
+            if command -v bat >/dev/null 2>&1; then
                 if [ -z "$2" ]; then
                     bat --paging never --style plain --color always "$1"
                 else
@@ -171,7 +171,7 @@ fzf_file_previewer() {
                 return
             fi
 
-            if has highlight; then
+            if command -v highlight >/dev/null 2>&1; then
                 highlight_config="$HOME/.highlight/themes/highlight.theme"
                 if [ ! -e "$highlight_config" ]; then
                     highlight -O ansi --force -- "$1"
@@ -181,7 +181,7 @@ fzf_file_previewer() {
                 return
             fi
 
-            if has cat; then
+            if command -v cat >/dev/null 2>&1; then
                 cat "$1"
                 return
             fi
