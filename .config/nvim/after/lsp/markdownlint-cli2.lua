@@ -28,6 +28,8 @@ return {
           lintSource = 'markdownlint-cli2',
           lintCommand = lint_command,
           lintFormats = {
+            '%f:%l:%c %trror %m',
+            '%f:%l:%c %tarning %m',
             '%f:%l %trror %m',
             '%f:%l %tarning %m',
           },
