@@ -57,6 +57,7 @@ return {
       { lhs = '<Leader>fq', opts = { desc = 'Find quickfix list' } },
       { lhs = '<Leader>fL', opts = { desc = 'Find location list stack' } },
       { lhs = '<Leader>fQ', opts = { desc = 'Find quickfix stack' } },
+      { lhs = '<Leader>fu', opts = { desc = 'Find undos' } },
       { lhs = '<Leader>fgt', opts = { desc = 'Find git tags' } },
       { lhs = '<Leader>fgs', opts = { desc = 'Find git stash' } },
       { lhs = '<Leader>fgg', opts = { desc = 'Find git status' } },
@@ -1637,6 +1638,7 @@ return {
       vim.keymap.set('n', '<Leader>fq', fzf.quickfix, { desc = 'Find quickfix list' })
       vim.keymap.set('n', '<Leader>fL', fzf.loclist_stack, { desc = 'Find location list stack' })
       vim.keymap.set('n', '<Leader>fQ', fzf.quickfix_stack, { desc = 'Find quickfix stack' })
+      vim.keymap.set('n', '<Leader>fu', fzf.undotree, { desc = 'Find undos' })
       vim.keymap.set('n', '<Leader>fgt', fzf.git_tags, { desc = 'Find git tags' })
       vim.keymap.set('n', '<Leader>fgs', fzf.git_stash, { desc = 'Find git stash' })
       vim.keymap.set('n', '<Leader>fgg', fzf.git_status, { desc = 'Find git status' })
