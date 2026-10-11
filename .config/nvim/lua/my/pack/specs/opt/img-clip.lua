@@ -174,23 +174,22 @@ return {
           use_cursor_in_template = true,
           dir_path = function()
             local bufname = vim.api.nvim_buf_get_name(0)
-            local img_dir = (
-              unpack(vim.fs.find({
-                'img',
-                'imgs',
-                'image',
-                'images',
-                'pic',
-                'pics',
-                'picture',
-                'pictures',
-                'asset',
-                'assets',
-              }, {
-                path = vim.fs.dirname(bufname),
-                upward = true,
-              }))
-            )
+            local img_dirs, _ = vim.fs.find({
+              'img',
+              'imgs',
+              'image',
+              'images',
+              'pic',
+              'pics',
+              'picture',
+              'pictures',
+              'asset',
+              'assets',
+            }, {
+              path = vim.fs.dirname(bufname),
+              upward = true,
+            })
+            local img_dir = img_dirs[1]
 
             -- Don't save images to `~/pictures` under home directory
             if
