@@ -5,7 +5,10 @@ module.exports = {
   parser: "none",
   function: (params, onError) => {
     params.lines.forEach((line, lineIndex) => {
+      const endColumn = params.config.ignore_trailing ? line.trimEnd().length : line.length;
       for (const match of line.matchAll(/\u00a0/g)) {
+        if (match.index >= endColumn) continue;
+
         onError({
           lineNumber: lineIndex + 1,
           range: [match.index + 1, 1],

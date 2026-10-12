@@ -5,6 +5,10 @@ const noNbsp = require("./.config/markdownlint/no-nbsp.cjs");
 module.exports = {
   config: {
     default: false,
+    MD009: {
+      br_spaces: 0,
+      code_blocks: true,
+    },
     MD022: true,
     MD030: {
       ul_single: 1,
@@ -15,7 +19,9 @@ module.exports = {
     MD041: false,
     "no-numbered-headings": true,
     "tight-lists": true,
-    "no-nbsp": true,
+    "no-nbsp": {
+      ignore_trailing: true,
+    },
   },
   customRules: [noNumberedHeadings, tightLists, noNbsp],
 };
