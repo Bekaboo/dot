@@ -1,5 +1,6 @@
 const noNumberedHeadings = require("./.config/markdownlint/no-numbered-headings.cjs");
 const tightLists = require("./.config/markdownlint/tight-lists.cjs");
+const noNbsp = require("./.config/markdownlint/no-nbsp.cjs");
 
 module.exports = {
   config: {
@@ -14,6 +15,7 @@ module.exports = {
     MD041: false,
     "no-numbered-headings": true,
     "tight-lists": true,
+    "no-nbsp": true,
   },
-  customRules: [noNumberedHeadings, tightLists],
+  customRules: [noNumberedHeadings, tightLists, noNbsp],
 };
