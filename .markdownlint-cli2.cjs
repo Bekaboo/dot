@@ -12,18 +12,25 @@ module.exports = {
     },
     MD022: true,
     MD030: {
+      severity: "warning",
       ul_single: 1,
       ol_single: 1,
       ul_multi: 1,
       ol_multi: 1,
     },
     MD041: false,
-    "no-numbered-headings": true,
-    "tight-lists": true,
+    "no-numbered-headings": {
+      severity: "warning",
+    },
+    "tight-lists": {
+      severity: "warning",
+    },
     "no-nbsp": {
       ignore_trailing: true,
     },
-    "aligned-tables": true,
+    "aligned-tables": {
+      severity: "warning",
+    },
   },
   customRules: [noNumberedHeadings, tightLists, noNbsp, alignedTables],
 };
