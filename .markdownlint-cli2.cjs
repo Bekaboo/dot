@@ -1,6 +1,7 @@
 const noNumberedHeadings = require("./.config/markdownlint/no-numbered-headings.cjs");
 const tightLists = require("./.config/markdownlint/tight-lists.cjs");
 const noNbsp = require("./.config/markdownlint/no-nbsp.cjs");
+const alignedTables = require("./.config/markdownlint/aligned-tables.cjs");
 
 module.exports = {
   config: {
@@ -22,6 +23,7 @@ module.exports = {
     "no-nbsp": {
       ignore_trailing: true,
     },
+    "aligned-tables": true,
   },
-  customRules: [noNumberedHeadings, tightLists, noNbsp],
+  customRules: [noNumberedHeadings, tightLists, noNbsp, alignedTables],
 };
