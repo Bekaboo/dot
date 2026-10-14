@@ -2,6 +2,7 @@ const noNumberedHeadings = require("./.config/markdownlint/no-numbered-headings.
 const tightLists = require("./.config/markdownlint/tight-lists.cjs");
 const noNbsp = require("./.config/markdownlint/no-nbsp.cjs");
 const alignedTables = require("./.config/markdownlint/aligned-tables.cjs");
+const hardWrap = require("./.config/markdownlint/hard-wrap.cjs");
 
 module.exports = {
   config: {
@@ -31,6 +32,10 @@ module.exports = {
     "aligned-tables": {
       severity: "warning",
     },
+    "hard-wrap": {
+      severity: "warning",
+      line_length: 79,
+    },
   },
-  customRules: [noNumberedHeadings, tightLists, noNbsp, alignedTables],
+  customRules: [noNumberedHeadings, tightLists, noNbsp, alignedTables, hardWrap],
 };
