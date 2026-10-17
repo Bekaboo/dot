@@ -84,7 +84,9 @@ setmetatable(_G._tabline, {
     -- Colorize and add click response
     for tabnr, tabname in ipairs(tabnames) do
       tabnames[tabnr] = utils.stl.hl(
-        string.format('%%%dT%s%%X', tabnr, tabname),
+        -- Notice that we escape `%` characters in `tabname` to prevent
+        -- unintended tabline evaluation
+        string.format('%%%dT%s%%X', tabnr, tabname:gsub('%%', '%%%%')),
         tabnr == tabnrcur and 'TabLineSel' or 'TabLine'
       )
     end

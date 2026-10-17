@@ -122,7 +122,7 @@ return {
       ---@return nil
       local function lcd(dir)
         local ok = pcall(vim.cmd.lcd, {
-          dir,
+          vim.fn.fnameescape(dir),
           mods = {
             silent = true,
             emsg_silent = true,

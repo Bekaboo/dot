@@ -233,7 +233,7 @@ do
               return
             end
             pcall(vim.cmd.lcd, {
-              root_dir,
+              vim.fn.fnameescape(root_dir),
               mods = {
                 silent = true,
                 emsg_silent = true,
