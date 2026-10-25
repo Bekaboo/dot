@@ -1,3 +1,4 @@
+---@class my.utils.git
 local M = {}
 
 vim.api.nvim_create_autocmd({ 'BufWrite', 'FileChangedShellPost' }, {
@@ -22,13 +23,18 @@ function M.diffstat(buf, args)
     return {}
   end
 
+  if vim.b[buf].git_diffstat_pending then
+    return vim.b[buf].git_diffstat
+  end
+
   if
     (vim.b[buf].git_diffstat_writetick or 0) < (vim.b[buf].git_writetick or 1)
   then
     local bufname = vim.api.nvim_buf_get_name(buf)
     local dirname = vim.fs.dirname(bufname)
     local now = vim.uv.hrtime()
-    pcall(
+    vim.b[buf].git_diffstat_pending = true
+    local ok = pcall(
       vim.system,
       vim.list_extend({ 'git', '-C', dirname, unpack(args or {}) }, {
         '--no-pager',
@@ -44,6 +50,7 @@ function M.diffstat(buf, args)
         if not vim.api.nvim_buf_is_valid(buf) then
           return
         end
+        vim.b[buf].git_diffstat_pending = nil
 
         local stat = { added = 0, removed = 0, changed = 0 }
         for _, line in ipairs(vim.split(o.stdout, '\n')) do
@@ -68,6 +75,9 @@ function M.diffstat(buf, args)
         end
       end)
     )
+    if not ok then
+      vim.b[buf].git_diffstat_pending = nil
+    end
   end
 
   return vim.b[buf].git_diffstat
@@ -86,12 +96,20 @@ function M.execute(buf, args)
 
   local cache_key = vim.fn.sha256(table.concat(args)):sub(1, 8)
   local cache_key_writetick = cache_key .. '_writetick'
+  local cache_key_pending = cache_key .. '_pending'
+
+  -- Several statusline components request the same context on each redraw.
+  -- Reuse the cached value until the outstanding request finishes.
+  if vim.b[buf][cache_key_pending] then
+    return vim.b[buf][cache_key]
+  end
 
   if
     (vim.b[buf][cache_key_writetick] or 0) < (vim.b[buf].git_writetick or 1)
   then
     local now = vim.uv.hrtime()
-    pcall(
+    vim.b[buf][cache_key_pending] = true
+    local ok = pcall(
       vim.system,
       {
         'git',
@@ -104,6 +122,7 @@ function M.execute(buf, args)
         if not vim.api.nvim_buf_is_valid(buf) then
           return
         end
+        vim.b[buf][cache_key_pending] = nil
 
         if (vim.b[buf][cache_key_writetick] or 0) < now then
           vim.b[buf][cache_key] = o.code == 0 and vim.trim(o.stdout) or nil
@@ -111,6 +130,9 @@ function M.execute(buf, args)
         end
       end)
     )
+    if not ok then
+      vim.b[buf][cache_key_pending] = nil
+    end
   end
 
   return vim.b[buf][cache_key]
@@ -127,29 +149,20 @@ function M.resolve_context(buf, fallback_args)
     return
   end
 
-  local work_tree = M.execute(buf, { 'rev-parse', '--show-toplevel' })
+  local command = { 'rev-parse', '--show-toplevel', '--absolute-git-dir' }
+  local context = M.execute(buf, command)
   for _, args in ipairs(fallback_args) do
-    if work_tree then
+    if context then
       break
     end
-    work_tree = M.execute(
-      buf,
-      vim.list_extend(vim.deepcopy(args), { 'rev-parse', '--show-toplevel' })
-    )
+    context = M.execute(buf, vim.list_extend(vim.deepcopy(args), command))
   end
 
-  local git_dir = M.execute(buf, { 'rev-parse', '--git-dir' })
-  for _, args in ipairs(fallback_args) do
-    if git_dir then
-      break
-    end
-    git_dir = M.execute(
-      buf,
-      vim.list_extend(vim.deepcopy(args), { 'rev-parse', '--git-dir' })
-    )
+  if not context then
+    return
   end
 
-  return work_tree, git_dir
+  return context:match('^(.-)\n(.+)$')
 end
 
 return M

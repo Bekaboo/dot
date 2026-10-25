@@ -7,10 +7,17 @@ local function tmux_get_socket()
   return vim.split(vim.env.TMUX, ',')[1]
 end
 
----@param command string tmux command to execute
+---@param command string|string[] tmux command to execute
 ---@param global boolean? command should be executed globally instead of in current pane
 ---@return string tmux command output
 local function tmux_exec(command, global)
+  if type(command) == 'table' then
+    local args = global and { 'tmux' } or { 'tmux', '-S', tmux_get_socket() }
+    return vim
+      .system(vim.list_extend(args, command), { text = true })
+      :wait().stdout or ''
+  end
+
   command = global and string.format('tmux %s', command)
     or string.format('tmux -S %s %s', tmux_get_socket(), command)
   local handle = assert(
@@ -27,13 +34,12 @@ end
 ---@return string tmux pane option value
 local function tmux_get_pane_opt(opt)
   return (
-    tmux_exec(
-      string.format(
-        "display-message -pt %s '#{%s}'",
-        vim.env.TMUX_PANE,
-        vim.fn.escape(opt, "'\\")
-      )
-    ):gsub('\n.*', '')
+    tmux_exec({
+      'display-message',
+      '-pt',
+      vim.env.TMUX_PANE,
+      '#{' .. opt .. '}',
+    }):gsub('\n.*', '')
   )
 end
 
@@ -42,27 +48,14 @@ end
 ---@param val string tmux pane option value
 ---@return nil
 local function tmux_set_pane_opt(opt, val)
-  tmux_exec(
-    string.format(
-      "set -pt %s %s '%s'",
-      vim.env.TMUX_PANE,
-      opt,
-      vim.fn.escape(val, "'\\")
-    )
-  )
+  tmux_exec({ 'set', '-pt', vim.env.TMUX_PANE, opt, val })
 end
 
 ---Unset a tmux pane option
 ---@param opt string tmux pane option
 ---@return nil
 local function tmux_unset_pane_opt(opt)
-  tmux_exec(
-    string.format(
-      "set -put %s '%s'",
-      vim.env.TMUX_PANE,
-      vim.fn.escape(opt, "'\\")
-    )
-  )
+  tmux_exec({ 'set', '-put', vim.env.TMUX_PANE, opt })
 end
 
 ---@return boolean
