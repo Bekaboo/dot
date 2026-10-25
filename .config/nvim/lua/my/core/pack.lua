@@ -49,7 +49,7 @@ utils.pack.add(filter_specs(specs_start, true))
 utils.load.on_events(
   'UIEnter',
   'my.pack.load_builtin_opt',
-  vim.schedule_wrap(function()
+  utils.load.schedule_wrap(function()
     utils.pack.add(filter_specs(get_specs_opt(), true))
   end)
 )
@@ -75,7 +75,7 @@ utils.pack.add(specs_start_external)
 utils.load.on_events(
   'UIEnter',
   'my.pack.load_external_opt',
-  vim.schedule_wrap(function()
+  utils.load.schedule_wrap(function()
     utils.pack.add(filter_specs(get_specs_opt(), false))
   end)
 )

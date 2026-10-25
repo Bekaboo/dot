@@ -15,10 +15,11 @@ return {
         end
       end
 
+      local scheduled_load = load.schedule_wrap(load_wk)
       if vim.v.vim_did_enter then
-        vim.schedule(load_wk)
+        scheduled_load()
       else
-        load.on_events('UIEnter', 'which-key', vim.schedule_wrap(load_wk))
+        load.on_events('UIEnter', 'which-key', scheduled_load)
       end
     end,
     postload = function()

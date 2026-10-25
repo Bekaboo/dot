@@ -25,7 +25,7 @@ load.on_events('DiagnosticChanged', 'my.core.diagnostic')
 load.on_events(
   'FileType',
   'my.core.lsp',
-  vim.schedule_wrap(function()
+  load.schedule_wrap(function()
     require('my.core.lsp')
   end)
 )

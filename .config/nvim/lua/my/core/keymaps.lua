@@ -1,10 +1,12 @@
+local load = require('my.utils.load')
+
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
-require('my.utils.load').on_events(
+load.on_events(
   'UIEnter',
   'my.keymaps',
-  vim.schedule_wrap(function()
+  load.schedule_wrap(function()
     local keymaps = {} ---@type table<string, table<string, true>>
     local buf_keymaps = {} ---@type table<integer, table<string, table<string, true>>>
 
@@ -507,24 +509,20 @@ require('my.utils.load').on_events(
   end)
 )
 
-require('my.utils.load').on_events(
-  'CmdlineEnter',
-  'my.keymaps.cmdline_abbrevs',
-  function()
-    local key = require('my.utils.key')
+load.on_events('CmdlineEnter', 'my.keymaps.cmdline_abbrevs', function()
+  local key = require('my.utils.key')
 
-    key.command_map(':', 'lua =')
-    key.command_abbrev('man', 'Man')
-    key.command_abbrev('tt', 'tab te')
-    key.command_abbrev('bt', 'bot te')
-    key.command_abbrev('ht', 'hor te')
-    key.command_abbrev('vt', 'vert te')
-    key.command_abbrev('rm', '!rm')
-    key.command_abbrev('mv', '!mv')
-    key.command_abbrev('git', '!git')
-    key.command_abbrev('tree', '!tree')
-    key.command_abbrev('mkdir', '!mkdir')
-    key.command_abbrev('touch', '!touch')
-    key.command_abbrev('chmod', '!chmod')
-  end
-)
+  key.command_map(':', 'lua =')
+  key.command_abbrev('man', 'Man')
+  key.command_abbrev('tt', 'tab te')
+  key.command_abbrev('bt', 'bot te')
+  key.command_abbrev('ht', 'hor te')
+  key.command_abbrev('vt', 'vert te')
+  key.command_abbrev('rm', '!rm')
+  key.command_abbrev('mv', '!mv')
+  key.command_abbrev('git', '!git')
+  key.command_abbrev('tree', '!tree')
+  key.command_abbrev('mkdir', '!mkdir')
+  key.command_abbrev('touch', '!touch')
+  key.command_abbrev('chmod', '!chmod')
+end)

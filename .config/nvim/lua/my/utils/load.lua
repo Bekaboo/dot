@@ -1,7 +1,21 @@
+---@class my.utils.load
 local M = {}
 
 ---@type table<string, boolean> plugins/modules loaded
 local loaded = {}
+
+---Schedule initialization only while Neovim is running. Shutdown can drain
+---scheduled callbacks while waiting for jobs, after VimLeavePre has fired.
+---@param callback fun(...: any)
+---@return fun(...: any)
+function M.schedule_wrap(callback)
+  return vim.schedule_wrap(function(...)
+    if vim.v.exiting ~= vim.NIL then
+      return
+    end
+    callback(...)
+  end)
+end
 
 ---Load lua module for given filetype once
 ---@param ft string filetype to load, default to current buffer's filetype
@@ -107,7 +121,7 @@ function M.on_events(event_specs, name, load)
     ---and re-triggers event to execute event handlers in lazy-loaded plugins
     ---@param args vim.api.keyset.create_autocmd.callback_args
     return function(args)
-      if loaded[name] then
+      if loaded[name] or vim.v.exiting ~= vim.NIL then
         return
       end
       loaded[name] = true

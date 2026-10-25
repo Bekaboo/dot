@@ -1,3 +1,5 @@
+local load = require('my.utils.load')
+
 vim.g.has_ui = #vim.api.nvim_list_uis() > 0
 vim.g.has_nf = vim.env.TERM ~= 'linux' and vim.env.NVIM_NF ~= nil
 
@@ -42,12 +44,8 @@ do
     pcall(vim.cmd.rshada)
   end
 
-  require('my.utils.load').on_events('BufReadPre', 'my.opt.shada', rshada)
-  require('my.utils.load').on_events(
-    'UIEnter',
-    'my.opt.shada',
-    vim.schedule_wrap(rshada)
-  )
+  load.on_events('BufReadPre', 'my.opt.shada', rshada)
+  load.on_events('UIEnter', 'my.opt.shada', load.schedule_wrap(rshada))
 end
 
 -- Folding
@@ -74,10 +72,10 @@ do
   vim.opt.spelllang = 'en,cjk'
   vim.opt.spelloptions = 'camel'
 
-  require('my.utils.load').on_events(
+  load.on_events(
     'UIEnter',
     'my.opt.spell',
-    vim.schedule_wrap(function()
+    load.schedule_wrap(function()
       ---Buffers where spellcheck is enabled
       ---@type table<integer, true>
       local bufs = {}
@@ -122,7 +120,7 @@ vim.opt.diffopt:append({
 -- Use system clipboard
 vim.api.nvim_create_autocmd('UIEnter', {
   once = true,
-  callback = vim.schedule_wrap(function()
+  callback = load.schedule_wrap(function()
     vim.opt.clipboard:append('unnamedplus')
   end),
 })
@@ -358,14 +356,10 @@ local function load_runtime()
   vim.cmd.runtime('provider/python3.vim')
 end
 
-require('my.utils.load').on_events(
+load.on_events(
   { 'FileType', 'BufReadPre', 'BufWritePost' },
   'my.load_runtime',
   load_runtime
 )
 
-require('my.utils.load').on_cmds(
-  'UpdateRemotePlugins',
-  'my.load_runtime',
-  load_runtime
-)
+load.on_cmds('UpdateRemotePlugins', 'my.load_runtime', load_runtime)

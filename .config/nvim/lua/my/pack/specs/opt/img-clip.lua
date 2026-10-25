@@ -15,10 +15,11 @@ return {
         end
       end
 
+      local scheduled_load = load.schedule_wrap(load_img_clip)
       if vim.v.vim_did_enter then
-        vim.schedule(load_img_clip)
+        scheduled_load()
       else
-        load.on_events('UIEnter', 'img-clip', vim.schedule_wrap(load_img_clip))
+        load.on_events('UIEnter', 'img-clip', scheduled_load)
       end
     end,
     postload = function()
