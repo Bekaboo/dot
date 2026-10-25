@@ -19,4 +19,13 @@ local load = require('my.utils.load')
 
 load.on_events('FileType', 'my.core.treesitter')
 load.on_events('DiagnosticChanged', 'my.core.diagnostic')
-load.on_events('FileType', 'my.core.lsp')
+
+-- LSP setup resolves every server configuration. Let the initial buffer and
+-- its UI finish loading before doing this work; highlighting stays synchronous.
+load.on_events(
+  'FileType',
+  'my.core.lsp',
+  vim.schedule_wrap(function()
+    require('my.core.lsp')
+  end)
+)
