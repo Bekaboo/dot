@@ -1,0 +1,244 @@
+#!/usr/bin/env node
+
+import assert from "node:assert/strict";
+import { createHash, randomUUID } from "node:crypto";
+import {
+    existsSync,
+    mkdirSync,
+    readFileSync,
+    realpathSync,
+    renameSync,
+    writeFileSync,
+} from "node:fs";
+import { createRequire } from "node:module";
+import * as path from "node:path";
+import { pathToFileURL } from "node:url";
+
+const IMAGE_DIR = "img";
+const DOWNLOAD_TIMEOUT_MS = 60_000;
+const USER_AGENT = "md-localize-imgs/1.0";
+const DEFAULT_IMAGE_NAME = "image";
+const TEXT_ENCODING = "utf8";
+const RULE_NAME = "collect-remote-images";
+
+/** @typedef {{type: string, text: string, startLine: number, startColumn: number, endLine: number, endColumn: number, children: Token[]}} Token */
+/** @typedef {{start: number, end: number, url: string}} Destination */
+
+/** Resolve dependencies from the markdownlint-cli2 installation on PATH.
+ * @returns {NodeJS.Require}
+ */
+function cliRequire() {
+    const searchPath = process.env.PATH;
+    assert.ok(searchPath, "PATH must be set to locate markdownlint-cli2");
+
+    const executable = searchPath
+        .split(path.delimiter)
+        .map((directory) => path.join(directory, "markdownlint-cli2"))
+        .find((candidate) => existsSync(candidate));
+
+    if (!executable) {
+        throw new Error("markdownlint-cli2 must be installed and available on PATH");
+    }
+
+    return createRequire(realpathSync(executable));
+}
+
+/** Walk parser tokens in source order, including nested tokens.
+ * @param {Token[]} tokens
+ * @returns {Generator<Token>}
+ */
+function* walkTokens(tokens) {
+    for (const token of tokens) {
+        yield token;
+        yield* walkTokens(token.children);
+    }
+}
+
+/** Collect inline HTTP(S) image destinations without reporting lint violations.
+ * @param {string} original
+ * @returns {Promise<Destination[]>}
+ */
+async function imageDestinations(original) {
+    const resolve = cliRequire();
+    const { lint } = await import(
+        pathToFileURL(resolve.resolve("markdownlint-cli2/markdownlint/promise")).href
+    );
+    const { unescapeAll } = resolve("markdown-it")().utils;
+    const starts = [0];
+
+    for (const match of original.matchAll(/\r\n|\r|\n/g)) {
+        starts.push(match.index + match[0].length);
+    }
+
+    /** @type {Destination[]} */
+    const destinations = [];
+    const rule = {
+        names: [RULE_NAME],
+        description: "Collect remote inline image destinations",
+        tags: ["images"],
+        parser: "micromark",
+        /** @param {{parsers: {micromark: {tokens: Token[]}}}} params */
+        function: (params) => {
+            for (const image of walkTokens(params.parsers.micromark.tokens)) {
+                if (image.type !== "image") continue;
+
+                // Reference-style images have no resource destination of their own.
+                const resource = image.children.find(
+                    (token) => token.type === "resource",
+                );
+                if (!resource) continue;
+
+                const destination = [...walkTokens(resource.children)].find(
+                    (token) => token.type === "resourceDestinationString",
+                );
+                if (!destination) continue;
+
+                const url = unescapeAll(destination.text);
+                if (!/^https?:\/\//i.test(url)) continue;
+
+                destinations.push({
+                    start:
+                        starts[destination.startLine - 1] + destination.startColumn - 1,
+                    end: starts[destination.endLine - 1] + destination.endColumn - 1,
+                    url,
+                });
+            }
+        },
+    };
+
+    await lint({
+        strings: { document: original },
+        config: { default: false, [RULE_NAME]: true },
+        customRules: [rule],
+        frontMatter: null,
+        noInlineConfig: true,
+    });
+
+    return destinations.sort((a, b) => a.start - b.start);
+}
+
+/** Download an image, reusing identical files and hashing filename collisions.
+ * @param {string} url
+ * @param {string} directory
+ * @returns {Promise<string>} The downloaded file's path.
+ */
+async function download(url, directory) {
+    const response = await fetch(url, {
+        headers: { "User-Agent": USER_AGENT },
+        signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS),
+    });
+
+    if (!response.ok) {
+        throw new Error(
+            `Download failed: ${response.status} ${response.statusText}: ${url}`,
+        );
+    }
+
+    const data = Buffer.from(await response.arrayBuffer());
+    const pathname = new URL(url).pathname;
+    let name = decodeURIComponent(
+        pathname.slice(pathname.lastIndexOf("/") + 1),
+    ).replace(
+        // biome-ignore lint/suspicious/noControlCharactersInRegex: Remove control characters from downloaded filenames.
+        /[\x00-\x1f\x7f/\\]/g,
+        "_",
+    );
+
+    if (["", ".", ".."].includes(name)) {
+        name = DEFAULT_IMAGE_NAME;
+    }
+
+    let target = path.join(directory, name);
+    if (existsSync(target) && readFileSync(target).equals(data)) return target;
+
+    if (existsSync(target)) {
+        const digest = createHash("sha256").update(data).digest("hex");
+        const { name: stem, ext } = path.parse(name);
+        target = path.join(directory, `${stem}-${digest}${ext}`);
+
+        if (existsSync(target)) {
+            if (!readFileSync(target).equals(data)) {
+                throw new Error(`Conflicting file: ${target}`);
+            }
+
+            return target;
+        }
+    }
+
+    mkdirSync(directory, { recursive: true });
+
+    // Publish only complete downloads using a temporary file beside the target.
+    const temporary = path.join(directory, `.download-${randomUUID()}`);
+    writeFileSync(temporary, data, { flag: "wx" });
+    renameSync(temporary, target);
+
+    return target;
+}
+
+/** Download inline images and rewrite destinations after all downloads succeed.
+ * @param {string} filename
+ * @returns {Promise<void>}
+ */
+async function localize(filename) {
+    const original = readFileSync(filename, TEXT_ENCODING);
+    // markdownlint strips a BOM before parsing; keep it outside source offsets.
+    const bom = original.startsWith("\uFEFF") ? "\uFEFF" : "";
+    const source = original.slice(bom.length);
+    const directory = path.join(
+        path.dirname(filename),
+        IMAGE_DIR,
+        path.parse(filename).name,
+    );
+    const destinations = await imageDestinations(source);
+    /** @type {Map<string, string>} */
+    const downloaded = new Map();
+
+    for (const { url } of destinations) {
+        if (downloaded.has(url)) continue;
+
+        const target = await download(url, directory);
+        const relative = path.relative(path.dirname(filename), target);
+        const encoded = relative
+            .split(path.sep)
+            .map((part) =>
+                encodeURIComponent(part).replace(
+                    /[!'()*]/g,
+                    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
+                ),
+            )
+            .join("/");
+        downloaded.set(url, encoded);
+    }
+
+    let updated = source;
+    for (const { start, end, url } of destinations.toReversed()) {
+        updated = updated.slice(0, start) + downloaded.get(url) + updated.slice(end);
+    }
+
+    if (destinations.length) {
+        writeFileSync(filename, bom + updated, TEXT_ENCODING);
+    }
+
+    console.log(`${filename}: localized ${destinations.length} image link(s)`);
+}
+
+/** Process explicitly supplied filenames; linting and formatting never load this rule.
+ * @returns {Promise<void>}
+ */
+async function main() {
+    const files = process.argv.slice(2);
+
+    if (!files.length || files.includes("--help") || files.includes("-h")) {
+        console.log(
+            `Usage: md-localize-imgs FILE [FILE ...]\n\nDownload inline images to ${IMAGE_DIR}/<file-stem>/ and update Markdown in place.`,
+        );
+        process.exitCode = files.length ? 0 : 2;
+        return;
+    }
+
+    for (const filename of files) {
+        await localize(filename);
+    }
+}
+
+void main();
