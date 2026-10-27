@@ -192,23 +192,24 @@ async function localize(filename) {
     const destinations = await imageDestinations(source);
     /** @type {Map<string, string>} */
     const downloaded = new Map();
+    const urls = [...new Set(destinations.map(({ url }) => url))];
 
-    for (const { url } of destinations) {
-        if (downloaded.has(url)) continue;
-
-        const target = await download(url, directory);
-        const relative = path.relative(path.dirname(filename), target);
-        const encoded = relative
-            .split(path.sep)
-            .map((part) =>
-                encodeURIComponent(part).replace(
-                    /[!'()*]/g,
-                    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
-                ),
-            )
-            .join("/");
-        downloaded.set(url, encoded);
-    }
+    await Promise.all(
+        urls.map(async (url) => {
+            const target = await download(url, directory);
+            const relative = path.relative(path.dirname(filename), target);
+            const encoded = relative
+                .split(path.sep)
+                .map((part) =>
+                    encodeURIComponent(part).replace(
+                        /[!'()*]/g,
+                        (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
+                    ),
+                )
+                .join("/");
+            downloaded.set(url, encoded);
+        }),
+    );
 
     let updated = source;
     for (const { start, end, url } of destinations.toReversed()) {
@@ -236,9 +237,7 @@ async function main() {
         return;
     }
 
-    for (const filename of files) {
-        await localize(filename);
-    }
+    await Promise.all(files.map(localize));
 }
 
 void main();
