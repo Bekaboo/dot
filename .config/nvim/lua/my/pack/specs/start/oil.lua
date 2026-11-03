@@ -910,18 +910,23 @@ return {
                 return
               end
               local entry_path = vim.fs.joinpath(dir, entry.name)
-              local response
-              vim.ui.input({
-                prompt = 'Open with: ',
-                completion = 'shellcmd',
-              }, function(r)
-                response = r
-              end)
-              if not response then
+              local open_cmd ---@type string?
+              vim.ui.input(
+                { prompt = 'Open with: ', completion = 'shellcmd' },
+                function(response)
+                  open_cmd = response
+                end
+              )
+              if not open_cmd then
                 return
               end
-              print('\n')
-              vim.system({ response, entry_path })
+              -- Use `sh -c` to allow user to supply command with flags, e.g.
+              -- `open -a Firefox`
+              vim.system({
+                'sh',
+                '-c',
+                open_cmd .. ' ' .. vim.fn.fnameescape(entry_path),
+              })
             end,
           },
           ['gY'] = {
