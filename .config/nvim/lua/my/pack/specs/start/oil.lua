@@ -926,7 +926,22 @@ return {
                 'sh',
                 '-c',
                 open_cmd .. ' ' .. vim.fn.fnameescape(entry_path),
-              })
+              }, vim.schedule_wrap(function(o)
+                -- Show command stdout for usages e.g. `sha256sum <file>`
+                if o.stdout then
+                  vim.notify(o.stdout)
+                end
+                if o.code ~= 0 then
+                  vim.notify(
+                    string.format(
+                      '[oil.nvim] failed to open file (exit code %d): %s',
+                      o.code,
+                      o.stderr
+                    ),
+                    vim.log.levels.ERROR
+                  )
+                end
+              end))
             end,
           },
           ['gY'] = {
