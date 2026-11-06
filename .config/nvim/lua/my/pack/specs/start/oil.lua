@@ -881,10 +881,39 @@ return {
               if vim.tbl_isempty(entries) or not dir then
                 return
               end
-              -- macOS has no `dragon-drop`, reveal entries in Finder instead
-              -- and drag from there
-              local cmd = vim.fn.has('mac') == 1 and { 'open', '-R' }
-                or { 'dragon-drop' }
+
+              local cmd ---@type string[]
+              if vim.fn.has('linux') == 1 then
+                cmd = { 'dragon-drop' }
+              elseif vim.fn.has('mac') == 1 then
+                cmd = {
+                  'osascript',
+                  '-e',
+                  [[
+                    on run argv
+                      set file_items to {}
+                      repeat with file_path in argv
+                        set file_item to POSIX file (contents of file_path)
+                        set end of file_items to file_item as alias
+                      end repeat
+                      tell application "Finder"
+                        activate
+                        reveal file_items
+                      end tell
+                    end run
+                  ]],
+                  '--',
+                }
+              end
+
+              if not cmd then
+                vim.notify(
+                  '[oil.nvim] system not supported',
+                  vim.log.levels.WARN
+                )
+                return
+              end
+
               if vim.fn.executable(cmd[1]) == 0 then
                 vim.notify(
                   string.format('[oil.nvim] `%s` is not executable', cmd[1]),
@@ -892,6 +921,7 @@ return {
                 )
                 return
               end
+
               vim.system(vim.list_extend(
                 cmd,
                 vim
