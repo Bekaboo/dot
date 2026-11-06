@@ -881,22 +881,26 @@ return {
               if vim.tbl_isempty(entries) or not dir then
                 return
               end
-              if vim.fn.executable('dragon-drop') == 0 then
+              -- macOS has no `dragon-drop`, reveal entries in Finder instead
+              -- and drag from there
+              local cmd = vim.fn.has('mac') == 1 and { 'open', '-R' }
+                or { 'dragon-drop' }
+              if vim.fn.executable(cmd[1]) == 0 then
                 vim.notify(
-                  '[oil.nvim] `dragon-drop` is not executable',
+                  string.format('[oil.nvim] `%s` is not executable', cmd[1]),
                   vim.log.levels.WARN
                 )
                 return
               end
-              vim.system({
-                'dragon-drop',
-                unpack(vim
+              vim.system(vim.list_extend(
+                cmd,
+                vim
                   .iter(entries)
                   :map(function(entry)
                     return vim.fs.joinpath(dir, entry.name)
                   end)
-                  :totable()),
-              })
+                  :totable()
+              ))
             end,
           },
           ['go'] = {
