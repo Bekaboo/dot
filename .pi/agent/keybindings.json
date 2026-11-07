@@ -4,6 +4,10 @@
   "tui.select.down": ["down", "ctrl+n"],
   "tui.editor.cursorUp": ["up", "ctrl+p"],
   "tui.editor.cursorDown": ["down", "ctrl+n"],
+  "tui.altScreen.search": ["ctrl+s", "ctrl+shift+f"],
+  "tui.altScreen.searchNext": ["ctrl+g", "enter"],
+  "tui.altScreen.searchPrevious": ["ctrl+t", "shift+enter"],
+  "app.session.rename": [],
   "app.session.togglePath": [],
   "app.session.toggleNamedFilter": [],
   "app.models.toggleProvider": []
