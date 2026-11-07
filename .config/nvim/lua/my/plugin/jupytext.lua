@@ -253,6 +253,13 @@ local function setup()
   end
   vim.g.loaded_jupytext = true
 
+  -- Cater for lazy-loading, convert existing jupyter notebook buffers
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf), ':e') == 'ipynb' then
+      jupytext_convert(buf)
+    end
+  end
+
   vim.api.nvim_create_autocmd('BufReadCmd', {
     group = vim.api.nvim_create_augroup('my.jupytext', {}),
     pattern = '*.ipynb',
