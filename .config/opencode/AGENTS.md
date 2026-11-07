@@ -15,7 +15,8 @@
   instead (e.g. `->`, `--`, `*`, `<<>>`).
 - Do NOT use markdown bold (`**text**`) in your output, unless truly necessary.
 - Always wrap special characters, filenames, variable/function/class/module
-  names, and command names in backticks (e.g. `\r\n`, `main()`, `$DOT_DIR`).
+  names, and commands in backticks (e.g. `\r\n`, `main()`, `$DOT_DIR`), except
+  for pure numbers or digits.
 
 ## Markdown
 
