@@ -7,6 +7,7 @@
   "tui.altScreen.search": ["ctrl+s", "ctrl+shift+f"],
   "tui.altScreen.searchNext": ["ctrl+g", "enter"],
   "tui.altScreen.searchPrevious": ["ctrl+t", "shift+enter"],
+  "app.editor.external": ["alt+e", "ctrl+g"],
   "app.session.rename": [],
   "app.session.togglePath": [],
   "app.session.toggleNamedFilter": [],
