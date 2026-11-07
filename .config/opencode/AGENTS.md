@@ -1,7 +1,5 @@
 ## Shell
 
-- You are using a new shell to run each command. So envs exported with export
-  xxx=xxx will not work in your next command.
 - Use normal, reproducible commands for dependency installation and builds.
   Keep standard cache and dependency locations, such as the default
   `PYTHONPATH`, `GOPATH` and `GOCACHE`.
