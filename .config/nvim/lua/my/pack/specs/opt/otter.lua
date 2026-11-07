@@ -30,16 +30,34 @@ return {
         },
       })
 
+      local ot_supported_fts = { 'markdown', 'norg', 'org' }
+
+      ---Activate otter for supported buffers
+      ---@param buf integer
+      ---@return nil
+      local function ot_activate_supports_buf(buf)
+        if
+          not vim.api.nvim_buf_is_valid(buf)
+          or not vim.tbl_contains(ot_supported_fts, vim.bo[buf].ft)
+          or not vim.bo[buf].ma
+          or not utils.ts.is_active(buf)
+        then
+          return
+        end
+        ot.activate(nil, nil, false)
+      end
+
+      -- Cater for lazy-loading, activate otter for existing buffers
+      for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        ot_activate_supports_buf(buf)
+      end
+
       vim.api.nvim_create_autocmd('FileType', {
         desc = 'Activate otter for filetypes with injections.',
         group = vim.api.nvim_create_augroup('my.otter.activate', {}),
-        pattern = { 'markdown', 'norg', 'org' },
+        pattern = ot_supported_fts,
         callback = function(args)
-          local buf = args.buf
-          if vim.bo[buf].ma and utils.ts.is_active(buf) then
-            -- Enable completion only, disable diagnostics
-            ot.activate(nil, nil, false)
-          end
+          ot_activate_supports_buf(args.buf)
         end,
       })
     end,
