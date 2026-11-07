@@ -1,17 +1,3 @@
 {
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "^(apply_patch|Edit|Write)$",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ~/.codex/hooks/markdownlint.mjs",
-            "timeout": 30,
-            "statusMessage": "Formatting Markdown"
-          }
-        ]
-      }
-    ]
-  }
+  "hooks": {}
 }
