@@ -117,176 +117,8 @@ interface WatchNoticeDetails {
   state: WatchState;
 }
 
-/** Shared state captured by the registered tools for one extension load. */
-interface WatchRuntime {
-  /** Extension API used for command execution and notifications. */
-  pi: ExtensionAPI;
-  /** Active watches keyed by id. */
-  watches: Map<string, Watch>;
-  /** Counter used to allocate stable watch ids. */
-  nextId: number;
-}
-
 /**
- * Read the optional context command for a watch.
- *
- * @param runtime - Shared extension state.
- * @param watch - Watch whose tail command should run.
- * @returns Combined stdout and stderr, trimmed; empty when no command is set.
- */
-async function readTail(runtime: WatchRuntime, watch: Watch): Promise<string> {
-  if (!watch.tailCommand) {
-    return "";
-  }
-
-  const result = await runtime.pi.exec("bash", ["-lc", watch.tailCommand], {
-    signal: watch.controller.signal,
-    timeout: TAIL_TIMEOUT_MS,
-  });
-  return `${result.stdout}${result.stderr}`.trim();
-}
-
-/**
- * Deliver a watch update to the agent.
- *
- * Uses `followUp` so the notification waits for the current run to finish and
- * starts a new turn when the agent is idle.
- *
- * @param runtime - Shared extension state.
- * @param watch - Watch that produced the update.
- * @param state - Current watch outcome.
- * @param detail - Log tail or explanatory text for the message body.
- */
-function notify(
-  runtime: WatchRuntime,
-  watch: Watch,
-  state: WatchState,
-  detail: string,
-): void {
-  runtime.pi.sendMessage(
-    {
-      customType: "job-watch",
-      content: `[job-watch ${watch.id}] ${state}\n\n${detail}`.trim(),
-      display: true,
-      details: { id: watch.id, state },
-    },
-    { triggerTurn: true, deliverAs: "followUp" },
-  );
-}
-
-/**
- * Poll a watch until it succeeds, times out, or is cancelled.
- *
- * @param runtime - Shared extension state.
- * @param watch - Watch to run.
- */
-async function runWatch(runtime: WatchRuntime, watch: Watch): Promise<void> {
-  const deadline = watch.startedAt + watch.timeoutSec * 1000;
-  let lastProgress = Date.now();
-
-  while (Date.now() < deadline) {
-    const remaining = deadline - Date.now();
-    const result = await runtime.pi.exec("bash", ["-lc", watch.command], {
-      signal: watch.controller.signal,
-      timeout: Math.min(
-        MAX_CONDITION_TIMEOUT_MS,
-        Math.max(MIN_CONDITION_TIMEOUT_MS, remaining),
-      ),
-    });
-
-    if (result.code === 0) {
-      notify(
-        runtime,
-        watch,
-        "done",
-        (await readTail(runtime, watch)) || "Condition met.",
-      );
-      return;
-    }
-
-    if (
-      watch.notifyEverySec &&
-      Date.now() - lastProgress >= watch.notifyEverySec * 1000
-    ) {
-      lastProgress = Date.now();
-      notify(
-        runtime,
-        watch,
-        "running",
-        (await readTail(runtime, watch)) || "Still running.",
-      );
-    }
-
-    const waitMs = Math.min(watch.intervalSec * 1000, deadline - Date.now());
-    if (waitMs <= 0) {
-      break;
-    }
-    await sleep(waitMs, undefined, { signal: watch.controller.signal });
-  }
-
-  notify(
-    runtime,
-    watch,
-    "timeout",
-    (await readTail(runtime, watch)) || `No result after ${watch.timeoutSec}s.`,
-  );
-}
-
-/**
- * Register and start a watch without blocking the caller.
- *
- * @param runtime - Shared extension state.
- * @param watch - Watch to start.
- */
-function startWatch(runtime: WatchRuntime, watch: Watch): void {
-  runtime.watches.set(watch.id, watch);
-  void runWatch(runtime, watch)
-    .catch((error) => {
-      if (!watch.stopped) {
-        notify(runtime, watch, "error", String(error));
-      }
-    })
-    .finally(() => {
-      runtime.watches.delete(watch.id);
-    });
-}
-
-/**
- * Create a watch from validated tool input.
- *
- * @param runtime - Shared extension state.
- * @param params - Validated `watch_job` input.
- * @returns A new watch with a fresh id and abort controller.
- */
-function createWatch(runtime: WatchRuntime, params: WatchJobInput): Watch {
-  return {
-    id: `job-${runtime.nextId++}`,
-    command: params.command,
-    tailCommand: params.tailCommand,
-    timeoutSec: params.timeoutSec ?? DEFAULT_TIMEOUT_SEC,
-    intervalSec: params.intervalSec ?? DEFAULT_INTERVAL_SEC,
-    notifyEverySec: params.notifyEverySec,
-    startedAt: Date.now(),
-    stopped: false,
-    controller: new AbortController(),
-  };
-}
-
-/**
- * Cancel every active watch and clear the registry.
- *
- * @param runtime - Shared extension state.
- */
-function stopAllWatches(runtime: WatchRuntime): void {
-  for (const watch of runtime.watches.values()) {
-    watch.stopped = true;
-    watch.controller.abort();
-  }
-  runtime.watches.clear();
-}
-
-/**
- * Extract the persisted fields from an active watch.
+ * Extract the persisted fields from a watch.
  *
  * @param watch - Watch to serialize into tool-result details.
  * @returns The watch specification stored in the session branch.
@@ -362,34 +194,217 @@ function nextWatchId(active: Map<string, WatchSpec>): number {
 }
 
 /**
- * Re-arm watches recorded on the active session branch.
+ * Registry of background watches for one extension load.
  *
- * @param runtime - Shared extension state.
- * @param entries - Active session branch entries.
+ * Owns the id counter, the active-watch map, and the poll loops, so tools and
+ * session handlers never touch watch bookkeeping directly.
  */
-function restoreWatches(
-  runtime: WatchRuntime,
-  entries: readonly SessionEntry[],
-): void {
-  const active = collectActiveWatches(entries);
-  runtime.nextId = nextWatchId(active);
+class WatchRegistry {
+  private pi: ExtensionAPI;
+  private watches: Map<string, Watch>;
+  private nextId: number;
 
-  for (const spec of active.values()) {
-    startWatch(runtime, {
-      ...spec,
+  /**
+   * @param pi - Extension API used for command execution and notifications.
+   */
+  constructor(pi: ExtensionAPI) {
+    this.pi = pi;
+    this.watches = new Map();
+    this.nextId = 1;
+  }
+
+  /**
+   * Arm a watch and start polling it in the background.
+   *
+   * @param params - Validated `watch_job` input.
+   * @returns The persisted specification of the new watch.
+   */
+  start(params: WatchJobInput): WatchSpec {
+    const watch: Watch = {
+      id: `job-${this.nextId++}`,
+      command: params.command,
+      tailCommand: params.tailCommand,
+      timeoutSec: params.timeoutSec ?? DEFAULT_TIMEOUT_SEC,
+      intervalSec: params.intervalSec ?? DEFAULT_INTERVAL_SEC,
+      notifyEverySec: params.notifyEverySec,
+      startedAt: Date.now(),
       stopped: false,
       controller: new AbortController(),
+    };
+
+    this.arm(watch);
+    return toWatchSpec(watch);
+  }
+
+  /**
+   * Cancel one watch and stop its poll loop.
+   *
+   * @param id - Id of the watch to stop.
+   * @returns `true` when an active watch had that id.
+   */
+  stop(id: string): boolean {
+    const watch = this.watches.get(id);
+    if (!watch) {
+      return false;
+    }
+
+    watch.stopped = true;
+    watch.controller.abort();
+    this.watches.delete(id);
+    return true;
+  }
+
+  /** Cancel every active watch. */
+  stopAll(): void {
+    for (const watch of this.watches.values()) {
+      watch.stopped = true;
+      watch.controller.abort();
+    }
+    this.watches.clear();
+  }
+
+  /**
+   * Replace the current watches with those recorded on a session branch.
+   *
+   * In-flight loops are cancelled first, so a branch switch cannot leave
+   * orphaned pollers that keep notifying about an abandoned timeline.
+   *
+   * @param entries - Active session branch entries.
+   */
+  restore(entries: readonly SessionEntry[]): void {
+    this.stopAll();
+
+    const active = collectActiveWatches(entries);
+    this.nextId = nextWatchId(active);
+    for (const spec of active.values()) {
+      this.arm({
+        ...spec,
+        stopped: false,
+        controller: new AbortController(),
+      });
+    }
+  }
+
+  /**
+   * Register a watch and start its poll loop without blocking the caller.
+   *
+   * @param watch - Watch to arm.
+   */
+  private arm(watch: Watch): void {
+    this.watches.set(watch.id, watch);
+    void this.poll(watch)
+      .catch((error) => {
+        if (!watch.stopped) {
+          this.notify(watch, "error", String(error));
+        }
+      })
+      .finally(() => {
+        this.watches.delete(watch.id);
+      });
+  }
+
+  /**
+   * Poll a watch until it succeeds, times out, or is cancelled.
+   *
+   * @param watch - Watch to run.
+   */
+  private async poll(watch: Watch): Promise<void> {
+    const deadline = watch.startedAt + watch.timeoutSec * 1000;
+    let lastProgress = Date.now();
+
+    while (Date.now() < deadline) {
+      const remaining = deadline - Date.now();
+      const result = await this.pi.exec("bash", ["-lc", watch.command], {
+        signal: watch.controller.signal,
+        timeout: Math.min(
+          MAX_CONDITION_TIMEOUT_MS,
+          Math.max(MIN_CONDITION_TIMEOUT_MS, remaining),
+        ),
+      });
+
+      if (result.code === 0) {
+        this.notify(
+          watch,
+          "done",
+          (await this.readTail(watch)) || "Condition met.",
+        );
+        return;
+      }
+
+      if (
+        watch.notifyEverySec &&
+        Date.now() - lastProgress >= watch.notifyEverySec * 1000
+      ) {
+        lastProgress = Date.now();
+        this.notify(
+          watch,
+          "running",
+          (await this.readTail(watch)) || "Still running.",
+        );
+      }
+
+      const waitMs = Math.min(watch.intervalSec * 1000, deadline - Date.now());
+      if (waitMs <= 0) {
+        break;
+      }
+      await sleep(waitMs, undefined, { signal: watch.controller.signal });
+    }
+
+    this.notify(
+      watch,
+      "timeout",
+      (await this.readTail(watch)) || `No result after ${watch.timeoutSec}s.`,
+    );
+  }
+
+  /**
+   * Read the optional context command for a watch.
+   *
+   * @param watch - Watch whose tail command should run.
+   * @returns Combined stdout and stderr, trimmed; empty when no command is set.
+   */
+  private async readTail(watch: Watch): Promise<string> {
+    if (!watch.tailCommand) {
+      return "";
+    }
+
+    const result = await this.pi.exec("bash", ["-lc", watch.tailCommand], {
+      signal: watch.controller.signal,
+      timeout: TAIL_TIMEOUT_MS,
     });
+    return `${result.stdout}${result.stderr}`.trim();
+  }
+
+  /**
+   * Deliver a watch update to the agent.
+   *
+   * Uses `followUp` so the notification waits for the current run to finish and
+   * starts a new turn when the agent is idle.
+   *
+   * @param watch - Watch that produced the update.
+   * @param state - Current watch outcome.
+   * @param detail - Log tail or explanatory text for the message body.
+   */
+  private notify(watch: Watch, state: WatchState, detail: string): void {
+    this.pi.sendMessage(
+      {
+        customType: "job-watch",
+        content: `[job-watch ${watch.id}] ${state}\n\n${detail}`.trim(),
+        display: true,
+        details: { id: watch.id, state },
+      },
+      { triggerTurn: true, deliverAs: "followUp" },
+    );
   }
 }
 
 /**
  * Build the `watch_job` tool definition.
  *
- * @param runtime - Shared extension state.
+ * @param registry - Watch registry shared with the session handlers.
  * @returns Tool definition registered with Pi.
  */
-function createWatchJobTool(runtime: WatchRuntime) {
+function createWatchJobTool(registry: WatchRegistry) {
   return {
     name: "watch_job",
     label: "Watch job",
@@ -401,7 +416,7 @@ function createWatchJobTool(runtime: WatchRuntime) {
       "Use watch_job instead of a blocking bash wait, a sleep loop, or repeated manual polling whenever a command, build, test, download, or monitor may run longer than a few seconds.",
       "Use watch_job when the user asks to monitor a file, log, process, or job and report how it changes over time: set notifyEverySec to the requested reporting cadence, set intervalSec at or below it, and give tailCommand a command that prints a fresh snapshot each time.",
       "After starting any long-running job with bash, arm watch_job immediately and then keep working or answer the user; do not hold the turn with a blocking wait.",
-      "Use watch_stop only when the watched condition is no longer relevant or the user asks to stop watching.",
+      "Use watch_stop only when the watched condition is no longer relevant or the user asks you to stop watching.",
     ],
     parameters: WatchJobParams,
 
@@ -413,17 +428,15 @@ function createWatchJobTool(runtime: WatchRuntime) {
      * @returns Tool result describing the background watch.
      */
     async execute(_toolCallId: string, params: WatchJobInput) {
-      const watch = createWatch(runtime, params);
-      startWatch(runtime, watch);
-
+      const spec = registry.start(params);
       return {
         content: [
           {
             type: "text" as const,
-            text: `Watching ${watch.id} in the background. Continue with other work; the agent will be notified when the condition succeeds or the watch times out.`,
+            text: `Watching ${spec.id} in the background. Continue with other work; the agent will be notified when the condition succeeds or the watch times out.`,
           },
         ],
-        details: toWatchSpec(watch),
+        details: spec,
       };
     },
   };
@@ -432,10 +445,10 @@ function createWatchJobTool(runtime: WatchRuntime) {
 /**
  * Build the `watch_stop` tool definition.
  *
- * @param runtime - Shared extension state.
+ * @param registry - Watch registry shared with the session handlers.
  * @returns Tool definition registered with Pi.
  */
-function createWatchStopTool(runtime: WatchRuntime) {
+function createWatchStopTool(registry: WatchRegistry) {
   return {
     name: "watch_stop",
     label: "Stop watch",
@@ -450,8 +463,7 @@ function createWatchStopTool(runtime: WatchRuntime) {
      * @returns Tool result indicating whether the watch was stopped.
      */
     async execute(_toolCallId: string, params: WatchStopInput) {
-      const watch = runtime.watches.get(params.id);
-      if (!watch) {
+      if (!registry.stop(params.id)) {
         return {
           content: [
             {
@@ -463,12 +475,9 @@ function createWatchStopTool(runtime: WatchRuntime) {
         };
       }
 
-      watch.stopped = true;
-      watch.controller.abort();
-      runtime.watches.delete(watch.id);
       return {
-        content: [{ type: "text" as const, text: `Stopped ${watch.id}.` }],
-        details: { id: watch.id },
+        content: [{ type: "text" as const, text: `Stopped ${params.id}.` }],
+        details: { id: params.id },
       };
     },
   };
@@ -480,23 +489,18 @@ function createWatchStopTool(runtime: WatchRuntime) {
  * @param pi - Extension API used to register tools and session cleanup.
  */
 export default function watchJob(pi: ExtensionAPI): void {
-  const runtime: WatchRuntime = {
-    pi,
-    watches: new Map(),
-    nextId: 1,
-  };
+  const registry = new WatchRegistry(pi);
 
-  pi.registerTool(createWatchJobTool(runtime));
-  pi.registerTool(createWatchStopTool(runtime));
+  pi.registerTool(createWatchJobTool(registry));
+  pi.registerTool(createWatchStopTool(registry));
 
   pi.on("session_start", async (_event, ctx) => {
-    restoreWatches(runtime, ctx.sessionManager.getBranch());
+    registry.restore(ctx.sessionManager.getBranch());
   });
 
   pi.on("session_tree", async (_event, ctx) => {
-    stopAllWatches(runtime);
-    restoreWatches(runtime, ctx.sessionManager.getBranch());
+    registry.restore(ctx.sessionManager.getBranch());
   });
 
-  pi.on("session_shutdown", async () => stopAllWatches(runtime));
+  pi.on("session_shutdown", async () => registry.stopAll());
 }
