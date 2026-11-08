@@ -1,0 +1,12 @@
+{
+  "name": "pi-agent-config",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@earendil-works/pi-ai": "1.5.0",
+    "@earendil-works/pi-coding-agent": "1.5.0",
+    "@earendil-works/pi-tui": "1.5.0",
+    "@types/node": "^26.6.6",
+    "typebox": "1.3.27"
+  }
+}
