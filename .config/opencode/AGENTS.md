@@ -28,6 +28,14 @@
 
 ## Code style
 
+- Keep your code clean, readable and elegant: fewer indents, less nesting,
+  clarity over cleverness. If a hack is unavoidable, keep it narrow and
+  comment why it exists and when it can go.
+- Don't over-engineer: no abstractions or layers for a single call site or a
+  hypothetical future, and no flexibility that serves only callers that don't
+  exist yet.
+- Prefer a map/table or `switch` over repeated `if`-`else` chains when there
+  are genuinely several choices.
 - Do not use `else` or `elseif` after a branch that unconditionally returns.
   Use a separate `if` instead.
 - Prefer early returns over lengthy `if`-`else` structures.
@@ -36,3 +44,4 @@
 - Keep error handling simple. Do not add unnecessary `try`-`catch` blocks,
   fallback logic, or defensive recovery for unexpected states; just let crash
   if unexpected error occurs.
+- Remove dead code, unused parameters, debug prints and commented-out blocks.
