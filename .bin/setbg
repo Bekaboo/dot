@@ -572,12 +572,18 @@ main() {
         # - `~/Library/LaunchAgents/user.syncbg.plist`
         wait
     fi
-    setbg_alacritty "$bg" &
-    setbg_foot "$bg" &
+    # Make tmux re-query terminal bg only after terminal themes are switched,
+    # without blocking other apps that do not depend on terminal bg
+    (
+        setbg_alacritty "$bg" &
+        setbg_foot "$bg" &
+        setbg_konsole_yakuake "$bg" &
+        setbg_termux "$bg" &
+        wait
+        setbg_tmux
+    ) &
     setbg_highlight "$bg" &
     setbg_nvim "$bg" &
-    setbg_konsole_yakuake "$bg" &
-    setbg_termux "$bg" &
     setbg_okular "$bg" &
     setbg_zathura "$bg" &
     setbg_vscode "$bg" &
@@ -585,8 +591,6 @@ main() {
     setbg_libreoffice "$bg" &
     write_conflict "$bg" &
     wait
-    # After terminal themes are switched
-    setbg_tmux
 }
 
 main "$@"
