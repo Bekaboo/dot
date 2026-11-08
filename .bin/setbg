@@ -557,7 +557,6 @@ main() {
     setbg_foot "$bg" &
     setbg_highlight "$bg" &
     setbg_nvim "$bg" &
-    nvim_pid=$!
     setbg_konsole_yakuake "$bg" &
     setbg_termux "$bg" &
     setbg_okular "$bg" &
@@ -566,10 +565,7 @@ main() {
     setbg_fish "$bg" &
     setbg_libreoffice "$bg" &
     write_conflict "$bg" &
-    wait "$nvim_pid"
-    nvim_status=$?
     wait
-    return "$nvim_status"
 }
 
 main "$@"
