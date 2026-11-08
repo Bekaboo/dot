@@ -9,9 +9,12 @@
   "tui.altScreen.searchPrevious": ["ctrl+t", "shift+enter"],
   "tui.editor.deleteCharForward": ["delete", "ctrl+d"],
   "app.editor.external": ["alt+e", "ctrl+g"],
+  "app.thinking.save": ["alt+enter"],
   "app.session.delete": ["ctrl+x"],
   "app.session.rename": [],
+  "app.session.toggleSort": ["ctrl+o"],
   "app.session.togglePath": [],
   "app.session.toggleNamedFilter": [],
+  "app.models.save": ["alt+enter"],
   "app.models.toggleProvider": []
 }
