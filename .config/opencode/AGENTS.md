@@ -31,6 +31,13 @@
 - Keep your code clean, readable and elegant: fewer indents, less nesting,
   clarity over cleverness. If a hack is unavoidable, keep it narrow and
   comment why it exists and when it can go.
+- Write doc comments for non-trivial functions, methods, types, and
+  interfaces. Describe the purpose and contract, and use `@param`/`@returns`
+  when the signature is not self-explanatory. Match the existing file style.
+- Do not use magic numbers. Assign meaningful named constants when the value
+  carries domain meaning. Do not invent trivial conversion constants such as
+  `MS_PER_SEC = 1000`; use the literal when its meaning is obvious from the
+  expression.
 - Don't over-engineer: no abstractions or layers for a single call site or a
   hypothetical future, and no flexibility that serves only callers that don't
   exist yet.
