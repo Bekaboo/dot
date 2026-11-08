@@ -28,9 +28,34 @@
 
 ## Code style
 
+### Clarity and structure
+
 - Keep your code clean, readable and elegant: fewer indents, less nesting,
   clarity over cleverness. If a hack is unavoidable, keep it narrow and
   comment why it exists and when it can go.
+- Don't over-engineer: no abstractions or layers for a single call site or a
+  hypothetical future, and no flexibility that serves only callers that don't
+  exist yet.
+- Remove dead code, unused parameters, debug prints and commented-out blocks.
+
+### Control flow
+
+- Do not use `else` or `elseif` after a branch that unconditionally returns.
+  Use a separate `if` instead.
+- Prefer early returns over lengthy `if`-`else` structures.
+- Prefer a map/table or `switch` over repeated `if`-`else` chains when there
+  are genuinely several choices.
+
+### Imports and errors
+
+- Keep imports/includes at the top of the file. Avoid lazy, inline, or
+  conditional imports unless they are genuinely required.
+- Keep error handling simple. Do not add unnecessary `try`-`catch` blocks,
+  fallback logic, or defensive recovery for unexpected states; just let crash
+  if unexpected error occurs.
+
+### Documentation and constants
+
 - Write doc comments for non-trivial functions, methods, types, and
   interfaces. Describe the purpose and contract, and use `@param`/`@returns`
   when the signature is not self-explanatory. Match the existing file style.
@@ -38,17 +63,3 @@
   carries domain meaning. Do not invent trivial conversion constants such as
   `MS_PER_SEC = 1000`; use the literal when its meaning is obvious from the
   expression.
-- Don't over-engineer: no abstractions or layers for a single call site or a
-  hypothetical future, and no flexibility that serves only callers that don't
-  exist yet.
-- Prefer a map/table or `switch` over repeated `if`-`else` chains when there
-  are genuinely several choices.
-- Do not use `else` or `elseif` after a branch that unconditionally returns.
-  Use a separate `if` instead.
-- Prefer early returns over lengthy `if`-`else` structures.
-- Keep imports/includes at the top of the file. Avoid lazy, inline, or
-  conditional imports unless they are genuinely required.
-- Keep error handling simple. Do not add unnecessary `try`-`catch` blocks,
-  fallback logic, or defensive recovery for unexpected states; just let crash
-  if unexpected error occurs.
-- Remove dead code, unused parameters, debug prints and commented-out blocks.
