@@ -66,8 +66,8 @@ type TodoInput = Static<typeof TodoParams>;
 function formatTodos(todos: Todo[]): string {
   return todos.length
     ? todos
-        .map((todo) => `[${todo.done ? "x" : " "}] #${todo.id}: ${todo.text}`)
-        .join("\n")
+      .map((todo) => `[${todo.done ? "x" : " "}] #${todo.id}: ${todo.text}`)
+      .join("\n")
     : "No todos";
 }
 
@@ -273,9 +273,9 @@ function renderTodoResult(
       const added = todos[todos.length - 1];
       return new Text(
         theme.fg("success", "✓ Added ") +
-          theme.fg("accent", `#${added.id}`) +
-          " " +
-          theme.fg("muted", added.text),
+        theme.fg("accent", `#${added.id}`) +
+        " " +
+        theme.fg("muted", added.text),
         0,
         0,
       );

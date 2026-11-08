@@ -24,7 +24,8 @@ export default function (pi: ExtensionAPI) {
   // The bash schema says "no default timeout"; tell the model the new contract.
   pi.on("before_agent_start", (event) => {
     const guidelines = (event.systemPromptOptions.toolGuidelines.bash ??= []);
-    if (!guidelines.includes(TIMEOUT_GUIDLINE)) guidelines.push(TIMEOUT_GUIDLINE);
+    if (!guidelines.includes(TIMEOUT_GUIDLINE))
+      guidelines.push(TIMEOUT_GUIDLINE);
   });
 
   pi.on("tool_call", (event) => {

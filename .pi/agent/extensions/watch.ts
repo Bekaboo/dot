@@ -65,7 +65,9 @@ const WatchParams = Type.Object({
     }),
   ),
   id: Type.Optional(
-    Type.String({ description: "stop (required): watch id returned by start." }),
+    Type.String({
+      description: "stop (required): watch id returned by start.",
+    }),
   ),
 });
 
