@@ -15,6 +15,7 @@
   "app.session.toggleSort": ["ctrl+o"],
   "app.session.togglePath": [],
   "app.session.toggleNamedFilter": [],
+  "app.model.cycleForward": [],
   "app.models.save": ["alt+enter"],
   "app.models.toggleProvider": []
 }
