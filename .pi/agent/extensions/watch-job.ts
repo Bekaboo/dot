@@ -2,9 +2,9 @@
  * Background job watcher.
  *
  * `watch_job` arms a poll loop and returns immediately, so the agent can keep
- * working or talking. When the condition succeeds, the watch times out, or an
- * optional progress interval elapses, the agent receives a follow-up message
- * that triggers a new turn.
+ * working or talking. When the condition succeeds, the watch times out, or the
+ * report interval elapses, the agent receives a follow-up message that
+ * triggers a new turn.
  */
 
 import { setTimeout as sleep } from "node:timers/promises";
@@ -22,7 +22,6 @@ const MIN_TIMEOUT_SEC = 10;
 
 const DEFAULT_INTERVAL_SEC = 60;
 const MIN_INTERVAL_SEC = 1;
-const MIN_NOTIFY_SEC = 1;
 
 // Command execution deadlines, in milliseconds.
 const TAIL_TIMEOUT_MS = 10_000;
@@ -49,16 +48,10 @@ const WatchJobParams = Type.Object({
   ),
   intervalSec: Type.Optional(
     Type.Number({
-      description: "Poll interval in seconds.",
+      description:
+        "Interval in seconds between condition checks. A check that finds the job still running also sends a progress notification when tailCommand is set, so set this to the cadence the user asked for.",
       minimum: MIN_INTERVAL_SEC,
       default: DEFAULT_INTERVAL_SEC,
-    }),
-  ),
-  notifyEverySec: Type.Optional(
-    Type.Number({
-      description:
-        "Optional progress notification interval in seconds. Set this to the reporting cadence the user asked for. The tailCommand output is captured fresh at every notification, so it should print a snapshot (e.g. tail -n 20 log), not a one-time diff.",
-      minimum: MIN_NOTIFY_SEC,
     }),
   ),
 });
@@ -87,10 +80,8 @@ interface WatchSpec {
   tailCommand?: string;
   /** Maximum lifetime in seconds. */
   timeoutSec: number;
-  /** Delay between condition checks in seconds. */
+  /** Interval between condition checks and progress reports, in seconds. */
   intervalSec: number;
-  /** Optional progress notification interval in seconds. */
-  notifyEverySec?: number;
   /** Unix timestamp in milliseconds when the watch was armed. */
   startedAt: number;
 }
@@ -130,7 +121,6 @@ function toWatchSpec(watch: Watch): WatchSpec {
     tailCommand: watch.tailCommand,
     timeoutSec: watch.timeoutSec,
     intervalSec: watch.intervalSec,
-    notifyEverySec: watch.notifyEverySec,
     startedAt: watch.startedAt,
   };
 }
@@ -226,7 +216,6 @@ class WatchRegistry {
       tailCommand: params.tailCommand,
       timeoutSec: params.timeoutSec ?? DEFAULT_TIMEOUT_SEC,
       intervalSec: params.intervalSec ?? DEFAULT_INTERVAL_SEC,
-      notifyEverySec: params.notifyEverySec,
       startedAt: Date.now(),
       stopped: false,
       controller: new AbortController(),
@@ -310,7 +299,8 @@ class WatchRegistry {
    */
   private async poll(watch: Watch): Promise<void> {
     const deadline = watch.startedAt + watch.timeoutSec * 1000;
-    let lastProgress = Date.now();
+    const intervalMs = watch.intervalSec * 1000;
+    let lastReport = watch.startedAt;
 
     while (Date.now() < deadline) {
       const remaining = deadline - Date.now();
@@ -331,11 +321,11 @@ class WatchRegistry {
         return;
       }
 
-      if (
-        watch.notifyEverySec &&
-        Date.now() - lastProgress >= watch.notifyEverySec * 1000
-      ) {
-        lastProgress = Date.now();
+      // A progress ping only adds information when it carries a new snapshot,
+      // so a watch without tailCommand stays silent until it finishes. The
+      // gate also skips the instant check made right after arming.
+      if (watch.tailCommand && Date.now() - lastReport >= intervalMs) {
+        lastReport = Date.now();
         this.notify(
           watch,
           "running",
@@ -343,7 +333,7 @@ class WatchRegistry {
         );
       }
 
-      const waitMs = Math.min(watch.intervalSec * 1000, deadline - Date.now());
+      const waitMs = Math.min(intervalMs, deadline - Date.now());
       if (waitMs <= 0) {
         break;
       }
@@ -414,7 +404,7 @@ function createWatchJobTool(registry: WatchRegistry) {
       "Watch a slow command, file, log, or process in the background and report when it changes or finishes",
     promptGuidelines: [
       "Use watch_job instead of a blocking bash wait, a sleep loop, or repeated manual polling whenever a command, build, test, download, or monitor may run longer than a few seconds.",
-      "Use watch_job when the user asks to monitor a file, log, process, or job and report how it changes over time: set notifyEverySec to the requested reporting cadence, set intervalSec at or below it, and give tailCommand a command that prints a fresh snapshot each time.",
+      "Use watch_job when the user asks to monitor a file, log, process, or job and report how it changes over time: set intervalSec to the requested reporting cadence and give tailCommand a command that prints a fresh snapshot each time.",
       "After starting any long-running job with bash, arm watch_job immediately and then keep working or answer the user; do not hold the turn with a blocking wait.",
       "Use watch_stop only when the watched condition is no longer relevant or the user asks you to stop watching.",
     ],
