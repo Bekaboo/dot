@@ -471,6 +471,25 @@ setbg_libreoffice() {
     ' "$config" >"$tmp" && mv "$tmp" "$config"
 }
 
+# Make tmux re-query the outer terminal's colors (OSC 10/11). tmux caches the
+# colors it gets when a client attaches and reports them to programs in panes,
+# so after a theme switch it would keep reporting the old background. tmux
+# re-queries on SIGWINCH, at most once per 30 seconds per client.
+#
+# TODO: Workaround for tmux <= 3.7b. tmux 3.8 adds a `theme` option and better
+# terminal theme detection/reporting to panes. We can remove this function once
+# we've upgraded to tmux 3.8 and tested.
+setbg_tmux() {
+    if ! command -v tmux >/dev/null 2>&1; then
+        return 1
+    fi
+
+    # Terminals reload their config files asynchronously, give them time to
+    # apply the new colors before tmux queries them
+    sleep 1
+    tmux list-clients -F '#{client_pid}' 2>/dev/null | xargs kill -WINCH 2>/dev/null
+}
+
 # Record the last timestamp when this script is called with 'conflict' bg
 # (different bg from suggested bg, see `suggestbg`) so that we can check the log
 # and avoid automatically setting the background if the user has already
@@ -566,6 +585,8 @@ main() {
     setbg_libreoffice "$bg" &
     write_conflict "$bg" &
     wait
+    # After terminal themes are switched
+    setbg_tmux
 }
 
 main "$@"
