@@ -1,14 +1,15 @@
 /**
  * Background job watcher.
  *
- * `watch_job` arms a poll loop and returns immediately, so the agent can keep
- * working or talking. When the condition succeeds, the watch times out, or the
- * report interval elapses, the agent receives a follow-up message that
- * triggers a new turn.
+ * The `watch` tool arms a poll loop and returns immediately, so the agent can
+ * keep working or talking. When the condition succeeds, the watch times out, or
+ * the report interval elapses, the agent receives a follow-up message that
+ * triggers a new turn. The same tool also stops an active watch by id.
  */
 
 import { setTimeout as sleep } from "node:timers/promises";
 
+import { StringEnum } from "@earendil-works/pi-ai";
 import type {
   ExtensionAPI,
   SessionEntry,
@@ -28,20 +29,29 @@ const TAIL_TIMEOUT_MS = 10_000;
 const MIN_CONDITION_TIMEOUT_MS = 1_000;
 const MAX_CONDITION_TIMEOUT_MS = 30_000;
 
-/** Schema for the `watch_job` tool. */
-const WatchJobParams = Type.Object({
-  command: Type.String({
-    description: "Shell condition. Exit code 0 means the job finished.",
+/** Custom message type used for watch notifications. */
+const NOTICE_TYPE = "watch";
+
+/** Schema for the `watch` tool. */
+const WatchParams = Type.Object({
+  action: StringEnum(["start", "stop"] as const, {
+    description: "start arms a new watch; stop cancels an active watch by id.",
   }),
+  command: Type.Optional(
+    Type.String({
+      description:
+        "start (required): shell condition. Exit code 0 means the job finished.",
+    }),
+  ),
   tailCommand: Type.Optional(
     Type.String({
       description:
-        "Optional command to capture context, e.g. tail -n 60 /tmp/job.log.",
+        "start: optional command to capture context, e.g. tail -n 60 /tmp/job.log.",
     }),
   ),
   timeoutSec: Type.Optional(
     Type.Number({
-      description: "Maximum watch duration in seconds.",
+      description: "start: maximum watch duration in seconds.",
       minimum: MIN_TIMEOUT_SEC,
       default: DEFAULT_TIMEOUT_SEC,
     }),
@@ -49,30 +59,25 @@ const WatchJobParams = Type.Object({
   intervalSec: Type.Optional(
     Type.Number({
       description:
-        "Interval in seconds between condition checks. A check that finds the job still running also sends a progress notification when tailCommand is set, so set this to the cadence the user asked for.",
+        "start: interval in seconds between condition checks. A check that finds the job still running also sends a progress notification when tailCommand is set, so set this to the cadence the user asked for.",
       minimum: MIN_INTERVAL_SEC,
       default: DEFAULT_INTERVAL_SEC,
     }),
   ),
+  id: Type.Optional(
+    Type.String({ description: "stop (required): watch id returned by start." }),
+  ),
 });
 
-/** Schema for the `watch_stop` tool. */
-const WatchStopParams = Type.Object({
-  id: Type.String({ description: "Watch id returned by watch_job." }),
-});
-
-/** Input accepted by the `watch_job` tool. */
-type WatchJobInput = Static<typeof WatchJobParams>;
-
-/** Input accepted by the `watch_stop` tool. */
-type WatchStopInput = Static<typeof WatchStopParams>;
+/** Input accepted by the `watch` tool. */
+type WatchInput = Static<typeof WatchParams>;
 
 /** Outcome reported by a watch notification. */
 type WatchState = "running" | "done" | "timeout" | "error";
 
 /** Persisted specification of one watch. */
 interface WatchSpec {
-  /** Stable id returned to the model and accepted by `watch_stop`. */
+  /** Stable id returned to the model and accepted by the stop action. */
   id: string;
   /** Shell condition; exit code 0 ends the watch successfully. */
   command: string;
@@ -94,13 +99,12 @@ interface Watch extends WatchSpec {
   controller: AbortController;
 }
 
-/** Details stored on a `watch_stop` tool result. */
-interface WatchStopDetails {
-  /** Id of the watch the result applies to. */
-  id: string;
-}
+/** Details stored on a `watch` tool result. */
+type WatchDetails =
+  | ({ action: "start" } & WatchSpec)
+  | { action: "stop"; id: string };
 
-/** Details stored on a `job-watch` notification. */
+/** Details stored on a watch notification. */
 interface WatchNoticeDetails {
   /** Watch id that produced the notification. */
   id: string;
@@ -126,7 +130,7 @@ function toWatchSpec(watch: Watch): WatchSpec {
 }
 
 /**
- * Replay watch, stop, and terminal notification entries from a session branch.
+ * Replay start, stop, and terminal notification entries from a session branch.
  *
  * @param entries - Active session branch entries.
  * @returns Active watch specifications keyed by id.
@@ -137,25 +141,23 @@ function collectActiveWatches(
   const active = new Map<string, WatchSpec>();
 
   for (const entry of entries) {
-    if (entry.type === "message" && entry.message.role === "toolResult") {
-      const message = entry.message;
-      if (message.toolName === "watch_job") {
-        const details = message.details as WatchSpec | undefined;
-        if (details) {
-          active.set(details.id, details);
-        }
-        continue;
+    if (
+      entry.type === "message" &&
+      entry.message.role === "toolResult" &&
+      entry.message.toolName === "watch"
+    ) {
+      const details = entry.message.details as WatchDetails | undefined;
+      if (details?.action === "start") {
+        const { action: _action, ...spec } = details;
+        active.set(spec.id, spec);
       }
-      if (message.toolName === "watch_stop") {
-        const details = message.details as WatchStopDetails | undefined;
-        if (details?.id) {
-          active.delete(details.id);
-        }
-        continue;
+      if (details?.action === "stop") {
+        active.delete(details.id);
       }
+      continue;
     }
 
-    if (entry.type === "custom_message" && entry.customType === "job-watch") {
+    if (entry.type === "custom_message" && entry.customType === NOTICE_TYPE) {
       const details = entry.details as WatchNoticeDetails | undefined;
       if (details?.id && details.state !== "running") {
         active.delete(details.id);
@@ -186,8 +188,8 @@ function nextWatchId(active: Map<string, WatchSpec>): number {
 /**
  * Registry of background watches for one extension load.
  *
- * Owns the id counter, the active-watch map, and the poll loops, so tools and
- * session handlers never touch watch bookkeeping directly.
+ * Owns the id counter, the active-watch map, and the poll loops, so the tool
+ * and session handlers never touch watch bookkeeping directly.
  */
 class WatchRegistry {
   private pi: ExtensionAPI;
@@ -206,13 +208,14 @@ class WatchRegistry {
   /**
    * Arm a watch and start polling it in the background.
    *
-   * @param params - Validated `watch_job` input.
+   * @param command - Shell condition; exit code 0 ends the watch.
+   * @param params - Optional tail command and timing from the tool input.
    * @returns The persisted specification of the new watch.
    */
-  start(params: WatchJobInput): WatchSpec {
+  start(command: string, params: WatchInput): WatchSpec {
     const watch: Watch = {
       id: `job-${this.nextId++}`,
-      command: params.command,
+      command,
       tailCommand: params.tailCommand,
       timeoutSec: params.timeoutSec ?? DEFAULT_TIMEOUT_SEC,
       intervalSec: params.intervalSec ?? DEFAULT_INTERVAL_SEC,
@@ -378,8 +381,8 @@ class WatchRegistry {
   private notify(watch: Watch, state: WatchState, detail: string): void {
     this.pi.sendMessage(
       {
-        customType: "job-watch",
-        content: `[job-watch ${watch.id}] ${state}\n\n${detail}`.trim(),
+        customType: NOTICE_TYPE,
+        content: `[watch ${watch.id}] ${state}\n\n${detail}`.trim(),
         display: true,
         details: { id: watch.id, state },
       },
@@ -389,100 +392,78 @@ class WatchRegistry {
 }
 
 /**
- * Build the `watch_job` tool definition.
+ * Build a `watch` tool result.
+ *
+ * @param text - Message shown to the model.
+ * @param details - Structured details replayed on session restore.
+ * @returns Tool result object.
+ */
+function watchResult(text: string, details: WatchDetails) {
+  return { content: [{ type: "text" as const, text }], details };
+}
+
+/**
+ * Build the `watch` tool definition.
  *
  * @param registry - Watch registry shared with the session handlers.
  * @returns Tool definition registered with Pi.
  */
-function createWatchJobTool(registry: WatchRegistry) {
+function createWatchTool(registry: WatchRegistry) {
   return {
-    name: "watch_job",
-    label: "Watch job",
+    name: "watch",
+    label: "Watch",
     description:
-      "Arm a background watcher that polls a shell condition and notifies the agent when the condition succeeds, times out, or on a progress interval. Returns immediately. This is the default way to wait for anything slow: it replaces blocking waits, sleep loops, and repeated manual polling.",
+      "Manage background watchers. action=start arms a watcher that polls a shell condition and notifies the agent when the condition succeeds, times out, or on a progress interval; it returns immediately. action=stop cancels an active watcher by id. This is the default way to wait for anything slow: it replaces blocking waits, sleep loops, and repeated manual polling.",
     promptSnippet:
       "Watch a slow command, file, log, or process in the background and report when it changes or finishes",
     promptGuidelines: [
-      "Use watch_job instead of a blocking bash wait, a sleep loop, or repeated manual polling whenever a command, build, test, download, or monitor may run longer than a few seconds.",
-      "Use watch_job when the user asks to monitor a file, log, process, or job and report how it changes over time: set intervalSec to the requested reporting cadence and give tailCommand a command that prints a fresh snapshot each time.",
-      "After starting any long-running job with bash, arm watch_job immediately and then keep working or answer the user; do not hold the turn with a blocking wait.",
-      "Use watch_stop only when the watched condition is no longer relevant or the user asks you to stop watching.",
+      "Use watch with action=start instead of a blocking bash wait, a sleep loop, or repeated manual polling whenever a command, build, test, download, or monitor may run longer than a few seconds.",
+      "Use watch with action=start when the user asks to monitor a file, log, process, or job and report how it changes over time: set intervalSec to the requested reporting cadence and give tailCommand a command that prints a fresh snapshot each time.",
+      "After starting any long-running job with bash, start a watch immediately and then keep working or answer the user; do not hold the turn with a blocking wait.",
+      "Use watch with action=stop only when the watched condition is no longer relevant or the user asks you to stop watching.",
     ],
-    parameters: WatchJobParams,
+    parameters: WatchParams,
 
     /**
-     * Start a watch and return immediately with its id.
+     * Start or stop a watch.
      *
      * @param _toolCallId - Tool call id assigned by Pi.
-     * @param params - Watch condition, timing, and optional tail command.
-     * @returns Tool result describing the background watch.
+     * @param params - Action plus its arguments.
+     * @returns Tool result describing the outcome.
      */
-    async execute(_toolCallId: string, params: WatchJobInput) {
-      const spec = registry.start(params);
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: `Watching ${spec.id} in the background. Continue with other work; the agent will be notified when the condition succeeds or the watch times out.`,
-          },
-        ],
-        details: spec,
-      };
-    },
-  };
-}
-
-/**
- * Build the `watch_stop` tool definition.
- *
- * @param registry - Watch registry shared with the session handlers.
- * @returns Tool definition registered with Pi.
- */
-function createWatchStopTool(registry: WatchRegistry) {
-  return {
-    name: "watch_stop",
-    label: "Stop watch",
-    description: "Stop an active background job watcher.",
-    parameters: WatchStopParams,
-
-    /**
-     * Stop one watch by id.
-     *
-     * @param _toolCallId - Tool call id assigned by Pi.
-     * @param params - Id of the watch to stop.
-     * @returns Tool result indicating whether the watch was stopped.
-     */
-    async execute(_toolCallId: string, params: WatchStopInput) {
-      if (!registry.stop(params.id)) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `No active watch: ${params.id}`,
-            },
-          ],
-          details: { id: params.id },
-        };
+    async execute(_toolCallId: string, params: WatchInput) {
+      if (params.action === "stop") {
+        if (!params.id) {
+          throw new Error("action=stop requires id.");
+        }
+        const stopped = registry.stop(params.id);
+        return watchResult(
+          stopped ? `Stopped ${params.id}.` : `No active watch: ${params.id}`,
+          { action: "stop", id: params.id },
+        );
       }
 
-      return {
-        content: [{ type: "text" as const, text: `Stopped ${params.id}.` }],
-        details: { id: params.id },
-      };
+      if (!params.command) {
+        throw new Error("action=start requires command.");
+      }
+      const spec = registry.start(params.command, params);
+      return watchResult(
+        `Watching ${spec.id} in the background. Continue with other work; the agent will be notified when the condition succeeds or the watch times out.`,
+        { action: "start", ...spec },
+      );
     },
   };
 }
 
 /**
- * Register the job-watch extension with Pi.
+ * Register the watch extension with Pi.
  *
- * @param pi - Extension API used to register tools and session cleanup.
+ * @param pi - Extension API used to register the tool and session cleanup.
  */
-export default function watchJob(pi: ExtensionAPI): void {
+export default function watch(pi: ExtensionAPI): void {
   const registry = new WatchRegistry(pi);
 
-  pi.registerTool(createWatchJobTool(registry));
-  pi.registerTool(createWatchStopTool(registry));
+  pi.registerTool(createWatchTool(registry));
 
   pi.on("session_start", async (_event, ctx) => {
     registry.restore(ctx.sessionManager.getBranch());
