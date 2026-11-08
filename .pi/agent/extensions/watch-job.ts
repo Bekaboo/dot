@@ -5,13 +5,15 @@
  * working or talking. When the condition succeeds, the watch times out, or an
  * optional progress interval elapses, the agent receives a follow-up message
  * that triggers a new turn.
- *
- * Watches are in-memory and session-scoped. They are cancelled on
- * `session_shutdown`, which includes `/reload` and session switches.
  */
 
 import { setTimeout as sleep } from "node:timers/promises";
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+
+import type {
+  ExtensionAPI,
+  SessionEntry,
+} from "@earendil-works/pi-coding-agent";
+
 import { type Static, Type } from "typebox";
 
 // Watch duration, polling, and notification defaults, in seconds.
@@ -75,8 +77,8 @@ type WatchStopInput = Static<typeof WatchStopParams>;
 /** Outcome reported by a watch notification. */
 type WatchState = "running" | "done" | "timeout" | "error";
 
-/** One active background watch. */
-interface Watch {
+/** Persisted specification of one watch. */
+interface WatchSpec {
   /** Stable id returned to the model and accepted by `watch_stop`. */
   id: string;
   /** Shell condition; exit code 0 ends the watch successfully. */
@@ -89,10 +91,30 @@ interface Watch {
   intervalSec: number;
   /** Optional progress notification interval in seconds. */
   notifyEverySec?: number;
+  /** Unix timestamp in milliseconds when the watch was armed. */
+  startedAt: number;
+}
+
+/** One active background watch. */
+interface Watch extends WatchSpec {
   /** Set when the user or session teardown cancels the watch. */
   stopped: boolean;
   /** Aborts in-flight `pi.exec()` and sleep calls on cancellation. */
   controller: AbortController;
+}
+
+/** Details stored on a `watch_stop` tool result. */
+interface WatchStopDetails {
+  /** Id of the watch the result applies to. */
+  id: string;
+}
+
+/** Details stored on a `job-watch` notification. */
+interface WatchNoticeDetails {
+  /** Watch id that produced the notification. */
+  id: string;
+  /** Notification state. */
+  state: WatchState;
 }
 
 /** Shared state captured by the registered tools for one extension load. */
@@ -159,7 +181,7 @@ function notify(
  * @param watch - Watch to run.
  */
 async function runWatch(runtime: WatchRuntime, watch: Watch): Promise<void> {
-  const deadline = Date.now() + watch.timeoutSec * 1000;
+  const deadline = watch.startedAt + watch.timeoutSec * 1000;
   let lastProgress = Date.now();
 
   while (Date.now() < deadline) {
@@ -244,6 +266,7 @@ function createWatch(runtime: WatchRuntime, params: WatchJobInput): Watch {
     timeoutSec: params.timeoutSec ?? DEFAULT_TIMEOUT_SEC,
     intervalSec: params.intervalSec ?? DEFAULT_INTERVAL_SEC,
     notifyEverySec: params.notifyEverySec,
+    startedAt: Date.now(),
     stopped: false,
     controller: new AbortController(),
   };
@@ -260,6 +283,104 @@ function stopAllWatches(runtime: WatchRuntime): void {
     watch.controller.abort();
   }
   runtime.watches.clear();
+}
+
+/**
+ * Extract the persisted fields from an active watch.
+ *
+ * @param watch - Watch to serialize into tool-result details.
+ * @returns The watch specification stored in the session branch.
+ */
+function toWatchSpec(watch: Watch): WatchSpec {
+  return {
+    id: watch.id,
+    command: watch.command,
+    tailCommand: watch.tailCommand,
+    timeoutSec: watch.timeoutSec,
+    intervalSec: watch.intervalSec,
+    notifyEverySec: watch.notifyEverySec,
+    startedAt: watch.startedAt,
+  };
+}
+
+/**
+ * Replay watch, stop, and terminal notification entries from a session branch.
+ *
+ * @param entries - Active session branch entries.
+ * @returns Active watch specifications keyed by id.
+ */
+function collectActiveWatches(
+  entries: readonly SessionEntry[],
+): Map<string, WatchSpec> {
+  const active = new Map<string, WatchSpec>();
+
+  for (const entry of entries) {
+    if (entry.type === "message" && entry.message.role === "toolResult") {
+      const message = entry.message;
+      if (message.toolName === "watch_job") {
+        const details = message.details as WatchSpec | undefined;
+        if (details) {
+          active.set(details.id, details);
+        }
+        continue;
+      }
+      if (message.toolName === "watch_stop") {
+        const details = message.details as WatchStopDetails | undefined;
+        if (details?.id) {
+          active.delete(details.id);
+        }
+        continue;
+      }
+    }
+
+    if (entry.type === "custom_message" && entry.customType === "job-watch") {
+      const details = entry.details as WatchNoticeDetails | undefined;
+      if (details?.id && details.state !== "running") {
+        active.delete(details.id);
+      }
+    }
+  }
+
+  return active;
+}
+
+/**
+ * Choose the next numeric watch id after restoring a branch.
+ *
+ * @param active - Restored watches keyed by id.
+ * @returns A counter that does not collide with restored ids.
+ */
+function nextWatchId(active: Map<string, WatchSpec>): number {
+  let next = 1;
+  for (const id of active.keys()) {
+    const suffix = Number(id.startsWith("job-") ? id.slice("job-".length) : "");
+    if (Number.isInteger(suffix)) {
+      next = Math.max(next, suffix + 1);
+    }
+  }
+  return next;
+}
+
+/**
+ * Re-arm watches recorded on the active session branch.
+ *
+ * @param runtime - Shared extension state.
+ * @param entries - Active session branch entries.
+ */
+function restoreWatches(
+  runtime: WatchRuntime,
+  entries: readonly SessionEntry[],
+): void {
+  const active = collectActiveWatches(entries);
+  runtime.nextId = nextWatchId(active);
+
+  for (const spec of active.values()) {
+    startWatch(runtime, {
+      ...spec,
+      stopped: false,
+      controller: new AbortController(),
+    });
+  }
 }
 
 /**
@@ -302,11 +423,7 @@ function createWatchJobTool(runtime: WatchRuntime) {
             text: `Watching ${watch.id} in the background. Continue with other work; the agent will be notified when the condition succeeds or the watch times out.`,
           },
         ],
-        details: {
-          id: watch.id,
-          timeoutSec: watch.timeoutSec,
-          intervalSec: watch.intervalSec,
-        },
+        details: toWatchSpec(watch),
       };
     },
   };
@@ -371,5 +488,15 @@ export default function watchJob(pi: ExtensionAPI): void {
 
   pi.registerTool(createWatchJobTool(runtime));
   pi.registerTool(createWatchStopTool(runtime));
+
+  pi.on("session_start", async (_event, ctx) => {
+    restoreWatches(runtime, ctx.sessionManager.getBranch());
+  });
+
+  pi.on("session_tree", async (_event, ctx) => {
+    stopAllWatches(runtime);
+    restoreWatches(runtime, ctx.sessionManager.getBranch());
+  });
+
   pi.on("session_shutdown", async () => stopAllWatches(runtime));
 }
