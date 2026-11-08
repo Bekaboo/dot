@@ -1,4 +1,5 @@
 {
   "lastChangelogVersion": "1.5.0",
-  "fullscreenScrollbar": "hidden"
+  "fullscreenScrollbar": "hidden",
+  "showHardwareCursor": true
 }
