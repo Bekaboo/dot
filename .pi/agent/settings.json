@@ -1,6 +1,4 @@
 {
   "lastChangelogVersion": "1.5.0",
-  "defaultProvider": "deepseek",
-  "defaultModel": "deepseek-flash",
   "fullscreenScrollbar": "hidden"
 }
