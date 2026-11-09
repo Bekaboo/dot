@@ -566,6 +566,121 @@ function createTodosCommand(runtime: TodoRuntime) {
 }
 
 /**
+ * Steering: track tool work and todo calls for the idle counter and push.
+ *
+ * @param runtime - Shared todo state.
+ * @param event - Finished tool execution.
+ */
+function trackToolExecution(
+  runtime: TodoRuntime,
+  event: ToolExecutionEndEvent,
+): void {
+  runtime.workedSinceInput = true;
+  if (event.toolName === "todo") runtime.touchedThisTurn = true;
+}
+
+/**
+ * Steering: count idle turns and queue a reminder once the limit is hit.
+ *
+ * @param event - Turn boundary with the entries proposed so far.
+ * @returns A transcript record of the reminder, or nothing.
+ */
+function countIdleTurn(
+  runtime: TodoRuntime,
+  event: TurnEndEvent,
+): TurnEndEventResult | undefined {
+  if (runtime.touchedThisTurn) {
+    runtime.touchedThisTurn = false;
+    runtime.idleTurns = 0;
+    return undefined;
+  }
+  runtime.idleTurns += 1;
+  if (runtime.idleTurns < STEER_AFTER_TURNS) return undefined;
+  if (event.outcome !== "completed" || event.toolResults.length === 0) {
+    return undefined;
+  }
+
+  runtime.idleTurns = 0;
+  const hint = idleHint(runtime.list);
+  if (!hint) return undefined;
+  runtime.pendingHint = hint;
+  // Recorded for the transcript only; custom entries never reach the model.
+  return {
+    entries: [
+      ...event.entries,
+      { type: "custom", customType: HINT_ENTRY_TYPE, data: { hint } },
+    ],
+  };
+}
+
+/**
+ * Steering: attach the queued reminder to the next request only.
+ *
+ * @param event - Full outgoing transcript.
+ * @returns The patched transcript, or nothing to keep it unchanged.
+ */
+function injectHint(
+  runtime: TodoRuntime,
+  event: ContextWithSystemEvent,
+): ContextEventResult | undefined {
+  const hint = runtime.pendingHint;
+  if (!hint) return undefined;
+  runtime.pendingHint = undefined;
+  const messages = withHint(event.messages, hint);
+  return messages ? { messages } : undefined;
+}
+
+/**
+ * Steering: push an agent that stops with unfinished items, once per input.
+ *
+ * @param event - Final boundary before the agent settles.
+ * @returns A continue request with a visible message, or nothing.
+ */
+function pushUnfinished(
+  runtime: TodoRuntime,
+  event: AgentBeforeSettleEvent,
+): AgentBeforeSettleEventResult | undefined {
+  if (event.outcome !== "completed" || runtime.pushedSinceInput) {
+    return undefined;
+  }
+  // A reply without any tool call is discussion, not abandoned work.
+  if (!runtime.workedSinceInput || !hasUnfinished(runtime.list)) {
+    return undefined;
+  }
+  runtime.pushedSinceInput = true;
+  return {
+    entries: [
+      ...event.entries,
+      {
+        type: "custom_message",
+        customType: CONTINUE_MESSAGE_TYPE,
+        content: continueMessage(runtime.list),
+        display: true,
+      },
+    ],
+    continue: true,
+  };
+}
+
+/**
+ * Steering: show a recorded reminder in the transcript.
+ *
+ * Pi does not pad custom entries, so the line applies the transcript's
+ * `outputPad` setting itself to align with messages and tool output.
+ *
+ * @param padding - Transcript output padding.
+ * @param theme - Active theme.
+ * @returns A one-line marker.
+ */
+function renderHintEntry(padding: number, theme: Theme): Text {
+  return new Text(
+    theme.fg("dim", "Todo reminder sent to the agent"),
+    padding,
+    0,
+  );
+}
+
+/**
  * Register the todo extension with Pi.
  *
  * @param pi - Extension API used to register tools, commands and handlers.
@@ -579,143 +694,16 @@ export default function todoExtension(pi: ExtensionAPI): void {
     workedSinceInput: false,
   };
 
-  /**
-   * Restore the list for the active branch on session start or tree moves.
-   *
-   * @param _event - Session event; only the context is needed.
-   * @param ctx - Session context providing the active branch.
-   */
-  function restoreSession(_event: unknown, ctx: ExtensionContext): void {
-    restoreState(runtime, ctx);
-  }
-
-  /** Steering: user input starts a fresh steering cycle. */
-  function resetOnInput(): void {
-    resetSteering(runtime);
-  }
-
-  /**
-   * Steering: track tool work and todo calls for the idle counter and push.
-   *
-   * @param event - Finished tool execution.
-   */
-  function trackToolExecution(event: ToolExecutionEndEvent): void {
-    runtime.workedSinceInput = true;
-    if (event.toolName === "todo") runtime.touchedThisTurn = true;
-  }
-
-  /**
-   * Steering: count idle turns and queue a reminder once the limit is hit.
-   *
-   * @param event - Turn boundary with the entries proposed so far.
-   * @returns A transcript record of the reminder, or nothing.
-   */
-  function countIdleTurn(event: TurnEndEvent): TurnEndEventResult | undefined {
-    if (runtime.touchedThisTurn) {
-      runtime.touchedThisTurn = false;
-      runtime.idleTurns = 0;
-      return undefined;
-    }
-    runtime.idleTurns += 1;
-    if (runtime.idleTurns < STEER_AFTER_TURNS) return undefined;
-    if (event.outcome !== "completed" || event.toolResults.length === 0) {
-      return undefined;
-    }
-
-    runtime.idleTurns = 0;
-    const hint = idleHint(runtime.list);
-    if (!hint) return undefined;
-    runtime.pendingHint = hint;
-    // Recorded for the transcript only; custom entries never reach the model.
-    return {
-      entries: [
-        ...event.entries,
-        { type: "custom", customType: HINT_ENTRY_TYPE, data: { hint } },
-      ],
-    };
-  }
-
-  /**
-   * Steering: attach the queued reminder to the next request only.
-   *
-   * @param event - Full outgoing transcript.
-   * @returns The patched transcript, or nothing to keep it unchanged.
-   */
-  function injectHint(
-    event: ContextWithSystemEvent,
-  ): ContextEventResult | undefined {
-    const hint = runtime.pendingHint;
-    if (!hint) return undefined;
-    runtime.pendingHint = undefined;
-    const messages = withHint(event.messages, hint);
-    return messages ? { messages } : undefined;
-  }
-
-  /**
-   * Steering: push an agent that stops with unfinished items, once per input.
-   *
-   * @param event - Final boundary before the agent settles.
-   * @returns A continue request with a visible message, or nothing.
-   */
-  function pushUnfinished(
-    event: AgentBeforeSettleEvent,
-  ): AgentBeforeSettleEventResult | undefined {
-    if (event.outcome !== "completed" || runtime.pushedSinceInput) {
-      return undefined;
-    }
-    // A reply without any tool call is discussion, not abandoned work.
-    if (!runtime.workedSinceInput || !hasUnfinished(runtime.list)) {
-      return undefined;
-    }
-    runtime.pushedSinceInput = true;
-    return {
-      entries: [
-        ...event.entries,
-        {
-          type: "custom_message",
-          customType: CONTINUE_MESSAGE_TYPE,
-          content: continueMessage(runtime.list),
-          display: true,
-        },
-      ],
-      continue: true,
-    };
-  }
-
-  /**
-   * Steering: show a recorded reminder in the transcript.
-   *
-   * Pi does not pad custom entries, so the line applies the transcript's
-   * `outputPad` setting itself to align with messages and tool output.
-   *
-   * @param _entry - Recorded reminder entry.
-   * @param _options - Render options.
-   * @param theme - Active theme.
-   * @returns A one-line marker.
-   */
-  function renderHintEntry(
-    _entry: unknown,
-    _options: unknown,
-    theme: Theme,
-  ): Text {
-    const padding = pi.getSettings().outputPad ?? 1;
-    return new Text(
-      theme.fg("dim", "Todo reminder sent to the agent"),
-      padding,
-      0,
-    );
-  }
-
-  pi.on("session_start", restoreSession);
-  pi.on("session_tree", restoreSession);
   pi.registerTool(createTodoTool(runtime));
   pi.registerCommand("todos", createTodosCommand(runtime));
-
-  // Steering handlers.
-  pi.on("input", resetOnInput);
-  pi.on("tool_execution_end", trackToolExecution);
-  pi.on("turn_end", countIdleTurn);
-  pi.on("context_with_system", injectHint);
-  pi.on("agent_before_settle", pushUnfinished);
-  pi.registerEntryRenderer(HINT_ENTRY_TYPE, renderHintEntry);
+  pi.on("session_start", (_event, ctx) => restoreState(runtime, ctx));
+  pi.on("session_tree", (_event, ctx) => restoreState(runtime, ctx));
+  pi.on("input", () => resetSteering(runtime));
+  pi.on("tool_execution_end", (event) => trackToolExecution(runtime, event));
+  pi.on("turn_end", (event) => countIdleTurn(runtime, event));
+  pi.on("context_with_system", (event) => injectHint(runtime, event));
+  pi.on("agent_before_settle", (event) => pushUnfinished(runtime, event));
+  pi.registerEntryRenderer(HINT_ENTRY_TYPE, (_entry, _options, theme) =>
+    renderHintEntry(pi.getSettings().outputPad ?? 1, theme),
+  );
 }
