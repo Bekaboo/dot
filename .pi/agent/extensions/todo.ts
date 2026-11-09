@@ -115,21 +115,6 @@ interface TodoDetails {
   error?: string;
 }
 
-/** Mutable state for one extension load. */
-interface TodoRuntime {
-  list: string;
-  /** Turns since the last todo call, user input, or reminder. */
-  idleTurns: number;
-  /** Whether a todo call finished during the current turn. */
-  touchedThisTurn: boolean;
-  /** Reminder waiting to be appended to the next request. */
-  pendingHint?: string;
-  /** Whether a stopped agent was pushed since the last user input. */
-  pushedSinceInput: boolean;
-  /** Whether any tool ran since the last user input. */
-  workedSinceInput: boolean;
-}
-
 const EditParams = Type.Object({
   oldText: Type.String({
     description: "Exact text of the current list to replace; must be unique.",
@@ -288,82 +273,6 @@ function todoResult(
 }
 
 /**
- * Run one todo call.
- *
- * @param runtime - Shared todo state.
- * @param params - Validated tool input.
- * @param signal - Cancellation signal; aborted calls leave the list unchanged.
- * @returns A result with the full list; failures leave the list unchanged.
- */
-async function executeTodo(
-  runtime: TodoRuntime,
-  params: TodoInput,
-  signal?: AbortSignal,
-): Promise<AgentToolResult<TodoDetails>> {
-  signal?.throwIfAborted();
-  if (params.write !== undefined && params.edits !== undefined) {
-    return todoResult(
-      runtime.list,
-      "",
-      "Pass either write or edits, not both.",
-    );
-  }
-  if (params.write === undefined && params.edits === undefined) {
-    return todoResult(runtime.list, "Viewed the todo list.");
-  }
-
-  try {
-    const next =
-      params.write !== undefined
-        ? params.write
-        : await applyEdits(runtime.list, params.edits ?? [], signal);
-    signal?.throwIfAborted();
-    runtime.list = normalizeList(next);
-  } catch (error) {
-    signal?.throwIfAborted();
-    const message = error instanceof Error ? error.message : String(error);
-    return todoResult(runtime.list, "", message);
-  }
-  return todoResult(runtime.list, "Updated the todo list.");
-}
-
-/**
- * Rebuild the list from the active session branch.
- *
- * The latest `todo` result on the branch wins, so forks and branches see the
- * list that existed at that point in history.
- *
- * @param runtime - Shared todo state to reset.
- * @param ctx - Session context providing the active branch.
- */
-function restoreState(runtime: TodoRuntime, ctx: ExtensionContext): void {
-  runtime.list = "";
-  resetSteering(runtime);
-
-  for (const entry of ctx.sessionManager.getBranch()) {
-    if (entry.type !== "message") continue;
-    const message = entry.message;
-    if (message.role !== "toolResult" || message.toolName !== "todo") continue;
-    const details = message.details as TodoDetails | undefined;
-    if (typeof details?.list !== "string") continue;
-    runtime.list = details.list;
-  }
-}
-
-/**
- * Reset the steering state after user input or a session change.
- *
- * @param runtime - Shared todo state.
- */
-function resetSteering(runtime: TodoRuntime): void {
-  runtime.idleTurns = 0;
-  runtime.touchedThisTurn = false;
-  runtime.pendingHint = undefined;
-  runtime.pushedSinceInput = false;
-  runtime.workedSinceInput = false;
-}
-
-/**
  * Choose the reminder for an agent that has gone quiet on its todo list.
  *
  * @param list - Current checklist.
@@ -458,65 +367,6 @@ function describeCall(args: TodoInput): string {
 }
 
 /**
- * Build the `todo` tool definition.
- *
- * @param runtime - Shared todo state.
- * @returns Tool definition registered with Pi.
- */
-function createTodoTool(
-  runtime: TodoRuntime,
-): ToolDefinition<typeof TodoParams, TodoDetails> {
-  const editTool = createEditToolDefinition("/");
-  return {
-    name: "todo",
-    label: "Todo",
-    description: `Manage the session todo list, a Markdown checklist. Item markers: \`- ${PENDING_BOX}\` pending, \`- ${IN_PROGRESS_BOX}\` in progress (at most one), \`- ${COMPLETED_BOX}\` done, \`- ${CANCELLED_BOX}\` cancelled. Call with no arguments to view the list. \`write\` replaces the whole list. \`edits\` applies exact-text replacements like the edit tool: each oldText must match the current list exactly and uniquely, otherwise nothing changes. Every call returns the full list.`,
-    promptSnippet: "Track multi-step work as a visible Markdown checklist",
-    promptGuidelines: [
-      "Use todo with write to plan before multi-step work whose progress is worth tracking (e.g. review then fix findings, multi-file changes, fix-test-commit loops), or when the user lists several items. Skip it for single-step or purely conversational requests.",
-      `Use todo edits to mark an item ${IN_PROGRESS_BOX} when starting it and ${COMPLETED_BOX} right after finishing it, before starting the next one. Keep at most one item ${IN_PROGRESS_BOX}.`,
-      `When requirements change mid-task, update todo first. Mark abandoned items ${CANCELLED_BOX} instead of deleting them.`,
-    ],
-    parameters: TodoParams,
-    // Calls share one mutable list, so Pi must run them in source order.
-    executionMode: "sequential",
-    prepareArguments: editTool.prepareArguments as (args: unknown) => TodoInput,
-
-    async execute(_toolCallId, params, signal) {
-      return executeTodo(runtime, params, signal);
-    },
-
-    renderCall(args, theme) {
-      return new Text(
-        theme.fg("toolTitle", theme.bold("todo ")) +
-          theme.fg("muted", describeCall(args)),
-        0,
-        0,
-      );
-    },
-
-    renderResult(result, _options, theme) {
-      const details = result.details;
-      // Host validation and blocked-call errors have no checklist snapshot.
-      if (typeof details?.list !== "string") {
-        const text = result.content
-          .filter((block) => block.type === "text")
-          .map((block) => block.text)
-          .join("\n");
-        return new Text(theme.fg("error", text), 0, 0);
-      }
-      const lines = details.list
-        ? renderItems(details.list, theme)
-        : [theme.fg("dim", "No todos")];
-      if (details.error) {
-        lines.unshift(theme.fg("error", `Error: ${details.error}`));
-      }
-      return new Text(lines.join("\n"), 0, 0);
-    },
-  };
-}
-
-/**
  * Build the overlay for the `/todos` command.
  *
  * @param list - Checklist to display.
@@ -562,124 +412,6 @@ function createTodoOverlay(
 }
 
 /**
- * Build the `/todos` command.
- *
- * @param runtime - Shared todo state.
- * @returns Command definition registered with Pi.
- */
-function createTodosCommand(runtime: TodoRuntime) {
-  return {
-    description: "Show the todo list on the current branch",
-    handler: async (_args: string, ctx: ExtensionCommandContext) => {
-      if (ctx.mode !== "tui") {
-        ctx.ui.notify("/todos requires interactive mode", "error");
-        return;
-      }
-      await ctx.ui.custom<void>((_tui, theme, _kb, done) =>
-        createTodoOverlay(runtime.list, theme, () => done()),
-      );
-    },
-  };
-}
-
-/**
- * Steering: track tool work and todo calls for the idle counter and push.
- *
- * @param runtime - Shared todo state.
- * @param event - Finished tool execution.
- */
-function trackToolExecution(
-  runtime: TodoRuntime,
-  event: ToolExecutionEndEvent,
-): void {
-  runtime.workedSinceInput = true;
-  if (event.toolName === "todo") runtime.touchedThisTurn = true;
-}
-
-/**
- * Steering: count idle turns and queue a reminder once the limit is hit.
- *
- * @param event - Turn boundary with the entries proposed so far.
- * @returns A transcript record of the reminder, or nothing.
- */
-function countIdleTurn(
-  runtime: TodoRuntime,
-  event: TurnEndEvent,
-): TurnEndEventResult | undefined {
-  if (runtime.touchedThisTurn) {
-    runtime.touchedThisTurn = false;
-    runtime.idleTurns = 0;
-    return undefined;
-  }
-  runtime.idleTurns += 1;
-  if (runtime.idleTurns < STEER_AFTER_TURNS) return undefined;
-  if (event.outcome !== "completed" || event.toolResults.length === 0) {
-    return undefined;
-  }
-
-  runtime.idleTurns = 0;
-  const hint = idleHint(runtime.list);
-  if (!hint) return undefined;
-  runtime.pendingHint = hint;
-  // Recorded for the transcript only; custom entries never reach the model.
-  return {
-    entries: [
-      ...event.entries,
-      { type: "custom", customType: HINT_ENTRY_TYPE, data: { hint } },
-    ],
-  };
-}
-
-/**
- * Steering: attach the queued reminder to the next request only.
- *
- * @param event - Full outgoing transcript.
- * @returns The patched transcript, or nothing to keep it unchanged.
- */
-function injectHint(
-  runtime: TodoRuntime,
-  event: ContextWithSystemEvent,
-): ContextEventResult | undefined {
-  const hint = runtime.pendingHint;
-  if (!hint) return undefined;
-  runtime.pendingHint = undefined;
-  const messages = withHint(event.messages, hint);
-  return messages ? { messages } : undefined;
-}
-
-/**
- * Steering: push an agent that stops with unfinished items, once per input.
- *
- * @param event - Final boundary before the agent settles.
- * @returns A continue request with a visible message, or nothing.
- */
-function pushUnfinished(
-  runtime: TodoRuntime,
-  event: AgentBeforeSettleEvent,
-): AgentBeforeSettleEventResult | undefined {
-  if (event.outcome !== "completed" || runtime.pushedSinceInput) {
-    return undefined;
-  }
-  // A reply without any tool call is discussion, not abandoned work.
-  if (!runtime.workedSinceInput || !hasUnfinished(runtime.list)) {
-    return undefined;
-  }
-  runtime.pushedSinceInput = true;
-  return {
-    entries: [
-      ...event.entries,
-      {
-        type: "custom_message",
-        customType: CONTINUE_MESSAGE_TYPE,
-        content: continueMessage(runtime.list),
-        display: true,
-      },
-    ],
-    continue: true,
-  };
-}
-
-/**
  * Steering: show a recorded reminder in the transcript.
  *
  * Pi does not pad custom entries, so the line applies the transcript's
@@ -697,29 +429,266 @@ function renderHintEntry(padding: number, theme: Theme): Text {
   );
 }
 
+/** Checklist and steering state owned by one extension instance. */
+class Todo {
+  private list = "";
+  /** Turns since the last todo call, user input, or reminder. */
+  private idleTurns = 0;
+  /** Whether a todo call finished during the current turn. */
+  private touchedThisTurn = false;
+  /** Reminder waiting to be appended to the next request. */
+  private pendingHint?: string;
+  /** Whether a stopped agent was pushed since the last user input. */
+  private pushedSinceInput = false;
+  /** Whether any tool ran since the last user input. */
+  private workedSinceInput = false;
+
+  /**
+   * Run one todo call.
+   *
+   * @param params - Validated tool input.
+   * @param signal - Cancellation signal; aborted calls leave the list unchanged.
+   * @returns A result with the full list; failures leave the list unchanged.
+   */
+  async execute(
+    params: TodoInput,
+    signal?: AbortSignal,
+  ): Promise<AgentToolResult<TodoDetails>> {
+    signal?.throwIfAborted();
+    if (params.write !== undefined && params.edits !== undefined) {
+      return todoResult(this.list, "", "Pass either write or edits, not both.");
+    }
+    if (params.write === undefined && params.edits === undefined) {
+      return todoResult(this.list, "Viewed the todo list.");
+    }
+
+    try {
+      const next =
+        params.write !== undefined
+          ? params.write
+          : await applyEdits(this.list, params.edits ?? [], signal);
+      signal?.throwIfAborted();
+      this.list = normalizeList(next);
+    } catch (error) {
+      signal?.throwIfAborted();
+      const message = error instanceof Error ? error.message : String(error);
+      return todoResult(this.list, "", message);
+    }
+    return todoResult(this.list, "Updated the todo list.");
+  }
+
+  /**
+   * Rebuild the list from the active session branch.
+   *
+   * The latest `todo` result on the branch wins, so forks and branches see the
+   * list that existed at that point in history.
+   *
+   * @param ctx - Session context providing the active branch.
+   */
+  restore(ctx: ExtensionContext): void {
+    this.list = "";
+    this.resetSteering();
+
+    for (const entry of ctx.sessionManager.getBranch()) {
+      if (entry.type !== "message") continue;
+      const message = entry.message;
+      if (message.role !== "toolResult" || message.toolName !== "todo")
+        continue;
+      const details = message.details as TodoDetails | undefined;
+      if (typeof details?.list !== "string") continue;
+      this.list = details.list;
+    }
+  }
+
+  /** Reset the steering state after user input or a session change. */
+  resetSteering(): void {
+    this.idleTurns = 0;
+    this.touchedThisTurn = false;
+    this.pendingHint = undefined;
+    this.pushedSinceInput = false;
+    this.workedSinceInput = false;
+  }
+
+  /**
+   * Build the `todo` tool definition.
+   *
+   * @returns Tool definition registered with Pi.
+   */
+  createTool(): ToolDefinition<typeof TodoParams, TodoDetails> {
+    const editTool = createEditToolDefinition("/");
+    return {
+      name: "todo",
+      label: "Todo",
+      description: `Manage the session todo list, a Markdown checklist. Item markers: \`- ${PENDING_BOX}\` pending, \`- ${IN_PROGRESS_BOX}\` in progress (at most one), \`- ${COMPLETED_BOX}\` done, \`- ${CANCELLED_BOX}\` cancelled. Call with no arguments to view the list. \`write\` replaces the whole list. \`edits\` applies exact-text replacements like the edit tool: each oldText must match the current list exactly and uniquely, otherwise nothing changes. Every call returns the full list.`,
+      promptSnippet: "Track multi-step work as a visible Markdown checklist",
+      promptGuidelines: [
+        "Use todo with write to plan before multi-step work whose progress is worth tracking (e.g. review then fix findings, multi-file changes, fix-test-commit loops), or when the user lists several items. Skip it for single-step or purely conversational requests.",
+        `Use todo edits to mark an item ${IN_PROGRESS_BOX} when starting it and ${COMPLETED_BOX} right after finishing it, before starting the next one. Keep at most one item ${IN_PROGRESS_BOX}.`,
+        `When requirements change mid-task, update todo first. Mark abandoned items ${CANCELLED_BOX} instead of deleting them.`,
+      ],
+      parameters: TodoParams,
+      // Calls share one mutable list, so Pi must run them in source order.
+      executionMode: "sequential",
+      prepareArguments: editTool.prepareArguments as (
+        args: unknown,
+      ) => TodoInput,
+
+      execute: (_toolCallId, params, signal) => this.execute(params, signal),
+
+      renderCall(args, theme) {
+        return new Text(
+          theme.fg("toolTitle", theme.bold("todo ")) +
+            theme.fg("muted", describeCall(args)),
+          0,
+          0,
+        );
+      },
+
+      renderResult(result, _options, theme) {
+        const details = result.details;
+        // Host validation and blocked-call errors have no checklist snapshot.
+        if (typeof details?.list !== "string") {
+          const text = result.content
+            .filter((block) => block.type === "text")
+            .map((block) => block.text)
+            .join("\n");
+          return new Text(theme.fg("error", text), 0, 0);
+        }
+        const lines = details.list
+          ? renderItems(details.list, theme)
+          : [theme.fg("dim", "No todos")];
+        if (details.error) {
+          lines.unshift(theme.fg("error", `Error: ${details.error}`));
+        }
+        return new Text(lines.join("\n"), 0, 0);
+      },
+    };
+  }
+
+  /**
+   * Build the `/todos` command.
+   *
+   * @returns Command definition registered with Pi.
+   */
+  createCommand() {
+    return {
+      description: "Show the todo list on the current branch",
+      handler: async (_args: string, ctx: ExtensionCommandContext) => {
+        if (ctx.mode !== "tui") {
+          ctx.ui.notify("/todos requires interactive mode", "error");
+          return;
+        }
+        await ctx.ui.custom<void>((_tui, theme, _kb, done) =>
+          createTodoOverlay(this.list, theme, () => done()),
+        );
+      },
+    };
+  }
+
+  /**
+   * Steering: track tool work and todo calls for the idle counter and push.
+   *
+   * @param event - Finished tool execution.
+   */
+  trackToolExecution(event: ToolExecutionEndEvent): void {
+    this.workedSinceInput = true;
+    if (event.toolName === "todo") this.touchedThisTurn = true;
+  }
+
+  /**
+   * Steering: count idle turns and queue a reminder once the limit is hit.
+   *
+   * @param event - Turn boundary with the entries proposed so far.
+   * @returns A transcript record of the reminder, or nothing.
+   */
+  countIdleTurn(event: TurnEndEvent): TurnEndEventResult | undefined {
+    if (this.touchedThisTurn) {
+      this.touchedThisTurn = false;
+      this.idleTurns = 0;
+      return undefined;
+    }
+    this.idleTurns += 1;
+    if (this.idleTurns < STEER_AFTER_TURNS) return undefined;
+    if (event.outcome !== "completed" || event.toolResults.length === 0) {
+      return undefined;
+    }
+
+    this.idleTurns = 0;
+    const hint = idleHint(this.list);
+    if (!hint) return undefined;
+    this.pendingHint = hint;
+    // Recorded for the transcript only; custom entries never reach the model.
+    return {
+      entries: [
+        ...event.entries,
+        { type: "custom", customType: HINT_ENTRY_TYPE, data: { hint } },
+      ],
+    };
+  }
+
+  /**
+   * Steering: attach the queued reminder to the next request only.
+   *
+   * @param event - Full outgoing transcript.
+   * @returns The patched transcript, or nothing to keep it unchanged.
+   */
+  injectHint(event: ContextWithSystemEvent): ContextEventResult | undefined {
+    const hint = this.pendingHint;
+    if (!hint) return undefined;
+    this.pendingHint = undefined;
+    const messages = withHint(event.messages, hint);
+    return messages ? { messages } : undefined;
+  }
+
+  /**
+   * Steering: push an agent that stops with unfinished items, once per input.
+   *
+   * @param event - Final boundary before the agent settles.
+   * @returns A continue request with a visible message, or nothing.
+   */
+  pushUnfinished(
+    event: AgentBeforeSettleEvent,
+  ): AgentBeforeSettleEventResult | undefined {
+    if (event.outcome !== "completed" || this.pushedSinceInput) {
+      return undefined;
+    }
+    // A reply without any tool call is discussion, not abandoned work.
+    if (!this.workedSinceInput || !hasUnfinished(this.list)) {
+      return undefined;
+    }
+    this.pushedSinceInput = true;
+    return {
+      entries: [
+        ...event.entries,
+        {
+          type: "custom_message",
+          customType: CONTINUE_MESSAGE_TYPE,
+          content: continueMessage(this.list),
+          display: true,
+        },
+      ],
+      continue: true,
+    };
+  }
+}
+
 /**
  * Register the todo extension with Pi.
  *
  * @param pi - Extension API used to register tools, commands and handlers.
  */
 export default function todoExtension(pi: ExtensionAPI): void {
-  const runtime: TodoRuntime = {
-    list: "",
-    idleTurns: 0,
-    touchedThisTurn: false,
-    pushedSinceInput: false,
-    workedSinceInput: false,
-  };
+  const todo = new Todo();
 
-  pi.registerTool(createTodoTool(runtime));
-  pi.registerCommand("todos", createTodosCommand(runtime));
-  pi.on("session_start", (_event, ctx) => restoreState(runtime, ctx));
-  pi.on("session_tree", (_event, ctx) => restoreState(runtime, ctx));
-  pi.on("input", () => resetSteering(runtime));
-  pi.on("tool_execution_end", (event) => trackToolExecution(runtime, event));
-  pi.on("turn_end", (event) => countIdleTurn(runtime, event));
-  pi.on("context_with_system", (event) => injectHint(runtime, event));
-  pi.on("agent_before_settle", (event) => pushUnfinished(runtime, event));
+  pi.registerTool(todo.createTool());
+  pi.registerCommand("todos", todo.createCommand());
+  pi.on("session_start", (_event, ctx) => todo.restore(ctx));
+  pi.on("session_tree", (_event, ctx) => todo.restore(ctx));
+  pi.on("input", () => todo.resetSteering());
+  pi.on("tool_execution_end", (event) => todo.trackToolExecution(event));
+  pi.on("turn_end", (event) => todo.countIdleTurn(event));
+  pi.on("context_with_system", (event) => todo.injectHint(event));
+  pi.on("agent_before_settle", (event) => todo.pushUnfinished(event));
   pi.registerEntryRenderer(HINT_ENTRY_TYPE, (_entry, _options, theme) =>
     renderHintEntry(pi.getSettings().outputPad ?? 1, theme),
   );
