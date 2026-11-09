@@ -490,6 +490,14 @@ function createTodoTool(
 
     renderResult(result, _options, theme) {
       const details = result.details;
+      // Host validation and blocked-call errors have no checklist snapshot.
+      if (typeof details?.list !== "string") {
+        const text = result.content
+          .filter((block) => block.type === "text")
+          .map((block) => block.text)
+          .join("\n");
+        return new Text(theme.fg("error", text), 0, 0);
+      }
       const lines = details.list
         ? renderItems(details.list, theme)
         : [theme.fg("dim", "No todos")];
