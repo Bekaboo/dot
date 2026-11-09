@@ -236,11 +236,13 @@ function describeList(list: string): string {
  *
  * @param list - Current checklist.
  * @param edits - Replacements to apply.
+ * @param signal - Cancellation signal for the delegated edit.
  * @returns The edited checklist text, not yet validated.
  */
 async function applyEdits(
   list: string,
   edits: NonNullable<TodoInput["edits"]>,
+  signal?: AbortSignal,
 ): Promise<string> {
   // Edit a newline-terminated copy so deleting the last line with its "\n"
   // matches like any other line; normalizeList() drops the blank lines.
@@ -257,7 +259,7 @@ async function applyEdits(
   await editTool.execute(
     "todo",
     { path: LIST_NAME, edits },
-    undefined,
+    signal,
     undefined,
     undefined as never,
   );
@@ -290,12 +292,15 @@ function todoResult(
  *
  * @param runtime - Shared todo state.
  * @param params - Validated tool input.
+ * @param signal - Cancellation signal; aborted calls leave the list unchanged.
  * @returns A result with the full list; failures leave the list unchanged.
  */
 async function executeTodo(
   runtime: TodoRuntime,
   params: TodoInput,
+  signal?: AbortSignal,
 ): Promise<AgentToolResult<TodoDetails>> {
+  signal?.throwIfAborted();
   if (params.write !== undefined && params.edits !== undefined) {
     return todoResult(
       runtime.list,
@@ -311,9 +316,11 @@ async function executeTodo(
     const next =
       params.write !== undefined
         ? params.write
-        : await applyEdits(runtime.list, params.edits ?? []);
+        : await applyEdits(runtime.list, params.edits ?? [], signal);
+    signal?.throwIfAborted();
     runtime.list = normalizeList(next);
   } catch (error) {
+    signal?.throwIfAborted();
     const message = error instanceof Error ? error.message : String(error);
     return todoResult(runtime.list, "", message);
   }
@@ -475,8 +482,8 @@ function createTodoTool(
     executionMode: "sequential",
     prepareArguments: editTool.prepareArguments as (args: unknown) => TodoInput,
 
-    async execute(_toolCallId, params) {
-      return executeTodo(runtime, params);
+    async execute(_toolCallId, params, signal) {
+      return executeTodo(runtime, params, signal);
     },
 
     renderCall(args, theme) {
