@@ -323,6 +323,12 @@ function createTodoTool(
     label: "Todo",
     description:
       "Manage a todo list. Actions: list, add (text), toggle (id), clear",
+    promptSnippet: "Track multi-step tasks as a visible checklist",
+    promptGuidelines: [
+      "Use todo to add a plan before starting complex, multi-step tasks (e.g. review then fix several findings, multi-file changes, fix-test-commit loops), or when the user lists several items.",
+      "Use todo with action=toggle to mark an item done right after finishing it, before starting the next item.",
+      "When the user adds or changes requirements mid-task, update todo first (clear stale items, add new ones).",
+    ],
     parameters: TodoParams,
 
     async execute(_toolCallId, params) {
