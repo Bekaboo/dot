@@ -471,6 +471,8 @@ function createTodoTool(
       `When requirements change mid-task, update todo first. Mark abandoned items ${CANCELLED_BOX} instead of deleting them.`,
     ],
     parameters: TodoParams,
+    // Calls share one mutable list, so Pi must run them in source order.
+    executionMode: "sequential",
     prepareArguments: editTool.prepareArguments as (args: unknown) => TodoInput,
 
     async execute(_toolCallId, params) {
