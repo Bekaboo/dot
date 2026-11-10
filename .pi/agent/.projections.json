@@ -1,0 +1,10 @@
+{
+  "extensions/*.ts": {
+    "type": "source",
+    "alternate": "tests/{}.test.mjs"
+  },
+  "tests/*.test.mjs": {
+    "type": "test",
+    "alternate": "extensions/{}.ts"
+  }
+}
