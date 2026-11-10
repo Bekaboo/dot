@@ -3,7 +3,7 @@
  * available skills when working with multiple repos.
  *
  * Pi resolves context files (AGENTS.md / CLAUDE.md) and skills once, for the
- * directory it was started in. When the agent touches files elsewhere (a
+ * directory it was started in. When the agent modifies files elsewhere (a
  * sibling repo, or a subdirectory with its own AGENTS.md), this extension asks
  * Pi's own `DefaultResourceLoader` what it would load if started in that
  * directory, and tells the model about anything not already in its system
@@ -12,8 +12,9 @@
  *
  * The reminder is delivered as a steering custom message (user role) rather
  * than inside the tool result, so the model does not dismiss it as a prompt
- * injection from file content. The first `write` / `edit` into a new context
- * is also blocked so the model reviews the instructions before modifying files.
+ * injection from file content. Reading files elsewhere announces nothing; the
+ * first `write` / `edit` into a new context is blocked so the model reviews the
+ * instructions before modifying files.
  *
  * Each context file and skill is announced once. Compaction resets the
  * announced set because a summary may drop the reminder.
@@ -41,9 +42,6 @@ import {
 
 /** Custom message type for injected reminders. */
 const MESSAGE_TYPE = "repo-context";
-
-/** Tools that read the file system; they run normally alongside the reminder. */
-const READ_TOOLS = new Set(["read", "grep", "find", "ls"]);
 
 /** Tools that modify files; their first call into a new context is blocked. */
 const WRITE_TOOLS = new Set(["write", "edit"]);
@@ -188,8 +186,8 @@ class RepoContextTracker {
 }
 
 /**
- * Announce new repo context for a file tool call. Blocks the first write or
- * edit into that context; read-like calls proceed.
+ * Announce new repo context for a write or edit, and block that first call so
+ * the model sees the instructions before modifying files.
  */
 async function handleToolCall(
   pi: ExtensionAPI,
@@ -197,9 +195,7 @@ async function handleToolCall(
   event: ToolCallEvent,
   ctx: ExtensionContext,
 ): Promise<ToolCallEventResult | undefined> {
-  const isWrite = WRITE_TOOLS.has(event.toolName);
-  const isRead = READ_TOOLS.has(event.toolName);
-  if (!isWrite && !isRead) return;
+  if (!WRITE_TOOLS.has(event.toolName)) return;
 
   const rawPath = (event.input as { path?: unknown }).path;
   const dir = nearestExistingDir(
@@ -218,11 +214,10 @@ async function handleToolCall(
     { deliverAs: "steer" },
   );
 
-  if (isWrite)
-    return {
-      block: true,
-      reason: `Not applied yet: project context references for ${dir} are delivered in the next message. Consider which references are relevant, then retry this ${event.toolName}. Reading the referenced files is your decision.`,
-    };
+  return {
+    block: true,
+    reason: `Not applied yet: project context references for ${dir} are delivered in the next message. Consider which references are relevant, then retry this ${event.toolName}. Reading the referenced files is your decision.`,
+  };
 }
 
 /** Fold the reminder in the TUI without changing its model-visible content. */
