@@ -1,35 +1,58 @@
 #!/usr/bin/env sh
 # vim:ft=sh:et:ts=4:sw=4:sts=4:
 #
-# Translate text using any OpenAI-compatible API.
+# Translate text using a pluggable LLM backend.
 #
 # Usage:
 #   trans [options] [text...]
 #   echo "hello" | trans -
 #   trans --to zh "hello world"
 #   trans --stream "hello world"
+#   trans --backend pi --model qoder/Qwen3.8-Flash "hello world"
 #
 # Environment:
-#   TRANSLATE_API_BASE  API base URL
-#   TRANSLATE_API_KEY   API key
-#   TRANSLATE_MODEL     Model name
+#   TRANSLATE_BACKEND   Backend: curl (default) or pi
+#   TRANSLATE_API_BASE  API base URL (curl backend)
+#   TRANSLATE_API_KEY   API key (curl backend)
+#   TRANSLATE_MODEL     Model name, backend specific
 #   TRANSLATE_TO        Default target language
 #   TRANSLATE_PAIR      Default language pair
+#
+# Backends:
+#   A backend <name> is a pair of functions sharing the globals `text`,
+#   `model` and `stream`:
+#
+#   <name>_check
+#       Validate backend-specific config. Call `die` on error.
+#
+#   <name>_translate SYSTEM_PROMPT
+#       Translate $text using $model. Print only the translation to stdout,
+#       ending with a newline. Stream as it arrives when $stream is 1.
+#       Exit non-zero on failure.
+#
+#   The benefit of supporting other backend besides curl is that it enables us
+#   to use LLM subscriptions. E.g. with the pi backend + pi-provider-qoder
+#   extension, we can use the Qoder subscription logged in to Pi. The reason
+#   why we choose Pi over QoderCLI is the startup speed.
 
 set -eu
+
+# Space-separated; each name needs `<name>_check` and `<name>_translate`.
+TRANSLATE_SUPPORTED_BACKENDS='curl pi'
 
 usage() {
     cat <<EOF
 Usage: $(basename "$0") [options] [text...]
 
-Translate text using any OpenAI-compatible API.
+Translate text using a pluggable LLM backend.
 
 Options:
-    -b, --base URL     API base URL         (default: \$TRANSLATE_API_BASE, e.g. https://api.deepseek.com)
-    -k, --key KEY      API key              (default: \$TRANSLATE_API_KEY,  e.g. \$DEEPSEEK_API_KEY)
-    -m, --model NAME   Model name           (default: \$TRANSLATE_MODEL,    e.g. deepseek-chat)
-    -t, --to LANG      Target language      (default: \$TRANSLATE_TO,       e.g. Chinese)
-    -p, --pair LANGS   Language pair        (default: \$TRANSLATE_PAIR,     e.g. English:Chinese)
+    -B, --backend NAME Underlying backend for translation  (default: \$TRANSLATE_BACKEND,  or curl)
+    -b, --base URL     API base URL                        (default: \$TRANSLATE_API_BASE, curl only, e.g. https://api.deepseek.com)
+    -k, --key KEY      API key                             (default: \$TRANSLATE_API_KEY,  curl only, e.g. \$DEEPSEEK_API_KEY)
+    -m, --model NAME   Model name                          (default: \$TRANSLATE_MODEL,    e.g. deepseek-chat, qoder/Qwen3.8-Flash)
+    -t, --to LANG      Target language                     (default: \$TRANSLATE_TO,       e.g. Chinese)
+    -p, --pair LANGS   Language pair                       (default: \$TRANSLATE_PAIR,     e.g. English:Chinese)
     -s, --stream       Stream the response
     -                  Read text from stdin
     -h, --help         Show this help message and exit
@@ -41,8 +64,17 @@ die() {
     exit 1
 }
 
+# $1: backend name
+is_supported_backend() {
+    for name in $TRANSLATE_SUPPORTED_BACKENDS; do
+        if [ "$name" = "$1" ]; then return 0; fi
+    done
+    return 1
+}
+
 # $@: args from command line
 parse_args() {
+    backend="${TRANSLATE_BACKEND:-curl}"
     api_base="${TRANSLATE_API_BASE:-}"
     api_key="${TRANSLATE_API_KEY:-}"
     model="${TRANSLATE_MODEL:-}"
@@ -61,6 +93,10 @@ parse_args() {
             ;;
         -m | --model)
             model="$2"
+            shift 2
+            ;;
+        -B | --backend)
+            backend="$2"
             shift 2
             ;;
         -k | --key)
@@ -99,8 +135,9 @@ parse_args() {
         esac
     done
 
-    if [ -z "$api_base" ]; then die "No API base URL set. Use -b or set TRANSLATE_API_BASE."; fi
-    if [ -z "$api_key" ]; then die "No API key found, set TRANSLATE_API_KEY."; fi
+    is_supported_backend "$backend" ||
+        die "Unknown backend '$backend'. Use one of: $TRANSLATE_SUPPORTED_BACKENDS"
+
     if [ -z "$model" ]; then die "No model set. Use -m or set TRANSLATE_MODEL."; fi
     if [ -z "$pair" ] && [ -z "$target_lang" ]; then
         die "No target language set. Use -t or set TRANSLATE_TO, or use -p for a language pair."
@@ -136,12 +173,20 @@ build_system_prompt() {
     fi
 }
 
+# Backend: any OpenAI-compatible chat completions API, queried with curl.
+
+curl_check() {
+    if [ -z "$api_base" ]; then die "No API base URL set. Use -b or set TRANSLATE_API_BASE."; fi
+    if [ -z "$api_key" ]; then die "No API key found, set TRANSLATE_API_KEY."; fi
+}
+
 # $1: system prompt
-call_api() {
+curl_translate() {
     payload=$(jq -nc \
         --arg model "$model" \
         --arg system "$1" \
         --arg text "$text" \
+        --argjson stream "$stream" \
         '{
             model: $model,
             messages: [
@@ -149,13 +194,14 @@ call_api() {
                 {role: "user",   content: $text}
             ],
             temperature: 0.3
-        }')
+        } + if $stream == 1 then {stream: true} else {} end')
 
-    if ! response=$(curl -sS --fail-with-body \
-        "$api_base/chat/completions" \
-        -H "Content-Type: application/json" \
-        -H "Authorization: Bearer $api_key" \
-        -d "$payload"); then
+    if [ "$stream" -eq 1 ]; then
+        curl_stream
+        return
+    fi
+
+    if ! response=$(curl_request); then
         die "API request failed: $response"
     fi
 
@@ -167,45 +213,82 @@ call_api() {
     printf '%s\n' "$translation"
 }
 
-# $1: system prompt
-call_api_stream() {
-    payload=$(jq -nc \
-        --arg model "$model" \
-        --arg system "$1" \
-        --arg text "$text" \
-        '{
-            model: $model,
-            messages: [
-                {role: "system", content: $system},
-                {role: "user",   content: $text}
-            ],
-            temperature: 0.3,
-            stream: true
-        }')
+# Print deltas of the server-sent event stream for $payload. Errors arrive as
+# an SSE event with `.error`, or as a plain body instead of the stream.
+curl_stream() {
+    curl_request -N --no-buffer | {
+        error=''
+        while IFS= read -r line || [ -n "$line" ]; do
+            case "$line" in
+            "data: [DONE]" | "data:[DONE]") break ;;
+            data:*)
+                printf '%s' "${line#data:}" | jq -rj '
+                    if .error then
+                        "\nAPI request failed: \(.error.message // .error)\n" | halt_error(1)
+                    else
+                        .choices[0].delta.content // empty
+                    end'
+                ;;
+            '' | :* | event:* | id:* | retry:*) ;;
+            *) error="$error$line" ;;
+            esac
+        done
+        printf '\n'
+        if [ -n "$error" ]; then die "API request failed: $error"; fi
+    }
+}
 
-    curl -sSN \
+# $@: extra curl options
+curl_request() {
+    curl -sS --fail-with-body "$@" \
         "$api_base/chat/completions" \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $api_key" \
-        -d "$payload" \
-        --no-buffer | while IFS= read -r line; do
-        case "$line" in
-        "data: [DONE]" | "data:[DONE]") break ;;
-        data:\ \{* | data:\{*)
-            printf '%s' "$line" | sed 's/^data:[[:space:]]*//' | jq -rj '.choices[0].delta.content // empty' 2>/dev/null
-            ;;
-        esac
-    done
+        -d "$payload"
+}
+
+# Backend: pi coding agent, using whatever provider auth pi has (e.g. a
+# Qoder subscription). $model is a pi model pattern like qoder/Qwen3.8-Flash.
+
+pi_check() {
+    command -v pi >/dev/null || die "pi not found in PATH."
+}
+
+# $1: system prompt
+pi_translate() {
+    if [ "$stream" -eq 0 ]; then
+        pi_run "$1" -p
+        return
+    fi
+    # `pi --mode json` exits 0 even on failure and reports errors in events.
+    # Fail only at end of input, so pi never writes into a closed pipe.
+    pi_run "$1" --mode json | jq -nrj --unbuffered '
+        foreach (inputs, {type: "eof"}) as $e (null;
+            if $e.type == "message_end" and $e.message.stopReason == "error" then
+                $e.message.errorMessage
+            end;
+            if $e.type == "message_update" and $e.assistantMessageEvent.type == "text_delta" then
+                $e.assistantMessageEvent.delta
+            elif $e.type == "eof" and . != null then
+                "\n\(.)\n" | halt_error(1)
+            else
+                empty
+            end)'
     printf '\n'
+}
+
+# $1: system prompt, rest: output mode options
+pi_run() {
+    system="$1"
+    shift
+    printf '%s' "$text" | pi "$@" --no-session --no-tools -nc -ns -np \
+        --thinking off --model "$model" --system-prompt "$system"
 }
 
 main() {
     parse_args "$@"
-    if [ "$stream" -eq 1 ]; then
-        call_api_stream "$(build_system_prompt)"
-    else
-        call_api "$(build_system_prompt)"
-    fi
+    "${backend}_check"
+    "${backend}_translate" "$(build_system_prompt)"
 }
 
 main "$@"
