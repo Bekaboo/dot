@@ -18,7 +18,7 @@ const DEFAULT_TIMEOUT_SEC = 120;
 const TIMEOUT_GUIDLINE =
   `bash commands without \`timeout\` are killed after ${DEFAULT_TIMEOUT_SEC} seconds. ` +
   "Pass a larger `timeout` for commands expected to run longer, or run them in " +
-  "the background and keep watching them.";
+  "the background and arm a `timer` to check on them.";
 
 export default function (pi: ExtensionAPI) {
   // The bash schema says "no default timeout"; tell the model the new contract.
