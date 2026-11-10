@@ -1,10 +1,11 @@
 /**
- * Background job watcher.
+ * Background watch tool.
  *
- * The `watch` tool arms a poll loop and returns immediately, so the agent can
- * keep working or talking. When the condition succeeds, the watch times out, or
- * the report interval elapses, the agent receives a follow-up message that
- * triggers a new turn. The same tool also stops an active watch by id.
+ * A watch polls an optional shell predicate on a fixed cadence and wakes the
+ * agent with a short, content-free notification: a tick, a met condition, or a
+ * timeout. The agent reads the job's output itself after a wake, so a queued
+ * notification never goes stale. Watches are named by the agent, so every wake
+ * and the status list are self-describing.
  */
 
 import { setTimeout as sleep } from "node:timers/promises";
@@ -24,49 +25,59 @@ const MIN_TIMEOUT_SEC = 1;
 const DEFAULT_INTERVAL_SEC = 60;
 const MIN_INTERVAL_SEC = 1;
 
-// Command execution deadlines, in milliseconds.
-const TAIL_TIMEOUT_MS = 10_000;
+// Condition execution deadlines, in milliseconds.
 const MIN_CONDITION_TIMEOUT_MS = 1_000;
 const MAX_CONDITION_TIMEOUT_MS = 30_000;
+
+/**
+ * Accepted watch ids.
+ *
+ * A slug rather than free text: the id is echoed in every notification, listed
+ * by status, and would name a log file if watches ever launch jobs.
+ */
+const ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$/;
 
 /** Custom message type used for watch notifications. */
 const NOTICE_TYPE = "watch";
 
 /** Schema for the `watch` tool. */
 const WatchParams = Type.Object({
-  action: StringEnum(["start", "stop"] as const, {
-    description: "start arms a new watch; stop cancels an active watch by id.",
+  action: StringEnum(["start", "stop", "status"] as const, {
+    description:
+      "start arms a named watch; stop cancels it; status reports one watch or all of them.",
   }),
-  command: Type.Optional(
+  id: Type.Optional(
     Type.String({
       description:
-        "start (required): shell condition. Exit code 0 means the job finished.",
+        "start/stop: required watch name. Short, unique, purpose-bearing, e.g. batch3-done or pa1-peek: you see it in every wake and in status. status: optional; omit to list every active watch.",
     }),
   ),
-  tailCommand: Type.Optional(
+  condition: Type.Optional(
     Type.String({
       description:
-        "start: optional command to capture context, e.g. tail -n 60 /tmp/job.log.",
-    }),
-  ),
-  timeoutSec: Type.Optional(
-    Type.Number({
-      description: "start: maximum watch duration in seconds.",
-      minimum: MIN_TIMEOUT_SEC,
-      default: DEFAULT_TIMEOUT_SEC,
+        "start: optional shell predicate; exit code 0 ends the watch and wakes you with 'condition met'. Omit for a timer that only ticks.",
     }),
   ),
   intervalSec: Type.Optional(
     Type.Number({
       description:
-        "start: interval in seconds between condition checks. A check that finds the job still running also sends a progress notification when tailCommand is set, so set this to the cadence the user asked for.",
+        "start: seconds between ticks; also the delay before the first tick of a timer.",
       minimum: MIN_INTERVAL_SEC,
       default: DEFAULT_INTERVAL_SEC,
     }),
   ),
-  id: Type.Optional(
-    Type.String({
-      description: "stop (required): watch id returned by start.",
+  maxTicks: Type.Optional(
+    Type.Number({
+      description:
+        "start: maximum tick wakes. 0 = never tick (condition watches only); omit = unlimited. A timer needs at least 1. The final 'condition met' or 'timeout' wake is always sent and does not count.",
+      minimum: 0,
+    }),
+  ),
+  timeoutSec: Type.Optional(
+    Type.Number({
+      description: "start: lifetime cap in seconds.",
+      minimum: MIN_TIMEOUT_SEC,
+      default: DEFAULT_TIMEOUT_SEC,
     }),
   ),
 });
@@ -74,27 +85,31 @@ const WatchParams = Type.Object({
 /** Input accepted by the `watch` tool. */
 type WatchInput = Static<typeof WatchParams>;
 
-/** Outcome reported by a watch notification. */
-type WatchState = "running" | "done" | "timeout" | "error";
+/** Kind of notification a watch emits. */
+type WatchState = "tick" | "done" | "timeout" | "error";
 
 /** Persisted specification of one watch. */
 interface WatchSpec {
-  /** Stable id returned to the model and accepted by the stop action. */
+  /** Agent-chosen name, unique among active watches. */
   id: string;
-  /** Shell condition; exit code 0 ends the watch successfully. */
-  command: string;
-  /** Optional command whose output is included in notifications. */
-  tailCommand?: string;
-  /** Maximum lifetime in seconds. */
-  timeoutSec: number;
-  /** Interval between condition checks and progress reports, in seconds. */
+  /** Shell predicate; exit code 0 means the watch is done. */
+  condition?: string;
+  /** Tick cadence in seconds; also the delay before a timer's first tick. */
   intervalSec: number;
+  /** Maximum tick wakes; `undefined` means unlimited. */
+  maxTicks?: number;
+  /** Lifetime cap in seconds. */
+  timeoutSec: number;
   /** Unix timestamp in milliseconds when the watch was armed. */
   startedAt: number;
 }
 
-/** One active background watch. */
+/** One active watch. */
 interface Watch extends WatchSpec {
+  /** Ticks actually delivered. */
+  ticksSent: number;
+  /** A notification is queued and not yet acted on by the agent. */
+  noticePending: boolean;
   /** Set when the user or session teardown cancels the watch. */
   stopped: boolean;
   /** Aborts in-flight `pi.exec()` and sleep calls on cancellation. */
@@ -104,18 +119,59 @@ interface Watch extends WatchSpec {
 /** Details stored on a `watch` tool result. */
 type WatchDetails =
   | ({ action: "start" } & WatchSpec)
-  | { action: "stop"; id: string };
+  | { action: "stop"; id: string }
+  | { action: "status"; id?: string };
 
 /** Details stored on a watch notification. */
 interface WatchNoticeDetails {
   /** Watch id that produced the notification. */
   id: string;
-  /** Notification state. */
+  /** Notification kind; used to retire a finished watch on replay. */
   state: WatchState;
 }
 
 /**
- * Extract the persisted fields from a watch.
+ * Build a `watch` tool result.
+ *
+ * @param text - Message shown to the model.
+ * @param details - Structured details replayed on session restore.
+ * @returns Tool result object.
+ */
+function watchResult(text: string, details: WatchDetails) {
+  return { content: [{ type: "text" as const, text }], details };
+}
+
+/**
+ * Read a required watch id and validate its shape.
+ *
+ * @param id - Raw id from the tool input.
+ * @param action - Action that needs the id, for the error message.
+ * @returns The validated id.
+ */
+function requireId(id: string | undefined, action: string): string {
+  if (!id) {
+    throw new Error(`action=${action} requires id.`);
+  }
+  if (!ID_PATTERN.test(id)) {
+    throw new Error(
+      `Invalid watch id "${id}": use 3-40 characters from A-Z a-z 0-9 . _ -, starting with a letter or digit, e.g. batch3-done.`,
+    );
+  }
+  return id;
+}
+
+/**
+ * Format elapsed seconds since a watch was armed.
+ *
+ * @param watch - Watch to measure.
+ * @returns Whole seconds, e.g. `40s`.
+ */
+function elapsed(watch: Watch): string {
+  return `${Math.floor((Date.now() - watch.startedAt) / 1000)}s`;
+}
+
+/**
+ * Persisted fields of a watch.
  *
  * @param watch - Watch to serialize into tool-result details.
  * @returns The watch specification stored in the session branch.
@@ -123,12 +179,26 @@ interface WatchNoticeDetails {
 function toWatchSpec(watch: Watch): WatchSpec {
   return {
     id: watch.id,
-    command: watch.command,
-    tailCommand: watch.tailCommand,
-    timeoutSec: watch.timeoutSec,
+    condition: watch.condition,
     intervalSec: watch.intervalSec,
+    maxTicks: watch.maxTicks,
+    timeoutSec: watch.timeoutSec,
     startedAt: watch.startedAt,
   };
+}
+
+/**
+ * Whether a start entry predates the content-free watch.
+ *
+ * The previous tool carried a `command`/`tailCommand` payload. Such a watch
+ * cannot be restored: its payload no longer exists, and re-arming the record as
+ * a timer would silently watch the wrong thing.
+ *
+ * @param details - Start details read from the session branch.
+ * @returns `true` when the entry uses the legacy payload fields.
+ */
+function isLegacyStart(details: object): boolean {
+  return "command" in details || "tailCommand" in details;
 }
 
 /**
@@ -150,6 +220,9 @@ function collectActiveWatches(
     ) {
       const details = entry.message.details as WatchDetails | undefined;
       if (details?.action === "start") {
+        if (isLegacyStart(details)) {
+          continue;
+        }
         const { action: _action, ...spec } = details;
         active.set(spec.id, spec);
       }
@@ -161,7 +234,7 @@ function collectActiveWatches(
 
     if (entry.type === "custom_message" && entry.customType === NOTICE_TYPE) {
       const details = entry.details as WatchNoticeDetails | undefined;
-      if (details?.id && details.state !== "running") {
+      if (details?.id && details.state !== "tick") {
         active.delete(details.id);
       }
     }
@@ -171,32 +244,14 @@ function collectActiveWatches(
 }
 
 /**
- * Choose the next numeric watch id after restoring a branch.
- *
- * @param active - Restored watches keyed by id.
- * @returns A counter that does not collide with restored ids.
- */
-function nextWatchId(active: Map<string, WatchSpec>): number {
-  let next = 1;
-  for (const id of active.keys()) {
-    const suffix = Number(id.startsWith("job-") ? id.slice("job-".length) : "");
-    if (Number.isInteger(suffix)) {
-      next = Math.max(next, suffix + 1);
-    }
-  }
-  return next;
-}
-
-/**
  * Registry of background watches for one extension load.
  *
- * Owns the id counter, the active-watch map, and the poll loops, so the tool
- * and session handlers never touch watch bookkeeping directly.
+ * Owns the active-watch map and the poll loops, so the tool and session
+ * handlers never touch watch bookkeeping directly.
  */
 class WatchRegistry {
   private pi: ExtensionAPI;
   private watches: Map<string, Watch>;
-  private nextId: number;
 
   /**
    * @param pi - Extension API used for command execution and notifications.
@@ -204,36 +259,67 @@ class WatchRegistry {
   constructor(pi: ExtensionAPI) {
     this.pi = pi;
     this.watches = new Map();
-    this.nextId = 1;
   }
 
   /**
    * Arm a watch and start polling it in the background.
    *
-   * @param command - Shell condition; exit code 0 ends the watch.
-   * @param params - Optional tail command and timing from the tool input.
+   * @param params - Validated tool input for `action=start`.
    * @returns The persisted specification of the new watch.
    */
-  start(command: string, params: WatchInput): WatchSpec {
+  start(params: WatchInput): WatchSpec {
+    const id = requireId(params.id, "start");
+    if (this.watches.has(id)) {
+      throw new Error(
+        `Watch "${id}" is already active; stop it first or pick another id.`,
+      );
+    }
+
+    const condition = params.condition?.trim() || undefined;
     const watch: Watch = {
-      id: `job-${this.nextId++}`,
-      command,
-      tailCommand: params.tailCommand,
-      timeoutSec: params.timeoutSec ?? DEFAULT_TIMEOUT_SEC,
+      id,
+      condition,
       intervalSec: params.intervalSec ?? DEFAULT_INTERVAL_SEC,
+      maxTicks: params.maxTicks,
+      timeoutSec: params.timeoutSec ?? DEFAULT_TIMEOUT_SEC,
       startedAt: Date.now(),
+      ticksSent: 0,
+      noticePending: false,
       stopped: false,
       controller: new AbortController(),
     };
 
+    this.validateBudget(watch);
     this.arm(watch);
     return toWatchSpec(watch);
   }
 
   /**
+   * Reject budgets that can never pay out.
+   *
+   * A timer with no ticks could never wake the agent, and a tick scheduled
+   * after the deadline would silently never fire.
+   *
+   * @param watch - Watch about to be armed.
+   */
+  private validateBudget(watch: Watch): void {
+    if (!watch.condition && watch.maxTicks === 0) {
+      throw new Error(
+        `Watch "${watch.id}" has no condition and maxTicks 0, so it could never wake you.`,
+      );
+    }
+
+    if (this.canTick(watch) && watch.timeoutSec < watch.intervalSec) {
+      throw new Error(
+        `Watch "${watch.id}" cannot tick: timeoutSec ${watch.timeoutSec} is shorter than intervalSec ${watch.intervalSec}.`,
+      );
+    }
+  }
+
+  /**
    * Cancel one watch and stop its poll loop.
    *
-   * @param id - Id of the watch to stop.
+   * @param id - Id of the watch to cancel.
    * @returns `true` when an active watch had that id.
    */
   stop(id: string): boolean {
@@ -257,6 +343,76 @@ class WatchRegistry {
     this.watches.clear();
   }
 
+  /** Forget which watches still have a queued notification. */
+  clearPending(): void {
+    for (const watch of this.watches.values()) {
+      watch.noticePending = false;
+    }
+  }
+
+  /**
+   * Describe every active watch, one line each.
+   *
+   * @returns Lines sorted by id, or a message when nothing is active.
+   */
+  list(): string {
+    if (this.watches.size === 0) {
+      return "No active watches.";
+    }
+
+    return [...this.watches.values()]
+      .sort((left, right) => left.id.localeCompare(right.id))
+      .map((watch) => this.describe(watch))
+      .join("\n");
+  }
+
+  /**
+   * Describe one active watch.
+   *
+   * @param id - Id from the tool input.
+   * @returns The one-line description of that watch.
+   */
+  status(id: string): string {
+    return this.describe(this.requireActive(id));
+  }
+
+  /**
+   * Look up an active watch or fail with the list of valid ids.
+   *
+   * @param id - Id from the tool input.
+   * @returns The active watch.
+   */
+  requireActive(id: string): Watch {
+    const watch = this.watches.get(id);
+    if (watch) {
+      return watch;
+    }
+
+    const active = [...this.watches.keys()].sort();
+    throw new Error(
+      active.length === 0
+        ? `No watch "${id}"; nothing is active.`
+        : `No watch "${id}"; active: ${active.join(", ")}.`,
+    );
+  }
+
+  /**
+   * Describe one watch as a single line.
+   *
+   * @param watch - Watch to describe.
+   * @returns Id, state, age, tick budget, and condition.
+   */
+  private describe(watch: Watch): string {
+    const ticks =
+      watch.maxTicks === undefined
+        ? `${watch.ticksSent}/unlimited`
+        : `${watch.ticksSent}/${watch.maxTicks}`;
+    const target = watch.condition
+      ? `cond: ${watch.condition}`
+      : "timer, no condition";
+    return `${watch.id}  running  ${elapsed(watch)}  ticks ${ticks}  ${target}`;
+  }
+
   /**
    * Replace the current watches with those recorded on a session branch.
    *
@@ -268,11 +424,11 @@ class WatchRegistry {
   restore(entries: readonly SessionEntry[]): void {
     this.stopAll();
 
-    const active = collectActiveWatches(entries);
-    this.nextId = nextWatchId(active);
-    for (const spec of active.values()) {
+    for (const spec of collectActiveWatches(entries).values()) {
       this.arm({
         ...spec,
+        ticksSent: 0,
+        noticePending: false,
         stopped: false,
         controller: new AbortController(),
       });
@@ -289,7 +445,7 @@ class WatchRegistry {
     void this.poll(watch)
       .catch((error) => {
         if (!watch.stopped) {
-          this.notify(watch, "error", String(error));
+          this.notify(watch, "error", `error: ${String(error)}`);
         }
       })
       .finally(() => {
@@ -298,34 +454,6 @@ class WatchRegistry {
         // An old loop may finish after its replacement is in the map; deleting
         // by id alone would orphan the replacement watch, making it impossible
         // to stop. Only remove the entry if this loop still owns it.
-        //
-        // Before the fix:
-        //
-        // time  event                         watches map         loops running
-        // ----  ----------------------------  ------------------  -------------------
-        //  t0   watch start -> job-1 (W1)      { job-1: W1 }       W1
-        //  t1   /tree -> stopAll()             { }                 W1 (aborting...)
-        //  t2   restore() re-arms job-1 (W2)   { job-1: W2 }       W1 (aborting), W2
-        //  t3   W1 finally:                    { }        <-- !!   W2
-        //         delete("job-1")
-        //  t4   watch stop job-1               { }                 W2 (still polling)
-        //         -> "No active watch: job-1"
-        //
-        // At t3, W1 deletes by id without checking which watch owns it,
-        // so it removes W2's entry.
-        //
-        // After the fix:
-        //
-        // time  event                         watches map         loops running
-        // ----  ----------------------------  ------------------  -------------------
-        //  t0   watch start -> job-1 (W1)      { job-1: W1 }       W1
-        //  t1   /tree -> stopAll()             { }                 W1 (aborting...)
-        //  t2   restore() re-arms job-1 (W2)   { job-1: W2 }       W1 (aborting), W2
-        //  t3   W1 finally:                    { job-1: W2 }       W2
-        //         map[job-1] is W2, not W1
-        //         -> skip delete
-        //  t4   watch stop job-1               { }                 (none)
-        //         -> "Stopped job-1."
         if (this.watches.get(watch.id) === watch) {
           this.watches.delete(watch.id);
         }
@@ -333,110 +461,175 @@ class WatchRegistry {
   }
 
   /**
+   * Whether the watch may still send a tick.
+   *
+   * @param watch - Watch to check.
+   * @returns `true` when the tick budget is not exhausted.
+   */
+  private canTick(watch: Watch): boolean {
+    return watch.maxTicks === undefined || watch.ticksSent < watch.maxTicks;
+  }
+
+  /**
    * Poll a watch until it succeeds, times out, or is cancelled.
+   *
+   * A condition watch checks once immediately, then on every tick. A timer
+   * only ticks, and ends once its budget is spent because it has nothing left
+   * to report.
    *
    * @param watch - Watch to run.
    */
   private async poll(watch: Watch): Promise<void> {
     const deadline = watch.startedAt + watch.timeoutSec * 1000;
-    const intervalMs = watch.intervalSec * 1000;
-    let lastReport = watch.startedAt;
 
-    while (Date.now() < deadline) {
-      const remaining = deadline - Date.now();
-      const result = await this.pi.exec("bash", ["-lc", watch.command], {
-        signal: watch.controller.signal,
-        timeout: Math.min(
-          MAX_CONDITION_TIMEOUT_MS,
-          Math.max(MIN_CONDITION_TIMEOUT_MS, remaining),
-        ),
-      });
+    if (
+      watch.condition &&
+      (await this.matches(watch, watch.condition, deadline))
+    ) {
+      this.finish(watch, "done");
+      return;
+    }
 
-      if (result.code === 0) {
-        this.notify(
-          watch,
-          "done",
-          (await this.readTail(watch)) || "Condition met.",
-        );
+    while (!watch.stopped) {
+      const waitMs = Math.min(watch.intervalSec * 1000, deadline - Date.now());
+      if (waitMs > 0) {
+        await sleep(waitMs, undefined, { signal: watch.controller.signal });
+      }
+      if (watch.stopped) {
         return;
       }
 
-      // A progress ping only adds information when it carries a new snapshot,
-      // so a watch without tailCommand stays silent until it finishes. The
-      // gate also skips the instant check made right after arming.
-      if (watch.tailCommand && Date.now() - lastReport >= intervalMs) {
-        lastReport = Date.now();
-        this.notify(
-          watch,
-          "running",
-          (await this.readTail(watch)) || "Still running.",
-        );
+      if (Date.now() >= deadline) {
+        this.finish(watch, "timeout");
+        return;
       }
 
-      const waitMs = Math.min(intervalMs, deadline - Date.now());
-      if (waitMs <= 0) {
-        break;
+      if (
+        watch.condition &&
+        (await this.matches(watch, watch.condition, deadline))
+      ) {
+        this.finish(watch, "done");
+        return;
       }
-      await sleep(waitMs, undefined, { signal: watch.controller.signal });
+
+      if (this.canTick(watch)) {
+        this.tick(watch);
+        if (!watch.condition && !this.canTick(watch)) {
+          // A timer with a spent budget has nothing left to say.
+          return;
+        }
+      }
     }
-
-    this.notify(
-      watch,
-      "timeout",
-      (await this.readTail(watch)) || `No result after ${watch.timeoutSec}s.`,
-    );
   }
 
   /**
-   * Read the optional context command for a watch.
+   * Run the watch's condition.
    *
-   * @param watch - Watch whose tail command should run.
-   * @returns Combined stdout and stderr, trimmed; empty when no command is set.
+   * @param watch - Watch the condition belongs to.
+   * @param condition - Shell predicate to evaluate.
+   * @param deadline - Unix timestamp in milliseconds when the watch expires.
+   * @returns `true` when the condition exited 0.
    */
-  private async readTail(watch: Watch): Promise<string> {
-    if (!watch.tailCommand) {
-      return "";
+  private async matches(
+    watch: Watch,
+    condition: string,
+    deadline: number,
+  ): Promise<boolean> {
+    const remaining = deadline - Date.now();
+    const result = await this.pi.exec("bash", ["-lc", condition], {
+      signal: watch.controller.signal,
+      timeout: Math.min(
+        MAX_CONDITION_TIMEOUT_MS,
+        Math.max(MIN_CONDITION_TIMEOUT_MS, remaining),
+      ),
+    });
+    return result.code === 0;
+  }
+
+  /**
+   * Send one tick unless a previous notification is still queued.
+   *
+   * Dropping the tick instead of queueing a second one keeps a busy agent from
+   * waking to a burst of stale ticks; the budget only counts what was sent.
+   *
+   * @param watch - Watch to tick.
+   * @returns `true` when the tick was sent.
+   */
+  private tick(watch: Watch): boolean {
+    if (watch.noticePending) {
+      return false;
     }
 
-    const result = await this.pi.exec("bash", ["-lc", watch.tailCommand], {
-      signal: watch.controller.signal,
-      timeout: TAIL_TIMEOUT_MS,
-    });
-    return `${result.stdout}${result.stderr}`.trim();
+    watch.ticksSent += 1;
+    this.notify(
+      watch,
+      "tick",
+      `tick ${watch.ticksSent}${watch.maxTicks === undefined ? "" : `/${watch.maxTicks}`}, ${elapsed(watch)} elapsed`,
+    );
+    return true;
+  }
+
+  /**
+   * Send the final notification of a watch and retire it.
+   *
+   * @param watch - Watch that finished.
+   * @param state - Why it finished.
+   */
+  private finish(watch: Watch, state: "done" | "timeout"): void {
+    if (state === "done") {
+      this.notify(
+        watch,
+        "done",
+        `condition met after ${elapsed(watch)}: ${watch.condition}`,
+      );
+      return;
+    }
+    this.notify(watch, "timeout", `timeout after ${watch.timeoutSec}s`);
   }
 
   /**
    * Deliver a watch update to the agent.
    *
-   * Uses `followUp` so the notification waits for the current run to finish and
-   * starts a new turn when the agent is idle.
+   * Uses `steer` so the wake is delivered before the next model request, even
+   * mid-turn; when idle it starts a new turn.
    *
    * @param watch - Watch that produced the update.
-   * @param state - Current watch outcome.
-   * @param detail - Log tail or explanatory text for the message body.
+   * @param state - Notification kind.
+   * @param line - One-line body with the watch name and the news.
    */
-  private notify(watch: Watch, state: WatchState, detail: string): void {
+  private notify(watch: Watch, state: WatchState, line: string): void {
+    watch.noticePending = true;
     this.pi.sendMessage(
       {
         customType: NOTICE_TYPE,
-        content: `[watch ${watch.id}] ${state}\n\n${detail}`.trim(),
+        content: `[watch ${watch.id}] ${line}`,
         display: true,
         details: { id: watch.id, state },
       },
-      { triggerTurn: true, deliverAs: "followUp" },
+      { triggerTurn: true, deliverAs: "steer" },
     );
   }
 }
 
 /**
- * Build a `watch` tool result.
+ * Describe what a freshly armed watch will do.
  *
- * @param text - Message shown to the model.
- * @param details - Structured details replayed on session restore.
- * @returns Tool result object.
+ * @param spec - Specification returned by the registry.
+ * @returns One-line summary for the tool result.
  */
-function watchResult(text: string, details: WatchDetails) {
-  return { content: [{ type: "text" as const, text }], details };
+function describeStart(spec: WatchSpec): string {
+  const ticks =
+    spec.maxTicks === undefined
+      ? `tick every ${spec.intervalSec}s`
+      : spec.maxTicks === 0
+        ? "no ticks"
+        : spec.maxTicks === 1
+          ? `one tick after ${spec.intervalSec}s`
+          : `tick every ${spec.intervalSec}s, at most ${spec.maxTicks}`;
+  const ending = spec.condition
+    ? `ends when the condition first exits 0 or after ${spec.timeoutSec}s`
+    : `then ends (timeout ${spec.timeoutSec}s)`;
+  return `Armed "${spec.id}": ${ticks}; ${ending}. Wakes arrive even after you end your turn.`;
 }
 
 /**
@@ -450,44 +643,50 @@ function createWatchTool(registry: WatchRegistry) {
     name: "watch",
     label: "Watch",
     description:
-      "Manage background watchers. action=start arms a watcher that polls a shell condition and notifies the agent when the condition succeeds, times out, or on a progress interval; it returns immediately. action=stop cancels an active watcher by id. This is the default way to wait for anything slow: it replaces blocking waits, sleep loops, and repeated manual polling.",
+      "Manage named background watches. action=start polls an optional shell condition on a fixed cadence and wakes you with a short notification (a tick, 'condition met', or 'timeout'); it returns immediately. action=stop cancels a watch. action=status reports one watch or all of them. Wakes carry no log text on purpose: read the job's output yourself after a wake, so a queued wake can never be stale.",
     promptSnippet:
-      "Watch a slow command, file, log, or process in the background and report when it changes or finishes",
+      "Watch a job, log, or process in the background and wake the agent on a tick or when a condition is met",
     promptGuidelines: [
-      "Use watch with action=start instead of a blocking bash wait, a sleep loop, or repeated manual polling whenever a command, build, test, download, or monitor may run longer than a few seconds.",
-      "Use watch with action=start when the user asks to monitor a file, log, process, or job and report how it changes over time: set intervalSec to the requested reporting cadence and give tailCommand a command that prints a fresh snapshot each time.",
-      "After starting any long-running job with bash, start a watch immediately and then keep working or answer the user; do not hold the turn with a blocking wait.",
-      "Use watch with action=stop only when the watched condition is no longer relevant or the user asks you to stop watching.",
+      "Name every watch with a short, unique, purpose-bearing id (batch3-done, pa1-peek, log1-monitor, etc.): the id is what you see in every wake, so it must remind you what you are waiting for.",
+      "Use watch instead of `sleep N; ...` in bash. Arm the watch, then keep working or end your turn; ending a turn loses nothing because the wake starts a new turn when you are idle.",
+      "For a single deferred look, use no condition with intervalSec=N and maxTicks=1: one wake after N seconds, then the watch ends.",
+      "For 'tell me when it finishes', give a condition with maxTicks=0: no ticks, one wake when the condition exits 0.",
+      "A wake says only that something happened. After a wake, run the check you actually need, then stop the watch once you no longer care.",
     ],
     parameters: WatchParams,
 
     /**
-     * Start or stop a watch.
+     * Start, stop, or inspect a watch.
      *
      * @param _toolCallId - Tool call id assigned by Pi.
      * @param params - Action plus its arguments.
      * @returns Tool result describing the outcome.
      */
     async execute(_toolCallId: string, params: WatchInput) {
-      if (params.action === "stop") {
-        if (!params.id) {
-          throw new Error("action=stop requires id.");
+      switch (params.action) {
+        case "stop": {
+          const id = requireId(params.id, "stop");
+          registry.requireActive(id);
+          registry.stop(id);
+          return watchResult(`Stopped "${id}".`, { action: "stop", id });
         }
-        const stopped = registry.stop(params.id);
-        return watchResult(
-          stopped ? `Stopped ${params.id}.` : `No active watch: ${params.id}`,
-          { action: "stop", id: params.id },
-        );
-      }
 
-      if (!params.command) {
-        throw new Error("action=start requires command.");
+        case "status": {
+          if (!params.id) {
+            return watchResult(registry.list(), { action: "status" });
+          }
+          const id = requireId(params.id, "status");
+          return watchResult(registry.status(id), { action: "status", id });
+        }
+
+        case "start": {
+          const spec = registry.start(params);
+          return watchResult(describeStart(spec), { action: "start", ...spec });
+        }
+
+        default:
+          throw new Error(`Unknown action: ${params.action}`);
       }
-      const spec = registry.start(params.command, params);
-      return watchResult(
-        `Watching ${spec.id} in the background. Continue with other work; the agent will be notified when the condition succeeds or the watch times out.`,
-        { action: "start", ...spec },
-      );
     },
   };
 }
@@ -509,6 +708,11 @@ export default function watch(pi: ExtensionAPI): void {
   pi.on("session_tree", async (_event, ctx) => {
     registry.restore(ctx.sessionManager.getBranch());
   });
+
+  // Any tool call means the agent acted on the last wake, so the next tick may
+  // be delivered again. `agent_start` covers runs that begin without a tool.
+  pi.on("tool_call", async () => registry.clearPending());
+  pi.on("agent_start", async () => registry.clearPending());
 
   pi.on("session_shutdown", async () => registry.stopAll());
 }
