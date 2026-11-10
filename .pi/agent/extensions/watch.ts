@@ -19,7 +19,7 @@ import { type Static, Type } from "typebox";
 
 // Watch duration, polling, and notification defaults, in seconds.
 const DEFAULT_TIMEOUT_SEC = 3_600;
-const MIN_TIMEOUT_SEC = 10;
+const MIN_TIMEOUT_SEC = 1;
 
 const DEFAULT_INTERVAL_SEC = 60;
 const MIN_INTERVAL_SEC = 1;
