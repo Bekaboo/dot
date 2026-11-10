@@ -293,7 +293,42 @@ class WatchRegistry {
         }
       })
       .finally(() => {
-        this.watches.delete(watch.id);
+        // Ownership check:
+        // `restore()` aborts old loops and immediately re-arms the same ids.
+        // An old loop may finish after its replacement is in the map; deleting
+        // by id alone would orphan the replacement watch, making it impossible
+        // to stop. Only remove the entry if this loop still owns it.
+        //
+        // Before the fix:
+        //
+        // time  event                         watches map         loops running
+        // ----  ----------------------------  ------------------  -------------------
+        //  t0   watch start -> job-1 (W1)      { job-1: W1 }       W1
+        //  t1   /tree -> stopAll()             { }                 W1 (aborting...)
+        //  t2   restore() re-arms job-1 (W2)   { job-1: W2 }       W1 (aborting), W2
+        //  t3   W1 finally:                    { }        <-- !!   W2
+        //         delete("job-1")
+        //  t4   watch stop job-1               { }                 W2 (still polling)
+        //         -> "No active watch: job-1"
+        //
+        // At t3, W1 deletes by id without checking which watch owns it,
+        // so it removes W2's entry.
+        //
+        // After the fix:
+        //
+        // time  event                         watches map         loops running
+        // ----  ----------------------------  ------------------  -------------------
+        //  t0   watch start -> job-1 (W1)      { job-1: W1 }       W1
+        //  t1   /tree -> stopAll()             { }                 W1 (aborting...)
+        //  t2   restore() re-arms job-1 (W2)   { job-1: W2 }       W1 (aborting), W2
+        //  t3   W1 finally:                    { job-1: W2 }       W2
+        //         map[job-1] is W2, not W1
+        //         -> skip delete
+        //  t4   watch stop job-1               { }                 (none)
+        //         -> "Stopped job-1."
+        if (this.watches.get(watch.id) === watch) {
+          this.watches.delete(watch.id);
+        }
       });
   }
 
