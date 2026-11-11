@@ -200,6 +200,50 @@ async function notices(pi, count = 1) {
   return pi.sent;
 }
 
+/**
+ * A fake extension UI that opens a custom component like the TUI mode does.
+ *
+ * @param t - Node test context, used to dispose a component left open.
+ * @returns The fake UI, its notifications, and the open component.
+ */
+function fakeUI(t) {
+  const notified = [];
+  let component;
+  const tui = { requestRender() {} };
+  const theme = { fg: (_color, text) => text, bold: (text) => text };
+  t.after(() => component?.dispose?.());
+  return {
+    notified,
+    get component() {
+      return component;
+    },
+    ui: {
+      notify: (text) => notified.push(text),
+      custom(factory) {
+        return new Promise((resolve) => {
+          const done = (result) => {
+            const closing = component;
+            component = undefined;
+            closing?.dispose?.();
+            resolve(result);
+          };
+          component = factory(tui, theme, undefined, done);
+        });
+      },
+    },
+  };
+}
+
+/**
+ * Visible width of a rendered line without its ANSI attributes.
+ *
+ * @param line - Rendered widget line.
+ * @returns Number of terminal columns it occupies.
+ */
+function widthOf(line) {
+  return line.replace(/\x1b\[[0-9;]*m/g, "").length;
+}
+
 test("builds the child invocation from the call", async (t) => {
   const { call, children } = setup(t);
   await call({ id: "cfg", prompt: "do it", model: "some/model", tools: ["read", "bash"] });
@@ -426,6 +470,68 @@ test("/subagents lists running children and says when there are none", async (t)
   notified.length = 0;
   await command.handler("", ctx);
   assert.match(notified[0], /\[subagent listed\] running for 0s \(m, tools=read, \/work\)/);
+});
+
+test("/subagents shows a live overlay that closes on Escape", async (t) => {
+  const { call, pi, children } = setup(t);
+  const screen = fakeUI(t);
+  const command = pi.commands.get("subagents");
+  const ctx = { mode: "tui", ui: screen.ui };
+
+  const showing = command.handler("", ctx);
+  const overlay = screen.component;
+  assert.ok(overlay, "the command opens the overlay");
+  const empty = overlay.render(60).join("\n");
+  assert.match(empty, /Subagents/);
+  assert.match(empty, /No subagents have run/);
+  assert.match(empty, /Press Escape to close/);
+
+  await call({ id: "first", prompt: "x", model: "m", tools: ["read"] });
+  await call({ id: "second", prompt: "y" });
+  children[0].write(
+    `${JSON.stringify({
+      type: "message_update",
+      assistantMessageEvent: {
+        type: "text_delta",
+        contentIndex: 0,
+        delta: "working on it",
+      },
+    })}\n`,
+  );
+  // Rendered wide, so the row's real working directory leaves room for the
+  // last message; width handling is checked below.
+  assert.match(overlay.render(160).join("\n"), /working on it/);
+  // The first child finishes while the second keeps running; creation order
+  // still decides the row order.
+  children[0].write(assistantRecord("first done"));
+  children[0].close(0);
+
+  const text = overlay.render(160).join("\n");
+  assert.match(text, /1 running, 1 finished/);
+  assert.ok(text.indexOf("first") < text.indexOf("second"));
+  assert.match(text, /first done/);
+  assert.match(text, /[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏] second 0s/);
+
+  // The last message is cut to the terminal width with an ellipsis.
+  children[1].write(
+    `${JSON.stringify({
+      type: "message_update",
+      assistantMessageEvent: {
+        type: "text_delta",
+        contentIndex: 0,
+        delta: "x".repeat(200),
+      },
+    })}\n`,
+  );
+  const narrow = overlay.render(40);
+  assert.ok(narrow.some((line) => line.includes("...")));
+  for (const line of narrow) assert.equal(widthOf(line), 40);
+
+  overlay.handleInput("\x1b");
+  await showing;
+  assert.equal(screen.component, undefined, "Escape closes the overlay");
+
+  await pi.hooks.get("session_shutdown")({ reason: "quit" });
 });
 
 test("subagent_status reports exited children only as finished while parent is busy", async (t) => {

@@ -18,10 +18,21 @@ import * as path from "node:path";
 import type { StopReason } from "@earendil-works/pi-ai";
 import type {
   ExtensionAPI,
+  ExtensionCommandContext,
   ExtensionContext,
   JsonAgentSessionEvent,
+  Theme,
   ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
+import { DynamicBorder } from "@earendil-works/pi-coding-agent";
+import {
+  type Component,
+  Container,
+  matchesKey,
+  Text,
+  type TUI,
+  truncateToWidth,
+} from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
 /** Custom message type used for subagent notifications. */
@@ -53,6 +64,18 @@ const MAX_RECORD_BYTES = 8 * 1024 * 1024;
 /** Prefix for ids generated when the caller omits one. */
 const AUTO_ID_PREFIX = "worker";
 
+/** Braille frames pi's built-in working spinner uses. */
+const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+
+/** Spinner frame interval in ms, matching pi's built-in working indicator. */
+const SPINNER_INTERVAL_MS = 80;
+
+/** How much streaming text is kept for the overlay, in bytes. */
+const LIVE_TEXT_CAP_BYTES = 4 * 1024;
+
+/** Horizontal padding inside the `/subagents` overlay. */
+const OVERLAY_PADDING_X = 2;
+
 /** A subagent that has not finished yet, as `/subagents` shows it. */
 interface RunningSubagent {
   id: string;
@@ -62,6 +85,10 @@ interface RunningSubagent {
   tools: string[];
   cwd: string;
   startedAt: number;
+  /** Creation order, so two children started in one millisecond stay ordered. */
+  order: number;
+  /** Latest assistant text the child emitted, empty before it speaks. */
+  lastMessage: string;
 }
 
 /** A child that ended, kept briefly so `subagent_status` can report it. */
@@ -76,6 +103,26 @@ interface FinishedSubagent {
   model: string;
   tools: string[];
   cwd: string;
+  /** Creation order, so two children started in one millisecond stay ordered. */
+  order: number;
+  /** Last assistant text the child emitted. */
+  lastMessage: string;
+}
+
+/** One line of the `/subagents` overlay. */
+interface SubagentRow {
+  id: string;
+  /** `running`, or the terminal state of a finished child. */
+  state: string;
+  /** Creation order, so two children started in one millisecond stay ordered. */
+  order: number;
+  /** Elapsed seconds: live while running, at exit once finished. */
+  seconds: number;
+  model: string;
+  tools: string[];
+  cwd: string;
+  /** Last assistant text the child emitted, or an empty string. */
+  lastMessage: string;
 }
 
 /** How many finished children are remembered for `subagent_status`. */
@@ -85,6 +132,8 @@ const FINISHED_HISTORY = 10;
 interface LastTurn {
   /** Answer text of that message, or an empty string. */
   answer: string;
+  /** Text of the message currently streaming, by content-block index. */
+  blocks: Map<number, string>;
   /** Terminal stop reason, such as "error", "length" or "aborted". */
   stopReason?: StopReason;
   /** Provider or pi error text, when the turn failed. */
@@ -119,6 +168,10 @@ class SubagentRunner {
   /** Set once the session shuts down: pending notifications are dropped. */
   private shuttingDown = false;
   private nextId = 1;
+  /** Monotonic creation order for the overlay rows. */
+  private nextOrder = 1;
+  /** Overlay the `/subagents` command shows, while it is open. */
+  private overlay?: SubagentsOverlay;
 
   /** Extension API used to inject notifications. */
   private readonly pi: ExtensionAPI;
@@ -162,7 +215,10 @@ class SubagentRunner {
    *   prompt of the child.
    */
   start(
-    subagent: Omit<RunningSubagent, "startedAt" | "prompt"> & {
+    subagent: Omit<
+      RunningSubagent,
+      "startedAt" | "order" | "lastMessage" | "prompt"
+    > & {
       prompt: string;
       /** Thinking level to force, empty to keep the model's own setting. */
       thinking: string;
@@ -182,10 +238,13 @@ class SubagentRunner {
       tools: subagent.tools,
       cwd: subagent.cwd,
       startedAt: Date.now(),
+      order: this.nextOrder++,
+      lastMessage: "",
     };
     this.running.set(running.id, running);
+    this.refreshOverlay();
 
-    const lastTurn: LastTurn = { answer: "" };
+    const lastTurn: LastTurn = { answer: "", blocks: new Map() };
     let stderrTail = "";
     let finished = false;
     let stopped = false;
@@ -196,7 +255,13 @@ class SubagentRunner {
     // In JSON mode a malformed record is the only place a parser complaint can
     // go; it lands next to the child's own stderr.
     proc.stdout.setEncoding("utf8");
-    proc.stdout.on("data", recordParser(appendStderr, lastTurn));
+    proc.stdout.on(
+      "data",
+      recordParser(appendStderr, lastTurn, (text) => {
+        running.lastMessage = text;
+        this.refreshOverlay();
+      }),
+    );
     proc.stderr.setEncoding("utf8");
     proc.stderr.on("data", appendStderr);
 
@@ -224,7 +289,10 @@ class SubagentRunner {
         model: running.model,
         tools: running.tools,
         cwd: running.cwd,
+        order: running.order,
+        lastMessage: running.lastMessage,
       });
+      this.refreshOverlay();
       this.deliver(running.id, outcome);
     };
 
@@ -262,7 +330,7 @@ class SubagentRunner {
       .filter((job) => matches(job.id))
       .map((job) => {
         const seconds = elapsedSec(job.startedAt);
-        return `${marker(job.id)} running for ${seconds}s${describe(job)}`;
+        return `${marker(job.id)} running for ${seconds}s (${subagentSettings(job)})`;
       });
     const finished = this.finished
       .filter((job) => matches(job.id))
@@ -275,6 +343,63 @@ class SubagentRunner {
     return wanted.size === 0
       ? "No subagents have run in this session."
       : `No subagent named ${[...wanted].map(marker).join(", ")}.`;
+  }
+
+  /**
+   * Create and track the overlay for the `/subagents` command.
+   *
+   * The overlay reads live state on every render, so it only needs refreshing
+   * as children start, speak and finish.
+   *
+   * @param tui - TUI the overlay renders into.
+   * @param theme - Active theme.
+   * @param close - Closes the overlay.
+   * @returns The overlay component.
+   */
+  createOverlay(tui: TUI, theme: Theme, close: () => void): SubagentsOverlay {
+    const overlay = new SubagentsOverlay(tui, theme, () => this.rows(), close);
+    this.overlay = overlay;
+    this.refreshOverlay();
+    return overlay;
+  }
+
+  /** Forget the overlay after `/subagents` closed it. */
+  detachOverlay(): void {
+    this.overlay = undefined;
+  }
+
+  /**
+   * Describe every subagent this session knows about, oldest first.
+   *
+   * @returns One row per running child and per remembered finished child.
+   */
+  private rows(): SubagentRow[] {
+    const running = [...this.running.values()].map((job) => ({
+      id: job.id,
+      state: "running",
+      order: job.order,
+      seconds: elapsedSec(job.startedAt),
+      model: job.model,
+      tools: job.tools,
+      cwd: job.cwd,
+      lastMessage: job.lastMessage,
+    }));
+    const finished = this.finished.map((job) => ({
+      id: job.id,
+      state: job.state,
+      order: job.order,
+      seconds: job.seconds,
+      model: job.model,
+      tools: job.tools,
+      cwd: job.cwd,
+      lastMessage: job.lastMessage,
+    }));
+    return [...running, ...finished].sort((a, b) => a.order - b.order);
+  }
+
+  /** Re-render the overlay after a state change, when it is open. */
+  private refreshOverlay(): void {
+    this.overlay?.refresh();
   }
 
   /**
@@ -305,12 +430,15 @@ class SubagentRunner {
         model: job?.model ?? "",
         tools: job?.tools ?? [],
         cwd: job?.cwd ?? "",
+        order: job?.order ?? 0,
+        lastMessage: job?.lastMessage ?? "",
       });
       this.running.delete(id);
       this.stoppers.delete(id);
       waits.push(stop());
     }
     await Promise.all(waits);
+    this.refreshOverlay();
     return { stopped, unknown };
   }
 
@@ -324,6 +452,8 @@ class SubagentRunner {
    */
   async shutdown(reason: string): Promise<void> {
     this.shuttingDown = true;
+    this.overlay?.dispose();
+    this.overlay = undefined;
     const killed = [...this.running.keys()];
     this.running.clear();
     if (killed.length > 0 && reason === "reload") {
@@ -363,6 +493,202 @@ class SubagentRunner {
       { deliverAs: "steer", triggerTurn: true },
     );
   }
+}
+
+/**
+ * Overlay listing the session's subagents, oldest first.
+ *
+ * Laid out like the todo overlay: a bordered box with a title, a summary, one
+ * line per child and an Escape hint. Rows are read from the runner on every
+ * render, so elapsed time and the last message stay current. A running child
+ * gets the same braille spinner as pi's working indicator; the animation runs
+ * only while one is alive.
+ */
+class SubagentsOverlay implements Component {
+  private readonly container = new Container();
+  private readonly summaryText: Text;
+  private readonly rowsText: Text;
+  private readonly tui: TUI;
+  private readonly theme: Theme;
+  private readonly readRows: () => SubagentRow[];
+  private readonly close: () => void;
+  private frame = 0;
+  private timer: ReturnType<typeof setInterval> | undefined;
+
+  constructor(
+    tui: TUI,
+    theme: Theme,
+    readRows: () => SubagentRow[],
+    close: () => void,
+  ) {
+    this.tui = tui;
+    this.theme = theme;
+    this.readRows = readRows;
+    this.close = close;
+    this.summaryText = new Text("", OVERLAY_PADDING_X, 0);
+    this.rowsText = new Text("", OVERLAY_PADDING_X, 0);
+
+    const border = () =>
+      new DynamicBorder((text) => theme.fg("borderMuted", text));
+    this.container.addChild(border());
+    this.container.addChild(
+      new Text(
+        theme.fg("accent", theme.bold("Subagents")),
+        OVERLAY_PADDING_X,
+        1,
+      ),
+    );
+    this.container.addChild(this.summaryText);
+    this.container.addChild(this.rowsText);
+    this.container.addChild(
+      new Text(theme.fg("dim", "Press Escape to close"), OVERLAY_PADDING_X, 1),
+    );
+    this.container.addChild(border());
+    this.syncAnimation();
+  }
+
+  render(width: number): string[] {
+    const rows = this.readRows();
+    this.summaryText.setText(summaryOf(rows, this.theme));
+    this.rowsText.setText(
+      rows.length > 0 ? `\n${this.renderRows(rows, width)}` : "",
+    );
+    return this.container.render(width);
+  }
+
+  invalidate(): void {
+    this.syncAnimation();
+    this.container.invalidate();
+    this.tui.requestRender();
+  }
+
+  /** Re-render after the runner's state changed. */
+  refresh(): void {
+    this.syncAnimation();
+    this.tui.requestRender();
+  }
+
+  /** Stop the animation when the overlay is closed. */
+  dispose(): void {
+    this.stopAnimation();
+  }
+
+  handleInput(data: string): void {
+    if (matchesKey(data, "escape") || matchesKey(data, "ctrl+c")) {
+      this.close();
+    }
+  }
+
+  /**
+   * Render every subagent on one line each.
+   *
+   * @param rows - Rows the overlay shows.
+   * @param width - Overlay width, including the text padding.
+   * @returns One width-truncated line per subagent.
+   */
+  private renderRows(rows: SubagentRow[], width: number): string {
+    const inner = Math.max(0, width - OVERLAY_PADDING_X * 2);
+    return rows
+      .map((row) => truncateToWidth(this.renderRow(row), inner, "...", true))
+      .join("\n");
+  }
+
+  /**
+   * Render one subagent as spinner or state marker, settings and last message.
+   *
+   * @param row - Subagent to render.
+   * @returns The styled line, before width truncation.
+   */
+  private renderRow(row: SubagentRow): string {
+    const { theme } = this;
+    const status =
+      row.state === "running"
+        ? `${row.seconds}s`
+        : `${row.state} after ${row.seconds}s`;
+    const head = [
+      stateMarker(row.state, this.frame, theme),
+      theme.bold(row.id),
+      theme.fg("muted", status),
+      theme.fg("dim", subagentSettings(row)),
+    ].join(" ");
+    const message = firstLine(row.lastMessage);
+    return message ? `${head} ${theme.fg("muted", message)}` : head;
+  }
+
+  /** Start or stop the animation to match the rows. */
+  private syncAnimation(): void {
+    if (this.readRows().some((row) => row.state === "running")) {
+      this.startAnimation();
+      return;
+    }
+    this.stopAnimation();
+  }
+
+  private startAnimation(): void {
+    if (this.timer) return;
+    this.timer = setInterval(() => {
+      this.frame = (this.frame + 1) % SPINNER_FRAMES.length;
+      this.tui.requestRender();
+    }, SPINNER_INTERVAL_MS);
+  }
+
+  private stopAnimation(): void {
+    if (!this.timer) return;
+    clearInterval(this.timer);
+    this.timer = undefined;
+  }
+}
+
+/**
+ * Summary line of the `/subagents` overlay.
+ *
+ * @param rows - Rows the overlay shows.
+ * @param theme - Active theme.
+ * @returns A styled count, or the empty state.
+ */
+function summaryOf(rows: SubagentRow[], theme: Theme): string {
+  if (rows.length === 0) {
+    return theme.fg("dim", "No subagents have run in this session.");
+  }
+  const running = rows.filter((row) => row.state === "running").length;
+  return theme.fg(
+    "muted",
+    `${running} running, ${rows.length - running} finished`,
+  );
+}
+
+/**
+ * Glyph and color for a subagent's state, with the spinner while it runs.
+ *
+ * @param state - `running` or the terminal state of a finished child.
+ * @param frame - Current spinner frame index.
+ * @param theme - Active theme.
+ * @returns The styled marker.
+ */
+function stateMarker(state: string, frame: number, theme: Theme): string {
+  switch (state) {
+    case "running":
+      return theme.fg("accent", SPINNER_FRAMES[frame % SPINNER_FRAMES.length]);
+    case "done":
+      return theme.fg("success", "✓");
+    case "failed":
+      return theme.fg("error", "✗");
+    default:
+      return theme.fg("dim", "·");
+  }
+}
+
+/**
+ * First non-blank line of a child's last message.
+ *
+ * @param text - Message text, possibly multi-line or empty.
+ * @returns Its first non-blank line, trimmed, or an empty string.
+ */
+function firstLine(text: string): string {
+  for (const line of text.split("\n")) {
+    if (line.trim() !== "") return line.trim();
+  }
+  return "";
 }
 
 /**
@@ -427,16 +753,46 @@ const StatusParams = Type.Object({ id: SelectionParams });
 const KillParams = Type.Object({ id: SelectionParams });
 
 /**
- * Read the last assistant message out of one JSONL record.
+ * Read the latest assistant text out of one JSONL record.
  *
  * The stream is delta-only, so the authoritative content is the completed
- * `message_end.message`; a new answer replaces the previous one.
+ * `message_end.message`; a new answer replaces the previous one. Text blocks
+ * are updated between completions, so the overlay can follow the child live.
  *
  * @param lastTurn - Last assistant message, updated in place.
  * @param record - Parsed `--mode json` record.
+ * @param onText - Called with the visible text after each update.
  */
-function absorbRecord(lastTurn: LastTurn, record: unknown): void {
+function absorbRecord(
+  lastTurn: LastTurn,
+  record: unknown,
+  onText?: (text: string) => void,
+): void {
   const event = record as JsonAgentSessionEvent;
+  if (event.type === "message_update") {
+    const update = event.assistantMessageEvent;
+    if (update.type === "text_delta") {
+      const text =
+        (lastTurn.blocks.get(update.contentIndex) ?? "") + update.delta;
+      lastTurn.blocks.set(
+        update.contentIndex,
+        truncateBytes(text, LIVE_TEXT_CAP_BYTES),
+      );
+      onText?.(draftText(lastTurn));
+    }
+    if (update.type === "text_end") {
+      lastTurn.blocks.set(
+        update.contentIndex,
+        truncateBytes(update.content, LIVE_TEXT_CAP_BYTES),
+      );
+      onText?.(draftText(lastTurn));
+    }
+    return;
+  }
+  if (event.type === "message_start") {
+    if (event.message.role === "assistant") lastTurn.blocks.clear();
+    return;
+  }
   if (event.type !== "message_end" || event.message.role !== "assistant")
     return;
   const message = event.message;
@@ -451,6 +807,22 @@ function absorbRecord(lastTurn: LastTurn, record: unknown): void {
   );
   lastTurn.stopReason = message.stopReason;
   lastTurn.errorMessage = message.errorMessage;
+  lastTurn.blocks.clear();
+  // A message with only tool calls has no text to show; keep the last words.
+  if (lastTurn.answer) onText?.(lastTurn.answer);
+}
+
+/**
+ * Join the text blocks of the message currently streaming.
+ *
+ * @param lastTurn - Last assistant message, holding the blocks.
+ * @returns The visible draft text.
+ */
+function draftText(lastTurn: LastTurn): string {
+  return [...lastTurn.blocks.entries()]
+    .sort(([left], [right]) => left - right)
+    .map(([, text]) => text)
+    .join("\n");
 }
 
 /**
@@ -462,15 +834,20 @@ function absorbRecord(lastTurn: LastTurn, record: unknown): void {
  *
  * @param write - Sink for parser complaints, usually stderr accumulation.
  * @param lastTurn - Last assistant message, updated in place.
+ * @param onText - Called with the visible text after each update.
  * @returns A function that accepts output chunks.
  */
-function recordParser(write: (text: string) => void, lastTurn: LastTurn) {
+function recordParser(
+  write: (text: string) => void,
+  lastTurn: LastTurn,
+  onText?: (text: string) => void,
+) {
   let partial = "";
   let skipping = false;
   const absorb = (line: string) => {
     if (!line.trim()) return;
     try {
-      absorbRecord(lastTurn, JSON.parse(line));
+      absorbRecord(lastTurn, JSON.parse(line), onText);
     } catch {
       // A malformed record carries no result; skip it. A lost result is caught
       // by the missing answer at exit, not by this line.
@@ -725,22 +1102,21 @@ function subagentTool(
 }
 
 /**
- * Describe a subagent's non-obvious settings on one line.
+ * Describe a child's model, tools and working directory on one line.
  *
  * @param job - Model, tools and working directory of the child.
- * @returns Suffix such as " (qoder/Fast, tools=read,bash, /work)".
+ * @returns Text such as "qoder/Fast, tools=read,bash, /work".
  */
-function describe(job: {
+function subagentSettings(job: {
   model: string;
   tools: string[];
   cwd: string;
 }): string {
-  const details = [
+  return [
     job.model || "model=default",
     job.tools.length > 0 ? `tools=${job.tools.join(",")}` : "tools=default",
     job.cwd,
   ].join(", ");
-  return ` (${details})`;
 }
 
 /**
@@ -819,6 +1195,27 @@ function toolText(text: string, details: Record<string, unknown> = {}) {
 }
 
 /**
+ * Build the `/subagents` command.
+ *
+ * @param runner - Session state the overlay shows.
+ */
+function subagentsCommand(runner: SubagentRunner) {
+  return {
+    description: "Show the session's subagents",
+    handler: async (_args: string, ctx: ExtensionCommandContext) => {
+      if (ctx.mode !== "tui") {
+        ctx.ui.notify(runner.status(), "info");
+        return;
+      }
+      await ctx.ui.custom<void>((tui, theme, _kb, done) =>
+        runner.createOverlay(tui, theme, () => done()),
+      );
+      runner.detachOverlay();
+    },
+  };
+}
+
+/**
  * Register the subagent tools, `/subagents`, and the shutdown hook.
  *
  * @param pi - Extension API.
@@ -829,12 +1226,7 @@ export default function subagent(pi: ExtensionAPI) {
   pi.registerTool(subagentTool(runner));
   pi.registerTool(statusTool(runner));
   pi.registerTool(killTool(runner));
-  pi.registerCommand("subagents", {
-    description: "List the subagents that are still running",
-    handler: async (_args: string, ctx: ExtensionContext) => {
-      ctx.ui.notify(runner.status(), "info");
-    },
-  });
+  pi.registerCommand("subagents", subagentsCommand(runner));
   // Async so the handler's promise is awaited: pi waits for children to close.
   pi.on("session_shutdown", async (event) => {
     await runner.shutdown(event.reason);
