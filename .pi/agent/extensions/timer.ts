@@ -284,6 +284,16 @@ function collectActiveTimers(
 class TimerRegistry {
   private pi: ExtensionAPI;
   private timers: Map<string, Timer>;
+  /**
+   * Timers that ended on their own, newest last, mapped to how they ended.
+   *
+   * Kept so a late `timer_stop` reports "stopped" instead of failing with
+   * "no such timer": after the wake that announced the end, stopping the
+   * timer is the obvious next move, and it must not look like an error. Bounded
+   * like the subagent history, so a long session of short timers cannot grow it
+   * without limit.
+   */
+  private retired: Map<string, string>;
 
   /**
    * @param pi - Extension API used for command execution and notifications.
@@ -291,6 +301,7 @@ class TimerRegistry {
   constructor(pi: ExtensionAPI) {
     this.pi = pi;
     this.timers = new Map();
+    this.retired = new Map();
   }
 
   /**
@@ -367,6 +378,31 @@ class TimerRegistry {
     return true;
   }
 
+  /**
+   * Forget a timer that ended on its own, and how it ended.
+   *
+   * Removal from the active map happens here rather than only in the loop's
+   * cleanup, so a `timer_stop` that races the farewell wake already sees a
+   * stopped timer instead of a live one.
+   *
+   * @param id - Id of the timer that just finished.
+   * @param reason - Why it finished, e.g. `tick budget spent`.
+   */
+  private retire(id: string, reason: string): void {
+    this.timers.delete(id);
+    this.retired.set(id, reason);
+  }
+
+  /**
+   * Explain why a timer by this id has stopped.
+   *
+   * @param id - Id of a timer this call has confirmed is retired.
+   * @returns A sentence ending in a period.
+   */
+  retirementText(id: string): string {
+    return `Timer "${id}" stopped (${this.retired.get(id)}).`;
+  }
+
   /** Cancel every active timer. */
   stopAll(): void {
     for (const timer of this.timers.values()) {
@@ -374,6 +410,7 @@ class TimerRegistry {
       timer.controller.abort();
     }
     this.timers.clear();
+    this.retired.clear();
   }
 
   /** Forget which timers still have a queued notification. */
@@ -400,33 +437,49 @@ class TimerRegistry {
   }
 
   /**
-   * Describe one active timer.
+   * Describe one timer.
    *
    * @param id - Id from the tool input.
    * @returns The one-line description of that timer.
    */
   status(id: string): string {
-    return this.describe(this.requireActive(id));
+    const timer = this.timers.get(id);
+    if (timer) {
+      return this.describe(timer);
+    }
+    return this.retired.has(id) ? this.retirementText(id) : this.unknownId(id);
   }
 
   /**
-   * Look up an active timer or fail with the list of valid ids.
+   * Look up the timer a `timer_stop` call should cancel.
+   *
+   * Stopping a timer that ended on its own is not an error: the agent usually
+   * stops it right after the wake that announced the end, and a failure there
+   * teaches it nothing. Such a call returns `undefined` so the tool can report
+   * that the timer stopped.
    *
    * @param id - Id from the tool input.
-   * @returns The active timer.
+   * @returns The active timer, or `undefined` when it already ended by itself.
    */
-  requireActive(id: string): Timer {
+  requireStopTarget(id: string): Timer | undefined {
     const timer = this.timers.get(id);
-    if (timer) {
+    if (timer || this.retired.has(id)) {
       return timer;
     }
+    throw new Error(this.unknownId(id));
+  }
 
+  /**
+   * Explain that no timer with this id is running or retired.
+   *
+   * @param id - Id from the tool input.
+   * @returns An error message naming the ids that are active.
+   */
+  private unknownId(id: string): string {
     const active = [...this.timers.keys()].sort();
-    throw new Error(
-      active.length === 0
-        ? `No timer "${id}"; nothing is active.`
-        : `No timer "${id}"; active: ${active.join(", ")}.`,
-    );
+    return active.length === 0
+      ? `No timer "${id}"; nothing is active.`
+      : `No timer "${id}"; active: ${active.join(", ")}.`;
   }
 
   /**
@@ -475,10 +528,14 @@ class TimerRegistry {
    */
   private arm(timer: Timer): void {
     this.timers.set(timer.id, timer);
+    this.retired.delete(timer.id);
     void this.poll(timer)
       .catch((error) => {
-        if (!timer.stopped) {
-          this.notify(timer, "error", `error: ${String(error)}`);
+        // Same ownership reason as the `finally` below: a loop replaced by
+        // `restore()` must not retire the timer that replaced it.
+        if (!timer.stopped && this.timers.get(timer.id) === timer) {
+          this.retire(timer.id, "failed");
+          this.notify(timer, "error", `error: ${String(error)}; timer stopped`);
         }
       })
       .finally(() => {
@@ -508,7 +565,8 @@ class TimerRegistry {
    *
    * A condition timer checks once immediately, then on every tick. A timer
    * only ticks, and ends once its budget is spent because it has nothing left
-   * to report.
+   * to report. The wake that ends a timer says it stopped, so the agent is not
+   * left guessing whether it is still armed.
    *
    * @param timer - Timer to run.
    */
@@ -548,14 +606,33 @@ class TimerRegistry {
       // The callback is the timer body: it runs on every tick even when the
       // wake is throttled, so periodic work is never silently skipped.
       const body = await this.capture(timer);
-      if (this.canTick(timer) && !timer.noticePending) {
-        this.tick(timer, body);
-        if (!timer.condition && !this.canTick(timer)) {
-          // A timer with a spent budget has nothing left to say.
-          return;
-        }
+      if (!this.canTick(timer) || timer.noticePending) {
+        // Nothing was delivered, so neither the budget nor the timer moved: a
+        // throttled wake still counts a tick, and this one was not sent.
+        continue;
+      }
+
+      // Only a timer with no condition ends when it runs out of ticks: one with
+      // a condition is still waiting for that condition to hold.
+      const last = !timer.condition && !this.hasTicksLeft(timer);
+      this.tick(timer, body, last);
+      if (last) {
+        // The tick just sent was the timer's farewell.
+        this.retire(timer.id, "tick budget spent");
+        return;
       }
     }
+  }
+
+  /**
+   * Whether the budget has room for a tick after the one about to be sent.
+   *
+   * @param timer - Timer about to tick.
+   * @returns `true` when another tick may follow; `false` when the next tick
+   *   spends the budget, making it the timer's last.
+   */
+  private hasTicksLeft(timer: Timer): boolean {
+    return timer.maxTicks === undefined || timer.ticksSent + 1 < timer.maxTicks;
   }
 
   /**
@@ -590,13 +667,18 @@ class TimerRegistry {
    *
    * @param timer - Timer to tick.
    * @param body - Snapshot captured for this tick, possibly empty.
+   * @param last - Whether this tick spends the budget, so nothing follows it.
    */
-  private tick(timer: Timer, body: string): void {
+  private tick(timer: Timer, body: string, last: boolean): void {
     timer.ticksSent += 1;
+    const count = `${timer.ticksSent}${timer.maxTicks === undefined ? "" : `/${timer.maxTicks}`}`;
+    // A last tick carries the farewell, so the one wake the agent reads tells it
+    // both the news and that the timer is gone.
+    const ending = last ? "; timer stopped" : "";
     this.notify(
       timer,
       "tick",
-      `tick ${timer.ticksSent}${timer.maxTicks === undefined ? "" : `/${timer.maxTicks}`}, ${elapsed(timer)} elapsed`,
+      `tick ${count}, ${elapsed(timer)} elapsed${ending}`,
       body,
     );
   }
@@ -639,15 +721,22 @@ class TimerRegistry {
   private async finish(timer: Timer, state: "done" | "timeout"): Promise<void> {
     const body = await this.capture(timer);
     if (state === "done") {
+      this.retire(timer.id, "condition met");
       this.notify(
         timer,
         "done",
-        `condition met after ${elapsed(timer)}: ${timer.condition}`,
+        `condition met after ${elapsed(timer)}: ${timer.condition}; timer stopped`,
         body,
       );
       return;
     }
-    this.notify(timer, "timeout", `timeout after ${timer.timeoutSec}s`, body);
+    this.retire(timer.id, "timed out");
+    this.notify(
+      timer,
+      "timeout",
+      `timeout after ${timer.timeoutSec}s; timer stopped`,
+      body,
+    );
   }
 
   /**
@@ -699,8 +788,8 @@ function describeStart(spec: TimerSpec): string {
           ? `one tick after ${spec.intervalSec}s`
           : `tick every ${spec.intervalSec}s, at most ${spec.maxTicks}`;
   const ending = spec.condition
-    ? `ends when the condition first exits 0 or after ${spec.timeoutSec}s`
-    : `then ends (timeout ${spec.timeoutSec}s)`;
+    ? `it ends when the condition first exits 0 or after ${spec.timeoutSec}s`
+    : `it ends after that tick or at its ${spec.timeoutSec}s timeout`;
   return `Started "${spec.id}": ${ticks}; ${ending}. Wakes arrive even after you end your turn.`;
 }
 
@@ -754,7 +843,10 @@ function timerStopTool(
 
     async execute(_toolCallId: string, params: TimerStopInput) {
       const id = requireId(params.id);
-      registry.requireActive(id);
+      const timer = registry.requireStopTarget(id);
+      if (!timer) {
+        return timerResult(registry.retirementText(id), { action: "stop", id });
+      }
       registry.stop(id);
       return timerResult(`Stopped "${id}".`, { action: "stop", id });
     },

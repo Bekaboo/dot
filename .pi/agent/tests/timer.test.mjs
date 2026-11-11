@@ -84,7 +84,10 @@ test("a timer wakes with 'condition met' as soon as its condition holds", async 
   const [notice] = await noticesAfter(1);
 
   assert.equal(result.details.id, "build-done");
-  assert.equal(notice.content, '[timer build-done] condition met after 0s: test -f done');
+  assert.equal(
+    notice.content,
+    "[timer build-done] condition met after 0s: test -f done; timer stopped",
+  );
   assert.equal(notice.details.state, "done");
   assert.equal(notice.options.deliverAs, "steer");
 });
@@ -105,7 +108,10 @@ test("a timer reports a timeout when its deadline passes", async (t) => {
   await hooks.get("session_start")({}, branch(expired));
   const [notice] = await noticesAfter(1);
 
-  assert.equal(notice.content, "[timer stale-timer] timeout after 1s");
+  assert.equal(
+    notice.content,
+    "[timer stale-timer] timeout after 1s; timer stopped",
+  );
   assert.equal(notice.details.state, "timeout");
 });
 
@@ -155,22 +161,73 @@ test("start rejects a duplicate id and an unreachable tick", async (t) => {
   );
 });
 
-test("a one-shot timer wakes once, then retires itself", async (t) => {
-  const { start, status, noticesAfter } = setup(t, () => exit(1));
+test("a one-shot timer wakes once, says it stopped, then retires itself", async (t) => {
+  const { start, stop, status, noticesAfter } = setup(t, () => exit(1));
 
   await start({
     id: "peek-1",
     intervalSec: 1,
     maxTicks: 1,
-    timeoutSec: 5,
+    timeoutSec: 90,
   });
   const [notice] = await noticesAfter(1);
 
-  assert.match(notice.content, /^\[timer peek-1\] tick 1\/1, \ds elapsed$/);
+  assert.match(
+    notice.content,
+    /^\[timer peek-1\] tick 1\/1, \ds elapsed; timer stopped$/,
+  );
   await wait(50);
-  await assert.rejects(
-    status({ id: "peek-1" }),
-    /No timer "peek-1"; nothing is active\./,
+
+  // The agent stops a timer it just saw finish; that must not look like a bug.
+  const stopped = await stop({ id: "peek-1" });
+  assert.equal(
+    stopped.content[0].text,
+    'Timer "peek-1" stopped (tick budget spent).',
+  );
+  assert.equal(
+    (await status({ id: "peek-1" })).content[0].text,
+    'Timer "peek-1" stopped (tick budget spent).',
+  );
+
+  // An id that never ran is still a real mistake.
+  await assert.rejects(stop({ id: "never-ran" }), /No timer "never-ran"/);
+});
+
+test("stopping a timed-out timer reports that it stopped", async (t) => {
+  const { hooks, stop, noticesAfter, branch } = setup(t, () => exit(1));
+  const expired = {
+    action: "start",
+    id: "stale-timer",
+    condition: "false",
+    intervalSec: 1,
+    maxTicks: 0,
+    timeoutSec: 1,
+    startedAt: Date.now() - 2_000,
+  };
+
+  await hooks.get("session_start")({}, branch(expired));
+  await noticesAfter(1);
+
+  const stopped = await stop({ id: "stale-timer" });
+  assert.equal(
+    stopped.content[0].text,
+    'Timer "stale-timer" stopped (timed out).',
+  );
+});
+
+test("reusing a retired id starts a fresh timer", async (t) => {
+  const { start, stop, status, noticesAfter } = setup(t, () => exit(1));
+
+  await start({ id: "peek-1", intervalSec: 1, maxTicks: 1, timeoutSec: 5 });
+  await noticesAfter(1);
+  await wait(50);
+
+  await start({ id: "peek-1", intervalSec: 5, maxTicks: 2, timeoutSec: 60 });
+
+  assert.match((await status({ id: "peek-1" })).content[0].text, /^peek-1 {2}running/);
+  assert.equal(
+    (await stop({ id: "peek-1" })).content[0].text,
+    'Stopped "peek-1".',
   );
 });
 
@@ -187,7 +244,11 @@ test("a timer ticks exactly maxTicks times", async (t) => {
 
   assert.equal(notices.length, 2);
   assert.match(notices[0].content, /^\[timer monitor-1\] tick 1\/2, \d+s elapsed$/);
-  assert.match(notices[1].content, /^\[timer monitor-1\] tick 2\/2, \d+s elapsed$/);
+  // Only the last tick may announce the end, so the first stays plain.
+  assert.match(
+    notices[1].content,
+    /^\[timer monitor-1\] tick 2\/2, \d+s elapsed; timer stopped$/,
+  );
 });
 
 test("a tick is dropped while the previous one is still unread", async (t) => {
@@ -272,7 +333,11 @@ test("onTick may produce no output", async (t) => {
   });
   const [notice] = await noticesAfter(1);
 
-  assert.match(notice.content, /^\[timer silent-work\] tick 1\/1, \d+s elapsed$/);
+  // No body line: empty callback output must not leave a dangling newline.
+  assert.match(
+    notice.content,
+    /^\[timer silent-work\] tick 1\/1, \d+s elapsed; timer stopped$/,
+  );
 });
 
 test("onTick output is capped", async (t) => {
@@ -336,7 +401,7 @@ test("maxTicks 0 silences a condition timer until it finishes", async (t) => {
   );
   assert.equal(
     result.content[0].text,
-    'Started "quiet-timer": no ticks; ends when the condition first exits 0 or after 5s. Wakes arrive even after you end your turn.',
+    'Started "quiet-timer": no ticks; it ends when the condition first exits 0 or after 5s. Wakes arrive even after you end your turn.',
   );
 });
 
