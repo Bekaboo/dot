@@ -4,39 +4,57 @@
  * The extension spawns a real pi process, so the interesting behaviour is the
  * seam around it: how a call becomes a child invocation, how the child's JSONL
  * output is read, how a finished child is reported, and that a child which
- * ends without an answer cannot pass as a success. The registered tool is
- * driven with a fake `pi`, and the module's `spawn` is swapped for a fake, so
- * every child outcome is reproducible without a model or a network.
+ * ends without an answer cannot pass as a success. Most tests drive the
+ * registered tools with a fake `pi`, and the extension's `spawn` is swapped for
+ * a fake, so every child outcome is reproducible without a model or a network.
+ *
+ * The last two tests run the real extension inside an SDK `AgentSession`,
+ * driven by a scripted faux model stream. They pin the delivery contract: a
+ * finished child is queued as a steering message with `triggerTurn`, so a busy
+ * parent sees it in its next request (before the run settles) and an idle
+ * parent is woken into a new turn.
  */
 
 import assert from "node:assert/strict";
+import * as fs from "node:fs";
+import { createRequire } from "node:module";
+import * as os from "node:os";
+import * as path from "node:path";
 import test from "node:test";
 
-import { createRequire } from "node:module";
-
 const require = createRequire(import.meta.url);
-const extensionPath = require.resolve("../extensions/subagent.ts");
-const loadExtension = () => require(extensionPath).default ?? require(extensionPath);
 
-/** Timeout for a notification that never arrives. */
+/** Timeout for a notification or a request that never arrives. */
 const NOTICE_TIMEOUT_MS = 2_000;
 
 /**
- * A fake `spawn` installed for the whole file, and the children it created.
+ * Real working directory for every fake call.
+ *
+ * The extension checks that a call's cwd is a directory, so the fake `pi`
+ * points at a directory the test owns instead of a made-up path.
+ */
+const workDir = fs.mkdtempSync(path.join(os.tmpdir(), "pi-subagent-work-"));
+test.after(() => {
+  fs.rmSync(workDir, { recursive: true, force: true });
+});
+
+/**
+ * Children created by the fake `spawn`, oldest first.
  *
  * One stub for every test keeps the extension's module cache intact, which
- * matters because each test needs a fresh instance: `loadExtension` re-runs the
- * factory against a fresh fake `pi` instead of re-importing the module.
+ * matters because each test needs a fresh instance: calling the factory again
+ * installs a new instance against a fresh fake `pi` instead of re-importing
+ * the module.
  */
 const children = [];
 
 /**
- * Create a fake child for the installed `spawn` stub.
+ * A controllable child process for the extension.
  *
  * @param command - Command the extension asked to spawn.
  * @param args - Arguments for that command.
  * @param options - Spawn options.
- * @returns A controllable child process.
+ * @returns A fake child that can emit output, close, or fail on demand.
  */
 function fakeChild(command, args, options) {
   const listeners = new Map();
@@ -74,10 +92,6 @@ function fakeChild(command, args, options) {
     write(text) {
       listeners.get("stdout:data")?.(text);
     },
-    /** Push text through the stderr handler. */
-    writeErr(text) {
-      listeners.get("stderr:data")?.(text);
-    },
     /** Finish the child with an exit code. */
     close(code = 0, signal = null) {
       child.exitCode = code;
@@ -93,25 +107,63 @@ function fakeChild(command, args, options) {
   return child;
 }
 
-
-// Built-in modules are shared singletons, so replacing `spawn` here is what the
-// extension sees when it spawns its child.
-process.getBuiltinModule("node:child_process").spawn = fakeChild;
+// The extension imports `spawn` with an ESM named import, which snapshots the
+// property when the module is evaluated. Patch it before that first load, then
+// restore it so the SDK and the rest of the process keep the real `spawn`.
+// Built-in modules are shared singletons, so the extension keeps the fake.
+const childProcess = process.getBuiltinModule("node:child_process");
+const realSpawn = childProcess.spawn;
+childProcess.spawn = fakeChild;
+const extensionPath = require.resolve("../extensions/subagent.ts");
+const extensionModule = require(extensionPath);
+childProcess.spawn = realSpawn;
 
 /**
- * Replace `fs.statSync` so a fake working directory passes the cwd check.
- *
- * @param t - Node test context, used to restore the original.
- * @param onlyFor - Fake path that should report as a directory.
+ * The extension factory: call it with a `pi` API to install a fresh instance.
  */
-function fakeDirectory(t) {
-  const fs = require("node:fs");
-  const previous = fs.statSync;
-  fs.statSync = (path, options) =>
-    path === "/work" ? { isDirectory: () => true } : previous(path, options);
-  t.after(() => {
-    fs.statSync = previous;
-  });
+const installSubagent = extensionModule.default ?? extensionModule;
+
+const { fauxAssistantMessage, fauxProvider, fauxToolCall } = await import(
+  "@earendil-works/pi-ai"
+);
+const {
+  createAgentSession,
+  DefaultResourceLoader,
+  ModelRuntime,
+  SessionManager,
+  SettingsManager,
+} = await import("@earendil-works/pi-coding-agent");
+
+/** Deterministic model: every response is scripted per test. */
+const faux = fauxProvider({ provider: "faux", models: [{ id: "faux-1" }] });
+const modelRuntime = await ModelRuntime.create({
+  modelsPath: null,
+  refreshOnCreate: false,
+  allowModelNetwork: false,
+});
+modelRuntime.registerNativeProvider(faux.provider);
+
+/**
+ * Wait until a predicate holds or the timeout expires.
+ *
+ * @param predicate - Condition to poll.
+ * @param timeoutMs - How long to wait, in milliseconds.
+ * @returns Whether the predicate holds at the end.
+ */
+async function waitFor(predicate, timeoutMs = NOTICE_TIMEOUT_MS) {
+  const deadline = Date.now() + timeoutMs;
+  while (!predicate() && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+  return predicate();
+}
+
+/** A JSONL record carrying a completed assistant message. */
+function assistantRecord(text, extra = {}) {
+  return `${JSON.stringify({
+    type: "message_end",
+    message: { role: "assistant", content: [{ type: "text", text }], ...extra },
+  })}\n`;
 }
 
 /** A fake `pi` that records what the extension registers and sends. */
@@ -142,16 +194,8 @@ function fakePi() {
  */
 const piArgs = (child) => child.args.slice(child.args.indexOf("-p"));
 
-/** A JSONL record carrying a completed assistant message. */
-function assistantRecord(text, extra = {}) {
-  return `${JSON.stringify({
-    type: "message_end",
-    message: { role: "assistant", content: [{ type: "text", text }], ...extra },
-  })}\n`;
-}
-
 /**
- * Install a fresh extension instance.
+ * Install a fresh extension instance against a fake `pi`.
  *
  * @param t - Node test context.
  * @param idle - Idle check reported by the fake context.
@@ -159,14 +203,10 @@ function assistantRecord(text, extra = {}) {
  * @param thinkingLevel - Thinking level the fake context reports.
  * @returns The fake pi, the registered tool, and a `call` helper.
  */
-function setup(
-  t,
-  { idle = () => true, model, thinkingLevel } = {},
-) {
-  fakeDirectory(t);
+function setup(t, { idle = () => true, model, thinkingLevel } = {}) {
   children.length = 0;
   // Keep the SIGTERM-to-SIGKILL escalation short, and restore it afterwards so
-  // no other test file inherits the shortened grace.
+  // no other test inherits the shortened grace.
   const grace = process.env.SUBAGENT_KILL_GRACE_MS;
   process.env.SUBAGENT_KILL_GRACE_MS = "20";
   t.after(() => {
@@ -174,9 +214,9 @@ function setup(
     else process.env.SUBAGENT_KILL_GRACE_MS = grace;
   });
   const pi = fakePi();
-  loadExtension()(pi.api);
+  installSubagent(pi.api);
   const tool = pi.tools.get("subagent");
-  const ctx = { cwd: "/work", isIdle: idle, model, thinkingLevel };
+  const ctx = { cwd: workDir, isIdle: idle, model, thinkingLevel };
   return {
     pi,
     tool,
@@ -193,10 +233,7 @@ function setup(
  * @returns The sent notifications.
  */
 async function notices(pi, count = 1) {
-  const deadline = Date.now() + NOTICE_TIMEOUT_MS;
-  while (pi.sent.length < count && Date.now() < deadline) {
-    await new Promise((resolve) => setTimeout(resolve, 5));
-  }
+  await waitFor(() => pi.sent.length >= count);
   return pi.sent;
 }
 
@@ -244,11 +281,56 @@ function widthOf(line) {
   return line.replace(/\x1b\[[0-9;]*m/g, "").length;
 }
 
+/**
+ * Create an idle SDK session with the real extension loaded.
+ *
+ * @param t - Node test context, used for cleanup.
+ * @param customTools - Extra tools the scripted parent may call.
+ * @param tools - Active tool names.
+ * @returns The created session.
+ */
+async function createSession(t, customTools = [], tools = ["subagent"]) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "pi-subagent-"));
+  const resourceLoader = new DefaultResourceLoader({
+    cwd: dir,
+    agentDir: dir,
+    noExtensions: true,
+    noSkills: true,
+    noPromptTemplates: true,
+    noThemes: true,
+    noContextFiles: true,
+    systemPrompt: "You are a test assistant.",
+    extensionFactories: [installSubagent],
+  });
+  await resourceLoader.reload();
+  const { session } = await createAgentSession({
+    cwd: dir,
+    agentDir: dir,
+    modelRuntime,
+    model: faux.getModel(),
+    thinkingLevel: "off",
+    resourceLoader,
+    sessionManager: SessionManager.inMemory(),
+    settingsManager: SettingsManager.inMemory({
+      compaction: { enabled: false },
+      retry: { enabled: false },
+    }),
+    noTools: "all",
+    tools,
+    customTools,
+  });
+  t.after(() => {
+    session.dispose();
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+  return session;
+}
+
 test("builds the child invocation from the call", async (t) => {
   const { call, children } = setup(t);
   await call({ id: "cfg", prompt: "do it", model: "some/model", tools: ["read", "bash"] });
   const [child] = children;
-  assert.equal(child.options.cwd, "/work");
+  assert.equal(child.options.cwd, workDir);
   assert.equal(child.options.shell, false);
   assert.deepEqual(piArgs(child).slice(0, 6), [
     "-p",
@@ -469,7 +551,7 @@ test("/subagents lists running children and says when there are none", async (t)
   await call({ id: "listed", prompt: "x", model: "m", tools: ["read"] });
   notified.length = 0;
   await command.handler("", ctx);
-  assert.match(notified[0], /\[subagent listed\] running for 0s \(m, tools=read, \/work\)/);
+  assert.equal(notified[0], `[subagent listed] running for 0s (m, tools=read, ${workDir})`);
 });
 
 test("/subagents shows a live overlay that closes on Escape", async (t) => {
@@ -543,7 +625,8 @@ test("subagent_status reports exited children only as finished while parent is b
 
   const status = pi.tools.get("subagent_status");
   const all = (await status.execute("call", {}, undefined, undefined, {})).content[0].text;
-  assert.match(all, /\[subagent busy\] running for \d+s \(m, tools=default, \/work\)/);
+  assert.match(all, /\[subagent busy\] running for \d+s \(m, tools=default, /);
+  assert.ok(all.includes(workDir), "the status shows the working directory");
   assert.match(all, /\[subagent done\] done after \d+s/);
   assert.doesNotMatch(all, /\[subagent done\] running/);
   assert.equal(pi.sent.length, 1);
@@ -657,4 +740,153 @@ test("shutdown kills children and says a reload cancelled them", async (t) => {
   const sent = await notices(pi);
   assert.match(sent[0].message.content, /Reload cancelled 1 running subagent\(s\): \[subagent alive\]/);
   assert.deepEqual(sent[0].options, { triggerTurn: false });
+});
+
+// Delivery through a real SDK session: the same finished-child notice, seen
+// from the parent agent's queue instead of the extension's `sendMessage`.
+
+test("a busy parent sees the result in its next request, before it settles", async (t) => {
+  children.length = 0;
+  const previousGrace = process.env.SUBAGENT_KILL_GRACE_MS;
+  process.env.SUBAGENT_KILL_GRACE_MS = "20";
+  t.after(() => {
+    if (previousGrace === undefined) delete process.env.SUBAGENT_KILL_GRACE_MS;
+    else process.env.SUBAGENT_KILL_GRACE_MS = previousGrace;
+  });
+
+  let releaseWait;
+  let waitStarted = false;
+  const waitTool = {
+    name: "wait",
+    label: "Wait",
+    description: "Block until the test releases it.",
+    parameters: { type: "object", properties: {} },
+    async execute() {
+      waitStarted = true;
+      return new Promise((resolve) => {
+        releaseWait = () =>
+          resolve({ content: [{ type: "text", text: "released" }], details: {} });
+      });
+    },
+  };
+
+  const session = await createSession(t, [waitTool], ["subagent", "wait"]);
+  const requests = [];
+  let settled = false;
+  session.subscribe((event) => {
+    if (event.type === "agent_settled") settled = true;
+  });
+
+  // Observe delivery mode through the agent queue, not extension internals.
+  const steered = [];
+  const followed = [];
+  const steer = session.agent.steer.bind(session.agent);
+  const followUp = session.agent.followUp.bind(session.agent);
+  session.agent.steer = (message) => {
+    steered.push(message);
+    steer(message);
+  };
+  session.agent.followUp = (message) => {
+    followed.push(message);
+    followUp(message);
+  };
+
+  faux.setResponses([
+    (context) => {
+      requests.push({ context, settled });
+      return fauxAssistantMessage(
+        fauxToolCall("subagent", { id: "slow", prompt: "work" }),
+      );
+    },
+    (context) => {
+      requests.push({ context, settled });
+      return fauxAssistantMessage(fauxToolCall("wait", {}));
+    },
+    (context) => {
+      requests.push({ context, settled });
+      return fauxAssistantMessage("parent finished");
+    },
+  ]);
+
+  const run = session.prompt("start");
+  try {
+    assert.ok(await waitFor(() => waitStarted), "the parent reached its busy tool");
+    assert.equal(children.length, 1, "the extension spawned one fake child");
+
+    children[0].write(assistantRecord("child answer"));
+    children[0].close(0);
+
+    assert.ok(
+      await waitFor(() => steered.length > 0),
+      "a finished child is steered while the parent is still in a tool",
+    );
+    assert.equal(followed.length, 0, "the result is not deferred as a follow-up");
+    assert.match(JSON.stringify(steered[0]), /child answer/);
+
+    releaseWait();
+    await run;
+  } finally {
+    releaseWait?.();
+    // Let the run finish even when an assertion above failed, so no work leaks
+    // past the test and the session can be disposed cleanly.
+    await run.catch(() => {});
+  }
+
+  assert.equal(requests.length, 3);
+  assert.match(
+    JSON.stringify(requests[2].context.messages),
+    /\[subagent slow\] finished in \d+s\.[\s\S]*child answer/,
+  );
+  assert.equal(
+    requests[2].settled,
+    false,
+    "the notice reaches the model before the parent run settles",
+  );
+});
+
+test("an idle parent is woken into a new request", async (t) => {
+  children.length = 0;
+  const session = await createSession(t);
+  const requests = [];
+  let settled = false;
+  session.subscribe((event) => {
+    if (event.type === "agent_settled") settled = true;
+  });
+
+  faux.setResponses([
+    (context) => {
+      requests.push({ context, settled });
+      return fauxAssistantMessage(
+        fauxToolCall("subagent", { id: "late", prompt: "work" }),
+      );
+    },
+    (context) => {
+      requests.push({ context, settled });
+      return fauxAssistantMessage("first run done");
+    },
+    (context) => {
+      requests.push({ context, settled });
+      return fauxAssistantMessage("woken by the subagent");
+    },
+  ]);
+
+  await session.prompt("start");
+  assert.equal(requests.length, 2);
+  assert.equal(children.length, 1);
+
+  children[0].write(assistantRecord("late child answer"));
+  children[0].close(0);
+
+  assert.ok(
+    await waitFor(() => requests.length === 3),
+    "an idle parent starts a new request when the result arrives",
+  );
+  await session.waitForIdle();
+
+  assert.match(
+    JSON.stringify(requests[2].context.messages),
+    /\[subagent late\] finished in \d+s\.[\s\S]*late child answer/,
+  );
+  assert.equal(requests[2].settled, true, "the wake starts after the parent was idle");
+  assert.equal(session.getLastAssistantText(), "woken by the subagent");
 });
