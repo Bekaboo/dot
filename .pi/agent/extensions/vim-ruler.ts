@@ -163,7 +163,7 @@ function createFooter(
 
   return {
     dispose: unsubscribe,
-    invalidate() { },
+    invalidate() {},
     render: (width) => renderFooterLines(ctx, tui, theme, footerData, width),
   };
 }

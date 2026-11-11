@@ -1,7 +1,18 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.6.5/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.6/schema.json",
   "files": {
-    "includes": ["**/*.ts", "**/*.json"]
+    "includes": [
+      "**/*.ts",
+      "**/*.json",
+      "!sessions",
+      "!missions",
+      "!npm",
+      "!node_modules",
+      "!*-cache.json",
+      "!models-store.json",
+      "!auth.json",
+      "!mcp-auth.json"
+    ]
   },
   "formatter": {
     "enabled": true,

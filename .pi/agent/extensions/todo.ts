@@ -627,10 +627,7 @@ class Todo {
     for (const entry of ctx.sessionManager.getBranch()) {
       if (entry.type !== "message") continue;
       const message = entry.message;
-      if (
-        message.role !== "toolResult" ||
-        !TODO_TOOLS.has(message.toolName)
-      )
+      if (message.role !== "toolResult" || !TODO_TOOLS.has(message.toolName))
         continue;
       const details = message.details as TodoDetails | undefined;
       if (typeof details?.list !== "string") continue;
