@@ -96,16 +96,6 @@ const STATUS_BY_MARKER = new Map<string, TodoStatus>(
   ]),
 );
 
-/**
- * Format the checkbox for a status, e.g. `[x]`.
- *
- * @param status - Item status.
- * @returns The bracketed marker.
- */
-function box(status: TodoStatus): string {
-  return `[${MARKERS[status]}]`;
-}
-
 /** Bracketed markers as they appear in prompts and messages. */
 const PENDING_BOX = box("pending");
 const IN_PROGRESS_BOX = box("in_progress");
@@ -124,18 +114,6 @@ const ITEM_PATTERN = new RegExp(`^- \\[([${MARKER_CLASS}])\\] (\\S.*)$`);
 const LINE_FORMATS = Object.keys(MARKERS)
   .map((status) => `"- ${box(status as TodoStatus)} text"`)
   .join(", ");
-
-/** One parsed checklist item. */
-interface TodoItem {
-  status: TodoStatus;
-  text: string;
-}
-
-/** Snapshot stored in every tool result for rendering and session replay. */
-interface TodoDetails {
-  list: string;
-  error?: string;
-}
 
 /** Schema for the `todo_list` tool. */
 const TodoListParams = Type.Object({});
@@ -163,8 +141,38 @@ const TodoEditParams = Type.Object({
   }),
 });
 
+/** Display color for each status marker. */
+const STATUS_COLOR = {
+  pending: "muted",
+  in_progress: "accent",
+  completed: "success",
+  cancelled: "dim",
+} as const;
+
+/** One parsed checklist item. */
+interface TodoItem {
+  status: TodoStatus;
+  text: string;
+}
+
+/** Snapshot stored in every tool result for rendering and session replay. */
+interface TodoDetails {
+  list: string;
+  error?: string;
+}
+
 /** One exact-text replacement against the current checklist. */
 type TodoEdit = Static<typeof EditParams>;
+
+/**
+ * Format the checkbox for a status, e.g. `[x]`.
+ *
+ * @param status - Item status.
+ * @returns The bracketed marker.
+ */
+function box(status: TodoStatus): string {
+  return `[${MARKERS[status]}]`;
+}
 
 /**
  * Read the message of an unknown thrown value.
@@ -385,14 +393,6 @@ function withHint(
   };
   return [...messages.slice(0, -1), patched];
 }
-
-/** Display color for each status marker. */
-const STATUS_COLOR = {
-  pending: "muted",
-  in_progress: "accent",
-  completed: "success",
-  cancelled: "dim",
-} as const;
 
 /**
  * Render checklist items.
