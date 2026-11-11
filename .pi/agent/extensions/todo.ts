@@ -497,7 +497,8 @@ function renderHintEntry(padding: number, theme: Theme): Text {
 
 /** Checklist and steering state owned by one extension instance. */
 class Todo {
-  private list = "";
+  /** Markdown checklist currently shown to the model. */
+  private items = "";
   /** Turns since the last todo call, user input, or reminder. */
   private idleTurns = 0;
   /** Whether a todo call finished during the current turn. */
@@ -509,13 +510,18 @@ class Todo {
   /** Whether any tool ran since the last user input. */
   private workedSinceInput = false;
 
+  /** Current checklist text, as the tools and the overlay show it. */
+  get list(): string {
+    return this.items;
+  }
+
   /**
    * Show the current checklist.
    *
    * @returns A result with the full list.
    */
   async view(): Promise<AgentToolResult<TodoDetails>> {
-    return todoResult(this.list, "Viewed the todo list.");
+    return todoResult(this.items, "Viewed the todo list.");
   }
 
   /**
@@ -547,10 +553,10 @@ class Todo {
     signal?.throwIfAborted();
     let next: string;
     try {
-      next = await applyEdits(this.list, edits, signal);
+      next = await applyEdits(this.items, edits, signal);
     } catch (error) {
       signal?.throwIfAborted();
-      return todoResult(this.list, "", errorMessage(error));
+      return todoResult(this.items, "", errorMessage(error));
     }
     return this.commit(next);
   }
@@ -563,11 +569,11 @@ class Todo {
    */
   private commit(next: string): AgentToolResult<TodoDetails> {
     try {
-      this.list = normalizeList(next);
+      this.items = normalizeList(next);
     } catch (error) {
-      return todoResult(this.list, "", errorMessage(error));
+      return todoResult(this.items, "", errorMessage(error));
     }
-    return todoResult(this.list, "Updated the todo list.");
+    return todoResult(this.items, "Updated the todo list.");
   }
 
   /**
@@ -579,7 +585,7 @@ class Todo {
    * @param ctx - Session context providing the active branch.
    */
   restore(ctx: ExtensionContext): void {
-    this.list = "";
+    this.items = "";
     this.resetSteering();
 
     for (const entry of ctx.sessionManager.getBranch()) {
@@ -592,7 +598,7 @@ class Todo {
         continue;
       const details = message.details as TodoDetails | undefined;
       if (typeof details?.list !== "string") continue;
-      this.list = details.list;
+      this.items = details.list;
     }
   }
 
@@ -603,128 +609,6 @@ class Todo {
     this.pendingHint = undefined;
     this.pushedSinceInput = false;
     this.workedSinceInput = false;
-  }
-
-  /**
-   * Build the `todo_list` tool definition.
-   *
-   * @returns Tool definition registered with Pi.
-   */
-  createListTool(): ToolDefinition<typeof TodoListParams, TodoDetails> {
-    return {
-      name: "todo_list",
-      label: "Todo List",
-      description:
-        "Show the session todo list, a Markdown checklist. Every other todo tool also returns the full list, so call this only to re-read the current state.",
-      promptSnippet: "View the session todo checklist",
-      parameters: TodoListParams,
-      // The todo tools share one mutable list, so Pi must run them in order.
-      executionMode: "sequential",
-      execute: () => this.view(),
-
-      renderCall(_args, theme) {
-        return callHeader("todo_list", "", theme);
-      },
-
-      renderResult(result, _options, theme) {
-        return renderTodoResult(result, theme);
-      },
-    };
-  }
-
-  /**
-   * Build the `todo_write` tool definition.
-   *
-   * @returns Tool definition registered with Pi.
-   */
-  createWriteTool(): ToolDefinition<typeof TodoWriteParams, TodoDetails> {
-    return {
-      name: "todo_write",
-      label: "Todo Write",
-      description: `Replace the session todo list, a Markdown checklist. Item markers: \`- ${PENDING_BOX}\` pending, \`- ${IN_PROGRESS_BOX}\` in progress (at most one), \`- ${COMPLETED_BOX}\` done, \`- ${CANCELLED_BOX}\` cancelled. Use for the initial plan or a major rework. Returns the full list.`,
-      promptSnippet: "Replace the session todo checklist with a new plan",
-      promptGuidelines: [
-        "Use todo_write to plan before multi-step work whose progress is worth tracking (e.g. review then fix findings, multi-file changes, fix-test-commit loops), or when the user lists several items. Skip it for single-step or purely conversational requests.",
-      ],
-      parameters: TodoWriteParams,
-      // The todo tools share one mutable list, so Pi must run them in order.
-      executionMode: "sequential",
-      execute: (_toolCallId, params, signal) =>
-        this.write(params.list, signal),
-
-      renderCall(args, theme) {
-        const count = countItems(args.list ?? "");
-        return callHeader(
-          "todo_write",
-          ` (${count} item${count === 1 ? "" : "s"})`,
-          theme,
-        );
-      },
-
-      renderResult(result, _options, theme) {
-        return renderTodoResult(result, theme);
-      },
-    };
-  }
-
-  /**
-   * Build the `todo_edit` tool definition.
-   *
-   * @returns Tool definition registered with Pi.
-   */
-  createEditTool(): ToolDefinition<typeof TodoEditParams, TodoDetails> {
-    const editTool = createEditToolDefinition("/");
-    return {
-      name: "todo_edit",
-      label: "Todo Edit",
-      description: `Update the session todo list, a Markdown checklist, with exact-text replacements like the edit tool: each oldText must match the current list exactly and uniquely, otherwise nothing changes. Item markers: \`- ${PENDING_BOX}\` pending, \`- ${IN_PROGRESS_BOX}\` in progress (at most one), \`- ${COMPLETED_BOX}\` done, \`- ${CANCELLED_BOX}\` cancelled. Returns the full list.`,
-      promptSnippet: "Edit the session todo checklist in place",
-      promptGuidelines: [
-        `Use todo_edit to mark an item ${IN_PROGRESS_BOX} when starting it and ${COMPLETED_BOX} right after finishing it, before starting the next one. Keep at most one item ${IN_PROGRESS_BOX}.`,
-        `When requirements change mid-task, update the todo list first. Mark abandoned items ${CANCELLED_BOX} instead of deleting them.`,
-      ],
-      parameters: TodoEditParams,
-      // The todo tools share one mutable list, so Pi must run them in order.
-      executionMode: "sequential",
-      prepareArguments: editTool.prepareArguments as (
-        args: unknown,
-      ) => Static<typeof TodoEditParams>,
-      execute: (_toolCallId, params, signal) =>
-        this.edit(params.edits, signal),
-
-      renderCall(args, theme) {
-        const count = args.edits?.length ?? 0;
-        return callHeader(
-          "todo_edit",
-          ` (${count} edit${count === 1 ? "" : "s"})`,
-          theme,
-        );
-      },
-
-      renderResult(result, _options, theme) {
-        return renderTodoResult(result, theme);
-      },
-    };
-  }
-
-  /**
-   * Build the `/todos` command.
-   *
-   * @returns Command definition registered with Pi.
-   */
-  createCommand() {
-    return {
-      description: "Show the todo list on the current branch",
-      handler: async (_args: string, ctx: ExtensionCommandContext) => {
-        if (ctx.mode !== "tui") {
-          ctx.ui.notify("/todos requires interactive mode", "error");
-          return;
-        }
-        await ctx.ui.custom<void>((_tui, theme, _kb, done) =>
-          createTodoOverlay(this.list, theme, () => done()),
-        );
-      },
-    };
   }
 
   /**
@@ -756,7 +640,7 @@ class Todo {
     }
 
     this.idleTurns = 0;
-    const hint = idleHint(this.list);
+    const hint = idleHint(this.items);
     if (!hint) return undefined;
     this.pendingHint = hint;
     // Recorded for the transcript only; custom entries never reach the model.
@@ -795,7 +679,7 @@ class Todo {
       return undefined;
     }
     // A reply without any tool call is discussion, not abandoned work.
-    if (!this.workedSinceInput || !hasUnfinished(this.list)) {
+    if (!this.workedSinceInput || !hasUnfinished(this.items)) {
       return undefined;
     }
     this.pushedSinceInput = true;
@@ -805,13 +689,143 @@ class Todo {
         {
           type: "custom_message",
           customType: CONTINUE_MESSAGE_TYPE,
-          content: continueMessage(this.list),
+          content: continueMessage(this.items),
           display: true,
         },
       ],
       continue: true,
     };
   }
+}
+
+/**
+ * Build the `todo_list` tool definition.
+ *
+ * @param todo - Session list state the tool reads.
+ * @returns Tool definition registered with Pi.
+ */
+function todoListTool(
+  todo: Todo,
+): ToolDefinition<typeof TodoListParams, TodoDetails> {
+  return {
+    name: "todo_list",
+    label: "Todo List",
+    description:
+      "Show the session todo list, a Markdown checklist. Every other todo tool also returns the full list, so call this only to re-read the current state.",
+    promptSnippet: "View the session todo checklist",
+    parameters: TodoListParams,
+    // The todo tools share one mutable list, so Pi must run them in order.
+    executionMode: "sequential",
+    execute: () => todo.view(),
+
+    renderCall(_args, theme) {
+      return callHeader("todo_list", "", theme);
+    },
+
+    renderResult(result, _options, theme) {
+      return renderTodoResult(result, theme);
+    },
+  };
+}
+
+/**
+ * Build the `todo_write` tool definition.
+ *
+ * @param todo - Session list state the tool replaces.
+ * @returns Tool definition registered with Pi.
+ */
+function todoWriteTool(
+  todo: Todo,
+): ToolDefinition<typeof TodoWriteParams, TodoDetails> {
+  return {
+    name: "todo_write",
+    label: "Todo Write",
+    description: `Replace the session todo list, a Markdown checklist. Item markers: \`- ${PENDING_BOX}\` pending, \`- ${IN_PROGRESS_BOX}\` in progress (at most one), \`- ${COMPLETED_BOX}\` done, \`- ${CANCELLED_BOX}\` cancelled. Use for the initial plan or a major rework. Returns the full list.`,
+    promptSnippet: "Replace the session todo checklist with a new plan",
+    promptGuidelines: [
+      "Use todo_write to plan before multi-step work whose progress is worth tracking (e.g. review then fix findings, multi-file changes, fix-test-commit loops), or when the user lists several items. Skip it for single-step or purely conversational requests.",
+    ],
+    parameters: TodoWriteParams,
+    // The todo tools share one mutable list, so Pi must run them in order.
+    executionMode: "sequential",
+    execute: (_toolCallId, params, signal) => todo.write(params.list, signal),
+
+    renderCall(args, theme) {
+      const count = countItems(args.list ?? "");
+      return callHeader(
+        "todo_write",
+        ` (${count} item${count === 1 ? "" : "s"})`,
+        theme,
+      );
+    },
+
+    renderResult(result, _options, theme) {
+      return renderTodoResult(result, theme);
+    },
+  };
+}
+
+/**
+ * Build the `todo_edit` tool definition.
+ *
+ * @param todo - Session list state the tool edits.
+ * @returns Tool definition registered with Pi.
+ */
+function todoEditTool(
+  todo: Todo,
+): ToolDefinition<typeof TodoEditParams, TodoDetails> {
+  const editTool = createEditToolDefinition("/");
+  return {
+    name: "todo_edit",
+    label: "Todo Edit",
+    description: `Update the session todo list, a Markdown checklist, with exact-text replacements like the edit tool: each oldText must match the current list exactly and uniquely, otherwise nothing changes. Item markers: \`- ${PENDING_BOX}\` pending, \`- ${IN_PROGRESS_BOX}\` in progress (at most one), \`- ${COMPLETED_BOX}\` done, \`- ${CANCELLED_BOX}\` cancelled. Returns the full list.`,
+    promptSnippet: "Edit the session todo checklist in place",
+    promptGuidelines: [
+      `Use todo_edit to mark an item ${IN_PROGRESS_BOX} when starting it and ${COMPLETED_BOX} right after finishing it, before starting the next one. Keep at most one item ${IN_PROGRESS_BOX}.`,
+      `When requirements change mid-task, update the todo list first. Mark abandoned items ${CANCELLED_BOX} instead of deleting them.`,
+    ],
+    parameters: TodoEditParams,
+    // The todo tools share one mutable list, so Pi must run them in order.
+    executionMode: "sequential",
+    prepareArguments: editTool.prepareArguments as (
+      args: unknown,
+    ) => Static<typeof TodoEditParams>,
+    execute: (_toolCallId, params, signal) => todo.edit(params.edits, signal),
+
+    renderCall(args, theme) {
+      const count = args.edits?.length ?? 0;
+      return callHeader(
+        "todo_edit",
+        ` (${count} edit${count === 1 ? "" : "s"})`,
+        theme,
+      );
+    },
+
+    renderResult(result, _options, theme) {
+      return renderTodoResult(result, theme);
+    },
+  };
+}
+
+/**
+ * Build the `/todos` command.
+ *
+ * @param todo - Session list state the overlay shows.
+ * @returns Command definition registered with Pi.
+ */
+function todosCommand(todo: Todo) {
+  return {
+    description: "Show the todo list on the current branch",
+    handler: async (_args: string, ctx: ExtensionCommandContext) => {
+      if (ctx.mode !== "tui") {
+        ctx.ui.notify("/todos requires interactive mode", "error");
+        return;
+      }
+      await ctx.ui.custom<void>((_tui, theme, _kb, done) =>
+        createTodoOverlay(todo.list, theme, () => done()),
+      );
+    },
+  };
 }
 
 /**
@@ -822,10 +836,10 @@ class Todo {
 export default function todoExtension(pi: ExtensionAPI): void {
   const todo = new Todo();
 
-  pi.registerTool(todo.createListTool());
-  pi.registerTool(todo.createWriteTool());
-  pi.registerTool(todo.createEditTool());
-  pi.registerCommand("todos", todo.createCommand());
+  pi.registerTool(todoListTool(todo));
+  pi.registerTool(todoWriteTool(todo));
+  pi.registerTool(todoEditTool(todo));
+  pi.registerCommand("todos", todosCommand(todo));
   pi.on("session_start", (_event, ctx) => todo.restore(ctx));
   pi.on("session_tree", (_event, ctx) => todo.restore(ctx));
   pi.on("input", () => todo.resetSteering());
