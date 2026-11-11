@@ -46,6 +46,9 @@ const ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$/;
 /** Custom message type used for timer notifications. */
 const NOTICE_TYPE = "timer";
 
+/** How many finished timers are remembered for a late `timer_stop` reply. */
+const RETIRED_HISTORY = 10;
+
 /** Names that replay as timer start results, including the old combined tool. */
 const START_TOOL_NAMES = new Set(["timer_start", "timer"]);
 
@@ -390,7 +393,14 @@ class TimerRegistry {
    */
   private retire(id: string, reason: string): void {
     this.timers.delete(id);
+    this.retired.delete(id);
     this.retired.set(id, reason);
+    // Oldest first: a re-inserted id moves to the end, so this drops the timer
+    // the agent is least likely to still ask about.
+    const oldest = this.retired.keys().next();
+    if (!oldest.done && this.retired.size > RETIRED_HISTORY) {
+      this.retired.delete(oldest.value);
+    }
   }
 
   /**

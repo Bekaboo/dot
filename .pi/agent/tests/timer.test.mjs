@@ -215,6 +215,24 @@ test("stopping a timed-out timer reports that it stopped", async (t) => {
   );
 });
 
+test("only recent stopped timers are remembered", async (t) => {
+  const { start, stop, noticesAfter } = setup(t, () => exit(0));
+
+  // A condition that already holds ends each timer on its first check, so this
+  // needs no tick interval.
+  for (let index = 0; index < 12; index += 1) {
+    await start({ id: `peek-${index}`, condition: "true", maxTicks: 0 });
+    await noticesAfter(index + 1);
+  }
+
+  // The history is bounded, so the oldest id is forgotten and errors again.
+  await assert.rejects(stop({ id: "peek-0" }), /No timer "peek-0"/);
+  assert.equal(
+    (await stop({ id: "peek-11" })).content[0].text,
+    'Timer "peek-11" stopped (condition met).',
+  );
+});
+
 test("reusing a retired id starts a fresh timer", async (t) => {
   const { start, stop, status, noticesAfter } = setup(t, () => exit(1));
 
