@@ -593,7 +593,7 @@ test("/subagents shows a live overlay that closes on Escape", async (t) => {
   assert.match(text, /1 running, 1 finished/);
   assert.ok(text.indexOf("first") < text.indexOf("second"));
   assert.match(text, /first done/);
-  assert.match(text, /[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏] second +work/);
+  assert.match(text, /[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏] second +work +0s/);
 
   // Every row starts its tools and cwd columns at the same offset.
   const firstRow = lines.find((line) => line.includes(" first "));
@@ -604,6 +604,11 @@ test("/subagents shows a live overlay that closes on Escape", async (t) => {
     firstRow.indexOf("done "),
     secondRow.indexOf("work "),
     "status column is aligned",
+  );
+  assert.equal(
+    firstRow.indexOf("0s"),
+    secondRow.indexOf("0s"),
+    "elapsed column is aligned",
   );
   assert.equal(
     firstRow.indexOf("tools="),

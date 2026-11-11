@@ -117,6 +117,8 @@ interface SubagentRow {
   state: string;
   /** Creation order, so two children started in one millisecond stay ordered. */
   order: number;
+  /** Elapsed seconds: live while running, at exit once finished. */
+  seconds: number;
   model: string;
   tools: string[];
   cwd: string;
@@ -377,6 +379,7 @@ class SubagentRunner {
       id: job.id,
       state: "work",
       order: job.order,
+      seconds: elapsedSec(job.startedAt),
       model: job.model,
       tools: job.tools,
       cwd: job.cwd,
@@ -386,6 +389,7 @@ class SubagentRunner {
       id: job.id,
       state: job.state,
       order: job.order,
+      seconds: job.seconds,
       model: job.model,
       tools: job.tools,
       cwd: job.cwd,
@@ -608,6 +612,7 @@ class SubagentsOverlay implements Component {
       stateMarker(row.state, this.frame, theme),
       theme.bold(padRight(column.id, widths.id)),
       theme.fg("muted", padLeft(column.status, widths.status)),
+      theme.fg("muted", padLeft(column.elapsed, widths.elapsed)),
       theme.fg("dim", padRight(column.model, widths.model)),
       theme.fg("dim", padRight(column.tools, widths.tools)),
       theme.fg("dim", padRight(column.cwd, widths.cwd)),
@@ -645,6 +650,7 @@ class SubagentsOverlay implements Component {
 interface SubagentColumns {
   id: string;
   status: string;
+  elapsed: string;
   model: string;
   tools: string;
   cwd: string;
@@ -655,6 +661,7 @@ interface SubagentColumns {
 interface ColumnWidths {
   id: number;
   status: number;
+  elapsed: number;
   model: number;
   tools: number;
   cwd: number;
@@ -670,6 +677,7 @@ function columnsOf(row: SubagentRow): SubagentColumns {
   return {
     id: row.id,
     status: row.state,
+    elapsed: `${row.seconds}s`,
     model: modelLabel(row),
     tools: toolsLabel(row),
     cwd: row.cwd,
@@ -684,8 +692,15 @@ function columnsOf(row: SubagentRow): SubagentColumns {
  * @returns The terminal width of each column.
  */
 function alignWidths(rows: SubagentRow[]): ColumnWidths {
-  const keys = ["id", "status", "model", "tools", "cwd"] as const;
-  const widths: ColumnWidths = { id: 0, status: 0, model: 0, tools: 0, cwd: 0 };
+  const keys = ["id", "status", "elapsed", "model", "tools", "cwd"] as const;
+  const widths: ColumnWidths = {
+    id: 0,
+    status: 0,
+    elapsed: 0,
+    model: 0,
+    tools: 0,
+    cwd: 0,
+  };
   for (const row of rows) {
     const column = columnsOf(row);
     for (const key of keys) {
