@@ -49,19 +49,11 @@ const STDERR_CAP_BYTES = 2 * 1024;
 /** Grace period before a child that ignored SIGTERM gets SIGKILL, in ms. */
 const KILL_GRACE_MS = 2_000;
 
-/**
- * Grace period override, so tests can drive the escalation without waiting.
- * Read on every kill, which keeps a test's value from leaking into others.
- *
- * @returns Milliseconds to wait before sending SIGKILL.
- */
-function killGraceMs(): number {
-  const override = Number(process.env.SUBAGENT_KILL_GRACE_MS);
-  return Number.isFinite(override) && override > 0 ? override : KILL_GRACE_MS;
-}
-
 /** Longest single JSONL record kept from the child, in bytes. */
 const MAX_RECORD_BYTES = 8 * 1024 * 1024;
+
+/** How many finished children are remembered for `subagent_status`. */
+const FINISHED_HISTORY = 10;
 
 /** Braille frames pi's built-in working spinner uses. */
 const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
@@ -80,6 +72,52 @@ const STREAM_CAP_CHARS = 4 * 1024;
 
 /** Horizontal padding inside the `/subagents` overlay. */
 const OVERLAY_PADDING_X = 2;
+
+/** Schema for the `subagent` tool. */
+const SubagentParams = Type.Object({
+  prompt: Type.String({
+    description:
+      "Full task for the subagent. It has no access to this conversation, so include every file path, constraint and deliverable it needs.",
+  }),
+  id: Type.String({
+    description:
+      "Short, purpose-bearing name used in every notification, e.g. review-auth or scan-tests.",
+  }),
+  tools: Type.Optional(
+    Type.Array(Type.String(), {
+      description:
+        'pi tool-selection for the child, passed to --tools: either exact names, e.g. ["read", "bash"], or only +name/-name modifiers on the defaults, e.g. ["+codemode"]. Omit or leave empty for pi defaults.',
+    }),
+  ),
+  model: Type.Optional(
+    Type.String({
+      description:
+        'Model for the child, as "provider/id" or a bare id, optionally with ":high" and similar for the thinking level. Omit to inherit this session\'s model and thinking level.',
+    }),
+  ),
+  cwd: Type.Optional(
+    Type.String({
+      description:
+        "Working directory for the child. Defaults to the current working directory.",
+    }),
+  ),
+});
+
+/** Ids accepted by `subagent_status` and `subagent_kill`. */
+const SelectionParams = Type.Optional(
+  Type.Union([Type.String(), Type.Array(Type.String())], {
+    description: "One subagent id or a list of ids. Omit for every subagent.",
+  }),
+);
+
+/** Schema for `subagent_status`. */
+const StatusParams = Type.Object({ id: SelectionParams });
+
+/** Schema for `subagent_kill`. */
+const KillParams = Type.Object({ id: SelectionParams });
+
+/** The marker as the model sees it in descriptions, before any id exists. */
+const MARKER_EXAMPLE = marker("<id>");
 
 /** A subagent that has not finished yet, as `/subagents` shows it. */
 interface RunningSubagent {
@@ -132,9 +170,6 @@ interface SubagentRow {
   stream: string;
 }
 
-/** How many finished children are remembered for `subagent_status`. */
-const FINISHED_HISTORY = 10;
-
 /** What the last assistant message of a child says, once its records are parsed. */
 interface LastTurn {
   /** Answer text of that message, or an empty string. */
@@ -162,6 +197,558 @@ interface Outcome {
   status: string;
   /** What the child said, or why it failed. */
   body: string;
+}
+
+/** Plain text of one subagent row, split into aligned columns. */
+interface SubagentColumns {
+  id: string;
+  status: string;
+  elapsed: string;
+  model: string;
+  tools: string;
+  cwd: string;
+  message: string;
+}
+
+/** Widest value of each aligned column in one overlay render. */
+interface ColumnWidths {
+  id: number;
+  status: number;
+  elapsed: number;
+  model: number;
+  tools: number;
+  cwd: number;
+}
+
+/**
+ * Grace period override, so tests can drive the escalation without waiting.
+ * Read on every kill, which keeps a test's value from leaking into others.
+ *
+ * @returns Milliseconds to wait before sending SIGKILL.
+ */
+function killGraceMs(): number {
+  const override = Number(process.env.SUBAGENT_KILL_GRACE_MS);
+  return Number.isFinite(override) && override > 0 ? override : KILL_GRACE_MS;
+}
+
+/**
+ * Format the text that opens every notification about a subagent.
+ *
+ * The agent keys on this marker to tell a subagent result from its own work,
+ * and the tool text names the same form, so promise and delivery cannot drift.
+ *
+ * @param id - Subagent id, or the `<id>` placeholder in model-facing text.
+ * @returns Marker such as `[subagent review-auth]`.
+ */
+function marker(id: string): string {
+  return `[subagent ${id}]`;
+}
+
+/**
+ * Read the latest assistant text out of one JSONL record.
+ *
+ * The stream is delta-only, so the authoritative content is the completed
+ * `message_end.message`. Text blocks are reported between completions, so the
+ * overlay can follow the child live.
+ *
+ * @param lastTurn - Last assistant message, updated in place.
+ * @param record - Parsed `--mode json` record.
+ * @param observer - Receives the current draft and each completed message.
+ */
+function absorbRecord(
+  lastTurn: LastTurn,
+  record: unknown,
+  observer?: TextObserver,
+): void {
+  const event = record as JsonAgentSessionEvent;
+  if (event.type === "message_update") {
+    const update = event.assistantMessageEvent;
+    if (update.type === "text_delta") {
+      const text =
+        (lastTurn.blocks.get(update.contentIndex) ?? "") + update.delta;
+      lastTurn.blocks.set(
+        update.contentIndex,
+        keepTailBytes(text, LIVE_TEXT_CAP_BYTES),
+      );
+      observer?.draft(draftText(lastTurn));
+    }
+    if (update.type === "text_end") {
+      lastTurn.blocks.set(
+        update.contentIndex,
+        keepTailBytes(update.content, LIVE_TEXT_CAP_BYTES),
+      );
+      observer?.draft(draftText(lastTurn));
+    }
+    return;
+  }
+  if (event.type === "message_start") {
+    if (event.message.role === "assistant") {
+      lastTurn.blocks.clear();
+      observer?.draft("");
+    }
+    return;
+  }
+  if (event.type !== "message_end" || event.message.role !== "assistant")
+    return;
+  const message = event.message;
+  lastTurn.answer = truncateBytes(
+    message.content
+      .filter(
+        (part): part is { type: "text"; text: string } => part.type === "text",
+      )
+      .map((part) => part.text)
+      .join("\n"),
+    OUTPUT_CAP_BYTES,
+  );
+  lastTurn.stopReason = message.stopReason;
+  lastTurn.errorMessage = message.errorMessage;
+  lastTurn.blocks.clear();
+  // A message with only tool calls adds no text to the recent stream.
+  if (lastTurn.answer) observer?.complete(lastTurn.answer);
+}
+
+/**
+ * Join the text blocks of the message currently streaming.
+ *
+ * @param lastTurn - Last assistant message, holding the blocks.
+ * @returns The visible draft text.
+ */
+function draftText(lastTurn: LastTurn): string {
+  return [...lastTurn.blocks.entries()]
+    .sort(([left], [right]) => left - right)
+    .map(([, text]) => text)
+    .join("\n");
+}
+
+/**
+ * Split child output into JSONL records and feed them to `absorbRecord`.
+ *
+ * Records are consumed as they arrive, so a long run retains only the latest
+ * answer. An oversized record is skipped up to its next newline instead of
+ * growing the buffer without bound.
+ *
+ * @param write - Sink for parser complaints, usually stderr accumulation.
+ * @param lastTurn - Last assistant message, updated in place.
+ * @param observer - Receives the current draft and each completed message.
+ * @returns A function that accepts output chunks.
+ */
+function recordParser(
+  write: (text: string) => void,
+  lastTurn: LastTurn,
+  observer?: TextObserver,
+) {
+  let partial = "";
+  let skipping = false;
+  const absorb = (line: string) => {
+    if (!line.trim()) return;
+    try {
+      absorbRecord(lastTurn, JSON.parse(line), observer);
+    } catch {
+      // A malformed record carries no result; skip it. A lost result is caught
+      // by the missing answer at exit, not by this line.
+    }
+  };
+  return (chunk: string) => {
+    const lines = (partial + chunk).split("\n");
+    partial = lines.pop() ?? "";
+    if (skipping) {
+      // Only the head of this buffer continues the oversized record; the rest
+      // are complete records that still have to be read.
+      skipping = false;
+      lines.shift();
+    }
+    // An oversized record has no newline yet, so it cannot carry a result: drop
+    // it and keep whatever follows rather than the whole buffer.
+    if (Buffer.byteLength(partial, "utf8") > MAX_RECORD_BYTES) {
+      partial = "";
+      skipping = true;
+      write(`subagent: dropped a record over ${MAX_RECORD_BYTES} bytes\n`);
+    }
+    for (const line of lines) absorb(line);
+  };
+}
+
+/**
+ * Cut a string to at most `maxBytes` UTF-8 bytes, appending a marker.
+ *
+ * A partial trailing code point is dropped, so the marker stays readable.
+ *
+ * @param text - Text to trim.
+ * @param maxBytes - Byte budget, which the marker may exceed by a few bytes.
+ * @returns Text no longer than the budget, plus the marker when cut.
+ */
+function truncateBytes(text: string, maxBytes: number): string {
+  const bytes = Buffer.from(text, "utf8");
+  if (bytes.length <= maxBytes) return text;
+  const head = new TextDecoder("utf-8").decode(bytes.subarray(0, maxBytes), {
+    stream: true,
+  });
+  return `${head}\n[truncated]`;
+}
+
+/**
+ * Keep the end of a string within a UTF-8 byte budget, adding a marker.
+ *
+ * The live overlay cares about the latest text, so a long block keeps its tail
+ * instead of its head.
+ *
+ * @param text - Text to trim.
+ * @param maxBytes - Byte budget, which the marker may exceed by a few bytes.
+ * @returns Text no longer than the budget, prefixed with the marker when cut.
+ */
+function keepTailBytes(text: string, maxBytes: number): string {
+  const bytes = Buffer.from(text, "utf8");
+  if (bytes.length <= maxBytes) return text;
+  const tail = new TextDecoder("utf-8").decode(
+    bytes.subarray(bytes.length - maxBytes),
+  );
+  return `[truncated]\n${tail}`;
+}
+
+/**
+ * Stop a child process, escalating from SIGTERM to SIGKILL.
+ *
+ * `proc.killed` only records that a signal was sent, so the real exit state and
+ * the `close` event decide when this resolves.
+ *
+ * @param proc - Process to stop.
+ * @returns Resolves once the process has closed.
+ */
+function stopProcess(proc: ChildProcess): Promise<void> {
+  return new Promise((resolve) => {
+    if (proc.exitCode !== null || proc.signalCode !== null) return resolve();
+    const settle = () => {
+      clearTimeout(escalate);
+      clearTimeout(giveUp);
+      resolve();
+    };
+    const grace = killGraceMs();
+    const escalate = setTimeout(() => proc.kill("SIGKILL"), grace);
+    // A process that survives SIGKILL, or a handler that never fires, must not
+    // keep the session alive on its own.
+    const giveUp = setTimeout(settle, grace * 2);
+    proc.once("close", settle);
+    proc.kill("SIGTERM");
+  });
+}
+
+/**
+ * Summarize a finished child for its notification.
+ *
+ * @param lastTurn - Last assistant message of the child.
+ * @param stderr - Child stderr, already capped.
+ * @param failure - Why the child failed, or undefined for a successful run.
+ * @param startedAt - Spawn time in ms, for the elapsed seconds.
+ * @returns Terminal state, one-line summary and body of the notification.
+ */
+function outcomeOf(
+  lastTurn: LastTurn,
+  stderr: string,
+  failure: string | undefined,
+  startedAt: number,
+): Outcome {
+  const seconds = elapsedSec(startedAt);
+  if (!failure && lastTurn.answer.trim()) {
+    return {
+      state: "done",
+      status: `finished in ${seconds}s.`,
+      body: lastTurn.answer,
+    };
+  }
+  // No answer and no reported failure would otherwise read as success, which is
+  // how a lost result turns into an invisible one.
+  const reason = failure ?? "the child exited without an answer";
+  const body = [lastTurn.answer, stderr.trim()].filter(Boolean).join("\n\n");
+  return {
+    state: "fail",
+    status: `failed after ${seconds}s: ${reason}`,
+    body: body || "(no output)",
+  };
+}
+
+/**
+ * Seconds since a timestamp, for messages like "finished in 12s.".
+ *
+ * @param startedAt - Start time in ms.
+ * @returns Whole seconds elapsed, at least zero.
+ */
+function elapsedSec(startedAt: number): number {
+  return Math.max(0, Math.round((Date.now() - startedAt) / 1000));
+}
+
+/**
+ * Classify how a child ended, from pi's JSON-mode records.
+ *
+ * JSON mode exits zero even when the assistant turn failed, so the terminal
+ * stop reasons have to be honored here; `aborted` is not a failure because
+ * shutdown kills children deliberately.
+ *
+ * @param lastTurn - Last assistant message, updated in place.
+ * @param code - Exit code, or null when the child died from a signal.
+ * @param signal - Terminating signal, when any.
+ * @returns A failure description, or undefined for a successful run.
+ */
+function failureOf(
+  lastTurn: LastTurn,
+  code: number | null,
+  signal: NodeJS.Signals | null,
+): string | undefined {
+  if (code !== 0) {
+    return code === null ? `signal ${signal}` : `exit code ${code}`;
+  }
+  const { stopReason, errorMessage } = lastTurn;
+  if (stopReason === "aborted") return "the child aborted the run";
+  if (stopReason === "error" || stopReason === "length") {
+    return errorMessage || `the child stopped: ${stopReason}`;
+  }
+  return undefined;
+}
+
+/**
+ * Build the invocation for the child pi process.
+ *
+ * @param subagent - Model, thinking level, tools, working directory and prompt
+ *   of the child.
+ * @returns Command and arguments to spawn.
+ */
+function childCommand(subagent: {
+  model: string;
+  thinking: string;
+  tools: string[];
+  cwd: string;
+  prompt: string;
+}): { command: string; args: string[] } {
+  // Reuse the build that is already running, so a second pi on PATH cannot win.
+  const command = process.env.PI_BIN ?? process.argv[1] ?? "pi";
+  const args = ["-p", "--mode", "json", "--no-session"];
+  if (subagent.model) args.push("--model", subagent.model);
+  // Only set on the inherited path: `--thinking` outranks a `:level` suffix.
+  if (subagent.thinking) args.push("--thinking", subagent.thinking);
+  if (subagent.tools.length > 0) args.push("--tools", subagent.tools.join(","));
+  args.push(
+    "--append-system-prompt",
+    `You are a subagent working in ${subagent.cwd}. Finish the task and report back concisely.`,
+    // The leading "Task:" keeps pi from parsing the prompt as CLI syntax.
+    `Task: ${subagent.prompt}`,
+  );
+  return { command, args };
+}
+
+/**
+ * Choose the model and thinking level for a child.
+ *
+ * An explicit `model` wins and carries its own optional `:thinking` suffix.
+ * Otherwise the child inherits this session's selection. Pi does not do that on
+ * its own: a child started without `--model` resolves the configured default,
+ * so after a mid-session model switch a bare child would silently run another
+ * model than its parent.
+ *
+ * @param model - Model the caller asked for, or an empty string.
+ * @param ctx - Tool context holding the session's model and thinking level.
+ * @returns The `--model` value, and the thinking level to force instead.
+ */
+function childSelection(
+  model: string,
+  ctx: Pick<ExtensionContext, "model" | "thinkingLevel">,
+): { model: string; thinking: string } {
+  if (model || !ctx.model) return { model, thinking: "" };
+  return {
+    model: `${ctx.model.provider}/${ctx.model.id}`,
+    thinking: ctx.thinkingLevel ?? "",
+  };
+}
+
+/**
+ * Model column text.
+ *
+ * @param job - Model of the child.
+ * @returns The model, or the inherited-model fallback.
+ */
+function modelLabel(job: { model: string }): string {
+  return job.model || "model=default";
+}
+
+/**
+ * Tools column text.
+ *
+ * @param job - Tools of the child.
+ * @returns The tool list, or the inherited-tools fallback.
+ */
+function toolsLabel(job: { tools: string[] }): string {
+  return job.tools.length > 0
+    ? `tools=${job.tools.join(",")}`
+    : "tools=default";
+}
+
+/**
+ * Describe a child's model, tools and working directory on one line.
+ *
+ * @param job - Model, tools and working directory of the child.
+ * @returns Text such as "qoder/Fast, tools=read,bash, /work".
+ */
+function subagentSettings(job: {
+  model: string;
+  tools: string[];
+  cwd: string;
+}): string {
+  return [modelLabel(job), toolsLabel(job), job.cwd].join(", ");
+}
+
+/**
+ * Split a row into the plain text of each column.
+ *
+ * @param row - Subagent to split.
+ * @returns The column values, without colors or padding.
+ */
+function columnsOf(row: SubagentRow): SubagentColumns {
+  return {
+    id: row.id,
+    status: row.state,
+    elapsed: `${row.seconds}s`,
+    model: modelLabel(row),
+    tools: toolsLabel(row),
+    cwd: row.cwd,
+    message: row.stream,
+  };
+}
+
+/**
+ * Measure the widest value of every column, so rows can line up.
+ *
+ * @param rows - Rows the overlay shows.
+ * @returns The terminal width of each column.
+ */
+function alignWidths(rows: SubagentRow[]): ColumnWidths {
+  const keys = ["id", "status", "elapsed", "model", "tools", "cwd"] as const;
+  const widths: ColumnWidths = {
+    id: 0,
+    status: 0,
+    elapsed: 0,
+    model: 0,
+    tools: 0,
+    cwd: 0,
+  };
+  for (const row of rows) {
+    const column = columnsOf(row);
+    for (const key of keys) {
+      widths[key] = Math.max(widths[key], visibleWidth(column[key]));
+    }
+  }
+  return widths;
+}
+
+/**
+ * Pad plain text on the right to a terminal width.
+ *
+ * @param text - Text without ANSI attributes.
+ * @param width - Target terminal columns.
+ * @returns The text followed by spaces, unchanged when already wide enough.
+ */
+function padRight(text: string, width: number): string {
+  const missing = width - visibleWidth(text);
+  return missing > 0 ? text + " ".repeat(missing) : text;
+}
+
+/**
+ * Pad plain text on the left to a terminal width.
+ *
+ * @param text - Text without ANSI attributes.
+ * @param width - Target terminal columns.
+ * @returns The text preceded by spaces, unchanged when already wide enough.
+ */
+function padLeft(text: string, width: number): string {
+  const missing = width - visibleWidth(text);
+  return missing > 0 ? " ".repeat(missing) + text : text;
+}
+
+/**
+ * Summary line of the `/subagents` overlay.
+ *
+ * @param rows - Rows the overlay shows.
+ * @param theme - Active theme.
+ * @returns A styled count, or the empty state.
+ */
+function summaryOf(rows: SubagentRow[], theme: Theme): string {
+  if (rows.length === 0) {
+    return theme.fg("dim", "No subagents have run in this session.");
+  }
+  const running = rows.filter((row) => row.state === "work").length;
+  return theme.fg(
+    "muted",
+    `${running} running, ${rows.length - running} finished`,
+  );
+}
+
+/**
+ * Glyph and color for a subagent's state, with the spinner while it runs.
+ *
+ * @param state - `work`, or the terminal state of a finished child.
+ * @param frame - Current spinner frame index.
+ * @param theme - Active theme.
+ * @returns The styled marker.
+ */
+function stateMarker(state: string, frame: number, theme: Theme): string {
+  switch (state) {
+    case "work":
+      return theme.fg("accent", SPINNER_FRAMES[frame % SPINNER_FRAMES.length]);
+    case "done":
+      return theme.fg("success", "✓");
+    case "fail":
+      return theme.fg("error", "✗");
+    default:
+      return theme.fg("dim", "·");
+  }
+}
+
+/**
+ * Collapse assistant text to the single line the overlay shows.
+ *
+ * @param text - Message text, possibly multi-line.
+ * @returns Its whitespace collapsed to one line and trimmed.
+ */
+function streamLine(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Combine the completed stream with the message being streamed.
+ *
+ * @param stream - Recent completed assistant text, already collapsed.
+ * @param draft - Text of the message currently streaming, already collapsed.
+ * @returns The combined one-line stream.
+ */
+function joinStream(stream: string, draft: string): string {
+  if (!draft) return stream;
+  return stream ? `${stream} ${draft}` : draft;
+}
+
+/**
+ * Append a completed message to the rolling stream, keeping its tail.
+ *
+ * @param stream - Recent completed assistant text.
+ * @param text - Authoritative text of the message that just completed.
+ * @returns The stream with the new message, capped to its most recent chars.
+ */
+function appendStream(stream: string, text: string): string {
+  const joined = joinStream(stream, streamLine(text));
+  return joined.length <= STREAM_CAP_CHARS
+    ? joined
+    : joined.slice(-STREAM_CAP_CHARS);
+}
+
+/**
+ * Keep the end of a message that fits a terminal width.
+ *
+ * @param text - Message line, without ANSI attributes.
+ * @param width - Terminal columns available for it.
+ * @returns The text, or its tail with a leading ellipsis when it does not fit.
+ */
+function tailText(text: string, width: number): string {
+  const total = visibleWidth(text);
+  if (total <= width) return text;
+  const budget = width - TAIL_ELLIPSIS.length;
+  if (budget <= 0) return TAIL_ELLIPSIS;
+  return TAIL_ELLIPSIS + sliceByColumn(text, total - budget, budget, true);
 }
 
 /**
@@ -667,555 +1254,30 @@ class SubagentsOverlay implements Component {
   }
 }
 
-/** Plain text of one subagent row, split into aligned columns. */
-interface SubagentColumns {
-  id: string;
-  status: string;
-  elapsed: string;
-  model: string;
-  tools: string;
-  cwd: string;
-  message: string;
-}
-
-/** Widest value of each aligned column in one overlay render. */
-interface ColumnWidths {
-  id: number;
-  status: number;
-  elapsed: number;
-  model: number;
-  tools: number;
-  cwd: number;
+/**
+ * Wrap a plain message, and optional details, as a tool result.
+ *
+ * @param text - Message for the agent.
+ * @param details - Structured result data, empty for errors.
+ * @returns Tool result carrying that message.
+ */
+function toolText(text: string, details: Record<string, unknown> = {}) {
+  return { content: [{ type: "text" as const, text }], details };
 }
 
 /**
- * Split a row into the plain text of each column.
+ * Normalize the `id` parameter: one id, a list, or nothing for all of them.
  *
- * @param row - Subagent to split.
- * @returns The column values, without colors or padding.
+ * @param id - Parameter value, already validated by the schema.
+ * @returns Ids to act on, or undefined for "every subagent".
  */
-function columnsOf(row: SubagentRow): SubagentColumns {
-  return {
-    id: row.id,
-    status: row.state,
-    elapsed: `${row.seconds}s`,
-    model: modelLabel(row),
-    tools: toolsLabel(row),
-    cwd: row.cwd,
-    message: row.stream,
-  };
-}
-
-/**
- * Measure the widest value of every column, so rows can line up.
- *
- * @param rows - Rows the overlay shows.
- * @returns The terminal width of each column.
- */
-function alignWidths(rows: SubagentRow[]): ColumnWidths {
-  const keys = ["id", "status", "elapsed", "model", "tools", "cwd"] as const;
-  const widths: ColumnWidths = {
-    id: 0,
-    status: 0,
-    elapsed: 0,
-    model: 0,
-    tools: 0,
-    cwd: 0,
-  };
-  for (const row of rows) {
-    const column = columnsOf(row);
-    for (const key of keys) {
-      widths[key] = Math.max(widths[key], visibleWidth(column[key]));
-    }
-  }
-  return widths;
-}
-
-/**
- * Pad plain text on the right to a terminal width.
- *
- * @param text - Text without ANSI attributes.
- * @param width - Target terminal columns.
- * @returns The text followed by spaces, unchanged when already wide enough.
- */
-function padRight(text: string, width: number): string {
-  const missing = width - visibleWidth(text);
-  return missing > 0 ? text + " ".repeat(missing) : text;
-}
-
-/**
- * Pad plain text on the left to a terminal width.
- *
- * @param text - Text without ANSI attributes.
- * @param width - Target terminal columns.
- * @returns The text preceded by spaces, unchanged when already wide enough.
- */
-function padLeft(text: string, width: number): string {
-  const missing = width - visibleWidth(text);
-  return missing > 0 ? " ".repeat(missing) + text : text;
-}
-
-/**
- * Summary line of the `/subagents` overlay.
- *
- * @param rows - Rows the overlay shows.
- * @param theme - Active theme.
- * @returns A styled count, or the empty state.
- */
-function summaryOf(rows: SubagentRow[], theme: Theme): string {
-  if (rows.length === 0) {
-    return theme.fg("dim", "No subagents have run in this session.");
-  }
-  const running = rows.filter((row) => row.state === "work").length;
-  return theme.fg(
-    "muted",
-    `${running} running, ${rows.length - running} finished`,
-  );
-}
-
-/**
- * Glyph and color for a subagent's state, with the spinner while it runs.
- *
- * @param state - `work`, or the terminal state of a finished child.
- * @param frame - Current spinner frame index.
- * @param theme - Active theme.
- * @returns The styled marker.
- */
-function stateMarker(state: string, frame: number, theme: Theme): string {
-  switch (state) {
-    case "work":
-      return theme.fg("accent", SPINNER_FRAMES[frame % SPINNER_FRAMES.length]);
-    case "done":
-      return theme.fg("success", "✓");
-    case "fail":
-      return theme.fg("error", "✗");
-    default:
-      return theme.fg("dim", "·");
-  }
-}
-
-/**
- * Collapse assistant text to the single line the overlay shows.
- *
- * @param text - Message text, possibly multi-line.
- * @returns Its whitespace collapsed to one line and trimmed.
- */
-function streamLine(text: string): string {
-  return text.replace(/\s+/g, " ").trim();
-}
-
-/**
- * Combine the completed stream with the message being streamed.
- *
- * @param stream - Recent completed assistant text, already collapsed.
- * @param draft - Text of the message currently streaming, already collapsed.
- * @returns The combined one-line stream.
- */
-function joinStream(stream: string, draft: string): string {
-  if (!draft) return stream;
-  return stream ? `${stream} ${draft}` : draft;
-}
-
-/**
- * Append a completed message to the rolling stream, keeping its tail.
- *
- * @param stream - Recent completed assistant text.
- * @param text - Authoritative text of the message that just completed.
- * @returns The stream with the new message, capped to its most recent chars.
- */
-function appendStream(stream: string, text: string): string {
-  const joined = joinStream(stream, streamLine(text));
-  return joined.length <= STREAM_CAP_CHARS
-    ? joined
-    : joined.slice(-STREAM_CAP_CHARS);
-}
-
-/**
- * Keep the end of a message that fits a terminal width.
- *
- * @param text - Message line, without ANSI attributes.
- * @param width - Terminal columns available for it.
- * @returns The text, or its tail with a leading ellipsis when it does not fit.
- */
-function tailText(text: string, width: number): string {
-  const total = visibleWidth(text);
-  if (total <= width) return text;
-  const budget = width - TAIL_ELLIPSIS.length;
-  if (budget <= 0) return TAIL_ELLIPSIS;
-  return TAIL_ELLIPSIS + sliceByColumn(text, total - budget, budget, true);
-}
-
-/**
- * Format the text that opens every notification about a subagent.
- *
- * The agent keys on this marker to tell a subagent result from its own work,
- * and the tool text names the same form, so promise and delivery cannot drift.
- *
- * @param id - Subagent id, or the `<id>` placeholder in model-facing text.
- * @returns Marker such as `[subagent review-auth]`.
- */
-function marker(id: string): string {
-  return `[subagent ${id}]`;
-}
-
-/** The marker as the model sees it in descriptions, before any id exists. */
-const MARKER_EXAMPLE = marker("<id>");
-
-/** Schema for the `subagent` tool. */
-const SubagentParams = Type.Object({
-  prompt: Type.String({
-    description:
-      "Full task for the subagent. It has no access to this conversation, so include every file path, constraint and deliverable it needs.",
-  }),
-  id: Type.String({
-    description:
-      "Short, purpose-bearing name used in every notification, e.g. review-auth or scan-tests.",
-  }),
-  tools: Type.Optional(
-    Type.Array(Type.String(), {
-      description:
-        'pi tool-selection for the child, passed to --tools: either exact names, e.g. ["read", "bash"], or only +name/-name modifiers on the defaults, e.g. ["+codemode"]. Omit or leave empty for pi defaults.',
-    }),
-  ),
-  model: Type.Optional(
-    Type.String({
-      description:
-        'Model for the child, as "provider/id" or a bare id, optionally with ":high" and similar for the thinking level. Omit to inherit this session\'s model and thinking level.',
-    }),
-  ),
-  cwd: Type.Optional(
-    Type.String({
-      description:
-        "Working directory for the child. Defaults to the current working directory.",
-    }),
-  ),
-});
-
-/** Ids accepted by `subagent_status` and `subagent_kill`. */
-const SelectionParams = Type.Optional(
-  Type.Union([Type.String(), Type.Array(Type.String())], {
-    description: "One subagent id or a list of ids. Omit for every subagent.",
-  }),
-);
-
-/** Schema for `subagent_status`. */
-const StatusParams = Type.Object({ id: SelectionParams });
-
-/** Schema for `subagent_kill`. */
-const KillParams = Type.Object({ id: SelectionParams });
-
-/**
- * Read the latest assistant text out of one JSONL record.
- *
- * The stream is delta-only, so the authoritative content is the completed
- * `message_end.message`. Text blocks are reported between completions, so the
- * overlay can follow the child live.
- *
- * @param lastTurn - Last assistant message, updated in place.
- * @param record - Parsed `--mode json` record.
- * @param observer - Receives the current draft and each completed message.
- */
-function absorbRecord(
-  lastTurn: LastTurn,
-  record: unknown,
-  observer?: TextObserver,
-): void {
-  const event = record as JsonAgentSessionEvent;
-  if (event.type === "message_update") {
-    const update = event.assistantMessageEvent;
-    if (update.type === "text_delta") {
-      const text =
-        (lastTurn.blocks.get(update.contentIndex) ?? "") + update.delta;
-      lastTurn.blocks.set(
-        update.contentIndex,
-        keepTailBytes(text, LIVE_TEXT_CAP_BYTES),
-      );
-      observer?.draft(draftText(lastTurn));
-    }
-    if (update.type === "text_end") {
-      lastTurn.blocks.set(
-        update.contentIndex,
-        keepTailBytes(update.content, LIVE_TEXT_CAP_BYTES),
-      );
-      observer?.draft(draftText(lastTurn));
-    }
-    return;
-  }
-  if (event.type === "message_start") {
-    if (event.message.role === "assistant") {
-      lastTurn.blocks.clear();
-      observer?.draft("");
-    }
-    return;
-  }
-  if (event.type !== "message_end" || event.message.role !== "assistant")
-    return;
-  const message = event.message;
-  lastTurn.answer = truncateBytes(
-    message.content
-      .filter(
-        (part): part is { type: "text"; text: string } => part.type === "text",
-      )
-      .map((part) => part.text)
-      .join("\n"),
-    OUTPUT_CAP_BYTES,
-  );
-  lastTurn.stopReason = message.stopReason;
-  lastTurn.errorMessage = message.errorMessage;
-  lastTurn.blocks.clear();
-  // A message with only tool calls adds no text to the recent stream.
-  if (lastTurn.answer) observer?.complete(lastTurn.answer);
-}
-
-/**
- * Join the text blocks of the message currently streaming.
- *
- * @param lastTurn - Last assistant message, holding the blocks.
- * @returns The visible draft text.
- */
-function draftText(lastTurn: LastTurn): string {
-  return [...lastTurn.blocks.entries()]
-    .sort(([left], [right]) => left - right)
-    .map(([, text]) => text)
-    .join("\n");
-}
-
-/**
- * Split child output into JSONL records and feed them to `absorbRecord`.
- *
- * Records are consumed as they arrive, so a long run retains only the latest
- * answer. An oversized record is skipped up to its next newline instead of
- * growing the buffer without bound.
- *
- * @param write - Sink for parser complaints, usually stderr accumulation.
- * @param lastTurn - Last assistant message, updated in place.
- * @param observer - Receives the current draft and each completed message.
- * @returns A function that accepts output chunks.
- */
-function recordParser(
-  write: (text: string) => void,
-  lastTurn: LastTurn,
-  observer?: TextObserver,
-) {
-  let partial = "";
-  let skipping = false;
-  const absorb = (line: string) => {
-    if (!line.trim()) return;
-    try {
-      absorbRecord(lastTurn, JSON.parse(line), observer);
-    } catch {
-      // A malformed record carries no result; skip it. A lost result is caught
-      // by the missing answer at exit, not by this line.
-    }
-  };
-  return (chunk: string) => {
-    const lines = (partial + chunk).split("\n");
-    partial = lines.pop() ?? "";
-    if (skipping) {
-      // Only the head of this buffer continues the oversized record; the rest
-      // are complete records that still have to be read.
-      skipping = false;
-      lines.shift();
-    }
-    // An oversized record has no newline yet, so it cannot carry a result: drop
-    // it and keep whatever follows rather than the whole buffer.
-    if (Buffer.byteLength(partial, "utf8") > MAX_RECORD_BYTES) {
-      partial = "";
-      skipping = true;
-      write(`subagent: dropped a record over ${MAX_RECORD_BYTES} bytes\n`);
-    }
-    for (const line of lines) absorb(line);
-  };
-}
-
-/**
- * Cut a string to at most `maxBytes` UTF-8 bytes, appending a marker.
- *
- * A partial trailing code point is dropped, so the marker stays readable.
- *
- * @param text - Text to trim.
- * @param maxBytes - Byte budget, which the marker may exceed by a few bytes.
- * @returns Text no longer than the budget, plus the marker when cut.
- */
-function truncateBytes(text: string, maxBytes: number): string {
-  const bytes = Buffer.from(text, "utf8");
-  if (bytes.length <= maxBytes) return text;
-  const head = new TextDecoder("utf-8").decode(bytes.subarray(0, maxBytes), {
-    stream: true,
-  });
-  return `${head}\n[truncated]`;
-}
-
-/**
- * Keep the end of a string within a UTF-8 byte budget, adding a marker.
- *
- * The live overlay cares about the latest text, so a long block keeps its tail
- * instead of its head.
- *
- * @param text - Text to trim.
- * @param maxBytes - Byte budget, which the marker may exceed by a few bytes.
- * @returns Text no longer than the budget, prefixed with the marker when cut.
- */
-function keepTailBytes(text: string, maxBytes: number): string {
-  const bytes = Buffer.from(text, "utf8");
-  if (bytes.length <= maxBytes) return text;
-  const tail = new TextDecoder("utf-8").decode(
-    bytes.subarray(bytes.length - maxBytes),
-  );
-  return `[truncated]\n${tail}`;
-}
-
-/**
- * Stop a child process, escalating from SIGTERM to SIGKILL.
- *
- * `proc.killed` only records that a signal was sent, so the real exit state and
- * the `close` event decide when this resolves.
- *
- * @param proc - Process to stop.
- * @returns Resolves once the process has closed.
- */
-function stopProcess(proc: ChildProcess): Promise<void> {
-  return new Promise((resolve) => {
-    if (proc.exitCode !== null || proc.signalCode !== null) return resolve();
-    const settle = () => {
-      clearTimeout(escalate);
-      clearTimeout(giveUp);
-      resolve();
-    };
-    const grace = killGraceMs();
-    const escalate = setTimeout(() => proc.kill("SIGKILL"), grace);
-    // A process that survives SIGKILL, or a handler that never fires, must not
-    // keep the session alive on its own.
-    const giveUp = setTimeout(settle, grace * 2);
-    proc.once("close", settle);
-    proc.kill("SIGTERM");
-  });
-}
-
-/**
- * Summarize a finished child for its notification.
- *
- * @param lastTurn - Last assistant message of the child.
- * @param stderr - Child stderr, already capped.
- * @param failure - Why the child failed, or undefined for a successful run.
- * @param startedAt - Spawn time in ms, for the elapsed seconds.
- * @returns Terminal state, one-line summary and body of the notification.
- */
-function outcomeOf(
-  lastTurn: LastTurn,
-  stderr: string,
-  failure: string | undefined,
-  startedAt: number,
-): Outcome {
-  const seconds = elapsedSec(startedAt);
-  if (!failure && lastTurn.answer.trim()) {
-    return {
-      state: "done",
-      status: `finished in ${seconds}s.`,
-      body: lastTurn.answer,
-    };
-  }
-  // No answer and no reported failure would otherwise read as success, which is
-  // how a lost result turns into an invisible one.
-  const reason = failure ?? "the child exited without an answer";
-  const body = [lastTurn.answer, stderr.trim()].filter(Boolean).join("\n\n");
-  return {
-    state: "fail",
-    status: `failed after ${seconds}s: ${reason}`,
-    body: body || "(no output)",
-  };
-}
-
-/**
- * Seconds since a timestamp, for messages like "finished in 12s.".
- *
- * @param startedAt - Start time in ms.
- * @returns Whole seconds elapsed, at least zero.
- */
-function elapsedSec(startedAt: number): number {
-  return Math.max(0, Math.round((Date.now() - startedAt) / 1000));
-}
-
-/**
- * Classify how a child ended, from pi's JSON-mode records.
- *
- * JSON mode exits zero even when the assistant turn failed, so the terminal
- * stop reasons have to be honored here; `aborted` is not a failure because
- * shutdown kills children deliberately.
- *
- * @param lastTurn - Last assistant message, updated in place.
- * @param code - Exit code, or null when the child died from a signal.
- * @param signal - Terminating signal, when any.
- * @returns A failure description, or undefined for a successful run.
- */
-function failureOf(
-  lastTurn: LastTurn,
-  code: number | null,
-  signal: NodeJS.Signals | null,
-): string | undefined {
-  if (code !== 0) {
-    return code === null ? `signal ${signal}` : `exit code ${code}`;
-  }
-  const { stopReason, errorMessage } = lastTurn;
-  if (stopReason === "aborted") return "the child aborted the run";
-  if (stopReason === "error" || stopReason === "length") {
-    return errorMessage || `the child stopped: ${stopReason}`;
-  }
-  return undefined;
-}
-
-/**
- * Build the invocation for the child pi process.
- *
- * @param subagent - Model, thinking level, tools, working directory and prompt
- *   of the child.
- * @returns Command and arguments to spawn.
- */
-function childCommand(subagent: {
-  model: string;
-  thinking: string;
-  tools: string[];
-  cwd: string;
-  prompt: string;
-}): { command: string; args: string[] } {
-  // Reuse the build that is already running, so a second pi on PATH cannot win.
-  const command = process.env.PI_BIN ?? process.argv[1] ?? "pi";
-  const args = ["-p", "--mode", "json", "--no-session"];
-  if (subagent.model) args.push("--model", subagent.model);
-  // Only set on the inherited path: `--thinking` outranks a `:level` suffix.
-  if (subagent.thinking) args.push("--thinking", subagent.thinking);
-  if (subagent.tools.length > 0) args.push("--tools", subagent.tools.join(","));
-  args.push(
-    "--append-system-prompt",
-    `You are a subagent working in ${subagent.cwd}. Finish the task and report back concisely.`,
-    // The leading "Task:" keeps pi from parsing the prompt as CLI syntax.
-    `Task: ${subagent.prompt}`,
-  );
-  return { command, args };
-}
-
-/**
- * Choose the model and thinking level for a child.
- *
- * An explicit `model` wins and carries its own optional `:thinking` suffix.
- * Otherwise the child inherits this session's selection. Pi does not do that on
- * its own: a child started without `--model` resolves the configured default,
- * so after a mid-session model switch a bare child would silently run another
- * model than its parent.
- *
- * @param model - Model the caller asked for, or an empty string.
- * @param ctx - Tool context holding the session's model and thinking level.
- * @returns The `--model` value, and the thinking level to force instead.
- */
-function childSelection(
-  model: string,
-  ctx: Pick<ExtensionContext, "model" | "thinkingLevel">,
-): { model: string; thinking: string } {
-  if (model || !ctx.model) return { model, thinking: "" };
-  return {
-    model: `${ctx.model.provider}/${ctx.model.id}`,
-    thinking: ctx.thinkingLevel ?? "",
-  };
+function idsOf(id: string | string[] | undefined): string[] | undefined {
+  if (id === undefined) return undefined;
+  const ids = (Array.isArray(id) ? id : [id])
+    .flatMap((entry) => entry.split(","))
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+  return ids.length > 0 ? ids : undefined;
 }
 
 /**
@@ -1276,57 +1338,6 @@ function subagentTool(
 }
 
 /**
- * Model column text.
- *
- * @param job - Model of the child.
- * @returns The model, or the inherited-model fallback.
- */
-function modelLabel(job: { model: string }): string {
-  return job.model || "model=default";
-}
-
-/**
- * Tools column text.
- *
- * @param job - Tools of the child.
- * @returns The tool list, or the inherited-tools fallback.
- */
-function toolsLabel(job: { tools: string[] }): string {
-  return job.tools.length > 0
-    ? `tools=${job.tools.join(",")}`
-    : "tools=default";
-}
-
-/**
- * Describe a child's model, tools and working directory on one line.
- *
- * @param job - Model, tools and working directory of the child.
- * @returns Text such as "qoder/Fast, tools=read,bash, /work".
- */
-function subagentSettings(job: {
-  model: string;
-  tools: string[];
-  cwd: string;
-}): string {
-  return [modelLabel(job), toolsLabel(job), job.cwd].join(", ");
-}
-
-/**
- * Normalize the `id` parameter: one id, a list, or nothing for all of them.
- *
- * @param id - Parameter value, already validated by the schema.
- * @returns Ids to act on, or undefined for "every subagent".
- */
-function idsOf(id: string | string[] | undefined): string[] | undefined {
-  if (id === undefined) return undefined;
-  const ids = (Array.isArray(id) ? id : [id])
-    .flatMap((entry) => entry.split(","))
-    .map((entry) => entry.trim())
-    .filter(Boolean);
-  return ids.length > 0 ? ids : undefined;
-}
-
-/**
  * Build the `subagent_status` tool definition.
  *
  * @param runner - Session state that owns the children.
@@ -1373,17 +1384,6 @@ function killTool(runner: SubagentRunner): ToolDefinition<typeof KillParams> {
       return toolText(`Stopped ${stopped.map(marker).join(", ")}.${kept}`);
     },
   };
-}
-
-/**
- * Wrap a plain message, and optional details, as a tool result.
- *
- * @param text - Message for the agent.
- * @param details - Structured result data, empty for errors.
- * @returns Tool result carrying that message.
- */
-function toolText(text: string, details: Record<string, unknown> = {}) {
-  return { content: [{ type: "text" as const, text }], details };
 }
 
 /**
