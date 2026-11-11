@@ -1,5 +1,5 @@
 /**
- * Background timer tool.
+ * Background timer tools: `timer_start`, `timer_stop`, `timer_status`.
  *
  * A timer fires on a fixed cadence, like `uv_timer_start(repeat, callback)`.
  * Each fire runs an optional `onTick` callback, checks an optional shell
@@ -11,10 +11,10 @@
 
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { StringEnum } from "@earendil-works/pi-ai";
 import type {
   ExtensionAPI,
   SessionEntry,
+  ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
 
 import { type Static, Type } from "typebox";
@@ -46,34 +46,34 @@ const ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$/;
 /** Custom message type used for timer notifications. */
 const NOTICE_TYPE = "timer";
 
-/** Schema for the `timer` tool. */
-const TimerParams = Type.Object({
-  action: StringEnum(["start", "stop", "status"] as const, {
+/** Names that replay as timer start results, including the old combined tool. */
+const START_TOOL_NAMES = new Set(["timer_start", "timer"]);
+
+/** Names that replay as timer stop results, including the old combined tool. */
+const STOP_TOOL_NAMES = new Set(["timer_stop", "timer"]);
+
+/** Schema for the `timer_start` tool. */
+const TimerStartParams = Type.Object({
+  id: Type.String({
     description:
-      "start arms a named timer; stop cancels it; status reports one timer or all of them.",
+      "Timer name: short, unique, purpose-bearing, e.g. batch3-done or pa1-peek. You see it in every wake and in `timer_status`.",
   }),
-  id: Type.Optional(
-    Type.String({
-      description:
-        "start/stop: required timer name. Short, unique, purpose-bearing, e.g. batch3-done or pa1-peek: you see it in every wake and in status. status: optional; omit to list every active timer.",
-    }),
-  ),
   condition: Type.Optional(
     Type.String({
       description:
-        "start: optional shell predicate; exit code 0 ends the timer and wakes you with 'condition met'. Omit for a timer that only ticks.",
+        "Optional shell predicate; exit code 0 ends the timer and wakes you with 'condition met'. Omit for a timer that only ticks.",
     }),
   ),
   onTick: Type.Optional(
     Type.String({
       description:
-        "start: optional shell command run at every tick interval. Its output, if any, is included in the wake when one is sent, so it can snapshot a job (`tail -n 20 /tmp/job.log`) or just do periodic work. It runs even when a wake is throttled or maxTicks is 0; it must never wait, so no sleep.",
+        "Optional shell command run at every tick interval. Its output, if any, is included in the wake when one is sent, so it can snapshot a job (`tail -n 20 /tmp/job.log`) or just do periodic work. It runs even when a wake is throttled or maxTicks is 0; it must never wait, so no sleep.",
     }),
   ),
   intervalSec: Type.Optional(
     Type.Number({
       description:
-        "start: seconds between ticks; also the delay before the first tick of a timer.",
+        "Seconds between ticks; also the delay before the first tick of a timer.",
       minimum: MIN_INTERVAL_SEC,
       default: DEFAULT_INTERVAL_SEC,
     }),
@@ -81,21 +81,41 @@ const TimerParams = Type.Object({
   maxTicks: Type.Optional(
     Type.Number({
       description:
-        "start: maximum tick wakes. 0 = never tick (condition timers only); omit = unlimited. A timer needs at least 1. The final 'condition met' or 'timeout' wake is always sent and does not count.",
+        "Maximum tick wakes. 0 = never tick (condition timers only); omit = unlimited. A timer needs at least 1. The final 'condition met' or 'timeout' wake is always sent and does not count.",
       minimum: 0,
     }),
   ),
   timeoutSec: Type.Optional(
     Type.Number({
-      description: "start: lifetime cap in seconds.",
+      description: "Lifetime cap in seconds.",
       minimum: MIN_TIMEOUT_SEC,
       default: DEFAULT_TIMEOUT_SEC,
     }),
   ),
 });
 
-/** Input accepted by the `timer` tool. */
-type TimerInput = Static<typeof TimerParams>;
+/** Input accepted by the `timer_start` tool. */
+type TimerStartInput = Static<typeof TimerStartParams>;
+
+/** Schema for the `timer_stop` tool. */
+const TimerStopParams = Type.Object({
+  id: Type.String({ description: "Name of the timer to cancel." }),
+});
+
+/** Input accepted by the `timer_stop` tool. */
+type TimerStopInput = Static<typeof TimerStopParams>;
+
+/** Schema for the `timer_status` tool. */
+const TimerStatusParams = Type.Object({
+  id: Type.Optional(
+    Type.String({
+      description: "Timer to report; omit to list every active timer.",
+    }),
+  ),
+});
+
+/** Input accepted by the `timer_status` tool. */
+type TimerStatusInput = Static<typeof TimerStatusParams>;
 
 /** Kind of notification a timer emits. */
 type TimerState = "tick" | "done" | "timeout" | "error";
@@ -130,7 +150,7 @@ interface Timer extends TimerSpec {
   controller: AbortController;
 }
 
-/** Details stored on a `timer` tool result. */
+/** Details stored on a timer tool result. */
 type TimerDetails =
   | ({ action: "start" } & TimerSpec)
   | { action: "stop"; id: string }
@@ -145,7 +165,7 @@ interface TimerNoticeDetails {
 }
 
 /**
- * Build a `timer` tool result.
+ * Build a timer tool result.
  *
  * @param text - Message shown to the model.
  * @param details - Structured details replayed on session restore.
@@ -158,13 +178,12 @@ function timerResult(text: string, details: TimerDetails) {
 /**
  * Read a required timer id and validate its shape.
  *
- * @param id - Raw id from the tool input.
- * @param action - Action that needs the id, for the error message.
+ * @param id - Raw id from the tool input, required by the schema.
  * @returns The validated id.
  */
-function requireId(id: string | undefined, action: string): string {
+function requireId(id: string): string {
   if (!id) {
-    throw new Error(`action=${action} requires id.`);
+    throw new Error("A timer id is required.");
   }
   if (!ID_PATTERN.test(id)) {
     throw new Error(
@@ -232,17 +251,14 @@ function collectActiveTimers(
   const active = new Map<string, TimerSpec>();
 
   for (const entry of entries) {
-    if (
-      entry.type === "message" &&
-      entry.message.role === "toolResult" &&
-      entry.message.toolName === "timer"
-    ) {
+    if (entry.type === "message" && entry.message.role === "toolResult") {
+      const { toolName } = entry.message;
       const details = entry.message.details as TimerDetails | undefined;
-      if (details?.action === "start") {
+      if (details?.action === "start" && START_TOOL_NAMES.has(toolName)) {
         const { action: _action, ...spec } = details;
         active.set(spec.id, spec);
       }
-      if (details?.action === "stop") {
+      if (details?.action === "stop" && STOP_TOOL_NAMES.has(toolName)) {
         active.delete(details.id);
       }
       continue;
@@ -280,11 +296,11 @@ class TimerRegistry {
   /**
    * Arm a timer and start polling it in the background.
    *
-   * @param params - Validated tool input for `action=start`.
+   * @param params - Validated `timer_start` input.
    * @returns The persisted specification of the new timer.
    */
-  start(params: TimerInput): TimerSpec {
-    const id = requireId(params.id, "start");
+  start(params: TimerStartInput): TimerSpec {
+    const id = requireId(params.id);
     if (this.timers.has(id)) {
       throw new Error(
         `Timer "${id}" is already active; stop it first or pick another id.`,
@@ -689,61 +705,84 @@ function describeStart(spec: TimerSpec): string {
 }
 
 /**
- * Build the `timer` tool definition.
+ * Build the `timer_start` tool definition.
  *
  * @param registry - Timer registry shared with the session handlers.
  * @returns Tool definition registered with Pi.
  */
-function createTimerTool(registry: TimerRegistry) {
+function timerStartTool(
+  registry: TimerRegistry,
+): ToolDefinition<typeof TimerStartParams, TimerDetails> {
   return {
-    name: "timer",
-    label: "Timer",
+    name: "timer_start",
+    label: "Timer start",
     description:
-      "Manage named background timers. action=start fires every intervalSec, running an optional onTick callback and an optional shell condition, and wakes you with a short notification (a tick, 'condition met', or 'timeout'); it returns immediately. action=stop cancels a timer. action=status reports one timer or all of them. The wake carries the onTick output when there is any, and otherwise just the event: read the job yourself so a queued wake cannot mislead you.",
+      "Arm a named background timer that fires every intervalSec, running an optional onTick callback and an optional shell condition, and wakes you with a short notification (a tick, 'condition met', or 'timeout'). It returns immediately. The wake carries the onTick output when there is any, and otherwise just the event: read the job yourself so a queued wake cannot mislead you.",
     promptSnippet:
       "Defer a wake: fire every interval, run a callback, and wake the agent on a tick or when a condition becomes true",
     promptGuidelines: [
-      "Name every `timer` with a short, unique, purpose-bearing id (batch3-done, pa1-peek, log1-monitor): the id is what you see in every wake, so it must remind you what you are waiting for.",
-      "Use `timer` instead of `sleep N; ...` in bash. Start the timer, then keep working or end your turn; ending a turn loses nothing because the wake starts a new turn when you are idle.",
-      "For a single deferred look, call `timer` with no condition, `intervalSec=N` and `maxTicks=1`: one wake after N seconds, then the timer ends.",
-      "For 'tell me when it finishes', give `timer` a condition and `maxTicks=0`: no ticks, one wake when the condition exits 0.",
-      "For work that must happen every interval, put it in `timer`'s `onTick`; it runs on every fire, even when the wake itself is throttled.",
-      "A `timer` wake says only that something happened. After a wake, run the check you actually need, then stop the timer once you no longer care.",
+      "Name every `timer_start` with a short, unique, purpose-bearing id (batch3-done, pa1-peek, log1-monitor): the id is what you see in every wake, so it must remind you what you are waiting for.",
+      "Use `timer_start` instead of `sleep N; ...` in bash. Start the timer, then keep working or end your turn; ending a turn loses nothing because the wake starts a new turn when you are idle.",
+      "For a single deferred look, call `timer_start` with no condition, `intervalSec=N` and `maxTicks=1`: one wake after N seconds, then the timer ends.",
+      "For 'tell me when it finishes', give `timer_start` a condition and `maxTicks=0`: no ticks, one wake when the condition exits 0.",
+      "For work that must happen every interval, put it in `timer_start`'s `onTick`; it runs on every fire, even when the wake itself is throttled.",
+      "A timer wake says only that something happened. After a wake, run the check you actually need, then call `timer_stop` once you no longer care.",
     ],
-    parameters: TimerParams,
+    parameters: TimerStartParams,
 
-    /**
-     * Start, stop, or inspect a timer.
-     *
-     * @param _toolCallId - Tool call id assigned by Pi.
-     * @param params - Action plus its arguments.
-     * @returns Tool result describing the outcome.
-     */
-    async execute(_toolCallId: string, params: TimerInput) {
-      switch (params.action) {
-        case "stop": {
-          const id = requireId(params.id, "stop");
-          registry.requireActive(id);
-          registry.stop(id);
-          return timerResult(`Stopped "${id}".`, { action: "stop", id });
-        }
+    async execute(_toolCallId: string, params: TimerStartInput) {
+      const spec = registry.start(params);
+      return timerResult(describeStart(spec), { action: "start", ...spec });
+    },
+  };
+}
 
-        case "status": {
-          if (!params.id) {
-            return timerResult(registry.list(), { action: "status" });
-          }
-          const id = requireId(params.id, "status");
-          return timerResult(registry.status(id), { action: "status", id });
-        }
+/**
+ * Build the `timer_stop` tool definition.
+ *
+ * @param registry - Timer registry shared with the session handlers.
+ * @returns Tool definition registered with Pi.
+ */
+function timerStopTool(
+  registry: TimerRegistry,
+): ToolDefinition<typeof TimerStopParams, TimerDetails> {
+  return {
+    name: "timer_stop",
+    label: "Timer stop",
+    description: "Cancel a running timer so it stops ticking and waking you.",
+    parameters: TimerStopParams,
 
-        case "start": {
-          const spec = registry.start(params);
-          return timerResult(describeStart(spec), { action: "start", ...spec });
-        }
+    async execute(_toolCallId: string, params: TimerStopInput) {
+      const id = requireId(params.id);
+      registry.requireActive(id);
+      registry.stop(id);
+      return timerResult(`Stopped "${id}".`, { action: "stop", id });
+    },
+  };
+}
 
-        default:
-          throw new Error(`Unknown action: ${params.action}`);
+/**
+ * Build the `timer_status` tool definition.
+ *
+ * @param registry - Timer registry shared with the session handlers.
+ * @returns Tool definition registered with Pi.
+ */
+function timerStatusTool(
+  registry: TimerRegistry,
+): ToolDefinition<typeof TimerStatusParams, TimerDetails> {
+  return {
+    name: "timer_status",
+    label: "Timer status",
+    description:
+      "Report every active timer: id, age, ticks spent, and what it waits for. Name an id to report just that timer.",
+    parameters: TimerStatusParams,
+
+    async execute(_toolCallId: string, params: TimerStatusInput) {
+      if (!params.id) {
+        return timerResult(registry.list(), { action: "status" });
       }
+      const id = requireId(params.id);
+      return timerResult(registry.status(id), { action: "status", id });
     },
   };
 }
@@ -751,12 +790,14 @@ function createTimerTool(registry: TimerRegistry) {
 /**
  * Register the timer extension with Pi.
  *
- * @param pi - Extension API used to register the tool and session cleanup.
+ * @param pi - Extension API used to register the tools and session cleanup.
  */
 export default function timer(pi: ExtensionAPI): void {
   const registry = new TimerRegistry(pi);
 
-  pi.registerTool(createTimerTool(registry));
+  pi.registerTool(timerStartTool(registry));
+  pi.registerTool(timerStopTool(registry));
+  pi.registerTool(timerStatusTool(registry));
 
   pi.on("session_start", async (_event, ctx) => {
     registry.restore(ctx.sessionManager.getBranch());
