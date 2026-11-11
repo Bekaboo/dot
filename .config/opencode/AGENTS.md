@@ -36,6 +36,10 @@
 - Don't over-engineer: no abstractions or layers for a single call site or a
   hypothetical future, and no flexibility that serves only callers that don't
   exist yet.
+- Match the shapes already around you before inventing a new one: the same kind
+  of class & function for the same job, the same naming and doc patterns. Read
+  sibling files first; if the established shape is genuinely wrong, fix it
+  everywhere instead of adding a competing style.
 - Remove dead code, unused parameters, debug prints and commented-out blocks.
 
 ### Control flow
