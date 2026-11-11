@@ -12,10 +12,15 @@
  * `details`, so branches and forks restore the list they had at that point.
  *
  * Steering:
- * - After `STEER_AFTER_TURNS` turns without a todo call or user input, while
- *   the list has unfinished items, a hint is appended to the next request
- *   only (not persisted in the transcript). Agents that never wrote a list
- *   are left alone;
+ * - After `REMIND_STALE_LIST_AFTER_TURNS` turns without a todo call or user
+ *   input, while the list has unfinished items, a hint is appended to the
+ *   next request only (not persisted in the transcript);
+ * - After `REMIND_NEW_TASK_AFTER_TURNS` turns without a todo call or user
+ *   input, a hint asks the agent to plan with the todo tools and is appended
+ *   the same way. It only fires while the list is empty or fully closed, i.e.
+ *   when a new task started; a stale list is left to the stale-list hint
+ *   above. This catches long-horizon agents that never wrote a list, including
+ *   small models that only reach for `bash`;
  * - When the agent stops with unfinished todo items, it will be reminded
  *   about them to either continue working for the target or mark the items
  *   cancelled.
@@ -52,7 +57,15 @@ import {
 
 import { type Static, Type } from "typebox";
 
-const STEER_AFTER_TURNS = 16;
+/** Turns of an unchanged checklist before the agent is nudged to update it. */
+const REMIND_STALE_LIST_AFTER_TURNS = 16;
+
+/**
+ * Turns of work without user input or todo calls before a new task, meaning an
+ * empty or fully closed checklist, is asked for a plan.
+ */
+const REMIND_NEW_TASK_AFTER_TURNS = 64;
+
 const LIST_NAME = "todo-list";
 const HINT_ENTRY_TYPE = "todo-hint";
 const CONTINUE_MESSAGE_TYPE = "todo-continue";
@@ -301,13 +314,34 @@ function todoResult(
  * @param list - Current checklist.
  * @returns Reminder text, or undefined when there is no unfinished item.
  */
-function idleHint(list: string): string | undefined {
+function staleListHint(list: string): string | undefined {
   if (!hasUnfinished(list)) return undefined;
   return [
     `<todo-reminder>`,
     `The todo list has not been viewed or updated recently.`,
     list,
     `If progress changed, update it with todo_edit: mark the current item ${IN_PROGRESS_BOX}, finished items ${COMPLETED_BOX}, abandoned items ${CANCELLED_BOX}. Ignore this if the list is accurate.`,
+    `</todo-reminder>`,
+  ].join("\n");
+}
+
+/**
+ * Build the reminder for a long run whose checklist does not cover the work.
+ *
+ * Long-horizon agents, especially small models that reach only for `bash`,
+ * keep their plan in the transcript instead of the list. Naming the tools and
+ * their markers is what makes them adopt the checklist.
+ *
+ * @param list - Current checklist, empty or fully closed.
+ * @returns Reminder text asking for the checklist to be adopted.
+ */
+function newTaskHint(list: string): string {
+  return [
+    `<todo-reminder>`,
+    `You have worked ${REMIND_NEW_TASK_AFTER_TURNS} turns without user input, which usually means a long-horizon task. Plan and track it with the todo tools instead of keeping progress in your head:`,
+    `- todo_write records the remaining work as a checklist;`,
+    `- todo_edit marks the current item ${IN_PROGRESS_BOX} when you start it and ${COMPLETED_BOX} right after finishing it, before starting the next one.`,
+    describeList(list),
     `</todo-reminder>`,
   ].join("\n");
 }
@@ -499,8 +533,10 @@ function renderHintEntry(padding: number, theme: Theme): Text {
 class Todo {
   /** Markdown checklist currently shown to the model. */
   private items = "";
-  /** Turns since the last todo call, user input, or reminder. */
-  private idleTurns = 0;
+  /** Turns since the last todo call, user input, or stale-list reminder. */
+  private staleListTurns = 0;
+  /** Turns since the last todo call, user input, or new-task reminder. */
+  private newTaskTurns = 0;
   /** Whether a todo call finished during the current turn. */
   private touchedThisTurn = false;
   /** Reminder waiting to be appended to the next request. */
@@ -604,7 +640,8 @@ class Todo {
 
   /** Reset the steering state after user input or a session change. */
   resetSteering(): void {
-    this.idleTurns = 0;
+    this.staleListTurns = 0;
+    this.newTaskTurns = 0;
     this.touchedThisTurn = false;
     this.pendingHint = undefined;
     this.pushedSinceInput = false;
@@ -612,7 +649,7 @@ class Todo {
   }
 
   /**
-   * Steering: track tool work and todo calls for the idle counter and push.
+   * Steering: track tool work and todo calls for the turn counters and push.
    *
    * @param event - Finished tool execution.
    */
@@ -622,26 +659,52 @@ class Todo {
   }
 
   /**
-   * Steering: count idle turns and queue a reminder once the limit is hit.
+   * Steering: count turns and queue a reminder once a window is hit.
+   *
+   * A checklist with work left is nudged every
+   * `REMIND_STALE_LIST_AFTER_TURNS` turns. Once a run goes
+   * `REMIND_NEW_TASK_AFTER_TURNS` turns without the user or the checklist, a
+   * list that is empty or fully closed means a new task started, and the
+   * agent is asked to plan it with the todo tools. Stale-list nudges do not
+   * restart that window; only its own reminder does. Stalled turns count
+   * towards both windows but never carry a reminder, which waits for the next
+   * turn with a tool result.
    *
    * @param event - Turn boundary with the entries proposed so far.
    * @returns A transcript record of the reminder, or nothing.
    */
-  countIdleTurn(event: TurnEndEvent): TurnEndEventResult | undefined {
+  countTurn(event: TurnEndEvent): TurnEndEventResult | undefined {
     if (this.touchedThisTurn) {
       this.touchedThisTurn = false;
-      this.idleTurns = 0;
-      return undefined;
+      this.staleListTurns = 0;
+      this.newTaskTurns = 0;
+    } else {
+      this.staleListTurns += 1;
+      this.newTaskTurns += 1;
     }
-    this.idleTurns += 1;
-    if (this.idleTurns < STEER_AFTER_TURNS) return undefined;
+    // A stalled turn (not completed, or no tool result) still counts as a
+    // turn without the user, but it carries no tool result, so the reminder
+    // waits for the next turn that does.
     if (event.outcome !== "completed" || event.toolResults.length === 0) {
       return undefined;
     }
 
-    this.idleTurns = 0;
-    const hint = idleHint(this.items);
+    const freshTask = !hasUnfinished(this.items);
+    const remindNewTask =
+      freshTask && this.newTaskTurns >= REMIND_NEW_TASK_AFTER_TURNS;
+    if (!remindNewTask && this.staleListTurns < REMIND_STALE_LIST_AFTER_TURNS) {
+      return undefined;
+    }
+
+    const hint = remindNewTask
+      ? newTaskHint(this.items)
+      : staleListHint(this.items);
+    this.staleListTurns = 0;
     if (!hint) return undefined;
+
+    // Keep the new-task window armed across stale-list nudges: only its own
+    // reminder restarts it.
+    if (remindNewTask) this.newTaskTurns = 0;
     this.pendingHint = hint;
     // Recorded for the transcript only; custom entries never reach the model.
     return {
@@ -844,7 +907,7 @@ export default function todoExtension(pi: ExtensionAPI): void {
   pi.on("session_tree", (_event, ctx) => todo.restore(ctx));
   pi.on("input", () => todo.resetSteering());
   pi.on("tool_execution_end", (event) => todo.trackToolExecution(event));
-  pi.on("turn_end", (event) => todo.countIdleTurn(event));
+  pi.on("turn_end", (event) => todo.countTurn(event));
   pi.on("context_with_system", (event) => todo.injectHint(event));
   pi.on("agent_before_settle", (event) => todo.pushUnfinished(event));
   pi.registerEntryRenderer(HINT_ENTRY_TYPE, (_entry, _options, theme) =>

@@ -101,18 +101,28 @@ async function sendTogether(tools, calls) {
   await agent.prompt("Update the checklist");
 }
 
+/** Simulate one busy turn that never touches todo. */
+function workTurn(hooks) {
+  hooks.get("tool_execution_end")({ toolName: "read" });
+  const turnEnd = { outcome: "completed", toolResults: [{}], entries: [] };
+  return hooks.get("turn_end")(turnEnd);
+}
+
 /** Simulate busy turns that never touch todo, until a reminder is queued. */
 function idleUntilReminder(hooks) {
   for (let turn = 0; turn < 100; turn++) {
-    hooks.get("tool_execution_end")({ toolName: "read" });
-    const turnEnd = { outcome: "completed", toolResults: [{}], entries: [] };
-    const result = hooks.get("turn_end")(turnEnd);
+    const result = workTurn(hooks);
     if (result) return result;
   }
   assert.fail("no reminder after 100 idle turns");
 }
 
 const done = (item) => ({ oldText: `- [ ] ${item}`, newText: `- [x] ${item}` });
+
+/** Turns before the stale-list reminder, as in the extension. */
+const REMIND_STALE_LIST_AFTER_TURNS = 16;
+/** Turns before the new-task reminder, as in the extension. */
+const REMIND_NEW_TASK_AFTER_TURNS = 64;
 
 test("the three todo tools share one checklist", async () => {
   const { view, write, edit, list } = setup();
@@ -238,17 +248,174 @@ test("a cancelled call does not change the checklist", async () => {
   }
 });
 
-test("no todo reminders when the agent never made a checklist", () => {
+test("an agent without a checklist is left alone until the new-task window", () => {
   const { hooks } = setup();
 
-  // Many busy turns that never use todo.
-  for (let turn = 0; turn < 100; turn++) {
-    hooks.get("tool_execution_end")({ toolName: "read" });
-    const turnEnd = { outcome: "completed", toolResults: [{}], entries: [] };
-    assert.equal(hooks.get("turn_end")(turnEnd), undefined);
+  // Busy turns that never use todo stay below the new-task limit.
+  for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++) {
+    assert.equal(workTurn(hooks), undefined);
   }
   const settle = { outcome: "completed", entries: [] };
   assert.equal(hooks.get("agent_before_settle")(settle), undefined);
+});
+
+test("a long run without a checklist asks for one", async () => {
+  const { hooks } = setup();
+  const history = [
+    { role: "user", content: [{ type: "text", text: "Do a long task" }] },
+    {
+      role: "toolResult",
+      toolName: "bash",
+      content: [{ type: "text", text: "output" }],
+    },
+  ];
+
+  for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++) workTurn(hooks);
+  const turnEnd = workTurn(hooks);
+  assert.deepEqual(
+    turnEnd.entries.map((entry) => [entry.type, entry.customType]),
+    [["custom", "todo-hint"]],
+  );
+
+  const request = hooks.get("context_with_system")({ messages: history });
+  const reminder = request.messages.at(-1).content.at(-1).text;
+  assert.match(reminder, /<todo-reminder>/);
+  assert.match(
+    reminder,
+    new RegExp(`${REMIND_NEW_TASK_AFTER_TURNS} turns without user input`),
+  );
+  assert.match(reminder, /todo_write/);
+  assert.match(reminder, /todo_edit/);
+  assert.match(reminder, /The todo list is empty\./);
+  assert.equal(history[1].content.length, 1);
+
+  // The limit restarts, so the next reminder waits another full window.
+  assert.equal(hooks.get("context_with_system")({ messages: history }), undefined);
+  for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++) {
+    assert.equal(workTurn(hooks), undefined);
+  }
+  assert.ok(workTurn(hooks));
+});
+
+test("user input restarts the new-task count", () => {
+  const { hooks } = setup();
+
+  for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++) workTurn(hooks);
+  hooks.get("input")({});
+  for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++) {
+    assert.equal(workTurn(hooks), undefined);
+  }
+});
+
+test("a todo call restarts the new-task count", () => {
+  const { hooks } = setup();
+
+  for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++) workTurn(hooks);
+  // One turn that views the checklist restarts the whole window.
+  hooks.get("tool_execution_end")({ toolName: "todo_list" });
+  const turnEnd = hooks.get("turn_end")({
+    outcome: "completed",
+    toolResults: [{}],
+    entries: [],
+  });
+  assert.equal(turnEnd, undefined);
+
+  for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++) {
+    assert.equal(workTurn(hooks), undefined);
+  }
+  assert.ok(workTurn(hooks));
+});
+
+test("a fully closed list is asked for a new checklist", async () => {
+  const { hooks, write } = setup();
+  await write("- [x] A\n- [-] B");
+
+  // A closed list has nothing to nudge about, so only the new-task hint fires.
+  for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++) {
+    assert.equal(workTurn(hooks), undefined);
+  }
+  const turnEnd = workTurn(hooks);
+  const reminder = turnEnd.entries.at(-1).data.hint;
+  assert.match(reminder, /<todo-reminder>/);
+  assert.match(
+    reminder,
+    new RegExp(`${REMIND_NEW_TASK_AFTER_TURNS} turns without user input`),
+  );
+  assert.match(reminder, /Current todo list:\n- \[x\] A\n- \[-\] B/);
+});
+
+test("unfinished items never get the new-task reminder", async () => {
+  const { hooks, write } = setup();
+  await write("- [ ] A");
+
+  // Stale-list nudges keep firing every REMIND_STALE_LIST_AFTER_TURNS turns
+  // while the new-task window counts past its limit, but the unfinished item
+  // keeps that reminder silent.
+  const reminderTurns = [];
+  const horizon = REMIND_NEW_TASK_AFTER_TURNS + REMIND_STALE_LIST_AFTER_TURNS;
+  for (let turn = 1; turn <= horizon; turn++) {
+    const turnEnd = workTurn(hooks);
+    if (!turnEnd) continue;
+    reminderTurns.push(turn);
+    const reminder = turnEnd.entries.at(-1).data.hint;
+    assert.match(reminder, /- \[ \] A/);
+    assert.doesNotMatch(reminder, /without user input/);
+  }
+  assert.deepEqual(reminderTurns, [16, 32, 48, 64, 80]);
+});
+
+test("stalled turns never queue a reminder", () => {
+  const { hooks } = setup();
+  const stalledTurn = (outcome, toolResults) =>
+    hooks.get("turn_end")({ outcome, toolResults, entries: [] });
+
+  // Turns that did not finish, or finished without any tool result, stay
+  // silent even once the counters are past the long horizon.
+  for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++) workTurn(hooks);
+  for (let turn = 0; turn < 5; turn++) {
+    assert.equal(stalledTurn("aborted", [{}]), undefined);
+    assert.equal(stalledTurn("completed", []), undefined);
+  }
+});
+
+test("a queued reminder is dropped when new input arrives first", async () => {
+  const { hooks, write } = setup();
+  await write("- [ ] A");
+  idleUntilReminder(hooks);
+
+  // The next request carries a fresh user message, not a tool result.
+  const request = hooks.get("context_with_system")({
+    messages: [{ role: "user", content: [{ type: "text", text: "Wait" }] }],
+  });
+  assert.equal(request, undefined);
+
+  // The reminder was dropped, not saved for a later request.
+  const history = [
+    { role: "user", content: [{ type: "text", text: "Do A" }] },
+    {
+      role: "toolResult",
+      toolName: "read",
+      content: [{ type: "text", text: "file" }],
+    },
+  ];
+  assert.equal(
+    hooks.get("context_with_system")({ messages: history }),
+    undefined,
+  );
+});
+
+test("a restored session restarts the steering counters", () => {
+  const { hooks } = setup();
+  const branch = { sessionManager: { getBranch: () => [] } };
+
+  for (const event of ["session_start", "session_tree"]) {
+    for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++) workTurn(hooks);
+    hooks.get(event)({}, branch);
+    for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++) {
+      assert.equal(workTurn(hooks), undefined);
+    }
+    assert.ok(workTurn(hooks));
+  }
 });
 
 test("long idle work with unfinished items reminds the next request only", async () => {
