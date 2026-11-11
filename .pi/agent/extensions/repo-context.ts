@@ -215,7 +215,7 @@ async function handleToolCall(
 
   return {
     block: true,
-    reason: `Not applied yet: project context references for ${dir} are delivered in the next message. Consider which references are relevant, then retry this ${event.toolName}. Reading the referenced files is your decision.`,
+    reason: `Not applied yet: project context references for ${dir} are delivered in the next message. Read relevant context, then retry this ${event.toolName}.`,
   };
 }
 
