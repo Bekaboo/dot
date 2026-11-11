@@ -3,3 +3,4 @@
 .config/kwinrc filter=kwinrc
 .config/okularpartrc filter=okularpartrc
 .config/klassy/klassyrc filter=klassyrc
+.pi/agent/settings.json filter=pi-settings

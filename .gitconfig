@@ -190,6 +190,14 @@
 	clean = sed \
 		-e '/[cC]olorTheme/d' \
 		-e '/defaultInterpreterPath/d'
+[filter "pi-settings"]
+	smudge = cat
+	; Drop machine-specific model selection
+	clean = jq --indent 2 'del( \
+		.defaultProvider, \
+		.defaultModel, \
+		.defaultThinkingLevel \
+	)'
 [filter "kglobalshortcutsrc"]
 	smudge = cat
 	clean = sed '/switch-to-activity-/d'
