@@ -63,9 +63,6 @@ function killGraceMs(): number {
 /** Longest single JSONL record kept from the child, in bytes. */
 const MAX_RECORD_BYTES = 8 * 1024 * 1024;
 
-/** Prefix for ids generated when the caller omits one. */
-const AUTO_ID_PREFIX = "worker";
-
 /** Braille frames pi's built-in working spinner uses. */
 const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
@@ -185,7 +182,6 @@ class SubagentRunner {
   private stoppers = new Map<string, () => Promise<void>>();
   /** Set once the session shuts down: pending notifications are dropped. */
   private shuttingDown = false;
-  private nextId = 1;
   /** Monotonic creation order for the overlay rows. */
   private nextOrder = 1;
   /** Overlay the `/subagents` command shows, while it is open. */
@@ -204,26 +200,21 @@ class SubagentRunner {
    * The id only labels notifications and keeps concurrent children apart, so
    * nothing here restricts its characters.
    *
-   * @param id - Requested id, empty to auto-generate one.
+   * @param id - Id requested by the caller, which must not be blank.
    * @param cwd - Absolute working directory for the child.
    * @returns The id to use, or the problem to report to the agent.
    */
-  reserveId(
-    id: string | undefined,
-    cwd: string,
-  ): { id: string } | { problem: string } {
-    const requested = id?.trim();
+  reserveId(id: string, cwd: string): { id: string } | { problem: string } {
+    const requested = id.trim();
     if (requested === "")
       return { problem: "The subagent id must not be empty." };
-    if (requested && this.running.has(requested)) {
+    if (this.running.has(requested)) {
       return { problem: `A subagent named "${requested}" is already running.` };
     }
     if (!fs.statSync(cwd, { throwIfNoEntry: false })?.isDirectory()) {
       return { problem: `Working directory is not a directory: ${cwd}` };
     }
-    if (requested) return { id: requested };
-    while (this.running.has(`${AUTO_ID_PREFIX}-${this.nextId}`)) this.nextId++;
-    return { id: `${AUTO_ID_PREFIX}-${this.nextId++}` };
+    return { id: requested };
   }
 
   /**
@@ -876,12 +867,10 @@ const SubagentParams = Type.Object({
     description:
       "Full task for the subagent. It has no access to this conversation, so include every file path, constraint and deliverable it needs.",
   }),
-  id: Type.Optional(
-    Type.String({
-      description:
-        "Short, purpose-bearing name used in every notification, e.g. review-auth or scan-tests.",
-    }),
-  ),
+  id: Type.String({
+    description:
+      "Short, purpose-bearing name used in every notification, e.g. review-auth or scan-tests.",
+  }),
   tools: Type.Optional(
     Type.Array(Type.String(), {
       description:
