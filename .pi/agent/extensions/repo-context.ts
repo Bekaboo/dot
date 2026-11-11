@@ -204,7 +204,6 @@ async function handleToolCall(
   const fresh = await tracker.takeFresh(dir);
   if (!fresh) return;
 
-  ctx.ui.notify(`repo-context: injected instructions for ${dir}`, "info");
   pi.sendMessage(
     {
       customType: MESSAGE_TYPE,
