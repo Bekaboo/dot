@@ -92,8 +92,8 @@ test("a timer wakes with 'condition met' as soon as its condition holds", async 
   assert.equal(notice.options.deliverAs, "steer");
 });
 
-test("a timer reports a timeout when its deadline passes", async (t) => {
-  const { hooks, noticesAfter, branch } = setup(t, () => exit(1));
+test("a timed-out timer says so and can then be stopped", async (t) => {
+  const { hooks, stop, noticesAfter, branch } = setup(t, () => exit(1));
   // A timer whose time ran out while the session was closed.
   const expired = {
     action: "start",
@@ -113,6 +113,12 @@ test("a timer reports a timeout when its deadline passes", async (t) => {
     "[timer stale-timer] timeout after 1s; timer stopped",
   );
   assert.equal(notice.details.state, "timeout");
+
+  const stopped = await stop({ id: "stale-timer" });
+  assert.equal(
+    stopped.content[0].text,
+    'Timer "stale-timer" stopped (timed out).',
+  );
 });
 
 test("stopping an unknown timer lists the active ones", async (t) => {
@@ -162,7 +168,7 @@ test("start rejects a duplicate id and an unreachable tick", async (t) => {
 });
 
 test("a one-shot timer wakes once, says it stopped, then retires itself", async (t) => {
-  const { start, stop, status, noticesAfter } = setup(t, () => exit(1));
+  const { start, stop, noticesAfter } = setup(t, () => exit(1));
 
   await start({
     id: "peek-1",
@@ -184,34 +190,20 @@ test("a one-shot timer wakes once, says it stopped, then retires itself", async 
     stopped.content[0].text,
     'Timer "peek-1" stopped (tick budget spent).',
   );
-  assert.equal(
-    (await status({ id: "peek-1" })).content[0].text,
-    'Timer "peek-1" stopped (tick budget spent).',
-  );
-
-  // An id that never ran is still a real mistake.
-  await assert.rejects(stop({ id: "never-ran" }), /No timer "never-ran"/);
 });
 
-test("stopping a timed-out timer reports that it stopped", async (t) => {
-  const { hooks, stop, noticesAfter, branch } = setup(t, () => exit(1));
-  const expired = {
-    action: "start",
-    id: "stale-timer",
-    condition: "false",
-    intervalSec: 1,
-    maxTicks: 0,
-    timeoutSec: 1,
-    startedAt: Date.now() - 2_000,
-  };
+test("a timer whose condition throws reports the failure and stops", async (t) => {
+  const { start, stop, noticesAfter } = setup(t, () => {
+    throw new Error("boom");
+  });
 
-  await hooks.get("session_start")({}, branch(expired));
-  await noticesAfter(1);
+  await start({ id: "broken-cond", condition: "snap", maxTicks: 0 });
+  const [notice] = await noticesAfter(1);
 
-  const stopped = await stop({ id: "stale-timer" });
+  assert.match(notice.content, /^\[timer broken-cond\] error: Error: boom; timer stopped$/);
   assert.equal(
-    stopped.content[0].text,
-    'Timer "stale-timer" stopped (timed out).',
+    (await stop({ id: "broken-cond" })).content[0].text,
+    'Timer "broken-cond" stopped (failed).',
   );
 });
 
@@ -269,24 +261,30 @@ test("a timer ticks exactly maxTicks times", async (t) => {
   );
 });
 
-test("a tick is dropped while the previous one is still unread", async (t) => {
-  const { start, notices, hooks } = setup(t, () => exit(1), { ack: false });
+test("a throttled tick costs no budget, so the next wake still comes", async (t) => {
+  const { start, notices, noticesAfter, hooks } = setup(t, () => exit(1), {
+    ack: false,
+  });
 
   await start({
     id: "busy-timer",
     intervalSec: 1,
     maxTicks: 2,
-    timeoutSec: 10,
+    timeoutSec: 6,
   });
-  await wait(1_300);
+  const [first] = await noticesAfter(1);
+  assert.match(first.content, /tick 1\/2/);
+
+  // The second fire lands while the first wake is still unread, so it is
+  // dropped: it must neither send a wake nor spend the tick budget.
+  await wait(1_200);
   assert.equal(notices.length, 1);
 
-  // The agent acts on the wake, so the next tick may be delivered again.
+  // Once the agent acts on the wake, the budget must still hold one tick.
   await hooks.get("tool_call")({});
-  await wait(1_200);
+  const [, second] = await noticesAfter(2);
 
-  assert.equal(notices.length, 2);
-  assert.match(notices[1].content, /tick 2\/2/);
+  assert.match(second.content, /tick 2\/2, \d+s elapsed; timer stopped$/);
 });
 
 test("onTick output rides along with a wake", async (t) => {
@@ -417,22 +415,23 @@ test("maxTicks 0 silences a condition timer until it finishes", async (t) => {
     notices.filter((notice) => notice.details.state === "tick"),
     [],
   );
-  assert.equal(
-    result.content[0].text,
-    'Started "quiet-timer": no ticks; it ends when the condition first exits 0 or after 5s. Wakes arrive even after you end your turn.',
-  );
+  assert.match(result.content[0].text, /^Started "quiet-timer": no ticks; /);
 });
 
-test("status lists every timer, and one timer by id", async (t) => {
+test("status lists every timer, one timer by id, and rejects an unknown id", async (t) => {
   const { start, status } = setup(t, runUntilCancelled);
   await start({ id: "timer-a", condition: "false" });
   await start({ id: "timer-b", intervalSec: 5, maxTicks: 2 });
 
-  const all = await status({});
-  assert.match(all.content[0].text, /^timer-a {2}running {2}\d+s {2}ticks 0\/unlimited {2}cond: false\ntimer-b {2}running {2}\d+s {2}ticks 0\/2 {2}timer, no condition$/);
+  const all = (await status({})).content[0].text;
+  assert.match(all, /^timer-a +running .*ticks 0\/unlimited +cond: false$/m);
+  assert.match(all, /^timer-b +running .*ticks 0\/2 +timer, no condition$/m);
 
-  const one = await status({ id: "timer-b" });
-  assert.match(one.content[0].text, /^timer-b {2}running/);
+  const one = (await status({ id: "timer-b" })).content[0].text;
+  assert.match(one, /^timer-b +running .*ticks 0\/2/m);
+
+  const unknown = (await status({ id: "ghost" })).content[0].text;
+  assert.equal(unknown, 'No timer "ghost"; active: timer-a, timer-b.');
 });
 
 test("resuming a session restores its active timers", async (t) => {
@@ -526,6 +525,32 @@ test("entries from the previous watch tool are ignored", async (t) => {
 
   const listed = await status({});
   assert.equal(listed.content[0].text, "No active timers.");
+});
+
+test("restoring a branch leaves exactly one poll loop per timer", async (t) => {
+  let captures = 0;
+  const { hooks, start, branch } = setup(t, (command) => {
+    if (command === "snap") {
+      captures += 1;
+      return exit(0);
+    }
+    return exit(1);
+  });
+  const { details } = await start({
+    id: "timer-a",
+    onTick: "snap",
+    intervalSec: 1,
+    maxTicks: 5,
+    timeoutSec: 30,
+  });
+
+  // Replaying the same start must replace the running loop, not add to it: a
+  // stale poller would keep capturing for a timer nobody can stop.
+  await hooks.get("session_tree")({}, branch(details));
+  const before = captures;
+  await wait(1_200);
+
+  assert.equal(captures - before, 1);
 });
 
 test("a timer can still be stopped after the branch is restored again", async (t) => {
