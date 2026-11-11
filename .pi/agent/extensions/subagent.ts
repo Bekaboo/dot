@@ -7,15 +7,14 @@
  * child gets a fresh context window; its prompt, tools, model and working
  * directory are chosen per call.
  *
- * Notifications are queued until the parent agent reports idle, and dropped
- * once the session shuts down. Child callbacks reach `ctx` only through
- * `isIdle`; anything else on it is stale by then.
+ * Results are queued through pi as soon as the child exits: a busy parent
+ * receives them at the next turn boundary, and an idle parent starts a turn.
+ * Child callbacks never retain a tool context; shutdown drops late results.
  */
 
 import { type ChildProcess, spawn } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { setTimeout as sleep } from "node:timers/promises";
 import type { StopReason } from "@earendil-works/pi-ai";
 import type {
   ExtensionAPI,
@@ -33,9 +32,6 @@ const OUTPUT_CAP_BYTES = 16 * 1024;
 
 /** How much of the child's stderr to keep for a failure report, in bytes. */
 const STDERR_CAP_BYTES = 2 * 1024;
-
-/** Interval for re-checking whether the parent agent went idle. */
-const IDLE_POLL_MS = 250;
 
 /** Grace period before a child that ignored SIGTERM gets SIGKILL, in ms. */
 const KILL_GRACE_MS = 2_000;
@@ -60,8 +56,6 @@ const AUTO_ID_PREFIX = "worker";
 /** A subagent that has not finished yet, as `/subagents` shows it. */
 interface RunningSubagent {
   id: string;
-  /** True once the child exited and its result waits for an idle parent. */
-  delivering?: boolean;
   /** Model as requested, empty when the child inherits pi's default. */
   model: string;
   /** Tools as requested, empty when the child gets pi's defaults. */
@@ -165,14 +159,11 @@ class SubagentRunner {
    * Start the child and report its result when it exits.
    *
    * @param subagent - Id, model, tools, working directory and prompt of the child.
-   * @param isIdle - Reports whether the parent agent is idle, the only safe
-   * moment to send a message.
    */
   start(
     subagent: Omit<RunningSubagent, "startedAt" | "prompt"> & {
       prompt: string;
     },
-    isIdle: () => boolean,
   ): void {
     const { command, args } = childCommand(subagent);
     const proc = spawn(command, args, {
@@ -210,8 +201,12 @@ class SubagentRunner {
     const finish = (failure: string | undefined) => {
       if (finished) return;
       finished = true;
-      this.children.delete(running.id);
-      if (this.shuttingDown) return;
+      if (this.children.get(running.id) === proc) {
+        this.children.delete(running.id);
+      }
+      if (this.shuttingDown || stopped) return;
+      this.stoppers.delete(running.id);
+      this.running.delete(running.id);
       const outcome = outcomeOf(
         lastTurn,
         stderrTail,
@@ -227,8 +222,7 @@ class SubagentRunner {
         tools: running.tools,
         cwd: running.cwd,
       });
-      if (stopped) return; // a kill already reported this child
-      void this.deliver(running.id, outcome, isIdle);
+      this.deliver(running.id, outcome);
     };
 
     this.stoppers.set(running.id, () => {
@@ -265,10 +259,7 @@ class SubagentRunner {
       .filter((job) => matches(job.id))
       .map((job) => {
         const seconds = elapsedSec(job.startedAt);
-        const wait = job.delivering
-          ? " (result waiting for you to be idle)"
-          : "";
-        return `${marker(job.id)} running for ${seconds}s${wait}${describe(job)}`;
+        return `${marker(job.id)} running for ${seconds}s${describe(job)}`;
       });
     const finished = this.finished
       .filter((job) => matches(job.id))
@@ -313,6 +304,7 @@ class SubagentRunner {
         cwd: job?.cwd ?? "",
       });
       this.running.delete(id);
+      this.stoppers.delete(id);
       waits.push(stop());
     }
     await Promise.all(waits);
@@ -352,40 +344,21 @@ class SubagentRunner {
   }
 
   /**
-   * Inject the child's result once the parent is idle, then free its id.
+   * Queue the result at pi's next safe turn boundary, or wake an idle parent.
    *
-   * This extension waits for idle instead of steering mid-stream: a message
-   * that arrives while the parent is idle is appended, but only starts a turn
-   * when it was requested before the run settled, so the re-check keeps that
-   * gap as small as it can be.
+   * Steering does not interrupt an in-flight request or tool execution. Pi
+   * owns message ordering and continuation, so no idle polling is needed.
    */
-  private async deliver(
-    id: string,
-    outcome: Outcome,
-    isIdle: () => boolean,
-  ): Promise<void> {
-    const subagent = this.running.get(id);
-    if (subagent) subagent.delivering = true;
-    try {
-      while (!this.shuttingDown && !isIdle()) {
-        // `unref` so a parent that never goes idle cannot hold the process open;
-        // the next wake still checks whether there is anything left to deliver.
-        await sleep(IDLE_POLL_MS);
-      }
-      if (this.shuttingDown) return;
-      const head = `${marker(id)} ${outcome.status}`;
-      this.pi.sendMessage(
-        {
-          customType: NOTICE_TYPE,
-          content: `${head}\n${outcome.body}`,
-          display: true,
-          details: { id, state: outcome.state },
-        },
-        { triggerTurn: true },
-      );
-    } finally {
-      this.running.delete(id);
-    }
+  private deliver(id: string, outcome: Outcome): void {
+    this.pi.sendMessage(
+      {
+        customType: NOTICE_TYPE,
+        content: `${marker(id)} ${outcome.status}\n${outcome.body}`,
+        display: true,
+        details: { id, state: outcome.state },
+      },
+      { deliverAs: "steer", triggerTurn: true },
+    );
   }
 }
 
@@ -689,7 +662,7 @@ function subagentTool(
       const { id } = reserved;
 
       const { prompt, tools = [], model = "" } = params;
-      runner.start({ id, prompt, model, tools, cwd }, () => ctx.isIdle());
+      runner.start({ id, prompt, model, tools, cwd });
 
       const config = [
         `model=${model || "default"}`,
@@ -789,7 +762,6 @@ function killTool(runner: SubagentRunner): ToolDefinition<typeof KillParams> {
 }
 
 /**
- * Wrap a plain message, and optional details, as a tool result./**
  * Wrap a plain message, and optional details, as a tool result.
  *
  * @param text - Message for the agent.

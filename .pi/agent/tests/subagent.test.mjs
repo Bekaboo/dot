@@ -245,7 +245,7 @@ test("returns before the child finishes and reports it once", async (t) => {
   const [sent] = await notices(pi);
   assert.match(sent.message.content, /^\[subagent slow\] finished in \d+s\./);
   assert.match(sent.message.content, /PONG/);
-  assert.deepEqual(sent.options, { triggerTurn: true });
+  assert.deepEqual(sent.options, { deliverAs: "steer", triggerTurn: true });
 });
 
 test("rejects an empty id, a live duplicate, and a non-directory cwd", async (t) => {
@@ -344,17 +344,22 @@ test("a spawn failure is reported once", async (t) => {
   assert.match(sent[0].message.content, /spawn error: spawn pi ENOENT/);
 });
 
-test("waits for the parent to be idle before sending", async (t) => {
-  let idle = false;
-  const { call, pi, children } = setup(t, { idle: () => idle });
+test("queues a result immediately while the parent remains busy", async (t) => {
+  const { call, pi, children } = setup(t, {
+    idle: () => {
+      throw new Error("child callbacks must not retain ctx");
+    },
+  });
   await call({ id: "busy", prompt: "x" });
-  children[0].write(assistantRecord("late"));
+  children[0].write(assistantRecord("ready"));
   children[0].close(0);
-  await new Promise((resolve) => setTimeout(resolve, 50));
-  assert.equal(pi.sent.length, 0, "nothing is sent while the parent is busy");
-  idle = true;
-  const [sent] = await notices(pi);
-  assert.match(sent.message.content, /late/);
+  assert.equal(pi.sent.length, 1, "delivery does not wait for idle or a poll");
+  assert.match(pi.sent[0].message.content, /ready/);
+  assert.deepEqual(pi.sent[0].options, { deliverAs: "steer", triggerTurn: true });
+  const kill = await pi.tools.get("subagent_kill").execute("call", { id: "busy" });
+  assert.match(kill.content[0].text, /No running subagent/);
+  assert.deepEqual(children[0].kills, [], "an exited child cannot be killed");
+  assert.equal(pi.sent.length, 1);
 });
 
 test("a fresh extension instance starts with no subagents", async (t) => {
@@ -387,7 +392,7 @@ test("/subagents lists running children and says when there are none", async (t)
   assert.match(notified[0], /\[subagent listed\] running for 0s \(m, tools=read, \/work\)/);
 });
 
-test("subagent_status tells a slow child from a slow parent", async (t) => {
+test("subagent_status reports exited children only as finished while parent is busy", async (t) => {
   const { call, pi, children } = setup(t, { idle: () => false });
   await call({ id: "busy", prompt: "x", model: "m" });
   await call({ id: "done", prompt: "y" });
@@ -396,11 +401,12 @@ test("subagent_status tells a slow child from a slow parent", async (t) => {
 
   const status = pi.tools.get("subagent_status");
   const all = (await status.execute("call", {}, undefined, undefined, {})).content[0].text;
-  // One child is still working, the other is done and only waiting for idle.
   assert.match(all, /\[subagent busy\] running for \d+s \(m, tools=default, \/work\)/);
-  assert.match(all, /\[subagent done\] running for \d+s \(result waiting for you to be idle\)/);
+  assert.match(all, /\[subagent done\] done after \d+s/);
+  assert.doesNotMatch(all, /\[subagent done\] running/);
+  assert.equal(pi.sent.length, 1);
 
-  // Shutdown ends both children, so this test leaves no pending idle poll.
+  // Shutdown stops the remaining live child.
   await pi.hooks.get("session_shutdown")({ reason: "quit" });
 });
 
@@ -475,6 +481,29 @@ test("a killed child does not report a result", async (t) => {
     .get("subagent_status")
     .execute("call", {}, undefined, undefined, {});
   assert.match(status.content[0].text, /\[subagent killed\] killed after \d+s/);
+});
+
+test("shutdown drops late child results", async (t) => {
+  const { call, pi, children } = setup(t);
+  await call({ id: "late", prompt: "x" });
+  await pi.hooks.get("session_shutdown")({ reason: "quit" });
+  children[0].write(assistantRecord("too late"));
+  children[0].close(0);
+  assert.equal(pi.sent.length, 0);
+});
+
+test("late close from a killed child preserves a reused id", async (t) => {
+  const { call, pi, children } = setup(t);
+  await call({ id: "reuse", prompt: "old" });
+  const old = children[0];
+  await pi.tools.get("subagent_kill").execute("call", { id: "reuse" });
+  await call({ id: "reuse", prompt: "new" });
+  old.close(0);
+  const status = await pi.tools.get("subagent_status").execute("call", {});
+  assert.match(status.content[0].text, /\[subagent reuse\] running/);
+  await pi.tools.get("subagent_kill").execute("call", { id: "reuse" });
+  assert.deepEqual(children[1].kills, ["SIGTERM", "SIGKILL"]);
+  assert.equal(pi.sent.length, 0);
 });
 
 test("shutdown kills children and says a reload cancelled them", async (t) => {
