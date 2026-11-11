@@ -17,15 +17,18 @@ const DEFAULT_TIMEOUT_SEC = 120;
 
 const TIMEOUT_GUIDLINE =
   `bash commands without \`timeout\` are killed after ${DEFAULT_TIMEOUT_SEC} seconds. ` +
-  "Pass a larger `timeout` for commands expected to run longer, or run them in " +
-  "the background and arm a `timer` to check on them.";
+  "Pass a larger `timeout` for commands expected to run longer; remember that " +
+  "a longer timeout can block the agent loop unnecessarily.";
 
 export default function (pi: ExtensionAPI) {
   // The bash schema says "no default timeout"; tell the model the new contract.
   pi.on("before_agent_start", (event) => {
-    const guidelines = (event.systemPromptOptions.toolGuidelines.bash ??= []);
-    if (!guidelines.includes(TIMEOUT_GUIDLINE))
+    const { toolGuidelines } = event.systemPromptOptions;
+    const guidelines = toolGuidelines.bash ?? [];
+    toolGuidelines.bash = guidelines;
+    if (!guidelines.includes(TIMEOUT_GUIDLINE)) {
       guidelines.push(TIMEOUT_GUIDLINE);
+    }
   });
 
   pi.on("tool_call", (event) => {
