@@ -272,7 +272,7 @@ if s:supportevents('BufLeave', 'WinLeave', 'FocusLost')
   endfunction
   augroup AutoSave
     au!
-    if has('patch-8.1113')
+    if s:has_autocmd_once()
       au BufLeave,WinLeave,FocusLost * nested
             \ :call s:auto_save(expand('<abuf>'), expand('<afile>'))
     else
@@ -307,7 +307,7 @@ endif
 if s:supportevents('WinClosed')
   augroup WinCloseJmp
     au!
-    if has('patch-8.1113')
+    if s:has_autocmd_once()
       au WinClosed * nested if expand('<amatch>') == win_getid() |
             \ wincmd p |
             \ endif
@@ -776,7 +776,7 @@ omap a` 2i`
 
 " Edit current file path {{{2
 nnoremap <expr> -                isdirectory(expand('%:p:h')) ? ':e%:p:h<CR>' : '<Cmd>e ' . fnameescape(getcwd(0)) . '<CR>'
-xnoremap <expr> - '<C-\><C-n>' . isdirectory(expand('%:p:h')) ? ':e%:p:h<CR>' : '<Cmd>e ' . fnameescape(getcwd(0)) . '<CR>'
+xnoremap <expr> - '<C-\><C-n>' . (isdirectory(expand('%:p:h')) ? ':e%:p:h<CR>' : '<Cmd>e ' . fnameescape(getcwd(0)) . '<CR>')
 " }}}2
 
 " Enter insert mode with a space after the cursor {{{2
