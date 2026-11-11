@@ -29,6 +29,7 @@ import {
   type Component,
   Container,
   matchesKey,
+  sliceByColumn,
   Text,
   type TUI,
   truncateToWidth,
@@ -67,6 +68,9 @@ const AUTO_ID_PREFIX = "worker";
 
 /** Braille frames pi's built-in working spinner uses. */
 const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+
+/** Marker a cut message tail starts with. */
+const TAIL_ELLIPSIS = "...";
 
 /** Spinner frame interval in ms, matching pi's built-in working indicator. */
 const SPINNER_INTERVAL_MS = 80;
@@ -592,7 +596,7 @@ class SubagentsOverlay implements Component {
     const inner = Math.max(0, width - OVERLAY_PADDING_X * 2);
     return rows
       .map((row) =>
-        truncateToWidth(this.renderRow(row, widths), inner, "...", true),
+        truncateToWidth(this.renderRow(row, widths, inner), inner, "...", true),
       )
       .join("\n");
   }
@@ -603,9 +607,14 @@ class SubagentsOverlay implements Component {
    *
    * @param row - Subagent to render.
    * @param widths - Column widths shared by every row of this render.
+   * @param inner - Width available to the row, including the message tail.
    * @returns The styled line, before width truncation.
    */
-  private renderRow(row: SubagentRow, widths: ColumnWidths): string {
+  private renderRow(
+    row: SubagentRow,
+    widths: ColumnWidths,
+    inner: number,
+  ): string {
     const { theme } = this;
     const column = columnsOf(row);
     const head = [
@@ -617,9 +626,9 @@ class SubagentsOverlay implements Component {
       theme.fg("dim", padRight(column.tools, widths.tools)),
       theme.fg("dim", padRight(column.cwd, widths.cwd)),
     ].join(" ");
-    return column.message
-      ? `${head} ${theme.fg("muted", column.message)}`
-      : head;
+    const room = inner - visibleWidth(head) - 1;
+    if (!column.message || room <= TAIL_ELLIPSIS.length) return head;
+    return `${head} ${theme.fg("muted", tailText(column.message, room))}`;
   }
 
   /** Start or stop the animation to match the rows. */
@@ -681,7 +690,7 @@ function columnsOf(row: SubagentRow): SubagentColumns {
     model: modelLabel(row),
     tools: toolsLabel(row),
     cwd: row.cwd,
-    message: firstLine(row.lastMessage),
+    message: tailLine(row.lastMessage),
   };
 }
 
@@ -774,16 +783,33 @@ function stateMarker(state: string, frame: number, theme: Theme): string {
 }
 
 /**
- * First non-blank line of a child's last message.
+ * Last non-blank line of a child's last message, the latest thing it said.
  *
  * @param text - Message text, possibly multi-line or empty.
- * @returns Its first non-blank line, trimmed, or an empty string.
+ * @returns Its last non-blank line, trimmed, or an empty string.
  */
-function firstLine(text: string): string {
-  for (const line of text.split("\n")) {
-    if (line.trim() !== "") return line.trim();
+function tailLine(text: string): string {
+  const lines = text.split("\n");
+  for (let index = lines.length - 1; index >= 0; index--) {
+    const line = lines[index].trim();
+    if (line !== "") return line;
   }
   return "";
+}
+
+/**
+ * Keep the end of a message that fits a terminal width.
+ *
+ * @param text - Message line, without ANSI attributes.
+ * @param width - Terminal columns available for it.
+ * @returns The text, or its tail with a leading ellipsis when it does not fit.
+ */
+function tailText(text: string, width: number): string {
+  const total = visibleWidth(text);
+  if (total <= width) return text;
+  const budget = width - TAIL_ELLIPSIS.length;
+  if (budget <= 0) return TAIL_ELLIPSIS;
+  return TAIL_ELLIPSIS + sliceByColumn(text, total - budget, budget, true);
 }
 
 /**

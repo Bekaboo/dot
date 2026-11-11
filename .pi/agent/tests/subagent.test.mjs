@@ -643,6 +643,40 @@ test("/subagents shows a live overlay that closes on Escape", async (t) => {
   await pi.hooks.get("session_shutdown")({ reason: "quit" });
 });
 
+test("/subagents overlay shows the tail of the last message", async (t) => {
+  const { call, pi, children } = setup(t);
+  const screen = fakeUI(t);
+  const showing = pi.commands.get("subagents").handler("", {
+    mode: "tui",
+    ui: screen.ui,
+  });
+  const overlay = screen.component;
+  await call({ id: "tail", prompt: "x" });
+
+  children[0].write(assistantRecord("earlier line\n\nlatest line"));
+  const text = overlay.render(160).join("\n");
+  assert.match(text, /latest line/);
+  assert.doesNotMatch(text, /earlier line/);
+
+  children[0].write(
+    `${JSON.stringify({
+      type: "message_update",
+      assistantMessageEvent: {
+        type: "text_delta",
+        contentIndex: 0,
+        delta: `${"x".repeat(200)}LATEST`,
+      },
+    })}\n`,
+  );
+  const row = overlay.render(160).find((line) => line.includes(" tail "));
+  assert.ok(row, "the subagent is still listed");
+  assert.match(row, /\.\.\.x+LATEST/);
+
+  overlay.handleInput("\x1b");
+  await showing;
+  await pi.hooks.get("session_shutdown")({ reason: "quit" });
+});
+
 test("subagent_status reports exited children only as finished while parent is busy", async (t) => {
   const { call, pi, children } = setup(t, { idle: () => false });
   await call({ id: "busy", prompt: "x", model: "m" });
