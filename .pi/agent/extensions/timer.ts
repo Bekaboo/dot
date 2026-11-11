@@ -96,7 +96,7 @@ const STOP_TOOL_NAMES = new Set(["timer_stop", "timer"]);
 const TimerStartParams = Type.Object({
   id: Type.String({
     description:
-      "Timer name: short, unique, purpose-bearing, e.g. batch3-done or pa1-peek. You see it in every wake and in `timer_status`.",
+      "Timer name: short, unique, purpose-bearing, e.g. batch3-done or pa1-peek. It appears in every wake and in `timer_status`, and it names the job log.",
   }),
   start: Type.Optional(
     Type.String({
@@ -1385,7 +1385,6 @@ function timerStartTool(
     promptSnippet:
       "Start a background command and wake when it exits, wait for a condition, or tick periodically.",
     promptGuidelines: [
-      "Name every `timer_start` with a short, unique, purpose-bearing id (batch3-done, pa1-peek, log1-monitor): it appears in every wake and in `timer_status`, and it names the job log.",
       "For a command that may take a while, use `timer_start` with `start`, never bash `&`, pid or exit files, polling, or `sleep N` waits. Keep working or end your turn: an idle agent is woken in a new turn.",
       "A tick or condition wake from a timer says only that something happened; a job wake already carries the exit code and log tail. After a wake, do what it asks, then `timer_stop` a timer you no longer need.",
     ],
