@@ -58,9 +58,10 @@ const HINT_ENTRY_TYPE = "todo-hint";
 const CONTINUE_MESSAGE_TYPE = "todo-continue";
 
 /**
- * Tools that snapshot the checklist in their result details.
+ * Tool names whose results snapshot the checklist.
  *
- * `todo` is the pre-split tool name, still present in older session branches.
+ * `todo` stays for backward compatibility: it is never registered, but branches
+ * recorded before the split still restore their checklist from its results.
  */
 const TODO_TOOLS = new Set(["todo_list", "todo_write", "todo_edit", "todo"]);
 
