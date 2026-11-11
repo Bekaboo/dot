@@ -3,6 +3,6 @@
   "fullscreenScrollbar": "hidden",
   "showHardwareCursor": true,
   "packages": [
-    "npm:pi-intercom"
+    "npm:pi-intercom@0.18.1"
   ]
 }
