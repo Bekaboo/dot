@@ -393,7 +393,7 @@ const SubagentParams = Type.Object({
   tools: Type.Optional(
     Type.Array(Type.String(), {
       description:
-        'pi tool-selection entries for the child, passed to --tools, e.g. ["read", "bash", "+codemode"]. Omit or leave empty for pi defaults.',
+        'pi tool-selection for the child, passed to --tools: either exact names, e.g. ["read", "bash"], or only +name/-name modifiers on the defaults, e.g. ["+codemode"]. Omit or leave empty for pi defaults.',
     }),
   ),
   model: Type.Optional(
