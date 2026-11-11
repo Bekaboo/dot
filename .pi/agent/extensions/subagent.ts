@@ -78,6 +78,9 @@ const SPINNER_INTERVAL_MS = 80;
 /** How much streaming text is kept for the overlay, in bytes. */
 const LIVE_TEXT_CAP_BYTES = 4 * 1024;
 
+/** How much recent streamed text each child keeps for the overlay, in chars. */
+const STREAM_CAP_CHARS = 4 * 1024;
+
 /** Horizontal padding inside the `/subagents` overlay. */
 const OVERLAY_PADDING_X = 2;
 
@@ -92,8 +95,10 @@ interface RunningSubagent {
   startedAt: number;
   /** Creation order, so two children started in one millisecond stay ordered. */
   order: number;
-  /** Latest assistant text the child emitted, empty before it speaks. */
-  lastMessage: string;
+  /** Recent completed assistant text, collapsed to one line, tail-capped. */
+  stream: string;
+  /** Text of the message currently streaming, collapsed to one line. */
+  draft: string;
 }
 
 /** A child that ended, kept briefly so `subagent_status` can report it. */
@@ -110,8 +115,8 @@ interface FinishedSubagent {
   cwd: string;
   /** Creation order, so two children started in one millisecond stay ordered. */
   order: number;
-  /** Last assistant text the child emitted. */
-  lastMessage: string;
+  /** Recent assistant text the child streamed, collapsed to one line. */
+  stream: string;
 }
 
 /** One line of the `/subagents` overlay. */
@@ -126,8 +131,8 @@ interface SubagentRow {
   model: string;
   tools: string[];
   cwd: string;
-  /** Last assistant text the child emitted, or an empty string. */
-  lastMessage: string;
+  /** Recent assistant text the child streamed, collapsed to one line. */
+  stream: string;
 }
 
 /** How many finished children are remembered for `subagent_status`. */
@@ -143,6 +148,14 @@ interface LastTurn {
   stopReason?: StopReason;
   /** Provider or pi error text, when the turn failed. */
   errorMessage?: string;
+}
+
+/** Receives a child's assistant text as it streams. */
+interface TextObserver {
+  /** Current text of the message being streamed, replacing the last draft. */
+  draft(text: string): void;
+  /** Authoritative text of a message that just completed. */
+  complete(text: string): void;
 }
 
 /** Terminal state of a child, as its notification reports it. */
@@ -222,7 +235,7 @@ class SubagentRunner {
   start(
     subagent: Omit<
       RunningSubagent,
-      "startedAt" | "order" | "lastMessage" | "prompt"
+      "startedAt" | "order" | "stream" | "draft" | "prompt"
     > & {
       prompt: string;
       /** Thinking level to force, empty to keep the model's own setting. */
@@ -244,7 +257,8 @@ class SubagentRunner {
       cwd: subagent.cwd,
       startedAt: Date.now(),
       order: this.nextOrder++,
-      lastMessage: "",
+      stream: "",
+      draft: "",
     };
     this.running.set(running.id, running);
     this.refreshOverlay();
@@ -262,9 +276,16 @@ class SubagentRunner {
     proc.stdout.setEncoding("utf8");
     proc.stdout.on(
       "data",
-      recordParser(appendStderr, lastTurn, (text) => {
-        running.lastMessage = text;
-        this.refreshOverlay();
+      recordParser(appendStderr, lastTurn, {
+        draft: (text) => {
+          running.draft = streamLine(text);
+          this.refreshOverlay();
+        },
+        complete: (text) => {
+          running.stream = appendStream(running.stream, text);
+          running.draft = "";
+          this.refreshOverlay();
+        },
       }),
     );
     proc.stderr.setEncoding("utf8");
@@ -295,7 +316,7 @@ class SubagentRunner {
         tools: running.tools,
         cwd: running.cwd,
         order: running.order,
-        lastMessage: running.lastMessage,
+        stream: joinStream(running.stream, running.draft),
       });
       this.refreshOverlay();
       this.deliver(running.id, outcome);
@@ -387,7 +408,7 @@ class SubagentRunner {
       model: job.model,
       tools: job.tools,
       cwd: job.cwd,
-      lastMessage: job.lastMessage,
+      stream: joinStream(job.stream, job.draft),
     }));
     const finished = this.finished.map((job) => ({
       id: job.id,
@@ -397,7 +418,7 @@ class SubagentRunner {
       model: job.model,
       tools: job.tools,
       cwd: job.cwd,
-      lastMessage: job.lastMessage,
+      stream: job.stream,
     }));
     return [...running, ...finished].sort((a, b) => a.order - b.order);
   }
@@ -436,7 +457,7 @@ class SubagentRunner {
         tools: job?.tools ?? [],
         cwd: job?.cwd ?? "",
         order: job?.order ?? 0,
-        lastMessage: job?.lastMessage ?? "",
+        stream: job ? joinStream(job.stream, job.draft) : "",
       });
       this.running.delete(id);
       this.stoppers.delete(id);
@@ -690,7 +711,7 @@ function columnsOf(row: SubagentRow): SubagentColumns {
     model: modelLabel(row),
     tools: toolsLabel(row),
     cwd: row.cwd,
-    message: tailLine(row.lastMessage),
+    message: row.stream,
   };
 }
 
@@ -783,18 +804,39 @@ function stateMarker(state: string, frame: number, theme: Theme): string {
 }
 
 /**
- * Last non-blank line of a child's last message, the latest thing it said.
+ * Collapse assistant text to the single line the overlay shows.
  *
- * @param text - Message text, possibly multi-line or empty.
- * @returns Its last non-blank line, trimmed, or an empty string.
+ * @param text - Message text, possibly multi-line.
+ * @returns Its whitespace collapsed to one line and trimmed.
  */
-function tailLine(text: string): string {
-  const lines = text.split("\n");
-  for (let index = lines.length - 1; index >= 0; index--) {
-    const line = lines[index].trim();
-    if (line !== "") return line;
-  }
-  return "";
+function streamLine(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Combine the completed stream with the message being streamed.
+ *
+ * @param stream - Recent completed assistant text, already collapsed.
+ * @param draft - Text of the message currently streaming, already collapsed.
+ * @returns The combined one-line stream.
+ */
+function joinStream(stream: string, draft: string): string {
+  if (!draft) return stream;
+  return stream ? `${stream} ${draft}` : draft;
+}
+
+/**
+ * Append a completed message to the rolling stream, keeping its tail.
+ *
+ * @param stream - Recent completed assistant text.
+ * @param text - Authoritative text of the message that just completed.
+ * @returns The stream with the new message, capped to its most recent chars.
+ */
+function appendStream(stream: string, text: string): string {
+  const joined = joinStream(stream, streamLine(text));
+  return joined.length <= STREAM_CAP_CHARS
+    ? joined
+    : joined.slice(-STREAM_CAP_CHARS);
 }
 
 /**
@@ -877,17 +919,17 @@ const KillParams = Type.Object({ id: SelectionParams });
  * Read the latest assistant text out of one JSONL record.
  *
  * The stream is delta-only, so the authoritative content is the completed
- * `message_end.message`; a new answer replaces the previous one. Text blocks
- * are updated between completions, so the overlay can follow the child live.
+ * `message_end.message`. Text blocks are reported between completions, so the
+ * overlay can follow the child live.
  *
  * @param lastTurn - Last assistant message, updated in place.
  * @param record - Parsed `--mode json` record.
- * @param onText - Called with the visible text after each update.
+ * @param observer - Receives the current draft and each completed message.
  */
 function absorbRecord(
   lastTurn: LastTurn,
   record: unknown,
-  onText?: (text: string) => void,
+  observer?: TextObserver,
 ): void {
   const event = record as JsonAgentSessionEvent;
   if (event.type === "message_update") {
@@ -897,21 +939,24 @@ function absorbRecord(
         (lastTurn.blocks.get(update.contentIndex) ?? "") + update.delta;
       lastTurn.blocks.set(
         update.contentIndex,
-        truncateBytes(text, LIVE_TEXT_CAP_BYTES),
+        keepTailBytes(text, LIVE_TEXT_CAP_BYTES),
       );
-      onText?.(draftText(lastTurn));
+      observer?.draft(draftText(lastTurn));
     }
     if (update.type === "text_end") {
       lastTurn.blocks.set(
         update.contentIndex,
-        truncateBytes(update.content, LIVE_TEXT_CAP_BYTES),
+        keepTailBytes(update.content, LIVE_TEXT_CAP_BYTES),
       );
-      onText?.(draftText(lastTurn));
+      observer?.draft(draftText(lastTurn));
     }
     return;
   }
   if (event.type === "message_start") {
-    if (event.message.role === "assistant") lastTurn.blocks.clear();
+    if (event.message.role === "assistant") {
+      lastTurn.blocks.clear();
+      observer?.draft("");
+    }
     return;
   }
   if (event.type !== "message_end" || event.message.role !== "assistant")
@@ -929,8 +974,8 @@ function absorbRecord(
   lastTurn.stopReason = message.stopReason;
   lastTurn.errorMessage = message.errorMessage;
   lastTurn.blocks.clear();
-  // A message with only tool calls has no text to show; keep the last words.
-  if (lastTurn.answer) onText?.(lastTurn.answer);
+  // A message with only tool calls adds no text to the recent stream.
+  if (lastTurn.answer) observer?.complete(lastTurn.answer);
 }
 
 /**
@@ -955,20 +1000,20 @@ function draftText(lastTurn: LastTurn): string {
  *
  * @param write - Sink for parser complaints, usually stderr accumulation.
  * @param lastTurn - Last assistant message, updated in place.
- * @param onText - Called with the visible text after each update.
+ * @param observer - Receives the current draft and each completed message.
  * @returns A function that accepts output chunks.
  */
 function recordParser(
   write: (text: string) => void,
   lastTurn: LastTurn,
-  onText?: (text: string) => void,
+  observer?: TextObserver,
 ) {
   let partial = "";
   let skipping = false;
   const absorb = (line: string) => {
     if (!line.trim()) return;
     try {
-      absorbRecord(lastTurn, JSON.parse(line), onText);
+      absorbRecord(lastTurn, JSON.parse(line), observer);
     } catch {
       // A malformed record carries no result; skip it. A lost result is caught
       // by the missing answer at exit, not by this line.
@@ -1010,6 +1055,25 @@ function truncateBytes(text: string, maxBytes: number): string {
     stream: true,
   });
   return `${head}\n[truncated]`;
+}
+
+/**
+ * Keep the end of a string within a UTF-8 byte budget, adding a marker.
+ *
+ * The live overlay cares about the latest text, so a long block keeps its tail
+ * instead of its head.
+ *
+ * @param text - Text to trim.
+ * @param maxBytes - Byte budget, which the marker may exceed by a few bytes.
+ * @returns Text no longer than the budget, prefixed with the marker when cut.
+ */
+function keepTailBytes(text: string, maxBytes: number): string {
+  const bytes = Buffer.from(text, "utf8");
+  if (bytes.length <= maxBytes) return text;
+  const tail = new TextDecoder("utf-8").decode(
+    bytes.subarray(bytes.length - maxBytes),
+  );
+  return `[truncated]\n${tail}`;
 }
 
 /**

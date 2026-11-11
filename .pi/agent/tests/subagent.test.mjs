@@ -643,7 +643,7 @@ test("/subagents shows a live overlay that closes on Escape", async (t) => {
   await pi.hooks.get("session_shutdown")({ reason: "quit" });
 });
 
-test("/subagents overlay shows the tail of the last message", async (t) => {
+test("/subagents overlay keeps the recent stream tail", async (t) => {
   const { call, pi, children } = setup(t);
   const screen = fakeUI(t);
   const showing = pi.commands.get("subagents").handler("", {
@@ -653,11 +653,19 @@ test("/subagents overlay shows the tail of the last message", async (t) => {
   const overlay = screen.component;
   await call({ id: "tail", prompt: "x" });
 
+  // Earlier messages stay in the stream, separated by a space.
   children[0].write(assistantRecord("earlier line\n\nlatest line"));
-  const text = overlay.render(160).join("\n");
-  assert.match(text, /latest line/);
-  assert.doesNotMatch(text, /earlier line/);
+  assert.match(
+    overlay.render(160).join("\n"),
+    /earlier line latest line/,
+  );
+  children[0].write(assistantRecord("another update"));
+  assert.match(
+    overlay.render(160).join("\n"),
+    /earlier line latest line another update/,
+  );
 
+  // A long running message is cut from the left, so the newest text remains.
   children[0].write(
     `${JSON.stringify({
       type: "message_update",
@@ -671,6 +679,20 @@ test("/subagents overlay shows the tail of the last message", async (t) => {
   const row = overlay.render(160).find((line) => line.includes(" tail "));
   assert.ok(row, "the subagent is still listed");
   assert.match(row, /\.\.\.x+LATEST/);
+
+  // Past the live-text cap, the newest text is still the one shown.
+  children[0].write(
+    `${JSON.stringify({
+      type: "message_update",
+      assistantMessageEvent: {
+        type: "text_delta",
+        contentIndex: 0,
+        delta: `${"y".repeat(5000)}NEWEST`,
+      },
+    })}\n`,
+  );
+  const capped = overlay.render(160).find((line) => line.includes(" tail "));
+  assert.match(capped, /\.\.\.y+NEWEST/);
 
   overlay.handleInput("\x1b");
   await showing;
