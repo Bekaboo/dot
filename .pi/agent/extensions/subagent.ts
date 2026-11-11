@@ -681,9 +681,17 @@ function subagentTool(
     description: `Start a separate pi process with a fresh context to work on a task in the background. Returns immediately; the child's answer arrives later as a "${MARKER_EXAMPLE} ..." message.`,
     promptSnippet: `Spawn a background pi subagent with its own prompt, tools and model; its result arrives later as a ${MARKER_EXAMPLE} message.`,
     promptGuidelines: [
-      "Use `subagent` to hand off self-contained work that can run alongside your own work, such as an independent review or a long scan.",
-      "Give `subagent` a complete prompt: it cannot see this conversation.",
-      `Do not poll for \`subagent\`'s result; keep working and its ${MARKER_EXAMPLE} message will arrive on its own.`,
+      "Use `subagent` for one task that can run alongside your own work, such as an independent review, a long scan, or a second opinion.",
+      "Use `subagent` for several independent tasks in one turn, such as research in separate areas, a change read from several perspectives, or verification from several angles, so they finish sooner and disagreement surfaces.",
+      "Do not use `subagent` for work your next step depends on, for a task one or two tool calls would answer, or for a task you cannot describe concretely; do those locally.",
+      "Give `subagent` a self-contained prompt: it starts with no conversation, cannot ask questions or be resumed, and returns one answer capped at 16 KB, so state the files, the constraints, and the result you expect back, and ask for a file when it may write.",
+      'For a fix you have already diagnosed, tell `subagent` the finding and the intended change; never write "fix what you find", which delegates the understanding instead of the work. Delegate verification of a concrete artifact; interpret an unclear finding yourself.',
+      "Split write scopes before spawning: `subagent` children share this working tree and can edit it, with no isolation, so keep concurrent writers on disjoint files.",
+      'Pass read-only `tools` such as ["read", "grep", "find"] to a research `subagent`, and give an editing child only the tools its change needs.',
+      "For review and judging, especially code review, give `subagent` a different `model` from the one that produced the work when one is available, ideally from another family: a reviewer that shares the author's model shares its blind spots.",
+      `After calling \`subagent\`, do non-overlapping work: do not poll, do not redo the task, and never predict or invent its result before the ${MARKER_EXAMPLE} message arrives.`,
+      "Use `subagent_status` to answer whether a child still runs, not to poll, and `subagent_kill` to stop one whose result you no longer need.",
+      `Treat a ${MARKER_EXAMPLE} report as a claim to verify, not as proof the work is done.`,
     ],
     parameters: SubagentParams,
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
@@ -761,8 +769,7 @@ function statusTool(
   return {
     name: "subagent_status",
     label: "Subagent status",
-    description:
-      "Report every subagent this session started: still running, or how it ended. Use it to check on a subagent instead of polling its result.",
+    description: `Report the subagents this session started: those still running, and the last ${FINISHED_HISTORY} that ended. Use it to check on a subagent instead of polling its result.`,
     parameters: StatusParams,
     async execute(_toolCallId, params) {
       return toolText(runner.status(idsOf(params.id)));
