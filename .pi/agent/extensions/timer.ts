@@ -532,12 +532,6 @@ class TimerRegistry {
    * Arm a timer and start polling it in the background.
    *
    * @param params - Validated `timer_start` input.
-   * @returns The persisted specification of the new timer.
-   */
-  /**
-   * Arm a timer and start polling it in the background.
-   *
-   * @param params - Validated `timer_start` input.
    * @param cwd - Directory the job runs in, which is the session's own cwd.
    * @returns The persisted specification of the new timer.
    */
