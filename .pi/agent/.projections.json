@@ -1,4 +1,8 @@
 {
+  "tests/subagent-delivery.test.mjs": {
+    "type": "test",
+    "alternate": "extensions/subagent.ts"
+  },
   "extensions/*.ts": {
     "type": "source",
     "alternate": "tests/{}.test.mjs"
