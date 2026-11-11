@@ -154,9 +154,15 @@ function assistantRecord(text, extra = {}) {
  * Install a fresh extension instance.
  *
  * @param t - Node test context.
+ * @param idle - Idle check reported by the fake context.
+ * @param model - Model the fake context reports as the session's selection.
+ * @param thinkingLevel - Thinking level the fake context reports.
  * @returns The fake pi, the registered tool, and a `call` helper.
  */
-function setup(t, { idle = () => true } = {}) {
+function setup(
+  t,
+  { idle = () => true, model, thinkingLevel } = {},
+) {
   fakeDirectory(t);
   children.length = 0;
   // Keep the SIGTERM-to-SIGKILL escalation short, and restore it afterwards so
@@ -170,7 +176,7 @@ function setup(t, { idle = () => true } = {}) {
   const pi = fakePi();
   loadExtension()(pi.api);
   const tool = pi.tools.get("subagent");
-  const ctx = { cwd: "/work", isIdle: idle };
+  const ctx = { cwd: "/work", isIdle: idle, model, thinkingLevel };
   return {
     pi,
     tool,
@@ -232,6 +238,36 @@ test("keeps pi's defaults when model and tools are omitted", async (t) => {
   const [child] = children;
   assert.ok(!piArgs(child).includes("--model"));
   assert.ok(!piArgs(child).includes("--tools"));
+});
+
+test("inherits the session's model and thinking level", async (t) => {
+  const { call, children } = setup(t, {
+    model: { provider: "qoder", id: "Fast" },
+    thinkingLevel: "high",
+  });
+  const result = await call({ id: "inherit", prompt: "x" });
+  const [child] = children;
+  assert.deepEqual(piArgs(child).slice(4, 8), [
+    "--model",
+    "qoder/Fast",
+    "--thinking",
+    "high",
+  ]);
+  assert.match(result.content[0].text, /model=qoder\/Fast/);
+});
+
+test("an explicit model wins over the session's selection", async (t) => {
+  const { call, children } = setup(t, {
+    model: { provider: "qoder", id: "Fast" },
+    thinkingLevel: "high",
+  });
+  await call({ id: "explicit", prompt: "x", model: "some/model:low" });
+  const [child] = children;
+  assert.equal(piArgs(child)[5], "some/model:low");
+  assert.ok(
+    !piArgs(child).includes("--thinking"),
+    "a `:level` suffix already carries the level",
+  );
 });
 
 test("returns before the child finishes and reports it once", async (t) => {

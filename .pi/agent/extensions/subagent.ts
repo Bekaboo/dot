@@ -158,11 +158,14 @@ class SubagentRunner {
   /**
    * Start the child and report its result when it exits.
    *
-   * @param subagent - Id, model, tools, working directory and prompt of the child.
+   * @param subagent - Id, model, thinking level, tools, working directory and
+   *   prompt of the child.
    */
   start(
     subagent: Omit<RunningSubagent, "startedAt" | "prompt"> & {
       prompt: string;
+      /** Thinking level to force, empty to keep the model's own setting. */
+      thinking: string;
     },
   ): void {
     const { command, args } = childCommand(subagent);
@@ -399,7 +402,7 @@ const SubagentParams = Type.Object({
   model: Type.Optional(
     Type.String({
       description:
-        'Model for the child, as "provider/id" or a bare id, optionally with ":high" and similar for the thinking level. Omit to inherit the model this session uses.',
+        'Model for the child, as "provider/id" or a bare id, optionally with ":high" and similar for the thinking level. Omit to inherit this session\'s model and thinking level.',
     }),
   ),
   cwd: Type.Optional(
@@ -613,11 +616,13 @@ function failureOf(
 /**
  * Build the invocation for the child pi process.
  *
- * @param subagent - Model, tools, working directory and prompt of the child.
+ * @param subagent - Model, thinking level, tools, working directory and prompt
+ *   of the child.
  * @returns Command and arguments to spawn.
  */
 function childCommand(subagent: {
   model: string;
+  thinking: string;
   tools: string[];
   cwd: string;
   prompt: string;
@@ -626,6 +631,8 @@ function childCommand(subagent: {
   const command = process.env.PI_BIN ?? process.argv[1] ?? "pi";
   const args = ["-p", "--mode", "json", "--no-session"];
   if (subagent.model) args.push("--model", subagent.model);
+  // Only set on the inherited path: `--thinking` outranks a `:level` suffix.
+  if (subagent.thinking) args.push("--thinking", subagent.thinking);
   if (subagent.tools.length > 0) args.push("--tools", subagent.tools.join(","));
   args.push(
     "--append-system-prompt",
@@ -634,6 +641,30 @@ function childCommand(subagent: {
     `Task: ${subagent.prompt}`,
   );
   return { command, args };
+}
+
+/**
+ * Choose the model and thinking level for a child.
+ *
+ * An explicit `model` wins and carries its own optional `:thinking` suffix.
+ * Otherwise the child inherits this session's selection. Pi does not do that on
+ * its own: a child started without `--model` resolves the configured default,
+ * so after a mid-session model switch a bare child would silently run another
+ * model than its parent.
+ *
+ * @param model - Model the caller asked for, or an empty string.
+ * @param ctx - Tool context holding the session's model and thinking level.
+ * @returns The `--model` value, and the thinking level to force instead.
+ */
+function childSelection(
+  model: string,
+  ctx: Pick<ExtensionContext, "model" | "thinkingLevel">,
+): { model: string; thinking: string } {
+  if (model || !ctx.model) return { model, thinking: "" };
+  return {
+    model: `${ctx.model.provider}/${ctx.model.id}`,
+    thinking: ctx.thinkingLevel ?? "",
+  };
 }
 
 /**
@@ -662,16 +693,24 @@ function subagentTool(
       const { id } = reserved;
 
       const { prompt, tools = [], model = "" } = params;
-      runner.start({ id, prompt, model, tools, cwd });
+      const selection = childSelection(model, ctx);
+      runner.start({
+        id,
+        prompt,
+        model: selection.model,
+        thinking: selection.thinking,
+        tools,
+        cwd,
+      });
 
       const config = [
-        `model=${model || "default"}`,
+        `model=${selection.model || "default"}`,
         `tools=${tools.length > 0 ? tools.join(",") : "default"}`,
         `cwd=${cwd}`,
       ].join(", ");
       return toolText(
         `Subagent "${id}" started (${config}). Its result arrives as a "${marker(id)}" message.`,
-        { id, cwd, model, tools },
+        { id, cwd, model: selection.model, tools },
       );
     },
   };
