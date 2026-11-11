@@ -5,7 +5,9 @@
  * `intercom_message` renderer. Discovered extensions load before packages and
  * Pi's renderer lookup takes the first match, which makes the override work
  * without patching the installed package. The corner swap and renderer live in
- * `lib/intercom-frame.ts`, which plain `node --test` can load.
+ * `lib/intercom-frame.ts`; the class is passed in from here so that module stays
+ * loadable by `node --test`, which cannot type-strip node_modules (see the
+ * workaround note there).
  *
  * The import walks into the managed install because the package is not
  * resolvable from this directory. It is the personal install path; a

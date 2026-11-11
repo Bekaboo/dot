@@ -1,10 +1,15 @@
 /**
  * Square-corner rendering for pi-intercom's inline message box.
  *
- * This module deliberately has no runtime import from pi-intercom: `node
- * --test` refuses to type-strip files under node_modules, and the extension
- * itself imports the real component. Tests drive createRenderer with a stand-in
- * base class here, and the entry file binds the real one.
+ * Workaround: this module takes pi-intercom's component class as an argument
+ * instead of importing it. pi-intercom ships TypeScript inside node_modules,
+ * where `node --test` refuses to type-strip
+ * (ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING), so a test that imported the
+ * class directly could not load. Tests pass a stand-in class, the entry file
+ * imports the real one and binds it.
+ *
+ * Drop the indirection once tests compile dependency TypeScript, for example by
+ * running under tsx, if the rest of the suite can move with it.
  */
 
 import type { MessageRenderer, Theme } from "@earendil-works/pi-coding-agent";
