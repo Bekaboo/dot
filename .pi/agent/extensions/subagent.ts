@@ -32,6 +32,7 @@ import {
   Text,
   type TUI,
   truncateToWidth,
+  visibleWidth,
 } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
@@ -96,7 +97,7 @@ interface FinishedSubagent {
   id: string;
   /** Elapsed seconds at exit. */
   seconds: number;
-  /** Outcome word: done, failed, killed, or cancelled by a reload. */
+  /** Outcome word: done, fail, or kill. */
   state: string;
   /** Failure text, when the child did not finish cleanly. */
   reason?: string;
@@ -112,12 +113,10 @@ interface FinishedSubagent {
 /** One line of the `/subagents` overlay. */
 interface SubagentRow {
   id: string;
-  /** `running`, or the terminal state of a finished child. */
+  /** Outcome word: work, done, fail, or kill. */
   state: string;
   /** Creation order, so two children started in one millisecond stay ordered. */
   order: number;
-  /** Elapsed seconds: live while running, at exit once finished. */
-  seconds: number;
   model: string;
   tools: string[];
   cwd: string;
@@ -142,7 +141,7 @@ interface LastTurn {
 
 /** Terminal state of a child, as its notification reports it. */
 interface Outcome {
-  state: "done" | "failed";
+  state: "done" | "fail";
   /** One-line summary, such as "finished in 12s.". */
   status: string;
   /** What the child said, or why it failed. */
@@ -376,9 +375,8 @@ class SubagentRunner {
   private rows(): SubagentRow[] {
     const running = [...this.running.values()].map((job) => ({
       id: job.id,
-      state: "running",
+      state: "work",
       order: job.order,
-      seconds: elapsedSec(job.startedAt),
       model: job.model,
       tools: job.tools,
       cwd: job.cwd,
@@ -388,7 +386,6 @@ class SubagentRunner {
       id: job.id,
       state: job.state,
       order: job.order,
-      seconds: job.seconds,
       model: job.model,
       tools: job.tools,
       cwd: job.cwd,
@@ -426,7 +423,7 @@ class SubagentRunner {
       this.remember({
         id,
         seconds: job ? elapsedSec(job.startedAt) : 0,
-        state: "killed",
+        state: "kill",
         model: job?.model ?? "",
         tools: job?.tools ?? [],
         cwd: job?.cwd ?? "",
@@ -580,44 +577,49 @@ class SubagentsOverlay implements Component {
   }
 
   /**
-   * Render every subagent on one line each.
+   * Render every subagent on one line each, with aligned columns.
    *
    * @param rows - Rows the overlay shows.
    * @param width - Overlay width, including the text padding.
    * @returns One width-truncated line per subagent.
    */
   private renderRows(rows: SubagentRow[], width: number): string {
+    const widths = alignWidths(rows);
     const inner = Math.max(0, width - OVERLAY_PADDING_X * 2);
     return rows
-      .map((row) => truncateToWidth(this.renderRow(row), inner, "...", true))
+      .map((row) =>
+        truncateToWidth(this.renderRow(row, widths), inner, "...", true),
+      )
       .join("\n");
   }
 
   /**
-   * Render one subagent as spinner or state marker, settings and last message.
+   * Render one subagent as spinner or state marker, aligned settings and last
+   * message.
    *
    * @param row - Subagent to render.
+   * @param widths - Column widths shared by every row of this render.
    * @returns The styled line, before width truncation.
    */
-  private renderRow(row: SubagentRow): string {
+  private renderRow(row: SubagentRow, widths: ColumnWidths): string {
     const { theme } = this;
-    const status =
-      row.state === "running"
-        ? `${row.seconds}s`
-        : `${row.state} after ${row.seconds}s`;
+    const column = columnsOf(row);
     const head = [
       stateMarker(row.state, this.frame, theme),
-      theme.bold(row.id),
-      theme.fg("muted", status),
-      theme.fg("dim", subagentSettings(row)),
+      theme.bold(padRight(column.id, widths.id)),
+      theme.fg("muted", padLeft(column.status, widths.status)),
+      theme.fg("dim", padRight(column.model, widths.model)),
+      theme.fg("dim", padRight(column.tools, widths.tools)),
+      theme.fg("dim", padRight(column.cwd, widths.cwd)),
     ].join(" ");
-    const message = firstLine(row.lastMessage);
-    return message ? `${head} ${theme.fg("muted", message)}` : head;
+    return column.message
+      ? `${head} ${theme.fg("muted", column.message)}`
+      : head;
   }
 
   /** Start or stop the animation to match the rows. */
   private syncAnimation(): void {
-    if (this.readRows().some((row) => row.state === "running")) {
+    if (this.readRows().some((row) => row.state === "work")) {
       this.startAnimation();
       return;
     }
@@ -639,6 +641,84 @@ class SubagentsOverlay implements Component {
   }
 }
 
+/** Plain text of one subagent row, split into aligned columns. */
+interface SubagentColumns {
+  id: string;
+  status: string;
+  model: string;
+  tools: string;
+  cwd: string;
+  message: string;
+}
+
+/** Widest value of each aligned column in one overlay render. */
+interface ColumnWidths {
+  id: number;
+  status: number;
+  model: number;
+  tools: number;
+  cwd: number;
+}
+
+/**
+ * Split a row into the plain text of each column.
+ *
+ * @param row - Subagent to split.
+ * @returns The column values, without colors or padding.
+ */
+function columnsOf(row: SubagentRow): SubagentColumns {
+  return {
+    id: row.id,
+    status: row.state,
+    model: modelLabel(row),
+    tools: toolsLabel(row),
+    cwd: row.cwd,
+    message: firstLine(row.lastMessage),
+  };
+}
+
+/**
+ * Measure the widest value of every column, so rows can line up.
+ *
+ * @param rows - Rows the overlay shows.
+ * @returns The terminal width of each column.
+ */
+function alignWidths(rows: SubagentRow[]): ColumnWidths {
+  const keys = ["id", "status", "model", "tools", "cwd"] as const;
+  const widths: ColumnWidths = { id: 0, status: 0, model: 0, tools: 0, cwd: 0 };
+  for (const row of rows) {
+    const column = columnsOf(row);
+    for (const key of keys) {
+      widths[key] = Math.max(widths[key], visibleWidth(column[key]));
+    }
+  }
+  return widths;
+}
+
+/**
+ * Pad plain text on the right to a terminal width.
+ *
+ * @param text - Text without ANSI attributes.
+ * @param width - Target terminal columns.
+ * @returns The text followed by spaces, unchanged when already wide enough.
+ */
+function padRight(text: string, width: number): string {
+  const missing = width - visibleWidth(text);
+  return missing > 0 ? text + " ".repeat(missing) : text;
+}
+
+/**
+ * Pad plain text on the left to a terminal width.
+ *
+ * @param text - Text without ANSI attributes.
+ * @param width - Target terminal columns.
+ * @returns The text preceded by spaces, unchanged when already wide enough.
+ */
+function padLeft(text: string, width: number): string {
+  const missing = width - visibleWidth(text);
+  return missing > 0 ? " ".repeat(missing) + text : text;
+}
+
 /**
  * Summary line of the `/subagents` overlay.
  *
@@ -650,7 +730,7 @@ function summaryOf(rows: SubagentRow[], theme: Theme): string {
   if (rows.length === 0) {
     return theme.fg("dim", "No subagents have run in this session.");
   }
-  const running = rows.filter((row) => row.state === "running").length;
+  const running = rows.filter((row) => row.state === "work").length;
   return theme.fg(
     "muted",
     `${running} running, ${rows.length - running} finished`,
@@ -660,18 +740,18 @@ function summaryOf(rows: SubagentRow[], theme: Theme): string {
 /**
  * Glyph and color for a subagent's state, with the spinner while it runs.
  *
- * @param state - `running` or the terminal state of a finished child.
+ * @param state - `work`, or the terminal state of a finished child.
  * @param frame - Current spinner frame index.
  * @param theme - Active theme.
  * @returns The styled marker.
  */
 function stateMarker(state: string, frame: number, theme: Theme): string {
   switch (state) {
-    case "running":
+    case "work":
       return theme.fg("accent", SPINNER_FRAMES[frame % SPINNER_FRAMES.length]);
     case "done":
       return theme.fg("success", "✓");
-    case "failed":
+    case "fail":
       return theme.fg("error", "✗");
     default:
       return theme.fg("dim", "·");
@@ -946,7 +1026,7 @@ function outcomeOf(
   const reason = failure ?? "the child exited without an answer";
   const body = [lastTurn.answer, stderr.trim()].filter(Boolean).join("\n\n");
   return {
-    state: "failed",
+    state: "fail",
     status: `failed after ${seconds}s: ${reason}`,
     body: body || "(no output)",
   };
@@ -1102,6 +1182,28 @@ function subagentTool(
 }
 
 /**
+ * Model column text.
+ *
+ * @param job - Model of the child.
+ * @returns The model, or the inherited-model fallback.
+ */
+function modelLabel(job: { model: string }): string {
+  return job.model || "model=default";
+}
+
+/**
+ * Tools column text.
+ *
+ * @param job - Tools of the child.
+ * @returns The tool list, or the inherited-tools fallback.
+ */
+function toolsLabel(job: { tools: string[] }): string {
+  return job.tools.length > 0
+    ? `tools=${job.tools.join(",")}`
+    : "tools=default";
+}
+
+/**
  * Describe a child's model, tools and working directory on one line.
  *
  * @param job - Model, tools and working directory of the child.
@@ -1112,11 +1214,7 @@ function subagentSettings(job: {
   tools: string[];
   cwd: string;
 }): string {
-  return [
-    job.model || "model=default",
-    job.tools.length > 0 ? `tools=${job.tools.join(",")}` : "tools=default",
-    job.cwd,
-  ].join(", ");
+  return [modelLabel(job), toolsLabel(job), job.cwd].join(", ");
 }
 
 /**

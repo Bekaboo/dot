@@ -588,11 +588,33 @@ test("/subagents shows a live overlay that closes on Escape", async (t) => {
   children[0].write(assistantRecord("first done"));
   children[0].close(0);
 
-  const text = overlay.render(160).join("\n");
+  const lines = overlay.render(160);
+  const text = lines.join("\n");
   assert.match(text, /1 running, 1 finished/);
   assert.ok(text.indexOf("first") < text.indexOf("second"));
   assert.match(text, /first done/);
-  assert.match(text, /[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏] second 0s/);
+  assert.match(text, /[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏] second +work/);
+
+  // Every row starts its tools and cwd columns at the same offset.
+  const firstRow = lines.find((line) => line.includes(" first "));
+  const secondRow = lines.find((line) => line.includes(" second "));
+  assert.ok(firstRow && secondRow, "both subagents are listed");
+  assert.match(firstRow, / first +done /);
+  assert.equal(
+    firstRow.indexOf("done "),
+    secondRow.indexOf("work "),
+    "status column is aligned",
+  );
+  assert.equal(
+    firstRow.indexOf("tools="),
+    secondRow.indexOf("tools="),
+    "tools column is aligned",
+  );
+  assert.equal(
+    firstRow.indexOf(workDir),
+    secondRow.indexOf(workDir),
+    "cwd column is aligned",
+  );
 
   // The last message is cut to the terminal width with an ellipsis.
   children[1].write(
@@ -655,7 +677,7 @@ test("subagent_status records a failure with its reason", async (t) => {
   const status = await pi.tools
     .get("subagent_status")
     .execute("call", {}, undefined, undefined, {});
-  assert.match(status.content[0].text, /\[subagent bad\] failed after \d+s: exit code 3/);
+  assert.match(status.content[0].text, /\[subagent bad\] fail after \d+s: exit code 3/);
 });
 
 test("subagent_status narrows to the ids it is given", async (t) => {
@@ -705,7 +727,7 @@ test("a killed child does not report a result", async (t) => {
   const status = await pi.tools
     .get("subagent_status")
     .execute("call", {}, undefined, undefined, {});
-  assert.match(status.content[0].text, /\[subagent killed\] killed after \d+s/);
+  assert.match(status.content[0].text, /\[subagent killed\] kill after \d+s/);
 });
 
 test("shutdown drops late child results", async (t) => {
