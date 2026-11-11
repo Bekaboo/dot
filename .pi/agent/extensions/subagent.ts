@@ -650,9 +650,9 @@ function subagentTool(
     description: `Start a separate pi process with a fresh context to work on a task in the background. Returns immediately; the child's answer arrives later as a "${MARKER_EXAMPLE} ..." message.`,
     promptSnippet: `Spawn a background pi subagent with its own prompt, tools and model; its result arrives later as a ${MARKER_EXAMPLE} message.`,
     promptGuidelines: [
-      "Use subagent to hand off self-contained work that can run alongside your own work, such as an independent review or a long scan.",
-      "Give a subagent a complete prompt: it cannot see this conversation.",
-      `Do not poll for a subagent's result; keep working and its ${MARKER_EXAMPLE} message will arrive on its own.`,
+      "Use `subagent` to hand off self-contained work that can run alongside your own work, such as an independent review or a long scan.",
+      "Give `subagent` a complete prompt: it cannot see this conversation.",
+      `Do not poll for \`subagent\`'s result; keep working and its ${MARKER_EXAMPLE} message will arrive on its own.`,
     ],
     parameters: SubagentParams,
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {

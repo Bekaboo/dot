@@ -703,12 +703,12 @@ function createTimerTool(registry: TimerRegistry) {
     promptSnippet:
       "Defer a wake: fire every interval, run a callback, and wake the agent on a tick or when a condition becomes true",
     promptGuidelines: [
-      "Name every timer with a short, unique, purpose-bearing id (batch3-done, pa1-peek, log1-monitor): the id is what you see in every wake, so it must remind you what you are waiting for.",
-      "Use timer instead of `sleep N; ...` in bash. Start the timer, then keep working or end your turn; ending a turn loses nothing because the wake starts a new turn when you are idle.",
-      "For a single deferred look, use no condition with intervalSec=N and maxTicks=1: one wake after N seconds, then the timer ends.",
-      "For 'tell me when it finishes', give a condition with maxTicks=0: no ticks, one wake when the condition exits 0.",
-      "For work that must happen every interval, put it in onTick; it runs on every fire, even when the wake itself is throttled.",
-      "A wake says only that something happened. After a wake, run the check you actually need, then stop the timer once you no longer care.",
+      "Name every `timer` with a short, unique, purpose-bearing id (batch3-done, pa1-peek, log1-monitor): the id is what you see in every wake, so it must remind you what you are waiting for.",
+      "Use `timer` instead of `sleep N; ...` in bash. Start the timer, then keep working or end your turn; ending a turn loses nothing because the wake starts a new turn when you are idle.",
+      "For a single deferred look, call `timer` with no condition, `intervalSec=N` and `maxTicks=1`: one wake after N seconds, then the timer ends.",
+      "For 'tell me when it finishes', give `timer` a condition and `maxTicks=0`: no ticks, one wake when the condition exits 0.",
+      "For work that must happen every interval, put it in `timer`'s `onTick`; it runs on every fire, even when the wake itself is throttled.",
+      "A `timer` wake says only that something happened. After a wake, run the check you actually need, then stop the timer once you no longer care.",
     ],
     parameters: TimerParams,
 

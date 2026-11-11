@@ -743,7 +743,7 @@ function todoWriteTool(
     description: `Replace the session todo list, a Markdown checklist. Item markers: \`- ${PENDING_BOX}\` pending, \`- ${IN_PROGRESS_BOX}\` in progress (at most one), \`- ${COMPLETED_BOX}\` done, \`- ${CANCELLED_BOX}\` cancelled. Use for the initial plan or a major rework. Returns the full list.`,
     promptSnippet: "Replace the session todo checklist with a new plan",
     promptGuidelines: [
-      "Use todo_write to plan before multi-step work whose progress is worth tracking (e.g. review then fix findings, multi-file changes, fix-test-commit loops), or when the user lists several items. Skip it for single-step or purely conversational requests.",
+      "Use `todo_write` to plan before multi-step work whose progress is worth tracking (e.g. review then fix findings, multi-file changes, fix-test-commit loops), or when the user lists several items. Skip it for single-step or purely conversational requests.",
     ],
     parameters: TodoWriteParams,
     // The todo tools share one mutable list, so Pi must run them in order.
@@ -781,8 +781,8 @@ function todoEditTool(
     description: `Update the session todo list, a Markdown checklist, with exact-text replacements like the edit tool: each oldText must match the current list exactly and uniquely, otherwise nothing changes. Item markers: \`- ${PENDING_BOX}\` pending, \`- ${IN_PROGRESS_BOX}\` in progress (at most one), \`- ${COMPLETED_BOX}\` done, \`- ${CANCELLED_BOX}\` cancelled. Returns the full list.`,
     promptSnippet: "Edit the session todo checklist in place",
     promptGuidelines: [
-      `Use todo_edit to mark an item ${IN_PROGRESS_BOX} when starting it and ${COMPLETED_BOX} right after finishing it, before starting the next one. Keep at most one item ${IN_PROGRESS_BOX}.`,
-      `When requirements change mid-task, update the todo list first. Mark abandoned items ${CANCELLED_BOX} instead of deleting them.`,
+      `Use \`todo_edit\` to mark an item ${IN_PROGRESS_BOX} when starting it and ${COMPLETED_BOX} right after finishing it, before starting the next one. Keep at most one item ${IN_PROGRESS_BOX}.`,
+      `Use \`todo_edit\` when requirements change mid-task: update the list first, and mark abandoned items ${CANCELLED_BOX} instead of deleting them.`,
     ],
     parameters: TodoEditParams,
     // The todo tools share one mutable list, so Pi must run them in order.
