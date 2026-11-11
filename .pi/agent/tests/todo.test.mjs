@@ -8,19 +8,23 @@ import todoExtension from "../extensions/todo.ts";
 
 /** Load the extension with a fake `pi` that only records registrations. */
 function setup() {
-  let tool;
+  const tools = new Map();
   const hooks = new Map();
   todoExtension({
     registerTool: (definition) => {
-      tool = definition;
+      tools.set(definition.name, definition);
     },
     registerCommand() {},
     registerEntryRenderer() {},
     on: (name, handler) => hooks.set(name, handler),
   });
-  const call = (params = {}, signal) => tool.execute("test", params, signal);
-  const list = async () => (await call()).details.list;
-  return { tool, hooks, call, list };
+  const run = (name, params, signal) =>
+    tools.get(name).execute("test", params, signal);
+  const view = () => run("todo_list", {});
+  const write = (list, signal) => run("todo_write", { list }, signal);
+  const edit = (edits, signal) => run("todo_edit", { edits }, signal);
+  const list = async () => (await view()).details.list;
+  return { tools, hooks, view, write, edit, list };
 }
 
 /** Render a tool result as plain text. */
@@ -59,7 +63,7 @@ function reply(content, stopReason) {
  *
  * The model is fake: it sends the given calls once, then says "Done".
  */
-async function sendTogether(tool, calls) {
+async function sendTogether(tools, calls) {
   const model = {
     id: "test",
     name: "test",
@@ -74,10 +78,10 @@ async function sendTogether(tool, calls) {
   };
   const replies = [
     reply(
-      calls.map((args, index) => ({
+      calls.map(({ name, args }, index) => ({
         type: "toolCall",
         id: String(index),
-        name: "todo",
+        name,
         arguments: args,
       })),
       "toolUse",
@@ -85,7 +89,7 @@ async function sendTogether(tool, calls) {
     reply([{ type: "text", text: "Done" }], "stop"),
   ];
   const agent = new Agent({
-    initialState: { model, tools: [tool] },
+    initialState: { model, tools: [...tools.values()] },
     streamFn: () => {
       const message = replies.shift();
       const stream = createAssistantMessageEventStream();
@@ -110,21 +114,62 @@ function idleUntilReminder(hooks) {
 
 const done = (item) => ({ oldText: `- [ ] ${item}`, newText: `- [x] ${item}` });
 
-test("todo writes, shows, and edits a checklist", async () => {
-  const { call, list } = setup();
+test("the three todo tools share one checklist", async () => {
+  const { view, write, edit, list } = setup();
 
-  await call({ write: "- [ ] A\n- [ ] B" });
+  await write("- [ ] A\n- [ ] B");
   assert.equal(await list(), "- [ ] A\n- [ ] B");
 
-  await call({ edits: [done("A")] });
+  const shown = await view();
+  assert.match(shown.content[0].text, /- \[ \] A\n- \[ \] B/);
+
+  await edit([done("A")]);
   assert.equal(await list(), "- [x] A\n- [ ] B");
 });
 
-test("todo rejects a bad update and keeps the old checklist", async () => {
-  const { call, list } = setup();
-  await call({ write: "- [ ] A" });
+test("each todo action has its own tool and parameters", () => {
+  const { tools } = setup();
 
-  const result = await call({ write: "not a checklist" });
+  assert.deepEqual([...tools.keys()], ["todo_list", "todo_write", "todo_edit"]);
+  assert.deepEqual(tools.get("todo_list").parameters.properties, {});
+  assert.deepEqual(Object.keys(tools.get("todo_write").parameters.properties), [
+    "list",
+  ]);
+  assert.deepEqual(Object.keys(tools.get("todo_edit").parameters.properties), [
+    "edits",
+  ]);
+  for (const tool of tools.values()) {
+    assert.equal(tool.executionMode, "sequential");
+  }
+});
+
+test("each todo call names its own tool in the header", () => {
+  const { tools } = setup();
+  const theme = { fg: (_color, text) => text, bold: (text) => text };
+  const header = (name, args) =>
+    tools
+      .get(name)
+      .renderCall(args, theme)
+      .render(1000)
+      .map((line) => line.trimEnd())
+      .join("\n");
+
+  assert.equal(header("todo_list", {}), "todo_list");
+  assert.equal(
+    header("todo_write", { list: "- [ ] A\n- [ ] B" }),
+    "todo_write (2 items)",
+  );
+  assert.equal(
+    header("todo_edit", { edits: [done("A")] }),
+    "todo_edit (1 edit)",
+  );
+});
+
+test("todo_write rejects a bad update and keeps the old checklist", async () => {
+  const { write, list } = setup();
+  await write("- [ ] A");
+
+  const result = await write("not a checklist");
 
   assert.equal(result.isError, true);
   assert.equal(await list(), "- [ ] A");
@@ -132,9 +177,9 @@ test("todo rejects a bad update and keeps the old checklist", async () => {
 
 test("todo restores the latest checklist when switching session branches", async () => {
   const { hooks, list } = setup();
-  const todoResult = (list) => ({
+  const todoResult = (toolName, list) => ({
     type: "message",
-    message: { role: "toolResult", toolName: "todo", details: { list } },
+    message: { role: "toolResult", toolName, details: { list } },
   });
   const branch = (entries) => ({
     sessionManager: { getBranch: () => entries },
@@ -142,7 +187,10 @@ test("todo restores the latest checklist when switching session branches", async
 
   hooks.get("session_start")(
     {},
-    branch([todoResult("- [ ] A"), todoResult("- [x] A")]),
+    branch([
+      todoResult("todo_write", "- [ ] A"),
+      todoResult("todo_edit", "- [x] A"),
+    ]),
   );
   assert.equal(await list(), "- [x] A");
 
@@ -151,31 +199,41 @@ test("todo restores the latest checklist when switching session branches", async
 });
 
 test("two edits sent at once both stay in the checklist", async () => {
-  const { tool, call, list } = setup();
-  await call({ write: "- [ ] A\n- [ ] B" });
+  const { tools, write, list } = setup();
+  await write("- [ ] A\n- [ ] B");
 
-  await sendTogether(tool, [{ edits: [done("A")] }, { edits: [done("B")] }]);
+  await sendTogether(tools, [
+    { name: "todo_edit", args: { edits: [done("A")] } },
+    { name: "todo_edit", args: { edits: [done("B")] } },
+  ]);
 
   assert.equal(await list(), "- [x] A\n- [x] B");
 });
 
 test("a rejected call shows Pi's error, not 'No todos'", () => {
-  const { tool } = setup();
+  const { tools } = setup();
   // Pi's own errors (bad arguments, blocked calls) carry no checklist.
   const result = {
     content: [{ type: "text", text: "Tool execution was blocked" }],
     details: {},
   };
 
-  assert.equal(render(tool, result), "Tool execution was blocked");
+  assert.equal(
+    render(tools.get("todo_list"), result),
+    "Tool execution was blocked",
+  );
 });
 
 test("a cancelled call does not change the checklist", async () => {
-  const { call, list } = setup();
-  await call({ write: "- [ ] A" });
+  const { write, edit, list } = setup();
+  await write("- [ ] A");
 
-  for (const params of [{ write: "- [x] A" }, { edits: [done("A")] }]) {
-    await assert.rejects(call(params, AbortSignal.abort()));
+  const calls = [
+    (signal) => write("- [x] A", signal),
+    (signal) => edit([done("A")], signal),
+  ];
+  for (const call of calls) {
+    await assert.rejects(call(AbortSignal.abort()));
     assert.equal(await list(), "- [ ] A");
   }
 });
@@ -194,8 +252,8 @@ test("no todo reminders when the agent never made a checklist", () => {
 });
 
 test("long idle work with unfinished items reminds the next request only", async () => {
-  const { hooks, call } = setup();
-  await call({ write: "- [ ] A" });
+  const { hooks, write } = setup();
+  await write("- [ ] A");
   const history = [
     { role: "user", content: [{ type: "text", text: "Do A" }] },
     {
@@ -216,6 +274,7 @@ test("long idle work with unfinished items reminds the next request only", async
   const reminder = request.messages.at(-1).content.at(-1).text;
   assert.match(reminder, /<todo-reminder>/);
   assert.match(reminder, /- \[ \] A/);
+  assert.match(reminder, /todo_edit/);
   assert.equal(history[1].content.length, 1);
 
   assert.equal(
@@ -225,8 +284,8 @@ test("long idle work with unfinished items reminds the next request only", async
 });
 
 test("stopping with unfinished items asks the agent to continue once", async () => {
-  const { hooks, call } = setup();
-  await call({ write: "- [x] A\n- [ ] B" });
+  const { hooks, write } = setup();
+  await write("- [x] A\n- [ ] B");
   hooks.get("input")({});
   hooks.get("tool_execution_end")({ toolName: "read" });
   const settle = { outcome: "completed", entries: [] };
@@ -242,8 +301,8 @@ test("stopping with unfinished items asks the agent to continue once", async () 
 });
 
 test("stopping with every item closed does not ask the agent to continue", async () => {
-  const { hooks, call } = setup();
-  await call({ write: "- [x] A\n- [-] B" });
+  const { hooks, write } = setup();
+  await write("- [x] A\n- [-] B");
   hooks.get("input")({});
   hooks.get("tool_execution_end")({ toolName: "read" });
 

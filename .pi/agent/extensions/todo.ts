@@ -1,10 +1,11 @@
 /**
  * Todo Extension - a markdown-style checklist the agent plans with.
  *
- * The `todo` tool keeps one checklist per session branch:
- * - no arguments: view the list;
- * - `write`: replace the whole list (initial plan or major rework);
- * - `edits`: exact-text replacements applied by Pi's own edit tool, so a
+ * Three tools keep one checklist per session branch. One action per tool keeps
+ * each schema to the parameters that action actually uses:
+ * - `todo_list`: view the list;
+ * - `todo_write`: replace the whole list (initial plan or major rework);
+ * - `todo_edit`: exact-text replacements applied by Pi's own edit tool, so a
  *   misremembered item fails to match instead of silently corrupting the list.
  *
  * Every result carries the full list, both for the model and as a snapshot in
@@ -55,6 +56,13 @@ const STEER_AFTER_TURNS = 16;
 const LIST_NAME = "todo-list";
 const HINT_ENTRY_TYPE = "todo-hint";
 const CONTINUE_MESSAGE_TYPE = "todo-continue";
+
+/**
+ * Tools that snapshot the checklist in their result details.
+ *
+ * `todo` is the pre-split tool name, still present in older session branches.
+ */
+const TODO_TOOLS = new Set(["todo_list", "todo_write", "todo_edit", "todo"]);
 
 /** Checklist marker for each item status; the single source of truth. */
 const MARKERS = {
@@ -115,6 +123,17 @@ interface TodoDetails {
   error?: string;
 }
 
+/** Schema for the `todo_list` tool. */
+const TodoListParams = Type.Object({});
+
+/** Schema for the `todo_write` tool. */
+const TodoWriteParams = Type.Object({
+  list: Type.String({
+    description:
+      "Complete Markdown checklist replacing the current one. Use for the initial plan or a major rework.",
+  }),
+});
+
 const EditParams = Type.Object({
   oldText: Type.String({
     description: "Exact text of the current list to replace; must be unique.",
@@ -122,23 +141,26 @@ const EditParams = Type.Object({
   newText: Type.String({ description: "Replacement text." }),
 });
 
-/** Schema for the todo tool. */
-const TodoParams = Type.Object({
-  write: Type.Optional(
-    Type.String({
-      description:
-        "Replace the whole list with this Markdown checklist. Use for the initial plan or a major rework.",
-    }),
-  ),
-  edits: Type.Optional(
-    Type.Array(EditParams, {
-      description:
-        "Exact-text replacements on the current list, same rules as the edit tool.",
-    }),
-  ),
+/** Schema for the `todo_edit` tool. */
+const TodoEditParams = Type.Object({
+  edits: Type.Array(EditParams, {
+    description:
+      "Exact-text replacements on the current list, same rules as the edit tool.",
+  }),
 });
 
-type TodoInput = Static<typeof TodoParams>;
+/** One exact-text replacement against the current checklist. */
+type TodoEdit = Static<typeof EditParams>;
+
+/**
+ * Read the message of an unknown thrown value.
+ *
+ * @param error - Value thrown by validation or the edit tool.
+ * @returns The message text.
+ */
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
 
 /**
  * Parse a checklist.
@@ -226,7 +248,7 @@ function describeList(list: string): string {
  */
 async function applyEdits(
   list: string,
-  edits: NonNullable<TodoInput["edits"]>,
+  edits: TodoEdit[],
   signal?: AbortSignal,
 ): Promise<string> {
   // Edit a newline-terminated copy so deleting the last line with its "\n"
@@ -242,7 +264,7 @@ async function applyEdits(
     },
   });
   await editTool.execute(
-    "todo",
+    "todo_edit",
     { path: LIST_NAME, edits },
     signal,
     undefined,
@@ -284,7 +306,7 @@ function idleHint(list: string): string | undefined {
     `<todo-reminder>`,
     `The todo list has not been viewed or updated recently.`,
     list,
-    `If progress changed, update it with todo edits: mark the current item ${IN_PROGRESS_BOX}, finished items ${COMPLETED_BOX}, abandoned items ${CANCELLED_BOX}. Ignore this if the list is accurate.`,
+    `If progress changed, update it with todo_edit: mark the current item ${IN_PROGRESS_BOX}, finished items ${COMPLETED_BOX}, abandoned items ${CANCELLED_BOX}. Ignore this if the list is accurate.`,
     `</todo-reminder>`,
   ].join("\n");
 }
@@ -301,7 +323,7 @@ function continueMessage(list: string): string {
     list,
     `Continue with the next item if it is actionable now.`,
     `If you are waiting for the user's answer, say so briefly and stop.`,
-    `If remaining items are blocked or no longer relevant, mark them ${CANCELLED_BOX} with todo edits, then stop.`,
+    `If remaining items are blocked or no longer relevant, mark them ${CANCELLED_BOX} with todo_edit, then stop.`,
   ].join("\n");
 }
 
@@ -355,15 +377,58 @@ function renderItems(list: string, theme: Theme): string[] {
 }
 
 /**
- * Describe a call for its header line.
+ * Count non-blank lines in a candidate checklist.
  *
- * @param args - Current tool call arguments.
- * @returns Short mode description.
+ * @param list - Candidate checklist text.
+ * @returns Number of checklist lines, ignoring blanks.
  */
-function describeCall(args: TodoInput): string {
-  if (args.write !== undefined) return "write";
-  if (args.edits !== undefined) return `edit (${args.edits.length})`;
-  return "view";
+function countItems(list: string): number {
+  return list.split("\n").filter((line) => line.trim() !== "").length;
+}
+
+/**
+ * Build the header line of a todo tool call.
+ *
+ * @param name - Tool name, e.g. `todo_edit`.
+ * @param detail - Muted suffix describing the call, e.g. ` (2 edits)`.
+ * @param theme - Active theme.
+ * @returns The rendered header text.
+ */
+function callHeader(name: string, detail: string, theme: Theme): Text {
+  return new Text(
+    theme.fg("toolTitle", theme.bold(name)) + theme.fg("muted", detail),
+    0,
+    0,
+  );
+}
+
+/**
+ * Render a todo tool result as a colored checklist.
+ *
+ * @param result - Tool result from any todo tool.
+ * @param theme - Active theme.
+ * @returns The checklist, or Pi's error text when there is no snapshot.
+ */
+function renderTodoResult(
+  result: AgentToolResult<TodoDetails>,
+  theme: Theme,
+): Text {
+  const details = result.details;
+  // Host validation and blocked-call errors have no checklist snapshot.
+  if (typeof details?.list !== "string") {
+    const text = result.content
+      .filter((block) => block.type === "text")
+      .map((block) => block.text)
+      .join("\n");
+    return new Text(theme.fg("error", text), 0, 0);
+  }
+  const lines = details.list
+    ? renderItems(details.list, theme)
+    : [theme.fg("dim", "No todos")];
+  if (details.error) {
+    lines.unshift(theme.fg("error", `Error: ${details.error}`));
+  }
+  return new Text(lines.join("\n"), 0, 0);
 }
 
 /**
@@ -444,35 +509,62 @@ class Todo {
   private workedSinceInput = false;
 
   /**
-   * Run one todo call.
+   * Show the current checklist.
    *
-   * @param params - Validated tool input.
-   * @param signal - Cancellation signal; aborted calls leave the list unchanged.
-   * @returns A result with the full list; failures leave the list unchanged.
+   * @returns A result with the full list.
    */
-  async execute(
-    params: TodoInput,
+  async view(): Promise<AgentToolResult<TodoDetails>> {
+    return todoResult(this.list, "Viewed the todo list.");
+  }
+
+  /**
+   * Replace the whole checklist.
+   *
+   * @param text - Candidate checklist text.
+   * @param signal - Cancellation signal; an aborted call leaves the list unchanged.
+   * @returns A result with the full list; an invalid checklist keeps the old one.
+   */
+  async write(
+    text: string,
     signal?: AbortSignal,
   ): Promise<AgentToolResult<TodoDetails>> {
     signal?.throwIfAborted();
-    if (params.write !== undefined && params.edits !== undefined) {
-      return todoResult(this.list, "", "Pass either write or edits, not both.");
-    }
-    if (params.write === undefined && params.edits === undefined) {
-      return todoResult(this.list, "Viewed the todo list.");
-    }
+    return this.commit(text);
+  }
 
+  /**
+   * Apply exact-text replacements to the checklist.
+   *
+   * @param edits - Replacements to apply.
+   * @param signal - Cancellation signal; an aborted call leaves the list unchanged.
+   * @returns A result with the full list; a failed edit keeps the old one.
+   */
+  async edit(
+    edits: TodoEdit[],
+    signal?: AbortSignal,
+  ): Promise<AgentToolResult<TodoDetails>> {
+    signal?.throwIfAborted();
+    let next: string;
     try {
-      const next =
-        params.write !== undefined
-          ? params.write
-          : await applyEdits(this.list, params.edits ?? [], signal);
-      signal?.throwIfAborted();
-      this.list = normalizeList(next);
+      next = await applyEdits(this.list, edits, signal);
     } catch (error) {
       signal?.throwIfAborted();
-      const message = error instanceof Error ? error.message : String(error);
-      return todoResult(this.list, "", message);
+      return todoResult(this.list, "", errorMessage(error));
+    }
+    return this.commit(next);
+  }
+
+  /**
+   * Validate a candidate checklist and make it the current list.
+   *
+   * @param next - Candidate checklist, not yet normalized.
+   * @returns A result with the full list; an invalid checklist keeps the old one.
+   */
+  private commit(next: string): AgentToolResult<TodoDetails> {
+    try {
+      this.list = normalizeList(next);
+    } catch (error) {
+      return todoResult(this.list, "", errorMessage(error));
     }
     return todoResult(this.list, "Updated the todo list.");
   }
@@ -480,7 +572,7 @@ class Todo {
   /**
    * Rebuild the list from the active session branch.
    *
-   * The latest `todo` result on the branch wins, so forks and branches see the
+   * The latest todo result on the branch wins, so forks and branches see the
    * list that existed at that point in history.
    *
    * @param ctx - Session context providing the active branch.
@@ -492,7 +584,10 @@ class Todo {
     for (const entry of ctx.sessionManager.getBranch()) {
       if (entry.type !== "message") continue;
       const message = entry.message;
-      if (message.role !== "toolResult" || message.toolName !== "todo")
+      if (
+        message.role !== "toolResult" ||
+        !TODO_TOOLS.has(message.toolName)
+      )
         continue;
       const details = message.details as TodoDetails | undefined;
       if (typeof details?.list !== "string") continue;
@@ -510,57 +605,103 @@ class Todo {
   }
 
   /**
-   * Build the `todo` tool definition.
+   * Build the `todo_list` tool definition.
    *
    * @returns Tool definition registered with Pi.
    */
-  createTool(): ToolDefinition<typeof TodoParams, TodoDetails> {
-    const editTool = createEditToolDefinition("/");
+  createListTool(): ToolDefinition<typeof TodoListParams, TodoDetails> {
     return {
-      name: "todo",
-      label: "Todo",
-      description: `Manage the session todo list, a Markdown checklist. Item markers: \`- ${PENDING_BOX}\` pending, \`- ${IN_PROGRESS_BOX}\` in progress (at most one), \`- ${COMPLETED_BOX}\` done, \`- ${CANCELLED_BOX}\` cancelled. Call with no arguments to view the list. \`write\` replaces the whole list. \`edits\` applies exact-text replacements like the edit tool: each oldText must match the current list exactly and uniquely, otherwise nothing changes. Every call returns the full list.`,
-      promptSnippet: "Track multi-step work as a visible Markdown checklist",
-      promptGuidelines: [
-        "Use todo with write to plan before multi-step work whose progress is worth tracking (e.g. review then fix findings, multi-file changes, fix-test-commit loops), or when the user lists several items. Skip it for single-step or purely conversational requests.",
-        `Use todo edits to mark an item ${IN_PROGRESS_BOX} when starting it and ${COMPLETED_BOX} right after finishing it, before starting the next one. Keep at most one item ${IN_PROGRESS_BOX}.`,
-        `When requirements change mid-task, update todo first. Mark abandoned items ${CANCELLED_BOX} instead of deleting them.`,
-      ],
-      parameters: TodoParams,
-      // Calls share one mutable list, so Pi must run them in source order.
+      name: "todo_list",
+      label: "Todo List",
+      description:
+        "Show the session todo list, a Markdown checklist. Every other todo tool also returns the full list, so call this only to re-read the current state.",
+      promptSnippet: "View the session todo checklist",
+      parameters: TodoListParams,
+      // The todo tools share one mutable list, so Pi must run them in order.
       executionMode: "sequential",
-      prepareArguments: editTool.prepareArguments as (
-        args: unknown,
-      ) => TodoInput,
+      execute: () => this.view(),
 
-      execute: (_toolCallId, params, signal) => this.execute(params, signal),
+      renderCall(_args, theme) {
+        return callHeader("todo_list", "", theme);
+      },
+
+      renderResult(result, _options, theme) {
+        return renderTodoResult(result, theme);
+      },
+    };
+  }
+
+  /**
+   * Build the `todo_write` tool definition.
+   *
+   * @returns Tool definition registered with Pi.
+   */
+  createWriteTool(): ToolDefinition<typeof TodoWriteParams, TodoDetails> {
+    return {
+      name: "todo_write",
+      label: "Todo Write",
+      description: `Replace the session todo list, a Markdown checklist. Item markers: \`- ${PENDING_BOX}\` pending, \`- ${IN_PROGRESS_BOX}\` in progress (at most one), \`- ${COMPLETED_BOX}\` done, \`- ${CANCELLED_BOX}\` cancelled. Use for the initial plan or a major rework. Returns the full list.`,
+      promptSnippet: "Replace the session todo checklist with a new plan",
+      promptGuidelines: [
+        "Use todo_write to plan before multi-step work whose progress is worth tracking (e.g. review then fix findings, multi-file changes, fix-test-commit loops), or when the user lists several items. Skip it for single-step or purely conversational requests.",
+      ],
+      parameters: TodoWriteParams,
+      // The todo tools share one mutable list, so Pi must run them in order.
+      executionMode: "sequential",
+      execute: (_toolCallId, params, signal) =>
+        this.write(params.list, signal),
 
       renderCall(args, theme) {
-        return new Text(
-          theme.fg("toolTitle", theme.bold("todo ")) +
-            theme.fg("muted", describeCall(args)),
-          0,
-          0,
+        const count = countItems(args.list ?? "");
+        return callHeader(
+          "todo_write",
+          ` (${count} item${count === 1 ? "" : "s"})`,
+          theme,
         );
       },
 
       renderResult(result, _options, theme) {
-        const details = result.details;
-        // Host validation and blocked-call errors have no checklist snapshot.
-        if (typeof details?.list !== "string") {
-          const text = result.content
-            .filter((block) => block.type === "text")
-            .map((block) => block.text)
-            .join("\n");
-          return new Text(theme.fg("error", text), 0, 0);
-        }
-        const lines = details.list
-          ? renderItems(details.list, theme)
-          : [theme.fg("dim", "No todos")];
-        if (details.error) {
-          lines.unshift(theme.fg("error", `Error: ${details.error}`));
-        }
-        return new Text(lines.join("\n"), 0, 0);
+        return renderTodoResult(result, theme);
+      },
+    };
+  }
+
+  /**
+   * Build the `todo_edit` tool definition.
+   *
+   * @returns Tool definition registered with Pi.
+   */
+  createEditTool(): ToolDefinition<typeof TodoEditParams, TodoDetails> {
+    const editTool = createEditToolDefinition("/");
+    return {
+      name: "todo_edit",
+      label: "Todo Edit",
+      description: `Update the session todo list, a Markdown checklist, with exact-text replacements like the edit tool: each oldText must match the current list exactly and uniquely, otherwise nothing changes. Item markers: \`- ${PENDING_BOX}\` pending, \`- ${IN_PROGRESS_BOX}\` in progress (at most one), \`- ${COMPLETED_BOX}\` done, \`- ${CANCELLED_BOX}\` cancelled. Returns the full list.`,
+      promptSnippet: "Edit the session todo checklist in place",
+      promptGuidelines: [
+        `Use todo_edit to mark an item ${IN_PROGRESS_BOX} when starting it and ${COMPLETED_BOX} right after finishing it, before starting the next one. Keep at most one item ${IN_PROGRESS_BOX}.`,
+        `When requirements change mid-task, update the todo list first. Mark abandoned items ${CANCELLED_BOX} instead of deleting them.`,
+      ],
+      parameters: TodoEditParams,
+      // The todo tools share one mutable list, so Pi must run them in order.
+      executionMode: "sequential",
+      prepareArguments: editTool.prepareArguments as (
+        args: unknown,
+      ) => Static<typeof TodoEditParams>,
+      execute: (_toolCallId, params, signal) =>
+        this.edit(params.edits, signal),
+
+      renderCall(args, theme) {
+        const count = args.edits?.length ?? 0;
+        return callHeader(
+          "todo_edit",
+          ` (${count} edit${count === 1 ? "" : "s"})`,
+          theme,
+        );
+      },
+
+      renderResult(result, _options, theme) {
+        return renderTodoResult(result, theme);
       },
     };
   }
@@ -592,7 +733,7 @@ class Todo {
    */
   trackToolExecution(event: ToolExecutionEndEvent): void {
     this.workedSinceInput = true;
-    if (event.toolName === "todo") this.touchedThisTurn = true;
+    if (TODO_TOOLS.has(event.toolName)) this.touchedThisTurn = true;
   }
 
   /**
@@ -680,7 +821,9 @@ class Todo {
 export default function todoExtension(pi: ExtensionAPI): void {
   const todo = new Todo();
 
-  pi.registerTool(todo.createTool());
+  pi.registerTool(todo.createListTool());
+  pi.registerTool(todo.createWriteTool());
+  pi.registerTool(todo.createEditTool());
   pi.registerCommand("todos", todo.createCommand());
   pi.on("session_start", (_event, ctx) => todo.restore(ctx));
   pi.on("session_tree", (_event, ctx) => todo.restore(ctx));
