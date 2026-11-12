@@ -209,12 +209,31 @@ function fakePi() {
 }
 
 /**
- * The child's arguments, from the mode flag that describes how it was spawned.
+ * How the extension launched the child pi, as pi itself would read it.
+ *
+ * Options are read by name rather than by position, so the assertions can state
+ * what the child gets -- its session name, model, tools -- without pinning the
+ * order or the exact spelling a current build happens to use.
  *
  * @param child - Fake child created by `spawn`.
- * @returns The arguments pi itself would receive.
+ * @returns Option values by name, and the set of flags the child was given.
  */
-const piArgs = (child) => child.args.slice(child.args.indexOf("--mode"));
+const childOptions = (child) => {
+  const options = {};
+  const flags = new Set();
+  for (let i = 0; i < child.args.length; i++) {
+    const arg = child.args[i];
+    if (!arg.startsWith("-")) continue;
+    const [flag, inlineValue] = arg.split("=");
+    const name = flag.replace(/^-+/, "");
+    flags.add(name);
+    const next = child.args[i + 1];
+    if (inlineValue !== undefined) options[name] = inlineValue;
+    else if (next !== undefined && !next.startsWith("-"))
+      options[name] = child.args[++i];
+  }
+  return { options, flags };
+};
 
 /**
  * The commands the extension wrote to a fake child's stdin.
@@ -359,24 +378,22 @@ describe("subagent", () => {
       const [child] = children;
       assert.equal(child.options.cwd, workDir);
       assert.equal(child.options.shell, false);
-      assert.deepEqual(piArgs(child).slice(0, 4), [
-        "--mode",
-        "rpc",
-        "--no-session",
-        "--name",
-      ]);
+      const { options, flags } = childOptions(child);
       assert.equal(
-        piArgs(child)[4],
+        options.name,
         "cfg",
-        "the call's id names the child session, so intercom peers read it",
+        "the child's session is named after the call's id, so peers can address it",
       );
-      const toolsAt = child.args.indexOf("--tools");
-      assert.deepEqual(child.args.slice(toolsAt, toolsAt + 2), [
-        "--tools",
-        "read,bash,subagent_finish",
-      ]);
+      assert.equal(options.mode, "rpc", "the child stays alive between its turns");
+      assert.ok(flags.has("no-session"), "the child keeps no session file of its own");
+      assert.equal(options.model, "some/model");
+      assert.deepEqual(
+        options.tools.split(","),
+        ["read", "bash", "subagent_finish"],
+        "the child gets the allowed tools plus its own way to end the session",
+      );
       assert.ok(
-        !child.args.includes("--append-system-prompt"),
+        !flags.has("append-system-prompt"),
         "the role and lifetime rules live in the finish tool declaration",
       );
       assert.ok(
@@ -414,18 +431,16 @@ describe("subagent", () => {
     test("keeps pi's defaults when model and tools are omitted", async (t) => {
       const { call, children } = setup(t);
       await call({ id: "plain", prompt: "x" });
-      const [child] = children;
-      assert.ok(!piArgs(child).includes("--model"));
-      assert.ok(!piArgs(child).includes("--tools"));
+      const { options } = childOptions(children[0]);
+      assert.equal(options.model, undefined);
+      assert.equal(options.tools, undefined);
     });
 
     test("keeps the finish tool reachable whatever the caller selected", async (t) => {
       const { call, children, pi } = setup(t);
       const toolsOf = async (tools) => {
         await call({ id: `sel-${tools.join("_")}`, prompt: "x", tools });
-        const args = children.at(-1).args;
-        const at = args.indexOf("--tools");
-        return at < 0 ? undefined : args[at + 1];
+        return childOptions(children.at(-1)).options.tools;
       };
 
       assert.equal(await toolsOf(["read"]), "read,subagent_finish");
@@ -446,13 +461,9 @@ describe("subagent", () => {
       });
       const result = await call({ id: "inherit", prompt: "x" });
       const [child] = children;
-      const modelAt = child.args.indexOf("--model");
-      assert.deepEqual(child.args.slice(modelAt, modelAt + 4), [
-        "--model",
-        "qoder/Fast",
-        "--thinking",
-        "high",
-      ]);
+      const { options } = childOptions(child);
+      assert.equal(options.model, "qoder/Fast");
+      assert.equal(options.thinking, "high");
       assert.match(result.content[0].text, /model=qoder\/Fast/);
     });
 
@@ -462,10 +473,10 @@ describe("subagent", () => {
         thinkingLevel: "high",
       });
       await call({ id: "explicit", prompt: "x", model: "some/model:low" });
-      const [child] = children;
-      assert.equal(child.args[child.args.indexOf("--model") + 1], "some/model:low");
+      const { options, flags } = childOptions(children[0]);
+      assert.equal(options.model, "some/model:low");
       assert.ok(
-        !piArgs(child).includes("--thinking"),
+        !flags.has("thinking"),
         "a `:level` suffix already carries the level",
       );
     });
@@ -1054,8 +1065,8 @@ describe("subagent", () => {
         .execute("call", { id: "sel", prompt: "x", tools: ["read"] }, undefined, undefined, {
           cwd: workDir,
         });
-      const args = children[0].args;
-      assert.equal(args[args.indexOf("--tools") + 1], "read,subagent_finish");
+      const toolSelection = childOptions(children[0]).options.tools;
+      assert.deepEqual(toolSelection.split(","), ["read", "subagent_finish"]);
     });
 
     test("the finish declaration carries the child's role and lifetime rules", async (t) => {
