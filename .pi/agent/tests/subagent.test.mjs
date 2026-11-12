@@ -940,7 +940,7 @@ describe("subagent", () => {
       const { call, pi, children } = setup(t);
       await call({ id: "refused", prompt: "x" });
       children[0].write(
-        rpcRecord({ type: "response", command: "prompt", success: false, error: "Model not found" }),
+        rpcRecord({ id: "prompt", type: "response", command: "prompt", success: false, error: "Model not found" }),
       );
       children[0].close(143);
       const [sent] = await notices(pi);
@@ -956,6 +956,7 @@ describe("subagent", () => {
       await call({ id: "consumed", prompt: "x" });
       children[0].write(
         rpcRecord({
+          id: "prompt",
           type: "response",
           command: "prompt",
           success: true,
@@ -1878,6 +1879,101 @@ describe("subagent", () => {
     });
   });
 
+  describe("subagent_update", () => {
+    /**
+     * Call `subagent_update` on a fake pi.
+     *
+     * @param pi - Fake pi holding the registered tool.
+     * @param params - Tool parameters.
+     * @returns The text the agent reads back.
+     */
+    async function update(pi, params) {
+      const result = await pi.tools
+        .get("subagent_update")
+        .execute("call", params, undefined, undefined, {});
+      return result.content[0].text;
+    }
+
+    test("a longer timeout keeps a child alive past its old deadline", async (t) => {
+      const { call, pi, children } = setup(t);
+      await call({ id: "grown", prompt: "x", timeoutSec: 0.1 });
+      const text = await update(pi, { id: "grown", timeoutSec: 0.5 });
+      assert.match(text, /\[subagent grown\] timeout changed from 0\.1s to 0\.5s/);
+
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      assert.equal(pi.sent.length, 0, "the old deadline no longer fires");
+      assert.deepEqual(children[0].kills, []);
+
+      const [sent] = await notices(pi);
+      assert.match(
+        sent.message.content,
+        /^\[subagent grown\] timeout after \d+s: no result within its 0\.5s timeout/,
+      );
+      const status = await pi.tools
+        .get("subagent_status")
+        .execute("call", { id: "grown" }, undefined, undefined, {});
+      assert.match(status.content[0].text, /\(timeout=0\.5s\)/);
+    });
+
+    test("the child is told its new limit", async (t) => {
+      const { call, pi, children } = setup(t);
+      await call({ id: "told", prompt: "x", timeoutSec: 60 });
+      await update(pi, { id: "told", timeoutSec: 120 });
+      const last = childCommands(children[0]).at(-1);
+      assert.equal(last.type, "prompt");
+      assert.equal(last.message, "/subagent-timeout 120");
+    });
+
+    test("a deadline the child has already passed is refused", async (t) => {
+      const advance = fakeClock(t);
+      const { call, pi, children } = setup(t);
+      await call({ id: "late", prompt: "x", timeoutSec: 60 });
+      advance(30);
+      const text = await update(pi, { id: "late", timeoutSec: 20 });
+      assert.match(text, /already run for 30s/);
+      assert.equal(childCommands(children[0]).length, 1, "the child hears nothing");
+    });
+
+    test("only a running child can be updated", async (t) => {
+      const { call, pi, children } = setup(t);
+      assert.match(
+        await update(pi, { id: "ghost", timeoutSec: 60 }),
+        /No running subagent named \[subagent ghost\]/,
+      );
+      await call({ id: "over", prompt: "x" });
+      children[0].write(assistantRecord("done"));
+      children[0].close(0);
+      await notices(pi);
+      assert.match(
+        await update(pi, { id: "over", timeoutSec: 60 }),
+        /No running subagent named \[subagent over\]/,
+      );
+      assert.match(
+        await update(pi, { id: "over", timeoutSec: 0 }),
+        /must be a positive number/,
+      );
+    });
+
+    test("the update command is not mistaken for a refused task", async (t) => {
+      const { call, pi, children } = setup(t);
+      await call({ id: "steady", prompt: "x" });
+      await update(pi, { id: "steady", timeoutSec: 7200 });
+      children[0].write(
+        `${JSON.stringify({
+          id: "timeout-update",
+          type: "response",
+          command: "prompt",
+          success: true,
+          data: { disposition: "handled" },
+        })}\n`,
+      );
+      children[0].write(assistantRecord("all good"));
+      children[0].close(0);
+      const [sent] = await notices(pi);
+      assert.match(sent.message.content, /^\[subagent steady\] finished in/);
+    });
+  });
+
   describe("the child keep-alive gate", () => {
     /**
      * Install the extension the way a spawned child loads it.
@@ -1997,6 +2093,23 @@ describe("subagent", () => {
       await pi.tools.get("subagent_finish").execute("call", { answer: "x" });
       await new Promise((resolve) => setTimeout(resolve, 250));
       assert.equal(pi.sent.length, 0, "no warning after a finish request");
+    });
+
+    test("a moved deadline moves the warning and tells the model", async (t) => {
+      const pi = childSetup(t, { timeout: "0.2" });
+      await pi.commands.get("subagent-timeout").handler("0.6");
+      const [told] = pi.sent;
+      assert.match(told.message.content, /limit to 0\.6s/);
+      assert.deepEqual(
+        told.options,
+        { triggerTurn: false },
+        "the model learns it at its next request, without being woken",
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      assert.equal(pi.sent.length, 1, "the old warning no longer fires");
+      await waitFor(() => pi.sent.length === 2);
+      assert.match(pi.sent[1].message.content, /of this session's 0\.6s budget/);
     });
 
     test("a finish request waits for a turn that is already running", async (t) => {
