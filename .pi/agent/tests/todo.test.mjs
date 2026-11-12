@@ -219,7 +219,7 @@ describe("todo", () => {
     /** Turns before the stale-list reminder, as in the extension. */
     const REMIND_STALE_LIST_AFTER_TURNS = 16;
     /** Turns before the new-task reminder, as in the extension. */
-    const REMIND_NEW_TASK_AFTER_TURNS = 64;
+    const REMIND_NEW_TASK_AFTER_TURNS = 32;
 
     test("an agent without a checklist is left alone until the new-task window", () => {
       const { hooks } = setup();
@@ -338,7 +338,7 @@ describe("todo", () => {
         assert.match(reminder, /recently\.\n\n- \[ \] A\n\nIf progress changed/);
         assert.doesNotMatch(reminder, /without user input/);
       }
-      assert.deepEqual(reminderTurns, [16, 32, 48, 64, 80]);
+      assert.deepEqual(reminderTurns, [16, 32, 48]);
     });
 
     test("stalled turns never queue a reminder", () => {
