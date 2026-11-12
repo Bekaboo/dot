@@ -94,6 +94,20 @@ const START_TIMEOUT_MS = 60_000;
  */
 const DEFAULT_TIMEOUT_SEC = 3_600;
 
+/** Environment variable carrying a child's timeout, so it can warn itself. */
+const TIMEOUT_ENV = "PI_SUBAGENT_TIMEOUT_SEC";
+
+/** Fraction of its timeout after which a child is warned to wrap up. */
+const WARN_AT = 0.8;
+
+/**
+ * Shortest warning lead worth a model turn, in seconds.
+ *
+ * A percentage of a short timeout would land too close to the deadline to be
+ * useful, so the warning moves earlier instead.
+ */
+const MIN_WARN_LEAD_SEC = 10;
+
 /** Longest single JSONL record kept from the child, in bytes. */
 const MAX_RECORD_BYTES = 8 * 1024 * 1024;
 
@@ -943,7 +957,13 @@ class SubagentRunner {
       stdio: ["pipe", "pipe", "pipe"],
       // The child's own copy of this extension ends the process once its work
       // is done; the marker tells it that is its job rather than the user's.
-      env: { ...process.env, [CHILD_ENV]: "1" },
+      env: {
+        ...process.env,
+        [CHILD_ENV]: "1",
+        // The child warns itself near the deadline; it needs the same number
+        // the parent enforces.
+        [TIMEOUT_ENV]: String(subagent.timeoutSec),
+      },
     });
 
     this.children.set(subagent.id, proc);
@@ -1562,6 +1582,46 @@ function killTool(runner: SubagentRunner): ToolDefinition<typeof KillParams> {
 }
 
 /**
+ * Warn the child once its timeout approaches, so it can wrap up by itself.
+ *
+ * The parent still enforces the deadline; this only gives a model that forgot
+ * to finish, or that is waiting on slow background work, one last chance to
+ * deliver a usable answer instead of being cut off. `triggerTurn` wakes a child
+ * that is idle on a timer and `steer` reaches one that is mid-turn, which is
+ * exactly the delivery this needs.
+ *
+ * @param pi - Extension API of the child process.
+ * @param runner - Session state telling whether the child already finished.
+ */
+function warnBeforeDeadline(pi: ExtensionAPI, runner: SubagentRunner): void {
+  const timeoutSec = Number(process.env[TIMEOUT_ENV]);
+  if (!Number.isFinite(timeoutSec) || timeoutSec <= 0) return;
+
+  const leadSec = Math.min(
+    timeoutSec / 2,
+    Math.max(MIN_WARN_LEAD_SEC, timeoutSec * (1 - WARN_AT)),
+  );
+  const warning = setTimeout(
+    () => {
+      // A child that already asked to finish needs no warning.
+      if (runner.finishRequested()) return;
+      pi.sendMessage(
+        {
+          customType: "subagent-deadline",
+          content: `[subagent deadline] About ${Math.ceil(leadSec)}s of this session's ${timeoutSec}s budget is left. Wrap up now: finish what you can and call \`${FINISH_TOOL}\` with your best answer. Anything still pending is abandoned at the deadline, so start no background work that cannot finish in time.`,
+          display: true,
+        },
+        { deliverAs: "steer", triggerTurn: true },
+      );
+    },
+    (timeoutSec - leadSec) * 1000,
+  );
+  // The timer must not be the reason the child stays alive, and process exit
+  // cancels it: no shutdown hook is needed for it.
+  warning.unref();
+}
+
+/**
  * Build the `subagent_finish` tool, which only a spawned child registers.
  *
  * Its session outlives its turns so async tools can wake it, which means the
@@ -1665,5 +1725,6 @@ export default function subagent(pi: ExtensionAPI) {
   if (process.env[CHILD_ENV] === "1") {
     pi.registerTool(finishTool(runner));
     endChildWhenDone(pi, runner);
+    warnBeforeDeadline(pi, runner);
   }
 }

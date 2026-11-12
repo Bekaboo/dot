@@ -386,6 +386,11 @@ describe("the child invocation", () => {
       "1",
       "the child is told to end itself when its work is done",
     );
+    assert.equal(
+      child.options.env.PI_SUBAGENT_TIMEOUT_SEC,
+      "3600",
+      "the child warns itself against the same deadline",
+    );
     assert.equal(child.command, process.argv[1], "the child reuses the running pi build");
   });
 
@@ -991,12 +996,18 @@ describe("the child keep-alive gate", () => {
    * @param t - Node test context, used to restore the environment variable.
    * @returns The fake pi holding the registered gate.
    */
-  function childSetup(t) {
-    const previous = process.env.PI_SUBAGENT_CHILD;
+  function childSetup(t, { timeout } = {}) {
+    const previousChild = process.env.PI_SUBAGENT_CHILD;
+    const previousTimeout = process.env.PI_SUBAGENT_TIMEOUT_SEC;
     process.env.PI_SUBAGENT_CHILD = "1";
+    if (timeout !== undefined) process.env.PI_SUBAGENT_TIMEOUT_SEC = timeout;
+    else delete process.env.PI_SUBAGENT_TIMEOUT_SEC;
     t.after(() => {
-      if (previous === undefined) delete process.env.PI_SUBAGENT_CHILD;
-      else process.env.PI_SUBAGENT_CHILD = previous;
+      if (previousChild === undefined) delete process.env.PI_SUBAGENT_CHILD;
+      else process.env.PI_SUBAGENT_CHILD = previousChild;
+      if (previousTimeout === undefined)
+        delete process.env.PI_SUBAGENT_TIMEOUT_SEC;
+      else process.env.PI_SUBAGENT_TIMEOUT_SEC = previousTimeout;
     });
     resetChildren();
     shortKillGrace(t);
@@ -1066,6 +1077,34 @@ describe("the child keep-alive gate", () => {
     assert.match(result.content[0].text, /Finishing/);
     await pi.hooks.get("agent_settled")({ aborted: false }, ctx);
     assert.equal(state.shutDown, 1);
+  });
+
+  test("a child is warned once shortly before its deadline", async (t) => {
+    // A sub-second timeout keeps the test fast: half of it is the lead.
+    const pi = childSetup(t, { timeout: "0.2" });
+    const [sent] = await notices(pi);
+    assert.equal(sent.message.customType, "subagent-deadline");
+    assert.match(sent.message.content, /\[subagent deadline\] About 1s/);
+    assert.match(sent.message.content, /call `subagent_finish` with your best answer/);
+    assert.deepEqual(
+      sent.options,
+      { deliverAs: "steer", triggerTurn: true },
+      "the warning is steered, and wakes an idle child",
+    );
+    assert.equal(pi.sent.length, 1, "the warning is sent once");
+  });
+
+  test("a child with no timeout is not warned", async (t) => {
+    const pi = childSetup(t);
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    assert.equal(pi.sent.length, 0);
+  });
+
+  test("a child that already asked to finish is not warned", async (t) => {
+    const pi = childSetup(t, { timeout: "0.2" });
+    await pi.tools.get("subagent_finish").execute("call", {});
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    assert.equal(pi.sent.length, 0, "no warning after a finish request");
   });
 
   test("a finish request waits for a turn that is already running", async (t) => {
