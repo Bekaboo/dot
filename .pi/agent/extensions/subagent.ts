@@ -43,12 +43,7 @@ import {
 } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
-import {
-  type RunState,
-  SPINNER_FRAMES,
-  SPINNER_INTERVAL_MS,
-  stateMarker,
-} from "./lib/state-marker.ts";
+import { type RunState, Spinner } from "./lib/spinner.ts";
 
 /** Custom message type used for subagent notifications. */
 const NOTICE_TYPE = "subagent";
@@ -1447,12 +1442,12 @@ function openSuffix(step: ActivityStep): string {
  * Header line of one child's detail view.
  *
  * @param row - Child the view shows.
- * @param frame - Current spinner frame index.
+ * @param marker - Styled state marker of the child.
  * @param theme - Active theme.
  * @returns Text naming its id, state marker, state, elapsed time, timeout,
  *   model, tools and working directory, in the order the list row shows them.
  */
-function detailHeader(row: SubagentRow, frame: number, theme: Theme): string {
+function detailHeader(row: SubagentRow, marker: string, theme: Theme): string {
   const column = columnsOf(row);
   const state =
     row.state === "running"
@@ -1460,7 +1455,7 @@ function detailHeader(row: SubagentRow, frame: number, theme: Theme): string {
       : `${row.state} after ${row.seconds}s`;
   return [
     theme.bold(column.id),
-    stateMarker(row.state, frame, theme),
+    marker,
     theme.fg("muted", state),
     theme.fg("dim", column.timeout),
     theme.fg("dim", column.model),
@@ -1936,8 +1931,7 @@ class SubagentsOverlay implements Component {
   private readonly keybindings: KeybindingsManager;
   private readonly readRows: () => SubagentRow[];
   private readonly close: () => void;
-  private frame = 0;
-  private timer: ReturnType<typeof setInterval> | undefined;
+  private readonly spinner: Spinner;
   /** Index of the row the list view selected. */
   private selected = 0;
   /** Id whose detail view is open, or undefined while the list is shown. */
@@ -1955,6 +1949,7 @@ class SubagentsOverlay implements Component {
     this.keybindings = keybindings;
     this.readRows = readRows;
     this.close = close;
+    this.spinner = new Spinner(() => tui.requestRender());
     this.summaryText = new Text("", OVERLAY_PADDING_X, 0);
     this.rowsText = new Text("", OVERLAY_PADDING_X, 0);
     this.footerText = new Text("", OVERLAY_PADDING_X, 1);
@@ -1981,7 +1976,13 @@ class SubagentsOverlay implements Component {
     this.selected = Math.min(this.selected, Math.max(0, rows.length - 1));
     const detail = rows.find((row) => row.id === this.detailId);
     if (detail) {
-      this.summaryText.setText(detailHeader(detail, this.frame, this.theme));
+      this.summaryText.setText(
+        detailHeader(
+          detail,
+          this.spinner.marker(detail.state, this.theme),
+          this.theme,
+        ),
+      );
       this.rowsText.setText(`\n${this.renderDetail(detail, width)}`);
       this.footerText.setText(this.theme.fg("dim", "Escape to go back"));
       return this.container.render(width);
@@ -2016,7 +2017,7 @@ class SubagentsOverlay implements Component {
 
   /** Stop the animation when the overlay is closed. */
   dispose(): void {
-    this.stopAnimation();
+    this.spinner.stop();
   }
 
   handleInput(data: string): void {
@@ -2092,7 +2093,7 @@ class SubagentsOverlay implements Component {
     return [
       cursor,
       selected ? theme.fg("accent", theme.bold(id)) : theme.bold(id),
-      stateMarker(row.state, this.frame, theme),
+      this.spinner.marker(row.state, theme),
       theme.fg("muted", padLeft(column.status, widths.status)),
       theme.fg("muted", padLeft(column.elapsed, widths.elapsed)),
       theme.fg("dim", padRight(column.timeout, widths.timeout)),
@@ -2154,25 +2155,7 @@ class SubagentsOverlay implements Component {
 
   /** Start or stop the animation to match the rows. */
   private syncAnimation(): void {
-    if (this.readRows().some((row) => row.state === "running")) {
-      this.startAnimation();
-      return;
-    }
-    this.stopAnimation();
-  }
-
-  private startAnimation(): void {
-    if (this.timer) return;
-    this.timer = setInterval(() => {
-      this.frame = (this.frame + 1) % SPINNER_FRAMES.length;
-      this.tui.requestRender();
-    }, SPINNER_INTERVAL_MS);
-  }
-
-  private stopAnimation(): void {
-    if (!this.timer) return;
-    clearInterval(this.timer);
-    this.timer = undefined;
+    this.spinner.sync(this.readRows().some((row) => row.state === "running"));
   }
 }
 

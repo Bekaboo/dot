@@ -52,12 +52,7 @@ import {
 
 import { type Static, Type } from "typebox";
 
-import {
-  type RunState,
-  SPINNER_FRAMES,
-  SPINNER_INTERVAL_MS,
-  stateMarker,
-} from "./lib/state-marker.ts";
+import { type RunState, Spinner } from "./lib/spinner.ts";
 
 // Timer duration, polling, and notification defaults, in seconds.
 const DEFAULT_TIMEOUT_SEC = 3_600;
@@ -1626,12 +1621,10 @@ class TimersOverlay implements Component {
   private readonly container = new Container();
   private readonly summaryText: Text;
   private readonly rowsText: Text;
-  private readonly tui: TUI;
   private readonly theme: Theme;
   private readonly readRows: () => TimerRow[];
   private readonly close: () => void;
-  private frame = 0;
-  private refreshTimer: ReturnType<typeof setInterval> | undefined;
+  private readonly spinner: Spinner;
 
   constructor(
     tui: TUI,
@@ -1639,10 +1632,10 @@ class TimersOverlay implements Component {
     readRows: () => TimerRow[],
     close: () => void,
   ) {
-    this.tui = tui;
     this.theme = theme;
     this.readRows = readRows;
     this.close = close;
+    this.spinner = new Spinner(() => tui.requestRender());
     this.summaryText = new Text("", OVERLAY_PADDING_X, 0);
     this.rowsText = new Text("", OVERLAY_PADDING_X, 0);
 
@@ -1676,9 +1669,9 @@ class TimersOverlay implements Component {
     this.container.invalidate();
   }
 
-  /** Stop the refresh interval once the overlay is closed. */
+  /** Stop the animation once the overlay is closed. */
   dispose(): void {
-    this.stopRefresh();
+    this.spinner.stop();
   }
 
   handleInput(data: string): void {
@@ -1706,7 +1699,7 @@ class TimersOverlay implements Component {
         truncateToWidth(
           [
             theme.bold(padRight(row.id, widths.id)),
-            stateMarker(row.state, this.frame, theme),
+            this.spinner.marker(row.state, theme),
             theme.fg("muted", padRight(row.state, widths.state)),
             theme.fg("muted", padRight(row.age, widths.age)),
             theme.fg("dim", padRight(row.ticks, widths.ticks)),
@@ -1726,21 +1719,7 @@ class TimersOverlay implements Component {
    * @param rows - Rows to inspect; read from the registry when omitted.
    */
   private syncRefresh(rows: readonly TimerRow[] = this.readRows()): void {
-    if (!rows.some((row) => row.state === "running")) {
-      this.stopRefresh();
-      return;
-    }
-    if (this.refreshTimer) return;
-    this.refreshTimer = setInterval(() => {
-      this.frame = (this.frame + 1) % SPINNER_FRAMES.length;
-      this.tui.requestRender();
-    }, SPINNER_INTERVAL_MS);
-  }
-
-  private stopRefresh(): void {
-    if (!this.refreshTimer) return;
-    clearInterval(this.refreshTimer);
-    this.refreshTimer = undefined;
+    this.spinner.sync(rows.some((row) => row.state === "running"));
   }
 }
 
