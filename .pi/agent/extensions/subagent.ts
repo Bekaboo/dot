@@ -29,7 +29,6 @@ import {
   type Component,
   Container,
   matchesKey,
-  sliceByColumn,
   Text,
   type TUI,
   truncateToWidth,
@@ -58,17 +57,8 @@ const FINISHED_HISTORY = 10;
 /** Braille frames pi's built-in working spinner uses. */
 const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
-/** Marker a cut message tail starts with. */
-const TAIL_ELLIPSIS = "...";
-
 /** Spinner frame interval in ms, matching pi's built-in working indicator. */
 const SPINNER_INTERVAL_MS = 80;
-
-/** How much streaming text is kept for the overlay, in bytes. */
-const LIVE_TEXT_CAP_BYTES = 4 * 1024;
-
-/** How much recent streamed text each child keeps for the overlay, in chars. */
-const STREAM_CAP_CHARS = 4 * 1024;
 
 /** Horizontal padding inside the `/subagents` overlay. */
 const OVERLAY_PADDING_X = 2;
@@ -130,10 +120,6 @@ interface RunningSubagent {
   startedAt: number;
   /** Creation order, so two children started in one millisecond stay ordered. */
   order: number;
-  /** Recent completed assistant text, collapsed to one line, tail-capped. */
-  stream: string;
-  /** Text of the message currently streaming, collapsed to one line. */
-  draft: string;
 }
 
 /** A child that ended, kept briefly so `subagent_status` can report it. */
@@ -150,8 +136,6 @@ interface FinishedSubagent {
   cwd: string;
   /** Creation order, so two children started in one millisecond stay ordered. */
   order: number;
-  /** Recent assistant text the child streamed, collapsed to one line. */
-  stream: string;
 }
 
 /** One line of the `/subagents` overlay. */
@@ -166,28 +150,16 @@ interface SubagentRow {
   model: string;
   tools: string[];
   cwd: string;
-  /** Recent assistant text the child streamed, collapsed to one line. */
-  stream: string;
 }
 
 /** What the last assistant message of a child says, once its records are parsed. */
 interface LastTurn {
   /** Answer text of that message, or an empty string. */
   answer: string;
-  /** Text of the message currently streaming, by content-block index. */
-  blocks: Map<number, string>;
   /** Terminal stop reason, such as "error", "length" or "aborted". */
   stopReason?: StopReason;
   /** Provider or pi error text, when the turn failed. */
   errorMessage?: string;
-}
-
-/** Receives a child's assistant text as it streams. */
-interface TextObserver {
-  /** Current text of the message being streamed, replacing the last draft. */
-  draft(text: string): void;
-  /** Authoritative text of a message that just completed. */
-  complete(text: string): void;
 }
 
 /** Terminal state of a child, as its notification reports it. */
@@ -207,7 +179,6 @@ interface SubagentColumns {
   model: string;
   tools: string;
   cwd: string;
-  message: string;
 }
 
 /** Widest value of each aligned column in one overlay render. */
@@ -247,47 +218,14 @@ function marker(id: string): string {
 /**
  * Read the latest assistant text out of one JSONL record.
  *
- * The stream is delta-only, so the authoritative content is the completed
- * `message_end.message`. Text blocks are reported between completions, so the
- * overlay can follow the child live.
+ * Only completed `message_end` records carry the authoritative answer, so the
+ * last assistant message alone is kept.
  *
  * @param lastTurn - Last assistant message, updated in place.
  * @param record - Parsed `--mode json` record.
- * @param observer - Receives the current draft and each completed message.
  */
-function absorbRecord(
-  lastTurn: LastTurn,
-  record: unknown,
-  observer?: TextObserver,
-): void {
+function absorbRecord(lastTurn: LastTurn, record: unknown): void {
   const event = record as JsonAgentSessionEvent;
-  if (event.type === "message_update") {
-    const update = event.assistantMessageEvent;
-    if (update.type === "text_delta") {
-      const text =
-        (lastTurn.blocks.get(update.contentIndex) ?? "") + update.delta;
-      lastTurn.blocks.set(
-        update.contentIndex,
-        keepTailBytes(text, LIVE_TEXT_CAP_BYTES),
-      );
-      observer?.draft(draftText(lastTurn));
-    }
-    if (update.type === "text_end") {
-      lastTurn.blocks.set(
-        update.contentIndex,
-        keepTailBytes(update.content, LIVE_TEXT_CAP_BYTES),
-      );
-      observer?.draft(draftText(lastTurn));
-    }
-    return;
-  }
-  if (event.type === "message_start") {
-    if (event.message.role === "assistant") {
-      lastTurn.blocks.clear();
-      observer?.draft("");
-    }
-    return;
-  }
   if (event.type !== "message_end" || event.message.role !== "assistant")
     return;
   const message = event.message;
@@ -302,22 +240,6 @@ function absorbRecord(
   );
   lastTurn.stopReason = message.stopReason;
   lastTurn.errorMessage = message.errorMessage;
-  lastTurn.blocks.clear();
-  // A message with only tool calls adds no text to the recent stream.
-  if (lastTurn.answer) observer?.complete(lastTurn.answer);
-}
-
-/**
- * Join the text blocks of the message currently streaming.
- *
- * @param lastTurn - Last assistant message, holding the blocks.
- * @returns The visible draft text.
- */
-function draftText(lastTurn: LastTurn): string {
-  return [...lastTurn.blocks.entries()]
-    .sort(([left], [right]) => left - right)
-    .map(([, text]) => text)
-    .join("\n");
 }
 
 /**
@@ -329,20 +251,15 @@ function draftText(lastTurn: LastTurn): string {
  *
  * @param write - Sink for parser complaints, usually stderr accumulation.
  * @param lastTurn - Last assistant message, updated in place.
- * @param observer - Receives the current draft and each completed message.
  * @returns A function that accepts output chunks.
  */
-function recordParser(
-  write: (text: string) => void,
-  lastTurn: LastTurn,
-  observer?: TextObserver,
-) {
+function recordParser(write: (text: string) => void, lastTurn: LastTurn) {
   let partial = "";
   let skipping = false;
   const absorb = (line: string) => {
     if (!line.trim()) return;
     try {
-      absorbRecord(lastTurn, JSON.parse(line), observer);
+      absorbRecord(lastTurn, JSON.parse(line));
     } catch {
       // A malformed record carries no result; skip it. A lost result is caught
       // by the missing answer at exit, not by this line.
@@ -384,25 +301,6 @@ function truncateBytes(text: string, maxBytes: number): string {
     stream: true,
   });
   return `${head}\n[truncated]`;
-}
-
-/**
- * Keep the end of a string within a UTF-8 byte budget, adding a marker.
- *
- * The live overlay cares about the latest text, so a long block keeps its tail
- * instead of its head.
- *
- * @param text - Text to trim.
- * @param maxBytes - Byte budget, which the marker may exceed by a few bytes.
- * @returns Text no longer than the budget, prefixed with the marker when cut.
- */
-function keepTailBytes(text: string, maxBytes: number): string {
-  const bytes = Buffer.from(text, "utf8");
-  if (bytes.length <= maxBytes) return text;
-  const tail = new TextDecoder("utf-8").decode(
-    bytes.subarray(bytes.length - maxBytes),
-  );
-  return `[truncated]\n${tail}`;
 }
 
 /**
@@ -608,7 +506,6 @@ function columnsOf(row: SubagentRow): SubagentColumns {
     model: modelLabel(row),
     tools: toolsLabel(row),
     cwd: row.cwd,
-    message: row.stream,
   };
 }
 
@@ -701,57 +598,6 @@ function stateMarker(state: string, frame: number, theme: Theme): string {
 }
 
 /**
- * Collapse assistant text to the single line the overlay shows.
- *
- * @param text - Message text, possibly multi-line.
- * @returns Its whitespace collapsed to one line and trimmed.
- */
-function streamLine(text: string): string {
-  return text.replace(/\s+/g, " ").trim();
-}
-
-/**
- * Combine the completed stream with the message being streamed.
- *
- * @param stream - Recent completed assistant text, already collapsed.
- * @param draft - Text of the message currently streaming, already collapsed.
- * @returns The combined one-line stream.
- */
-function joinStream(stream: string, draft: string): string {
-  if (!draft) return stream;
-  return stream ? `${stream} ${draft}` : draft;
-}
-
-/**
- * Append a completed message to the rolling stream, keeping its tail.
- *
- * @param stream - Recent completed assistant text.
- * @param text - Authoritative text of the message that just completed.
- * @returns The stream with the new message, capped to its most recent chars.
- */
-function appendStream(stream: string, text: string): string {
-  const joined = joinStream(stream, streamLine(text));
-  return joined.length <= STREAM_CAP_CHARS
-    ? joined
-    : joined.slice(-STREAM_CAP_CHARS);
-}
-
-/**
- * Keep the end of a message that fits a terminal width.
- *
- * @param text - Message line, without ANSI attributes.
- * @param width - Terminal columns available for it.
- * @returns The text, or its tail with a leading ellipsis when it does not fit.
- */
-function tailText(text: string, width: number): string {
-  const total = visibleWidth(text);
-  if (total <= width) return text;
-  const budget = width - TAIL_ELLIPSIS.length;
-  if (budget <= 0) return TAIL_ELLIPSIS;
-  return TAIL_ELLIPSIS + sliceByColumn(text, total - budget, budget, true);
-}
-
-/**
  * The session's subagents: who is running, and how their results get back.
  *
  * One instance per extension load. It owns the child processes, so a shutdown
@@ -811,10 +657,7 @@ class SubagentRunner {
    *   prompt of the child.
    */
   start(
-    subagent: Omit<
-      RunningSubagent,
-      "startedAt" | "order" | "stream" | "draft" | "prompt"
-    > & {
+    subagent: Omit<RunningSubagent, "startedAt" | "order" | "prompt"> & {
       prompt: string;
       /** Thinking level to force, empty to keep the model's own setting. */
       thinking: string;
@@ -835,13 +678,11 @@ class SubagentRunner {
       cwd: subagent.cwd,
       startedAt: Date.now(),
       order: this.nextOrder++,
-      stream: "",
-      draft: "",
     };
     this.running.set(running.id, running);
     this.refreshOverlay();
 
-    const lastTurn: LastTurn = { answer: "", blocks: new Map() };
+    const lastTurn: LastTurn = { answer: "" };
     let stderrTail = "";
     let finished = false;
     let stopped = false;
@@ -852,20 +693,7 @@ class SubagentRunner {
     // In JSON mode a malformed record is the only place a parser complaint can
     // go; it lands next to the child's own stderr.
     proc.stdout.setEncoding("utf8");
-    proc.stdout.on(
-      "data",
-      recordParser(appendStderr, lastTurn, {
-        draft: (text) => {
-          running.draft = streamLine(text);
-          this.refreshOverlay();
-        },
-        complete: (text) => {
-          running.stream = appendStream(running.stream, text);
-          running.draft = "";
-          this.refreshOverlay();
-        },
-      }),
-    );
+    proc.stdout.on("data", recordParser(appendStderr, lastTurn));
     proc.stderr.setEncoding("utf8");
     proc.stderr.on("data", appendStderr);
 
@@ -894,7 +722,6 @@ class SubagentRunner {
         tools: running.tools,
         cwd: running.cwd,
         order: running.order,
-        stream: joinStream(running.stream, running.draft),
       });
       this.refreshOverlay();
       this.deliver(running.id, outcome);
@@ -986,7 +813,6 @@ class SubagentRunner {
       model: job.model,
       tools: job.tools,
       cwd: job.cwd,
-      stream: joinStream(job.stream, job.draft),
     }));
     const finished = this.finished.map((job) => ({
       id: job.id,
@@ -996,7 +822,6 @@ class SubagentRunner {
       model: job.model,
       tools: job.tools,
       cwd: job.cwd,
-      stream: job.stream,
     }));
     return [...running, ...finished].sort((a, b) => a.order - b.order);
   }
@@ -1035,7 +860,6 @@ class SubagentRunner {
         tools: job?.tools ?? [],
         cwd: job?.cwd ?? "",
         order: job?.order ?? 0,
-        stream: job ? joinStream(job.stream, job.draft) : "",
       });
       this.running.delete(id);
       this.stoppers.delete(id);
@@ -1104,7 +928,7 @@ class SubagentRunner {
  *
  * Laid out like the todo overlay: a bordered box with a title, a summary, one
  * line per child and an Escape hint. Rows are read from the runner on every
- * render, so elapsed time and the last message stay current. A running child
+ * render, so elapsed time stays current. A running child
  * gets the same braille spinner as pi's working indicator; the animation runs
  * only while one is alive.
  */
@@ -1195,28 +1019,22 @@ class SubagentsOverlay implements Component {
     const inner = Math.max(0, width - OVERLAY_PADDING_X * 2);
     return rows
       .map((row) =>
-        truncateToWidth(this.renderRow(row, widths, inner), inner, "...", true),
+        truncateToWidth(this.renderRow(row, widths), inner, "...", true),
       )
       .join("\n");
   }
 
   /**
-   * Render one subagent as spinner or state marker, aligned settings and last
-   * message.
+   * Render one subagent as spinner or state marker and aligned settings.
    *
    * @param row - Subagent to render.
    * @param widths - Column widths shared by every row of this render.
-   * @param inner - Width available to the row, including the message tail.
    * @returns The styled line, before width truncation.
    */
-  private renderRow(
-    row: SubagentRow,
-    widths: ColumnWidths,
-    inner: number,
-  ): string {
+  private renderRow(row: SubagentRow, widths: ColumnWidths): string {
     const { theme } = this;
     const column = columnsOf(row);
-    const head = [
+    return [
       stateMarker(row.state, this.frame, theme),
       theme.bold(padRight(column.id, widths.id)),
       theme.fg("muted", padLeft(column.status, widths.status)),
@@ -1225,9 +1043,6 @@ class SubagentsOverlay implements Component {
       theme.fg("dim", padRight(column.tools, widths.tools)),
       theme.fg("dim", padRight(column.cwd, widths.cwd)),
     ].join(" ");
-    const room = inner - visibleWidth(head) - 1;
-    if (!column.message || room <= TAIL_ELLIPSIS.length) return head;
-    return `${head} ${theme.fg("muted", tailText(column.message, room))}`;
   }
 
   /** Start or stop the animation to match the rows. */

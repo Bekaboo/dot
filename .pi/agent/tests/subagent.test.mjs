@@ -547,19 +547,6 @@ describe("the /subagents view", () => {
 
     await call({ id: "first", prompt: "x", model: "m", tools: ["read"] });
     await call({ id: "second", prompt: "y" });
-    children[0].write(
-      `${JSON.stringify({
-        type: "message_update",
-        assistantMessageEvent: {
-          type: "text_delta",
-          contentIndex: 0,
-          delta: "working on it",
-        },
-      })}\n`,
-    );
-    // Rendered wide, so the row's real working directory leaves room for the
-    // last message; width handling is checked below.
-    assert.match(overlay.render(160).join("\n"), /working on it/);
     // The first child finishes while the second keeps running; creation order
     // still decides the row order.
     children[0].write(assistantRecord("first done"));
@@ -569,7 +556,6 @@ describe("the /subagents view", () => {
     const text = lines.join("\n");
     assert.match(text, /1 running, 1 finished/);
     assert.ok(text.indexOf("first") < text.indexOf("second"));
-    assert.match(text, /first done/);
     assert.match(text, /[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏] second +work +0s/);
 
     // Every row starts its tools and cwd columns at the same offset.
@@ -598,81 +584,14 @@ describe("the /subagents view", () => {
       "cwd column is aligned",
     );
 
-    // The last message is cut to the terminal width with an ellipsis.
-    children[1].write(
-      `${JSON.stringify({
-        type: "message_update",
-        assistantMessageEvent: {
-          type: "text_delta",
-          contentIndex: 0,
-          delta: "x".repeat(200),
-        },
-      })}\n`,
-    );
+    // A narrow terminal cuts the row instead of overflowing it.
     const narrow = overlay.render(40);
-    assert.ok(narrow.some((line) => line.includes("...")));
     for (const line of narrow) assert.equal(widthOf(line), 40);
 
     overlay.handleInput("\x1b");
     await showing;
     assert.equal(screen.component, undefined, "Escape closes the overlay");
 
-    await pi.hooks.get("session_shutdown")({ reason: "quit" });
-  });
-
-  test("/subagents overlay keeps the recent stream tail", async (t) => {
-    const { call, pi, children } = setup(t);
-    const screen = fakeUI(t);
-    const showing = pi.commands.get("subagents").handler("", {
-      mode: "tui",
-      ui: screen.ui,
-    });
-    const overlay = screen.component;
-    await call({ id: "tail", prompt: "x" });
-
-    // Earlier messages stay in the stream, separated by a space.
-    children[0].write(assistantRecord("earlier line\n\nlatest line"));
-    assert.match(
-      overlay.render(160).join("\n"),
-      /earlier line latest line/,
-    );
-    children[0].write(assistantRecord("another update"));
-    assert.match(
-      overlay.render(160).join("\n"),
-      /earlier line latest line another update/,
-    );
-
-    // A long running message is cut from the left, so the newest text remains.
-    children[0].write(
-      `${JSON.stringify({
-        type: "message_update",
-        assistantMessageEvent: {
-          type: "text_delta",
-          contentIndex: 0,
-          delta: `${"x".repeat(200)}LATEST`,
-        },
-      })}\n`,
-    );
-    const row = overlay.render(160).find((line) => line.includes(" tail "));
-    assert.ok(row, "the subagent is still listed");
-    assert.match(row, /\.\.\.x+LATEST/);
-
-    // Past the live-text cap, the newest text is still the one shown.
-    children[0].write(
-      `${JSON.stringify({
-        type: "message_update",
-        assistantMessageEvent: {
-          type: "text_delta",
-          contentIndex: 0,
-          delta: `${"y".repeat(5000)}NEWEST`,
-        },
-      })}\n`,
-    );
-    const capped = overlay.render(160).find((line) => line.includes(" tail "));
-    assert.match(capped, /\.\.\.y+NEWEST/);
-
-    overlay.handleInput("\x1b");
-    await showing;
     await pi.hooks.get("session_shutdown")({ reason: "quit" });
   });
 });
