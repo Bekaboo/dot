@@ -151,7 +151,7 @@ const DEFAULT_TIMEOUT_SEC = 3_600;
 const TIMEOUT_ENV = "PI_SUBAGENT_TIMEOUT_SEC";
 
 /** Fraction of its timeout after which a child is warned to wrap up. */
-const WARN_AT = 0.8;
+const TIMEOUT_WARN_THRESH = 0.8;
 
 /**
  * Shortest warning lead worth a model turn, in seconds.
@@ -159,7 +159,7 @@ const WARN_AT = 0.8;
  * A percentage of a short timeout would land too close to the deadline to be
  * useful, so the warning moves earlier instead.
  */
-const MIN_WARN_LEAD_SEC = 10;
+const MIN_TIMEOUT_WARN_LEAD_SEC = 10;
 
 /**
  * System-prompt lines every spawned child gets.
@@ -1756,7 +1756,7 @@ function warnBeforeDeadline(pi: ExtensionAPI, runner: SubagentRunner): void {
 
   const leadSec = Math.min(
     timeoutSec / 2,
-    Math.max(MIN_WARN_LEAD_SEC, timeoutSec * (1 - WARN_AT)),
+    Math.max(MIN_TIMEOUT_WARN_LEAD_SEC, timeoutSec * (1 - TIMEOUT_WARN_THRESH)),
   );
   const warning = setTimeout(
     () => {
