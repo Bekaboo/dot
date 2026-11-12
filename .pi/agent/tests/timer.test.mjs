@@ -396,7 +396,7 @@ test("onTick output rides along with a wake", async (t) => {
 
   assert.match(
     notice.content,
-    /^\[timer build-timer\] tick 1\/1, \d+s elapsed\nbuild finished$/,
+    /^\[timer build-timer\] tick 1\/1, \d+s elapsed\n\nbuild finished$/,
   );
 });
 
@@ -488,7 +488,7 @@ test("a failing onTick does not kill the timer", async (t) => {
   });
   const [notice] = await noticesAfter(1);
 
-  assert.match(notice.content, /tick 1\/1.*\nonTick failed: Error: boom$/);
+  assert.match(notice.content, /tick 1\/1.*\n\nonTick failed: Error: boom$/);
 });
 
 test("maxTicks 0 silences a condition timer until it finishes", async (t) => {
@@ -547,7 +547,7 @@ test("restoring a session keeps the onTick callback", async (t) => {
   const [notice] = await noticesAfter(1);
 
   assert.equal(notice.details.id, "restored-timer");
-  assert.match(notice.content, /condition met .*\nrestored snapshot$/);
+  assert.match(notice.content, /condition met .*\n\nrestored snapshot$/);
 });
 
 test("timers already stopped on the branch are not restarted", async (t) => {
@@ -654,7 +654,7 @@ test("a job that exits 0 wakes with its output and the exit marker", async (t) =
 
   assert.match(
     notice.content,
-    /^\[timer job-ok\] exited 0 after \ds; timer stopped\nhi\n\[exit 0\]$/,
+    /^\[timer job-ok\] exited 0 after \ds; timer stopped\n\nhi\n\[exit 0\]$/,
   );
   assert.equal(notice.details.state, "done");
   assert.equal(result.details.start, "echo hi");
@@ -676,7 +676,7 @@ test("a job that exits non-zero wakes with failed: exit 3", async (t) => {
 
   assert.match(
     notice.content,
-    /^\[timer job-fail\] failed: exit 3 after \ds; timer stopped\nnope\n\[exit 3\]$/,
+    /^\[timer job-fail\] failed: exit 3 after \ds; timer stopped\n\nnope\n\[exit 3\]$/,
   );
   assert.equal(
     readFileSync(result.details.logPath, "utf8"),
@@ -707,7 +707,7 @@ test("a job timeout kills the job and marks the log", async (t) => {
 
   assert.equal(
     notice.content,
-    "[timer job-timeout] timeout after 1s; job killed; timer stopped\n[killed by the timer]",
+    "[timer job-timeout] timeout after 1s; job killed; timer stopped\n\n[killed by the timer]",
   );
   assert.equal(notice.details.state, "timeout");
   assert.match(
@@ -761,7 +761,7 @@ test("the exit wake carries only the last 10 log lines", async (t) => {
     /\n22\n23\n24\n25\n26\n27\n28\n29\n30\n\[exit 0\]$/,
   );
   assert.doesNotMatch(notice.content, /^21$/m);
-  assert.equal(notice.content.split("\n").length, 11);
+  assert.equal(notice.content.split("\n").length, 12);
 });
 
 test("onTick output follows the log tail in the exit wake", async (t) => {
@@ -774,7 +774,7 @@ test("onTick output follows the log tail in the exit wake", async (t) => {
 
   assert.match(
     notice.content,
-    /^\[timer job-ontick\] exited 0 after \ds; timer stopped\nhi\n\[exit 0\]\nsnapshot$/,
+    /^\[timer job-ontick\] exited 0 after \ds; timer stopped\n\nhi\n\[exit 0\]\nsnapshot$/,
   );
 });
 
@@ -814,7 +814,7 @@ test("restoring a branch re-attaches a live job without rerunning it", async (t)
 
   assert.match(
     notice.content,
-    /^\[timer job-reattach\] exited 0 after \ds; timer stopped\n\[exit 0\]$/,
+    /^\[timer job-reattach\] exited 0 after \ds; timer stopped\n\n\[exit 0\]$/,
   );
   // One line in the file and one marker in the log: the command ran once and
   // only one loop watched it to the end.

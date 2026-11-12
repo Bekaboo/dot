@@ -253,7 +253,7 @@ function hasUnfinished(list: string): boolean {
  * @returns The checklist, or a note that it is empty.
  */
 function describeList(list: string): string {
-  return list ? `Current todo list:\n${list}` : "The todo list is empty.";
+  return list ? `Current todo list:\n\n${list}` : "The todo list is empty.";
 }
 
 /**
@@ -327,7 +327,9 @@ function staleListHint(list: string): string | undefined {
   return [
     `<todo-reminder>`,
     `The todo list has not been viewed or updated recently.`,
+    ``,
     list,
+    ``,
     `If progress changed, update it with todo_edit: mark the current item ${IN_PROGRESS_BOX}, finished items ${COMPLETED_BOX}, abandoned items ${CANCELLED_BOX}. Ignore this if the list is accurate.`,
     `</todo-reminder>`,
   ].join("\n");
@@ -349,6 +351,7 @@ function newTaskHint(list: string): string {
     `You have worked ${REMIND_NEW_TASK_AFTER_TURNS} turns without user input, which usually means a long-horizon task. Plan and track it with the todo tools instead of keeping progress in your head:`,
     `- todo_write records the remaining work as a checklist;`,
     `- todo_edit marks the current item ${IN_PROGRESS_BOX} when you start it and ${COMPLETED_BOX} right after finishing it, before starting the next one.`,
+    ``,
     describeList(list),
     `</todo-reminder>`,
   ].join("\n");
@@ -363,7 +366,9 @@ function newTaskHint(list: string): string {
 function continueMessage(list: string): string {
   return [
     `You stopped, but the todo list still has unfinished items:`,
+    ``,
     list,
+    ``,
     `Continue with the next item if it is actionable now.`,
     `If you are waiting for the user's answer, say so briefly and stop.`,
     `If remaining items are blocked or no longer relevant, mark them ${CANCELLED_BOX} with todo_edit, then stop.`,

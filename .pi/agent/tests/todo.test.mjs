@@ -300,7 +300,11 @@ describe("steering reminders", () => {
       reminder,
       new RegExp(`${REMIND_NEW_TASK_AFTER_TURNS} turns without user input`),
     );
-    assert.match(reminder, /Current todo list:\n- \[x\] A\n- \[-\] B/);
+    // The checklist gets its own block so it cannot absorb what follows it.
+    assert.match(
+      reminder,
+      /Current todo list:\n\n- \[x\] A\n- \[-\] B\n<\/todo-reminder>$/,
+    );
   });
 
   test("unfinished items never get the new-task reminder", async () => {
@@ -317,7 +321,7 @@ describe("steering reminders", () => {
       if (!turnEnd) continue;
       reminderTurns.push(turn);
       const reminder = turnEnd.entries.at(-1).data.hint;
-      assert.match(reminder, /- \[ \] A/);
+      assert.match(reminder, /recently\.\n\n- \[ \] A\n\nIf progress changed/);
       assert.doesNotMatch(reminder, /without user input/);
     }
     assert.deepEqual(reminderTurns, [16, 32, 48, 64, 80]);
@@ -422,7 +426,7 @@ describe("stopping with unfinished items", () => {
     assert.equal(pushed.continue, true);
     assert.match(
       pushed.entries[0].content,
-      /unfinished items:\n- \[x\] A\n- \[ \] B/,
+      /unfinished items:\n\n- \[x\] A\n- \[ \] B\n\nContinue with the next item/,
     );
 
     assert.equal(hooks.get("agent_before_settle")(settle), undefined);

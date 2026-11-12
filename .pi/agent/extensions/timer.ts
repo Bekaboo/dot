@@ -1311,8 +1311,10 @@ class TimerRegistry {
     body = "",
   ): void {
     timer.noticePending = true;
+    // A blank line keeps the captured output its own block instead of letting a
+    // log line continue the summary paragraph.
     const content = body
-      ? `[timer ${timer.id}] ${line}\n${body}`
+      ? `[timer ${timer.id}] ${line}\n\n${body}`
       : `[timer ${timer.id}] ${line}`;
     this.pi.sendMessage(
       {

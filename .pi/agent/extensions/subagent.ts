@@ -1090,7 +1090,7 @@ class SubagentRunner {
     this.pi.sendMessage(
       {
         customType: NOTICE_TYPE,
-        content: `${marker(id)} ${outcome.status}\n${outcome.body}`,
+        content: `${marker(id)} ${outcome.status}\n\n${outcome.body}`,
         display: true,
         details: { id, state: outcome.state },
       },
