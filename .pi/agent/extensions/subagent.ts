@@ -169,10 +169,8 @@ const MIN_WARN_LEAD_SEC = 10;
  * that its session outlives its turns. They are appended verbatim via
  * `--append-system-prompt`.
  */
-const CHILD_SYSTEM_PROMPT = [
-  "You are a subagent working alone in the current directory: no user can answer questions, so finish the task and report back concisely.",
-  "This subagent session outlives its turns so background work you start, such as a timer or a nested subagent, can still wake you after you stop calling tools: end the turn instead of waiting for it in a loop, and react when its notification arrives.",
-].join("\n\n");
+const CHILD_SYSTEM_PROMPT =
+  "You are a subagent working in the current directory. Finish assigned task faithfaully and report back concisely.";
 
 /** Longest single JSONL record kept from the child, in bytes. */
 const MAX_RECORD_BYTES = 8 * 1024 * 1024;
@@ -1809,8 +1807,8 @@ function finishTool(
     promptSnippet:
       "End this subagent session and report your answer to the parent verbatim; a turn ending does not end the session.",
     promptGuidelines: [
-      `Call \`${FINISH_TOOL}\` when your answer is final, even if you started no background work: the parent receives the \`answer\` argument verbatim and nothing else, so put your complete report there.`,
-      `Background work still pending when you call \`${FINISH_TOOL}\` is abandoned, so wait for anything you still need before finishing.`,
+      `You MUST call \`${FINISH_TOOL}\` when your answer is final: the parent receives the \`answer\` argument verbatim and nothing else, so put your complete report there.`,
+      `Background work still pending when you call \`${FINISH_TOOL}\` is abandoned, so you may wait for anything you still need before finishing.`,
     ],
     parameters: FinishParams,
     async execute() {
