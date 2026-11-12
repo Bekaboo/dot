@@ -26,11 +26,15 @@ const exit = (code, stdout = "") => ({ code, stdout, stderr: "" });
 function setup(t, runCommand, { ack = true } = {}) {
   const tools = new Map();
   const hooks = new Map();
+  const commands = new Map();
   const notices = [];
   let onNotice = () => {};
   timerExtension({
     registerTool: (definition) => {
       tools.set(definition.name, definition);
+    },
+    registerCommand: (name, definition) => {
+      commands.set(name, definition);
     },
     on: (name, handler) => hooks.set(name, handler),
     exec: async (_bash, [_flag, command], { signal }) =>
@@ -73,6 +77,7 @@ function setup(t, runCommand, { ack = true } = {}) {
   return {
     hooks,
     tools,
+    commands,
     start,
     stop,
     status,
@@ -511,6 +516,99 @@ describe("timer", () => {
       [],
     );
     assert.match(result.content[0].text, /^Started "quiet-timer": no ticks; /);
+  });
+
+  test("/timers opens a live overlay showing active timers in aligned columns", async (t) => {
+    const { start, commands } = setup(t, runUntilCancelled);
+    let component;
+    const tui = { requestRender() {} };
+    const bolded = [];
+    const colored = [];
+    const theme = {
+      fg: (color, text) => {
+        colored.push({ color, text });
+        return text;
+      },
+      bold: (text) => {
+        bolded.push(text);
+        return text;
+      },
+    };
+    t.after(() => component?.dispose?.());
+    const screen = {
+      get component() {
+        return component;
+      },
+      ui: {
+        notify: () => assert.fail("TUI mode must not notify"),
+        custom(factory) {
+          return new Promise((resolve) => {
+            const done = (result) => {
+              const closing = component;
+              component = undefined;
+              closing?.dispose?.();
+              resolve(result);
+            };
+            component = factory(tui, theme, undefined, done);
+          });
+        },
+      },
+    };
+    const command = commands.get("timers");
+
+    const showing = command.handler("", { mode: "tui", ui: screen.ui });
+    const overlay = screen.component;
+    assert.ok(overlay, "the command opens the overlay");
+    const empty = overlay.render(60).join("\n");
+    assert.match(empty, /Timers/);
+    assert.match(empty, /No active timers/);
+    assert.match(empty, /Press Escape to close/);
+
+    await start({ id: "timer-a", condition: "false" });
+    await start({ id: "longer-timer", intervalSec: 5, maxTicks: 2 });
+
+    const lines = overlay.render(80);
+    assert.ok(
+      !lines.some((line) => /^\s*ID\s+STATE/.test(line)),
+      "the table has no header row",
+    );
+    const rows = lines.filter((line) => line.includes("running"));
+    assert.deepEqual(
+      rows.map((row) => row.trim().split(/ +/)[1]),
+      ["longer-timer", "timer-a"],
+    );
+    // Every row starts with the running spinner and keeps its columns aligned.
+    for (const row of rows) {
+      assert.match(row.trim(), /^[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏] /);
+    }
+    for (const column of ["running", "ticks "]) {
+      assert.equal(new Set(rows.map((row) => row.indexOf(column))).size, 1);
+    }
+    // Rows are highlighted like the subagent overlay: accent marker, bold id,
+    // muted state and age, dim tick budget and target.
+    assert.ok(bolded.some((text) => text.trim() === "timer-a"));
+    assert.ok(colored.some((entry) => entry.color === "accent"));
+    assert.ok(
+      colored.some(
+        (entry) => entry.color === "muted" && entry.text.trim() === "running",
+      ),
+    );
+    assert.ok(
+      colored.some(
+        (entry) => entry.color === "dim" && entry.text.includes("cond:"),
+      ),
+    );
+
+    overlay.handleInput("\x1b");
+    await showing;
+    assert.equal(screen.component, undefined, "Escape closes the overlay");
+
+    const notified = [];
+    await command.handler("", {
+      mode: "print",
+      ui: { notify: (text) => notified.push(text) },
+    });
+    assert.match(notified[0], /^timer-a +running/m);
   });
 
   test("status lists every timer, one timer by id, and rejects an unknown id", async (t) => {

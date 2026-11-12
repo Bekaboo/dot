@@ -11,7 +11,8 @@
  *
  * Its tick budget, or its deadline. Every ending wakes the agent with a short
  * notification. Timers are named by the agent, so every wake and the status
- * list are self-describing.
+ * list are self-describing. The user-facing `/timers` command shows the same
+ * timers as an aligned table.
  */
 
 import { type ChildProcess, spawn } from "node:child_process";
@@ -26,15 +27,27 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
-
 import {
   type AgentToolUpdateCallback,
+  DynamicBorder,
   type ExtensionAPI,
+  type ExtensionCommandContext,
   type ExtensionToolContext,
   getAgentDir,
   type SessionEntry,
+  type Theme,
   type ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
+
+import {
+  type Component,
+  Container,
+  matchesKey,
+  Text,
+  type TUI,
+  truncateToWidth,
+  visibleWidth,
+} from "@earendil-works/pi-tui";
 
 import { type Static, Type } from "typebox";
 
@@ -66,6 +79,12 @@ const JOB_TAIL_CHARS = 2_000;
 // Condition execution deadlines, in milliseconds.
 const MIN_CONDITION_TIMEOUT_MS = 1_000;
 const MAX_CONDITION_TIMEOUT_MS = 30_000;
+
+// The `/timers` overlay: horizontal padding and the same spinner as the
+// subagent overlay, so both views animate the same way.
+const OVERLAY_PADDING_X = 2;
+const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+const SPINNER_INTERVAL_MS = 80;
 
 // Snapshot deadline and size cap for the optional `onTick` callback.
 const ON_TICK_TIMEOUT_MS = 10_000;
@@ -277,6 +296,82 @@ function requireId(id: string): string {
  */
 function elapsed(timer: Timer): string {
   return `${Math.floor((Date.now() - timer.startedAt) / 1000)}s`;
+}
+
+/** One active timer as fields, so display code can align them into columns. */
+interface TimerRow {
+  id: string;
+  state: string;
+  age: string;
+  ticks: string;
+  target: string;
+}
+
+/** Columns of a timer table, in display order. */
+const TIMER_COLUMNS: readonly (keyof TimerRow)[] = [
+  "id",
+  "state",
+  "age",
+  "ticks",
+  "target",
+];
+
+/**
+ * Render one timer row on a single line.
+ *
+ * @param row - Timer fields to join.
+ * @returns Fields separated by two spaces.
+ */
+function formatTimerRow(row: TimerRow): string {
+  return TIMER_COLUMNS.map((column) => row[column]).join("  ");
+}
+
+/** Width of each timer column, in terminal columns. */
+type TimerWidths = Record<keyof TimerRow, number>;
+
+/**
+ * Measure the widest value of every timer column, so rows line up.
+ *
+ * @param rows - Rows the overlay shows.
+ * @returns The terminal width of each column.
+ */
+function timerWidths(rows: readonly TimerRow[]): TimerWidths {
+  const widths: TimerWidths = { id: 0, state: 0, age: 0, ticks: 0, target: 0 };
+  for (const row of rows) {
+    for (const column of TIMER_COLUMNS) {
+      widths[column] = Math.max(widths[column], visibleWidth(row[column]));
+    }
+  }
+  return widths;
+}
+
+/**
+ * Pad plain text on the right to a terminal width.
+ *
+ * @param text - Text without ANSI attributes.
+ * @param width - Target terminal columns.
+ * @returns The text followed by spaces, unchanged when already wide enough.
+ */
+function padRight(text: string, width: number): string {
+  const missing = width - visibleWidth(text);
+  return missing > 0 ? text + " ".repeat(missing) : text;
+}
+
+/**
+ * Summary line of the `/timers` overlay.
+ *
+ * @param rows - Rows the overlay shows.
+ * @param theme - Active theme.
+ * @returns A styled count, or the empty state.
+ */
+function summaryOf(rows: readonly TimerRow[], theme: Theme): string {
+  if (rows.length === 0) {
+    return theme.fg("dim", "No active timers.");
+  }
+  return theme.fg(
+    "muted",
+    rows.length === 1 ? "1 active timer" : `${rows.length} active timers`,
+  );
 }
 
 /**
@@ -781,19 +876,26 @@ class TimerRegistry {
   }
 
   /**
+   * Collect the active timers as table rows.
+   *
+   * @returns One row per active timer, sorted by id.
+   */
+  rows(): TimerRow[] {
+    return [...this.timers.values()]
+      .sort((left, right) => left.id.localeCompare(right.id))
+      .map((timer) => this.row(timer));
+  }
+
+  /**
    * Describe every active timer, one line each.
    *
    * @returns Lines sorted by id, or a message when nothing is active.
    */
   list(): string {
-    if (this.timers.size === 0) {
-      return "No active timers.";
-    }
-
-    return [...this.timers.values()]
-      .sort((left, right) => left.id.localeCompare(right.id))
-      .map((timer) => this.describe(timer))
-      .join("\n");
+    const rows = this.rows();
+    return rows.length === 0
+      ? "No active timers."
+      : rows.map(formatTimerRow).join("\n");
   }
 
   /**
@@ -805,7 +907,7 @@ class TimerRegistry {
   status(id: string): string {
     const timer = this.timers.get(id);
     if (timer) {
-      return this.describe(timer);
+      return formatTimerRow(this.row(timer));
     }
     return this.retired.has(id) ? this.retirementText(id) : this.unknownId(id);
   }
@@ -843,12 +945,12 @@ class TimerRegistry {
   }
 
   /**
-   * Describe one timer as a single line.
+   * Describe one timer as fields for a table row.
    *
    * @param timer - Timer to describe.
-   * @returns Id, state, age, tick budget, and condition.
+   * @returns Id, state, age, tick budget, and what it waits for.
    */
-  private describe(timer: Timer): string {
+  private row(timer: Timer): TimerRow {
     const ticks =
       timer.maxTicks === undefined
         ? `${timer.ticksSent}/unlimited`
@@ -858,7 +960,13 @@ class TimerRegistry {
       : timer.condition
         ? `cond: ${timer.condition}`
         : "timer, no condition";
-    return `${timer.id}  running  ${elapsed(timer)}  ticks ${ticks}  ${target}`;
+    return {
+      id: timer.id,
+      state: "running",
+      age: elapsed(timer),
+      ticks: `ticks ${ticks}`,
+      target,
+    };
   }
 
   /**
@@ -1431,6 +1539,169 @@ function timerStopTool(
 }
 
 /**
+ * Overlay listing the session's active timers.
+ *
+ * Laid out like the subagent overlay: a bordered box with a title, a summary,
+ * one highlighted line per timer and an Escape hint. Rows are read on every
+ * render, and the overlay animates while timers are active, so elapsed times
+ * stay current and ended timers disappear without reopening it.
+ */
+class TimersOverlay implements Component {
+  private readonly container = new Container();
+  private readonly summaryText: Text;
+  private readonly rowsText: Text;
+  private readonly tui: TUI;
+  private readonly theme: Theme;
+  private readonly readRows: () => TimerRow[];
+  private readonly close: () => void;
+  private frame = 0;
+  private refreshTimer: ReturnType<typeof setInterval> | undefined;
+
+  constructor(
+    tui: TUI,
+    theme: Theme,
+    readRows: () => TimerRow[],
+    close: () => void,
+  ) {
+    this.tui = tui;
+    this.theme = theme;
+    this.readRows = readRows;
+    this.close = close;
+    this.summaryText = new Text("", OVERLAY_PADDING_X, 0);
+    this.rowsText = new Text("", OVERLAY_PADDING_X, 0);
+
+    const border = () =>
+      new DynamicBorder((text) => theme.fg("borderMuted", text));
+    this.container.addChild(border());
+    this.container.addChild(
+      new Text(theme.fg("accent", theme.bold("Timers")), OVERLAY_PADDING_X, 1),
+    );
+    this.container.addChild(this.summaryText);
+    this.container.addChild(this.rowsText);
+    this.container.addChild(
+      new Text(theme.fg("dim", "Press Escape to close"), OVERLAY_PADDING_X, 1),
+    );
+    this.container.addChild(border());
+    this.syncRefresh();
+  }
+
+  render(width: number): string[] {
+    const rows = this.readRows();
+    this.summaryText.setText(summaryOf(rows, this.theme));
+    this.rowsText.setText(
+      rows.length > 0 ? `\n${this.renderRows(rows, width)}` : "",
+    );
+    this.syncRefresh(rows);
+    return this.container.render(width);
+  }
+
+  invalidate(): void {
+    this.syncRefresh();
+    this.container.invalidate();
+  }
+
+  /** Stop the refresh interval once the overlay is closed. */
+  dispose(): void {
+    this.stopRefresh();
+  }
+
+  handleInput(data: string): void {
+    if (matchesKey(data, "escape") || matchesKey(data, "ctrl+c")) {
+      this.close();
+    }
+  }
+
+  /**
+   * Render every timer on one line each, with aligned, highlighted columns.
+   *
+   * @param rows - Rows the overlay shows.
+   * @param width - Overlay width, including the text padding.
+   * @returns One width-truncated line per timer.
+   */
+  private renderRows(rows: readonly TimerRow[], width: number): string {
+    const { theme } = this;
+    const widths = timerWidths(rows);
+    const inner = Math.max(0, width - OVERLAY_PADDING_X * 2);
+    return rows
+      .map((row) =>
+        truncateToWidth(
+          [
+            theme.fg(
+              "accent",
+              SPINNER_FRAMES[this.frame % SPINNER_FRAMES.length],
+            ),
+            theme.bold(padRight(row.id, widths.id)),
+            theme.fg("muted", padRight(row.state, widths.state)),
+            theme.fg("muted", padRight(row.age, widths.age)),
+            theme.fg("dim", padRight(row.ticks, widths.ticks)),
+            theme.fg("dim", row.target),
+          ].join(" "),
+          inner,
+          "...",
+          true,
+        ),
+      )
+      .join("\n");
+  }
+
+  /**
+   * Animate the spinner and refresh elapsed times while timers are active.
+   *
+   * @param rows - Rows to inspect; read from the registry when omitted.
+   */
+  private syncRefresh(rows: readonly TimerRow[] = this.readRows()): void {
+    if (rows.length === 0) {
+      this.stopRefresh();
+      return;
+    }
+    if (this.refreshTimer) return;
+    this.refreshTimer = setInterval(() => {
+      this.frame = (this.frame + 1) % SPINNER_FRAMES.length;
+      this.tui.requestRender();
+    }, SPINNER_INTERVAL_MS);
+  }
+
+  private stopRefresh(): void {
+    if (!this.refreshTimer) return;
+    clearInterval(this.refreshTimer);
+    this.refreshTimer = undefined;
+  }
+}
+
+/**
+ * Build the `/timers` command.
+ *
+ * @param registry - Timer registry shared with the tools.
+ * @returns Command definition registered with Pi.
+ */
+function timersCommand(registry: TimerRegistry) {
+  return {
+    description: "Show the active timers in a live overlay",
+    handler: async (_args: string, ctx: ExtensionCommandContext) => {
+      if (ctx.mode !== "tui") {
+        ctx.ui.notify(registry.list(), "info");
+        return;
+      }
+
+      let overlay: TimersOverlay | undefined;
+      try {
+        await ctx.ui.custom<void>((tui, theme, _kb, done) => {
+          overlay = new TimersOverlay(
+            tui,
+            theme,
+            () => registry.rows(),
+            () => done(),
+          );
+          return overlay;
+        });
+      } finally {
+        overlay?.dispose();
+      }
+    },
+  };
+}
+
+/**
  * Build the `timer_status` tool definition.
  *
  * @param registry - Timer registry shared with the session handlers.
@@ -1459,7 +1730,8 @@ function timerStatusTool(
 /**
  * Register the timer extension with Pi.
  *
- * @param pi - Extension API used to register the tools and session cleanup.
+ * @param pi - Extension API used to register the tools, the `/timers`
+ *   command, and session cleanup.
  */
 export default function timer(pi: ExtensionAPI): void {
   const registry = new TimerRegistry(pi);
@@ -1467,6 +1739,7 @@ export default function timer(pi: ExtensionAPI): void {
   pi.registerTool(timerStartTool(registry));
   pi.registerTool(timerStopTool(registry));
   pi.registerTool(timerStatusTool(registry));
+  pi.registerCommand("timers", timersCommand(registry));
 
   pi.on("session_start", async (_event, ctx) => {
     registry.restore(ctx.sessionManager.getBranch());
