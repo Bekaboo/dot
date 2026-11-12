@@ -151,7 +151,7 @@ const DEFAULT_TIMEOUT_SEC = 3_600;
 const TIMEOUT_ENV = "PI_SUBAGENT_TIMEOUT_SEC";
 
 /** Fraction of its timeout after which a child is warned to wrap up. */
-const TIMEOUT_WARN_THRESH = 0.8;
+const TIMEOUT_WARN_THRESH = 0.9;
 
 /**
  * Shortest warning lead worth a model turn, in seconds.
