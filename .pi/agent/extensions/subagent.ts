@@ -1,11 +1,18 @@
 /**
  * Subagent tool.
  *
- * `subagent()` spawns a separate `pi -p --mode json` process for a
+ * `subagent()` spawns a separate `pi --mode rpc --no-session` process for a
  * self-contained task, returns as soon as the child is running, and injects a
  * `[subagent <id>]` message into this session when the child finishes. The
  * child gets a fresh context window; its prompt, tools, model and working
  * directory are chosen per call.
+ *
+ * RPC mode, rather than a single-shot print mode, is what lets a child use
+ * async tools: its prompt travels on stdin and the process survives a turn
+ * with no tool calls, so a timer or nested subagent that reports afterwards
+ * still wakes it. Since the process has no natural end any more, the child's
+ * own instance of this extension ends it when the model calls the
+ * `subagent_finish` tool.
  *
  * Results are queued through pi as soon as the child exits: a busy parent
  * receives them at the next turn boundary, and an idle parent starts a turn.
@@ -39,6 +46,25 @@ import { Type } from "typebox";
 /** Custom message type used for subagent notifications. */
 const NOTICE_TYPE = "subagent";
 
+/**
+ * Environment variable that marks a pi process as a spawned subagent.
+ *
+ * The child's copy of this extension reads it to take over ending the process;
+ * a session a user drives must never end itself that way.
+ */
+const CHILD_ENV = "PI_SUBAGENT_CHILD";
+
+/** Id of the `prompt` command sent to the child, echoed in its response. */
+const PROMPT_ID = "prompt";
+
+/**
+ * Tool a spawned child uses to end its session by itself.
+ *
+ * Named rather than inlined: the child asserts it at session start, and its
+ * system prompt tells the model when to call it.
+ */
+const FINISH_TOOL = "subagent_finish";
+
 /** How much of the child's final answer to put in a notification, in bytes. */
 const OUTPUT_CAP_BYTES = 16 * 1024;
 
@@ -47,6 +73,15 @@ const STDERR_CAP_BYTES = 2 * 1024;
 
 /** Grace period before a child that ignored SIGTERM gets SIGKILL, in ms. */
 const KILL_GRACE_MS = 2_000;
+
+/**
+ * How long a child may take to start its run before the call gives up, in ms.
+ *
+ * The child ends itself once its work is done, so a child that never starts a
+ * run -- its extensions failed to load, or an extension consumed the prompt --
+ * would otherwise stay alive forever and never report.
+ */
+const START_TIMEOUT_MS = 60_000;
 
 /** Longest single JSONL record kept from the child, in bytes. */
 const MAX_RECORD_BYTES = 8 * 1024 * 1024;
@@ -106,6 +141,9 @@ const StatusParams = Type.Object({ id: SelectionParams });
 /** Schema for `subagent_kill`. */
 const KillParams = Type.Object({ id: SelectionParams });
 
+/** Schema for `subagent_finish`, which needs no arguments. */
+const FinishParams = Type.Object({});
+
 /** The marker as the model sees it in descriptions, before any id exists. */
 const MARKER_EXAMPLE = marker("<id>");
 
@@ -117,6 +155,7 @@ interface RunningSubagent {
   /** Tools as requested, empty when the child gets pi's defaults. */
   tools: string[];
   cwd: string;
+  /** Wall-clock limit the child was given, in seconds. */
   startedAt: number;
   /** Creation order, so two children started in one millisecond stay ordered. */
   order: number;
@@ -203,6 +242,18 @@ function killGraceMs(): number {
 }
 
 /**
+ * Run-start deadline override, so tests need not wait a minute.
+ *
+ * @returns Milliseconds a child may take to emit `agent_start`.
+ */
+function startTimeoutMs(): number {
+  const override = Number(process.env.SUBAGENT_START_TIMEOUT_MS);
+  return Number.isFinite(override) && override > 0
+    ? override
+    : START_TIMEOUT_MS;
+}
+
+/**
  * Format the text that opens every notification about a subagent.
  *
  * The agent keys on this marker to tell a subagent result from its own work,
@@ -243,23 +294,26 @@ function absorbRecord(lastTurn: LastTurn, record: unknown): void {
 }
 
 /**
- * Split child output into JSONL records and feed them to `absorbRecord`.
+ * Split child output into JSONL records and feed them to `onRecord`.
  *
  * Records are consumed as they arrive, so a long run retains only the latest
  * answer. An oversized record is skipped up to its next newline instead of
  * growing the buffer without bound.
  *
  * @param write - Sink for parser complaints, usually stderr accumulation.
- * @param lastTurn - Last assistant message, updated in place.
+ * @param onRecord - Receiver of each parsed record.
  * @returns A function that accepts output chunks.
  */
-function recordParser(write: (text: string) => void, lastTurn: LastTurn) {
+function recordParser(
+  write: (text: string) => void,
+  onRecord: (record: unknown) => void,
+) {
   let partial = "";
   let skipping = false;
   const absorb = (line: string) => {
     if (!line.trim()) return;
     try {
-      absorbRecord(lastTurn, JSON.parse(line));
+      onRecord(JSON.parse(line));
     } catch {
       // A malformed record carries no result; skip it. A lost result is caught
       // by the missing answer at exit, not by this line.
@@ -403,33 +457,196 @@ function failureOf(
 }
 
 /**
+ * Tool selection for a child, with the finish tool kept reachable.
+ *
+ * A selection of plain names is an allowlist, which would otherwise hide the
+ * one tool a child needs when background work keeps its session open. A
+ * selection made only of `+name`/`-name` modifiers edits the default set
+ * instead, and that set already contains every extension tool.
+ *
+ * @param tools - Selection the caller asked for, possibly empty.
+ * @returns The selection to pass to `--tools`.
+ */
+function childTools(tools: string[]): string[] {
+  if (tools.length === 0) return tools;
+  const modifiersOnly = tools.every(
+    (tool) => tool.startsWith("+") || tool.startsWith("-"),
+  );
+  if (modifiersOnly) {
+    // Only an explicit removal has to be undone; the tool is in the defaults.
+    if (!tools.includes(`-${FINISH_TOOL}`)) return tools;
+    return [
+      ...tools.filter((tool) => tool !== `-${FINISH_TOOL}`),
+      `+${FINISH_TOOL}`,
+    ];
+  }
+  if (tools.includes(FINISH_TOOL)) return tools;
+  return [...tools, FINISH_TOOL];
+}
+
+/**
  * Build the invocation for the child pi process.
  *
- * @param subagent - Model, thinking level, tools, working directory and prompt
- *   of the child.
+ * The child runs in RPC mode: its prompt travels on stdin, and the process stays
+ * alive between turns so async tools can wake it. Nothing is passed as a
+ * positional argument, because RPC mode rejects `@file` prompts and expects
+ * commands on stdin instead.
+ *
+ * The child's role and its contract for ending the session travel in the
+ * `subagent_finish` declaration, which only a child ever sees; nothing is
+ * appended to its system prompt here.
+ *
+ * @param subagent - Model, thinking level and tools of the child.
  * @returns Command and arguments to spawn.
  */
 function childCommand(subagent: {
   model: string;
   thinking: string;
   tools: string[];
-  cwd: string;
-  prompt: string;
 }): { command: string; args: string[] } {
   // Reuse the build that is already running, so a second pi on PATH cannot win.
   const command = process.env.PI_BIN ?? process.argv[1] ?? "pi";
-  const args = ["-p", "--mode", "json", "--no-session"];
+  const args = ["--mode", "rpc", "--no-session"];
   if (subagent.model) args.push("--model", subagent.model);
   // Only set on the inherited path: `--thinking` outranks a `:level` suffix.
   if (subagent.thinking) args.push("--thinking", subagent.thinking);
-  if (subagent.tools.length > 0) args.push("--tools", subagent.tools.join(","));
-  args.push(
-    "--append-system-prompt",
-    `You are a subagent working in ${subagent.cwd}. Finish the task and report back concisely.`,
-    // The leading "Task:" keeps pi from parsing the prompt as CLI syntax.
-    `Task: ${subagent.prompt}`,
-  );
+  if (subagent.tools.length > 0) {
+    args.push("--tools", childTools(subagent.tools).join(","));
+  }
   return { command, args };
+}
+
+/**
+ * Frame a JSONL record for the child's stdin.
+ *
+ * @param record - Value to serialize.
+ * @returns One complete record line.
+ */
+function jsonLine(record: Record<string, unknown>): string {
+  return `${JSON.stringify(record)}\n`;
+}
+
+/**
+ * Build the `prompt` command that starts the child's run.
+ *
+ * The `Task:` prefix keeps pi from reading the prompt as a skill, template or
+ * extension command, which RPC mode would dispatch instead of sending it.
+ *
+ * @param prompt - Task the caller described.
+ * @returns One JSONL record for the child's stdin.
+ */
+function promptCommand(prompt: string): string {
+  return jsonLine({
+    id: PROMPT_ID,
+    type: "prompt",
+    message: `Task: ${prompt}`,
+  });
+}
+
+/**
+ * Answer a child's extension UI record, which no user can see.
+ *
+ * Fire-and-forget records such as `notify` need no answer and pi ignores a
+ * response to them, so every request is cancelled instead of only the dialog
+ * methods of the day: a future blocking method must not park the child forever.
+ *
+ * @param record - Parsed child record.
+ * @returns The response record, or undefined when this is not a UI request.
+ */
+function uiCancellation(record: unknown): string | undefined {
+  const request = record as { type?: unknown; id?: unknown };
+  if (request.type !== "extension_ui_request") return undefined;
+  if (typeof request.id !== "string") return undefined;
+  return jsonLine({
+    type: "extension_ui_response",
+    id: request.id,
+    cancelled: true,
+  });
+}
+
+/**
+ * Read a prompt the child will not run.
+ *
+ * A refused prompt starts no run, and neither does one an extension consumed,
+ * so without this the call would wait for a child that can never finish.
+ *
+ * @param record - Parsed child record.
+ * @returns Why no run will happen, or undefined for any other record.
+ */
+function promptRejection(record: unknown): string | undefined {
+  const response = record as {
+    type?: unknown;
+    command?: unknown;
+    success?: unknown;
+    error?: unknown;
+    data?: { disposition?: unknown };
+  };
+  if (response.type !== "response" || response.command !== "prompt")
+    return undefined;
+  if (response.success === false) {
+    return typeof response.error === "string" && response.error !== ""
+      ? response.error
+      : "the child rejected its prompt";
+  }
+  // `handled` means an extension command or input handler consumed the prompt
+  // and no run started, so no settle would ever end the child.
+  if (response.data?.disposition === "handled") {
+    return "the child handed its prompt to an extension instead of running";
+  }
+  return undefined;
+}
+
+/**
+ * Whether a record marks the start of the child's first run.
+ *
+ * @param record - Parsed child record.
+ * @returns True for an `agent_start` event.
+ */
+function isAgentStart(record: unknown): boolean {
+  return (record as { type?: unknown }).type === "agent_start";
+}
+
+/**
+ * Read an extension failure the child reported.
+ *
+ * @param record - Parsed child record.
+ * @returns A one-line description, or undefined for any other record.
+ */
+function extensionError(record: unknown): string | undefined {
+  const failure = record as {
+    type?: unknown;
+    extensionPath?: unknown;
+    event?: unknown;
+    error?: unknown;
+  };
+  if (failure.type !== "extension_error") return undefined;
+  return `subagent: extension error in ${String(failure.extensionPath)} on ${String(failure.event)}: ${String(failure.error)}`;
+}
+
+/**
+ * Write one JSONL record to the child's stdin.
+ *
+ * A child that already exited leaves its pipe closed; that is reported into the
+ * failure text instead of throwing out of the child's stdout handler.
+ *
+ * @param proc - Child process.
+ * @param line - Complete record line.
+ * @param report - Sink for write complaints.
+ */
+function writeChild(
+  proc: ChildProcess,
+  line: string,
+  report: (text: string) => void,
+): void {
+  const stdin = proc.stdin;
+  if (!stdin || stdin.destroyed || !stdin.writable) {
+    report("subagent: the child's stdin is closed\n");
+    return;
+  }
+  stdin.write(line, (error) => {
+    if (error)
+      report(`subagent: cannot write to the child: ${error.message}\n`);
+  });
 }
 
 /**
@@ -615,6 +832,13 @@ class SubagentRunner {
   private stoppers = new Map<string, () => Promise<void>>();
   /** Set once the session shuts down: pending notifications are dropped. */
   private shuttingDown = false;
+  /**
+   * Set when the child's model called `subagent_finish`.
+   *
+   * Only meaningful in a spawned child, where nothing else ends the session:
+   * the model is the one who knows the task is over.
+   */
+  private finishAsked = false;
   /** Monotonic creation order for the overlay rows. */
   private nextOrder = 1;
   /** Overlay the `/subagents` command shows, while it is open. */
@@ -667,7 +891,10 @@ class SubagentRunner {
     const proc = spawn(command, args, {
       cwd: subagent.cwd,
       shell: false,
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: ["pipe", "pipe", "pipe"],
+      // The child's own copy of this extension ends the process once its work
+      // is done; the marker tells it that is its job rather than the user's.
+      env: { ...process.env, [CHILD_ENV]: "1" },
     });
 
     this.children.set(subagent.id, proc);
@@ -684,23 +911,52 @@ class SubagentRunner {
 
     const lastTurn: LastTurn = { answer: "" };
     let stderrTail = "";
+    let startFailure = "";
+    let runStarted = false;
+    let startDeadline: ReturnType<typeof setTimeout> | undefined;
     let finished = false;
     let stopped = false;
 
     const appendStderr = (text: string) => {
       stderrTail = truncateBytes(stderrTail + text, STDERR_CAP_BYTES);
     };
-    // In JSON mode a malformed record is the only place a parser complaint can
+    /** The child has begun its run, so the start deadline no longer applies. */
+    const runBegan = () => {
+      runStarted = true;
+      clearTimeout(startDeadline);
+    };
+    const onRecord = (record: unknown) => {
+      absorbRecord(lastTurn, record);
+      if (isAgentStart(record)) runBegan();
+      const cancellation = uiCancellation(record);
+      if (cancellation) {
+        writeChild(proc, cancellation, appendStderr);
+        return;
+      }
+      const rejection = promptRejection(record);
+      if (rejection) {
+        startFailure = rejection;
+        void stopProcess(proc);
+        return;
+      }
+      const failure = extensionError(record);
+      if (failure) appendStderr(`${failure}\n`);
+    };
+    // In RPC mode a malformed record is the only place a parser complaint can
     // go; it lands next to the child's own stderr.
     proc.stdout.setEncoding("utf8");
-    proc.stdout.on("data", recordParser(appendStderr, lastTurn));
+    proc.stdout.on("data", recordParser(appendStderr, onRecord));
     proc.stderr.setEncoding("utf8");
     proc.stderr.on("data", appendStderr);
+    proc.stdin?.on("error", (error) =>
+      appendStderr(`subagent: stdin error: ${error.message}\n`),
+    );
 
     // `error` and `close` can both fire for one child; report it only once.
     const finish = (failure: string | undefined) => {
       if (finished) return;
       finished = true;
+      clearTimeout(startDeadline);
       if (this.children.get(running.id) === proc) {
         this.children.delete(running.id);
       }
@@ -734,8 +990,31 @@ class SubagentRunner {
 
     proc.on("error", (error) => finish(`spawn error: ${error.message}`));
     proc.on("close", (code, signal) =>
-      finish(failureOf(lastTurn, code, signal)),
+      finish(startFailure || failureOf(lastTurn, code, signal)),
     );
+    // The readers are attached first, so a fast answer cannot arrive unread.
+    writeChild(proc, promptCommand(subagent.prompt), appendStderr);
+    // A child that never starts a run cannot report, and its gate never fires.
+    // Unref'd: this deadline must not keep the parent's event loop alive.
+    startDeadline = setTimeout(() => {
+      if (runStarted || finished) return;
+      startFailure = "the child never started a run";
+      void stopProcess(proc);
+    }, startTimeoutMs());
+    startDeadline.unref();  }
+
+  /** Record that the child's model asked to end the session. */
+  requestFinish(): void {
+    this.finishAsked = true;
+  }
+
+  /**
+   * Whether the child's model asked to end the session.
+   *
+   * @returns True once `requestFinish()` was called.
+   */
+  finishRequested(): boolean {
+    return this.finishAsked;
   }
 
   /**
@@ -1106,8 +1385,8 @@ function subagentTool(
   return {
     name: "subagent",
     label: "Subagent",
-    description: `Start a separate pi process with a fresh context to work on a task in the background. Returns immediately; the child's answer arrives later as a "${MARKER_EXAMPLE} ..." message.`,
-    promptSnippet: `Spawn a background pi subagent with its own prompt, tools and model; its result arrives later as a ${MARKER_EXAMPLE} message.`,
+    description: `Start a separate pi process with a fresh context to work on a task in the background. Returns immediately; the child's answer arrives later as a "${MARKER_EXAMPLE} ..." message. The child ends itself by calling its own \`${FINISH_TOOL}\` tool, so background work it started, such as a timer or a nested subagent, can wake it after a turn and be reported too.`,
+    promptSnippet: `Spawn a background pi subagent with its own prompt, tools and model; its result arrives later as a ${MARKER_EXAMPLE} message. A child may wait on background work it started (timers, nested subagents) before it reports.`,
     promptGuidelines: [
       "Use `subagent` for one task that can run alongside your own work, such as an independent review, a long scan, or a second opinion.",
       "Use `subagent` for several independent tasks in one turn, such as research in separate areas, a change read from several perspectives, or verification from several angles, so they finish sooner and disagreement surfaces.",
@@ -1119,6 +1398,7 @@ function subagentTool(
       "For review and judging, especially code review, give `subagent` a different `model` from the one that produced the work when one is available, ideally from another family: a reviewer that shares the author's model shares its blind spots.",
       `After calling \`subagent\`, do non-overlapping work: do not poll, do not redo the task, and never predict or invent its result before the ${MARKER_EXAMPLE} message arrives.`,
       "Use `subagent_status` to answer whether a child still runs, not to poll, and `subagent_kill` to stop one whose result you no longer need.",
+      `A child stays alive after its turns, so a timer or nested subagent it started can wake it; it reports by calling its own \`${FINISH_TOOL}\` tool. A child that never calls it keeps running, so check \`subagent_status\` before assuming a silent child is stuck, and tell it to stop timers it no longer needs.`,
       `Treat a ${MARKER_EXAMPLE} report as a claim to verify, not as proof the work is done.`,
     ],
     parameters: SubagentParams,
@@ -1202,6 +1482,47 @@ function killTool(runner: SubagentRunner): ToolDefinition<typeof KillParams> {
 }
 
 /**
+ * Build the `subagent_finish` tool, which only a spawned child registers.
+ *
+ * Its session outlives its turns so async tools can wake it, which means the
+ * process needs an explicit end: this tool is the only thing that closes it.
+ * The request is honored at the next settle, so the turn's own answer is
+ * recorded before the session ends.
+ *
+ * The snippet and guidelines are this tool's whole purpose in prose: pi puts
+ * them in the system prompt of every session that declares the tool, which is
+ * exactly the spawned child. That includes the child's role, so nothing else
+ * has to be appended to its system prompt.
+ *
+ * @param runner - Session state holding the end request.
+ */
+function finishTool(
+  runner: SubagentRunner,
+): ToolDefinition<typeof FinishParams> {
+  return {
+    name: FINISH_TOOL,
+    label: "Finish subagent",
+    description:
+      "End this subagent session and report your last message to the parent. Anything still pending is abandoned.",
+    promptSnippet:
+      "End this subagent session and report your last message; a turn ending does not end the session.",
+    promptGuidelines: [
+      "You are a subagent working alone in the current directory: no user can answer questions, so finish the task and report back concisely.",
+      "This subagent session outlives its turns so background work you start, such as a timer or a nested subagent, can still wake you after you stop calling tools: end the turn instead of waiting for it in a loop, and react when its notification arrives.",
+      `Call \`${FINISH_TOOL}\` when your answer is final, even if you started no background work: the session does not end when a turn does, so this call is what reports you to the parent.`,
+      `Background work still pending when you call \`${FINISH_TOOL}\` is abandoned, so wait for anything you still need before finishing.`,
+    ],
+    parameters: FinishParams,
+    async execute() {
+      runner.requestFinish();
+      return toolText(
+        "Finishing: this session ends after this turn, and any background work still pending is abandoned.",
+      );
+    },
+  };
+}
+
+/**
  * Build the `/subagents` command.
  *
  * @param runner - Session state the overlay shows.
@@ -1223,6 +1544,26 @@ function subagentsCommand(runner: SubagentRunner) {
 }
 
 /**
+ * End a spawned child when its model says the work is done.
+ *
+ * A child runs in RPC mode, so a turn with no tool calls no longer ends the
+ * process: a timer or nested subagent that reports after that turn still wakes
+ * it, which is the point. The flip side is that the process now has no natural
+ * end, so the model ends it: `subagent_finish` sets the request, and the next
+ * settle -- after the turn's own answer is recorded -- closes the session.
+ *
+ * @param pi - Extension API of the child process.
+ * @param runner - Runner holding the child's end request.
+ */
+function endChildWhenDone(pi: ExtensionAPI, runner: SubagentRunner): void {
+  pi.on("agent_settled", async (_event, ctx) => {
+    if (!runner.finishRequested()) return;
+    // A turn that is already running has to report before the session ends.
+    if (ctx.isIdle()) ctx.shutdown();
+  });
+}
+
+/**
  * Register the subagent tools, `/subagents`, and the shutdown hook.
  *
  * @param pi - Extension API.
@@ -1238,4 +1579,11 @@ export default function subagent(pi: ExtensionAPI) {
   pi.on("session_shutdown", async (event) => {
     await runner.shutdown(event.reason);
   });
+
+  // A parent session is driven by its user, who decides when pi ends; a child
+  // has nobody to close it, so it ends itself with the finish tool.
+  if (process.env[CHILD_ENV] === "1") {
+    pi.registerTool(finishTool(runner));
+    endChildWhenDone(pi, runner);
+  }
 }

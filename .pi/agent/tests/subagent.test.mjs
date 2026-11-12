@@ -57,7 +57,17 @@ const children = [];
  * @returns A fake child that can emit output, close, or fail on demand.
  */
 function fakeChild(command, args, options) {
+  // Several listeners can share one event: the extension's result handler and
+  // the stop helper both wait for `close`.
   const listeners = new Map();
+  const add = (event, handler) => {
+    const handlers = listeners.get(event) ?? new Set();
+    handlers.add(handler);
+    listeners.set(event, handlers);
+  };
+  const emit = (event, ...values) => {
+    for (const handler of listeners.get(event) ?? []) handler(...values);
+  };
   const child = {
     command,
     args,
@@ -68,20 +78,32 @@ function fakeChild(command, args, options) {
     stdout: {
       setEncoding() {},
       on(event, handler) {
-        listeners.set(`stdout:${event}`, handler);
+        add(`stdout:${event}`, handler);
       },
     },
     stderr: {
       setEncoding() {},
       on(event, handler) {
-        listeners.set(`stderr:${event}`, handler);
+        add(`stderr:${event}`, handler);
+      },
+    },
+    stdin: {
+      writes: [],
+      writable: true,
+      destroyed: false,
+      on(event, handler) {
+        add(`stdin:${event}`, handler);
+      },
+      write(text, done) {
+        this.writes.push(text);
+        done?.(null);
       },
     },
     on(event, handler) {
-      listeners.set(event, handler);
+      add(event, handler);
     },
     once(event, handler) {
-      listeners.set(event, handler);
+      add(event, handler);
     },
     kill(signal) {
       child.kills.push(signal);
@@ -90,17 +112,17 @@ function fakeChild(command, args, options) {
     },
     /** Push text through the stdout handler, as a chunk of output. */
     write(text) {
-      listeners.get("stdout:data")?.(text);
+      emit("stdout:data", text);
     },
     /** Finish the child with an exit code. */
     close(code = 0, signal = null) {
       child.exitCode = code;
       child.signalCode = signal;
-      listeners.get("close")?.(code, signal);
+      emit("close", code, signal);
     },
     /** Fail the spawn itself, as a missing executable would. */
     fail(message) {
-      listeners.get("error")?.(new Error(message));
+      emit("error", new Error(message));
     },
   };
   children.push(child);
@@ -187,12 +209,21 @@ function fakePi() {
 }
 
 /**
- * The child's arguments without the pi script that launched this process.
+ * The child's arguments, from the mode flag that describes how it was spawned.
  *
  * @param child - Fake child created by `spawn`.
  * @returns The arguments pi itself would receive.
  */
-const piArgs = (child) => child.args.slice(child.args.indexOf("-p"));
+const piArgs = (child) => child.args.slice(child.args.indexOf("--mode"));
+
+/**
+ * The commands the extension wrote to a fake child's stdin.
+ *
+ * @param child - Fake child created by `spawn`.
+ * @returns One parsed RPC command per written line.
+ */
+const childCommands = (child) =>
+  child.stdin.writes.map((line) => JSON.parse(line));
 
 /** Forget the children created by an earlier test. */
 function resetChildren() {
@@ -211,6 +242,20 @@ function shortKillGrace(t) {
   t.after(() => {
     if (grace === undefined) delete process.env.SUBAGENT_KILL_GRACE_MS;
     else process.env.SUBAGENT_KILL_GRACE_MS = grace;
+  });
+}
+
+/**
+ * Shorten the run-start deadline for one test.
+ *
+ * @param t - Node test context, used to restore the previous value.
+ */
+function shortStartDeadline(t) {
+  const deadline = process.env.SUBAGENT_START_TIMEOUT_MS;
+  process.env.SUBAGENT_START_TIMEOUT_MS = "50";
+  t.after(() => {
+    if (deadline === undefined) delete process.env.SUBAGENT_START_TIMEOUT_MS;
+    else process.env.SUBAGENT_START_TIMEOUT_MS = deadline;
   });
 }
 
@@ -284,17 +329,34 @@ describe("the child invocation", () => {
     const [child] = children;
     assert.equal(child.options.cwd, workDir);
     assert.equal(child.options.shell, false);
-    assert.deepEqual(piArgs(child).slice(0, 6), [
-      "-p",
+    assert.deepEqual(piArgs(child).slice(0, 5), [
       "--mode",
-      "json",
+      "rpc",
       "--no-session",
       "--model",
       "some/model",
     ]);
-    assert.equal(piArgs(child)[6], "--tools");
-    assert.equal(piArgs(child)[7], "read,bash");
-    assert.ok(piArgs(child).includes("Task: do it"), "the prompt is a positional argument");
+    const toolsAt = child.args.indexOf("--tools");
+    assert.deepEqual(child.args.slice(toolsAt, toolsAt + 2), [
+      "--tools",
+      "read,bash,subagent_finish",
+    ]);
+    assert.ok(
+      !child.args.includes("--append-system-prompt"),
+      "the role and lifetime rules live in the finish tool declaration",
+    );
+    assert.ok(
+      !child.args.some((arg) => arg.startsWith("Task: do it")),
+      "the prompt travels on stdin, not in argv",
+    );
+    assert.deepEqual(childCommands(child), [
+      { id: "prompt", type: "prompt", message: "Task: do it" },
+    ]);
+    assert.equal(
+      child.options.env.PI_SUBAGENT_CHILD,
+      "1",
+      "the child is told to end itself when its work is done",
+    );
     assert.equal(child.command, process.argv[1], "the child reuses the running pi build");
   });
 
@@ -318,6 +380,26 @@ describe("the child invocation", () => {
     assert.ok(!piArgs(child).includes("--tools"));
   });
 
+  test("keeps the finish tool reachable whatever the caller selected", async (t) => {
+    const { call, children, pi } = setup(t);
+    const toolsOf = async (tools) => {
+      await call({ id: `sel-${tools.join("_")}`, prompt: "x", tools });
+      const args = children.at(-1).args;
+      const at = args.indexOf("--tools");
+      return at < 0 ? undefined : args[at + 1];
+    };
+
+    assert.equal(await toolsOf(["read"]), "read,subagent_finish");
+    assert.equal(await toolsOf(["read", "subagent_finish"]), "read,subagent_finish");
+    assert.equal(await toolsOf(["+codemode"]), "+codemode", "a modifier list is left alone");
+    assert.equal(
+      await toolsOf(["+codemode", "-subagent_finish"]),
+      "+codemode,+subagent_finish",
+      "an explicit removal is undone",
+    );
+    await pi.tools.get("subagent_kill").execute("call", {}, undefined, undefined, {});
+  });
+
   test("inherits the session's model and thinking level", async (t) => {
     const { call, children } = setup(t, {
       model: { provider: "qoder", id: "Fast" },
@@ -325,7 +407,8 @@ describe("the child invocation", () => {
     });
     const result = await call({ id: "inherit", prompt: "x" });
     const [child] = children;
-    assert.deepEqual(piArgs(child).slice(4, 8), [
+    const modelAt = child.args.indexOf("--model");
+    assert.deepEqual(child.args.slice(modelAt, modelAt + 4), [
       "--model",
       "qoder/Fast",
       "--thinking",
@@ -341,7 +424,7 @@ describe("the child invocation", () => {
     });
     await call({ id: "explicit", prompt: "x", model: "some/model:low" });
     const [child] = children;
-    assert.equal(piArgs(child)[5], "some/model:low");
+    assert.equal(piArgs(child)[4], "some/model:low");
     assert.ok(
       !piArgs(child).includes("--thinking"),
       "a `:level` suffix already carries the level",
@@ -435,6 +518,105 @@ describe("reading the child's output", () => {
     const sent = await notices(pi);
     assert.equal(sent.length, 1, "error and close do not both report");
     assert.match(sent[0].message.content, /spawn error: spawn pi ENOENT/);
+  });
+});
+
+describe("the RPC conversation with the child", () => {
+  /** One JSONL record of the shape the child writes to stdout. */
+  const rpcRecord = (record) => `${JSON.stringify(record)}\n`;
+
+  test("cancels every extension UI record the child cannot show anyone", async (t) => {
+    const { call, children } = setup(t);
+    await call({ id: "dialog", prompt: "x" });
+    const [child] = children;
+    child.write(
+      rpcRecord({
+        type: "extension_ui_request",
+        id: "ui-1",
+        method: "confirm",
+        title: "Allow dangerous command?",
+        message: "rm -rf /",
+      }),
+    );
+    child.write(
+      rpcRecord({ type: "extension_ui_request", id: "ui-2", method: "notify", message: "hi" }),
+    );
+    const answers = childCommands(child).filter((command) => command.type === "extension_ui_response");
+    assert.deepEqual(answers, [
+      { type: "extension_ui_response", id: "ui-1", cancelled: true },
+      // Harmless: pi ignores a response to a fire-and-forget record, and a new
+      // blocking method must not leave the child waiting.
+      { type: "extension_ui_response", id: "ui-2", cancelled: true },
+    ]);
+  });
+
+  test("a prompt the child refuses ends the call with that reason", async (t) => {
+    const { call, pi, children } = setup(t);
+    await call({ id: "refused", prompt: "x" });
+    children[0].write(
+      rpcRecord({ type: "response", command: "prompt", success: false, error: "Model not found" }),
+    );
+    children[0].close(143);
+    const [sent] = await notices(pi);
+    assert.match(sent.message.content, /^\[subagent refused\] failed after \d+s: Model not found/);
+    assert.ok(
+      children[0].kills.includes("SIGTERM"),
+      "a child that never ran is stopped instead of left waiting",
+    );
+  });
+
+  test("a prompt an extension consumes counts as a failure, not a silent wait", async (t) => {
+    const { call, pi, children } = setup(t);
+    await call({ id: "consumed", prompt: "x" });
+    children[0].write(
+      rpcRecord({
+        type: "response",
+        command: "prompt",
+        success: true,
+        data: { disposition: "handled" },
+      }),
+    );
+    children[0].close(143);
+    const [sent] = await notices(pi);
+    assert.match(sent.message.content, /failed after \d+s: the child handed its prompt/);
+  });
+
+  test("a child that never starts a run is stopped at the deadline", async (t) => {
+    shortStartDeadline(t);
+    const { call, pi, children } = setup(t);
+    await call({ id: "silent-start", prompt: "x" });
+    const [sent] = await notices(pi);
+    assert.match(sent.message.content, /failed after \d+s: the child never started a run/);
+    assert.ok(children[0].kills.includes("SIGTERM"));
+  });
+
+  test("a started run disarms the deadline", async (t) => {
+    shortStartDeadline(t);
+    const { call, pi, children } = setup(t);
+    await call({ id: "starting", prompt: "x" });
+    children[0].write(rpcRecord({ type: "agent_start" }));
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    assert.deepEqual(children[0].kills, [], "a run that started is left alone");
+    children[0].write(assistantRecord("done"));
+    children[0].close(0);
+    const [sent] = await notices(pi);
+    assert.match(sent.message.content, /finished in/);
+  });
+
+  test("an extension failure in the child reaches the failure text", async (t) => {
+    const { call, pi, children } = setup(t);
+    await call({ id: "broken", prompt: "x" });
+    children[0].write(
+      rpcRecord({
+        type: "extension_error",
+        extensionPath: "/ext/bad.ts",
+        event: "agent_settled",
+        error: "boom",
+      }),
+    );
+    children[0].close(1);
+    const [sent] = await notices(pi);
+    assert.match(sent.message.content, /extension error in \/ext\/bad\.ts on agent_settled: boom/);
   });
 });
 
@@ -723,6 +905,103 @@ describe("subagent_kill and shutdown", () => {
     const sent = await notices(pi);
     assert.match(sent[0].message.content, /Reload cancelled 1 running subagent\(s\): \[subagent alive\]/);
     assert.deepEqual(sent[0].options, { triggerTurn: false });
+  });
+});
+
+describe("the child keep-alive gate", () => {
+  /**
+   * Install the extension the way a spawned child loads it.
+   *
+   * @param t - Node test context, used to restore the environment variable.
+   * @returns The fake pi holding the registered gate.
+   */
+  function childSetup(t) {
+    const previous = process.env.PI_SUBAGENT_CHILD;
+    process.env.PI_SUBAGENT_CHILD = "1";
+    t.after(() => {
+      if (previous === undefined) delete process.env.PI_SUBAGENT_CHILD;
+      else process.env.PI_SUBAGENT_CHILD = previous;
+    });
+    resetChildren();
+    shortKillGrace(t);
+    const pi = fakePi();
+    installSubagent(pi.api);
+    return pi;
+  }
+
+  /**
+   * A settle context that records whether the child was asked to end.
+   *
+   * @param idle - What `isIdle()` reports.
+   * @returns The context, and the state it records.
+   */
+  function settleCtx({ idle = true } = {}) {
+    const state = { shutDown: 0 };
+    return {
+      state,
+      ctx: {
+        isIdle: () => idle,
+        hasPendingMessages: () => false,
+        shutdown: () => {
+          state.shutDown += 1;
+        },
+      },
+    };
+  }
+
+  test("a parent session installs no gate", async (t) => {
+    const { pi } = setup(t);
+    assert.equal(pi.hooks.has("agent_settled"), false);
+    assert.equal(pi.tools.has("subagent_finish"), false, "a parent has nothing to finish");
+  });
+
+  test("a child sees the finish tool even when its selection hides it", async (t) => {
+    const pi = childSetup(t);
+    await pi.tools
+      .get("subagent")
+      .execute("call", { id: "sel", prompt: "x", tools: ["read"] }, undefined, undefined, {
+        cwd: workDir,
+      });
+    const args = children[0].args;
+    assert.equal(args[args.indexOf("--tools") + 1], "read,subagent_finish");
+  });
+
+  test("the finish declaration carries the child's role and lifetime rules", async (t) => {
+    const pi = childSetup(t);
+    const finish = pi.tools.get("subagent_finish");
+    const guidelines = finish.promptGuidelines.join(" ");
+    assert.match(finish.promptSnippet, /a turn ending does not end the session/);
+    assert.match(guidelines, /You are a subagent working alone/);
+    assert.match(guidelines, /outlives its turns/);
+    assert.match(guidelines, /Call `subagent_finish` when your answer is final/);
+  });
+
+  test("a child stays open after a turn until its model finishes", async (t) => {
+    const pi = childSetup(t);
+    const { ctx, state } = settleCtx();
+    await pi.hooks.get("agent_settled")({ aborted: false }, ctx);
+    assert.equal(state.shutDown, 0, "a turn ending no longer ends the session");
+  });
+
+  test("the finish tool ends the child at the next settle", async (t) => {
+    const pi = childSetup(t);
+    const { ctx, state } = settleCtx();
+    const result = await pi.tools.get("subagent_finish").execute("call", {});
+    assert.match(result.content[0].text, /Finishing/);
+    await pi.hooks.get("agent_settled")({ aborted: false }, ctx);
+    assert.equal(state.shutDown, 1);
+  });
+
+  test("a finish request waits for a turn that is already running", async (t) => {
+    const pi = childSetup(t);
+    await pi.tools.get("subagent_finish").execute("call", {});
+    const busy = settleCtx({ idle: false });
+    await pi.hooks.get("agent_settled")({ aborted: false }, busy.ctx);
+    assert.equal(busy.state.shutDown, 0, "a running turn reports first");
+
+    const idle = settleCtx();
+    await pi.hooks.get("agent_settled")({ aborted: false }, idle.ctx);
+    assert.equal(idle.state.shutDown, 1);
   });
 });
 
