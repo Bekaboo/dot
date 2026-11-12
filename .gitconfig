@@ -194,6 +194,7 @@
 	smudge = cat
 	; Drop machine-specific model selection
 	clean = jq --indent 2 'del( \
+		.hideThinkingBlock, \
 		.defaultProvider, \
 		.defaultModel, \
 		.defaultThinkingLevel \
