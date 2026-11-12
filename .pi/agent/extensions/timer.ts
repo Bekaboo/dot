@@ -11,8 +11,9 @@
  *
  * Its tick budget, or its deadline. Every ending wakes the agent with a short
  * notification. Timers are named by the agent, so every wake and the status
- * list are self-describing. The user-facing `/timers` command shows the same
- * timers as an aligned table.
+ * list are self-describing. The user-facing `/timers` command shows the
+ * session's timers as an aligned table: the running ones first, then the ones
+ * that ended, each with the same state marker the `/subagents` view uses.
  */
 
 import { type ChildProcess, spawn } from "node:child_process";
@@ -51,6 +52,13 @@ import {
 
 import { type Static, Type } from "typebox";
 
+import {
+  type RunState,
+  SPINNER_FRAMES,
+  SPINNER_INTERVAL_MS,
+  stateMarker,
+} from "./lib/state-marker.ts";
+
 // Timer duration, polling, and notification defaults, in seconds.
 const DEFAULT_TIMEOUT_SEC = 3_600;
 const MIN_TIMEOUT_SEC = 1;
@@ -80,11 +88,9 @@ const JOB_TAIL_CHARS = 2_000;
 const MIN_CONDITION_TIMEOUT_MS = 1_000;
 const MAX_CONDITION_TIMEOUT_MS = 30_000;
 
-// The `/timers` overlay: horizontal padding and the same spinner as the
-// subagent overlay, so both views animate the same way.
+// The `/timers` overlay's horizontal padding, matching the subagent overlay so
+// both views line up.
 const OVERLAY_PADDING_X = 2;
-const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
-const SPINNER_INTERVAL_MS = 80;
 
 // Snapshot deadline and size cap for the optional `onTick` callback.
 const ON_TICK_TIMEOUT_MS = 10_000;
@@ -183,7 +189,7 @@ const TimerStatusParams = Type.Object({
 type TimerStatusInput = Static<typeof TimerStatusParams>;
 
 /** Kind of notification a timer emits. */
-type TimerState = "tick" | "done" | "timeout" | "error";
+type TimerState = "tick" | "done" | "timeout" | "failed";
 
 /** Persisted specification of one timer. */
 interface TimerSpec {
@@ -291,17 +297,18 @@ function requireId(id: string): string {
 /**
  * Format elapsed seconds since a timer was armed.
  *
- * @param timer - Timer to measure.
+ * @param startedAt - Unix timestamp in milliseconds when the timer was armed.
  * @returns Whole seconds, e.g. `40s`.
  */
-function elapsed(timer: Timer): string {
-  return `${Math.floor((Date.now() - timer.startedAt) / 1000)}s`;
+function elapsed(startedAt: number): string {
+  return `${Math.floor((Date.now() - startedAt) / 1000)}s`;
 }
 
-/** One active timer as fields, so display code can align them into columns. */
+/** One timer as fields, so display code can align them into columns. */
 interface TimerRow {
   id: string;
-  state: string;
+  /** Whether the timer still runs, or how it ended. */
+  state: RunState;
   age: string;
   ticks: string;
   target: string;
@@ -366,11 +373,12 @@ function padRight(text: string, width: number): string {
  */
 function summaryOf(rows: readonly TimerRow[], theme: Theme): string {
   if (rows.length === 0) {
-    return theme.fg("dim", "No active timers.");
+    return theme.fg("dim", "No timers have run in this session.");
   }
+  const running = rows.filter((row) => row.state === "running").length;
   return theme.fg(
     "muted",
-    rows.length === 1 ? "1 active timer" : `${rows.length} active timers`,
+    `${running} running, ${rows.length - running} finished`,
   );
 }
 
@@ -586,6 +594,16 @@ function collectActiveTimers(
   return active;
 }
 
+/** One timer that ended, kept so a late `timer_stop` and `/timers` can report it. */
+interface RetiredTimer {
+  /** Why it ended, e.g. `tick budget spent`. */
+  reason: string;
+  /** How it ended, which picks its marker and state word. */
+  state: RunState;
+  /** Elapsed time at the end, e.g. `41s`. */
+  age: string;
+}
+
 /**
  * Registry of background timers for one extension load.
  *
@@ -596,15 +614,17 @@ class TimerRegistry {
   private pi: ExtensionAPI;
   private timers: Map<string, Timer>;
   /**
-   * Timers that ended on their own, newest last, mapped to how they ended.
+   * Timers that ended, newest last, with how and when they ended.
    *
    * Kept so a late `timer_stop` reports "stopped" instead of failing with
    * "no such timer": after the wake that announced the end, stopping the
-   * timer is the obvious next move, and it must not look like an error. Bounded
-   * like the subagent history, so a long session of short timers cannot grow it
+   * timer is the obvious next move, and it must not look like an error. The
+   * `/timers` overlay lists the same entries after the active ones, so a timer
+   * does not vanish from the view the moment it wakes the agent. Bounded like
+   * the subagent history, so a long session of short timers cannot grow it
    * without limit.
    */
-  private retired: Map<string, string>;
+  private retired: Map<string, RetiredTimer>;
   /**
    * Jobs this process still watches, keyed by timer id.
    *
@@ -777,6 +797,9 @@ class TimerRegistry {
   /**
    * Cancel one timer, stopping its loop and killing its job.
    *
+   * The timer is retired as killed, so `/timers` keeps showing it as an ended
+   * row instead of dropping it from the list.
+   *
    * @param id - Id of the timer to cancel.
    * @returns The cancelled timer, or `undefined` when nothing had that id.
    */
@@ -792,12 +815,18 @@ class TimerRegistry {
       this.kill(timer.job, "killed by timer_stop");
       this.jobs.delete(id);
     }
-    this.timers.delete(id);
+    this.retire(
+      id,
+      "killed by timer_stop",
+      "killed",
+      elapsed(timer.startedAt),
+      timer,
+    );
     return timer;
   }
 
   /**
-   * Forget a timer that ended on its own, and how it ended.
+   * Forget a timer that ended, and how and when it ended.
    *
    * Removal from the active map happens here rather than only in the loop's
    * cleanup, so a `timer_stop` that races the farewell wake already sees a
@@ -805,18 +834,29 @@ class TimerRegistry {
    *
    * @param id - Id of the timer that just finished.
    * @param reason - Why it finished, e.g. `tick budget spent`.
+   * @param state - How it finished, for its marker in `/timers`.
+   * @param age - Elapsed time at the end, e.g. `41s`.
+   * @param owner - Timer this call expects to retire, when a loop finishes it.
    */
-  private retire(id: string, reason: string, owner?: Timer): void {
+  private retire(
+    id: string,
+    reason: string,
+    state: RunState,
+    age: string,
+    owner?: Timer,
+  ): void {
     // A replaced timer must not retire its replacement: `restore()` re-arms the
     // same ids while an old loop can still be unwinding.
     if (owner && this.timers.get(id) !== owner) {
       return;
     }
     this.timers.delete(id);
+    // A re-inserted id moves to the end, so this also keeps the display order
+    // the order the timers ended in.
     this.retired.delete(id);
-    this.retired.set(id, reason);
-    // Oldest first: a re-inserted id moves to the end, so this drops the timer
-    // the agent is least likely to still ask about.
+    this.retired.set(id, { reason, state, age });
+    // Oldest first: this drops the timer the agent is least likely to still ask
+    // about.
     const oldest = this.retired.keys().next();
     if (!oldest.done && this.retired.size > RETIRED_HISTORY) {
       this.retired.delete(oldest.value);
@@ -830,7 +870,7 @@ class TimerRegistry {
    * @returns A sentence ending in a period.
    */
   retirementText(id: string): string {
-    return `Timer "${id}" stopped (${this.retired.get(id)}).`;
+    return `Timer "${id}" stopped (${this.retired.get(id)?.reason}).`;
   }
 
   /**
@@ -880,19 +920,39 @@ class TimerRegistry {
    *
    * @returns One row per active timer, sorted by id.
    */
-  rows(): TimerRow[] {
+  private activeRows(): TimerRow[] {
     return [...this.timers.values()]
       .sort((left, right) => left.id.localeCompare(right.id))
       .map((timer) => this.row(timer));
   }
 
   /**
+   * Collect every timer as table rows for `/timers`.
+   *
+   * @returns The active rows sorted by id, then the ended ones in the order
+   *   they ended.
+   */
+  rows(): TimerRow[] {
+    const retired = [...this.retired.entries()].map(([id, entry]) => ({
+      id,
+      state: entry.state,
+      age: entry.age,
+      ticks: "-",
+      target: entry.reason,
+    }));
+    return [...this.activeRows(), ...retired];
+  }
+
+  /**
    * Describe every active timer, one line each.
+   *
+   * Ended timers stay out of this list: the wake that announced the end already
+   * told the agent, and `timer_status <id>` still reports one by name.
    *
    * @returns Lines sorted by id, or a message when nothing is active.
    */
   list(): string {
-    const rows = this.rows();
+    const rows = this.activeRows();
     return rows.length === 0
       ? "No active timers."
       : rows.map(formatTimerRow).join("\n");
@@ -963,7 +1023,7 @@ class TimerRegistry {
     return {
       id: timer.id,
       state: "running",
-      age: elapsed(timer),
+      age: elapsed(timer.startedAt),
       ticks: `ticks ${ticks}`,
       target,
     };
@@ -987,7 +1047,13 @@ class TimerRegistry {
       const job = spec.start ? this.jobs.get(spec.id) : undefined;
       if (spec.start && !job) {
         const log = spec.logPath ? `; log ${spec.logPath}` : "";
-        this.retire(spec.id, `orphaned${log}`);
+        // Its end was never observed, so it can only be reported as failed.
+        this.retire(
+          spec.id,
+          `orphaned${log}`,
+          "failed",
+          elapsed(spec.startedAt),
+        );
         continue;
       }
       this.arm({
@@ -1020,8 +1086,12 @@ class TimerRegistry {
         // Same ownership reason as the `finally` below: a loop replaced by
         // `restore()` must not retire the timer that replaced it.
         if (!timer.stopped && this.timers.get(timer.id) === timer) {
-          this.retire(timer.id, "failed");
-          this.notify(timer, "error", `error: ${String(error)}; timer stopped`);
+          this.retire(timer.id, "failed", "failed", elapsed(timer.startedAt));
+          this.notify(
+            timer,
+            "failed",
+            `error: ${String(error)}; timer stopped`,
+          );
         }
       })
       .finally(() => {
@@ -1121,7 +1191,12 @@ class TimerRegistry {
       this.tick(timer, body, last);
       if (last) {
         // The tick just sent was the timer's farewell.
-        this.retire(timer.id, "tick budget spent");
+        this.retire(
+          timer.id,
+          "tick budget spent",
+          "done",
+          elapsed(timer.startedAt),
+        );
         return;
       }
     }
@@ -1134,7 +1209,7 @@ class TimerRegistry {
    * @returns One line for the final wake.
    */
   private conditionLine(timer: Timer): string {
-    return `condition met after ${elapsed(timer)}: ${timer.condition}`;
+    return `condition met after ${elapsed(timer.startedAt)}: ${timer.condition}`;
   }
 
   /**
@@ -1272,9 +1347,9 @@ class TimerRegistry {
     outcome: JobOutcome,
   ): Promise<void> {
     this.jobs.delete(job.id);
-    const end = describeJobEnd(outcome, elapsed(timer));
+    const end = describeJobEnd(outcome, elapsed(timer.startedAt));
     appendLogMarker(job.logPath, end.marker);
-    const state = !outcome.error && outcome.code === 0 ? "done" : "error";
+    const state = !outcome.error && outcome.code === 0 ? "done" : "failed";
     await this.finish(timer, state, end.line, end.reason);
   }
 
@@ -1332,7 +1407,7 @@ class TimerRegistry {
     this.notify(
       timer,
       "tick",
-      `tick ${count}, ${elapsed(timer)} elapsed${ending}`,
+      `tick ${count}, ${elapsed(timer.startedAt)} elapsed${ending}`,
       body,
     );
   }
@@ -1384,7 +1459,7 @@ class TimerRegistry {
    */
   private async finish(
     timer: Timer,
-    state: "done" | "timeout" | "error",
+    state: "done" | "timeout" | "failed",
     line: string,
     reason: string,
   ): Promise<void> {
@@ -1392,7 +1467,7 @@ class TimerRegistry {
       return;
     }
     timer.settled = true;
-    this.retire(timer.id, reason, timer);
+    this.retire(timer.id, reason, state, elapsed(timer.startedAt), timer);
     const tail = timer.job ? readLogTail(timer.job.logPath) : "";
     const body = [tail, await this.capture(timer)].filter(Boolean).join("\n");
     if (timer.stopped) {
@@ -1539,12 +1614,13 @@ function timerStopTool(
 }
 
 /**
- * Overlay listing the session's active timers.
+ * Overlay listing the session's timers, running ones first.
  *
  * Laid out like the subagent overlay: a bordered box with a title, a summary,
- * one highlighted line per timer and an Escape hint. Rows are read on every
- * render, and the overlay animates while timers are active, so elapsed times
- * stay current and ended timers disappear without reopening it.
+ * one line per timer and an Escape hint. Rows are read on every render, so
+ * elapsed times stay current and a timer that just ended turns into its
+ * finished row without reopening the view. The animation runs only while some
+ * timer is still running.
  */
 class TimersOverlay implements Component {
   private readonly container = new Container();
@@ -1614,6 +1690,9 @@ class TimersOverlay implements Component {
   /**
    * Render every timer on one line each, with aligned, highlighted columns.
    *
+   * The id comes first and the marker after it, so the markers of all rows form
+   * one column, matching `/subagents`.
+   *
    * @param rows - Rows the overlay shows.
    * @param width - Overlay width, including the text padding.
    * @returns One width-truncated line per timer.
@@ -1626,11 +1705,8 @@ class TimersOverlay implements Component {
       .map((row) =>
         truncateToWidth(
           [
-            theme.fg(
-              "accent",
-              SPINNER_FRAMES[this.frame % SPINNER_FRAMES.length],
-            ),
             theme.bold(padRight(row.id, widths.id)),
+            stateMarker(row.state, this.frame, theme),
             theme.fg("muted", padRight(row.state, widths.state)),
             theme.fg("muted", padRight(row.age, widths.age)),
             theme.fg("dim", padRight(row.ticks, widths.ticks)),
@@ -1645,12 +1721,12 @@ class TimersOverlay implements Component {
   }
 
   /**
-   * Animate the spinner and refresh elapsed times while timers are active.
+   * Animate the spinner while some timer is still running.
    *
    * @param rows - Rows to inspect; read from the registry when omitted.
    */
   private syncRefresh(rows: readonly TimerRow[] = this.readRows()): void {
-    if (rows.length === 0) {
+    if (!rows.some((row) => row.state === "running")) {
       this.stopRefresh();
       return;
     }
@@ -1676,7 +1752,7 @@ class TimersOverlay implements Component {
  */
 function timersCommand(registry: TimerRegistry) {
   return {
-    description: "Show the active timers in a live overlay",
+    description: "Show this session's timers in a live overlay",
     handler: async (_args: string, ctx: ExtensionCommandContext) => {
       if (ctx.mode !== "tui") {
         ctx.ui.notify(registry.list(), "info");

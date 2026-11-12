@@ -561,7 +561,7 @@ describe("timer", () => {
     assert.ok(overlay, "the command opens the overlay");
     const empty = overlay.render(60).join("\n");
     assert.match(empty, /Timers/);
-    assert.match(empty, /No active timers/);
+    assert.match(empty, /No timers have run in this session/);
     assert.match(empty, /Press Escape to close/);
 
     await start({ id: "timer-a", condition: "false" });
@@ -572,14 +572,19 @@ describe("timer", () => {
       !lines.some((line) => /^\s*ID\s+STATE/.test(line)),
       "the table has no header row",
     );
-    const rows = lines.filter((line) => line.includes("running"));
+    assert.ok(
+      lines.some((line) => line.trim() === "2 running, 0 finished"),
+      "the summary counts the running and the finished timers",
+    );
+    const rows = lines.filter((line) => line.includes("ticks "));
     assert.deepEqual(
-      rows.map((row) => row.trim().split(/ +/)[1]),
+      rows.map((row) => row.trim().split(/ +/)[0]),
       ["longer-timer", "timer-a"],
     );
-    // Every row starts with the running spinner and keeps its columns aligned.
+    // Every row names its id first, with the spinner right after it, so the
+    // markers line up as one column like the /subagents rows.
     for (const row of rows) {
-      assert.match(row.trim(), /^[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏] /);
+      assert.match(row.trim(), /^\S+ +[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏] running /);
     }
     for (const column of ["running", "ticks "]) {
       assert.equal(new Set(rows.map((row) => row.indexOf(column))).size, 1);
@@ -609,6 +614,57 @@ describe("timer", () => {
       ui: { notify: (text) => notified.push(text) },
     });
     assert.match(notified[0], /^timer-a +running/m);
+  });
+
+  test("/timers keeps a timer that ended, with its glyph and state word", async (t) => {
+    const { start, stop, commands, noticesAfter } = setup(t, (command) =>
+      exit(command === "true" ? 0 : 1),
+    );
+    let component;
+    const tui = { requestRender() {} };
+    const theme = { fg: (_color, text) => text, bold: (text) => text };
+    t.after(() => component?.dispose?.());
+    const screen = {
+      get component() {
+        return component;
+      },
+      ui: {
+        notify: () => assert.fail("TUI mode must not notify"),
+        custom(factory) {
+          return new Promise((resolve) => {
+            const done = () => {
+              const closing = component;
+              component = undefined;
+              closing?.dispose?.();
+              resolve();
+            };
+            component = factory(tui, theme, undefined, done);
+          });
+        },
+      },
+    };
+    const command = commands.get("timers");
+
+    const showing = command.handler("", { mode: "tui", ui: screen.ui });
+    const overlay = screen.component;
+
+    // A condition that holds at once ends the first timer; a user stop ends the
+    // second one. Both must still be listed, not dropped from the view.
+    await start({ id: "cond-met", condition: "true", maxTicks: 0 });
+    await noticesAfter(1);
+    const done = overlay.render(80).join("\n");
+    assert.match(done, /^\s*cond-met +✓ done \d+s +- +condition met\s*$/m);
+    assert.match(done, /0 running, 1 finished/);
+
+    await start({ id: "peek-stop", condition: "false", timeoutSec: 600 });
+    await stop({ id: "peek-stop" });
+    const stopped = overlay.render(80).join("\n");
+    assert.match(stopped, /^\s*peek-stop +· killed \d+s/m);
+    assert.match(stopped, /0 running, 2 finished/);
+
+    overlay.handleInput("\x1b");
+    await showing;
+    assert.equal(screen.component, undefined, "Escape closes the overlay");
   });
 
   test("status lists every timer, one timer by id, and rejects an unknown id", async (t) => {

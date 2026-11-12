@@ -43,6 +43,13 @@ import {
 } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
+import {
+  type RunState,
+  SPINNER_FRAMES,
+  SPINNER_INTERVAL_MS,
+  stateMarker,
+} from "./lib/state-marker.ts";
+
 /** Custom message type used for subagent notifications. */
 const NOTICE_TYPE = "subagent";
 
@@ -197,12 +204,6 @@ const TOOL_SUMMARY_CHARS = 60;
 /** Characters kept from an open text block, enough to derive its tail line. */
 const TEXT_TAIL_BUFFER_CHARS = 400;
 
-/** Braille frames pi's built-in working spinner uses. */
-const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
-
-/** Spinner frame interval in ms, matching pi's built-in working indicator. */
-const SPINNER_INTERVAL_MS = 80;
-
 /** Kind column of the detail view's first line, the moment the child spawned. */
 const START_KIND = "start";
 
@@ -242,7 +243,7 @@ const SubagentParams = Type.Object({
   ),
   timeoutSec: Type.Optional(
     Type.Number({
-      description: `Wall-clock limit for the child, in seconds. The child is stopped and reported as failed when it passes, which bounds a child that never calls its own finish tool. Defaults to ${DEFAULT_TIMEOUT_SEC}.`,
+      description: `Wall-clock limit for the child, in seconds. The child is stopped and reported as timed out when it passes, which bounds a child that never calls its own finish tool. Defaults to ${DEFAULT_TIMEOUT_SEC}.`,
     }),
   ),
 });
@@ -295,8 +296,8 @@ interface FinishedSubagent {
   seconds: number;
   /** Spawn time in ms, the first line of the detail view. */
   startedAt: number;
-  /** Outcome word: done, fail, or kill. */
-  state: string;
+  /** Outcome word: done, failed, timeout, or killed. */
+  state: Exclude<RunState, "running">;
   /** Failure text, when the child did not finish cleanly. */
   reason?: string;
   model: string;
@@ -313,8 +314,8 @@ interface FinishedSubagent {
 /** One line of the `/subagents` overlay. */
 interface SubagentRow {
   id: string;
-  /** Outcome word: work, done, fail, or kill. */
-  state: string;
+  /** Outcome word: running, done, failed, timeout, or killed. */
+  state: RunState;
   /** Creation order, so two children started in one millisecond stay ordered. */
   order: number;
   /** Elapsed seconds: live while running, at exit once finished. */
@@ -390,7 +391,7 @@ type StreamBlock = Extract<
 
 /** Terminal state of a child, as its notification reports it. */
 interface Outcome {
-  state: "done" | "fail";
+  state: "done" | "failed" | "timeout";
   /** One-line summary, such as "finished in 12s.". */
   status: string;
   /** What the child said, or why it failed. */
@@ -928,6 +929,8 @@ function stopProcess(proc: ChildProcess): Promise<void> {
  * @param stderr - Child stderr, already capped.
  * @param failure - Why the child failed, or undefined for a successful run.
  * @param startedAt - Spawn time in ms, for the elapsed seconds.
+ * @param timedOut - Whether the child ran out of wall-clock time, which is
+ *   reported as its own outcome so `/subagents` names the cause at a glance.
  * @returns Terminal state, one-line summary and body of the notification.
  */
 function outcomeOf(
@@ -935,6 +938,7 @@ function outcomeOf(
   stderr: string,
   failure: string | undefined,
   startedAt: number,
+  timedOut: boolean,
 ): Outcome {
   const seconds = elapsedSec(startedAt);
   if (!failure && lastTurn.answer.trim()) {
@@ -948,9 +952,10 @@ function outcomeOf(
   // how a lost result turns into an invisible one.
   const reason = failure ?? "the child exited without an answer";
   const body = [lastTurn.answer, stderr.trim()].filter(Boolean).join("\n\n");
+  const state = timedOut ? "timeout" : "failed";
   return {
-    state: "fail",
-    status: `failed after ${seconds}s: ${reason}`,
+    state,
+    status: `${state} after ${seconds}s: ${reason}`,
     body: body || "(no output)",
   };
 }
@@ -1444,13 +1449,13 @@ function openSuffix(step: ActivityStep): string {
  * @param row - Child the view shows.
  * @param frame - Current spinner frame index.
  * @param theme - Active theme.
- * @returns Text naming its id, state, elapsed time, timeout, model, tools and
- *   working directory, in the order the list row shows them.
+ * @returns Text naming its id, state marker, state, elapsed time, timeout,
+ *   model, tools and working directory, in the order the list row shows them.
  */
 function detailHeader(row: SubagentRow, frame: number, theme: Theme): string {
   const column = columnsOf(row);
   const state =
-    row.state === "work"
+    row.state === "running"
       ? `running for ${row.seconds}s`
       : `${row.state} after ${row.seconds}s`;
   return [
@@ -1475,32 +1480,11 @@ function summaryOf(rows: SubagentRow[], theme: Theme): string {
   if (rows.length === 0) {
     return theme.fg("dim", "No subagents have run in this session.");
   }
-  const running = rows.filter((row) => row.state === "work").length;
+  const running = rows.filter((row) => row.state === "running").length;
   return theme.fg(
     "muted",
     `${running} running, ${rows.length - running} finished`,
   );
-}
-
-/**
- * Glyph and color for a subagent's state, with the spinner while it runs.
- *
- * @param state - `work`, or the terminal state of a finished child.
- * @param frame - Current spinner frame index.
- * @param theme - Active theme.
- * @returns The styled marker.
- */
-function stateMarker(state: string, frame: number, theme: Theme): string {
-  switch (state) {
-    case "work":
-      return theme.fg("accent", SPINNER_FRAMES[frame % SPINNER_FRAMES.length]);
-    case "done":
-      return theme.fg("success", "✓");
-    case "fail":
-      return theme.fg("error", "✗");
-    default:
-      return theme.fg("dim", "·");
-  }
 }
 
 /**
@@ -1649,7 +1633,7 @@ class SubagentRunner {
     );
 
     // `error` and `close` can both fire for one child; report it only once.
-    const finish = (failure: string | undefined) => {
+    const finish = (failure: string | undefined, timedOut = false) => {
       if (finished) return;
       finished = true;
       clearTimeout(startDeadline);
@@ -1665,6 +1649,7 @@ class SubagentRunner {
         stderrTail,
         failure,
         running.startedAt,
+        timedOut,
       );
       this.remember({
         id: running.id,
@@ -1706,7 +1691,7 @@ class SubagentRunner {
     // extension error, still has to report instead of living on.
     timeout = setTimeout(
       () => {
-        finish(`no result within its ${subagent.timeoutSec}s timeout`);
+        finish(`no result within its ${subagent.timeoutSec}s timeout`, true);
         void stopProcess(proc);
       },
       Math.min(subagent.timeoutSec * 1000, MAX_TIMER_MS),
@@ -1806,7 +1791,7 @@ class SubagentRunner {
   private rows(): SubagentRow[] {
     const running = [...this.running.values()].map((job) => ({
       id: job.id,
-      state: "work",
+      state: "running" as const,
       order: job.order,
       seconds: elapsedSec(job.startedAt),
       startedAt: job.startedAt,
@@ -1861,7 +1846,7 @@ class SubagentRunner {
         id,
         seconds: job ? elapsedSec(job.startedAt) : 0,
         startedAt: job?.startedAt ?? 0,
-        state: "kill",
+        state: "killed",
         model: job?.model ?? "",
         tools: job?.tools ?? [],
         cwd: job?.cwd ?? "",
@@ -1898,9 +1883,9 @@ class SubagentRunner {
       this.pi.sendMessage(
         {
           customType: NOTICE_TYPE,
-          content: `Reload cancelled ${killed.length} running subagent(s): ${killed.map(marker).join(", ")}. Their results are lost; start them again if you still need them.`,
+          content: `Reload killed ${killed.length} running subagent(s): ${killed.map(marker).join(", ")}. Their results are lost; start them again if you still need them.`,
           display: true,
-          details: { state: "cancelled", ids: killed },
+          details: { state: "killed", ids: killed },
         },
         { triggerTurn: false },
       );
@@ -2169,7 +2154,7 @@ class SubagentsOverlay implements Component {
 
   /** Start or stop the animation to match the rows. */
   private syncAnimation(): void {
-    if (this.readRows().some((row) => row.state === "work")) {
+    if (this.readRows().some((row) => row.state === "running")) {
       this.startAnimation();
       return;
     }
@@ -2228,7 +2213,7 @@ function subagentTool(
   return {
     name: "subagent",
     label: "Subagent",
-    description: `Start a separate pi process with a fresh context to work on a task in the background. Returns immediately; the child's answer arrives later as a "${MARKER_EXAMPLE} ..." message. The child ends itself by calling its own \`${FINISH_TOOL}\` tool, so background work it started, such as a timer or a nested subagent, can wake it after a turn and be reported too. A child still running at its timeout is stopped and reported as failed, so a stuck child cannot go silent.`,
+    description: `Start a separate pi process with a fresh context to work on a task in the background. Returns immediately; the child's answer arrives later as a "${MARKER_EXAMPLE} ..." message. The child ends itself by calling its own \`${FINISH_TOOL}\` tool, so background work it started, such as a timer or a nested subagent, can wake it after a turn and be reported too. A child still running at its timeout is stopped and reported as timed out, so a stuck child cannot go silent.`,
     promptSnippet: `Spawn a background pi subagent with its own prompt, tools and model; its result arrives later as a ${MARKER_EXAMPLE} message. A child may wait on background work it started (timers, nested subagents) before it reports, and is stopped at its timeout.`,
     promptGuidelines: [
       "Use `subagent` for one task that can run alongside your own work, such as an independent review, a long scan, or a second opinion.",

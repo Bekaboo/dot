@@ -863,7 +863,7 @@ describe("subagent", () => {
       }
     });
 
-    test("a child that outlives its timeout is stopped and reported as failed", async (t) => {
+    test("a child that outlives its timeout is stopped and reported as timed out", async (t) => {
       const { call, pi, children } = setup(t);
       await call({ id: "stuck", prompt: "x", timeoutSec: 0.05 });
       const [child] = children;
@@ -871,7 +871,7 @@ describe("subagent", () => {
       const [sent] = await notices(pi);
       assert.match(
         sent.message.content,
-        /^\[subagent stuck\] failed after \d+s: no result within its 0.05s timeout/,
+        /^\[subagent stuck\] timeout after \d+s: no result within its 0.05s timeout/,
       );
       assert.ok(child.kills.includes("SIGTERM"), "the child is stopped, not left running");
       assert.ok(
@@ -882,7 +882,7 @@ describe("subagent", () => {
       const status = await pi.tools
         .get("subagent_status")
         .execute("call", { id: "stuck" }, undefined, undefined, {});
-      assert.match(status.content[0].text, /\[subagent stuck\] fail after \d+s/);
+      assert.match(status.content[0].text, /\[subagent stuck\] timeout after \d+s/);
     });
 
     test("a child that finishes before its timeout is not stopped", async (t) => {
@@ -1081,14 +1081,27 @@ describe("subagent", () => {
     }
 
     /**
+     * A rendered line without its ANSI attributes.
+     *
+     * @param line - Rendered widget line.
+     * @returns The text the user sees.
+     */
+    function plainOf(line) {
+      return line.replace(/\x1b\[[0-9;]*m/g, "");
+    }
+
+    /**
      * Visible width of a rendered line without its ANSI attributes.
      *
      * @param line - Rendered widget line.
      * @returns Number of terminal columns it occupies.
      */
     function widthOf(line) {
-      return line.replace(/\x1b\[[0-9;]*m/g, "").length;
+      return plainOf(line).length;
     }
+
+    /** Spinner frame or finished-state glyph of a row's state marker. */
+    const STATE_MARKER = /[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏✓✗·]/;
 
     test("/subagents lists running children and says when there are none", async (t) => {
       const { call, pi } = setup(t);
@@ -1132,16 +1145,33 @@ describe("subagent", () => {
       const text = lines.join("\n");
       assert.match(text, /1 running, 1 finished/);
       assert.ok(text.indexOf("first") < text.indexOf("second"));
-      assert.match(text, /second +[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏] +work +0s/);
+      assert.match(text, /second +[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏] +running +0s/);
 
       // Every row starts its tools and cwd columns at the same offset.
       const firstRow = lines.find((line) => line.includes(" first "));
       const secondRow = lines.find((line) => line.includes(" second "));
       assert.ok(firstRow && secondRow, "both subagents are listed");
       assert.match(firstRow, / first +\S +done /);
+      // The state marker follows the id: a glyph once the child ended, the
+      // spinner while it runs, so it never sits beside the selection cursor.
+      for (const [row, id] of [
+        [firstRow, "first"],
+        [secondRow, "second"],
+      ]) {
+        assert.ok(
+          plainOf(row).indexOf(id) < plainOf(row).search(STATE_MARKER),
+          `the row names ${id} before its state marker`,
+        );
+      }
+      assert.doesNotMatch(
+        plainOf(firstRow),
+        new RegExp(`${SELECTED_CURSOR} *${STATE_MARKER.source}`),
+        "the cursor is not immediately followed by the state marker",
+      );
+      // The status column is right-aligned, so both words end at one offset.
       assert.equal(
-        firstRow.indexOf("done "),
-        secondRow.indexOf("work "),
+        firstRow.indexOf("done") + "done".length,
+        secondRow.indexOf("running") + "running".length,
         "status column is aligned",
       );
       assert.equal(
@@ -1276,6 +1306,11 @@ describe("subagent", () => {
       assert.ok(
         header.indexOf("audited") < header.indexOf("running"),
         "the id comes before the state",
+      );
+      assert.ok(
+        plainOf(header).indexOf("audited") <
+          plainOf(header).search(STATE_MARKER),
+        "the header names the child before its state marker",
       );
       assert.match(header, /running for \d+s/);
       assert.match(header, /audit-model/);
@@ -1428,7 +1463,7 @@ describe("subagent", () => {
         .execute("call", {}, undefined, undefined, {});
       assert.match(
         status.content[0].text,
-        /\[subagent bad\] fail after \d+s \(timeout=3600s\): exit code 3/,
+        /\[subagent bad\] failed after \d+s \(timeout=3600s\): exit code 3/,
       );
     });
 
@@ -1805,7 +1840,7 @@ describe("subagent", () => {
       const status = await pi.tools
         .get("subagent_status")
         .execute("call", {}, undefined, undefined, {});
-      assert.match(status.content[0].text, /\[subagent killed\] kill after \d+s/);
+      assert.match(status.content[0].text, /\[subagent killed\] killed after \d+s/);
     });
 
     test("shutdown drops late child results", async (t) => {
@@ -1831,14 +1866,14 @@ describe("subagent", () => {
       assert.equal(pi.sent.length, 0);
     });
 
-    test("shutdown kills children and says a reload cancelled them", async (t) => {
+    test("shutdown kills children and says a reload killed them", async (t) => {
       const { call, pi, children } = setup(t, { idle: () => false });
       await call({ id: "alive", prompt: "x" });
       assert.deepEqual(children[0].kills, [], "nothing is killed while the child runs");
       await pi.hooks.get("session_shutdown")({ reason: "reload" });
       assert.deepEqual(children[0].kills, ["SIGTERM", "SIGKILL"], "shutdown stops the child");
       const sent = await notices(pi);
-      assert.match(sent[0].message.content, /Reload cancelled 1 running subagent\(s\): \[subagent alive\]/);
+      assert.match(sent[0].message.content, /Reload killed 1 running subagent\(s\): \[subagent alive\]/);
       assert.deepEqual(sent[0].options, { triggerTurn: false });
     });
   });
