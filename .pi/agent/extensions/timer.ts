@@ -52,7 +52,7 @@ import {
 
 import { type Static, Type } from "typebox";
 
-import { type RunState, Spinner } from "./lib/spinner.ts";
+import { type RunState, Spinner } from "./utils/spinner.ts";
 
 // Timer duration, polling, and notification defaults, in seconds.
 const DEFAULT_TIMEOUT_SEC = 3_600;

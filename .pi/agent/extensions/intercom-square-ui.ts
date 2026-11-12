@@ -7,7 +7,7 @@
  * first match, which makes the override work without patching the installed
  * package. Its popups (session list, compose box, handover picker) are built
  * inside pi-intercom and cannot be re-registered, so they are squared through
- * the theme Pi hands them. Both mechanisms live in `lib/intercom-frame.ts`.
+ * the theme Pi hands them. Both mechanisms live in `utils/intercom-frame.ts`.
  *
  * The import walks into the managed install because the package is not
  * resolvable from this directory. It is the personal install path; a
@@ -16,7 +16,7 @@
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { InlineMessageComponent } from "../npm/node_modules/pi-intercom/ui/inline-message.ts";
-import { createRenderer, squareThemeFrames } from "./lib/intercom-frame.ts";
+import { createRenderer, squareThemeFrames } from "./utils/intercom-frame.ts";
 
 export default function (pi: ExtensionAPI) {
   pi.registerMessageRenderer(

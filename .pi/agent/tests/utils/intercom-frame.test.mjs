@@ -5,7 +5,7 @@ import {
   createRenderer,
   squareFrames,
   squareThemeFrames,
-} from "../../extensions/lib/intercom-frame.ts";
+} from "../../extensions/utils/intercom-frame.ts";
 
 const plainTheme = { fg: (_color, text) => text };
 const STYLED = /\x1b\[[0-9;]*m/g;

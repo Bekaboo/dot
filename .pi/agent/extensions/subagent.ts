@@ -43,7 +43,7 @@ import {
 } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
-import { type RunState, Spinner } from "./lib/spinner.ts";
+import { type RunState, Spinner } from "./utils/spinner.ts";
 
 /** Custom message type used for subagent notifications. */
 const NOTICE_TYPE = "subagent";
