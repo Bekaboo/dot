@@ -419,10 +419,20 @@ describe("subagent", () => {
         .get("subagent_status")
         .execute("call", { id: "default-timeout" }, undefined, undefined, {});
       assert.match(status.content[0].text, /timeout=3600s/);
-      assert.match(
-        (await call({ id: "custom-timeout", prompt: "x", timeoutSec: 90 })).content[0].text,
-        /timeout=90s/,
-      );
+      const customResult = await call({
+        id: "custom-timeout",
+        prompt: "x",
+        timeoutSec: 90,
+      });
+      assert.match(customResult.content[0].text, /timeout=90s/);
+      assert.deepEqual(childCommands(children.at(-1)), [
+        {
+          id: "prompt",
+          type: "prompt",
+          message:
+            "Task: x\n\nThis subagent has a 90s wall-clock timeout; the parent stops it when the timeout passes.",
+        },
+      ]);
       await pi.hooks.get("session_shutdown")({ reason: "quit" });
       assert.ok(children.length >= 1);
     });
@@ -474,7 +484,12 @@ describe("subagent", () => {
         "the prompt travels on stdin, not in argv",
       );
       assert.deepEqual(childCommands(child), [
-        { id: "prompt", type: "prompt", message: "Task: do it" },
+        {
+          id: "prompt",
+          type: "prompt",
+          message:
+            "Task: do it\n\nThis subagent has a 3600s wall-clock timeout; the parent stops it when the timeout passes.",
+        },
       ]);
       assert.equal(
         child.options.env.PI_SUBAGENT_CHILD,

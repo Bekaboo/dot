@@ -713,15 +713,18 @@ function jsonLine(record: Record<string, unknown>): string {
  *
  * The `Task:` prefix keeps pi from reading the prompt as a skill, template or
  * extension command, which RPC mode would dispatch instead of sending it.
+ * The deadline travels in the same message so the child knows how long it has
+ * from the start; it names no tool, so it stays decoupled from any extension.
  *
  * @param prompt - Task the caller described.
+ * @param timeoutSec - Wall-clock limit the parent enforces, in seconds.
  * @returns One JSONL record for the child's stdin.
  */
-function promptCommand(prompt: string): string {
+function promptCommand(prompt: string, timeoutSec: number): string {
   return jsonLine({
     id: PROMPT_ID,
     type: "prompt",
-    message: `Task: ${prompt}`,
+    message: `Task: ${prompt}\n\nThis subagent has a ${timeoutSec}s wall-clock timeout; the parent stops it when the timeout passes.`,
   });
 }
 
@@ -1205,7 +1208,11 @@ class SubagentRunner {
       finish(startFailure || failureOf(lastTurn, code, signal)),
     );
     // The readers are attached first, so a fast answer cannot arrive unread.
-    writeChild(proc, promptCommand(subagent.prompt), appendStderr);
+    writeChild(
+      proc,
+      promptCommand(subagent.prompt, subagent.timeoutSec),
+      appendStderr,
+    );
     // A child that never starts a run cannot report, and its gate never fires.
     // Unref'd: this deadline must not keep the parent's event loop alive.
     startDeadline = setTimeout(() => {
