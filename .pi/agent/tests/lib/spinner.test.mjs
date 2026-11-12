@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test, { describe } from "node:test";
 
-import { Spinner } from "../extensions/lib/spinner.ts";
+import { Spinner } from "../../extensions/lib/spinner.ts";
 
 const plainTheme = { fg: (_color, text) => text };
 const BRAILLE = /^[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏]$/;
