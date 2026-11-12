@@ -425,6 +425,10 @@ describe("subagent", () => {
         timeoutSec: 90,
       });
       assert.match(customResult.content[0].text, /timeout=90s/);
+      assert.match(
+        childOptions(children.at(-1)).options["append-system-prompt"],
+        /You are a subagent working alone/,
+      );
       assert.deepEqual(childCommands(children.at(-1)), [
         {
           id: "prompt",
@@ -476,8 +480,18 @@ describe("subagent", () => {
         "the child gets the allowed tools plus its own way to end the session",
       );
       assert.ok(
-        !flags.has("append-system-prompt"),
-        "the role and lifetime rules live in the finish tool declaration",
+        flags.has("append-system-prompt"),
+        "the child's role and lifetime live in an appended system prompt",
+      );
+      assert.match(
+        options["append-system-prompt"],
+        /You are a subagent working alone/,
+      );
+      assert.match(options["append-system-prompt"], /outlives its turns/);
+      assert.doesNotMatch(
+        options["append-system-prompt"],
+        /wall-clock timeout/,
+        "the deadline is not part of the system prompt",
       );
       assert.ok(
         !child.args.some((arg) => arg.startsWith("Task: do it")),
@@ -1289,13 +1303,13 @@ describe("subagent", () => {
       assert.deepEqual(toolSelection.split(","), ["read", "subagent_finish"]);
     });
 
-    test("the finish declaration carries the child's role and lifetime rules", async (t) => {
+    test("the finish declaration carries only the finish contract", async (t) => {
       const pi = childSetup(t);
       const finish = pi.tools.get("subagent_finish");
       const guidelines = finish.promptGuidelines.join(" ");
       assert.match(finish.promptSnippet, /a turn ending does not end the session/);
-      assert.match(guidelines, /You are a subagent working alone/);
-      assert.match(guidelines, /outlives its turns/);
+      assert.doesNotMatch(guidelines, /You are a subagent working alone/);
+      assert.doesNotMatch(guidelines, /outlives its turns/);
       assert.match(guidelines, /Call `subagent_finish` when your answer is final/);
     });
 

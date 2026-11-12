@@ -161,6 +161,19 @@ const WARN_AT = 0.8;
  */
 const MIN_WARN_LEAD_SEC = 10;
 
+/**
+ * Static system-prompt lines every spawned child gets.
+ *
+ * These describe the child's role and lifetime, which belong in the system
+ * prompt rather than a tool declaration: a child must know it works alone and
+ * that its session outlives its turns. They are appended verbatim via
+ * `--append-system-prompt`.
+ */
+const CHILD_SYSTEM_PROMPT = [
+  "You are a subagent working alone in the current directory: no user can answer questions, so finish the task and report back concisely.",
+  "This subagent session outlives its turns so background work you start, such as a timer or a nested subagent, can still wake you after you stop calling tools: end the turn instead of waiting for it in a loop, and react when its notification arrives.",
+].join("\n\n");
+
 /** Longest single JSONL record kept from the child, in bytes. */
 const MAX_RECORD_BYTES = 8 * 1024 * 1024;
 
@@ -665,9 +678,10 @@ function childEnv(
  * positional argument, because RPC mode rejects `@file` prompts and expects
  * commands on stdin instead.
  *
- * The child's role and its contract for ending the session travel in the
- * `subagent_finish` declaration, which only a child ever sees; nothing is
- * appended to its system prompt here.
+ * The child's role and lifetime travel in `--append-system-prompt`, so they sit
+ * in the system prompt in one place instead of a tool declaration. The
+ * `subagent_finish` declaration keeps only how the session ends, and the
+ * deadline travels in the prompt command on stdin.
  *
  * The call's id also names the child's session. Pi's session name is one field
  * that `/name`, `--name` and `pi.setSessionName()` all write, so naming the
@@ -695,6 +709,7 @@ function childCommand(subagent: {
   if (subagent.tools.length > 0) {
     args.push("--tools", childTools(subagent.tools).join(","));
   }
+  args.push("--append-system-prompt", CHILD_SYSTEM_PROMPT);
   return { command, args };
 }
 
@@ -1775,10 +1790,11 @@ function warnBeforeDeadline(pi: ExtensionAPI, runner: SubagentRunner): void {
  * The answer travels in the argument, so the result ends the turn: a follow-up
  * turn would only repeat the report or add a sign-off.
  *
- * The snippet and guidelines are this tool's whole purpose in prose: pi puts
- * them in the system prompt of every session that declares the tool, which is
- * exactly the spawned child. That includes the child's role, so nothing else
- * has to be appended to its system prompt.
+ * The snippet and guidelines describe only how the session ends: pi puts them
+ * in the system prompt of every session that declares the tool, which is
+ * exactly the spawned child. The child's role and lifetime travel in the
+ * system prompt that `childCommand` appends, and its deadline in the prompt
+ * command; neither belongs here.
  *
  * @param runner - Session state holding the end request.
  */
@@ -1793,8 +1809,6 @@ function finishTool(
     promptSnippet:
       "End this subagent session and report your answer to the parent verbatim; a turn ending does not end the session.",
     promptGuidelines: [
-      "You are a subagent working alone in the current directory: no user can answer questions, so finish the task and report back concisely.",
-      "This subagent session outlives its turns so background work you start, such as a timer or a nested subagent, can still wake you after you stop calling tools: end the turn instead of waiting for it in a loop, and react when its notification arrives.",
       `Call \`${FINISH_TOOL}\` when your answer is final, even if you started no background work: the parent receives the \`answer\` argument verbatim and nothing else, so put your complete report there.`,
       `Background work still pending when you call \`${FINISH_TOOL}\` is abandoned, so wait for anything you still need before finishing.`,
     ],
