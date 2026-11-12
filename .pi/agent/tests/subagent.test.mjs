@@ -189,6 +189,26 @@ function assistantRecord(text, extra = {}) {
 }
 
 /**
+ * A JSONL record carrying an assistant message that calls the finish tool.
+ *
+ * @param answer - Answer the child passes to `subagent_finish`.
+ * @param text - Text in the same message, or omitted for none.
+ */
+function finishRecord(answer, text) {
+  const content = text ? [{ type: "text", text }] : [];
+  content.push({
+    type: "toolCall",
+    id: "finish-call",
+    name: "subagent_finish",
+    arguments: { answer },
+  });
+  return `${JSON.stringify({
+    type: "message_end",
+    message: { role: "assistant", content },
+  })}\n`;
+}
+
+/**
  * A fake `pi` that records what the extension registers and sends.
  *
  * @param sessionName - Name this session was given, as another extension reads it.
@@ -665,6 +685,29 @@ describe("subagent", () => {
       const [sent] = await notices(pi);
       assert.match(sent.message.content, /second/);
       assert.doesNotMatch(sent.message.content, /first/);
+    });
+
+    test("a finish call's answer outranks the sign-off after it", async (t) => {
+      const { call, pi, children } = setup(t);
+      await call({ id: "report", prompt: "x" });
+      children[0].write(assistantRecord("the full report"));
+      children[0].write(finishRecord("REPORT"));
+      children[0].write(assistantRecord("The review is above."));
+      children[0].close(0);
+      const [sent] = await notices(pi);
+      assert.match(sent.message.content, /^\[subagent report\] finished in \d+s\./);
+      assert.match(sent.message.content, /REPORT/);
+      assert.doesNotMatch(sent.message.content, /The review is above\./);
+    });
+
+    test("an answer-only finish call still reports the answer", async (t) => {
+      const { call, pi, children } = setup(t);
+      await call({ id: "bare", prompt: "x" });
+      children[0].write(finishRecord("REPORT"));
+      children[0].close(0);
+      const [sent] = await notices(pi);
+      assert.match(sent.message.content, /^\[subagent bare\] finished in \d+s\./);
+      assert.match(sent.message.content, /REPORT/);
     });
 
     test("a child that exits without an answer is reported as a failure", async (t) => {
@@ -1251,8 +1294,11 @@ describe("subagent", () => {
     test("the finish tool ends the child at the next settle", async (t) => {
       const pi = childSetup(t);
       const { ctx, state } = settleCtx();
-      const result = await pi.tools.get("subagent_finish").execute("call", {});
+      const result = await pi.tools
+        .get("subagent_finish")
+        .execute("call", { answer: "x" });
       assert.match(result.content[0].text, /Finishing/);
+      assert.equal(result.terminate, true, "the answer already carries the report");
       await pi.hooks.get("agent_settled")({ aborted: false }, ctx);
       assert.equal(state.shutDown, 1);
     });
@@ -1280,14 +1326,14 @@ describe("subagent", () => {
 
     test("a child that already asked to finish is not warned", async (t) => {
       const pi = childSetup(t, { timeout: "0.2" });
-      await pi.tools.get("subagent_finish").execute("call", {});
+      await pi.tools.get("subagent_finish").execute("call", { answer: "x" });
       await new Promise((resolve) => setTimeout(resolve, 250));
       assert.equal(pi.sent.length, 0, "no warning after a finish request");
     });
 
     test("a finish request waits for a turn that is already running", async (t) => {
       const pi = childSetup(t);
-      await pi.tools.get("subagent_finish").execute("call", {});
+      await pi.tools.get("subagent_finish").execute("call", { answer: "x" });
       const busy = settleCtx({ idle: false });
       await pi.hooks.get("agent_settled")({ aborted: false }, busy.ctx);
       assert.equal(busy.state.shutDown, 0, "a running turn reports first");

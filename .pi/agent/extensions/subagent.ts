@@ -224,8 +224,13 @@ const StatusParams = Type.Object({ id: SelectionParams });
 /** Schema for `subagent_kill`. */
 const KillParams = Type.Object({ id: SelectionParams });
 
-/** Schema for `subagent_finish`, which needs no arguments. */
-const FinishParams = Type.Object({});
+/** Schema for `subagent_finish`, whose answer is the only text the parent sees. */
+const FinishParams = Type.Object({
+  answer: Type.String({
+    description:
+      "Your complete final report. This text is the only thing the parent receives, so include all findings; do not refer to earlier messages.",
+  }),
+});
 
 /** The marker as the model sees it in descriptions, before any id exists. */
 const MARKER_EXAMPLE = marker("<id>");
@@ -287,6 +292,8 @@ interface LastTurn {
   stopReason?: StopReason;
   /** Provider or pi error text, when the turn failed. */
   errorMessage?: string;
+  /** Set once a finish call delivered the answer; later records are ignored. */
+  final?: boolean;
 }
 
 /** Terminal state of a child, as its notification reports it. */
@@ -357,19 +364,38 @@ function marker(id: string): string {
 }
 
 /**
- * Read the latest assistant text out of one JSONL record.
+ * Read the latest assistant text, or a finish call's answer, out of one record.
  *
- * Only completed `message_end` records carry the authoritative answer, so the
- * last assistant message alone is kept.
+ * Only completed `message_end` records carry the authoritative answer. A finish
+ * call carries the answer the parent is meant to see, so it settles the turn
+ * and later records are ignored. Without one, the last assistant message is the
+ * fallback for a child that timed out or never called finish.
  *
  * @param lastTurn - Last assistant message, updated in place.
  * @param record - Parsed `--mode json` record.
  */
 function absorbRecord(lastTurn: LastTurn, record: unknown): void {
+  if (lastTurn.final) return;
+
   const event = record as JsonAgentSessionEvent;
   if (event.type !== "message_end" || event.message.role !== "assistant")
     return;
+
   const message = event.message;
+  lastTurn.stopReason = message.stopReason;
+  lastTurn.errorMessage = message.errorMessage;
+  const finish = message.content.find(
+    (part) => part.type === "toolCall" && part.name === FINISH_TOOL,
+  );
+  const answer =
+    finish?.type === "toolCall" ? finish.arguments.answer : undefined;
+
+  if (typeof answer === "string") {
+    lastTurn.answer = truncateBytes(answer, OUTPUT_CAP_BYTES);
+    lastTurn.final = true;
+    return;
+  }
+
   lastTurn.answer = truncateBytes(
     message.content
       .filter(
@@ -379,8 +405,6 @@ function absorbRecord(lastTurn: LastTurn, record: unknown): void {
       .join("\n"),
     OUTPUT_CAP_BYTES,
   );
-  lastTurn.stopReason = message.stopReason;
-  lastTurn.errorMessage = message.errorMessage;
 }
 
 /**
@@ -1741,8 +1765,8 @@ function warnBeforeDeadline(pi: ExtensionAPI, runner: SubagentRunner): void {
  *
  * Its session outlives its turns so async tools can wake it, which means the
  * process needs an explicit end: this tool is the only thing that closes it.
- * The request is honored at the next settle, so the turn's own answer is
- * recorded before the session ends.
+ * The answer travels in the argument, so the result ends the turn: a follow-up
+ * turn would only repeat the report or add a sign-off.
  *
  * The snippet and guidelines are this tool's whole purpose in prose: pi puts
  * them in the system prompt of every session that declares the tool, which is
@@ -1758,21 +1782,26 @@ function finishTool(
     name: FINISH_TOOL,
     label: "Finish subagent",
     description:
-      "End this subagent session and report your last message to the parent. Anything still pending is abandoned.",
+      "End this subagent session and report your answer to the parent verbatim. Anything still pending is abandoned.",
     promptSnippet:
-      "End this subagent session and report your last message; a turn ending does not end the session.",
+      "End this subagent session and report your answer to the parent verbatim; a turn ending does not end the session.",
     promptGuidelines: [
       "You are a subagent working alone in the current directory: no user can answer questions, so finish the task and report back concisely.",
       "This subagent session outlives its turns so background work you start, such as a timer or a nested subagent, can still wake you after you stop calling tools: end the turn instead of waiting for it in a loop, and react when its notification arrives.",
-      `Call \`${FINISH_TOOL}\` when your answer is final, even if you started no background work: the session does not end when a turn does, so this call is what reports you to the parent.`,
+      `Call \`${FINISH_TOOL}\` when your answer is final, even if you started no background work: the parent receives the \`answer\` argument verbatim and nothing else, so put your complete report there.`,
       `Background work still pending when you call \`${FINISH_TOOL}\` is abandoned, so wait for anything you still need before finishing.`,
     ],
     parameters: FinishParams,
     async execute() {
       runner.requestFinish();
-      return toolText(
-        "Finishing: this session ends after this turn, and any background work still pending is abandoned.",
-      );
+      // The answer travels in the argument, so the follow-up turn would only
+      // add a sign-off.
+      return {
+        ...toolText(
+          "Finishing: this session ends after this turn, and any background work still pending is abandoned.",
+        ),
+        terminate: true,
+      };
     },
   };
 }
