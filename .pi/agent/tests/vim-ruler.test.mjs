@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import test, { describe } from "node:test";
 
 import vimRuler from "../extensions/vim-ruler.ts";
 
@@ -56,36 +56,38 @@ const scroll = (scrollTop, isFollowingEnd = false) => ({
   isFollowingEnd,
 });
 
-test("the ruler shows All when the transcript fits on screen", () => {
-  assert.equal(
-    ruler({ scrollTop: 0, contentHeight: 50, viewportHeight: 100 }),
-    "All",
-  );
-});
-
-test("the ruler shows Top, a percentage, and Bot while scrolling", () => {
-  assert.equal(ruler(scroll(0)), "Top");
-  assert.equal(ruler(scroll(100)), "50%");
-  assert.equal(ruler(scroll(200)), "Bot");
-});
-
-test("the ruler shows Bot while following new output", () => {
-  assert.equal(ruler(scroll(150, true)), "Bot");
-});
-
-test("the footer hides the ruler outside fullscreen mode", () => {
-  const footer = setupFooter(scroll(100), { mode: "inline" });
-
-  assert.match(render(footer)[0], /model-x$/);
-});
-
-test("every footer line fits the terminal width", () => {
-  const footer = setupFooter(scroll(100), {
-    branch: "a-very-long-branch-name",
-    statuses: [["a", "x".repeat(100)]],
+describe("vim-ruler", () => {
+  test("the ruler shows All when the transcript fits on screen", () => {
+    assert.equal(
+      ruler({ scrollTop: 0, contentHeight: 50, viewportHeight: 100 }),
+      "All",
+    );
   });
 
-  for (const line of footer.render(20)) {
-    assert.ok(line.replace(/\x1b\[[0-9;]*m/g, "").length <= 20, line);
-  }
+  test("the ruler shows Top, a percentage, and Bot while scrolling", () => {
+    assert.equal(ruler(scroll(0)), "Top");
+    assert.equal(ruler(scroll(100)), "50%");
+    assert.equal(ruler(scroll(200)), "Bot");
+  });
+
+  test("the ruler shows Bot while following new output", () => {
+    assert.equal(ruler(scroll(150, true)), "Bot");
+  });
+
+  test("the footer hides the ruler outside fullscreen mode", () => {
+    const footer = setupFooter(scroll(100), { mode: "inline" });
+
+    assert.match(render(footer)[0], /model-x$/);
+  });
+
+  test("every footer line fits the terminal width", () => {
+    const footer = setupFooter(scroll(100), {
+      branch: "a-very-long-branch-name",
+      statuses: [["a", "x".repeat(100)]],
+    });
+
+    for (const line of footer.render(20)) {
+      assert.ok(line.replace(/\x1b\[[0-9;]*m/g, "").length <= 20, line);
+    }
+  });
 });

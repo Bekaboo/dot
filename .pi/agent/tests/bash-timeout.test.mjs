@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import test, { describe } from "node:test";
 
 import bashTimeout from "../extensions/bash-timeout.ts";
 
@@ -21,43 +21,45 @@ function setup() {
   return { toolCall, startAgent };
 }
 
-test("bash without a timeout gets the default timeout", () => {
-  const { toolCall } = setup();
+describe("bash-timeout", () => {
+  test("bash without a timeout gets the default timeout", () => {
+    const { toolCall } = setup();
 
-  assert.equal(toolCall("bash", { command: "sleep 1" }).timeout, 120);
-});
+    assert.equal(toolCall("bash", { command: "sleep 1" }).timeout, 120);
+  });
 
-test("bash keeps a timeout the model chose", () => {
-  const { toolCall } = setup();
+  test("bash keeps a timeout the model chose", () => {
+    const { toolCall } = setup();
 
-  assert.equal(
-    toolCall("bash", { command: "make", timeout: 600 }).timeout,
-    600,
-  );
-});
+    assert.equal(
+      toolCall("bash", { command: "make", timeout: 600 }).timeout,
+      600,
+    );
+  });
 
-test("other tools are left unchanged", () => {
-  const { toolCall } = setup();
+  test("other tools are left unchanged", () => {
+    const { toolCall } = setup();
 
-  assert.deepEqual(toolCall("read", { path: "a.txt" }), { path: "a.txt" });
-});
+    assert.deepEqual(toolCall("read", { path: "a.txt" }), { path: "a.txt" });
+  });
 
-test("the prompt tells the model about the default timeout once", () => {
-  const { startAgent } = setup();
-  const guidelines = {};
+  test("the prompt tells the model about the default timeout once", () => {
+    const { startAgent } = setup();
+    const guidelines = {};
 
-  startAgent(guidelines);
-  startAgent(guidelines);
+    startAgent(guidelines);
+    startAgent(guidelines);
 
-  assert.equal(guidelines.bash.length, 1);
-  assert.match(guidelines.bash[0], /killed after 120 seconds/);
-});
+    assert.equal(guidelines.bash.length, 1);
+    assert.match(guidelines.bash[0], /killed after 120 seconds/);
+  });
 
-test("the timeout guideline is added after existing bash guidelines", () => {
-  const { startAgent } = setup();
+  test("the timeout guideline is added after existing bash guidelines", () => {
+    const { startAgent } = setup();
 
-  const guidelines = startAgent({ bash: ["Prefer rg over grep."] });
+    const guidelines = startAgent({ bash: ["Prefer rg over grep."] });
 
-  assert.equal(guidelines.bash[0], "Prefer rg over grep.");
-  assert.equal(guidelines.bash.length, 2);
+    assert.equal(guidelines.bash[0], "Prefer rg over grep.");
+    assert.equal(guidelines.bash.length, 2);
+  });
 });
