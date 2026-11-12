@@ -2,10 +2,27 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test, { describe } from "node:test";
 
-import { createRenderer, squareCorners } from "../extensions/lib/intercom-frame.ts";
+import { createRenderer, squareFrames, squareThemeFrames } from "../extensions/lib/intercom-frame.ts";
 
 const plainTheme = { fg: (_color, text) => text };
 const STYLED = /\x1b\[[0-9;]*m/g;
+const POPUP_UI = ["session-list", "compose", "handover-picker"];
+
+/**
+ * Fresh stand-in for pi's Theme class, so patching it in one test cannot leak
+ * into the next. `prefix` proves the swap keeps running with the right `this`.
+ */
+function fakeThemeClass() {
+  return class FakeTheme {
+    constructor(prefix = "") {
+      this.prefix = prefix;
+    }
+
+    fg(color, text) {
+      return `${this.prefix}<${color}>${text}</${color}>`;
+    }
+  };
+}
 
 /**
  * Stand-in for pi-intercom's InlineMessageComponent: draws the same rounded
@@ -52,15 +69,16 @@ function renderMessage(text, { expanded = true, width = 60 } = {}) {
 }
 
 describe("intercom-square-ui", () => {
-  test("squareCorners swaps frame corners only", () => {
+  test("squareFrames swaps frame corners only", () => {
     // Frame lines, including the ANSI styling theme.fg wraps them in.
-    assert.equal(squareCorners("╭ From: planner ╮"), "┌ From: planner ┐");
-    assert.equal(squareCorners("╰──────────────╯"), "└──────────────┘");
-    assert.equal(squareCorners("\x1b[2m╭\x1b[0mt\x1b[2m╮\x1b[0m"), "\x1b[2m┌\x1b[0mt\x1b[2m┐\x1b[0m");
+    assert.equal(squareFrames("╭ From: planner ╮"), "┌ From: planner ┐");
+    assert.equal(squareFrames("╰──────────────╯"), "└──────────────┘");
+    assert.equal(squareFrames("\x1b[2m╭\x1b[0mt\x1b[2m╮\x1b[0m"), "\x1b[2m┌\x1b[0mt\x1b[2m┐\x1b[0m");
+    assert.equal(squareFrames("╭─╮\n│x│\n╰─╯"), "┌─┐\n│x│\n└─┘");
 
     // Corner glyphs are ordinary text anywhere else on the line.
     const body = "│ glyphs ╭╮╰╯ stay ╮";
-    assert.equal(squareCorners(body), body);
+    assert.equal(squareFrames(body), body);
   });
 
   test("renders a square box and keeps glyphs inside the text", () => {
@@ -113,5 +131,49 @@ describe("intercom-square-ui", () => {
     assert.match(component, /export class InlineMessageComponent/);
     assert.match(intercom, /registerMessageRenderer\(\s*["']intercom_message["']/);
     assert.match(entry, /registerMessageRenderer\(\s*["']intercom_message["']/);
+    assert.match(entry, /squareThemeFrames\(ctx\.ui\.theme\)/);
+  });
+
+  test("popup borders are single lines so the theme can square them", () => {
+    // squareThemeFrames can only rewrite a border that reaches theme.fg() as
+    // one string, so a popup that draws its frame piecewise would silently
+    // keep rounded corners.
+    for (const name of POPUP_UI) {
+      const path = `../npm/node_modules/pi-intercom/ui/${name}.ts`;
+      const source = readFileSync(new URL(path, import.meta.url), "utf8");
+
+      assert.match(source, /`╭[^`]*╮`/, `${name} draws its top border as one line`);
+      assert.match(source, /`╰[^`]*╯`/, `${name} draws its bottom border as one line`);
+    }
+  });
+
+  describe("squareThemeFrames", () => {
+    test("squares frame lines and leaves other styled text alone", () => {
+      const theme = new (fakeThemeClass())("~");
+      squareThemeFrames(theme);
+
+      assert.equal(theme.fg("accent", "╭──────╮"), "~<accent>┌──────┐</accent>");
+      assert.equal(theme.fg("accent", "╰──────╯"), "~<accent>└──────┘</accent>");
+
+      const body = "~<accent>│ ╭x╮ │</accent>";
+      assert.equal(theme.fg("accent", "│ ╭x╮ │"), body);
+    });
+
+    test("squares a whole styled block, keeping its styling per call", () => {
+      const theme = new (fakeThemeClass())();
+      squareThemeFrames(theme);
+
+      assert.equal(
+        theme.fg("accent", "╭─╮\n│x│\n╰─╯"),
+        "<accent>┌─┐\n│x│\n└─┘</accent>",
+      );
+    });
+
+    test("covers themes created after the swap, such as a theme switch", () => {
+      const FakeTheme = fakeThemeClass();
+      squareThemeFrames(new FakeTheme());
+
+      assert.equal(new FakeTheme().fg("accent", "╭─╮"), "<accent>┌─┐</accent>");
+    });
   });
 });

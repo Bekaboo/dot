@@ -1,13 +1,13 @@
 /**
- * Make pi-intercom's inline message box squared
+ * Make pi-intercom's UI squared
  *
- * pi-intercom hardcodes rounded frame glyphs, so this overlay re-registers its
- * `intercom_message` renderer. Discovered extensions load before packages and
- * Pi's renderer lookup takes the first match, which makes the override work
- * without patching the installed package. The corner swap and renderer live in
- * `lib/intercom-frame.ts`; the class is passed in from here so that module stays
- * loadable by `node --test`, which cannot type-strip node_modules (see the
- * workaround note there).
+ * pi-intercom hardcodes rounded frame glyphs. Its inline message box is a
+ * registered renderer, so this overlay re-registers `intercom_message`:
+ * discovered extensions load before packages and Pi's renderer lookup takes the
+ * first match, which makes the override work without patching the installed
+ * package. Its popups (session list, compose box, handover picker) are built
+ * inside pi-intercom and cannot be re-registered, so they are squared through
+ * the theme Pi hands them. Both mechanisms live in `lib/intercom-frame.ts`.
  *
  * The import walks into the managed install because the package is not
  * resolvable from this directory. It is the personal install path; a
@@ -16,11 +16,13 @@
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { InlineMessageComponent } from "../npm/node_modules/pi-intercom/ui/inline-message.ts";
-import { createRenderer } from "./lib/intercom-frame.ts";
+import { createRenderer, squareThemeFrames } from "./lib/intercom-frame.ts";
 
 export default function (pi: ExtensionAPI) {
   pi.registerMessageRenderer(
     "intercom_message",
     createRenderer(InlineMessageComponent),
   );
+
+  pi.on("session_start", (_event, ctx) => squareThemeFrames(ctx.ui.theme));
 }
