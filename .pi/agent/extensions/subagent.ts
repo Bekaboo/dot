@@ -65,6 +65,59 @@ const PROMPT_ID = "prompt";
  */
 const FINISH_TOOL = "subagent_finish";
 
+/** Environment variable pi-intercom publishes when a session starts with it loaded. */
+const INTERCOM_SESSION_ID_ENV = "PI_INTERCOM_SESSION_ID";
+
+/*
+ * Environment pi-intercom reads to give a spawned child a tool that reaches
+ * back to its supervisor.
+ *
+ * These are facts about this session, not a link to an extension: nothing reads
+ * them unless something is installed that understands them, so an environment
+ * without pi-intercom is unaffected. A bridge is ignored whole unless the
+ * target, run id, agent and index are all present; the session id and the
+ * intercom name are optional refinements.
+ */
+const ORCHESTRATOR_TARGET_ENV = "PI_SUBAGENT_ORCHESTRATOR_TARGET";
+const ORCHESTRATOR_SESSION_ID_ENV = "PI_SUBAGENT_ORCHESTRATOR_SESSION_ID";
+const CHILD_RUN_ID_ENV = "PI_SUBAGENT_RUN_ID";
+const CHILD_AGENT_ENV = "PI_SUBAGENT_CHILD_AGENT";
+const CHILD_INDEX_ENV = "PI_SUBAGENT_CHILD_INDEX";
+const CHILD_INTERCOM_NAME_ENV = "PI_SUBAGENT_INTERCOM_SESSION_NAME";
+
+/** Every variable the bridge above is made of, for clearing it as a whole. */
+const BRIDGE_ENV = [
+  ORCHESTRATOR_TARGET_ENV,
+  ORCHESTRATOR_SESSION_ID_ENV,
+  CHILD_RUN_ID_ENV,
+  CHILD_AGENT_ENV,
+  CHILD_INDEX_ENV,
+  CHILD_INTERCOM_NAME_ENV,
+];
+
+/**
+ * Environment variable a pi-subagents run uses to hand its child a supervisor
+ * channel of its own.
+ *
+ * That channel belongs to this session, not to the one this session spawns, and
+ * pi-intercom reads it as "the bridge is already taken care of".
+ */
+const SUPERVISOR_CHANNEL_ENV = "PI_SUBAGENT_SUPERVISOR_CHANNEL_DIR";
+
+/**
+ * Environment that describes this process's own coordination and must not reach
+ * the child it spawns.
+ *
+ * A child gets the bridge computed for it or none at all, and never this
+ * session's identity or an outer run's channel: it belongs to the session that
+ * spawned it, so a grandchild must never end up addressing the run above.
+ */
+const NOT_INHERITED_ENV = [
+  INTERCOM_SESSION_ID_ENV,
+  SUPERVISOR_CHANNEL_ENV,
+  ...BRIDGE_ENV,
+];
+
 /** How much of the child's final answer to put in a notification, in bytes. */
 const OUTPUT_CAP_BYTES = 16 * 1024;
 
@@ -522,6 +575,65 @@ function childTools(tools: string[]): string[] {
 }
 
 /**
+ * Environment that lets a child reach this session through whatever it loads.
+ *
+ * Only facts about this session travel here: its intercom id, which survives a
+ * `/name` rename, the name to show, and which run the child belongs to. No tool
+ * name and no prompt text is involved, so nothing breaks or misleads a child in
+ * an environment that has no extension reading these variables; whether a
+ * child ends up with a tool that uses them is that extension's business.
+ *
+ * @param pi - Extension API of this session, read for its display name.
+ * @param id - Subagent id: one call is one run of one agent.
+ * @param index - Creation order, so a parent can tell siblings apart.
+ * @returns Env to add, or undefined when this session is not on intercom.
+ */
+function bridgeEnv(
+  pi: ExtensionAPI,
+  id: string,
+  index: number,
+): Record<string, string> | undefined {
+  // Only a session that loaded pi-intercom publishes an id, at its own start.
+  // Without one there is nobody for a child to reach, and a bridge missing its
+  // required half would be ignored anyway.
+  const sessionId = process.env[INTERCOM_SESSION_ID_ENV]?.trim();
+  if (!sessionId) return undefined;
+  return {
+    [ORCHESTRATOR_TARGET_ENV]: pi.getSessionName()?.trim() || sessionId,
+    [ORCHESTRATOR_SESSION_ID_ENV]: sessionId,
+    [CHILD_RUN_ID_ENV]: id,
+    [CHILD_AGENT_ENV]: id,
+    [CHILD_INDEX_ENV]: String(index),
+    [CHILD_INTERCOM_NAME_ENV]: id,
+  };
+}
+
+/**
+ * Environment for a child pi process.
+ *
+ * The marker and the deadline are this extension's own contract with its child.
+ * Everything that describes this process's own coordination is dropped first,
+ * and a bridge is added only when this session has one: a child asks the
+ * session that spawned it, and a stale target would point it at the wrong one.
+ *
+ * @param timeoutSec - Deadline the parent enforces, which the child mirrors.
+ * @param bridge - Bridge from `bridgeEnv`, or undefined for none.
+ * @returns Environment to spawn the child with.
+ */
+function childEnv(
+  timeoutSec: number,
+  bridge: Record<string, string> | undefined,
+): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = {
+    ...process.env,
+    [CHILD_ENV]: "1",
+    [TIMEOUT_ENV]: String(timeoutSec),
+  };
+  for (const name of NOT_INHERITED_ENV) delete env[name];
+  return Object.assign(env, bridge);
+}
+
+/**
  * Build the invocation for the child pi process.
  *
  * The child runs in RPC mode: its prompt travels on stdin, and the process stays
@@ -959,20 +1071,14 @@ class SubagentRunner {
       thinking: string;
     },
   ): void {
+    const order = this.nextOrder++;
+    const bridge = bridgeEnv(this.pi, subagent.id, order);
     const { command, args } = childCommand(subagent);
     const proc = spawn(command, args, {
       cwd: subagent.cwd,
       shell: false,
       stdio: ["pipe", "pipe", "pipe"],
-      // The child's own copy of this extension ends the process once its work
-      // is done; the marker tells it that is its job rather than the user's.
-      env: {
-        ...process.env,
-        [CHILD_ENV]: "1",
-        // The child warns itself near the deadline; it needs the same number
-        // the parent enforces.
-        [TIMEOUT_ENV]: String(subagent.timeoutSec),
-      },
+      env: childEnv(subagent.timeoutSec, bridge),
     });
 
     this.children.set(subagent.id, proc);
@@ -983,7 +1089,7 @@ class SubagentRunner {
       cwd: subagent.cwd,
       timeoutSec: subagent.timeoutSec,
       startedAt: Date.now(),
-      order: this.nextOrder++,
+      order,
     };
     this.running.set(running.id, running);
     this.refreshOverlay();

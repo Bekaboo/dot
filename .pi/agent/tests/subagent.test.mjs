@@ -188,8 +188,12 @@ function assistantRecord(text, extra = {}) {
   })}\n`;
 }
 
-/** A fake `pi` that records what the extension registers and sends. */
-function fakePi() {
+/**
+ * A fake `pi` that records what the extension registers and sends.
+ *
+ * @param sessionName - Name this session was given, as another extension reads it.
+ */
+function fakePi(sessionName) {
   const tools = new Map();
   const commands = new Map();
   const hooks = new Map();
@@ -204,6 +208,7 @@ function fakePi() {
       registerCommand: (name, definition) => commands.set(name, definition),
       on: (name, handler) => hooks.set(name, handler),
       sendMessage: (message, options) => sent.push({ message, options }),
+      getSessionName: () => sessionName,
     },
   };
 }
@@ -234,6 +239,24 @@ const childOptions = (child) => {
   }
   return { options, flags };
 };
+
+/**
+ * The bridge variables a child was spawned with, projected for exact assertions.
+ *
+ * @param env - Environment handed to the fake `spawn`.
+ * @returns The six bridge names mapped to the values the child would see.
+ */
+const bridgeOf = (env) =>
+  Object.fromEntries(
+    [
+      "PI_SUBAGENT_ORCHESTRATOR_TARGET",
+      "PI_SUBAGENT_ORCHESTRATOR_SESSION_ID",
+      "PI_SUBAGENT_RUN_ID",
+      "PI_SUBAGENT_CHILD_AGENT",
+      "PI_SUBAGENT_CHILD_INDEX",
+      "PI_SUBAGENT_INTERCOM_SESSION_NAME",
+    ].map((name) => [name, env[name]]),
+  );
 
 /**
  * The commands the extension wrote to a fake child's stdin.
@@ -279,18 +302,48 @@ function shortStartDeadline(t) {
 }
 
 /**
+ * Process environment a test owns, so the runner's own state cannot leak in.
+ *
+ * The suite may be run from a session that is itself on intercom, or from a
+ * shell inside a spawned child.
+ */
+const OWNED_ENV = [
+  "PI_INTERCOM_SESSION_ID",
+  "PI_SUBAGENT_CHILD",
+  "PI_SUBAGENT_TIMEOUT_SEC",
+];
+
+/**
  * Install a fresh extension instance against a fake `pi`.
  *
  * @param t - Node test context.
  * @param idle - Idle check reported by the fake context.
  * @param model - Model the fake context reports as the session's selection.
  * @param thinkingLevel - Thinking level the fake context reports.
+ * @param intercom - Intercom id and session name to appear connected as.
  * @returns The fake pi, the registered tool, and a `call` helper.
  */
-function setup(t, { idle = () => true, model, thinkingLevel } = {}) {
+function setup(
+  t,
+  { idle = () => true, model, thinkingLevel, intercom } = {},
+) {
   resetChildren();
   shortKillGrace(t);
-  const pi = fakePi();
+  const previous = new Map(
+    OWNED_ENV.filter((name) => name in process.env).map((name) => [
+      name,
+      process.env[name],
+    ]),
+  );
+  for (const name of OWNED_ENV) delete process.env[name];
+  if (intercom !== undefined) {
+    process.env.PI_INTERCOM_SESSION_ID = intercom.id;
+  }
+  t.after(() => {
+    for (const name of OWNED_ENV) delete process.env[name];
+    for (const [name, value] of previous) process.env[name] = value;
+  });
+  const pi = fakePi(intercom?.name);
   installSubagent(pi.api);
   const tool = pi.tools.get("subagent");
   const ctx = { cwd: workDir, isIdle: idle, model, thinkingLevel };
@@ -452,6 +505,115 @@ describe("subagent", () => {
         "an explicit removal is undone",
       );
       await pi.tools.get("subagent_kill").execute("call", {}, undefined, undefined, {});
+    });
+
+    test("tells the child which session spawned it", async (t) => {
+      const { call, children } = setup(t, {
+        intercom: { id: "01a1cf7a-ccf2-72dc-830f", name: "planner" },
+      });
+      await call({ id: "probe", prompt: "x", tools: ["read"] });
+      await call({ id: "second", prompt: "x" });
+      assert.deepEqual(bridgeOf(children[0].options.env), {
+        PI_SUBAGENT_ORCHESTRATOR_TARGET: "planner",
+        PI_SUBAGENT_ORCHESTRATOR_SESSION_ID: "01a1cf7a-ccf2-72dc-830f",
+        PI_SUBAGENT_RUN_ID: "probe",
+        PI_SUBAGENT_CHILD_AGENT: "probe",
+        PI_SUBAGENT_CHILD_INDEX: "1",
+        PI_SUBAGENT_INTERCOM_SESSION_NAME: "probe",
+      });
+      assert.equal(
+        bridgeOf(children[1].options.env).PI_SUBAGENT_CHILD_INDEX,
+        "2",
+        "each child carries its own place in this session's start order",
+      );
+      assert.equal(
+        childOptions(children[0]).options.tools,
+        "read,subagent_finish",
+        "the extension adds no tool of another extension to the selection",
+      );
+      assert.equal(
+        children[0].options.env.PI_SUBAGENT_SUPERVISOR_CHANNEL_DIR,
+        undefined,
+        "the child inherits no channel from an outer run",
+      );
+    });
+
+    test("targets an unnamed session by its id", async (t) => {
+      const { call, children } = setup(t, {
+        intercom: { id: "01a1cf7a-ccf2-72dc-830f" },
+      });
+      await call({ id: "probe", prompt: "x" });
+      assert.equal(
+        children[0].options.env.PI_SUBAGENT_ORCHESTRATOR_TARGET,
+        "01a1cf7a-ccf2-72dc-830f",
+      );
+    });
+
+    test("carries no bridge when this session is not on intercom", async (t) => {
+      const { call, children } = setup(t);
+      await call({ id: "plain", prompt: "x" });
+      assert.deepEqual(bridgeOf(children[0].options.env), {
+        PI_SUBAGENT_ORCHESTRATOR_TARGET: undefined,
+        PI_SUBAGENT_ORCHESTRATOR_SESSION_ID: undefined,
+        PI_SUBAGENT_RUN_ID: undefined,
+        PI_SUBAGENT_CHILD_AGENT: undefined,
+        PI_SUBAGENT_CHILD_INDEX: undefined,
+        PI_SUBAGENT_INTERCOM_SESSION_NAME: undefined,
+      });
+    });
+
+    test("a child belongs to the session that spawned it, not the run above", async (t) => {
+      const stale = {
+        PI_INTERCOM_SESSION_ID: "grandparent-id",
+        PI_SUBAGENT_SUPERVISOR_CHANNEL_DIR: "/tmp/channel",
+        PI_SUBAGENT_ORCHESTRATOR_TARGET: "grandparent",
+        PI_SUBAGENT_ORCHESTRATOR_SESSION_ID: "grandparent-id",
+        PI_SUBAGENT_RUN_ID: "outer-run",
+        PI_SUBAGENT_CHILD_AGENT: "outer-agent",
+        PI_SUBAGENT_CHILD_INDEX: "9",
+        PI_SUBAGENT_INTERCOM_SESSION_NAME: "outer-child",
+      };
+      const previous = new Map(
+        Object.keys(stale)
+          .filter((name) => name in process.env)
+          .map((name) => [name, process.env[name]]),
+      );
+      Object.assign(process.env, stale);
+      t.after(() => {
+        for (const name of Object.keys(stale)) delete process.env[name];
+        for (const [name, value] of previous) process.env[name] = value;
+      });
+
+      const { call, children } = setup(t);
+      await call({ id: "plain", prompt: "x" });
+      const absent = {
+        PI_SUBAGENT_ORCHESTRATOR_TARGET: undefined,
+        PI_SUBAGENT_ORCHESTRATOR_SESSION_ID: undefined,
+        PI_SUBAGENT_RUN_ID: undefined,
+        PI_SUBAGENT_CHILD_AGENT: undefined,
+        PI_SUBAGENT_CHILD_INDEX: undefined,
+        PI_SUBAGENT_INTERCOM_SESSION_NAME: undefined,
+      };
+      assert.deepEqual(bridgeOf(children[0].options.env), absent);
+      assert.equal(children[0].options.env.PI_INTERCOM_SESSION_ID, undefined);
+      assert.equal(
+        children[0].options.env.PI_SUBAGENT_SUPERVISOR_CHANNEL_DIR,
+        undefined,
+      );
+
+      // The same session, now on intercom, hands its child a bridge to itself:
+      // never the target it inherited, and never its own id as the child's.
+      process.env.PI_INTERCOM_SESSION_ID = "own-id";
+      await call({ id: "bridged", prompt: "x" });
+      assert.deepEqual(bridgeOf(children[1].options.env), {
+        PI_SUBAGENT_ORCHESTRATOR_TARGET: "own-id",
+        PI_SUBAGENT_ORCHESTRATOR_SESSION_ID: "own-id",
+        PI_SUBAGENT_RUN_ID: "bridged",
+        PI_SUBAGENT_CHILD_AGENT: "bridged",
+        PI_SUBAGENT_CHILD_INDEX: "2",
+        PI_SUBAGENT_INTERCOM_SESSION_NAME: "bridged",
+      });
+      assert.equal(children[1].options.env.PI_INTERCOM_SESSION_ID, undefined);
     });
 
     test("inherits the session's model and thinking level", async (t) => {
