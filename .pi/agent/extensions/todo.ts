@@ -208,7 +208,7 @@ function parseList(list: string): TodoItem[] {
  *
  * @param text - Candidate checklist text.
  * @returns The normalized checklist.
- * @throws When a line is not a checklist item or several items are in progress.
+ * @throws When a line is not a checklist item.
  */
 function normalizeList(text: string): string {
   const lines = text
@@ -222,16 +222,7 @@ function normalizeList(text: string): string {
       );
     }
   }
-  const list = lines.join("\n");
-  const inProgress = parseList(list).filter(
-    (item) => item.status === "in_progress",
-  ).length;
-  if (inProgress > 1) {
-    throw new Error(
-      `${inProgress} items are marked ${IN_PROGRESS_BOX}; at most one item can be in progress.`,
-    );
-  }
-  return list;
+  return lines.join("\n");
 }
 
 /**
@@ -805,7 +796,7 @@ function todoWriteTool(
   return {
     name: "todo_write",
     label: "Todo Write",
-    description: `Replace the session todo list, a Markdown checklist. Item markers: \`- ${PENDING_BOX}\` pending, \`- ${IN_PROGRESS_BOX}\` in progress (at most one), \`- ${COMPLETED_BOX}\` done, \`- ${CANCELLED_BOX}\` cancelled. Use for the initial plan or a major rework. Returns the full list.`,
+    description: `Replace the session todo list, a Markdown checklist. Item markers: \`- ${PENDING_BOX}\` pending, \`- ${IN_PROGRESS_BOX}\` in progress, \`- ${COMPLETED_BOX}\` done, \`- ${CANCELLED_BOX}\` cancelled. Use for the initial plan or a major rework. Returns the full list.`,
     promptSnippet: "Replace the session todo checklist with a new plan",
     promptGuidelines: [
       "Use `todo_write` to plan before multi-step work whose progress is worth tracking (e.g. review then fix findings, multi-file changes, fix-test-commit loops), or when the user lists several items. Skip it for single-step or purely conversational requests.",
@@ -843,10 +834,10 @@ function todoEditTool(
   return {
     name: "todo_edit",
     label: "Todo Edit",
-    description: `Update the session todo list, a Markdown checklist, with exact-text replacements like the edit tool: each oldText must match the current list exactly and uniquely, otherwise nothing changes. Item markers: \`- ${PENDING_BOX}\` pending, \`- ${IN_PROGRESS_BOX}\` in progress (at most one), \`- ${COMPLETED_BOX}\` done, \`- ${CANCELLED_BOX}\` cancelled. Returns the full list.`,
+    description: `Update the session todo list, a Markdown checklist, with exact-text replacements like the edit tool: each oldText must match the current list exactly and uniquely, otherwise nothing changes. Item markers: \`- ${PENDING_BOX}\` pending, \`- ${IN_PROGRESS_BOX}\` in progress, \`- ${COMPLETED_BOX}\` done, \`- ${CANCELLED_BOX}\` cancelled. Returns the full list.`,
     promptSnippet: "Edit the session todo checklist in place",
     promptGuidelines: [
-      `Use \`todo_edit\` to mark an item ${IN_PROGRESS_BOX} when starting it and ${COMPLETED_BOX} right after finishing it, before starting the next one. Keep at most one item ${IN_PROGRESS_BOX}.`,
+      `Use \`todo_edit\` to mark an item ${IN_PROGRESS_BOX} when starting it and ${COMPLETED_BOX} right after finishing it, before starting the next one.`,
       `Use \`todo_edit\` when requirements change mid-task: update the list first, and mark abandoned items ${CANCELLED_BOX} instead of deleting them.`,
     ],
     parameters: TodoEditParams,

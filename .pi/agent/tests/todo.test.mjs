@@ -43,6 +43,19 @@ describe("the todo tools", () => {
     assert.equal(await list(), "- [x] A\n- [ ] B");
   });
 
+  test("several items may be in progress at once", async () => {
+    const { write, edit, list } = setup();
+
+    await write("- [~] A\n- [~] B\n- [ ] C");
+    assert.equal(await list(), "- [~] A\n- [~] B\n- [ ] C");
+
+    await edit([
+      { oldText: "- [ ] C", newText: "- [~] C" },
+      { oldText: "- [~] A", newText: "- [x] A" },
+    ]);
+    assert.equal(await list(), "- [x] A\n- [~] B\n- [~] C");
+  });
+
   test("each todo action has its own tool and parameters", () => {
     const { tools } = setup();
 
