@@ -103,7 +103,10 @@ const ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$/;
 /** Custom message type used for timer notifications. */
 const NOTICE_TYPE = "timer";
 
-/** How many finished timers are remembered for a late `timer_stop` reply. */
+/**
+ * How many ended timers are remembered, for `/timers`, `timer_status` and a
+ * late `timer_stop` reply.
+ */
 const RETIRED_HISTORY = 10;
 
 /** Names that replay as timer start results, including the old combined tool. */
@@ -184,7 +187,7 @@ const TimerStatusParams = Type.Object({
 type TimerStatusInput = Static<typeof TimerStatusParams>;
 
 /** Kind of notification a timer emits. */
-type TimerState = "tick" | "done" | "timeout" | "failed";
+type TimerState = "tick" | "done" | "timeout" | "failed" | "killed";
 
 /** Persisted specification of one timer. */
 interface TimerSpec {
@@ -393,6 +396,19 @@ function clipOutput(text: string): string {
     return `${kept}\n... (+${lines.length - ON_TICK_MAX_LINES} more lines)`;
   }
   return kept;
+}
+
+/**
+ * Classify how a job ended, for its wake and its `/timers` marker.
+ *
+ * @param outcome - Exit code, signal, or spawn failure.
+ * @returns `killed` for a signal from outside the timer, `done` for exit 0,
+ *   and `failed` otherwise.
+ */
+function jobEndState(outcome: JobOutcome): "done" | "failed" | "killed" {
+  if (outcome.error) return "failed";
+  if (outcome.signal) return "killed";
+  return outcome.code === 0 ? "done" : "failed";
 }
 
 /**
@@ -970,13 +986,13 @@ class TimerRegistry {
   /**
    * Look up the timer a `timer_stop` call should cancel.
    *
-   * Stopping a timer that ended on its own is not an error: the agent usually
+   * Stopping a timer that already ended is not an error: the agent usually
    * stops it right after the wake that announced the end, and a failure there
    * teaches it nothing. Such a call returns `undefined` so the tool can report
    * that the timer stopped.
    *
    * @param id - Id from the tool input.
-   * @returns The active timer, or `undefined` when it already ended by itself.
+   * @returns The active timer, or `undefined` when it already ended.
    */
   requireStopTarget(id: string): Timer | undefined {
     const timer = this.timers.get(id);
@@ -1174,6 +1190,11 @@ class TimerRegistry {
       // The callback is the timer body: it runs on every tick even when the
       // wake is throttled, so periodic work is never silently skipped.
       const body = await this.capture(timer);
+      // `timer_stop` or a branch restore may have ended the timer while the
+      // callback ran; a late tick would wake the agent about a dead timer.
+      if (timer.stopped) {
+        return;
+      }
       if (!this.canTick(timer) || timer.noticePending) {
         // Nothing was delivered, so neither the budget nor the timer moved: a
         // throttled wake still counts a tick, and this one was not sent.
@@ -1191,6 +1212,7 @@ class TimerRegistry {
           "tick budget spent",
           "done",
           elapsed(timer.startedAt),
+          timer,
         );
         return;
       }
@@ -1344,8 +1366,7 @@ class TimerRegistry {
     this.jobs.delete(job.id);
     const end = describeJobEnd(outcome, elapsed(timer.startedAt));
     appendLogMarker(job.logPath, end.marker);
-    const state = !outcome.error && outcome.code === 0 ? "done" : "failed";
-    await this.finish(timer, state, end.line, end.reason);
+    await this.finish(timer, jobEndState(outcome), end.line, end.reason);
   }
 
   /**
@@ -1454,7 +1475,7 @@ class TimerRegistry {
    */
   private async finish(
     timer: Timer,
-    state: "done" | "timeout" | "failed",
+    state: "done" | "timeout" | "failed" | "killed",
     line: string,
     reason: string,
   ): Promise<void> {

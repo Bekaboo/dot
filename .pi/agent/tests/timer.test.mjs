@@ -667,6 +667,134 @@ describe("timer", () => {
     assert.equal(screen.component, undefined, "Escape closes the overlay");
   });
 
+  test("/timers marks failed, timed-out and signal-killed timers", async (t) => {
+    const { start, hooks, commands, noticesAfter, branch } = setup(t, (command) => {
+      if (command === "snap") throw new Error("boom");
+      return exit(1);
+    });
+    let overlay;
+    const theme = { fg: (_color, text) => text, bold: (text) => text };
+    t.after(() => overlay?.dispose());
+    const showing = commands.get("timers").handler("", {
+      mode: "tui",
+      ui: {
+        custom(factory) {
+          return new Promise((resolve) => {
+            overlay = factory({ requestRender() {} }, theme, undefined, () => {
+              overlay.dispose();
+              resolve();
+            });
+          });
+        },
+      },
+    });
+
+    // A condition that throws fails the timer.
+    await start({ id: "cond-boom", condition: "snap", maxTicks: 0 });
+    await noticesAfter(1);
+    assert.match(overlay.render(100).join("\n"), /^\s*cond-boom +✗ failed /m);
+
+    // A job its own command kills is killed, not failed: the timer did not fail.
+    await start({ id: "self-kill", start: "kill -TERM $$" });
+    const [, killed] = await noticesAfter(2);
+    assert.match(killed.content, /killed by SIGTERM .*not by the timer/);
+    assert.equal(killed.details.state, "killed");
+    assert.match(overlay.render(100).join("\n"), /^\s*self-kill +· killed /m);
+
+    // A deadline that passed while the session was closed times the timer out.
+    // Restoring a branch starts a fresh history, so this row stands alone.
+    await hooks.get("session_tree")(
+      {},
+      branch({
+        action: "start",
+        id: "stale",
+        condition: "false",
+        intervalSec: 1,
+        maxTicks: 0,
+        timeoutSec: 1,
+        startedAt: Date.now() - 2_000,
+      }),
+    );
+    await noticesAfter(3);
+    assert.match(overlay.render(100).join("\n"), /^\s*stale +⧖ timeout /m);
+
+    overlay.handleInput("\x1b");
+    await showing;
+  });
+
+  test("a stop during a slow last tick sends no late wake and stays killed", async (t) => {
+    let release;
+    const captured = new Promise((resolve) => {
+      release = resolve;
+    });
+    let capturing;
+    const capturingStarted = new Promise((resolve) => {
+      capturing = resolve;
+    });
+    const { start, stop, status, notices } = setup(t, async (command) => {
+      if (command !== "slow-snap") return exit(1);
+      capturing();
+      await captured;
+      return exit(0, "late output");
+    });
+
+    await start({
+      id: "last-tick",
+      onTick: "slow-snap",
+      intervalSec: 1,
+      maxTicks: 1,
+      timeoutSec: 30,
+    });
+    await capturingStarted;
+    await stop({ id: "last-tick" });
+    release();
+    await wait(50);
+
+    assert.equal(notices.length, 0, "a stopped timer does not wake the agent");
+    assert.equal(
+      (await status({ id: "last-tick" })).content[0].text,
+      'Timer "last-tick" stopped (killed by timer_stop).',
+    );
+  });
+
+  test("a branch restore during a slow last tick keeps the replacement timer", async (t) => {
+    let release;
+    const captured = new Promise((resolve) => {
+      release = resolve;
+    });
+    let capturing;
+    const capturingStarted = new Promise((resolve) => {
+      capturing = resolve;
+    });
+    let slow = true;
+    const { start, hooks, status, branch } = setup(t, async (command) => {
+      if (command !== "slow-snap" || !slow) return exit(1);
+      slow = false;
+      capturing();
+      await captured;
+      return exit(0);
+    });
+
+    const { details } = await start({
+      id: "replaced",
+      onTick: "slow-snap",
+      intervalSec: 1,
+      maxTicks: 1,
+      timeoutSec: 30,
+    });
+    await capturingStarted;
+    // The replayed start replaces the timer whose loop is mid-capture.
+    await hooks.get("session_tree")({}, branch(details));
+    release();
+    await wait(50);
+
+    assert.match(
+      (await status({ id: "replaced" })).content[0].text,
+      /^replaced +running /,
+      "the old loop must not retire the timer that replaced it",
+    );
+  });
+
   test("status lists every timer, one timer by id, and rejects an unknown id", async (t) => {
     const { start, status } = setup(t, runUntilCancelled);
     await start({ id: "timer-a", condition: "false" });
