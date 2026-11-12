@@ -74,6 +74,9 @@ const STDERR_CAP_BYTES = 2 * 1024;
 /** Grace period before a child that ignored SIGTERM gets SIGKILL, in ms. */
 const KILL_GRACE_MS = 2_000;
 
+/** Largest delay `setTimeout` honors; anything above it would fire at once. */
+const MAX_TIMER_MS = 2 ** 31 - 1;
+
 /**
  * How long a child may take to start its run before the call gives up, in ms.
  *
@@ -82,6 +85,14 @@ const KILL_GRACE_MS = 2_000;
  * would otherwise stay alive forever and never report.
  */
 const START_TIMEOUT_MS = 60_000;
+
+/**
+ * Wall-clock limit for a child when the caller names none, in seconds.
+ *
+ * Generous, because a child may legitimately wait on background work it
+ * started; it exists so a stuck child still reports instead of living on.
+ */
+const DEFAULT_TIMEOUT_SEC = 3_600;
 
 /** Longest single JSONL record kept from the child, in bytes. */
 const MAX_RECORD_BYTES = 8 * 1024 * 1024;
@@ -126,6 +137,11 @@ const SubagentParams = Type.Object({
         "Working directory for the child. Defaults to the current working directory.",
     }),
   ),
+  timeoutSec: Type.Optional(
+    Type.Number({
+      description: `Wall-clock limit for the child, in seconds. The child is stopped and reported as failed when it passes, which bounds a child that never calls its own finish tool. Defaults to ${DEFAULT_TIMEOUT_SEC}.`,
+    }),
+  ),
 });
 
 /** Ids accepted by `subagent_status` and `subagent_kill`. */
@@ -156,6 +172,7 @@ interface RunningSubagent {
   tools: string[];
   cwd: string;
   /** Wall-clock limit the child was given, in seconds. */
+  timeoutSec: number;
   startedAt: number;
   /** Creation order, so two children started in one millisecond stay ordered. */
   order: number;
@@ -173,6 +190,8 @@ interface FinishedSubagent {
   model: string;
   tools: string[];
   cwd: string;
+  /** Wall-clock limit the child was given, in seconds. */
+  timeoutSec: number;
   /** Creation order, so two children started in one millisecond stay ordered. */
   order: number;
 }
@@ -189,6 +208,8 @@ interface SubagentRow {
   model: string;
   tools: string[];
   cwd: string;
+  /** Wall-clock limit the child was given, in seconds. */
+  timeoutSec: number;
 }
 
 /** What the last assistant message of a child says, once its records are parsed. */
@@ -215,6 +236,7 @@ interface SubagentColumns {
   id: string;
   status: string;
   elapsed: string;
+  timeout: string;
   model: string;
   tools: string;
   cwd: string;
@@ -225,6 +247,7 @@ interface ColumnWidths {
   id: number;
   status: number;
   elapsed: number;
+  timeout: number;
   model: number;
   tools: number;
   cwd: number;
@@ -705,8 +728,14 @@ function subagentSettings(job: {
   model: string;
   tools: string[];
   cwd: string;
+  timeoutSec: number;
 }): string {
-  return [modelLabel(job), toolsLabel(job), job.cwd].join(", ");
+  return [
+    modelLabel(job),
+    toolsLabel(job),
+    job.cwd,
+    `timeout=${job.timeoutSec}s`,
+  ].join(", ");
 }
 
 /**
@@ -720,10 +749,21 @@ function columnsOf(row: SubagentRow): SubagentColumns {
     id: row.id,
     status: row.state,
     elapsed: `${row.seconds}s`,
+    timeout: timeoutLabel(row.timeoutSec),
     model: modelLabel(row),
     tools: toolsLabel(row),
     cwd: row.cwd,
   };
+}
+
+/**
+ * Deadline column text.
+ *
+ * @param seconds - Wall-clock limit the child was given, zero when unknown.
+ * @returns Text such as "timeout=600s".
+ */
+function timeoutLabel(seconds: number): string {
+  return seconds > 0 ? `timeout=${seconds}s` : "timeout=-";
 }
 
 /**
@@ -733,11 +773,20 @@ function columnsOf(row: SubagentRow): SubagentColumns {
  * @returns The terminal width of each column.
  */
 function alignWidths(rows: SubagentRow[]): ColumnWidths {
-  const keys = ["id", "status", "elapsed", "model", "tools", "cwd"] as const;
+  const keys = [
+    "id",
+    "status",
+    "elapsed",
+    "timeout",
+    "model",
+    "tools",
+    "cwd",
+  ] as const;
   const widths: ColumnWidths = {
     id: 0,
     status: 0,
     elapsed: 0,
+    timeout: 0,
     model: 0,
     tools: 0,
     cwd: 0,
@@ -877,8 +926,8 @@ class SubagentRunner {
   /**
    * Start the child and report its result when it exits.
    *
-   * @param subagent - Id, model, thinking level, tools, working directory and
-   *   prompt of the child.
+   * @param subagent - Id, model, thinking level, tools, working directory,
+   *   timeout and prompt of the child.
    */
   start(
     subagent: Omit<RunningSubagent, "startedAt" | "order" | "prompt"> & {
@@ -903,6 +952,7 @@ class SubagentRunner {
       model: subagent.model,
       tools: subagent.tools,
       cwd: subagent.cwd,
+      timeoutSec: subagent.timeoutSec,
       startedAt: Date.now(),
       order: this.nextOrder++,
     };
@@ -914,6 +964,7 @@ class SubagentRunner {
     let startFailure = "";
     let runStarted = false;
     let startDeadline: ReturnType<typeof setTimeout> | undefined;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
     let finished = false;
     let stopped = false;
 
@@ -957,6 +1008,7 @@ class SubagentRunner {
       if (finished) return;
       finished = true;
       clearTimeout(startDeadline);
+      clearTimeout(timeout);
       if (this.children.get(running.id) === proc) {
         this.children.delete(running.id);
       }
@@ -977,6 +1029,7 @@ class SubagentRunner {
         model: running.model,
         tools: running.tools,
         cwd: running.cwd,
+        timeoutSec: running.timeoutSec,
         order: running.order,
       });
       this.refreshOverlay();
@@ -1001,7 +1054,18 @@ class SubagentRunner {
       startFailure = "the child never started a run";
       void stopProcess(proc);
     }, startTimeoutMs());
-    startDeadline.unref();  }
+    startDeadline.unref();
+    // A child that never calls its own finish tool, or that hangs on an
+    // extension error, still has to report instead of living on.
+    timeout = setTimeout(
+      () => {
+        finish(`no result within its ${subagent.timeoutSec}s timeout`);
+        void stopProcess(proc);
+      },
+      Math.min(subagent.timeoutSec * 1000, MAX_TIMER_MS),
+    );
+    timeout.unref();
+  }
 
   /** Record that the child's model asked to end the session. */
   requestFinish(): void {
@@ -1046,7 +1110,7 @@ class SubagentRunner {
       .filter((job) => matches(job.id))
       .map(
         (job) =>
-          `${marker(job.id)} ${job.state} after ${job.seconds}s${job.reason ? `: ${job.reason}` : ""}`,
+          `${marker(job.id)} ${job.state} after ${job.seconds}s (timeout=${job.timeoutSec}s)${job.reason ? `: ${job.reason}` : ""}`,
       );
     const lines = [...running, ...finished];
     if (lines.length > 0) return lines.join("\n");
@@ -1092,6 +1156,7 @@ class SubagentRunner {
       model: job.model,
       tools: job.tools,
       cwd: job.cwd,
+      timeoutSec: job.timeoutSec,
     }));
     const finished = this.finished.map((job) => ({
       id: job.id,
@@ -1101,6 +1166,7 @@ class SubagentRunner {
       model: job.model,
       tools: job.tools,
       cwd: job.cwd,
+      timeoutSec: job.timeoutSec,
     }));
     return [...running, ...finished].sort((a, b) => a.order - b.order);
   }
@@ -1138,6 +1204,7 @@ class SubagentRunner {
         model: job?.model ?? "",
         tools: job?.tools ?? [],
         cwd: job?.cwd ?? "",
+        timeoutSec: job?.timeoutSec ?? 0,
         order: job?.order ?? 0,
       });
       this.running.delete(id);
@@ -1318,6 +1385,7 @@ class SubagentsOverlay implements Component {
       theme.bold(padRight(column.id, widths.id)),
       theme.fg("muted", padLeft(column.status, widths.status)),
       theme.fg("muted", padLeft(column.elapsed, widths.elapsed)),
+      theme.fg("dim", padRight(column.timeout, widths.timeout)),
       theme.fg("dim", padRight(column.model, widths.model)),
       theme.fg("dim", padRight(column.tools, widths.tools)),
       theme.fg("dim", padRight(column.cwd, widths.cwd)),
@@ -1385,8 +1453,8 @@ function subagentTool(
   return {
     name: "subagent",
     label: "Subagent",
-    description: `Start a separate pi process with a fresh context to work on a task in the background. Returns immediately; the child's answer arrives later as a "${MARKER_EXAMPLE} ..." message. The child ends itself by calling its own \`${FINISH_TOOL}\` tool, so background work it started, such as a timer or a nested subagent, can wake it after a turn and be reported too.`,
-    promptSnippet: `Spawn a background pi subagent with its own prompt, tools and model; its result arrives later as a ${MARKER_EXAMPLE} message. A child may wait on background work it started (timers, nested subagents) before it reports.`,
+    description: `Start a separate pi process with a fresh context to work on a task in the background. Returns immediately; the child's answer arrives later as a "${MARKER_EXAMPLE} ..." message. The child ends itself by calling its own \`${FINISH_TOOL}\` tool, so background work it started, such as a timer or a nested subagent, can wake it after a turn and be reported too. A child still running at its timeout is stopped and reported as failed, so a stuck child cannot go silent.`,
+    promptSnippet: `Spawn a background pi subagent with its own prompt, tools and model; its result arrives later as a ${MARKER_EXAMPLE} message. A child may wait on background work it started (timers, nested subagents) before it reports, and is stopped at its timeout.`,
     promptGuidelines: [
       "Use `subagent` for one task that can run alongside your own work, such as an independent review, a long scan, or a second opinion.",
       "Use `subagent` for several independent tasks in one turn, such as research in separate areas, a change read from several perspectives, or verification from several angles, so they finish sooner and disagreement surfaces.",
@@ -1398,17 +1466,27 @@ function subagentTool(
       "For review and judging, especially code review, give `subagent` a different `model` from the one that produced the work when one is available, ideally from another family: a reviewer that shares the author's model shares its blind spots.",
       `After calling \`subagent\`, do non-overlapping work: do not poll, do not redo the task, and never predict or invent its result before the ${MARKER_EXAMPLE} message arrives.`,
       "Use `subagent_status` to answer whether a child still runs, not to poll, and `subagent_kill` to stop one whose result you no longer need.",
-      `A child stays alive after its turns, so a timer or nested subagent it started can wake it; it reports by calling its own \`${FINISH_TOOL}\` tool. A child that never calls it keeps running, so check \`subagent_status\` before assuming a silent child is stuck, and tell it to stop timers it no longer needs.`,
+      `A child stays alive after its turns, so a timer or nested subagent it started can wake it; it reports by calling its own \`${FINISH_TOOL}\` tool. A child that never calls it keeps running until its \`timeoutSec\` passes, so raise that timeout when the child is meant to wait on long background work, and tell it to stop timers it no longer needs.`,
       `Treat a ${MARKER_EXAMPLE} report as a claim to verify, not as proof the work is done.`,
     ],
     parameters: SubagentParams,
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
+      const {
+        prompt,
+        tools = [],
+        model = "",
+        timeoutSec = DEFAULT_TIMEOUT_SEC,
+      } = params;
+      if (!Number.isFinite(timeoutSec) || timeoutSec <= 0) {
+        return toolText(
+          "The subagent timeout must be a positive number of seconds.",
+        );
+      }
       const cwd = params.cwd ? path.resolve(ctx.cwd, params.cwd) : ctx.cwd;
       const reserved = runner.reserveId(params.id, cwd);
       if ("problem" in reserved) return toolText(reserved.problem);
       const { id } = reserved;
 
-      const { prompt, tools = [], model = "" } = params;
       const selection = childSelection(model, ctx);
       runner.start({
         id,
@@ -1417,16 +1495,18 @@ function subagentTool(
         thinking: selection.thinking,
         tools,
         cwd,
+        timeoutSec,
       });
 
       const config = [
         `model=${selection.model || "default"}`,
         `tools=${tools.length > 0 ? tools.join(",") : "default"}`,
         `cwd=${cwd}`,
+        `timeout=${timeoutSec}s`,
       ].join(", ");
       return toolText(
         `Subagent "${id}" started (${config}). Its result arrives as a "${marker(id)}" message.`,
-        { id, cwd, model: selection.model, tools },
+        { id, cwd, model: selection.model, tools, timeoutSec },
       );
     },
   };

@@ -305,6 +305,35 @@ describe("the call contract", () => {
     assert.match(bad.content[0].text, /not a directory/);
   });
 
+  test("rejects a timeout that could never elapse", async (t) => {
+    const { call, children } = setup(t);
+    assert.match(
+      (await call({ id: "bad-timeout", prompt: "x", timeoutSec: 0 })).content[0].text,
+      /positive number of seconds/,
+    );
+    assert.match(
+      (await call({ id: "bad-timeout", prompt: "x", timeoutSec: -5 })).content[0].text,
+      /positive number of seconds/,
+    );
+    assert.equal(children.length, 0, "an unusable timeout spawns nothing");
+  });
+
+  test("defaults the timeout and reports the deadline it got", async (t) => {
+    const { call, pi, children } = setup(t);
+    const result = await call({ id: "default-timeout", prompt: "x" });
+    assert.match(result.content[0].text, /timeout=3600s/);
+    const status = await pi.tools
+      .get("subagent_status")
+      .execute("call", { id: "default-timeout" }, undefined, undefined, {});
+    assert.match(status.content[0].text, /timeout=3600s/);
+    assert.match(
+      (await call({ id: "custom-timeout", prompt: "x", timeoutSec: 90 })).content[0].text,
+      /timeout=90s/,
+    );
+    await pi.hooks.get("session_shutdown")({ reason: "quit" });
+    assert.ok(children.length >= 1);
+  });
+
   test("a fresh extension instance starts with no subagents", async (t) => {
     const { call, pi, children } = setup(t, { idle: () => false });
     await call({ id: "reuse", prompt: "x" });
@@ -510,6 +539,39 @@ describe("reading the child's output", () => {
     }
   });
 
+  test("a child that outlives its timeout is stopped and reported as failed", async (t) => {
+    const { call, pi, children } = setup(t);
+    await call({ id: "stuck", prompt: "x", timeoutSec: 0.05 });
+    const [child] = children;
+
+    const [sent] = await notices(pi);
+    assert.match(
+      sent.message.content,
+      /^\[subagent stuck\] failed after \d+s: no result within its 0.05s timeout/,
+    );
+    assert.ok(child.kills.includes("SIGTERM"), "the child is stopped, not left running");
+    assert.ok(
+      await waitFor(() => child.kills.includes("SIGKILL")),
+      "a child that ignores SIGTERM is escalated",
+    );
+    assert.equal(pi.sent.length, 1, "the timeout reports once");
+    const status = await pi.tools
+      .get("subagent_status")
+      .execute("call", { id: "stuck" }, undefined, undefined, {});
+    assert.match(status.content[0].text, /\[subagent stuck\] fail after \d+s/);
+  });
+
+  test("a child that finishes before its timeout is not stopped", async (t) => {
+    const { call, pi, children } = setup(t);
+    await call({ id: "quick", prompt: "x", timeoutSec: 0.05 });
+    children[0].write(assistantRecord("in time"));
+    children[0].close(0);
+    const [sent] = await notices(pi);
+    assert.match(sent.message.content, /finished in \d+s\./);
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    assert.deepEqual(children[0].kills, [], "the deadline is cleared on result");
+  });
+
   test("a spawn failure is reported once", async (t) => {
     const { call, pi, children } = setup(t);
     await call({ id: "enoent", prompt: "x" });
@@ -710,7 +772,10 @@ describe("the /subagents view", () => {
     await call({ id: "listed", prompt: "x", model: "m", tools: ["read"] });
     notified.length = 0;
     await command.handler("", ctx);
-    assert.equal(notified[0], `[subagent listed] running for 0s (m, tools=read, ${workDir})`);
+    assert.equal(
+      notified[0],
+      `[subagent listed] running for 0s (m, tools=read, ${workDir}, timeout=3600s)`,
+    );
   });
 
   test("/subagents shows a live overlay that closes on Escape", async (t) => {
@@ -754,6 +819,14 @@ describe("the /subagents view", () => {
       firstRow.indexOf("0s"),
       secondRow.indexOf("0s"),
       "elapsed column is aligned",
+    );
+    // A finished row keeps the deadline it had, so both rows show a timeout.
+    assert.match(firstRow, /timeout=3600s/);
+    assert.match(secondRow, /timeout=3600s/);
+    assert.equal(
+      firstRow.indexOf("timeout="),
+      secondRow.indexOf("timeout="),
+      "timeout column is aligned",
     );
     assert.equal(
       firstRow.indexOf("tools="),
@@ -818,7 +891,10 @@ describe("subagent_status", () => {
     const status = await pi.tools
       .get("subagent_status")
       .execute("call", {}, undefined, undefined, {});
-    assert.match(status.content[0].text, /\[subagent bad\] fail after \d+s: exit code 3/);
+    assert.match(
+      status.content[0].text,
+      /\[subagent bad\] fail after \d+s \(timeout=3600s\): exit code 3/,
+    );
   });
 
   test("subagent_status narrows to the ids it is given", async (t) => {
