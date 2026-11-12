@@ -67,3 +67,15 @@
   carries domain meaning. Do not invent trivial conversion constants such as
   `MS_PER_SEC = 1000`; use the literal when its meaning is obvious from the
   expression.
+
+## Tests
+
+- Assert the outcome, not the route: the value a caller gets back, the state
+  left on disk, the request that leaves the process. Pinning an intermediate
+  breaks on refactors that change nothing observable and passes while the
+  outcome is wrong.
+- Read that outcome the way a consumer would, not the wording, layout or
+  ordering the current implementation happens to produce.
+- Pin only what is really the contract, such as a documented syntax, wire
+  format or stored schema; representation that is merely current does not
+  belong in a test.
