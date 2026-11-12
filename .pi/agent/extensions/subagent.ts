@@ -162,15 +162,22 @@ const WARN_AT = 0.8;
 const MIN_WARN_LEAD_SEC = 10;
 
 /**
- * Static system-prompt lines every spawned child gets.
+ * System-prompt lines every spawned child gets.
  *
- * These describe the child's role and lifetime, which belong in the system
- * prompt rather than a tool declaration: a child must know it works alone and
- * that its session outlives its turns. They are appended verbatim via
- * `--append-system-prompt`.
+ * These describe the child's role and its deadline, which belong in the system
+ * prompt rather than a tool declaration: a child must know what it is and how
+ * long the parent lets it run before the session is cut off. They are appended
+ * verbatim via `--append-system-prompt`.
+ *
+ * @param timeoutSec - Wall-clock limit the parent enforces, in seconds.
+ * @returns Text to append to the child's system prompt.
  */
-const CHILD_SYSTEM_PROMPT =
-  "You are a subagent working in the current directory. Finish assigned task faithfaully and report back concisely.";
+function childSystemPrompt(timeoutSec: number): string {
+  return (
+    "You are a subagent working in the current directory. Finish assigned task faithfully and report back concisely.\n\n" +
+    `This session has a ${timeoutSec}s wall-clock limit; the parent stops it when the limit passes, and anything still pending is abandoned.`
+  );
+}
 
 /** Longest single JSONL record kept from the child, in bytes. */
 const MAX_RECORD_BYTES = 8 * 1024 * 1024;
@@ -676,11 +683,6 @@ function childEnv(
  * positional argument, because RPC mode rejects `@file` prompts and expects
  * commands on stdin instead.
  *
- * The child's role and lifetime travel in `--append-system-prompt`, so they sit
- * in the system prompt in one place instead of a tool declaration. The
- * `subagent_finish` declaration keeps only how the session ends, and the
- * deadline travels in the prompt command on stdin.
- *
  * The call's id also names the child's session. Pi's session name is one field
  * that `/name`, `--name` and `pi.setSessionName()` all write, so naming the
  * child here makes every reader of it agree: notifications and `status` say
@@ -689,7 +691,7 @@ function childEnv(
  * this, a parent can only tell its children apart by model, directory or
  * context size, and none of that survives two children that share them.
  *
- * @param subagent - Id, model, thinking level and tools of the child.
+ * @param subagent - Id, model, thinking level, tools and timeout of the child.
  * @returns Command and arguments to spawn.
  */
 function childCommand(subagent: {
@@ -697,6 +699,7 @@ function childCommand(subagent: {
   model: string;
   thinking: string;
   tools: string[];
+  timeoutSec: number;
 }): { command: string; args: string[] } {
   // Reuse the build that is already running, so a second pi on PATH cannot win.
   const command = process.env.PI_BIN ?? process.argv[1] ?? "pi";
@@ -707,7 +710,7 @@ function childCommand(subagent: {
   if (subagent.tools.length > 0) {
     args.push("--tools", childTools(subagent.tools).join(","));
   }
-  args.push("--append-system-prompt", CHILD_SYSTEM_PROMPT);
+  args.push("--append-system-prompt", childSystemPrompt(subagent.timeoutSec));
   return { command, args };
 }
 
@@ -726,18 +729,17 @@ function jsonLine(record: Record<string, unknown>): string {
  *
  * The `Task:` prefix keeps pi from reading the prompt as a skill, template or
  * extension command, which RPC mode would dispatch instead of sending it.
- * The deadline travels in the same message so the child knows how long it has
- * from the start; it names no tool, so it stays decoupled from any extension.
+ * Nothing else is added: how long the child may run lives in its system prompt,
+ * where the parent already states it once.
  *
  * @param prompt - Task the caller described.
- * @param timeoutSec - Wall-clock limit the parent enforces, in seconds.
  * @returns One JSONL record for the child's stdin.
  */
-function promptCommand(prompt: string, timeoutSec: number): string {
+function promptCommand(prompt: string): string {
   return jsonLine({
     id: PROMPT_ID,
     type: "prompt",
-    message: `Task: ${prompt}\n\nThis subagent has a ${timeoutSec}s wall-clock timeout; the parent stops it when the timeout passes.`,
+    message: `Task: ${prompt}`,
   });
 }
 
@@ -1221,11 +1223,7 @@ class SubagentRunner {
       finish(startFailure || failureOf(lastTurn, code, signal)),
     );
     // The readers are attached first, so a fast answer cannot arrive unread.
-    writeChild(
-      proc,
-      promptCommand(subagent.prompt, subagent.timeoutSec),
-      appendStderr,
-    );
+    writeChild(proc, promptCommand(subagent.prompt), appendStderr);
     // A child that never starts a run cannot report, and its gate never fires.
     // Unref'd: this deadline must not keep the parent's event loop alive.
     startDeadline = setTimeout(() => {
@@ -1790,9 +1788,8 @@ function warnBeforeDeadline(pi: ExtensionAPI, runner: SubagentRunner): void {
  *
  * The snippet and guidelines describe only how the session ends: pi puts them
  * in the system prompt of every session that declares the tool, which is
- * exactly the spawned child. The child's role and lifetime travel in the
- * system prompt that `childCommand` appends, and its deadline in the prompt
- * command; neither belongs here.
+ * exactly the spawned child. The child's role and deadline travel in the system
+ * prompt that `childCommand` appends; neither belongs here.
  *
  * @param runner - Session state holding the end request.
  */

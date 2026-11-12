@@ -427,15 +427,11 @@ describe("subagent", () => {
       assert.match(customResult.content[0].text, /timeout=90s/);
       assert.match(
         childOptions(children.at(-1)).options["append-system-prompt"],
-        /You are a subagent working alone/,
+        /This session has a 90s wall-clock limit/,
+        "the child is told the same deadline the parent reports",
       );
       assert.deepEqual(childCommands(children.at(-1)), [
-        {
-          id: "prompt",
-          type: "prompt",
-          message:
-            "Task: x\n\nThis subagent has a 90s wall-clock timeout; the parent stops it when the timeout passes.",
-        },
+        { id: "prompt", type: "prompt", message: "Task: x" },
       ]);
       await pi.hooks.get("session_shutdown")({ reason: "quit" });
       assert.ok(children.length >= 1);
@@ -481,29 +477,20 @@ describe("subagent", () => {
       );
       assert.ok(
         flags.has("append-system-prompt"),
-        "the child's role and lifetime live in an appended system prompt",
+        "the child's role and deadline live in an appended system prompt",
       );
+      assert.match(options["append-system-prompt"], /You are a subagent/);
       assert.match(
         options["append-system-prompt"],
-        /You are a subagent working alone/,
-      );
-      assert.match(options["append-system-prompt"], /outlives its turns/);
-      assert.doesNotMatch(
-        options["append-system-prompt"],
-        /wall-clock timeout/,
-        "the deadline is not part of the system prompt",
+        /3600s wall-clock limit/,
+        "the child is told the deadline it runs under",
       );
       assert.ok(
         !child.args.some((arg) => arg.startsWith("Task: do it")),
         "the prompt travels on stdin, not in argv",
       );
       assert.deepEqual(childCommands(child), [
-        {
-          id: "prompt",
-          type: "prompt",
-          message:
-            "Task: do it\n\nThis subagent has a 3600s wall-clock timeout; the parent stops it when the timeout passes.",
-        },
+        { id: "prompt", type: "prompt", message: "Task: do it" },
       ]);
       assert.equal(
         child.options.env.PI_SUBAGENT_CHILD,
@@ -1310,7 +1297,7 @@ describe("subagent", () => {
       assert.match(finish.promptSnippet, /a turn ending does not end the session/);
       assert.doesNotMatch(guidelines, /You are a subagent working alone/);
       assert.doesNotMatch(guidelines, /outlives its turns/);
-      assert.match(guidelines, /Call `subagent_finish` when your answer is final/);
+      assert.match(guidelines, /call `subagent_finish` when your answer is final/);
     });
 
     test("a child stays open after a turn until its model finishes", async (t) => {
