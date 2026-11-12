@@ -208,7 +208,7 @@ const SubagentParams = Type.Object({
   model: Type.Optional(
     Type.String({
       description:
-        'Model for the child, as "provider/id" or a bare id, optionally with ":high" and similar for the thinking level. Omit to inherit this session\'s model and thinking level.',
+        'Model for the child, as "provider/id" or a bare id, optionally with ":high" and similar for the thinking level. Use `pi --list-models` to check available models. Omit to inherit this session\'s model and thinking level.',
     }),
   ),
   cwd: Type.Optional(
