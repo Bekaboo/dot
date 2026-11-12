@@ -28,6 +28,7 @@ import type {
   ExtensionCommandContext,
   ExtensionContext,
   JsonAgentSessionEvent,
+  KeybindingsManager,
   Theme,
   ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
@@ -35,7 +36,6 @@ import { DynamicBorder } from "@earendil-works/pi-coding-agent";
 import {
   type Component,
   Container,
-  matchesKey,
   Text,
   type TUI,
   truncateToWidth,
@@ -185,14 +185,32 @@ const MAX_RECORD_BYTES = 8 * 1024 * 1024;
 /** How many finished children are remembered for `subagent_status`. */
 const FINISHED_HISTORY = 10;
 
+/** How many of a child's activity steps the status and detail view keep. */
+const ACTIVITY_HISTORY = 20;
+
+/** Longest line kept as a text step's label or tail, in characters. */
+const ACTIVITY_LINE_CHARS = 80;
+
+/** Longest argument summary kept for a tool step, in characters. */
+const TOOL_SUMMARY_CHARS = 60;
+
+/** Characters kept from an open text block, enough to derive its tail line. */
+const TEXT_TAIL_BUFFER_CHARS = 400;
+
 /** Braille frames pi's built-in working spinner uses. */
 const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
 /** Spinner frame interval in ms, matching pi's built-in working indicator. */
 const SPINNER_INTERVAL_MS = 80;
 
+/** Kind column of the detail view's first line, the moment the child spawned. */
+const START_KIND = "start";
+
 /** Horizontal padding inside the `/subagents` overlay. */
 const OVERLAY_PADDING_X = 2;
+
+/** Cursor in front of the selected `/subagents` row, as pi's select lists draw it. */
+export const SELECTED_CURSOR = "→";
 
 /** Schema for the `subagent` tool. */
 const SubagentParams = Type.Object({
@@ -266,6 +284,8 @@ interface RunningSubagent {
   startedAt: number;
   /** Creation order, so two children started in one millisecond stay ordered. */
   order: number;
+  /** What the child has been doing, updated from its records. */
+  activity: Activity;
 }
 
 /** A child that ended, kept briefly so `subagent_status` can report it. */
@@ -273,6 +293,8 @@ interface FinishedSubagent {
   id: string;
   /** Elapsed seconds at exit. */
   seconds: number;
+  /** Spawn time in ms, the first line of the detail view. */
+  startedAt: number;
   /** Outcome word: done, fail, or kill. */
   state: string;
   /** Failure text, when the child did not finish cleanly. */
@@ -284,6 +306,8 @@ interface FinishedSubagent {
   timeoutSec: number;
   /** Creation order, so two children started in one millisecond stay ordered. */
   order: number;
+  /** What it was doing when it ended, for the detail view. */
+  activity: Activity;
 }
 
 /** One line of the `/subagents` overlay. */
@@ -300,6 +324,10 @@ interface SubagentRow {
   cwd: string;
   /** Wall-clock limit the child was given, in seconds. */
   timeoutSec: number;
+  /** Spawn time in ms, the first line of the detail view. */
+  startedAt: number;
+  /** What the child has been doing, for the detail view. */
+  activity: Activity;
 }
 
 /** What the last assistant message of a child says, once its records are parsed. */
@@ -313,6 +341,52 @@ interface LastTurn {
   /** Set once a finish call delivered the answer; later records are ignored. */
   final?: boolean;
 }
+
+/** One step of a child's activity: a thinking block, text block or tool call. */
+interface ActivityStep {
+  /** What the child did. */
+  kind: "think" | "text" | "tool";
+  /** Tool name for a tool step, empty otherwise. */
+  tool: string;
+  /** First line of a text block, or the argument summary of a tool call. */
+  label: string;
+  /** Last non-empty line of a text block, for the status line. */
+  tail?: string;
+  /** Tool call the step belongs to, so its end can find it. */
+  callId?: string;
+  startedAt: number;
+  endedAt?: number;
+  /** Characters streamed into a think or text block. */
+  chars: number;
+}
+
+/**
+ * What a child has been doing, updated from its JSONL records.
+ *
+ * Steps stay bounded and never hold thinking text or a whole text block, so a
+ * long run lets the parent see whether the child is busy without the parent's
+ * own memory growing with it.
+ */
+interface Activity {
+  /**
+   * Lifecycle phase, absent before the child emitted any activity: waiting for
+   * the model during a live request, settled once its run is over but the
+   * process still holds background work.
+   */
+  phase?: "waiting" | "settled";
+  /** When the current phase began, in ms. */
+  phaseStartedAt: number;
+  /** The last `ACTIVITY_HISTORY` steps, oldest first. */
+  steps: ActivityStep[];
+  /** Characters kept from the open text block, enough to derive its tail. */
+  textBuffer: string;
+}
+
+/** One streamed assistant content-block update, as the wire carries it. */
+type StreamBlock = Extract<
+  JsonAgentSessionEvent,
+  { type: "message_update" }
+>["assistantMessageEvent"];
 
 /** Terminal state of a child, as its notification reports it. */
 interface Outcome {
@@ -423,6 +497,337 @@ function absorbRecord(lastTurn: LastTurn, record: unknown): void {
       .join("\n"),
     OUTPUT_CAP_BYTES,
   );
+}
+
+/**
+ * Fresh activity for a child that has not emitted anything yet.
+ *
+ * @returns Activity with no phase and no steps.
+ */
+function emptyActivity(): Activity {
+  return { phaseStartedAt: 0, steps: [], textBuffer: "" };
+}
+
+/**
+ * Start a new step and append it to the activity, dropping the oldest.
+ *
+ * @param activity - Activity of the child.
+ * @param kind - What the child started doing.
+ * @param tool - Tool name for a tool step, empty otherwise.
+ * @returns The new step, which later updates happen on in place.
+ */
+function startStep(
+  activity: Activity,
+  kind: ActivityStep["kind"],
+  tool = "",
+): ActivityStep {
+  const step: ActivityStep = {
+    kind,
+    tool,
+    label: "",
+    startedAt: Date.now(),
+    chars: 0,
+  };
+  activity.steps.push(step);
+  if (activity.steps.length > ACTIVITY_HISTORY) activity.steps.shift();
+  // An open step is what the child is doing, so it ends the wait. A settled
+  // child keeps that phase against late records.
+  if (activity.phase === "waiting") activity.phase = undefined;
+  return step;
+}
+
+/**
+ * The most recent step that is still open and matches a predicate.
+ *
+ * @param activity - Activity of the child.
+ * @param match - Which steps qualify.
+ * @returns The matching open step, or undefined when there is none.
+ */
+function openStep(
+  activity: Activity,
+  match: (step: ActivityStep) => boolean = () => true,
+): ActivityStep | undefined {
+  for (let i = activity.steps.length - 1; i >= 0; i--) {
+    const step = activity.steps[i];
+    if (step.endedAt === undefined && match(step)) return step;
+  }
+  return undefined;
+}
+
+/**
+ * Close the open step a predicate matches, if there is one.
+ *
+ * @param activity - Activity of the child.
+ * @param match - Which steps qualify.
+ */
+function closeStep(
+  activity: Activity,
+  match: (step: ActivityStep) => boolean,
+): void {
+  const step = openStep(activity, match);
+  if (step) step.endedAt = Date.now();
+}
+
+/**
+ * Report the child as waiting for the model, once it has nothing open.
+ *
+ * Re-entering the phase keeps its clock, so duplicate lifecycle records do not
+ * restart it. A settled child stays settled until a new run begins.
+ *
+ * @param activity - Activity of the child, updated in place.
+ * @param restart - Begin a new wait even if the child had settled.
+ */
+function waitForModel(activity: Activity, restart = false): void {
+  if (openStep(activity)) return;
+  if (activity.phase === "waiting") return;
+  if (activity.phase === "settled" && !restart) return;
+  activity.phase = "waiting";
+  activity.phaseStartedAt = Date.now();
+}
+
+/**
+ * Report the child as settled: its run is over, but its process stays alive
+ * for background work. Settled overrides any step that never closed.
+ *
+ * @param activity - Activity of the child, updated in place.
+ */
+function settle(activity: Activity): void {
+  for (const step of activity.steps) step.endedAt ??= Date.now();
+  activity.phase = "settled";
+  activity.phaseStartedAt = Date.now();
+}
+
+/**
+ * Cut text to a character budget, marking an elision.
+ *
+ * @param text - Text to cut, already a single line.
+ * @param maxChars - Character budget, including the marker.
+ * @returns The text, or its head followed by "...".
+ */
+function truncateChars(text: string, maxChars: number): string {
+  return text.length > maxChars ? `${text.slice(0, maxChars - 3)}...` : text;
+}
+
+/**
+ * First or last non-empty line of a text, trimmed and cut short.
+ *
+ * @param text - Text to scan.
+ * @param fromEnd - Take the last non-empty line instead of the first.
+ * @param maxChars - Character budget for the line.
+ * @returns The line, or an empty string when every line is blank.
+ */
+function edgeLine(text: string, fromEnd: boolean, maxChars: number): string {
+  const lines = text.split("\n");
+  const step = fromEnd ? -1 : 1;
+  for (
+    let i = fromEnd ? lines.length - 1 : 0;
+    i >= 0 && i < lines.length;
+    i += step
+  ) {
+    const line = lines[i].trim();
+    if (line) return truncateChars(line, maxChars);
+  }
+  return "";
+}
+
+/** Argument keys whose value best names what a tool call does, in order. */
+const TOOL_SUMMARY_KEYS = ["command", "path", "pattern", "url", "query", "id"];
+
+/**
+ * Summarize the arguments of a tool call for a step label.
+ *
+ * The named keys cover the tools a child usually calls: a command, a file, a
+ * search pattern, a URL, a query or an id. Anything else falls back to the
+ * first string value, so an unknown tool still says something useful.
+ *
+ * @param args - Arguments the child passed to the tool.
+ * @returns The first line of that value, cut short, or an empty string.
+ */
+function toolSummary(args: unknown): string {
+  if (!args || typeof args !== "object") return "";
+  const values = args as Record<string, unknown>;
+  const named = TOOL_SUMMARY_KEYS.map((key) => values[key]);
+  const value =
+    named.find((entry) => typeof entry === "string" && entry !== "") ??
+    Object.values(values).find(
+      (entry) => typeof entry === "string" && entry !== "",
+    );
+  return typeof value === "string"
+    ? edgeLine(value, false, TOOL_SUMMARY_CHARS)
+    : "";
+}
+
+/**
+ * Read what a child is doing out of one record.
+ *
+ * Only lifecycle records move the child between phases, so a bare response or
+ * UI record changes nothing. Streaming deltas update the open step in place,
+ * so one block or tool call stays one entry.
+ *
+ * @param activity - Activity of the child, updated in place.
+ * @param record - Parsed `--mode json` record.
+ */
+function absorbActivity(activity: Activity, record: unknown): void {
+  const event = record as JsonAgentSessionEvent;
+  switch (event.type) {
+    case "agent_start":
+    case "turn_start":
+      waitForModel(activity, true);
+      return;
+    case "agent_settled":
+      settle(activity);
+      return;
+    case "message_start":
+      if (event.message.role === "assistant") waitForModel(activity, true);
+      return;
+    case "message_update":
+      absorbBlock(activity, event.assistantMessageEvent);
+      return;
+    case "tool_execution_start": {
+      const step = startStep(activity, "tool", event.toolName);
+      step.callId = event.toolCallId;
+      step.label = toolSummary(event.args);
+      return;
+    }
+    case "tool_execution_end":
+      closeStep(activity, (step) => step.callId === event.toolCallId);
+      waitForModel(activity);
+      return;
+    case "message_end":
+      // An aborted or failed stream ends its message without closing its
+      // blocks; nothing streams into them after this.
+      if (event.message.role !== "assistant") return;
+      for (const step of activity.steps) {
+        if (step.kind !== "tool") step.endedAt ??= Date.now();
+      }
+      waitForModel(activity);
+      return;
+  }
+}
+
+/**
+ * Apply one streamed content-block update to the activity.
+ *
+ * A delta with no matching open step starts one, so a missing start event
+ * costs a label rather than the whole block. Thinking text is counted, never
+ * kept; a text block keeps its first line as a label and the tail of a bounded
+ * rolling buffer as its last line. Tool-call arguments stream while the reply
+ * is still being prepared, so they open no step of their own.
+ *
+ * @param activity - Activity of the child, updated in place.
+ * @param block - Streamed assistant content-block update.
+ */
+function absorbBlock(activity: Activity, block: StreamBlock): void {
+  switch (block.type) {
+    case "thinking_start":
+      startStep(activity, "think");
+      return;
+    case "thinking_delta": {
+      const step =
+        openStep(activity, (entry) => entry.kind === "think") ??
+        startStep(activity, "think");
+      step.chars += block.delta.length;
+      return;
+    }
+    case "thinking_end":
+      closeStep(activity, (step) => step.kind === "think");
+      waitForModel(activity);
+      return;
+    case "text_start":
+      activity.textBuffer = "";
+      startStep(activity, "text");
+      return;
+    case "text_delta": {
+      let step = openStep(activity, (entry) => entry.kind === "text");
+      if (!step) {
+        activity.textBuffer = "";
+        step = startStep(activity, "text");
+      }
+      activity.textBuffer = (activity.textBuffer + block.delta).slice(
+        -TEXT_TAIL_BUFFER_CHARS,
+      );
+      step.chars += block.delta.length;
+      // The first line grows over several deltas; follow it while the buffer
+      // still holds the block's start.
+      if (step.chars <= TEXT_TAIL_BUFFER_CHARS) {
+        step.label = edgeLine(activity.textBuffer, false, ACTIVITY_LINE_CHARS);
+      }
+      step.tail = edgeLine(activity.textBuffer, true, ACTIVITY_LINE_CHARS);
+      return;
+    }
+    case "text_end":
+      closeStep(activity, (step) => step.kind === "text");
+      waitForModel(activity);
+      return;
+  }
+}
+
+/**
+ * Character count in the compact form the status line uses.
+ *
+ * @param chars - Characters streamed into a block.
+ * @returns Text such as "850 chars" or "1.8k chars".
+ */
+function charCount(chars: number): string {
+  if (chars < 1000) return `${chars} chars`;
+  return `${(chars / 1000).toFixed(1)}k chars`;
+}
+
+/**
+ * What a running child is doing right now, for the status line.
+ *
+ * @param activity - Activity of the child.
+ * @returns Text such as "thinking for 3s (1.8k chars)", "waiting for the
+ *   model (12s)" or "idle, waiting on background work (5s)".
+ */
+function activityNow(activity: Activity): string {
+  if (activity.phase === "settled") {
+    return `idle, waiting on background work (${elapsedSec(activity.phaseStartedAt)}s)`;
+  }
+  const step = openStep(activity);
+  if (!step) {
+    return `waiting for the model (${elapsedSec(activity.phaseStartedAt)}s)`;
+  }
+  if (step.kind === "think") {
+    return `thinking for ${elapsedSec(step.startedAt)}s (${charCount(step.chars)})`;
+  }
+  if (step.kind === "text") {
+    return `writing for ${elapsedSec(step.startedAt)}s (${charCount(step.chars)})`;
+  }
+  const seconds = elapsedSec(step.startedAt);
+  return step.label
+    ? `${step.tool} \`${step.label}\` (${seconds}s)`
+    : `${step.tool} (${seconds}s)`;
+}
+
+/**
+ * Second status line of a child that is writing text, when it has one.
+ *
+ * @param activity - Activity of the child.
+ * @returns The open text block's last line, or undefined.
+ */
+function activityTail(activity: Activity): string | undefined {
+  const step = openStep(activity);
+  return step?.kind === "text" ? step.tail : undefined;
+}
+
+/**
+ * Status line of a running child: elapsed time, what it is doing now and for
+ * how long.
+ *
+ * A child that has emitted no activity yet keeps the plain elapsed line: there
+ * is nothing to report about it.
+ *
+ * @param job - Running child.
+ * @returns One status line, with a second line for an open text block's tail.
+ */
+function runningLine(job: RunningSubagent): string {
+  const head = `${marker(job.id)} running for ${elapsedSec(job.startedAt)}s`;
+  if (job.activity.phase === undefined && job.activity.steps.length === 0)
+    return `${head} (${subagentSettings(job)})`;
+  const line = `${head}, ${activityNow(job.activity)} (${subagentSettings(job)})`;
+  const tail = activityTail(job.activity);
+  return tail ? `${line}\n  "...${tail}"` : line;
 }
 
 /**
@@ -1002,6 +1407,64 @@ function padLeft(text: string, width: number): string {
 }
 
 /**
+ * Local wall-clock time of an event, for the detail view.
+ *
+ * @param ms - Epoch time in ms.
+ * @returns Text such as "15:56:43".
+ */
+function clockTime(ms: number): string {
+  return new Date(ms).toTimeString().slice(0, "hh:mm:ss".length);
+}
+
+/**
+ * Detail-view kind column of a step.
+ *
+ * @param step - Step to describe.
+ * @returns "think", "text", or the tool name.
+ */
+function stepKind(step: ActivityStep): string {
+  return step.kind === "tool" ? step.tool : step.kind;
+}
+
+/**
+ * Detail-view suffix of a step that is still open.
+ *
+ * @param step - Step to describe.
+ * @returns Text such as "running 35s" or "writing", empty once it closed.
+ */
+function openSuffix(step: ActivityStep): string {
+  if (step.endedAt !== undefined) return "";
+  if (step.kind === "tool") return `running ${elapsedSec(step.startedAt)}s`;
+  return step.kind === "text" ? "writing" : "thinking";
+}
+
+/**
+ * Header line of one child's detail view.
+ *
+ * @param row - Child the view shows.
+ * @param frame - Current spinner frame index.
+ * @param theme - Active theme.
+ * @returns Text naming its id, state, elapsed time, timeout, model, tools and
+ *   working directory, in the order the list row shows them.
+ */
+function detailHeader(row: SubagentRow, frame: number, theme: Theme): string {
+  const column = columnsOf(row);
+  const state =
+    row.state === "work"
+      ? `running for ${row.seconds}s`
+      : `${row.state} after ${row.seconds}s`;
+  return [
+    theme.bold(column.id),
+    stateMarker(row.state, frame, theme),
+    theme.fg("muted", state),
+    theme.fg("dim", column.timeout),
+    theme.fg("dim", column.model),
+    theme.fg("dim", column.tools),
+    theme.fg("dim", column.cwd),
+  ].join(" ");
+}
+
+/**
  * Summary line of the `/subagents` overlay.
  *
  * @param rows - Rows the overlay shows.
@@ -1107,7 +1570,10 @@ class SubagentRunner {
    *   timeout and prompt of the child.
    */
   start(
-    subagent: Omit<RunningSubagent, "startedAt" | "order" | "prompt"> & {
+    subagent: Omit<
+      RunningSubagent,
+      "startedAt" | "order" | "prompt" | "activity"
+    > & {
       prompt: string;
       /** Thinking level to force, empty to keep the model's own setting. */
       thinking: string;
@@ -1132,6 +1598,7 @@ class SubagentRunner {
       timeoutSec: subagent.timeoutSec,
       startedAt: Date.now(),
       order,
+      activity: emptyActivity(),
     };
     this.running.set(running.id, running);
     this.refreshOverlay();
@@ -1155,6 +1622,7 @@ class SubagentRunner {
     };
     const onRecord = (record: unknown) => {
       absorbRecord(lastTurn, record);
+      absorbActivity(running.activity, record);
       if (isAgentStart(record)) runBegan();
       const cancellation = uiCancellation(record);
       if (cancellation) {
@@ -1201,6 +1669,7 @@ class SubagentRunner {
       this.remember({
         id: running.id,
         seconds: elapsedSec(running.startedAt),
+        startedAt: running.startedAt,
         state: outcome.state,
         reason: failure,
         model: running.model,
@@ -1208,6 +1677,7 @@ class SubagentRunner {
         cwd: running.cwd,
         timeoutSec: running.timeoutSec,
         order: running.order,
+        activity: running.activity,
       });
       this.refreshOverlay();
       this.deliver(running.id, outcome);
@@ -1279,10 +1749,7 @@ class SubagentRunner {
     const matches = (id: string) => wanted.size === 0 || wanted.has(id);
     const running = [...this.running.values()]
       .filter((job) => matches(job.id))
-      .map((job) => {
-        const seconds = elapsedSec(job.startedAt);
-        return `${marker(job.id)} running for ${seconds}s (${subagentSettings(job)})`;
-      });
+      .map((job) => runningLine(job));
     const finished = this.finished
       .filter((job) => matches(job.id))
       .map(
@@ -1304,11 +1771,23 @@ class SubagentRunner {
    *
    * @param tui - TUI the overlay renders into.
    * @param theme - Active theme.
+   * @param keybindings - User keybindings the list navigation follows.
    * @param close - Closes the overlay.
    * @returns The overlay component.
    */
-  createOverlay(tui: TUI, theme: Theme, close: () => void): SubagentsOverlay {
-    const overlay = new SubagentsOverlay(tui, theme, () => this.rows(), close);
+  createOverlay(
+    tui: TUI,
+    theme: Theme,
+    keybindings: KeybindingsManager,
+    close: () => void,
+  ): SubagentsOverlay {
+    const overlay = new SubagentsOverlay(
+      tui,
+      theme,
+      keybindings,
+      () => this.rows(),
+      close,
+    );
     this.overlay = overlay;
     this.refreshOverlay();
     return overlay;
@@ -1330,20 +1809,24 @@ class SubagentRunner {
       state: "work",
       order: job.order,
       seconds: elapsedSec(job.startedAt),
+      startedAt: job.startedAt,
       model: job.model,
       tools: job.tools,
       cwd: job.cwd,
       timeoutSec: job.timeoutSec,
+      activity: job.activity,
     }));
     const finished = this.finished.map((job) => ({
       id: job.id,
       state: job.state,
       order: job.order,
       seconds: job.seconds,
+      startedAt: job.startedAt,
       model: job.model,
       tools: job.tools,
       cwd: job.cwd,
       timeoutSec: job.timeoutSec,
+      activity: job.activity,
     }));
     return [...running, ...finished].sort((a, b) => a.order - b.order);
   }
@@ -1377,12 +1860,14 @@ class SubagentRunner {
       this.remember({
         id,
         seconds: job ? elapsedSec(job.startedAt) : 0,
+        startedAt: job?.startedAt ?? 0,
         state: "kill",
         model: job?.model ?? "",
         tools: job?.tools ?? [],
         cwd: job?.cwd ?? "",
         timeoutSec: job?.timeoutSec ?? 0,
         order: job?.order ?? 0,
+        activity: job?.activity ?? emptyActivity(),
       });
       this.running.delete(id);
       this.stoppers.delete(id);
@@ -1451,33 +1936,43 @@ class SubagentRunner {
  *
  * Laid out like the todo overlay: a bordered box with a title, a summary, one
  * line per child and an Escape hint. Rows are read from the runner on every
- * render, so elapsed time stays current. A running child
- * gets the same braille spinner as pi's working indicator; the animation runs
- * only while one is alive.
+ * render, so elapsed time stays current; Enter opens one child's activity and
+ * Escape walks back out. A running child gets the same braille spinner as pi's
+ * working indicator; the animation runs only while one is alive.
  */
 class SubagentsOverlay implements Component {
   private readonly container = new Container();
   private readonly summaryText: Text;
   private readonly rowsText: Text;
+  private readonly footerText: Text;
   private readonly tui: TUI;
   private readonly theme: Theme;
+  /** User keybindings, so the list moves with the keys every pi list uses. */
+  private readonly keybindings: KeybindingsManager;
   private readonly readRows: () => SubagentRow[];
   private readonly close: () => void;
   private frame = 0;
   private timer: ReturnType<typeof setInterval> | undefined;
+  /** Index of the row the list view selected. */
+  private selected = 0;
+  /** Id whose detail view is open, or undefined while the list is shown. */
+  private detailId: string | undefined;
 
   constructor(
     tui: TUI,
     theme: Theme,
+    keybindings: KeybindingsManager,
     readRows: () => SubagentRow[],
     close: () => void,
   ) {
     this.tui = tui;
     this.theme = theme;
+    this.keybindings = keybindings;
     this.readRows = readRows;
     this.close = close;
     this.summaryText = new Text("", OVERLAY_PADDING_X, 0);
     this.rowsText = new Text("", OVERLAY_PADDING_X, 0);
+    this.footerText = new Text("", OVERLAY_PADDING_X, 1);
 
     const border = () =>
       new DynamicBorder((text) => theme.fg("borderMuted", text));
@@ -1491,18 +1986,33 @@ class SubagentsOverlay implements Component {
     );
     this.container.addChild(this.summaryText);
     this.container.addChild(this.rowsText);
-    this.container.addChild(
-      new Text(theme.fg("dim", "Press Escape to close"), OVERLAY_PADDING_X, 1),
-    );
+    this.container.addChild(this.footerText);
     this.container.addChild(border());
     this.syncAnimation();
   }
 
   render(width: number): string[] {
     const rows = this.readRows();
+    this.selected = Math.min(this.selected, Math.max(0, rows.length - 1));
+    const detail = rows.find((row) => row.id === this.detailId);
+    if (detail) {
+      this.summaryText.setText(detailHeader(detail, this.frame, this.theme));
+      this.rowsText.setText(`\n${this.renderDetail(detail, width)}`);
+      this.footerText.setText(this.theme.fg("dim", "Escape to go back"));
+      return this.container.render(width);
+    }
+    this.detailId = undefined;
     this.summaryText.setText(summaryOf(rows, this.theme));
     this.rowsText.setText(
       rows.length > 0 ? `\n${this.renderRows(rows, width)}` : "",
+    );
+    this.footerText.setText(
+      this.theme.fg(
+        "dim",
+        rows.length > 0
+          ? "Enter for details, Escape to close"
+          : "Press Escape to close",
+      ),
     );
     return this.container.render(width);
   }
@@ -1525,8 +2035,31 @@ class SubagentsOverlay implements Component {
   }
 
   handleInput(data: string): void {
-    if (matchesKey(data, "escape") || matchesKey(data, "ctrl+c")) {
+    if (this.keybindings.matches(data, "tui.select.cancel")) {
+      if (this.detailId !== undefined) {
+        this.detailId = undefined;
+        this.tui.requestRender();
+        return;
+      }
       this.close();
+      return;
+    }
+    if (this.detailId !== undefined) return;
+    const rows = this.readRows();
+    if (this.keybindings.matches(data, "tui.select.up")) {
+      this.selected = Math.max(0, this.selected - 1);
+      this.tui.requestRender();
+      return;
+    }
+    if (this.keybindings.matches(data, "tui.select.down")) {
+      this.selected = Math.min(Math.max(0, rows.length - 1), this.selected + 1);
+      this.tui.requestRender();
+      return;
+    }
+    const row = rows[this.selected];
+    if (row && this.keybindings.matches(data, "tui.select.confirm")) {
+      this.detailId = row.id;
+      this.tui.requestRender();
     }
   }
 
@@ -1541,8 +2074,13 @@ class SubagentsOverlay implements Component {
     const widths = alignWidths(rows);
     const inner = Math.max(0, width - OVERLAY_PADDING_X * 2);
     return rows
-      .map((row) =>
-        truncateToWidth(this.renderRow(row, widths), inner, "...", true),
+      .map((row, index) =>
+        truncateToWidth(
+          this.renderRow(row, widths, index === this.selected),
+          inner,
+          "...",
+          true,
+        ),
       )
       .join("\n");
   }
@@ -1552,14 +2090,23 @@ class SubagentsOverlay implements Component {
    *
    * @param row - Subagent to render.
    * @param widths - Column widths shared by every row of this render.
+   * @param selected - Whether the list view has this row selected.
    * @returns The styled line, before width truncation.
    */
-  private renderRow(row: SubagentRow, widths: ColumnWidths): string {
+  private renderRow(
+    row: SubagentRow,
+    widths: ColumnWidths,
+    selected: boolean,
+  ): string {
     const { theme } = this;
     const column = columnsOf(row);
+    const id = padRight(column.id, widths.id);
+    // Every row reserves the cursor column, so selection never shifts it.
+    const cursor = selected ? theme.fg("accent", SELECTED_CURSOR) : " ";
     return [
+      cursor,
       stateMarker(row.state, this.frame, theme),
-      theme.bold(padRight(column.id, widths.id)),
+      selected ? theme.fg("accent", theme.bold(id)) : theme.bold(id),
       theme.fg("muted", padLeft(column.status, widths.status)),
       theme.fg("muted", padLeft(column.elapsed, widths.elapsed)),
       theme.fg("dim", padRight(column.timeout, widths.timeout)),
@@ -1567,6 +2114,56 @@ class SubagentsOverlay implements Component {
       theme.fg("dim", padRight(column.tools, widths.tools)),
       theme.fg("dim", padRight(column.cwd, widths.cwd)),
     ].join(" ");
+  }
+
+  /**
+   * Render the activity of one child, one step per line.
+   *
+   * @param row - Child whose detail is open.
+   * @param width - Overlay width, including the text padding.
+   * @returns One width-truncated line per step, or the empty state.
+   */
+  private renderDetail(row: SubagentRow, width: number): string {
+    const { theme } = this;
+    const { steps } = row.activity;
+    const inner = Math.max(0, width - OVERLAY_PADDING_X * 2);
+    const kindWidth = Math.max(
+      ...[START_KIND, ...steps.map(stepKind)].map(visibleWidth),
+    );
+    const start = [
+      theme.fg("dim", clockTime(row.startedAt)),
+      theme.fg("muted", padRight(START_KIND, kindWidth)),
+    ].join(" ");
+    const lines = [
+      start,
+      ...steps.map((step) => this.renderStep(step, kindWidth)),
+    ];
+    if (steps.length === 0) lines.push(theme.fg("dim", "No activity yet."));
+    return lines
+      .map((line) => truncateToWidth(line, inner, "...", true))
+      .join("\n");
+  }
+
+  /**
+   * Render one activity step: its start time, kind, label and open-state
+   * suffix.
+   *
+   * @param step - Step to render.
+   * @param kindWidth - Widest kind column of this render.
+   * @returns The styled line, before width truncation.
+   */
+  private renderStep(step: ActivityStep, kindWidth: number): string {
+    const { theme } = this;
+    const label = step.kind === "think" ? charCount(step.chars) : step.label;
+    const suffix = openSuffix(step);
+    return [
+      theme.fg("dim", clockTime(step.startedAt)),
+      theme.fg("muted", padRight(stepKind(step), kindWidth)),
+      label,
+      suffix ? theme.fg("dim", suffix) : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
   }
 
   /** Start or stop the animation to match the rows. */
@@ -1835,8 +2432,8 @@ function subagentsCommand(runner: SubagentRunner) {
         ctx.ui.notify(runner.status(), "info");
         return;
       }
-      await ctx.ui.custom<void>((tui, theme, _kb, done) =>
-        runner.createOverlay(tui, theme, () => done()),
+      await ctx.ui.custom<void>((tui, theme, keybindings, done) =>
+        runner.createOverlay(tui, theme, keybindings, () => done()),
       );
       runner.detachOverlay();
     },
