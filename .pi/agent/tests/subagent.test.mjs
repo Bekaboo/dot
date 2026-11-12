@@ -359,13 +359,17 @@ describe("subagent", () => {
       const [child] = children;
       assert.equal(child.options.cwd, workDir);
       assert.equal(child.options.shell, false);
-      assert.deepEqual(piArgs(child).slice(0, 5), [
+      assert.deepEqual(piArgs(child).slice(0, 4), [
         "--mode",
         "rpc",
         "--no-session",
-        "--model",
-        "some/model",
+        "--name",
       ]);
+      assert.equal(
+        piArgs(child)[4],
+        "cfg",
+        "the call's id names the child session, so intercom peers read it",
+      );
       const toolsAt = child.args.indexOf("--tools");
       assert.deepEqual(child.args.slice(toolsAt, toolsAt + 2), [
         "--tools",
@@ -459,7 +463,7 @@ describe("subagent", () => {
       });
       await call({ id: "explicit", prompt: "x", model: "some/model:low" });
       const [child] = children;
-      assert.equal(piArgs(child)[4], "some/model:low");
+      assert.equal(child.args[child.args.indexOf("--model") + 1], "some/model:low");
       assert.ok(
         !piArgs(child).includes("--thinking"),
         "a `:level` suffix already carries the level",

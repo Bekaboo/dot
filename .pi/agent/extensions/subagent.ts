@@ -533,17 +533,26 @@ function childTools(tools: string[]): string[] {
  * `subagent_finish` declaration, which only a child ever sees; nothing is
  * appended to its system prompt here.
  *
- * @param subagent - Model, thinking level and tools of the child.
+ * The call's id also names the child's session. Pi's session name is one field
+ * that `/name`, `--name` and `pi.setSessionName()` all write, so naming the
+ * child here makes every reader of it agree: notifications and `status` say
+ * `<id>`, and pi-intercom publishes `<id>` as the child's address instead of
+ * the `subagent-chat-<session id>` fallback an unnamed session gets. Without
+ * this, a parent can only tell its children apart by model, directory or
+ * context size, and none of that survives two children that share them.
+ *
+ * @param subagent - Id, model, thinking level and tools of the child.
  * @returns Command and arguments to spawn.
  */
 function childCommand(subagent: {
+  id: string;
   model: string;
   thinking: string;
   tools: string[];
 }): { command: string; args: string[] } {
   // Reuse the build that is already running, so a second pi on PATH cannot win.
   const command = process.env.PI_BIN ?? process.argv[1] ?? "pi";
-  const args = ["--mode", "rpc", "--no-session"];
+  const args = ["--mode", "rpc", "--no-session", "--name", subagent.id];
   if (subagent.model) args.push("--model", subagent.model);
   // Only set on the inherited path: `--thinking` outranks a `:level` suffix.
   if (subagent.thinking) args.push("--thinking", subagent.thinking);
