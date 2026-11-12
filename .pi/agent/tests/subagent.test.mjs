@@ -1132,13 +1132,13 @@ describe("subagent", () => {
       const text = lines.join("\n");
       assert.match(text, /1 running, 1 finished/);
       assert.ok(text.indexOf("first") < text.indexOf("second"));
-      assert.match(text, /[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏] second +work +0s/);
+      assert.match(text, /second +[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏] +work +0s/);
 
       // Every row starts its tools and cwd columns at the same offset.
       const firstRow = lines.find((line) => line.includes(" first "));
       const secondRow = lines.find((line) => line.includes(" second "));
       assert.ok(firstRow && secondRow, "both subagents are listed");
-      assert.match(firstRow, / first +done /);
+      assert.match(firstRow, / first +\S +done /);
       assert.equal(
         firstRow.indexOf("done "),
         secondRow.indexOf("work "),

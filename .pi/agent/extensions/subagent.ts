@@ -2086,7 +2086,8 @@ class SubagentsOverlay implements Component {
   }
 
   /**
-   * Render one subagent as spinner or state marker and aligned settings.
+   * Render one subagent as its id, spinner or state marker, and aligned
+   * settings.
    *
    * @param row - Subagent to render.
    * @param widths - Column widths shared by every row of this render.
@@ -2105,8 +2106,8 @@ class SubagentsOverlay implements Component {
     const cursor = selected ? theme.fg("accent", SELECTED_CURSOR) : " ";
     return [
       cursor,
-      stateMarker(row.state, this.frame, theme),
       selected ? theme.fg("accent", theme.bold(id)) : theme.bold(id),
+      stateMarker(row.state, this.frame, theme),
       theme.fg("muted", padLeft(column.status, widths.status)),
       theme.fg("muted", padLeft(column.elapsed, widths.elapsed)),
       theme.fg("dim", padRight(column.timeout, widths.timeout)),
