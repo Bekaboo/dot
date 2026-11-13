@@ -8,6 +8,14 @@
   redirect caches, dependencies, or tool installations to `/tmp` merely to work
   around sandbox restrictions.
 
+## Evidence
+
+- Every time you present evidence, such as a quoted log line, JSON field,
+  test result, error, or artifact, name the source file path and, when
+  applicable, the line number. Do not present evidence without its source.
+- If evidence comes from command output rather than a stored file, name the
+  command and the working directory.
+
 ## Output
 
 - Do NOT use special/unicode characters that cannot be typed directly on a
@@ -26,7 +34,7 @@
 - Do NOT number markdown headings (e.g. `## 1. Foo` or `### 2. Bar`). Use plain
   headings like `## Foo` or `### Bar` instead.
 
-## Code style
+## Coding
 
 ### Clarity and structure
 
