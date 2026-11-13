@@ -1073,7 +1073,11 @@ describe("subagent", () => {
       const notified = [];
       let component;
       const tui = { requestRender() {}, terminal: { rows } };
-      const theme = { fg: (_color, text) => text, bold: (text) => text };
+      const theme = {
+        fg: (_color, text) => text,
+        bold: (text) => text,
+        bg: (_color, text) => text,
+      };
       t.after(() => component?.dispose?.());
       return {
         notified,

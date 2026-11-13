@@ -25,6 +25,7 @@ import {
   type Keybinding,
   Text,
   type TUI,
+  truncateToWidth,
   visibleWidth,
 } from "@earendil-works/pi-tui";
 
@@ -68,6 +69,22 @@ export function padRight(text: string, width: number): string {
 export function padLeft(text: string, width: number): string {
   const missing = width - visibleWidth(text);
   return missing > 0 ? " ".repeat(missing) + text : text;
+}
+
+/**
+ * Paint one row as pi's select lists paint their cursor line.
+ *
+ * The selection background covers the whole body width, not only the text, so
+ * the highlight reads as one band across the page. The row is cut and padded to
+ * that width first, so the padding carries the background too.
+ *
+ * @param theme - Active theme.
+ * @param row - Styled row, before truncation.
+ * @param width - Body width, so the band reaches both edges of the page.
+ * @returns The row cut and padded to width, on the `selectedBg` background.
+ */
+export function selectedLine(theme: Theme, row: string, width: number): string {
+  return theme.bg("selectedBg", truncateToWidth(row, width, "...", true));
 }
 
 /**

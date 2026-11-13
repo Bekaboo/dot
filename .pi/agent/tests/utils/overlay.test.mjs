@@ -8,6 +8,7 @@ import {
   OverlayPage,
   padLeft,
   padRight,
+  selectedLine,
 } from "../../extensions/utils/overlay.ts";
 
 import { VIEWPORT_RESERVE_ROWS } from "../../extensions/utils/page.ts";
@@ -15,6 +16,7 @@ import { VIEWPORT_RESERVE_ROWS } from "../../extensions/utils/page.ts";
 const plainTheme = {
   fg: (_color, text) => text,
   bold: (text) => text,
+  bg: (_color, text) => text,
 };
 const STYLED = /\x1b\[[0-9;]*m/g;
 
@@ -272,6 +274,32 @@ describe("overlay", () => {
       assert.equal(padRight("abcdef", 5), "abcdef");
       assert.equal(padLeft("ab", 5), "   ab");
       assert.equal(padLeft("abcdef", 5), "abcdef");
+    });
+  });
+
+  describe("selection", () => {
+    test("paints the whole row width with the selection background", () => {
+      const painted = [];
+      const theme = {
+        bg: (color, text) => {
+          painted.push({ color, text });
+          return text;
+        },
+      };
+      const line = selectedLine(theme, "timer-a running", 20);
+      assert.equal(
+        line,
+        "timer-a running     ",
+        "the row is padded to the body width",
+      );
+      assert.deepEqual(painted, [{ color: "selectedBg", text: line }]);
+    });
+
+    test("cuts a row wider than the body before painting it", () => {
+      const theme = { bg: (_color, text) => text };
+      const line = selectedLine(theme, "a".repeat(30), 10);
+      assert.equal(visibleWidth(line), 10);
+      assert.match(line.replace(STYLED, ""), /\.\.\.$/);
     });
   });
 });

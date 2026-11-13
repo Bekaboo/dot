@@ -472,7 +472,11 @@ describe("todo", () => {
     function fakeUI(t, rows) {
       let component;
       const tui = { requestRender() {}, terminal: { rows } };
-      const theme = { fg: (_color, text) => text, bold: (text) => text };
+      const theme = {
+        fg: (_color, text) => text,
+        bold: (text) => text,
+        bg: (_color, text) => text,
+      };
       t.after(() => component?.dispose?.());
       return {
         get component() {
@@ -556,7 +560,11 @@ describe("todo", () => {
 
     test("each todo call names its own tool in the header", () => {
       const { tools } = setup();
-      const theme = { fg: (_color, text) => text, bold: (text) => text };
+      const theme = {
+        fg: (_color, text) => text,
+        bold: (text) => text,
+        bg: (_color, text) => text,
+      };
       const header = (name, args) =>
         tools
           .get(name)

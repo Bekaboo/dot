@@ -46,6 +46,7 @@ import {
   padLeft,
   padRight,
   SELECTED_CURSOR,
+  selectedLine,
 } from "./utils/overlay.ts";
 import {
   PAGE_PADDING_X,
@@ -2217,7 +2218,8 @@ class SubagentsOverlay implements Component {
    * @param rows - Every row of the list.
    * @param width - Overlay width, including the text padding.
    * @param selected - Index of the selected row within all rows.
-   * @returns One width-truncated line per subagent.
+   * @returns One width-truncated line per subagent, the selected row on the
+   *   selection background.
    */
   private renderRows(
     rows: readonly SubagentRow[],
@@ -2226,14 +2228,12 @@ class SubagentsOverlay implements Component {
   ): string[] {
     const widths = alignWidths(rows);
     const inner = Math.max(0, width - PAGE_PADDING_X * 2);
-    return rows.map((row, index) =>
-      truncateToWidth(
-        this.renderRow(row, widths, index === selected),
-        inner,
-        "...",
-        true,
-      ),
-    );
+    return rows.map((row, index) => {
+      const line = this.renderRow(row, widths, index === selected);
+      return index === selected
+        ? selectedLine(this.theme, line, inner)
+        : truncateToWidth(line, inner, "...", true);
+    });
   }
 
   /**
@@ -2319,7 +2319,9 @@ class SubagentsOverlay implements Component {
 
   /** Start or stop the animation to match the rows. */
   private syncAnimation(): void {
-    this.spinner.sync(this.currentRows().some((row) => row.state === "running"));
+    this.spinner.sync(
+      this.currentRows().some((row) => row.state === "running"),
+    );
   }
 }
 

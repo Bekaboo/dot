@@ -57,6 +57,7 @@ import {
   OverlayPage,
   padRight,
   SELECTED_CURSOR,
+  selectedLine,
 } from "./utils/overlay.ts";
 import { PAGE_PADDING_X, windowStart } from "./utils/page.ts";
 import { type RunState, Spinner } from "./utils/spinner.ts";
@@ -1952,7 +1953,8 @@ class TimersOverlay implements Component {
    * @param rows - Every row of the list.
    * @param width - Overlay width, including the text padding.
    * @param selected - Index of the selected row within all rows.
-   * @returns One width-truncated line per timer.
+   * @returns One width-truncated line per timer, the selected row on the
+   *   selection background.
    */
   private renderRows(
     rows: readonly TimerRow[],
@@ -1967,20 +1969,18 @@ class TimersOverlay implements Component {
       const id = padRight(row.id, widths.id);
       // Every row reserves the cursor column, so selection never shifts it.
       const cursor = current ? theme.fg("accent", SELECTED_CURSOR) : " ";
-      return truncateToWidth(
-        [
-          cursor,
-          current ? theme.fg("accent", theme.bold(id)) : theme.bold(id),
-          this.spinner.marker(row.state, theme),
-          theme.fg("muted", padRight(row.state, widths.state)),
-          theme.fg("muted", padRight(row.age, widths.age)),
-          theme.fg("dim", padRight(row.ticks, widths.ticks)),
-          theme.fg("dim", row.target),
-        ].join(" "),
-        inner,
-        "...",
-        true,
-      );
+      const line = [
+        cursor,
+        current ? theme.fg("accent", theme.bold(id)) : theme.bold(id),
+        this.spinner.marker(row.state, theme),
+        theme.fg("muted", padRight(row.state, widths.state)),
+        theme.fg("muted", padRight(row.age, widths.age)),
+        theme.fg("dim", padRight(row.ticks, widths.ticks)),
+        theme.fg("dim", row.target),
+      ].join(" ");
+      return current
+        ? selectedLine(theme, line, inner)
+        : truncateToWidth(line, inner, "...", true);
     });
   }
 

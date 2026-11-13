@@ -107,7 +107,11 @@ function runUntilCancelled(_command, signal) {
 }
 
 /** Theme that adds no attributes, so tests read the page as plain text. */
-const flatTheme = { fg: (_color, text) => text, bold: (text) => text };
+const flatTheme = {
+  fg: (_color, text) => text,
+  bold: (text) => text,
+  bg: (_color, text) => text,
+};
 
 /**
  * A fake extension UI that opens a custom component like the TUI mode does.
@@ -647,6 +651,7 @@ describe("timer", () => {
           bolded.push(text);
           return text;
         },
+        bg: (_color, text) => text,
       },
     });
     const command = commands.get("timers");
