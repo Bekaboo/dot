@@ -73,4 +73,6 @@ five body lines; if it needs more, it is usually restating the diff, so cut it.
 
 - Conventional commit type and optional scope, imperative mood, lowercase
   after the scope, no trailing period, at most 72 characters.
+- Name the identifier the change is about -- a constant, parameter, flag,
+  type, command, etc. for searchability.
 - One subject line only; never wrap it.
