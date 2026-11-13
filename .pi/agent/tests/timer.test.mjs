@@ -4,7 +4,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, describe, test } from "node:test";
 
-import timerExtension from "../extensions/timer.ts";
+import timerExtension, { SELECTED_CURSOR } from "../extensions/timer.ts";
+
+const { KeybindingsManager, TUI_KEYBINDINGS } = await import(
+  "@earendil-works/pi-tui"
+);
 
 // Job logs go under the agent dir; keep them out of the real one.
 const agentDir = mkdtempSync(join(tmpdir(), "pi-timer-tests-"));
@@ -92,6 +96,66 @@ function runUntilCancelled(_command, signal) {
   return new Promise((resolve) =>
     signal.addEventListener("abort", () => resolve(exit(null))),
   );
+}
+
+/** Theme that adds no attributes, so tests read the page as plain text. */
+const flatTheme = { fg: (_color, text) => text, bold: (text) => text };
+
+/**
+ * A fake extension UI that opens a custom component like the TUI mode does.
+ *
+ * @param t - Node test context, used to dispose a component left open.
+ * @param options - `rows` for a short terminal, `theme` to record color use.
+ * @returns The fake UI and the component it opened.
+ */
+function fakeUI(t, { rows = 40, theme = flatTheme } = {}) {
+  let component;
+  const tui = { requestRender() {}, terminal: { rows } };
+  t.after(() => component?.dispose?.());
+  return {
+    get component() {
+      return component;
+    },
+    ui: {
+      notify: () => assert.fail("TUI mode must not notify"),
+      custom(factory) {
+        return new Promise((resolve) => {
+          const done = (result) => {
+            const closing = component;
+            component = undefined;
+            closing?.dispose?.();
+            resolve(result);
+          };
+          const keybindings = new KeybindingsManager(TUI_KEYBINDINGS, {});
+          component = factory(tui, theme, keybindings, done);
+        });
+      },
+    },
+  };
+}
+
+/**
+ * The page as the user reads it, rows without the selection cursor.
+ *
+ * @param overlay - Open `/timers` overlay.
+ * @param width - Overlay width.
+ * @returns The rendered page, one line per row.
+ */
+function pageOf(overlay, width = 100) {
+  return overlay
+    .render(width)
+    .map((line) => line.replace(SELECTED_CURSOR, " "))
+    .join("\n");
+}
+
+/**
+ * A page split into trimmed lines, so a test can name one row exactly.
+ *
+ * @param text - Page text from `pageOf`.
+ * @returns One trimmed line per page row.
+ */
+function linesOf(text) {
+  return text.split("\n").map((line) => line.trim());
 }
 
 /** Resolve after `ms` milliseconds, so a poll loop can reach its next tick. */
@@ -520,40 +584,20 @@ describe("timer", () => {
 
   test("/timers opens a live overlay showing active timers in aligned columns", async (t) => {
     const { start, commands } = setup(t, runUntilCancelled);
-    let component;
-    const tui = { requestRender() {}, terminal: { rows: 40 } };
     const bolded = [];
     const colored = [];
-    const theme = {
-      fg: (color, text) => {
-        colored.push({ color, text });
-        return text;
-      },
-      bold: (text) => {
-        bolded.push(text);
-        return text;
-      },
-    };
-    t.after(() => component?.dispose?.());
-    const screen = {
-      get component() {
-        return component;
-      },
-      ui: {
-        notify: () => assert.fail("TUI mode must not notify"),
-        custom(factory) {
-          return new Promise((resolve) => {
-            const done = (result) => {
-              const closing = component;
-              component = undefined;
-              closing?.dispose?.();
-              resolve(result);
-            };
-            component = factory(tui, theme, undefined, done);
-          });
+    const screen = fakeUI(t, {
+      theme: {
+        fg: (color, text) => {
+          colored.push({ color, text });
+          return text;
+        },
+        bold: (text) => {
+          bolded.push(text);
+          return text;
         },
       },
-    };
+    });
     const command = commands.get("timers");
 
     const showing = command.handler("", { mode: "tui", ui: screen.ui });
@@ -577,14 +621,22 @@ describe("timer", () => {
       "the summary counts the running and the finished timers",
     );
     const rows = lines.filter((line) => line.includes("ticks "));
+    // Every row reserves a cursor column, so the ids line up with or without
+    // the mark in front of the selected row.
+    const rowText = (row) => row.replace(SELECTED_CURSOR, " ").trim();
     assert.deepEqual(
-      rows.map((row) => row.trim().split(/ +/)[0]),
+      rows.map((row) => rowText(row).split(/ +/)[0]),
       ["longer-timer", "timer-a"],
+    );
+    assert.equal(
+      lines.filter((line) => line.includes(SELECTED_CURSOR)).length,
+      1,
+      "the first row starts selected",
     );
     // Every row names its id first, with the spinner right after it, so the
     // markers line up as one column like the /subagents rows.
     for (const row of rows) {
-      assert.match(row.trim(), /^\S+ +[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏] running /);
+      assert.match(rowText(row), /^\S+ +[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏] running /);
     }
     for (const column of ["running", "ticks "]) {
       assert.equal(new Set(rows.map((row) => row.indexOf(column))).size, 1);
@@ -622,33 +674,7 @@ describe("timer", () => {
     // Rows pi keeps around the page are assumed to be 4; the fake UI cannot
     // verify the real reserve, but a page that grows past it would clip.
     const piRows = 4;
-    let component;
-    const theme = { fg: (_color, text) => text, bold: (text) => text };
-    t.after(() => component?.dispose?.());
-    const screen = {
-      get component() {
-        return component;
-      },
-      ui: {
-        notify: () => assert.fail("TUI mode must not notify"),
-        custom(factory) {
-          return new Promise((resolve) => {
-            const done = () => {
-              const closing = component;
-              component = undefined;
-              closing?.dispose?.();
-              resolve();
-            };
-            component = factory(
-              { requestRender() {}, terminal: { rows } },
-              theme,
-              undefined,
-              done,
-            );
-          });
-        },
-      },
-    };
+    const screen = fakeUI(t, { rows });
 
     const showing = commands
       .get("timers")
@@ -672,7 +698,7 @@ describe("timer", () => {
     const first = shown();
     assert.match(first, /Timers/);
     assert.match(first, /8 running, 0 finished/);
-    assert.match(first, /Press Escape to close/);
+    assert.match(first, /Escape to close/);
     assert.match(first, /up\/down scroll/);
     assert.doesNotMatch(first, /\btim8\b/);
 
@@ -680,7 +706,7 @@ describe("timer", () => {
     for (let page = 0; page < 3; page += 1) overlay.handleInput("\x1b[6~");
     const later = shown();
     assert.match(later, /\btim8\b/);
-    assert.match(later, /Press Escape to close/);
+    assert.match(later, /Escape to close/);
 
     overlay.handleInput("\x1b");
     await showing;
@@ -691,29 +717,7 @@ describe("timer", () => {
     const { start, stop, commands, noticesAfter } = setup(t, (command) =>
       exit(command === "true" ? 0 : 1),
     );
-    let component;
-    const tui = { requestRender() {}, terminal: { rows: 40 } };
-    const theme = { fg: (_color, text) => text, bold: (text) => text };
-    t.after(() => component?.dispose?.());
-    const screen = {
-      get component() {
-        return component;
-      },
-      ui: {
-        notify: () => assert.fail("TUI mode must not notify"),
-        custom(factory) {
-          return new Promise((resolve) => {
-            const done = () => {
-              const closing = component;
-              component = undefined;
-              closing?.dispose?.();
-              resolve();
-            };
-            component = factory(tui, theme, undefined, done);
-          });
-        },
-      },
-    };
+    const screen = fakeUI(t);
     const command = commands.get("timers");
 
     const showing = command.handler("", { mode: "tui", ui: screen.ui });
@@ -723,15 +727,25 @@ describe("timer", () => {
     // second one. Both must still be listed, not dropped from the view.
     await start({ id: "cond-met", condition: "true", maxTicks: 0 });
     await noticesAfter(1);
-    const done = overlay.render(80).join("\n");
+    const done = pageOf(overlay, 80);
     assert.match(done, /^\s*cond-met +✓ done \d+s +- +condition met\s*$/m);
     assert.match(done, /0 running, 1 finished/);
 
     await start({ id: "peek-stop", condition: "false", timeoutSec: 600 });
     await stop({ id: "peek-stop" });
-    const stopped = overlay.render(80).join("\n");
+    const stopped = pageOf(overlay, 80);
     assert.match(stopped, /^\s*peek-stop +· killed \d+s/m);
     assert.match(stopped, /0 running, 2 finished/);
+
+    // A timer that ran no command has no log: its detail is the specification
+    // alone, with nothing to scroll.
+    overlay.handleInput("\r");
+    const detail = pageOf(overlay, 80);
+    assert.match(detail, /cond-met\s+✓ done after \d+s timeout=3600s/);
+    assert.match(detail, /cond: true/);
+    assert.match(detail, /Escape to go back/);
+    assert.doesNotMatch(detail, /up\/down scroll/);
+    overlay.handleInput("\x1b");
 
     overlay.handleInput("\x1b");
     await showing;
@@ -743,39 +757,23 @@ describe("timer", () => {
       if (command === "snap") throw new Error("boom");
       return exit(1);
     });
-    let overlay;
-    const theme = { fg: (_color, text) => text, bold: (text) => text };
-    t.after(() => overlay?.dispose());
-    const showing = commands.get("timers").handler("", {
-      mode: "tui",
-      ui: {
-        custom(factory) {
-          return new Promise((resolve) => {
-            overlay = factory(
-              { requestRender() {}, terminal: { rows: 40 } },
-              theme,
-              undefined,
-              () => {
-                overlay.dispose();
-                resolve();
-              },
-            );
-          });
-        },
-      },
-    });
+    const screen = fakeUI(t);
+    const showing = commands
+      .get("timers")
+      .handler("", { mode: "tui", ui: screen.ui });
+    const overlay = screen.component;
 
     // A condition that throws fails the timer.
     await start({ id: "cond-boom", condition: "snap", maxTicks: 0 });
     await noticesAfter(1);
-    assert.match(overlay.render(100).join("\n"), /^\s*cond-boom +✗ failed /m);
+    assert.match(pageOf(overlay), /^\s*cond-boom +✗ failed /m);
 
     // A job its own command kills is killed, not failed: the timer did not fail.
     await start({ id: "self-kill", start: "kill -TERM $$" });
     const [, killed] = await noticesAfter(2);
     assert.match(killed.content, /killed by SIGTERM .*not by the timer/);
     assert.equal(killed.details.state, "killed");
-    assert.match(overlay.render(100).join("\n"), /^\s*self-kill +· killed /m);
+    assert.match(pageOf(overlay), /^\s*self-kill +· killed /m);
 
     // A deadline that passed while the session was closed times the timer out.
     // Restoring a branch starts a fresh history, so this row stands alone.
@@ -792,10 +790,100 @@ describe("timer", () => {
       }),
     );
     await noticesAfter(3);
-    assert.match(overlay.render(100).join("\n"), /^\s*stale +⧖ timeout /m);
+    assert.match(pageOf(overlay), /^\s*stale +⧖ timeout /m);
 
     overlay.handleInput("\x1b");
     await showing;
+  });
+
+  test("/timers opens the selected timer's detail with its log tail", async (t) => {
+    const { start, commands } = setup(t, runUntilCancelled);
+    const screen = fakeUI(t, { rows: 20 });
+    const showing = commands
+      .get("timers")
+      .handler("", { mode: "tui", ui: screen.ui });
+    const overlay = screen.component;
+
+    const { details } = await start({
+      id: "live-job",
+      start: "printf 'line-%s\\n' $(seq 1 40); sleep 60",
+    });
+    await until(
+      () => readFileSync(details.logPath, "utf8").includes("line-40"),
+      "the job writes its whole log",
+    );
+
+    assert.match(pageOf(overlay), /live-job/);
+    assert.match(pageOf(overlay), /Enter for details, Escape to close/);
+
+    overlay.handleInput("\r");
+    // Wide enough for the log path to stay on one line; the specification may
+    // still wrap, so read it as one text.
+    const detail = pageOf(overlay, 200);
+    const lines = linesOf(detail);
+    const flat = detail.replace(/\s+/g, " ");
+    assert.match(
+      detail,
+      /^\s*live-job\s+[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏] running for \d+s timeout=86400s\s*$/m,
+    );
+    assert.match(flat, /started=\d\d:\d\d:\d\d, pid \d+, /);
+    assert.ok(flat.includes(details.logPath), "the detail names the log file");
+    assert.ok(
+      flat.includes("printf 'line-%s\\n' $(seq 1 40); sleep 60"),
+      "the detail names the command it runs",
+    );
+    // The view opens at the end of the log, following the newest line.
+    assert.ok(lines.includes("line-40"), "newest log line");
+    assert.ok(!lines.includes("line-1"), "oldest log line is above the window");
+    assert.match(detail, /Escape to go back/);
+
+    // Paging up walks back towards the oldest line.
+    for (let step = 0; step < 8; step += 1) overlay.handleInput("\x1b[5~");
+    assert.ok(linesOf(pageOf(overlay)).includes("line-1"), "oldest log line");
+
+    // Escape walks back to the list; a second one closes the overlay.
+    overlay.handleInput("\x1b");
+    const back = pageOf(overlay);
+    assert.match(back, /Enter for details, Escape to close/);
+    assert.doesNotMatch(back, /Escape to go back/);
+
+    overlay.handleInput("\x1b");
+    await showing;
+    assert.equal(screen.component, undefined, "Escape from the list closes");
+  });
+
+  test("/timers keeps a retired job's detail, log and end reason", async (t) => {
+    const { start, commands, noticesAfter } = setup(t, runUntilCancelled);
+    const screen = fakeUI(t);
+    const showing = commands
+      .get("timers")
+      .handler("", { mode: "tui", ui: screen.ui });
+    const overlay = screen.component;
+
+    const { details } = await start({ id: "build", start: "echo built-ok" });
+    await noticesAfter(1);
+
+    overlay.handleInput("\r");
+    const detail = pageOf(overlay, 200);
+    const lines = linesOf(detail);
+    // The specification may wrap, so read the page as one text.
+    const flat = detail.replace(/\s+/g, " ");
+    // The header keeps the state, the age at the end and the deadline; a job
+    // timer has no interval or tick budget to report.
+    assert.match(detail, /^\s*build\s+✓ done after \d+s timeout=86400s\s*$/m);
+    assert.doesNotMatch(detail, /interval=/);
+    assert.ok(flat.includes("ended: exited 0"), "end reason");
+    assert.ok(flat.includes(details.logPath), "log path");
+    assert.ok(flat.includes("echo built-ok"), "command");
+    assert.ok(lines.includes("built-ok"), "the log outlives the timer");
+    assert.ok(lines.includes("[exit 0]"), "the log records how it ended");
+
+    // Escape walks back to the list, and a second one closes the overlay.
+    overlay.handleInput("\x1b");
+    assert.match(pageOf(overlay, 200), /Enter for details/);
+    overlay.handleInput("\x1b");
+    await showing;
+    assert.equal(screen.component, undefined, "Escape from the list closes");
   });
 
   test("a stop during a slow last tick sends no late wake and stays killed", async (t) => {

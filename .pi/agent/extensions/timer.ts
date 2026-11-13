@@ -14,6 +14,8 @@
  * list are self-describing. The user-facing `/timers` command shows the
  * session's timers as an aligned table: the running ones first, then the ones
  * that ended, each with the same state marker the `/subagents` view uses.
+ * Enter opens one timer's detail: what it runs or waits for, its deadlines, and
+ * the tail of the job log it writes.
  */
 
 import { type ChildProcess, spawn } from "node:child_process";
@@ -35,6 +37,7 @@ import {
   type ExtensionCommandContext,
   type ExtensionToolContext,
   getAgentDir,
+  type KeybindingsManager,
   type SessionEntry,
   type Theme,
   type ToolDefinition,
@@ -43,7 +46,6 @@ import {
 import {
   type Component,
   Container,
-  matchesKey,
   Text,
   type TUI,
   truncateToWidth,
@@ -56,7 +58,6 @@ import {
   bodyRows,
   hintLine,
   PAGE_PADDING_X,
-  scrolledStart,
   windowLabel,
 } from "./utils/page.ts";
 import { type RunState, Spinner } from "./utils/spinner.ts";
@@ -86,6 +87,10 @@ const LOG_TAIL_BYTES = 64 * 1024;
 const JOB_TAIL_LINES = 10;
 const JOB_TAIL_CHARS = 2_000;
 
+// The `/timers` detail view reads the same bounded window, but keeps more of
+// it: a reader who asked for the detail can scroll back through recent output.
+const DETAIL_TAIL_LINES = 200;
+
 // Condition execution deadlines, in milliseconds.
 const MIN_CONDITION_TIMEOUT_MS = 1_000;
 const MAX_CONDITION_TIMEOUT_MS = 30_000;
@@ -111,6 +116,9 @@ const NOTICE_TYPE = "timer";
  * late `timer_stop` reply.
  */
 const RETIRED_HISTORY = 10;
+
+/** Cursor in front of the selected `/timers` row, as pi's select lists draw it. */
+export const SELECTED_CURSOR = "→";
 
 /** Names that replay as timer start results, including the old combined tool. */
 const START_TOOL_NAMES = new Set(["timer_start", "timer"]);
@@ -313,6 +321,12 @@ interface TimerRow {
   age: string;
   ticks: string;
   target: string;
+  /** Specification it was armed with, which its detail view shows. */
+  spec: TimerSpec;
+  /** Why an ended timer finished; absent while it runs. */
+  reason?: string;
+  /** Process id of the job, while this process still watches it. */
+  pid?: number;
 }
 
 /** Columns of a timer table, in display order. */
@@ -381,6 +395,91 @@ function summaryOf(rows: readonly TimerRow[], theme: Theme): string {
     "muted",
     `${running} running, ${rows.length - running} finished`,
   );
+}
+
+/**
+ * Local wall-clock time of an event, for the detail view.
+ *
+ * @param ms - Epoch time in ms.
+ * @returns Text such as "15:56:43".
+ */
+function clockTime(ms: number): string {
+  return new Date(ms).toTimeString().slice(0, "hh:mm:ss".length);
+}
+
+/**
+ * Header lines of one timer's detail view.
+ *
+ * The specification is packed into a second line rather than laid out as a
+ * table of fields, so even a short terminal keeps rows for the log below it.
+ *
+ * @param row - Timer the view shows.
+ * @param stateMarker - Styled state marker of the timer.
+ * @param theme - Active theme.
+ * @returns The summary line, then the specification line.
+ */
+function detailHeader(
+  row: TimerRow,
+  stateMarker: string,
+  theme: Theme,
+): string {
+  const state =
+    row.state === "running"
+      ? `running for ${row.age}`
+      : `${row.state} after ${row.age}`;
+  // A job timer with no tick budget runs until its process exits, so neither an
+  // interval nor a tick count says anything about it.
+  const ticking = row.spec.maxTicks !== 0;
+  const header = [
+    theme.bold(row.id),
+    stateMarker,
+    theme.fg("muted", state),
+    theme.fg("dim", `timeout=${row.spec.timeoutSec}s`),
+    ticking ? theme.fg("dim", `interval=${row.spec.intervalSec}s`) : undefined,
+    ticking && row.state === "running" ? theme.fg("dim", row.ticks) : undefined,
+  ]
+    .filter((part) => part !== undefined)
+    .join(" ");
+  return `${header}\n${detailSpec(row, theme)}`;
+}
+
+/**
+ * What one timer runs, waits for, and where it logs.
+ *
+ * Only what the timer actually has appears, so a job timer shows no condition
+ * and a periodic timer shows no log path.
+ *
+ * @param row - Timer the view shows.
+ * @param theme - Active theme.
+ * @returns Comma-separated parts, never empty.
+ */
+function detailSpec(row: TimerRow, theme: Theme): string {
+  const { spec } = row;
+  const parts = [theme.fg("dim", `started=${clockTime(spec.startedAt)}`)];
+  if (row.pid !== undefined) parts.push(theme.fg("dim", `pid ${row.pid}`));
+  if (spec.logPath) parts.push(theme.fg("dim", spec.logPath));
+  if (spec.start) parts.push(theme.fg("muted", spec.start));
+  if (spec.condition) parts.push(theme.fg("muted", `cond: ${spec.condition}`));
+  if (spec.onTick) parts.push(theme.fg("muted", `onTick: ${spec.onTick}`));
+  if (row.reason) parts.push(theme.fg("muted", `ended: ${row.reason}`));
+  return parts.join(", ");
+}
+
+/**
+ * Index of the first row of a window that keeps the selection visible.
+ *
+ * @param selected - Index of the selected row within all rows.
+ * @param total - Number of rows to show.
+ * @param capacity - Rows the window holds.
+ * @returns Index of the window's first row.
+ */
+function windowStart(
+  selected: number,
+  total: number,
+  capacity: number,
+): number {
+  const last = Math.max(0, total - capacity);
+  return Math.min(last, Math.max(0, selected - Math.floor(capacity / 2)));
 }
 
 /**
@@ -477,9 +576,15 @@ function appendLogMarker(path: string, marker: string): void {
  * same as a short one.
  *
  * @param path - Absolute path of the job log.
- * @returns At most `JOB_TAIL_LINES` lines and `JOB_TAIL_CHARS` characters.
+ * @param maxLines - Trailing lines to keep.
+ * @param maxChars - Character budget for the kept lines.
+ * @returns At most `maxLines` lines and `maxChars` characters.
  */
-function readLogTail(path: string): string {
+function readLogTail(
+  path: string,
+  maxLines = JOB_TAIL_LINES,
+  maxChars = JOB_TAIL_CHARS,
+): string {
   let fd: number | undefined;
   try {
     fd = openSync(path, "r");
@@ -496,10 +601,10 @@ function readLogTail(path: string): string {
       .trimEnd()
       .split("\n")
       .map((line) => line.slice(line.lastIndexOf("\r") + 1))
-      .slice(-JOB_TAIL_LINES)
+      .slice(-maxLines)
       .join("\n");
-    return tail.length > JOB_TAIL_CHARS
-      ? `...${tail.slice(tail.length - JOB_TAIL_CHARS)}`
+    return tail.length > maxChars
+      ? `...${tail.slice(tail.length - maxChars)}`
       : tail;
   } catch {
     // A job that failed to spawn has no log yet; the outcome already says why.
@@ -616,6 +721,8 @@ interface RetiredTimer {
   state: RunState;
   /** Elapsed time at the end, e.g. `41s`. */
   age: string;
+  /** Specification it was armed with, so its detail view outlives it. */
+  spec: TimerSpec;
 }
 
 /**
@@ -830,7 +937,7 @@ class TimerRegistry {
       this.jobs.delete(id);
     }
     this.retire(
-      id,
+      toTimerSpec(timer),
       "killed by timer_stop",
       "killed",
       elapsed(timer.startedAt),
@@ -844,16 +951,17 @@ class TimerRegistry {
    *
    * Removal from the active map happens here rather than only in the loop's
    * cleanup, so a `timer_stop` that races the farewell wake already sees a
-   * stopped timer instead of a live one.
+   * stopped timer instead of a live one. The specification is kept with the
+   * retirement, so `/timers` can still open the detail of a timer that ended.
    *
-   * @param id - Id of the timer that just finished.
+   * @param spec - Specification of the timer that just finished.
    * @param reason - Why it finished, e.g. `tick budget spent`.
    * @param state - How it finished, for its marker in `/timers`.
    * @param age - Elapsed time at the end, e.g. `41s`.
    * @param owner - Timer this call expects to retire, when a loop finishes it.
    */
   private retire(
-    id: string,
+    spec: TimerSpec,
     reason: string,
     state: RunState,
     age: string,
@@ -861,14 +969,14 @@ class TimerRegistry {
   ): void {
     // A replaced timer must not retire its replacement: `restore()` re-arms the
     // same ids while an old loop can still be unwinding.
-    if (owner && this.timers.get(id) !== owner) {
+    if (owner && this.timers.get(spec.id) !== owner) {
       return;
     }
-    this.timers.delete(id);
+    this.timers.delete(spec.id);
     // A re-inserted id moves to the end, so this also keeps the display order
     // the order the timers ended in.
-    this.retired.delete(id);
-    this.retired.set(id, { reason, state, age });
+    this.retired.delete(spec.id);
+    this.retired.set(spec.id, { reason, state, age, spec });
     // Oldest first: this drops the timer the agent is least likely to still ask
     // about.
     const oldest = this.retired.keys().next();
@@ -953,6 +1061,8 @@ class TimerRegistry {
       age: entry.age,
       ticks: "-",
       target: entry.reason,
+      spec: entry.spec,
+      reason: entry.reason,
     }));
     return [...this.activeRows(), ...retired];
   }
@@ -1022,7 +1132,8 @@ class TimerRegistry {
    * Describe one timer as fields for a table row.
    *
    * @param timer - Timer to describe.
-   * @returns Id, state, age, tick budget, and what it waits for.
+   * @returns Id, state, age, tick budget, what it waits for, and the
+   *   specification its detail view shows.
    */
   private row(timer: Timer): TimerRow {
     const ticks =
@@ -1040,6 +1151,8 @@ class TimerRegistry {
       age: elapsed(timer.startedAt),
       ticks: `ticks ${ticks}`,
       target,
+      spec: toTimerSpec(timer),
+      pid: timer.job?.proc.pid,
     };
   }
 
@@ -1062,12 +1175,7 @@ class TimerRegistry {
       if (spec.start && !job) {
         const log = spec.logPath ? `; log ${spec.logPath}` : "";
         // Its end was never observed, so it can only be reported as failed.
-        this.retire(
-          spec.id,
-          `orphaned${log}`,
-          "failed",
-          elapsed(spec.startedAt),
-        );
+        this.retire(spec, `orphaned${log}`, "failed", elapsed(spec.startedAt));
         continue;
       }
       this.arm({
@@ -1100,7 +1208,13 @@ class TimerRegistry {
         // Same ownership reason as the `finally` below: a loop replaced by
         // `restore()` must not retire the timer that replaced it.
         if (!timer.stopped && this.timers.get(timer.id) === timer) {
-          this.retire(timer.id, "failed", "failed", elapsed(timer.startedAt));
+          this.retire(
+            toTimerSpec(timer),
+            "failed",
+            "failed",
+            elapsed(timer.startedAt),
+            timer,
+          );
           this.notify(
             timer,
             "failed",
@@ -1211,7 +1325,7 @@ class TimerRegistry {
       if (last) {
         // The tick just sent was the timer's farewell.
         this.retire(
-          timer.id,
+          toTimerSpec(timer),
           "tick budget spent",
           "done",
           elapsed(timer.startedAt),
@@ -1486,7 +1600,13 @@ class TimerRegistry {
       return;
     }
     timer.settled = true;
-    this.retire(timer.id, reason, state, elapsed(timer.startedAt), timer);
+    this.retire(
+      toTimerSpec(timer),
+      reason,
+      state,
+      elapsed(timer.startedAt),
+      timer,
+    );
     const tail = timer.job ? readLogTail(timer.job.logPath) : "";
     const body = [tail, await this.capture(timer)].filter(Boolean).join("\n");
     if (timer.stopped) {
@@ -1632,15 +1752,32 @@ function timerStopTool(
   };
 }
 
+/** Text of an overlay body and its hint line. */
+interface OverlayBody {
+  lines: string;
+  footer: string;
+}
+
+/** Size of the open detail view, so scrolling knows how far it can move. */
+interface DetailViewport {
+  /** Lines the detail view has in total. */
+  total: number;
+  /** Lines the window holds. */
+  capacity: number;
+}
+
 /**
  * Overlay listing the session's timers, running ones first.
  *
  * Laid out like the subagent overlay: a bordered box with a title, a summary,
  * one line per timer and an Escape hint. Rows are read on every render, so
  * elapsed times stay current and a timer that just ended turns into its
- * finished row without reopening the view. The animation runs only while some
- * timer is still running. The list is cut to the rows the terminal leaves and
- * scrolls with the list keys, so a short terminal keeps the hint visible.
+ * finished row without reopening the view; Enter opens one timer's detail, the
+ * tail of its job log included, and Escape walks back out. A running timer gets
+ * the same braille spinner as pi's working indicator; the animation runs only
+ * while one is running. Bodies are cut to the rows the terminal leaves, and the
+ * selected row or newest log line stays in view, so a short terminal keeps the
+ * box chrome and its hint visible.
  */
 class TimersOverlay implements Component {
   private readonly container = new Container();
@@ -1649,22 +1786,35 @@ class TimersOverlay implements Component {
   private readonly footerText: Text;
   private readonly theme: Theme;
   private readonly tui: TUI;
+  /** User keybindings, so the list moves with the keys every pi list uses. */
+  private readonly keybindings: KeybindingsManager;
   private readonly readRows: () => TimerRow[];
   private readonly close: () => void;
   private readonly spinner: Spinner;
-  /** First timer the window shows; the reader scrolls it with the list keys. */
-  private scrollStart = 0;
-  /** Timer rows the window holds at the last render. */
+  /** Index of the row the list view selected. */
+  private selected = 0;
+  /** Id whose detail view is open, or undefined while the list is shown. */
+  private detailId: string | undefined;
+  /**
+   * First detail line the window shows, or undefined to follow the log tail.
+   * Scrolling up pins it; scrolling to the end follows again.
+   */
+  private detailStart: number | undefined;
+  /** Size of the detail view at the last render, so scrolling knows its bounds. */
+  private detailView: DetailViewport | undefined;
+  /** Rows the window holds at the last render, for the list's page keys. */
   private capacity = 0;
 
   constructor(
     tui: TUI,
     theme: Theme,
+    keybindings: KeybindingsManager,
     readRows: () => TimerRow[],
     close: () => void,
   ) {
     this.theme = theme;
     this.tui = tui;
+    this.keybindings = keybindings;
     this.readRows = readRows;
     this.close = close;
     this.spinner = new Spinner(() => tui.requestRender());
@@ -1687,30 +1837,26 @@ class TimersOverlay implements Component {
 
   render(width: number): string[] {
     const rows = this.readRows();
-    this.summaryText.setText(summaryOf(rows, this.theme));
-    const hint = "Press Escape to close";
-    const scrollHint = `${hint}, up/down scroll`;
-    this.capacity = this.bodyCapacity(width, scrollHint);
-    this.scrollStart = scrolledStart(
-      this.scrollStart,
-      0,
-      rows.length,
-      this.capacity,
+    this.selected = Math.min(this.selected, Math.max(0, rows.length - 1));
+    const detail = rows.find((row) => row.id === this.detailId);
+    if (!detail) {
+      this.detailId = undefined;
+      this.detailView = undefined;
+    }
+    this.summaryText.setText(
+      detail
+        ? detailHeader(
+            detail,
+            this.spinner.marker(detail.state, this.theme),
+            this.theme,
+          )
+        : summaryOf(rows, this.theme),
     );
-    const shown = rows.slice(
-      this.scrollStart,
-      this.scrollStart + this.capacity,
-    );
-    this.rowsText.setText(
-      shown.length > 0 ? `\n${this.renderRows(shown, width)}` : "",
-    );
-    this.footerText.setText(
-      hintLine(
-        this.theme,
-        `${shown.length < rows.length ? scrollHint : hint}${windowLabel(this.scrollStart, shown.length, rows.length)}`,
-        width,
-      ),
-    );
+    const body = detail
+      ? this.detailBody(detail, width)
+      : this.listBody(rows, width);
+    this.rowsText.setText(body.lines);
+    this.footerText.setText(body.footer);
     this.syncRefresh(rows);
     return this.container.render(width);
   }
@@ -1725,10 +1871,11 @@ class TimersOverlay implements Component {
   private bodyCapacity(width: number, hint: string): number {
     this.rowsText.setText("");
     this.footerText.setText(hintLine(this.theme, hint, width));
-    return bodyRows(
+    this.capacity = bodyRows(
       () => this.container.render(width).length,
       this.tui.terminal.rows,
     );
+    return this.capacity;
   }
 
   invalidate(): void {
@@ -1742,37 +1889,172 @@ class TimersOverlay implements Component {
   }
 
   handleInput(data: string): void {
-    if (matchesKey(data, "escape") || matchesKey(data, "ctrl+c")) {
+    if (this.keybindings.matches(data, "tui.select.cancel")) {
+      if (this.detailId !== undefined) {
+        this.detailId = undefined;
+        this.detailView = undefined;
+        this.tui.requestRender();
+        return;
+      }
       this.close();
       return;
     }
-    this.scroll(data);
-  }
-
-  /**
-   * Scroll the timer list with the list keys.
-   *
-   * @param data - Input the overlay received.
-   */
-  private scroll(data: string): void {
+    if (this.detailId !== undefined) {
+      this.scrollDetailView(data);
+      return;
+    }
+    const rows = this.readRows();
     const page = Math.max(1, this.capacity);
     const moves: [string, number][] = [
-      ["up", -1],
-      ["down", 1],
-      ["pageUp", -page],
-      ["pageDown", page],
+      ["tui.select.up", -1],
+      ["tui.select.down", 1],
+      ["tui.select.pageUp", -page],
+      ["tui.select.pageDown", page],
     ];
-    for (const [key, lines] of moves) {
-      if (!matchesKey(data, key)) continue;
-      this.scrollStart = scrolledStart(
-        this.scrollStart,
-        lines,
-        this.readRows().length,
-        page,
+    for (const [action, lines] of moves) {
+      if (!this.keybindings.matches(data, action)) continue;
+      this.selected = Math.max(
+        0,
+        Math.min(rows.length - 1, this.selected + lines),
       );
       this.tui.requestRender();
       return;
     }
+    const row = rows[this.selected];
+    if (row && this.keybindings.matches(data, "tui.select.confirm")) {
+      this.detailId = row.id;
+      this.detailStart = undefined;
+      this.detailView = undefined;
+      this.tui.requestRender();
+    }
+  }
+
+  /**
+   * Move the open detail view with the list keys.
+   *
+   * @param data - Input the overlay received.
+   */
+  private scrollDetailView(data: string): void {
+    const page = Math.max(1, this.detailView?.capacity ?? 1);
+    const moves: [string, number][] = [
+      ["tui.select.up", -1],
+      ["tui.select.down", 1],
+      ["tui.select.pageUp", -page],
+      ["tui.select.pageDown", page],
+    ];
+    for (const [action, lines] of moves) {
+      if (!this.keybindings.matches(data, action)) continue;
+      this.scrollDetail(lines);
+      return;
+    }
+  }
+
+  /**
+   * Scroll the detail view, and follow the log tail again at its end.
+   *
+   * @param lines - Lines to move; negative moves towards older lines.
+   */
+  private scrollDetail(lines: number): void {
+    const view = this.detailView;
+    if (!view) return;
+    const last = Math.max(0, view.total - view.capacity);
+    if (last === 0) return;
+    // Resolve a followed tail before moving, so repeated keys add up even when
+    // the TUI has not rendered between them.
+    const from = this.detailStart ?? last;
+    const next = Math.max(0, Math.min(last, from + lines));
+    this.detailStart = next >= last ? undefined : next;
+    this.tui.requestRender();
+  }
+
+  /**
+   * Render the list view, scrolled so the selected timer stays visible.
+   *
+   * @param rows - Rows the overlay shows.
+   * @param width - Overlay width, including the text padding.
+   * @returns The body text and its hint line.
+   */
+  private listBody(rows: readonly TimerRow[], width: number): OverlayBody {
+    if (rows.length === 0) {
+      return {
+        lines: "",
+        footer: hintLine(this.theme, "Press Escape to close", width),
+      };
+    }
+    const hint = "Enter for details, Escape to close";
+    const capacity = this.bodyCapacity(width, hint);
+    const start = windowStart(this.selected, rows.length, capacity);
+    const shown = rows.slice(start, start + capacity);
+    // Only a window that hides rows needs the scrolling keys named.
+    const keys = shown.length < rows.length ? `${hint}, up/down scroll` : hint;
+    return {
+      lines:
+        shown.length > 0 ? `\n${this.renderRows(shown, width, start)}` : "",
+      footer: hintLine(
+        this.theme,
+        `${keys}${windowLabel(start, shown.length, rows.length)}`,
+        width,
+      ),
+    };
+  }
+
+  /**
+   * Render one timer's detail body: the tail of its job log.
+   *
+   * The log is read on every render, so a running job's progress stays live
+   * while the view is open. That read is bounded, so a log that grew for hours
+   * costs no more than a short one.
+   *
+   * @param row - Timer whose detail is open.
+   * @param width - Overlay width, including the text padding.
+   * @returns The body text and its hint line.
+   */
+  private detailBody(row: TimerRow, width: number): OverlayBody {
+    const lines = this.logTail(row);
+    const hint = "Escape to go back";
+    const scrollHint = `${hint}, up/down scroll`;
+    const capacity = this.bodyCapacity(width, scrollHint);
+    const last = Math.max(0, lines.length - capacity);
+    const start =
+      this.detailStart === undefined ? last : Math.min(this.detailStart, last);
+    const shown = lines.slice(start, start + capacity);
+    const inner = Math.max(0, width - PAGE_PADDING_X * 2);
+    this.detailView = { total: lines.length, capacity };
+    return {
+      lines:
+        shown.length > 0
+          ? `\n${shown
+              .map((line) => truncateToWidth(line, inner, "...", true))
+              .join("\n")}`
+          : "",
+      footer: hintLine(
+        this.theme,
+        `${lines.length > capacity ? scrollHint : hint}${windowLabel(start, shown.length, lines.length)}`,
+        width,
+      ),
+    };
+  }
+
+  /**
+   * Tail of the job log a timer writes, or the empty state when it has none.
+   *
+   * @param row - Timer whose detail is open.
+   * @returns One dim line per log line, oldest first.
+   */
+  private logTail(row: TimerRow): string[] {
+    const { theme } = this;
+    const path = row.spec.logPath;
+    if (!path) return [];
+    const text = readLogTail(path, DETAIL_TAIL_LINES, LOG_TAIL_BYTES);
+    if (!text) {
+      return [
+        theme.fg(
+          "dim",
+          existsSync(path) ? "(the log is empty)" : "(no log was written)",
+        ),
+      ];
+    }
+    return text.split("\n").map((line) => theme.fg("dim", line));
   }
 
   /**
@@ -1781,19 +2063,30 @@ class TimersOverlay implements Component {
    * The id comes first and the marker after it, so the markers of all rows form
    * one column, matching `/subagents`.
    *
-   * @param rows - Rows the overlay shows.
+   * @param rows - Rows the window shows.
    * @param width - Overlay width, including the text padding.
+   * @param first - Index of the first row within all rows, so the cursor stays
+   *   on the selection while the list is scrolled.
    * @returns One width-truncated line per timer.
    */
-  private renderRows(rows: readonly TimerRow[], width: number): string {
+  private renderRows(
+    rows: readonly TimerRow[],
+    width: number,
+    first: number,
+  ): string {
     const { theme } = this;
     const widths = timerWidths(rows);
     const inner = Math.max(0, width - PAGE_PADDING_X * 2);
     return rows
-      .map((row) =>
-        truncateToWidth(
+      .map((row, index) => {
+        const selected = index + first === this.selected;
+        const id = padRight(row.id, widths.id);
+        // Every row reserves the cursor column, so selection never shifts it.
+        const cursor = selected ? theme.fg("accent", SELECTED_CURSOR) : " ";
+        return truncateToWidth(
           [
-            theme.bold(padRight(row.id, widths.id)),
+            cursor,
+            selected ? theme.fg("accent", theme.bold(id)) : theme.bold(id),
             this.spinner.marker(row.state, theme),
             theme.fg("muted", padRight(row.state, widths.state)),
             theme.fg("muted", padRight(row.age, widths.age)),
@@ -1803,8 +2096,8 @@ class TimersOverlay implements Component {
           inner,
           "...",
           true,
-        ),
-      )
+        );
+      })
       .join("\n");
   }
 
@@ -1835,10 +2128,11 @@ function timersCommand(registry: TimerRegistry) {
 
       let overlay: TimersOverlay | undefined;
       try {
-        await ctx.ui.custom<void>((tui, theme, _kb, done) => {
+        await ctx.ui.custom<void>((tui, theme, keybindings, done) => {
           overlay = new TimersOverlay(
             tui,
             theme,
+            keybindings,
             () => registry.rows(),
             () => done(),
           );
