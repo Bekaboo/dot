@@ -5,6 +5,7 @@ import { Agent } from "@earendil-works/pi-agent-core";
 import { createAssistantMessageEventStream } from "@earendil-works/pi-ai";
 
 import todoExtension, {
+  REMIND_FOLLOW_UP_TURNS,
   REMIND_NEW_TASK_AFTER_TURNS,
   REMIND_STALE_LIST_AFTER_TURNS,
 } from "../extensions/todo.ts";
@@ -268,15 +269,22 @@ describe("todo", () => {
       assert.match(reminder, /The todo list is empty\./);
       assert.equal(history[1].content.length, 1);
 
-      // The limit restarts, so the next reminder waits another full window.
+      // The window restarts, but follow-ups repeat every REMIND_FOLLOW_UP_TURNS.
       assert.equal(
         hooks.get("context_with_system")({ messages: history }),
         undefined,
       );
-      for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++) {
+      for (let turn = 0; turn < REMIND_FOLLOW_UP_TURNS - 1; turn++) {
         assert.equal(workTurn(hooks), undefined);
       }
-      assert.ok(workTurn(hooks));
+      const followUp = workTurn(hooks);
+      // The hint names the turns actually worked, not just the first window.
+      assert.match(
+        followUp.entries.at(-1).data.hint,
+        new RegExp(
+          `${REMIND_NEW_TASK_AFTER_TURNS + REMIND_FOLLOW_UP_TURNS} turns without user input`,
+        ),
+      );
     });
 
     test("user input restarts the new-task count", () => {
@@ -336,9 +344,9 @@ describe("todo", () => {
       const { hooks, write } = setup();
       await write("- [ ] A");
 
-      // Stale-list nudges keep firing every REMIND_STALE_LIST_AFTER_TURNS turns
-      // while the new-task window counts past its limit, but the unfinished item
-      // keeps that reminder silent.
+      // Stale-list nudges open at REMIND_STALE_LIST_AFTER_TURNS, then repeat
+      // every REMIND_FOLLOW_UP_TURNS while the new-task window counts past its
+      // own limit; the unfinished item keeps that reminder silent.
       const reminderTurns = [];
       const horizon =
         REMIND_NEW_TASK_AFTER_TURNS + REMIND_STALE_LIST_AFTER_TURNS;
@@ -353,11 +361,34 @@ describe("todo", () => {
         );
         assert.doesNotMatch(reminder, /without user input/);
       }
-      const staleTurns = Array.from(
-        { length: Math.floor(horizon / REMIND_STALE_LIST_AFTER_TURNS) },
-        (_, index) => (index + 1) * REMIND_STALE_LIST_AFTER_TURNS,
-      );
+      const staleTurns = [];
+      for (
+        let turn = REMIND_STALE_LIST_AFTER_TURNS;
+        turn <= horizon;
+        turn += REMIND_FOLLOW_UP_TURNS
+      ) {
+        staleTurns.push(turn);
+      }
       assert.deepEqual(reminderTurns, staleTurns);
+    });
+
+    test("a todo call restarts the stale-list window, not just its follow-up", async () => {
+      const { hooks, write } = setup();
+      await write("- [ ] A");
+      idleUntilReminder(hooks);
+
+      // Touching the list clears the initial window along with the follow-up.
+      hooks.get("tool_execution_end")({ toolName: "todo_edit" });
+      hooks.get("turn_end")({
+        outcome: "completed",
+        toolResults: [{}],
+        entries: [],
+      });
+
+      for (let turn = 0; turn < REMIND_STALE_LIST_AFTER_TURNS - 1; turn++) {
+        assert.equal(workTurn(hooks), undefined);
+      }
+      assert.ok(workTurn(hooks));
     });
 
     test("stalled turns never queue a reminder", () => {
