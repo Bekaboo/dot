@@ -521,7 +521,7 @@ describe("timer", () => {
   test("/timers opens a live overlay showing active timers in aligned columns", async (t) => {
     const { start, commands } = setup(t, runUntilCancelled);
     let component;
-    const tui = { requestRender() {} };
+    const tui = { requestRender() {}, terminal: { rows: 40 } };
     const bolded = [];
     const colored = [];
     const theme = {
@@ -616,12 +616,83 @@ describe("timer", () => {
     assert.match(notified[0], /^timer-a +running/m);
   });
 
+  test("/timers fits a short terminal and scrolls the list", async (t) => {
+    const { start, commands } = setup(t, runUntilCancelled);
+    const rows = 20;
+    // Rows pi keeps around the page are assumed to be 4; the fake UI cannot
+    // verify the real reserve, but a page that grows past it would clip.
+    const piRows = 4;
+    let component;
+    const theme = { fg: (_color, text) => text, bold: (text) => text };
+    t.after(() => component?.dispose?.());
+    const screen = {
+      get component() {
+        return component;
+      },
+      ui: {
+        notify: () => assert.fail("TUI mode must not notify"),
+        custom(factory) {
+          return new Promise((resolve) => {
+            const done = () => {
+              const closing = component;
+              component = undefined;
+              closing?.dispose?.();
+              resolve();
+            };
+            component = factory(
+              { requestRender() {}, terminal: { rows } },
+              theme,
+              undefined,
+              done,
+            );
+          });
+        },
+      },
+    };
+
+    const showing = commands
+      .get("timers")
+      .handler("", { mode: "tui", ui: screen.ui });
+    const overlay = screen.component;
+    const ids = ["tim1", "tim2", "tim3", "tim4", "tim5", "tim6", "tim7", "tim8"];
+    for (const id of ids) {
+      await start({ id, condition: "false", intervalSec: 3600 });
+    }
+
+    /** The list as the user sees it, in a terminal this short. */
+    const shown = () => {
+      const lines = overlay.render(80);
+      assert.ok(
+        lines.length <= rows - piRows,
+        `page leaves pi its rows: ${lines.length} of ${rows}`,
+      );
+      return lines.join("\n");
+    };
+
+    const first = shown();
+    assert.match(first, /Timers/);
+    assert.match(first, /8 running, 0 finished/);
+    assert.match(first, /Press Escape to close/);
+    assert.match(first, /up\/down scroll/);
+    assert.doesNotMatch(first, /\btim8\b/);
+
+    // Paging down reaches the timers the window hides, and its hint says so.
+    for (let page = 0; page < 3; page += 1) overlay.handleInput("\x1b[6~");
+    const later = shown();
+    assert.match(later, /\btim8\b/);
+    assert.match(later, /Press Escape to close/);
+
+    overlay.handleInput("\x1b");
+    await showing;
+    assert.equal(screen.component, undefined, "Escape closes the overlay");
+  });
+
   test("/timers keeps a timer that ended, with its glyph and state word", async (t) => {
     const { start, stop, commands, noticesAfter } = setup(t, (command) =>
       exit(command === "true" ? 0 : 1),
     );
     let component;
-    const tui = { requestRender() {} };
+    const tui = { requestRender() {}, terminal: { rows: 40 } };
     const theme = { fg: (_color, text) => text, bold: (text) => text };
     t.after(() => component?.dispose?.());
     const screen = {
@@ -680,10 +751,15 @@ describe("timer", () => {
       ui: {
         custom(factory) {
           return new Promise((resolve) => {
-            overlay = factory({ requestRender() {} }, theme, undefined, () => {
-              overlay.dispose();
-              resolve();
-            });
+            overlay = factory(
+              { requestRender() {}, terminal: { rows: 40 } },
+              theme,
+              undefined,
+              () => {
+                overlay.dispose();
+                resolve();
+              },
+            );
           });
         },
       },

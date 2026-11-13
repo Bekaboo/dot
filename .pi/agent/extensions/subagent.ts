@@ -43,6 +43,12 @@ import {
 } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
+import {
+  bodyRows,
+  hintLine,
+  PAGE_PADDING_X,
+  windowLabel,
+} from "./utils/page.ts";
 import { type RunState, Spinner } from "./utils/spinner.ts";
 
 /** Custom message type used for subagent notifications. */
@@ -221,17 +227,6 @@ const TEXT_TAIL_BUFFER_CHARS = 400;
 
 /** Kind column of the detail view's first line, the moment the child spawned. */
 const START_KIND = "start";
-
-/** Horizontal padding inside the `/subagents` overlay. */
-const OVERLAY_PADDING_X = 2;
-
-/**
- * Rows pi keeps for itself around a custom component: the transcript line above
- * it, the status line, and the two-line footer of a session with an extension
- * footer. A page taller than the terminal height minus this reserve loses its
- * last rows, so the overlay sizes its body to what the terminal leaves.
- */
-const VIEWPORT_RESERVE_ROWS = 4;
 
 /** Cursor in front of the selected `/subagents` row, as pi's select lists draw it. */
 export const SELECTED_CURSOR = "→";
@@ -1562,20 +1557,6 @@ function windowStart(
 }
 
 /**
- * Describe the rows a window hides, so the hint says more rows exist.
- *
- * @param start - Index of the window's first row.
- * @param shown - Rows the window shows.
- * @param total - Number of rows there are.
- * @returns Suffix such as "  (5-12 of 20)", empty when nothing is hidden.
- */
-function windowLabel(start: number, shown: number, total: number): string {
-  if (shown >= total) return "";
-  if (shown === 0) return `  (${total} hidden)`;
-  return `  (${start + 1}-${start + shown} of ${total})`;
-}
-
-/**
  * The session's subagents: who is running, and how their results get back.
  *
  * One instance per extension load. It owns the child processes, so a shutdown
@@ -2116,19 +2097,15 @@ class SubagentsOverlay implements Component {
     this.readRows = readRows;
     this.close = close;
     this.spinner = new Spinner(() => tui.requestRender());
-    this.summaryText = new Text("", OVERLAY_PADDING_X, 0);
-    this.rowsText = new Text("", OVERLAY_PADDING_X, 0);
-    this.footerText = new Text("", OVERLAY_PADDING_X, 1);
+    this.summaryText = new Text("", PAGE_PADDING_X, 0);
+    this.rowsText = new Text("", PAGE_PADDING_X, 0);
+    this.footerText = new Text("", PAGE_PADDING_X, 1);
 
     const border = () =>
       new DynamicBorder((text) => theme.fg("borderMuted", text));
     this.container.addChild(border());
     this.container.addChild(
-      new Text(
-        theme.fg("accent", theme.bold("Subagents")),
-        OVERLAY_PADDING_X,
-        1,
-      ),
+      new Text(theme.fg("accent", theme.bold("Subagents")), PAGE_PADDING_X, 1),
     );
     this.container.addChild(this.summaryText);
     this.container.addChild(this.rowsText);
@@ -2264,16 +2241,12 @@ class SubagentsOverlay implements Component {
    * @returns Lines available for the body, or 0 when only the chrome fits.
    */
   private bodyCapacity(width: number, hint: string): number {
-    // Measure with an empty body and a hint cut to this width: the previous
-    // frame's hint may not fit after a resize and would wrap into rows this
-    // frame does not use. Truncating here keeps the chrome height exact, and
-    // the row count added later only shortens the hint.
     this.rowsText.setText("");
-    this.footerText.setText(this.hintLine(hint, width));
-    const chrome = this.container.render(width).length;
-    const budget = Math.max(0, this.tui.terminal.rows - VIEWPORT_RESERVE_ROWS);
-    // The body follows the summary after one blank line.
-    return Math.max(0, budget - chrome - 1);
+    this.footerText.setText(hintLine(this.theme, hint, width));
+    return bodyRows(
+      () => this.container.render(width).length,
+      this.tui.terminal.rows,
+    );
   }
 
   /**
@@ -2287,7 +2260,7 @@ class SubagentsOverlay implements Component {
     if (rows.length === 0) {
       return {
         lines: "",
-        footer: this.hintLine("Press Escape to close", width),
+        footer: hintLine(this.theme, "Press Escape to close", width),
       };
     }
     const hint = "Enter for details, Escape to close";
@@ -2297,7 +2270,8 @@ class SubagentsOverlay implements Component {
     return {
       lines:
         shown.length > 0 ? `\n${this.renderRows(shown, width, start)}` : "",
-      footer: this.hintLine(
+      footer: hintLine(
+        this.theme,
         `${hint}${windowLabel(start, shown.length, rows.length)}`,
         width,
       ),
@@ -2323,23 +2297,12 @@ class SubagentsOverlay implements Component {
     this.detailView = { total: lines.length, capacity };
     return {
       lines: shown.length > 0 ? `\n${shown.join("\n")}` : "",
-      footer: this.hintLine(
+      footer: hintLine(
+        this.theme,
         `${lines.length > capacity ? scrollHint : hint}${windowLabel(start, shown.length, lines.length)}`,
         width,
       ),
     };
-  }
-
-  /**
-   * Dim a hint and keep it on one line, so it never grows the box.
-   *
-   * @param text - Hint text.
-   * @param width - Overlay width, including the text padding.
-   * @returns The styled, width-truncated hint.
-   */
-  private hintLine(text: string, width: number): string {
-    const inner = Math.max(1, width - OVERLAY_PADDING_X * 2);
-    return this.theme.fg("dim", truncateToWidth(text, inner, "...", true));
   }
 
   /**
@@ -2357,7 +2320,7 @@ class SubagentsOverlay implements Component {
     first: number,
   ): string {
     const widths = alignWidths(rows);
-    const inner = Math.max(0, width - OVERLAY_PADDING_X * 2);
+    const inner = Math.max(0, width - PAGE_PADDING_X * 2);
     return rows
       .map((row, index) =>
         truncateToWidth(
@@ -2412,7 +2375,7 @@ class SubagentsOverlay implements Component {
   private renderDetail(row: SubagentRow, width: number): string[] {
     const { theme } = this;
     const { steps } = row.activity;
-    const inner = Math.max(0, width - OVERLAY_PADDING_X * 2);
+    const inner = Math.max(0, width - PAGE_PADDING_X * 2);
     const kindWidth = Math.max(
       ...[START_KIND, ...steps.map(stepKind)].map(visibleWidth),
     );

@@ -10,11 +10,12 @@ import todoExtension from "../extensions/todo.ts";
 function setup() {
   const tools = new Map();
   const hooks = new Map();
+  const commands = new Map();
   todoExtension({
     registerTool: (definition) => {
       tools.set(definition.name, definition);
     },
-    registerCommand() {},
+    registerCommand: (name, command) => commands.set(name, command),
     registerEntryRenderer() {},
     on: (name, handler) => hooks.set(name, handler),
   });
@@ -24,7 +25,7 @@ function setup() {
   const write = (list, signal) => run("todo_write", { list }, signal);
   const edit = (edits, signal) => run("todo_edit", { edits }, signal);
   const list = async () => (await view()).details.list;
-  return { tools, hooks, view, write, edit, list };
+  return { tools, hooks, commands, view, write, edit, list };
 }
 
 const done = (item) => ({ oldText: `- [ ] ${item}`, newText: `- [x] ${item}` });
@@ -454,6 +455,89 @@ describe("todo", () => {
 
       const settle = { outcome: "completed", entries: [] };
       assert.equal(hooks.get("agent_before_settle")(settle), undefined);
+    });
+  });
+
+  describe("the /todos view", () => {
+    /**
+     * A fake extension UI that opens a custom component like the TUI mode does.
+     *
+     * @param t - Node test context, used to dispose a component left open.
+     * @param rows - Terminal height the component sees.
+     * @returns The fake UI and the open component.
+     */
+    function fakeUI(t, rows) {
+      let component;
+      const tui = { requestRender() {}, terminal: { rows } };
+      const theme = { fg: (_color, text) => text, bold: (text) => text };
+      t.after(() => component?.dispose?.());
+      return {
+        get component() {
+          return component;
+        },
+        ui: {
+          notify: () => assert.fail("TUI mode must not notify"),
+          custom(factory) {
+            return new Promise((resolve) => {
+              const done = () => {
+                const closing = component;
+                component = undefined;
+                closing?.dispose?.();
+                resolve();
+              };
+              component = factory(tui, theme, undefined, done);
+            });
+          },
+        },
+      };
+    }
+
+    test("keeps its hint inside a short terminal and scrolls the items", async (t) => {
+      const { commands, write } = setup();
+      const rows = 20;
+      // Rows pi keeps around the page are assumed to be 4; the fake UI cannot
+      // verify the real reserve, but a page that grows past it would clip.
+      const piRows = 4;
+      const items = Array.from({ length: 12 }, (_, index) => `- [ ] item ${index}`);
+      await write(items.join("\n"));
+
+      const screen = fakeUI(t, rows);
+      const showing = commands.get("todos").handler("", {
+        mode: "tui",
+        ui: screen.ui,
+      });
+      const overlay = screen.component;
+
+      /** The list as the user sees it, in a terminal this short. */
+      const shown = () => {
+        const lines = overlay.render(80);
+        assert.ok(
+          lines.length <= rows - piRows,
+          `page leaves pi its rows: ${lines.length} of ${rows}`,
+        );
+        return lines.join("\n");
+      };
+
+      const first = shown();
+      assert.match(first, /Todos/);
+      assert.match(first, /0\/12 closed/);
+      assert.match(first, /Press Escape to close/);
+      assert.match(first, /item 0\b/);
+      assert.doesNotMatch(first, /item 11\b/);
+
+      // Paging down reaches the items the window hides.
+      for (let page = 0; page < 3; page += 1) overlay.handleInput("\x1b[6~");
+      const later = shown();
+      assert.match(later, /item 11\b/);
+      assert.match(later, /Press Escape to close/);
+
+      // Paging back up returns to the head of the list.
+      for (let page = 0; page < 3; page += 1) overlay.handleInput("\x1b[5~");
+      assert.match(shown(), /item 0\b/);
+
+      overlay.handleInput("\x1b");
+      await showing;
+      assert.equal(screen.component, undefined, "Escape closes the overlay");
     });
   });
 

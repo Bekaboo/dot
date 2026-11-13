@@ -52,6 +52,13 @@ import {
 
 import { type Static, Type } from "typebox";
 
+import {
+  bodyRows,
+  hintLine,
+  PAGE_PADDING_X,
+  scrolledStart,
+  windowLabel,
+} from "./utils/page.ts";
 import { type RunState, Spinner } from "./utils/spinner.ts";
 
 // Timer duration, polling, and notification defaults, in seconds.
@@ -82,10 +89,6 @@ const JOB_TAIL_CHARS = 2_000;
 // Condition execution deadlines, in milliseconds.
 const MIN_CONDITION_TIMEOUT_MS = 1_000;
 const MAX_CONDITION_TIMEOUT_MS = 30_000;
-
-// The `/timers` overlay's horizontal padding, matching the subagent overlay so
-// both views line up.
-const OVERLAY_PADDING_X = 2;
 
 // Snapshot deadline and size cap for the optional `onTick` callback.
 const ON_TICK_TIMEOUT_MS = 10_000;
@@ -1636,16 +1639,23 @@ function timerStopTool(
  * one line per timer and an Escape hint. Rows are read on every render, so
  * elapsed times stay current and a timer that just ended turns into its
  * finished row without reopening the view. The animation runs only while some
- * timer is still running.
+ * timer is still running. The list is cut to the rows the terminal leaves and
+ * scrolls with the list keys, so a short terminal keeps the hint visible.
  */
 class TimersOverlay implements Component {
   private readonly container = new Container();
   private readonly summaryText: Text;
   private readonly rowsText: Text;
+  private readonly footerText: Text;
   private readonly theme: Theme;
+  private readonly tui: TUI;
   private readonly readRows: () => TimerRow[];
   private readonly close: () => void;
   private readonly spinner: Spinner;
+  /** First timer the window shows; the reader scrolls it with the list keys. */
+  private scrollStart = 0;
+  /** Timer rows the window holds at the last render. */
+  private capacity = 0;
 
   constructor(
     tui: TUI,
@@ -1654,23 +1664,23 @@ class TimersOverlay implements Component {
     close: () => void,
   ) {
     this.theme = theme;
+    this.tui = tui;
     this.readRows = readRows;
     this.close = close;
     this.spinner = new Spinner(() => tui.requestRender());
-    this.summaryText = new Text("", OVERLAY_PADDING_X, 0);
-    this.rowsText = new Text("", OVERLAY_PADDING_X, 0);
+    this.summaryText = new Text("", PAGE_PADDING_X, 0);
+    this.rowsText = new Text("", PAGE_PADDING_X, 0);
+    this.footerText = new Text("", PAGE_PADDING_X, 1);
 
     const border = () =>
       new DynamicBorder((text) => theme.fg("borderMuted", text));
     this.container.addChild(border());
     this.container.addChild(
-      new Text(theme.fg("accent", theme.bold("Timers")), OVERLAY_PADDING_X, 1),
+      new Text(theme.fg("accent", theme.bold("Timers")), PAGE_PADDING_X, 1),
     );
     this.container.addChild(this.summaryText);
     this.container.addChild(this.rowsText);
-    this.container.addChild(
-      new Text(theme.fg("dim", "Press Escape to close"), OVERLAY_PADDING_X, 1),
-    );
+    this.container.addChild(this.footerText);
     this.container.addChild(border());
     this.syncRefresh();
   }
@@ -1678,11 +1688,47 @@ class TimersOverlay implements Component {
   render(width: number): string[] {
     const rows = this.readRows();
     this.summaryText.setText(summaryOf(rows, this.theme));
+    const hint = "Press Escape to close";
+    const scrollHint = `${hint}, up/down scroll`;
+    this.capacity = this.bodyCapacity(width, scrollHint);
+    this.scrollStart = scrolledStart(
+      this.scrollStart,
+      0,
+      rows.length,
+      this.capacity,
+    );
+    const shown = rows.slice(
+      this.scrollStart,
+      this.scrollStart + this.capacity,
+    );
     this.rowsText.setText(
-      rows.length > 0 ? `\n${this.renderRows(rows, width)}` : "",
+      shown.length > 0 ? `\n${this.renderRows(shown, width)}` : "",
+    );
+    this.footerText.setText(
+      hintLine(
+        this.theme,
+        `${shown.length < rows.length ? scrollHint : hint}${windowLabel(this.scrollStart, shown.length, rows.length)}`,
+        width,
+      ),
     );
     this.syncRefresh(rows);
     return this.container.render(width);
+  }
+
+  /**
+   * Rows the timer list may fill, keeping the box chrome and its hint visible.
+   *
+   * @param width - Overlay width, including the text padding.
+   * @param hint - Hint the box will show, measured without its row count.
+   * @returns Lines available for the timer rows.
+   */
+  private bodyCapacity(width: number, hint: string): number {
+    this.rowsText.setText("");
+    this.footerText.setText(hintLine(this.theme, hint, width));
+    return bodyRows(
+      () => this.container.render(width).length,
+      this.tui.terminal.rows,
+    );
   }
 
   invalidate(): void {
@@ -1698,6 +1744,34 @@ class TimersOverlay implements Component {
   handleInput(data: string): void {
     if (matchesKey(data, "escape") || matchesKey(data, "ctrl+c")) {
       this.close();
+      return;
+    }
+    this.scroll(data);
+  }
+
+  /**
+   * Scroll the timer list with the list keys.
+   *
+   * @param data - Input the overlay received.
+   */
+  private scroll(data: string): void {
+    const page = Math.max(1, this.capacity);
+    const moves: [string, number][] = [
+      ["up", -1],
+      ["down", 1],
+      ["pageUp", -page],
+      ["pageDown", page],
+    ];
+    for (const [key, lines] of moves) {
+      if (!matchesKey(data, key)) continue;
+      this.scrollStart = scrolledStart(
+        this.scrollStart,
+        lines,
+        this.readRows().length,
+        page,
+      );
+      this.tui.requestRender();
+      return;
     }
   }
 
@@ -1714,7 +1788,7 @@ class TimersOverlay implements Component {
   private renderRows(rows: readonly TimerRow[], width: number): string {
     const { theme } = this;
     const widths = timerWidths(rows);
-    const inner = Math.max(0, width - OVERLAY_PADDING_X * 2);
+    const inner = Math.max(0, width - PAGE_PADDING_X * 2);
     return rows
       .map((row) =>
         truncateToWidth(
