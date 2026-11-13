@@ -31,7 +31,7 @@ import {
 import { bodyRows, hintLine, PAGE_PADDING_X, windowLabel } from "./page.ts";
 
 /** Cursor in front of a selected row, as pi's select lists draw it. */
-export const SELECTED_CURSOR = "→";
+export const SELECTED_CURSOR = "›";
 
 /**
  * Keys that move a list or a detail, and the rows each one moves.
