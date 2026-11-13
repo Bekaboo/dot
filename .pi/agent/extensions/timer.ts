@@ -408,21 +408,15 @@ function clockTime(ms: number): string {
 }
 
 /**
- * Header lines of one timer's detail view.
- *
- * The specification is packed into a second line rather than laid out as a
- * table of fields, so even a short terminal keeps rows for the log below it.
+ * Title line of one timer's detail view: its id, state and budget.
  *
  * @param row - Timer the view shows.
  * @param stateMarker - Styled state marker of the timer.
  * @param theme - Active theme.
- * @returns The summary line, then the specification line.
+ * @returns Text naming its id, state marker, state, timeout, interval and tick
+ *   budget, in the order the list row shows them.
  */
-function detailHeader(
-  row: TimerRow,
-  stateMarker: string,
-  theme: Theme,
-): string {
+function detailTitle(row: TimerRow, stateMarker: string, theme: Theme): string {
   const state =
     row.state === "running"
       ? `running for ${row.age}`
@@ -430,7 +424,7 @@ function detailHeader(
   // A job timer with no tick budget runs until its process exits, so neither an
   // interval nor a tick count says anything about it.
   const ticking = row.spec.maxTicks !== 0;
-  const header = [
+  return [
     theme.bold(row.id),
     stateMarker,
     theme.fg("muted", state),
@@ -440,7 +434,6 @@ function detailHeader(
   ]
     .filter((part) => part !== undefined)
     .join(" ");
-  return `${header}\n${detailSpec(row, theme)}`;
 }
 
 /**
@@ -1758,6 +1751,14 @@ interface OverlayBody {
   footer: string;
 }
 
+/** What a timer's detail body shows. */
+interface LogTail {
+  /** One dim line per log line, oldest first, or the empty-state line. */
+  lines: string[];
+  /** Whether these are log lines, rather than a placeholder for no log. */
+  content: boolean;
+}
+
 /** Size of the open detail view, so scrolling knows how far it can move. */
 interface DetailViewport {
   /** Lines the detail view has in total. */
@@ -1844,13 +1845,7 @@ class TimersOverlay implements Component {
       this.detailView = undefined;
     }
     this.summaryText.setText(
-      detail
-        ? detailHeader(
-            detail,
-            this.spinner.marker(detail.state, this.theme),
-            this.theme,
-          )
-        : summaryOf(rows, this.theme),
+      detail ? this.detailSummary(detail, true) : summaryOf(rows, this.theme),
     );
     const body = detail
       ? this.detailBody(detail, width)
@@ -2010,16 +2005,23 @@ class TimersOverlay implements Component {
    * @returns The body text and its hint line.
    */
   private detailBody(row: TimerRow, width: number): OverlayBody {
-    const lines = this.logTail(row);
+    const tail = this.logTail(row);
     const hint = "Escape to go back";
     const scrollHint = `${hint}, up/down scroll`;
-    const capacity = this.bodyCapacity(width, scrollHint);
-    const last = Math.max(0, lines.length - capacity);
+    let capacity = this.bodyCapacity(width, scrollHint);
+    // The specification wraps, so it competes with the log for the same rows. A
+    // log with no row of its own is what the reader came for, so the header
+    // stands alone then: the list row already names the pid and the log path.
+    if (capacity === 0 && tail.content) {
+      this.summaryText.setText(this.detailSummary(row, false));
+      capacity = this.bodyCapacity(width, scrollHint);
+    }
+    const last = Math.max(0, tail.lines.length - capacity);
     const start =
       this.detailStart === undefined ? last : Math.min(this.detailStart, last);
-    const shown = lines.slice(start, start + capacity);
+    const shown = tail.lines.slice(start, start + capacity);
     const inner = Math.max(0, width - PAGE_PADDING_X * 2);
-    this.detailView = { total: lines.length, capacity };
+    this.detailView = { total: tail.lines.length, capacity };
     return {
       lines:
         shown.length > 0
@@ -2029,32 +2031,50 @@ class TimersOverlay implements Component {
           : "",
       footer: hintLine(
         this.theme,
-        `${lines.length > capacity ? scrollHint : hint}${windowLabel(start, shown.length, lines.length)}`,
+        `${tail.lines.length > capacity ? scrollHint : hint}${windowLabel(start, shown.length, tail.lines.length)}`,
         width,
       ),
     };
   }
 
   /**
+   * Fixed head of one timer's detail: its title, then its specification.
+   *
+   * @param row - Timer whose detail is open.
+   * @param withSpec - Whether to add the specification line under the title.
+   * @returns The styled lines of that block.
+   */
+  private detailSummary(row: TimerRow, withSpec: boolean): string {
+    const title = detailTitle(
+      row,
+      this.spinner.marker(row.state, this.theme),
+      this.theme,
+    );
+    return withSpec ? `${title}\n${detailSpec(row, this.theme)}` : title;
+  }
+
+  /**
    * Tail of the job log a timer writes, or the empty state when it has none.
    *
    * @param row - Timer whose detail is open.
-   * @returns One dim line per log line, oldest first.
+   * @returns The dim lines to show, and whether they are log output rather than
+   *   a placeholder for an empty or missing log.
    */
-  private logTail(row: TimerRow): string[] {
+  private logTail(row: TimerRow): LogTail {
     const { theme } = this;
     const path = row.spec.logPath;
-    if (!path) return [];
+    if (!path) return { lines: [], content: false };
     const text = readLogTail(path, DETAIL_TAIL_LINES, LOG_TAIL_BYTES);
     if (!text) {
-      return [
-        theme.fg(
-          "dim",
-          existsSync(path) ? "(the log is empty)" : "(no log was written)",
-        ),
-      ];
+      const empty = existsSync(path)
+        ? "(the log is empty)"
+        : "(no log was written)";
+      return { lines: [theme.fg("dim", empty)], content: false };
     }
-    return text.split("\n").map((line) => theme.fg("dim", line));
+    return {
+      lines: text.split("\n").map((line) => theme.fg("dim", line)),
+      content: true,
+    };
   }
 
   /**

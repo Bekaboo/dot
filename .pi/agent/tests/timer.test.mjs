@@ -852,6 +852,61 @@ describe("timer", () => {
     assert.equal(screen.component, undefined, "Escape from the list closes");
   });
 
+  test("/timers fits its detail and log in a short terminal", async (t) => {
+    const { start, commands } = setup(t, runUntilCancelled);
+
+    const { details } = await start({
+      id: "live-job",
+      start: "printf 'line-%s\\n' $(seq 1 40); sleep 60",
+    });
+    await until(
+      () => readFileSync(details.logPath, "utf8").includes("line-40"),
+      "the job writes its whole log",
+    );
+
+    /**
+     * The detail page at one terminal height.
+     *
+     * @param rows - Terminal height the page renders into.
+     * @returns The rendered page and the rows pi leaves for it.
+     */
+    const detailAt = async (rows) => {
+      const screen = fakeUI(t, { rows });
+      const showing = commands
+        .get("timers")
+        .handler("", { mode: "tui", ui: screen.ui });
+      screen.component.handleInput("\r");
+      const page = screen.component.render(100);
+      // Leave through both views so the next height opens a fresh page.
+      screen.component.handleInput("\x1b");
+      screen.component.handleInput("\x1b");
+      await showing;
+      assert.equal(screen.component, undefined, "both Escapes close the page");
+      return { page, budget: rows - 4 };
+    };
+
+    // The page keeps pi's rows and its own hint at every height the box fits in
+    // at all. The list has the same 13-row floor, which is the chrome alone.
+    for (let rows = 13; rows <= 22; rows += 1) {
+      const { page, budget } = await detailAt(rows);
+      assert.ok(
+        page.length <= budget,
+        `the detail leaves pi its rows at ${rows}: ${page.length} of ${budget}`,
+      );
+      if (rows < 15) continue;
+      const shown = page.filter((line) => /line-\d+/.test(line));
+      assert.ok(shown.length > 0, `the log keeps a row at ${rows} rows`);
+    }
+
+    // At a workable height the specification and several log lines both fit.
+    const { page } = await detailAt(20);
+    const text = page.join("\n");
+    assert.match(text, /started=\d\d:\d\d:\d\d/);
+    const logLines = linesOf(text).filter((line) => /line-\d+/.test(line));
+    assert.ok(logLines.includes("line-40"), "the newest line");
+    assert.ok(logLines.length >= 2, "more than the newest line fits");
+  });
+
   test("/timers keeps a retired job's detail, log and end reason", async (t) => {
     const { start, commands, noticesAfter } = setup(t, runUntilCancelled);
     const screen = fakeUI(t);
