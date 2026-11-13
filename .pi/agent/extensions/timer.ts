@@ -32,7 +32,6 @@ import { dirname, join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import {
   type AgentToolUpdateCallback,
-  DynamicBorder,
   type ExtensionAPI,
   type ExtensionCommandContext,
   type ExtensionToolContext,
@@ -45,8 +44,6 @@ import {
 
 import {
   type Component,
-  Container,
-  Text,
   type TUI,
   truncateToWidth,
   visibleWidth,
@@ -55,12 +52,15 @@ import {
 import { type Static, Type } from "typebox";
 
 import {
-  bodyRows,
-  hintLine,
-  PAGE_PADDING_X,
-  windowLabel,
-} from "./utils/page.ts";
+  DrillDown,
+  OverlayPage,
+  padRight,
+  SELECTED_CURSOR,
+} from "./utils/overlay.ts";
+import { PAGE_PADDING_X, windowStart } from "./utils/page.ts";
 import { type RunState, Spinner } from "./utils/spinner.ts";
+
+export { SELECTED_CURSOR };
 
 // Timer duration, polling, and notification defaults, in seconds.
 const DEFAULT_TIMEOUT_SEC = 3_600;
@@ -116,9 +116,6 @@ const NOTICE_TYPE = "timer";
  * late `timer_stop` reply.
  */
 const RETIRED_HISTORY = 10;
-
-/** Cursor in front of the selected `/timers` row, as pi's select lists draw it. */
-export const SELECTED_CURSOR = "→";
 
 /** Names that replay as timer start results, including the old combined tool. */
 const START_TOOL_NAMES = new Set(["timer_start", "timer"]);
@@ -330,13 +327,10 @@ interface TimerRow {
 }
 
 /** Columns of a timer table, in display order. */
-const TIMER_COLUMNS: readonly (keyof TimerRow)[] = [
-  "id",
-  "state",
-  "age",
-  "ticks",
-  "target",
-];
+const TIMER_COLUMNS = ["id", "state", "age", "ticks", "target"] as const;
+
+/** A column of the timer table. */
+type TimerColumn = (typeof TIMER_COLUMNS)[number];
 
 /**
  * Render one timer row on a single line.
@@ -349,7 +343,7 @@ function formatTimerRow(row: TimerRow): string {
 }
 
 /** Width of each timer column, in terminal columns. */
-type TimerWidths = Record<keyof TimerRow, number>;
+type TimerWidths = Record<TimerColumn, number>;
 
 /**
  * Measure the widest value of every timer column, so rows line up.
@@ -358,25 +352,19 @@ type TimerWidths = Record<keyof TimerRow, number>;
  * @returns The terminal width of each column.
  */
 function timerWidths(rows: readonly TimerRow[]): TimerWidths {
-  const widths: TimerWidths = { id: 0, state: 0, age: 0, ticks: 0, target: 0 };
+  const widths: TimerWidths = {
+    id: 0,
+    state: 0,
+    age: 0,
+    ticks: 0,
+    target: 0,
+  };
   for (const row of rows) {
     for (const column of TIMER_COLUMNS) {
       widths[column] = Math.max(widths[column], visibleWidth(row[column]));
     }
   }
   return widths;
-}
-
-/**
- * Pad plain text on the right to a terminal width.
- *
- * @param text - Text without ANSI attributes.
- * @param width - Target terminal columns.
- * @returns The text followed by spaces, unchanged when already wide enough.
- */
-function padRight(text: string, width: number): string {
-  const missing = width - visibleWidth(text);
-  return missing > 0 ? text + " ".repeat(missing) : text;
 }
 
 /**
@@ -456,23 +444,6 @@ function detailSpec(row: TimerRow, theme: Theme): string {
   if (spec.onTick) parts.push(theme.fg("muted", `onTick: ${spec.onTick}`));
   if (row.reason) parts.push(theme.fg("muted", `ended: ${row.reason}`));
   return parts.join(", ");
-}
-
-/**
- * Index of the first row of a window that keeps the selection visible.
- *
- * @param selected - Index of the selected row within all rows.
- * @param total - Number of rows to show.
- * @param capacity - Rows the window holds.
- * @returns Index of the window's first row.
- */
-function windowStart(
-  selected: number,
-  total: number,
-  capacity: number,
-): number {
-  const last = Math.max(0, total - capacity);
-  return Math.min(last, Math.max(0, selected - Math.floor(capacity / 2)));
 }
 
 /**
@@ -1745,12 +1716,6 @@ function timerStopTool(
   };
 }
 
-/** Text of an overlay body and its hint line. */
-interface OverlayBody {
-  lines: string;
-  footer: string;
-}
-
 /** What a timer's detail body shows. */
 interface LogTail {
   /** One dim line per log line, oldest first, or the empty-state line. */
@@ -1759,52 +1724,26 @@ interface LogTail {
   content: boolean;
 }
 
-/** Size of the open detail view, so scrolling knows how far it can move. */
-interface DetailViewport {
-  /** Lines the detail view has in total. */
-  total: number;
-  /** Lines the window holds. */
-  capacity: number;
-}
-
 /**
  * Overlay listing the session's timers, running ones first.
  *
- * Laid out like the subagent overlay: a bordered box with a title, a summary,
- * one line per timer and an Escape hint. Rows are read on every render, so
- * elapsed times stay current and a timer that just ended turns into its
- * finished row without reopening the view; Enter opens one timer's detail, the
- * tail of its job log included, and Escape walks back out. A running timer gets
- * the same braille spinner as pi's working indicator; the animation runs only
- * while one is running. Bodies are cut to the rows the terminal leaves, and the
- * selected row or newest log line stays in view, so a short terminal keeps the
- * box chrome and its hint visible.
+ * Built on the shared overlay page, like `/subagents`: a bordered box with a
+ * title, a summary, one line per timer and an Escape hint. Rows are read on
+ * every render, so elapsed times stay current and a timer that just ended turns
+ * into its finished row without reopening the view; Enter opens one timer's
+ * detail, the tail of its job log included, and Escape walks back out. A
+ * running timer gets the same braille spinner as pi's working indicator; the
+ * animation runs only while one is running.
  */
 class TimersOverlay implements Component {
-  private readonly container = new Container();
-  private readonly summaryText: Text;
-  private readonly rowsText: Text;
-  private readonly footerText: Text;
+  private readonly page: OverlayPage;
+  private readonly nav: DrillDown;
   private readonly theme: Theme;
-  private readonly tui: TUI;
   /** User keybindings, so the list moves with the keys every pi list uses. */
   private readonly keybindings: KeybindingsManager;
   private readonly readRows: () => TimerRow[];
   private readonly close: () => void;
   private readonly spinner: Spinner;
-  /** Index of the row the list view selected. */
-  private selected = 0;
-  /** Id whose detail view is open, or undefined while the list is shown. */
-  private detailId: string | undefined;
-  /**
-   * First detail line the window shows, or undefined to follow the log tail.
-   * Scrolling up pins it; scrolling to the end follows again.
-   */
-  private detailStart: number | undefined;
-  /** Size of the detail view at the last render, so scrolling knows its bounds. */
-  private detailView: DetailViewport | undefined;
-  /** Rows the window holds at the last render, for the list's page keys. */
-  private capacity = 0;
 
   constructor(
     tui: TUI,
@@ -1814,68 +1753,30 @@ class TimersOverlay implements Component {
     close: () => void,
   ) {
     this.theme = theme;
-    this.tui = tui;
     this.keybindings = keybindings;
     this.readRows = readRows;
     this.close = close;
+    this.page = new OverlayPage(tui, theme, "Timers");
+    this.nav = new DrillDown(() => tui.requestRender());
     this.spinner = new Spinner(() => tui.requestRender());
-    this.summaryText = new Text("", PAGE_PADDING_X, 0);
-    this.rowsText = new Text("", PAGE_PADDING_X, 0);
-    this.footerText = new Text("", PAGE_PADDING_X, 1);
-
-    const border = () =>
-      new DynamicBorder((text) => theme.fg("borderMuted", text));
-    this.container.addChild(border());
-    this.container.addChild(
-      new Text(theme.fg("accent", theme.bold("Timers")), PAGE_PADDING_X, 1),
-    );
-    this.container.addChild(this.summaryText);
-    this.container.addChild(this.rowsText);
-    this.container.addChild(this.footerText);
-    this.container.addChild(border());
     this.syncRefresh();
   }
 
   render(width: number): string[] {
     const rows = this.readRows();
-    this.selected = Math.min(this.selected, Math.max(0, rows.length - 1));
-    const detail = rows.find((row) => row.id === this.detailId);
-    if (!detail) {
-      this.detailId = undefined;
-      this.detailView = undefined;
-    }
-    this.summaryText.setText(
+    const { selected, detail } = this.nav.sync(rows, (row) => row.id);
+    this.page.setSummary(
       detail ? this.detailSummary(detail, true) : summaryOf(rows, this.theme),
     );
-    const body = detail
-      ? this.detailBody(detail, width)
-      : this.listBody(rows, width);
-    this.rowsText.setText(body.lines);
-    this.footerText.setText(body.footer);
+    if (detail) this.detailBody(detail, width);
+    else this.listBody(rows, selected, width);
     this.syncRefresh(rows);
-    return this.container.render(width);
-  }
-
-  /**
-   * Rows the timer list may fill, keeping the box chrome and its hint visible.
-   *
-   * @param width - Overlay width, including the text padding.
-   * @param hint - Hint the box will show, measured without its row count.
-   * @returns Lines available for the timer rows.
-   */
-  private bodyCapacity(width: number, hint: string): number {
-    this.rowsText.setText("");
-    this.footerText.setText(hintLine(this.theme, hint, width));
-    this.capacity = bodyRows(
-      () => this.container.render(width).length,
-      this.tui.terminal.rows,
-    );
-    return this.capacity;
+    return this.page.render(width);
   }
 
   invalidate(): void {
     this.syncRefresh();
-    this.container.invalidate();
+    this.page.invalidate();
   }
 
   /** Stop the animation once the overlay is closed. */
@@ -1884,113 +1785,43 @@ class TimersOverlay implements Component {
   }
 
   handleInput(data: string): void {
-    if (this.keybindings.matches(data, "tui.select.cancel")) {
-      if (this.detailId !== undefined) {
-        this.detailId = undefined;
-        this.detailView = undefined;
-        this.tui.requestRender();
-        return;
-      }
-      this.close();
-      return;
-    }
-    if (this.detailId !== undefined) {
-      this.scrollDetailView(data);
-      return;
-    }
-    const rows = this.readRows();
-    const page = Math.max(1, this.capacity);
-    const moves: [string, number][] = [
-      ["tui.select.up", -1],
-      ["tui.select.down", 1],
-      ["tui.select.pageUp", -page],
-      ["tui.select.pageDown", page],
-    ];
-    for (const [action, lines] of moves) {
-      if (!this.keybindings.matches(data, action)) continue;
-      this.selected = Math.max(
-        0,
-        Math.min(rows.length - 1, this.selected + lines),
-      );
-      this.tui.requestRender();
-      return;
-    }
-    const row = rows[this.selected];
-    if (row && this.keybindings.matches(data, "tui.select.confirm")) {
-      this.detailId = row.id;
-      this.detailStart = undefined;
-      this.detailView = undefined;
-      this.tui.requestRender();
-    }
-  }
-
-  /**
-   * Move the open detail view with the list keys.
-   *
-   * @param data - Input the overlay received.
-   */
-  private scrollDetailView(data: string): void {
-    const page = Math.max(1, this.detailView?.capacity ?? 1);
-    const moves: [string, number][] = [
-      ["tui.select.up", -1],
-      ["tui.select.down", 1],
-      ["tui.select.pageUp", -page],
-      ["tui.select.pageDown", page],
-    ];
-    for (const [action, lines] of moves) {
-      if (!this.keybindings.matches(data, action)) continue;
-      this.scrollDetail(lines);
-      return;
-    }
-  }
-
-  /**
-   * Scroll the detail view, and follow the log tail again at its end.
-   *
-   * @param lines - Lines to move; negative moves towards older lines.
-   */
-  private scrollDetail(lines: number): void {
-    const view = this.detailView;
-    if (!view) return;
-    const last = Math.max(0, view.total - view.capacity);
-    if (last === 0) return;
-    // Resolve a followed tail before moving, so repeated keys add up even when
-    // the TUI has not rendered between them.
-    const from = this.detailStart ?? last;
-    const next = Math.max(0, Math.min(last, from + lines));
-    this.detailStart = next >= last ? undefined : next;
-    this.tui.requestRender();
+    const ids = this.readRows().map((row) => row.id);
+    const closing = this.nav.handleInput(
+      data,
+      this.keybindings,
+      ids,
+      this.page.rowCapacity,
+    );
+    if (!closing) return;
+    this.close();
   }
 
   /**
    * Render the list view, scrolled so the selected timer stays visible.
    *
    * @param rows - Rows the overlay shows.
+   * @param selected - Index of the selected row within all rows.
    * @param width - Overlay width, including the text padding.
-   * @returns The body text and its hint line.
    */
-  private listBody(rows: readonly TimerRow[], width: number): OverlayBody {
-    if (rows.length === 0) {
-      return {
-        lines: "",
-        footer: hintLine(this.theme, "Press Escape to close", width),
-      };
-    }
-    const hint = "Enter for details, Escape to close";
-    const capacity = this.bodyCapacity(width, hint);
-    const start = windowStart(this.selected, rows.length, capacity);
-    const shown = rows.slice(start, start + capacity);
-    // Only a window that hides rows needs the scrolling keys named.
-    const keys = shown.length < rows.length ? `${hint}, up/down scroll` : hint;
-    return {
-      lines:
-        shown.length > 0 ? `\n${this.renderRows(shown, width, start)}` : "",
-      footer: hintLine(
-        this.theme,
-        `${keys}${windowLabel(start, shown.length, rows.length)}`,
-        width,
-      ),
-    };
+  private listBody(
+    rows: readonly TimerRow[],
+    selected: number,
+    width: number,
+  ): void {
+    // The hint names Enter only while there is a row to open.
+    const hint =
+      rows.length === 0
+        ? "Press Escape to close"
+        : "Enter for details, Escape to close";
+    const capacity = this.page.measure(width, hint);
+    const start = windowStart(selected, rows.length, capacity);
+    this.page.setWindow(
+      this.renderRows(rows, width, selected),
+      start,
+      capacity,
+      hint,
+      width,
+    );
   }
 
   /**
@@ -2002,39 +1833,27 @@ class TimersOverlay implements Component {
    *
    * @param row - Timer whose detail is open.
    * @param width - Overlay width, including the text padding.
-   * @returns The body text and its hint line.
    */
-  private detailBody(row: TimerRow, width: number): OverlayBody {
+  private detailBody(row: TimerRow, width: number): void {
     const tail = this.logTail(row);
     const hint = "Escape to go back";
-    const scrollHint = `${hint}, up/down scroll`;
-    let capacity = this.bodyCapacity(width, scrollHint);
+    let capacity = this.page.measure(width, `${hint}, up/down scroll`);
     // The specification wraps, so it competes with the log for the same rows. A
     // log with no row of its own is what the reader came for, so the header
     // stands alone then: the list row already names the pid and the log path.
     if (capacity === 0 && tail.content) {
-      this.summaryText.setText(this.detailSummary(row, false));
-      capacity = this.bodyCapacity(width, scrollHint);
+      this.page.setSummary(this.detailSummary(row, false));
+      capacity = this.page.measure(width, `${hint}, up/down scroll`);
     }
-    const last = Math.max(0, tail.lines.length - capacity);
-    const start =
-      this.detailStart === undefined ? last : Math.min(this.detailStart, last);
-    const shown = tail.lines.slice(start, start + capacity);
+    const start = this.nav.detailWindow(tail.lines.length, capacity);
     const inner = Math.max(0, width - PAGE_PADDING_X * 2);
-    this.detailView = { total: tail.lines.length, capacity };
-    return {
-      lines:
-        shown.length > 0
-          ? `\n${shown
-              .map((line) => truncateToWidth(line, inner, "...", true))
-              .join("\n")}`
-          : "",
-      footer: hintLine(
-        this.theme,
-        `${tail.lines.length > capacity ? scrollHint : hint}${windowLabel(start, shown.length, tail.lines.length)}`,
-        width,
-      ),
-    };
+    this.page.setWindow(
+      tail.lines.map((line) => truncateToWidth(line, inner, "...", true)),
+      start,
+      capacity,
+      hint,
+      width,
+    );
   }
 
   /**
@@ -2083,42 +1902,39 @@ class TimersOverlay implements Component {
    * The id comes first and the marker after it, so the markers of all rows form
    * one column, matching `/subagents`.
    *
-   * @param rows - Rows the window shows.
+   * @param rows - Every row of the list.
    * @param width - Overlay width, including the text padding.
-   * @param first - Index of the first row within all rows, so the cursor stays
-   *   on the selection while the list is scrolled.
+   * @param selected - Index of the selected row within all rows.
    * @returns One width-truncated line per timer.
    */
   private renderRows(
     rows: readonly TimerRow[],
     width: number,
-    first: number,
-  ): string {
+    selected: number,
+  ): string[] {
     const { theme } = this;
     const widths = timerWidths(rows);
     const inner = Math.max(0, width - PAGE_PADDING_X * 2);
-    return rows
-      .map((row, index) => {
-        const selected = index + first === this.selected;
-        const id = padRight(row.id, widths.id);
-        // Every row reserves the cursor column, so selection never shifts it.
-        const cursor = selected ? theme.fg("accent", SELECTED_CURSOR) : " ";
-        return truncateToWidth(
-          [
-            cursor,
-            selected ? theme.fg("accent", theme.bold(id)) : theme.bold(id),
-            this.spinner.marker(row.state, theme),
-            theme.fg("muted", padRight(row.state, widths.state)),
-            theme.fg("muted", padRight(row.age, widths.age)),
-            theme.fg("dim", padRight(row.ticks, widths.ticks)),
-            theme.fg("dim", row.target),
-          ].join(" "),
-          inner,
-          "...",
-          true,
-        );
-      })
-      .join("\n");
+    return rows.map((row, index) => {
+      const current = index === selected;
+      const id = padRight(row.id, widths.id);
+      // Every row reserves the cursor column, so selection never shifts it.
+      const cursor = current ? theme.fg("accent", SELECTED_CURSOR) : " ";
+      return truncateToWidth(
+        [
+          cursor,
+          current ? theme.fg("accent", theme.bold(id)) : theme.bold(id),
+          this.spinner.marker(row.state, theme),
+          theme.fg("muted", padRight(row.state, widths.state)),
+          theme.fg("muted", padRight(row.age, widths.age)),
+          theme.fg("dim", padRight(row.ticks, widths.ticks)),
+          theme.fg("dim", row.target),
+        ].join(" "),
+        inner,
+        "...",
+        true,
+      );
+    });
   }
 
   /**

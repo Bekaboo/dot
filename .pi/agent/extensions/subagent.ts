@@ -32,11 +32,8 @@ import type {
   Theme,
   ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
-import { DynamicBorder } from "@earendil-works/pi-coding-agent";
 import {
   type Component,
-  Container,
-  Text,
   type TUI,
   truncateToWidth,
   visibleWidth,
@@ -44,12 +41,16 @@ import {
 import { Type } from "typebox";
 
 import {
-  bodyRows,
-  hintLine,
-  PAGE_PADDING_X,
-  windowLabel,
-} from "./utils/page.ts";
+  DrillDown,
+  OverlayPage,
+  padLeft,
+  padRight,
+  SELECTED_CURSOR,
+} from "./utils/overlay.ts";
+import { PAGE_PADDING_X, windowStart } from "./utils/page.ts";
 import { type RunState, Spinner } from "./utils/spinner.ts";
+
+export { SELECTED_CURSOR };
 
 /** Custom message type used for subagent notifications. */
 const NOTICE_TYPE = "subagent";
@@ -227,9 +228,6 @@ const TEXT_TAIL_BUFFER_CHARS = 400;
 
 /** Kind column of the detail view's first line, the moment the child spawned. */
 const START_KIND = "start";
-
-/** Cursor in front of the selected `/subagents` row, as pi's select lists draw it. */
-export const SELECTED_CURSOR = "→";
 
 /** Schema for the `subagent` tool. */
 const SubagentParams = Type.Object({
@@ -1407,7 +1405,7 @@ function timeoutLabel(seconds: number): string {
  * @param rows - Rows the overlay shows.
  * @returns The terminal width of each column.
  */
-function alignWidths(rows: SubagentRow[]): ColumnWidths {
+function alignWidths(rows: readonly SubagentRow[]): ColumnWidths {
   const keys = [
     "id",
     "status",
@@ -1433,30 +1431,6 @@ function alignWidths(rows: SubagentRow[]): ColumnWidths {
     }
   }
   return widths;
-}
-
-/**
- * Pad plain text on the right to a terminal width.
- *
- * @param text - Text without ANSI attributes.
- * @param width - Target terminal columns.
- * @returns The text followed by spaces, unchanged when already wide enough.
- */
-function padRight(text: string, width: number): string {
-  const missing = width - visibleWidth(text);
-  return missing > 0 ? text + " ".repeat(missing) : text;
-}
-
-/**
- * Pad plain text on the left to a terminal width.
- *
- * @param text - Text without ANSI attributes.
- * @param width - Target terminal columns.
- * @returns The text preceded by spaces, unchanged when already wide enough.
- */
-function padLeft(text: string, width: number): string {
-  const missing = width - visibleWidth(text);
-  return missing > 0 ? " ".repeat(missing) + text : text;
 }
 
 /**
@@ -1537,23 +1511,6 @@ function summaryOf(rows: SubagentRow[], theme: Theme): string {
     "muted",
     `${running} running, ${rows.length - running} finished`,
   );
-}
-
-/**
- * Index of the first row of a window that keeps the selection visible.
- *
- * @param selected - Index of the selected row within all rows.
- * @param total - Number of rows to show.
- * @param capacity - Rows the window holds.
- * @returns Index of the window's first row.
- */
-function windowStart(
-  selected: number,
-  total: number,
-  capacity: number,
-): number {
-  const last = Math.max(0, total - capacity);
-  return Math.min(last, Math.max(0, selected - Math.floor(capacity / 2)));
 }
 
 /**
@@ -2029,42 +1986,18 @@ class SubagentRunner {
 }
 
 /**
- * Text of an overlay body and its hint line.
- *
- * `lines` already carries the blank line that separates the body from the
- * summary, and has been cut down to the rows the terminal leaves.
- */
-interface OverlayBody {
-  lines: string;
-  footer: string;
-}
-
-/**
- * Size of the open detail view, so scrolling knows how far it can move.
- */
-interface DetailViewport {
-  /** Lines the detail view has in total. */
-  total: number;
-  /** Lines the window holds. */
-  capacity: number;
-}
-
-/**
  * Overlay listing the session's subagents, oldest first.
  *
- * Laid out like the todo overlay: a bordered box with a title, a summary, one
- * line per child and an Escape hint. Rows are read from the runner on every
- * render, so elapsed time stays current; Enter opens one child's activity and
- * Escape walks back out. A running child gets the same braille spinner as pi's
- * working indicator; the animation runs only while one is alive. Bodies are cut
- * to the rows the terminal leaves, and the selected row or newest step stays in
- * view, so a short terminal keeps the box chrome and its hint visible.
+ * Built on the shared overlay page, like `/timers`: a bordered box with a
+ * title, a summary, one line per child and an Escape hint. Rows are read from
+ * the runner on every render, so elapsed time stays current; Enter opens one
+ * child's activity and Escape walks back out. A running child gets the same
+ * braille spinner as pi's working indicator; the animation runs only while one
+ * is alive.
  */
 class SubagentsOverlay implements Component {
-  private readonly container = new Container();
-  private readonly summaryText: Text;
-  private readonly rowsText: Text;
-  private readonly footerText: Text;
+  private readonly page: OverlayPage;
+  private readonly nav: DrillDown;
   private readonly tui: TUI;
   private readonly theme: Theme;
   /** User keybindings, so the list moves with the keys every pi list uses. */
@@ -2072,17 +2005,6 @@ class SubagentsOverlay implements Component {
   private readonly readRows: () => SubagentRow[];
   private readonly close: () => void;
   private readonly spinner: Spinner;
-  /** Index of the row the list view selected. */
-  private selected = 0;
-  /** Id whose detail view is open, or undefined while the list is shown. */
-  private detailId: string | undefined;
-  /**
-   * First detail line the window shows, or undefined to follow the newest step.
-   * Scrolling up pins it; scrolling to the end follows again.
-   */
-  private detailStart: number | undefined;
-  /** Size of the detail view at the last render, so scrolling knows its bounds. */
-  private detailView: DetailViewport | undefined;
 
   constructor(
     tui: TUI,
@@ -2096,33 +2018,16 @@ class SubagentsOverlay implements Component {
     this.keybindings = keybindings;
     this.readRows = readRows;
     this.close = close;
+    this.page = new OverlayPage(tui, theme, "Subagents");
+    this.nav = new DrillDown(() => tui.requestRender());
     this.spinner = new Spinner(() => tui.requestRender());
-    this.summaryText = new Text("", PAGE_PADDING_X, 0);
-    this.rowsText = new Text("", PAGE_PADDING_X, 0);
-    this.footerText = new Text("", PAGE_PADDING_X, 1);
-
-    const border = () =>
-      new DynamicBorder((text) => theme.fg("borderMuted", text));
-    this.container.addChild(border());
-    this.container.addChild(
-      new Text(theme.fg("accent", theme.bold("Subagents")), PAGE_PADDING_X, 1),
-    );
-    this.container.addChild(this.summaryText);
-    this.container.addChild(this.rowsText);
-    this.container.addChild(this.footerText);
-    this.container.addChild(border());
     this.syncAnimation();
   }
 
   render(width: number): string[] {
     const rows = this.readRows();
-    this.selected = Math.min(this.selected, Math.max(0, rows.length - 1));
-    const detail = rows.find((row) => row.id === this.detailId);
-    if (!detail) {
-      this.detailId = undefined;
-      this.detailView = undefined;
-    }
-    this.summaryText.setText(
+    const { selected, detail } = this.nav.sync(rows, (row) => row.id);
+    this.page.setSummary(
       detail
         ? detailHeader(
             detail,
@@ -2131,17 +2036,14 @@ class SubagentsOverlay implements Component {
           )
         : summaryOf(rows, this.theme),
     );
-    const body = detail
-      ? this.detailBody(detail, width)
-      : this.listBody(rows, width);
-    this.rowsText.setText(body.lines);
-    this.footerText.setText(body.footer);
-    return this.container.render(width);
+    if (detail) this.detailBody(detail, width);
+    else this.listBody(rows, selected, width);
+    return this.page.render(width);
   }
 
   invalidate(): void {
     this.syncAnimation();
-    this.container.invalidate();
+    this.page.invalidate();
     this.tui.requestRender();
   }
 
@@ -2157,125 +2059,43 @@ class SubagentsOverlay implements Component {
   }
 
   handleInput(data: string): void {
-    if (this.keybindings.matches(data, "tui.select.cancel")) {
-      if (this.detailId !== undefined) {
-        this.detailId = undefined;
-        this.detailView = undefined;
-        this.tui.requestRender();
-        return;
-      }
-      this.close();
-      return;
-    }
-    if (this.detailId !== undefined) {
-      this.scrollDetailView(data);
-      return;
-    }
-    const rows = this.readRows();
-    if (this.keybindings.matches(data, "tui.select.up")) {
-      this.selected = Math.max(0, this.selected - 1);
-      this.tui.requestRender();
-      return;
-    }
-    if (this.keybindings.matches(data, "tui.select.down")) {
-      this.selected = Math.min(Math.max(0, rows.length - 1), this.selected + 1);
-      this.tui.requestRender();
-      return;
-    }
-    const row = rows[this.selected];
-    if (row && this.keybindings.matches(data, "tui.select.confirm")) {
-      this.detailId = row.id;
-      this.detailStart = undefined;
-      this.detailView = undefined;
-      this.tui.requestRender();
-    }
-  }
-
-  /**
-   * Move the open detail view with the list keys.
-   *
-   * @param data - Input the overlay received.
-   */
-  private scrollDetailView(data: string): void {
-    const page = Math.max(1, this.detailView?.capacity ?? 1);
-    const moves: [string, number][] = [
-      ["tui.select.up", -1],
-      ["tui.select.down", 1],
-      ["tui.select.pageUp", -page],
-      ["tui.select.pageDown", page],
-    ];
-    for (const [action, lines] of moves) {
-      if (!this.keybindings.matches(data, action)) continue;
-      this.scrollDetail(lines);
-      return;
-    }
-  }
-
-  /**
-   * Scroll the detail view, and follow the newest step again at its end.
-   *
-   * @param lines - Lines to move; negative moves towards older steps.
-   */
-  private scrollDetail(lines: number): void {
-    const view = this.detailView;
-    if (!view) return;
-    const last = Math.max(0, view.total - view.capacity);
-    if (last === 0) return;
-    // Resolve a followed tail before moving, so repeated keys add up even when
-    // the TUI has not rendered between them.
-    const from = this.detailStart ?? last;
-    const next = Math.max(0, Math.min(last, from + lines));
-    this.detailStart = next >= last ? undefined : next;
-    this.tui.requestRender();
-  }
-
-  /**
-   * Rows the body may fill at this width, without the box chrome.
-   *
-   * The overlay takes the editor's place between the transcript and pi's
-   * footer, so the terminal height minus pi's own rows is all it can use
-   * before the viewport clips its last lines.
-   *
-   * @param width - Overlay width, including the text padding.
-   * @param hint - Hint the box will show, measured without its row count.
-   * @returns Lines available for the body, or 0 when only the chrome fits.
-   */
-  private bodyCapacity(width: number, hint: string): number {
-    this.rowsText.setText("");
-    this.footerText.setText(hintLine(this.theme, hint, width));
-    return bodyRows(
-      () => this.container.render(width).length,
-      this.tui.terminal.rows,
+    const ids = this.readRows().map((row) => row.id);
+    const closing = this.nav.handleInput(
+      data,
+      this.keybindings,
+      ids,
+      this.page.rowCapacity,
     );
+    if (!closing) return;
+    this.close();
   }
 
   /**
    * Render the list view, scrolled so the selected row stays visible.
    *
    * @param rows - Rows the overlay shows.
+   * @param selected - Index of the selected row within all rows.
    * @param width - Overlay width, including the text padding.
-   * @returns The body text and its hint line.
    */
-  private listBody(rows: SubagentRow[], width: number): OverlayBody {
-    if (rows.length === 0) {
-      return {
-        lines: "",
-        footer: hintLine(this.theme, "Press Escape to close", width),
-      };
-    }
-    const hint = "Enter for details, Escape to close";
-    const capacity = this.bodyCapacity(width, hint);
-    const start = windowStart(this.selected, rows.length, capacity);
-    const shown = rows.slice(start, start + capacity);
-    return {
-      lines:
-        shown.length > 0 ? `\n${this.renderRows(shown, width, start)}` : "",
-      footer: hintLine(
-        this.theme,
-        `${hint}${windowLabel(start, shown.length, rows.length)}`,
-        width,
-      ),
-    };
+  private listBody(
+    rows: readonly SubagentRow[],
+    selected: number,
+    width: number,
+  ): void {
+    // The hint names Enter only while there is a row to open.
+    const hint =
+      rows.length === 0
+        ? "Press Escape to close"
+        : "Enter for details, Escape to close";
+    const capacity = this.page.measure(width, hint);
+    const start = windowStart(selected, rows.length, capacity);
+    this.page.setWindow(
+      this.renderRows(rows, width, selected),
+      start,
+      capacity,
+      hint,
+      width,
+    );
   }
 
   /**
@@ -2283,54 +2103,38 @@ class SubagentsOverlay implements Component {
    *
    * @param row - Child whose detail is open.
    * @param width - Overlay width, including the text padding.
-   * @returns The body text and its hint line.
    */
-  private detailBody(row: SubagentRow, width: number): OverlayBody {
+  private detailBody(row: SubagentRow, width: number): void {
     const lines = this.renderDetail(row, width);
     const hint = "Escape to go back";
-    const scrollHint = `${hint}, up/down scroll`;
-    const capacity = this.bodyCapacity(width, scrollHint);
-    const last = Math.max(0, lines.length - capacity);
-    const start =
-      this.detailStart === undefined ? last : Math.min(this.detailStart, last);
-    const shown = lines.slice(start, start + capacity);
-    this.detailView = { total: lines.length, capacity };
-    return {
-      lines: shown.length > 0 ? `\n${shown.join("\n")}` : "",
-      footer: hintLine(
-        this.theme,
-        `${lines.length > capacity ? scrollHint : hint}${windowLabel(start, shown.length, lines.length)}`,
-        width,
-      ),
-    };
+    const capacity = this.page.measure(width, `${hint}, up/down scroll`);
+    const start = this.nav.detailWindow(lines.length, capacity);
+    this.page.setWindow(lines, start, capacity, hint, width);
   }
 
   /**
    * Render every subagent on one line each, with aligned columns.
    *
-   * @param rows - Rows the window shows.
+   * @param rows - Every row of the list.
    * @param width - Overlay width, including the text padding.
-   * @param first - Index of the first row within all rows, so the cursor stays
-   *   on the selection while the list is scrolled.
+   * @param selected - Index of the selected row within all rows.
    * @returns One width-truncated line per subagent.
    */
   private renderRows(
-    rows: SubagentRow[],
+    rows: readonly SubagentRow[],
     width: number,
-    first: number,
-  ): string {
+    selected: number,
+  ): string[] {
     const widths = alignWidths(rows);
     const inner = Math.max(0, width - PAGE_PADDING_X * 2);
-    return rows
-      .map((row, index) =>
-        truncateToWidth(
-          this.renderRow(row, widths, index + first === this.selected),
-          inner,
-          "...",
-          true,
-        ),
-      )
-      .join("\n");
+    return rows.map((row, index) =>
+      truncateToWidth(
+        this.renderRow(row, widths, index === selected),
+        inner,
+        "...",
+        true,
+      ),
+    );
   }
 
   /**

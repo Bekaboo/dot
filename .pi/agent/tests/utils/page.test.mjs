@@ -9,6 +9,7 @@ import {
   PAGE_PADDING_X,
   scrolledStart,
   windowLabel,
+  windowStart,
 } from "../../extensions/utils/page.ts";
 
 const plainTheme = { fg: (_color, text) => text };
@@ -75,6 +76,24 @@ describe("page", () => {
 
     test("still says something when the window holds no row at all", () => {
       assert.equal(windowLabel(0, 0, 20), "  (20 hidden)");
+    });
+  });
+
+  describe("windowStart", () => {
+    test("stays at the top while the selected row fits in view", () => {
+      assert.equal(windowStart(0, 20, 6), 0);
+      assert.equal(windowStart(3, 20, 6), 0);
+    });
+
+    test("centers the selection, then sticks to both ends", () => {
+      assert.equal(windowStart(10, 20, 6), 7);
+      assert.equal(windowStart(1, 20, 6), 0, "no window above the first row");
+      assert.equal(windowStart(19, 20, 6), 14, "a full window at the end");
+    });
+
+    test("holds an empty list at its only position", () => {
+      assert.equal(windowStart(0, 0, 6), 0);
+      assert.equal(windowStart(7, 0, 6), 0);
     });
   });
 

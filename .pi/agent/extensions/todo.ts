@@ -42,27 +42,19 @@ import type {
   TurnEndEventResult,
 } from "@earendil-works/pi-coding-agent";
 
-import {
-  createEditToolDefinition,
-  DynamicBorder,
-} from "@earendil-works/pi-coding-agent";
+import { createEditToolDefinition } from "@earendil-works/pi-coding-agent";
 
 import {
   type Component,
-  Container,
+  type KeyId,
   matchesKey,
   Text,
   type TUI,
 } from "@earendil-works/pi-tui";
 import { type Static, Type } from "typebox";
 
-import {
-  bodyRows,
-  hintLine,
-  PAGE_PADDING_X,
-  scrolledStart,
-  windowLabel,
-} from "./utils/page.ts";
+import { OverlayPage } from "./utils/overlay.ts";
+import { scrolledStart } from "./utils/page.ts";
 
 /** Turns of an unchanged checklist before the agent is nudged to update it. */
 const REMIND_STALE_LIST_AFTER_TURNS = 16;
@@ -472,10 +464,11 @@ function renderTodoResult(
 /**
  * Build the overlay for the `/todos` command.
  *
- * Laid out like the subagent and timer overlays: a bordered box with a title, a
- * summary, one line per item and an Escape hint. The items are cut to the rows
- * the terminal leaves and scroll with the list keys, so a short terminal keeps
- * the hint visible and no item becomes unreachable.
+ * Built on the shared overlay page, like the subagent and timer overlays: a
+ * bordered box with a title, a summary, one line per item and an Escape hint.
+ * The items are cut to the rows the terminal leaves and scroll with the list
+ * keys, so a short terminal keeps the hint visible and no item becomes
+ * unreachable.
  *
  * @param tui - TUI the overlay renders into.
  * @param list - Checklist to display.
@@ -497,73 +490,35 @@ function createTodoOverlay(
     ? theme.fg("muted", `${closed}/${items.length} closed`)
     : theme.fg("dim", "No todos yet. Ask the agent to add some!");
   const rendered = renderItems(list, theme);
-  const summaryText = new Text(summary, PAGE_PADDING_X, 0);
-  const itemsText = new Text("", PAGE_PADDING_X, 0);
-  const footerText = new Text("", PAGE_PADDING_X, 1);
   const hint = "Press Escape to close";
-  const scrollHint = `${hint}, up/down scroll`;
+  const page = new OverlayPage(tui, theme, "Todos");
+  page.setSummary(summary);
   /** First item the window shows. */
   let start = 0;
-  /** Item rows the window holds at the last render. */
-  let capacity = 0;
-
-  const container = new Container();
-  container.addChild(
-    new DynamicBorder((text) => theme.fg("borderMuted", text)),
-  );
-  container.addChild(
-    new Text(theme.fg("accent", theme.bold("Todos")), PAGE_PADDING_X, 1),
-  );
-  container.addChild(summaryText);
-  container.addChild(itemsText);
-  container.addChild(footerText);
-  container.addChild(
-    new DynamicBorder((text) => theme.fg("borderMuted", text)),
-  );
-
-  /**
-   * Rows the checklist may fill, keeping the box chrome and its hint visible.
-   *
-   * @param width - Overlay width, including the text padding.
-   * @returns Lines available for the items.
-   */
-  const bodyCapacity = (width: number): number => {
-    itemsText.setText("");
-    footerText.setText(hintLine(theme, scrollHint, width));
-    return bodyRows(() => container.render(width).length, tui.terminal.rows);
-  };
 
   return {
     render(width) {
-      capacity = bodyCapacity(width);
+      const capacity = page.measure(width, hint);
       start = scrolledStart(start, 0, rendered.length, capacity);
-      const shown = rendered.slice(start, start + capacity);
-      itemsText.setText(shown.length > 0 ? `\n${shown.join("\n")}` : "");
-      footerText.setText(
-        hintLine(
-          theme,
-          `${shown.length < rendered.length ? scrollHint : hint}${windowLabel(start, shown.length, rendered.length)}`,
-          width,
-        ),
-      );
-      return container.render(width);
+      page.setWindow(rendered, start, capacity, hint, width);
+      return page.render(width);
     },
-    invalidate: () => container.invalidate(),
+    invalidate: () => page.invalidate(),
     handleInput(data) {
       if (matchesKey(data, "escape") || matchesKey(data, "ctrl+c")) {
         close();
         return;
       }
-      const page = Math.max(1, capacity);
-      const moves: [string, number][] = [
+      const pageRows = Math.max(1, page.rowCapacity);
+      const moves: [KeyId, number][] = [
         ["up", -1],
         ["down", 1],
-        ["pageUp", -page],
-        ["pageDown", page],
+        ["pageUp", -pageRows],
+        ["pageDown", pageRows],
       ];
       for (const [key, lines] of moves) {
         if (!matchesKey(data, key)) continue;
-        start = scrolledStart(start, lines, rendered.length, page);
+        start = scrolledStart(start, lines, rendered.length, pageRows);
         tui.requestRender();
         return;
       }

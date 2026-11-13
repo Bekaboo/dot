@@ -4,8 +4,8 @@
  * `/subagents`, `/timers` and `/todos` all replace pi's editor slot with a
  * bordered page. Pi lays that slot out inside the dock under the transcript, so
  * a page taller than the terminal loses its last rows: the Escape hint and the
- * bottom border. These helpers size a page body to the rows the terminal leaves
- * and say which rows a window hides.
+ * bottom border. These helpers size a page body to the rows the terminal leaves,
+ * move a window of rows, and say which rows it hides.
  */
 
 import type { Theme } from "@earendil-works/pi-coding-agent";
@@ -69,6 +69,23 @@ export function windowLabel(
   if (shown >= total) return "";
   if (shown === 0) return `  (${total} hidden)`;
   return `  (${start + 1}-${start + shown} of ${total})`;
+}
+
+/**
+ * Index of the first row of a window that keeps one row selected.
+ *
+ * @param selected - Index of the selected row within all rows.
+ * @param total - Number of rows there are.
+ * @param capacity - Rows the window holds.
+ * @returns Index of the window's first row.
+ */
+export function windowStart(
+  selected: number,
+  total: number,
+  capacity: number,
+): number {
+  const last = Math.max(0, total - capacity);
+  return Math.min(last, Math.max(0, selected - Math.floor(capacity / 2)));
 }
 
 /**
