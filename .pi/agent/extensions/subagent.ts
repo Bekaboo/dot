@@ -226,11 +226,20 @@ const FINISHED_HISTORY = 10;
 /** How many of a child's activity steps the status and detail view keep. */
 const ACTIVITY_HISTORY = 20;
 
-/** Longest line kept as a text step's label or tail, in characters. */
-const ACTIVITY_LINE_CHARS = 80;
+/** Longest line kept as a text step's tail, the status line's second row. */
+const ACTIVITY_TAIL_CHARS = 80;
 
-/** Longest argument summary kept for a tool step, in characters. */
-const TOOL_SUMMARY_CHARS = 60;
+/**
+ * Longest step label kept, in characters.
+ *
+ * The detail view cuts a row to the terminal width, so a label has to outlast
+ * any terminal; this bound only keeps a pathological argument from being held
+ * whole. Anything shorter is kept intact.
+ */
+const ACTIVITY_LABEL_CHARS = 2000;
+
+/** Longest step label the status line quotes, so a poll stays one short line. */
+const STATUS_LABEL_CHARS = 60;
 
 /** Characters kept from an open text block, enough to derive its tail line. */
 const TEXT_TAIL_BUFFER_CHARS = 400;
@@ -383,7 +392,7 @@ interface ActivityStep {
   kind: "think" | "text" | "tool";
   /** Tool name for a tool step, empty otherwise. */
   tool: string;
-  /** First line of a text block, or the argument summary of a tool call. */
+  /** First line of a text block, or the argument value naming a tool call. */
   label: string;
   /** Last non-empty line of a text block, for the status line. */
   tail?: string;
@@ -676,7 +685,7 @@ const TOOL_SUMMARY_KEYS = ["command", "path", "pattern", "url", "query", "id"];
  * first string value, so an unknown tool still says something useful.
  *
  * @param args - Arguments the child passed to the tool.
- * @returns The first line of that value, cut short, or an empty string.
+ * @returns The first line of that value, or an empty string.
  */
 function toolSummary(args: unknown): string {
   if (!args || typeof args !== "object") return "";
@@ -688,7 +697,7 @@ function toolSummary(args: unknown): string {
       (entry) => typeof entry === "string" && entry !== "",
     );
   return typeof value === "string"
-    ? edgeLine(value, false, TOOL_SUMMARY_CHARS)
+    ? edgeLine(value, false, ACTIVITY_LABEL_CHARS)
     : "";
 }
 
@@ -785,9 +794,9 @@ function absorbBlock(activity: Activity, block: StreamBlock): void {
       // The first line grows over several deltas; follow it while the buffer
       // still holds the block's start.
       if (step.chars <= TEXT_TAIL_BUFFER_CHARS) {
-        step.label = edgeLine(activity.textBuffer, false, ACTIVITY_LINE_CHARS);
+        step.label = edgeLine(activity.textBuffer, false, ACTIVITY_LABEL_CHARS);
       }
-      step.tail = edgeLine(activity.textBuffer, true, ACTIVITY_LINE_CHARS);
+      step.tail = edgeLine(activity.textBuffer, true, ACTIVITY_TAIL_CHARS);
       return;
     }
     case "text_end":
@@ -830,8 +839,9 @@ function activityNow(activity: Activity): string {
     return `writing for ${elapsedSec(step.startedAt)}s (${charCount(step.chars)})`;
   }
   const seconds = elapsedSec(step.startedAt);
+  // Only this line stays compact; the detail view shows the whole label.
   return step.label
-    ? `${step.tool} \`${step.label}\` (${seconds}s)`
+    ? `${step.tool} \`${truncateChars(step.label, STATUS_LABEL_CHARS)}\` (${seconds}s)`
     : `${step.tool} (${seconds}s)`;
 }
 

@@ -1400,6 +1400,75 @@ describe("subagent", () => {
       await pi.hooks.get("session_shutdown")({ reason: "quit" });
     });
 
+    test("/subagents shows a step's whole label on a wide page", async (t) => {
+      const { call, pi, children } = setup(t);
+      const screen = fakeUI(t);
+      const showing = pi.commands
+        .get("subagents")
+        .handler("", { mode: "tui", ui: screen.ui });
+      const overlay = screen.component;
+
+      await call({ id: "reader", prompt: "x" });
+      // Longer than the status line quotes, short enough for a wide page.
+      const file = `/Users/zeng/Code/${"autodata-dev-v0.1.6-fix-request-disable-".repeat(3)}src/index.ts`;
+      children[0].write(
+        toolRecord("tool_execution_start", "call-1", "read", { path: file }),
+      );
+
+      const status = await pi.tools
+        .get("subagent_status")
+        .execute("call", {}, undefined, undefined, {});
+      assert.ok(
+        !status.content[0].text.includes(file),
+        "the status line still quotes a short label",
+      );
+
+      overlay.handleInput("\r");
+      // The row follows the page width instead of a fixed budget.
+      for (const width of [20, 40, 60, 100, 200]) {
+        const lines = overlay.render(width);
+        for (const line of lines) {
+          assert.equal(widthOf(line), width, `a line fits ${width} columns`);
+        }
+        const page = lines.map(plainOf).join("\n");
+        if (width === 200) {
+          assert.ok(page.includes(file), "a wide page shows the whole path");
+          assert.doesNotMatch(page, /\.\.\./, "nothing is cut");
+        } else {
+          assert.ok(!page.includes(file), `a ${width}-column page cuts it`);
+          assert.match(page, /\.\.\./, `a ${width}-column page says it cut`);
+        }
+      }
+
+      overlay.handleInput("\x1b");
+      overlay.handleInput("\x1b");
+      await showing;
+
+      // The same long label must not wrap and push the hint out of a short
+      // terminal at any width.
+      const rows = 20;
+      const short = fakeUI(t, {}, rows);
+      const shortShowing = pi.commands
+        .get("subagents")
+        .handler("", { mode: "tui", ui: short.ui });
+      short.component.handleInput("\r");
+      // 40 columns is narrow enough to cut the row; the settings header alone
+      // already needs more rows than a 20-row terminal leaves at width 20.
+      for (const width of [40, 100]) {
+        const page = short.component.render(width);
+        assert.ok(
+          page.length <= rows - 4,
+          `the page fits ${rows} rows at ${width} columns: ${page.length}`,
+        );
+        for (const line of page) {
+          assert.equal(widthOf(line), width, `a line fits ${width} columns`);
+        }
+      }
+      short.component.handleInput("\x1b");
+      short.component.handleInput("\x1b");
+      await shortShowing;
+    });
+
     test("/subagents keeps a finished child's steps in its details", async (t) => {
       const { call, pi, children } = setup(t);
       const screen = fakeUI(t);
