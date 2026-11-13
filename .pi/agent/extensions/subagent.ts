@@ -170,10 +170,10 @@ const START_TIMEOUT_MS = 60_000;
 /**
  * Wall-clock limit for a child when the caller names none, in seconds.
  *
- * Generous, because a child may legitimately wait on background work it
- * started; it exists so a stuck child still reports instead of living on.
+ * Be conservative because a subagent tend to over-think and run for a long
+ * time if given too much time to complete.
  */
-const DEFAULT_TIMEOUT_SEC = 3_600;
+const DEFAULT_TIMEOUT_SEC = 600;
 
 /** Environment variable carrying a child's timeout, so it can warn itself. */
 const TIMEOUT_ENV = "PI_SUBAGENT_TIMEOUT_SEC";
