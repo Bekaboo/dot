@@ -5,10 +5,11 @@ import { visibleWidth } from "@earendil-works/pi-tui";
 
 import {
   DrillDown,
+  listRow,
   OverlayPage,
   padLeft,
   padRight,
-  selectedLine,
+  SELECTED_CURSOR,
 } from "../../extensions/utils/overlay.ts";
 
 import { VIEWPORT_RESERVE_ROWS } from "../../extensions/utils/page.ts";
@@ -277,29 +278,80 @@ describe("overlay", () => {
     });
   });
 
-  describe("selection", () => {
-    test("paints the whole row width with the selection background", () => {
-      const painted = [];
+  describe("list rows", () => {
+    /**
+     * A theme that records what a row is styled with, and leaves its text.
+     *
+     * @returns The theme, and the `fg`, `bold` and `bg` calls it received.
+     */
+    function recordingTheme() {
+      const calls = { fg: [], bold: [], bg: [] };
       const theme = {
+        fg: (color, text) => {
+          calls.fg.push({ color, text });
+          return text;
+        },
+        bold: (text) => {
+          calls.bold.push(text);
+          return text;
+        },
         bg: (color, text) => {
-          painted.push({ color, text });
+          calls.bg.push({ color, text });
           return text;
         },
       };
-      const line = selectedLine(theme, "timer-a running", 20);
-      assert.equal(
-        line,
-        "timer-a running     ",
-        "the row is padded to the body width",
+      return { calls, theme };
+    }
+
+    test("marks the cursor row with the cursor, a bold label and the band", () => {
+      const { calls, theme } = recordingTheme();
+      const line = listRow(theme, "timer-a", ["running", "00:12"], 24, true);
+
+      assert.equal(textOf([line]).trimEnd(), `${SELECTED_CURSOR} timer-a running 00:12`);
+      assert.equal(visibleWidth(line), 24, "the row fills the body width");
+      assert.deepEqual(calls.bold, ["timer-a"], "the label is bold");
+      assert.deepEqual(
+        calls.bg,
+        [{ color: "selectedBg", text: line }],
+        "the band covers the padding too",
       );
-      assert.deepEqual(painted, [{ color: "selectedBg", text: line }]);
+      assert.deepEqual(
+        calls.fg,
+        [{ color: "accent", text: SELECTED_CURSOR }],
+        "the accent marks the cursor only, so the label keeps its text color",
+      );
+    });
+
+    test("leaves every other row plain and aligned with the cursor row", () => {
+      const { calls, theme } = recordingTheme();
+      const selected = listRow(theme, "timer-a", ["running"], 20, true);
+      const other = listRow(theme, "timer-b", ["running"], 20, false);
+
+      assert.deepEqual(
+        calls.bold,
+        ["timer-a"],
+        "only the cursor row's label is bold",
+      );
+      assert.deepEqual(
+        calls.bg.map((entry) => entry.color),
+        ["selectedBg"],
+        "only the cursor row is painted",
+      );
+      assert.equal(visibleWidth(other), 20, "the plain row still fills the body");
+      assert.equal(
+        textOf([other]).indexOf("running"),
+        textOf([selected]).indexOf("running"),
+        "the cursor column keeps the columns aligned",
+      );
     });
 
     test("cuts a row wider than the body before painting it", () => {
-      const theme = { bg: (_color, text) => text };
-      const line = selectedLine(theme, "a".repeat(30), 10);
+      const { calls, theme } = recordingTheme();
+      const line = listRow(theme, "a".repeat(30), [], 10, true);
+
       assert.equal(visibleWidth(line), 10);
-      assert.match(line.replace(STYLED, ""), /\.\.\.$/);
+      assert.match(textOf([line]), /\.\.\.$/);
+      assert.equal(calls.bg[0].text, line, "the band wraps the cut, padded row");
     });
   });
 });

@@ -54,10 +54,10 @@ import { type Static, Type } from "typebox";
 
 import {
   DrillDown,
+  listRow,
   OverlayPage,
   padRight,
   SELECTED_CURSOR,
-  selectedLine,
 } from "./utils/overlay.ts";
 import { PAGE_PADDING_X, windowStart } from "./utils/page.ts";
 import { type RunState, Spinner } from "./utils/spinner.ts";
@@ -1964,24 +1964,21 @@ class TimersOverlay implements Component {
     const { theme } = this;
     const widths = timerWidths(rows);
     const inner = Math.max(0, width - PAGE_PADDING_X * 2);
-    return rows.map((row, index) => {
-      const current = index === selected;
-      const id = padRight(row.id, widths.id);
-      // Every row reserves the cursor column, so selection never shifts it.
-      const cursor = current ? theme.fg("accent", SELECTED_CURSOR) : " ";
-      const line = [
-        cursor,
-        current ? theme.fg("accent", theme.bold(id)) : theme.bold(id),
-        this.spinner.marker(row.state, theme),
-        theme.fg("muted", padRight(row.state, widths.state)),
-        theme.fg("muted", padRight(row.age, widths.age)),
-        theme.fg("dim", padRight(row.ticks, widths.ticks)),
-        theme.fg("dim", row.target),
-      ].join(" ");
-      return current
-        ? selectedLine(theme, line, inner)
-        : truncateToWidth(line, inner, "...", true);
-    });
+    return rows.map((row, index) =>
+      listRow(
+        theme,
+        padRight(row.id, widths.id),
+        [
+          this.spinner.marker(row.state, theme),
+          theme.fg("muted", padRight(row.state, widths.state)),
+          theme.fg("muted", padRight(row.age, widths.age)),
+          theme.fg("dim", padRight(row.ticks, widths.ticks)),
+          theme.fg("dim", row.target),
+        ],
+        inner,
+        index === selected,
+      ),
+    );
   }
 
   /**

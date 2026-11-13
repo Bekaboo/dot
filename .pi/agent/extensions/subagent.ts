@@ -42,11 +42,11 @@ import { Type } from "typebox";
 
 import {
   DrillDown,
+  listRow,
   OverlayPage,
   padLeft,
   padRight,
   SELECTED_CURSOR,
-  selectedLine,
 } from "./utils/overlay.ts";
 import {
   PAGE_PADDING_X,
@@ -2229,43 +2229,23 @@ class SubagentsOverlay implements Component {
     const widths = alignWidths(rows);
     const inner = Math.max(0, width - PAGE_PADDING_X * 2);
     return rows.map((row, index) => {
-      const line = this.renderRow(row, widths, index === selected);
-      return index === selected
-        ? selectedLine(this.theme, line, inner)
-        : truncateToWidth(line, inner, "...", true);
+      const column = columnsOf(row);
+      return listRow(
+        this.theme,
+        padRight(column.id, widths.id),
+        [
+          this.spinner.marker(row.state, this.theme),
+          this.theme.fg("muted", padLeft(column.status, widths.status)),
+          this.theme.fg("muted", padLeft(column.elapsed, widths.elapsed)),
+          this.theme.fg("dim", padRight(column.timeout, widths.timeout)),
+          this.theme.fg("dim", padRight(column.model, widths.model)),
+          this.theme.fg("dim", padRight(column.tools, widths.tools)),
+          this.theme.fg("dim", padRight(column.cwd, widths.cwd)),
+        ],
+        inner,
+        index === selected,
+      );
     });
-  }
-
-  /**
-   * Render one subagent as its id, spinner or state marker, and aligned
-   * settings.
-   *
-   * @param row - Subagent to render.
-   * @param widths - Column widths shared by every row of this render.
-   * @param selected - Whether the list view has this row selected.
-   * @returns The styled line, before width truncation.
-   */
-  private renderRow(
-    row: SubagentRow,
-    widths: ColumnWidths,
-    selected: boolean,
-  ): string {
-    const { theme } = this;
-    const column = columnsOf(row);
-    const id = padRight(column.id, widths.id);
-    // Every row reserves the cursor column, so selection never shifts it.
-    const cursor = selected ? theme.fg("accent", SELECTED_CURSOR) : " ";
-    return [
-      cursor,
-      selected ? theme.fg("accent", theme.bold(id)) : theme.bold(id),
-      this.spinner.marker(row.state, theme),
-      theme.fg("muted", padLeft(column.status, widths.status)),
-      theme.fg("muted", padLeft(column.elapsed, widths.elapsed)),
-      theme.fg("dim", padRight(column.timeout, widths.timeout)),
-      theme.fg("dim", padRight(column.model, widths.model)),
-      theme.fg("dim", padRight(column.tools, widths.tools)),
-      theme.fg("dim", padRight(column.cwd, widths.cwd)),
-    ].join(" ");
   }
 
   /**

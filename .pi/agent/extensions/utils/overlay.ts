@@ -72,19 +72,32 @@ export function padLeft(text: string, width: number): string {
 }
 
 /**
- * Paint one row as pi's select lists paint their cursor line.
+ * Render one list row as pi's select lists render theirs.
  *
- * The selection background covers the whole body width, not only the text, so
- * the highlight reads as one band across the page. The row is cut and padded to
- * that width first, so the padding carries the background too.
+ * The cursor row opens with an accent cursor, its label is bold, and the whole
+ * row sits on the `selectedBg` band; every other row reserves the cursor column
+ * and stays plain. The label keeps its text color either way, as pi's own lists
+ * keep theirs: tinting it accent makes the selected row read as dimmer than the
+ * rows around it, since accent has less contrast on the band than text does.
  *
  * @param theme - Active theme.
- * @param row - Styled row, before truncation.
+ * @param label - Row's own name, plain text, already padded to its column.
+ * @param columns - Styled columns after the label, such as state and elapsed.
  * @param width - Body width, so the band reaches both edges of the page.
- * @returns The row cut and padded to width, on the `selectedBg` background.
+ * @param selected - Whether this row carries the cursor.
+ * @returns The row cut and padded to width, on the band when selected.
  */
-export function selectedLine(theme: Theme, row: string, width: number): string {
-  return theme.bg("selectedBg", truncateToWidth(row, width, "...", true));
+export function listRow(
+  theme: Theme,
+  label: string,
+  columns: readonly string[],
+  width: number,
+  selected: boolean,
+): string {
+  const cursor = selected ? theme.fg("accent", SELECTED_CURSOR) : " ";
+  const row = [cursor, selected ? theme.bold(label) : label, ...columns];
+  const line = truncateToWidth(row.join(" "), width, "...", true);
+  return selected ? theme.bg("selectedBg", line) : line;
 }
 
 /**
