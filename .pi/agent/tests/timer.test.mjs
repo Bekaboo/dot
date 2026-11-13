@@ -4,7 +4,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, describe, test } from "node:test";
 
-import timerExtension, { SELECTED_CURSOR } from "../extensions/timer.ts";
+import timerExtension, {
+  DEFAULT_JOB_TIMEOUT_SEC,
+  DEFAULT_TIMEOUT_SEC,
+  JOB_TAIL_LINES,
+  ON_TICK_MAX_LINES,
+  RETIRED_HISTORY,
+  SELECTED_CURSOR,
+} from "../extensions/timer.ts";
+import { VIEWPORT_RESERVE_ROWS } from "../extensions/utils/page.ts";
 
 const { KeybindingsManager, TUI_KEYBINDINGS } = await import(
   "@earendil-works/pi-tui"
@@ -372,7 +380,8 @@ describe("timer", () => {
 
     // A condition that already holds ends each timer on its first check, so this
     // needs no tick interval.
-    for (let index = 0; index < 12; index += 1) {
+    const started = RETIRED_HISTORY + 2;
+    for (let index = 0; index < started; index += 1) {
       await start({ id: `peek-${index}`, condition: "true", maxTicks: 0 });
       await noticesAfter(index + 1);
     }
@@ -380,8 +389,8 @@ describe("timer", () => {
     // The history is bounded, so the oldest id is forgotten and errors again.
     await assert.rejects(stop({ id: "peek-0" }), /No timer "peek-0"/);
     assert.equal(
-      (await stop({ id: "peek-11" })).content[0].text,
-      'Timer "peek-11" stopped (condition met).',
+      (await stop({ id: `peek-${started - 1}` })).content[0].text,
+      `Timer "peek-${started - 1}" stopped (condition met).`,
     );
   });
 
@@ -521,9 +530,11 @@ describe("timer", () => {
   });
 
   test("onTick output is capped", async (t) => {
-    const many = Array.from({ length: 60 }, (_, index) => `line ${index}`).join(
-      "\n",
-    );
+    const extra = 20;
+    const many = Array.from(
+      { length: ON_TICK_MAX_LINES + extra },
+      (_, index) => `line ${index}`,
+    ).join("\n");
     const { start, noticesAfter } = setup(t, (command) =>
       command === "snap" ? exit(0, many) : exit(1),
     );
@@ -537,8 +548,16 @@ describe("timer", () => {
     });
     const [notice] = await noticesAfter(1);
 
-    assert.match(notice.content, /line 39\n\.\.\. \(\+20 more lines\)$/);
-    assert.doesNotMatch(notice.content, /line 40/);
+    assert.match(
+      notice.content,
+      new RegExp(
+        `line ${ON_TICK_MAX_LINES - 1}\\n\\.\\.\\. \\(\\+${extra} more lines\\)$`,
+      ),
+    );
+    assert.doesNotMatch(
+      notice.content,
+      new RegExp(`line ${ON_TICK_MAX_LINES}\\b`),
+    );
   });
 
   test("a failing onTick does not kill the timer", async (t) => {
@@ -671,9 +690,8 @@ describe("timer", () => {
   test("/timers fits a short terminal and scrolls the list", async (t) => {
     const { start, commands } = setup(t, runUntilCancelled);
     const rows = 20;
-    // Rows pi keeps around the page are assumed to be 4; the fake UI cannot
-    // verify the real reserve, but a page that grows past it would clip.
-    const piRows = 4;
+    // The fake UI cannot verify the real reserve, but a page that grows past it
+    // would clip.
     const screen = fakeUI(t, { rows });
 
     const showing = commands
@@ -689,7 +707,7 @@ describe("timer", () => {
     const shown = () => {
       const lines = overlay.render(80);
       assert.ok(
-        lines.length <= rows - piRows,
+        lines.length <= rows - VIEWPORT_RESERVE_ROWS,
         `page leaves pi its rows: ${lines.length} of ${rows}`,
       );
       return lines.join("\n");
@@ -741,7 +759,10 @@ describe("timer", () => {
     // alone, with nothing to scroll.
     overlay.handleInput("\r");
     const detail = pageOf(overlay, 80);
-    assert.match(detail, /cond-met\s+✓ done after \d+s timeout=3600s/);
+    assert.match(
+      detail,
+      new RegExp(`cond-met\\s+✓ done after \\d+s timeout=${DEFAULT_TIMEOUT_SEC}s`),
+    );
     assert.match(detail, /cond: true/);
     assert.match(detail, /Escape to go back/);
     assert.doesNotMatch(detail, /up\/down scroll/);
@@ -824,7 +845,10 @@ describe("timer", () => {
     const flat = detail.replace(/\s+/g, " ");
     assert.match(
       detail,
-      /^\s*live-job\s+[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏] running for \d+s timeout=86400s\s*$/m,
+      new RegExp(
+        `^\\s*live-job\\s+[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏] running for \\d+s timeout=${DEFAULT_JOB_TIMEOUT_SEC}s\\s*$`,
+        "m",
+      ),
     );
     assert.match(flat, /started=\d\d:\d\d:\d\d, pid \d+, /);
     assert.ok(flat.includes(details.logPath), "the detail names the log file");
@@ -882,7 +906,7 @@ describe("timer", () => {
       screen.component.handleInput("\x1b");
       await showing;
       assert.equal(screen.component, undefined, "both Escapes close the page");
-      return { page, budget: rows - 4 };
+      return { page, budget: rows - VIEWPORT_RESERVE_ROWS };
     };
 
     // The page keeps pi's rows and its own hint at every height the box fits in
@@ -925,7 +949,13 @@ describe("timer", () => {
     const flat = detail.replace(/\s+/g, " ");
     // The header keeps the state, the age at the end and the deadline; a job
     // timer has no interval or tick budget to report.
-    assert.match(detail, /^\s*build\s+✓ done after \d+s timeout=86400s\s*$/m);
+    assert.match(
+      detail,
+      new RegExp(
+        `^\\s*build\\s+✓ done after \\d+s timeout=${DEFAULT_JOB_TIMEOUT_SEC}s\\s*$`,
+        "m",
+      ),
+    );
     assert.doesNotMatch(detail, /interval=/);
     assert.ok(flat.includes("ended: exited 0"), "end reason");
     assert.ok(flat.includes(details.logPath), "log path");
@@ -1161,10 +1191,12 @@ describe("timer", () => {
     assert.equal(notice.details.state, "done");
     assert.equal(result.details.start, "echo hi");
     assert.equal(result.details.maxTicks, 0);
-    assert.equal(result.details.timeoutSec, 86_400);
+    assert.equal(result.details.timeoutSec, DEFAULT_JOB_TIMEOUT_SEC);
     assert.match(
       result.content[0].text,
-      /^Started job "job-ok": runs `echo hi` in the background, no tick wakes, log .*\/jobs\/job-ok-\d+\.log; wakes you when it exits or after 86400s\. It is killed when this session ends\.$/,
+      new RegExp(
+        `^Started job "job-ok": runs \`echo hi\` in the background, no tick wakes, log .*\\/jobs\\/job-ok-\\d+\\.log; wakes you when it exits or after ${DEFAULT_JOB_TIMEOUT_SEC}s\\. It is killed when this session ends\\.$`,
+      ),
     );
     // The log outlives the wake, so it must record the outcome too.
     assert.equal(readFileSync(result.details.logPath, "utf8"), "hi\n[exit 0]\n");
@@ -1251,19 +1283,23 @@ describe("timer", () => {
     await waitGone(pid);
   });
 
-  test("the exit wake carries only the last 10 log lines", async (t) => {
+  test(`the exit wake carries only the last ${JOB_TAIL_LINES} log lines`, async (t) => {
     const { start, noticesAfter } = setup(t, () => exit(1));
 
-    await start({ id: "job-tail", start: "seq 1 30" });
+    const total = JOB_TAIL_LINES * 3;
+    await start({ id: "job-tail", start: `seq 1 ${total}` });
     const [notice] = await noticesAfter(1);
 
-    // The marker counts as a line, so the tail is lines 22-30 plus [exit 0].
+    // The marker counts as a line, so the tail keeps the newest lines and drops
+    // the oldest.
+    const keptLogLines = JOB_TAIL_LINES - 1;
+    const firstKept = total - keptLogLines + 1;
     assert.match(
       notice.content,
-      /\n22\n23\n24\n25\n26\n27\n28\n29\n30\n\[exit 0\]$/,
+      new RegExp(`\\n${firstKept}\\n[\\s\\S]*\\n\\[exit 0\\]$`),
     );
-    assert.doesNotMatch(notice.content, /^21$/m);
-    assert.equal(notice.content.split("\n").length, 12);
+    assert.doesNotMatch(notice.content, new RegExp(`^${firstKept - 1}$`, "m"));
+    assert.equal(notice.content.split("\n").length, JOB_TAIL_LINES + 2);
   });
 
   test("onTick output follows the log tail in the exit wake", async (t) => {

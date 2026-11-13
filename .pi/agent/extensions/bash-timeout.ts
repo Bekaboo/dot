@@ -13,7 +13,8 @@ import {
   isToolCallEventType,
 } from "@earendil-works/pi-coding-agent";
 
-const DEFAULT_TIMEOUT_SEC = 120;
+/** Default `bash` timeout, in seconds, when the model names none. */
+export const DEFAULT_TIMEOUT_SEC = 120;
 
 const TIMEOUT_GUIDLINE =
   `bash commands without \`timeout\` are killed after ${DEFAULT_TIMEOUT_SEC} seconds. ` +

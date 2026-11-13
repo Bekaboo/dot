@@ -60,7 +60,14 @@ import {
 import { PAGE_PADDING_X, windowStart } from "./utils/page.ts";
 import { type RunState, Spinner } from "./utils/spinner.ts";
 
-export { SELECTED_CURSOR };
+export {
+  DEFAULT_JOB_TIMEOUT_SEC,
+  DEFAULT_TIMEOUT_SEC,
+  JOB_TAIL_LINES,
+  ON_TICK_MAX_LINES,
+  RETIRED_HISTORY,
+  SELECTED_CURSOR,
+};
 
 // Timer duration, polling, and notification defaults, in seconds.
 const DEFAULT_TIMEOUT_SEC = 3_600;

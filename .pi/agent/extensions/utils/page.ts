@@ -16,7 +16,7 @@ import { truncateToWidth } from "@earendil-works/pi-tui";
  * it, the status line, and the two-line footer of a session with an extension
  * footer.
  */
-const VIEWPORT_RESERVE_ROWS = 4;
+export const VIEWPORT_RESERVE_ROWS = 4;
 
 /** Horizontal padding each page adds inside its border. */
 export const PAGE_PADDING_X = 2;

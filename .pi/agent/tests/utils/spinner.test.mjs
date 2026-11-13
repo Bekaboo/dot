@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test, { describe } from "node:test";
 
-import { Spinner } from "../../extensions/utils/spinner.ts";
+import { Spinner, SPINNER_INTERVAL_MS } from "../../extensions/utils/spinner.ts";
 
 const plainTheme = { fg: (_color, text) => text };
 const BRAILLE = /^[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏]$/;
@@ -23,22 +23,22 @@ describe("spinner", () => {
     const first = spinner.marker("running", plainTheme);
 
     spinner.sync(false);
-    t.mock.timers.tick(1000);
+    t.mock.timers.tick(SPINNER_INTERVAL_MS * 10);
     assert.equal(renders, 0, "nothing running, nothing to animate");
 
     spinner.sync(true);
     spinner.sync(true);
-    t.mock.timers.tick(80);
+    t.mock.timers.tick(SPINNER_INTERVAL_MS);
     assert.equal(renders, 1, "a second sync does not start a second animation");
     assert.notEqual(spinner.marker("running", plainTheme), first);
 
     spinner.sync(false);
-    t.mock.timers.tick(1000);
+    t.mock.timers.tick(SPINNER_INTERVAL_MS * 10);
     assert.equal(renders, 1, "the animation stops once nothing runs");
 
     spinner.sync(true);
     spinner.stop();
-    t.mock.timers.tick(1000);
+    t.mock.timers.tick(SPINNER_INTERVAL_MS * 10);
     assert.equal(renders, 1, "stop ends the animation");
   });
 });

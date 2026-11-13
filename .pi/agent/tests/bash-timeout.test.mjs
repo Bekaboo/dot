@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test, { describe } from "node:test";
 
-import bashTimeout from "../extensions/bash-timeout.ts";
+import bashTimeout, { DEFAULT_TIMEOUT_SEC } from "../extensions/bash-timeout.ts";
 
 /** Load the extension with a fake `pi` that only records hooks. */
 function setup() {
@@ -25,7 +25,10 @@ describe("bash-timeout", () => {
   test("bash without a timeout gets the default timeout", () => {
     const { toolCall } = setup();
 
-    assert.equal(toolCall("bash", { command: "sleep 1" }).timeout, 120);
+    assert.equal(
+      toolCall("bash", { command: "sleep 1" }).timeout,
+      DEFAULT_TIMEOUT_SEC,
+    );
   });
 
   test("bash keeps a timeout the model chose", () => {
@@ -51,7 +54,9 @@ describe("bash-timeout", () => {
     startAgent(guidelines);
 
     assert.equal(guidelines.bash.length, 1);
-    assert.match(guidelines.bash[0], /killed after 120 seconds/);
+    assert.ok(
+      guidelines.bash[0].includes(`killed after ${DEFAULT_TIMEOUT_SEC} seconds`),
+    );
   });
 
   test("the timeout guideline is added after existing bash guidelines", () => {

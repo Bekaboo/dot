@@ -28,7 +28,7 @@ import type {
 const CUSTOM_TYPE = "toolcall-fail-recovery";
 
 /** Failed turns in a row that may be re-issued before the run ends. */
-const MAX_CONSECUTIVE_RECOVERIES = 2;
+export const MAX_CONSECUTIVE_RECOVERIES = 2;
 
 /**
  * Tool-call JSON failures Pi's retry classifier treats as permanent. A dropped
@@ -115,7 +115,9 @@ function neutralize(
   const note =
     `No tool ran: the provider rejected this response because its tool-call JSON ` +
     `did not parse (${errorMessage}).` +
-    (dropped.length > 0 ? ` Dropped tool call(s): ${dropped.join(", ")}.` : "") +
+    (dropped.length > 0
+      ? ` Dropped tool call(s): ${dropped.join(", ")}.`
+      : "") +
     " Re-issuing the request in smaller steps.";
   return {
     ...message,

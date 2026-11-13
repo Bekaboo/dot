@@ -8,6 +8,7 @@ import {
   hintLine,
   PAGE_PADDING_X,
   scrolledStart,
+  VIEWPORT_RESERVE_ROWS,
   windowLabel,
   windowStart,
 } from "../../extensions/utils/page.ts";
@@ -23,9 +24,14 @@ function plainWidth(line) {
 describe("page", () => {
   describe("bodyRows", () => {
     test("leaves the terminal's own rows and the box chrome out of the body", () => {
-      // 20 rows: pi keeps 4, the box chrome takes 9, the blank line 1.
-      assert.equal(bodyRows(() => 9, 20), 6);
-      assert.equal(bodyRows(() => 5, 20), 10, "a slimmer box fits more rows");
+      // 20 rows: pi keeps its own rows, the box chrome takes 9, the blank
+      // line 1.
+      assert.equal(bodyRows(() => 9, 20), 20 - VIEWPORT_RESERVE_ROWS - 9 - 1);
+      assert.equal(
+        bodyRows(() => 5, 20),
+        20 - VIEWPORT_RESERVE_ROWS - 5 - 1,
+        "a slimmer box fits more rows",
+      );
     });
 
     test("never goes negative when the chrome alone fills the terminal", () => {

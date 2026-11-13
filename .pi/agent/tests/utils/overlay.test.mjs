@@ -10,6 +10,8 @@ import {
   padRight,
 } from "../../extensions/utils/overlay.ts";
 
+import { VIEWPORT_RESERVE_ROWS } from "../../extensions/utils/page.ts";
+
 const plainTheme = {
   fg: (_color, text) => text,
   bold: (text) => text,
@@ -63,8 +65,12 @@ describe("overlay", () => {
 
       const lines = page.render(40);
       const text = textOf(lines);
-      // 4 rows are pi's own; a taller page loses its last rows to the viewport.
-      assert.ok(lines.length <= rows - 4, `${lines.length} of ${rows} rows`);
+      // Pi's own rows stay out of a taller page, or it loses its last rows to
+      // the viewport.
+      assert.ok(
+        lines.length <= rows - VIEWPORT_RESERVE_ROWS,
+        `${lines.length} of ${rows} rows`,
+      );
       assert.match(text, /Timers/);
       assert.match(text, /2 running, 1 finished/);
       assert.match(text, /timer-a running/);
@@ -142,11 +148,11 @@ describe("overlay", () => {
       const page = new OverlayPage(fakeTui(20), plainTheme, "Todos");
       const wide = page.measure(100, "Press Escape to close");
       page.setWindow(rowsNamed(30), 0, wide, "Press Escape to close", 100);
-      assert.equal(page.render(100).length, 20 - 4);
+      assert.equal(page.render(100).length, 20 - VIEWPORT_RESERVE_ROWS);
 
       const narrow = page.measure(20, "Press Escape to close");
       page.setWindow(rowsNamed(30), 0, narrow, "Press Escape to close", 20);
-      assert.equal(page.render(20).length, 20 - 4);
+      assert.equal(page.render(20).length, 20 - VIEWPORT_RESERVE_ROWS);
     });
   });
 

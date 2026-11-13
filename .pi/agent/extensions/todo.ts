@@ -57,13 +57,13 @@ import { OverlayPage } from "./utils/overlay.ts";
 import { scrolledStart } from "./utils/page.ts";
 
 /** Turns of an unchanged checklist before the agent is nudged to update it. */
-const REMIND_STALE_LIST_AFTER_TURNS = 16;
+export const REMIND_STALE_LIST_AFTER_TURNS = 16;
 
 /**
  * Turns of work without user input or todo calls before a new task, meaning an
  * empty or fully closed checklist, is asked for a plan.
  */
-const REMIND_NEW_TASK_AFTER_TURNS = 32;
+export const REMIND_NEW_TASK_AFTER_TURNS = 32;
 
 const LIST_NAME = "todo-list";
 const HINT_ENTRY_TYPE = "todo-hint";

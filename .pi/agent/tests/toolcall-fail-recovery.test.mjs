@@ -26,7 +26,9 @@ import {
   SettingsManager,
 } from "@earendil-works/pi-coding-agent";
 
-import toolcallFailRecovery from "../extensions/toolcall-fail-recovery.ts";
+import toolcallFailRecovery, {
+  MAX_CONSECUTIVE_RECOVERIES,
+} from "../extensions/toolcall-fail-recovery.ts";
 
 /** Provider text that fails a turn without being retryable by Pi. */
 const MALFORMED_JSON = "Invalid or incomplete tool-call JSON (characters=4149)";
@@ -166,20 +168,21 @@ describe("toolcall-fail-recovery", () => {
 
   test("stops recovering after the chain budget", async (t) => {
     const { session, requests, assistantMessages } = await createSession(t);
+    const turns = 1 + MAX_CONSECUTIVE_RECOVERIES;
     faux.setResponses(
       scripted(
-        [
-          failedTurn(MALFORMED_JSON),
-          failedTurn(MALFORMED_JSON),
-          failedTurn(MALFORMED_JSON),
-        ],
+        Array.from({ length: turns }, () => failedTurn(MALFORMED_JSON)),
         requests,
       ),
     );
 
     await session.prompt("keep trying");
 
-    assert.equal(requests.length, 3, "one initial request plus two recoveries");
+    assert.equal(
+      requests.length,
+      turns,
+      "one initial request plus the recovery budget",
+    );
     assert.equal(assistantMessages.at(-1).stopReason, "error");
     assert.equal(assistantMessages.at(-1).errorMessage, MALFORMED_JSON);
   });

@@ -146,7 +146,12 @@ childProcess.spawn = realSpawn;
 const installSubagent = extensionModule.default ?? extensionModule;
 
 /** Cursor the `/subagents` list draws in front of the selected row. */
-const { SELECTED_CURSOR } = extensionModule;
+const {
+  DEFAULT_TIMEOUT_SEC,
+  MAX_RECORD_BYTES,
+  SELECTED_CURSOR,
+  VIEWPORT_RESERVE_ROWS,
+} = extensionModule;
 
 const { fauxAssistantMessage, fauxProvider, fauxToolCall } = await import(
   "@earendil-works/pi-ai"
@@ -504,11 +509,17 @@ describe("subagent", () => {
     test("defaults the timeout and reports the deadline it got", async (t) => {
       const { call, pi, children } = setup(t);
       const result = await call({ id: "default-timeout", prompt: "x" });
-      assert.match(result.content[0].text, /timeout=3600s/);
+      assert.match(
+        result.content[0].text,
+        new RegExp(`timeout=${DEFAULT_TIMEOUT_SEC}s`),
+      );
       const status = await pi.tools
         .get("subagent_status")
         .execute("call", { id: "default-timeout" }, undefined, undefined, {});
-      assert.match(status.content[0].text, /timeout=3600s/);
+      assert.match(
+        status.content[0].text,
+        new RegExp(`timeout=${DEFAULT_TIMEOUT_SEC}s`),
+      );
       const customResult = await call({
         id: "custom-timeout",
         prompt: "x",
@@ -572,7 +583,7 @@ describe("subagent", () => {
       assert.match(options["append-system-prompt"], /You are a subagent/);
       assert.match(
         options["append-system-prompt"],
-        /3600s wall-clock limit/,
+        new RegExp(`${DEFAULT_TIMEOUT_SEC}s wall-clock limit`),
         "the child is told the deadline it runs under",
       );
       assert.ok(
@@ -589,7 +600,7 @@ describe("subagent", () => {
       );
       assert.equal(
         child.options.env.PI_SUBAGENT_TIMEOUT_SEC,
-        "3600",
+        String(DEFAULT_TIMEOUT_SEC),
         "the child warns itself against the same deadline",
       );
       assert.equal(child.command, process.argv[1], "the child reuses the running pi build");
@@ -837,8 +848,10 @@ describe("subagent", () => {
     test("an oversized record is dropped and the next record in the chunk is read", async (t) => {
       const { call, pi, children } = setup(t);
       await call({ id: "relay", prompt: "x" });
-      // One record past the 8 MiB cap, then a complete answer in the same chunk.
-      children[0].write(`${"x".repeat(9 * 1024 * 1024)}\n${assistantRecord("after the big one")}`);
+      // One record past the cap, then a complete answer in the same chunk.
+      children[0].write(
+        `${"x".repeat(MAX_RECORD_BYTES + 1)}\n${assistantRecord("after the big one")}`,
+      );
       children[0].close(0);
       const [sent] = await notices(pi);
       assert.match(sent.message.content, /finished in/);
@@ -1124,7 +1137,7 @@ describe("subagent", () => {
       await command.handler("", ctx);
       assert.equal(
         notified[0],
-        `[subagent listed] running for 0s (m, tools=read, ${workDir}, timeout=3600s)`,
+        `[subagent listed] running for 0s (m, tools=read, ${workDir}, timeout=${DEFAULT_TIMEOUT_SEC}s)`,
       );
     });
 
@@ -1188,8 +1201,8 @@ describe("subagent", () => {
         "elapsed column is aligned",
       );
       // A finished row keeps the deadline it had, so both rows show a timeout.
-      assert.match(firstRow, /timeout=3600s/);
-      assert.match(secondRow, /timeout=3600s/);
+      assert.match(firstRow, new RegExp(`timeout=${DEFAULT_TIMEOUT_SEC}s`));
+      assert.match(secondRow, new RegExp(`timeout=${DEFAULT_TIMEOUT_SEC}s`));
       assert.equal(
         firstRow.indexOf("timeout="),
         secondRow.indexOf("timeout="),
@@ -1461,14 +1474,12 @@ describe("subagent", () => {
       overlay.handleInput("\r");
 
       // The page must leave pi its own rows above and below, so the viewport
-      // never clips the hint away. The fake UI cannot see pi's real rows; 4 is
-      // what a session with an extension footer keeps, so a page that grows past
-      // it would clip in a real terminal.
-      const piRows = 4;
+      // never clips the hint away. The fake UI cannot see pi's real rows, so a
+      // page that grows past the reserve would clip in a real terminal.
       const detail = overlay.render(100);
       const text = detail.map(plainOf).join("\n");
       assert.ok(
-        detail.length <= rows - piRows,
+        detail.length <= rows - VIEWPORT_RESERVE_ROWS,
         `page leaves pi its rows: ${detail.length} of ${rows}`,
       );
       assert.match(text, /Escape to go back/);
@@ -1531,9 +1542,8 @@ describe("subagent", () => {
     test("/subagents scrolls its list to keep the selection in a short terminal", async (t) => {
       const { call, pi, children } = setup(t);
       const rows = 20;
-      // Rows pi keeps around the page are assumed to be 4; the fake UI cannot
-      // verify the real reserve, but a page that grows past it would clip.
-      const piRows = 4;
+      // The fake UI cannot verify the real reserve, but a page that grows past
+      // it would clip.
       const screen = fakeUI(t, {}, rows);
       const showing = pi.commands
         .get("subagents")
@@ -1548,7 +1558,7 @@ describe("subagent", () => {
       const shown = () => {
         const lines = overlay.render(100);
         assert.ok(
-          lines.length <= rows - piRows,
+          lines.length <= rows - VIEWPORT_RESERVE_ROWS,
           `page leaves pi its rows: ${lines.length} of ${rows}`,
         );
         return lines.map(plainOf).join("\n");
@@ -1620,7 +1630,9 @@ describe("subagent", () => {
         .execute("call", {}, undefined, undefined, {});
       assert.match(
         status.content[0].text,
-        /\[subagent bad\] failed after \d+s \(timeout=3600s\): exit code 3/,
+        new RegExp(
+          `\\[subagent bad\\] failed after \\d+s \\(timeout=${DEFAULT_TIMEOUT_SEC}s\\): exit code 3`,
+        ),
       );
     });
 
@@ -1652,7 +1664,10 @@ describe("subagent", () => {
       const before = await report();
       assert.match(
         before,
-        /^\[subagent quiet\] running for 2s \(model=default, tools=default, .*timeout=3600s\)$/m,
+        new RegExp(
+          `^\\[subagent quiet\\] running for 2s \\(model=default, tools=default, .*timeout=${DEFAULT_TIMEOUT_SEC}s\\)$`,
+          "m",
+        ),
       );
       assert.doesNotMatch(before, /waiting/);
 

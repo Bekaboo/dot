@@ -4,7 +4,11 @@ import test, { describe } from "node:test";
 import { Agent } from "@earendil-works/pi-agent-core";
 import { createAssistantMessageEventStream } from "@earendil-works/pi-ai";
 
-import todoExtension from "../extensions/todo.ts";
+import todoExtension, {
+  REMIND_NEW_TASK_AFTER_TURNS,
+  REMIND_STALE_LIST_AFTER_TURNS,
+} from "../extensions/todo.ts";
+import { VIEWPORT_RESERVE_ROWS } from "../extensions/utils/page.ts";
 
 /** Load the extension with a fake `pi` that only records registrations. */
 function setup() {
@@ -217,11 +221,6 @@ describe("todo", () => {
       assert.fail("no reminder after 100 idle turns");
     }
 
-    /** Turns before the stale-list reminder, as in the extension. */
-    const REMIND_STALE_LIST_AFTER_TURNS = 16;
-    /** Turns before the new-task reminder, as in the extension. */
-    const REMIND_NEW_TASK_AFTER_TURNS = 32;
-
     test("an agent without a checklist is left alone until the new-task window", () => {
       const { hooks } = setup();
 
@@ -339,7 +338,11 @@ describe("todo", () => {
         assert.match(reminder, /recently\.\n\n- \[ \] A\n\nIf progress changed/);
         assert.doesNotMatch(reminder, /without user input/);
       }
-      assert.deepEqual(reminderTurns, [16, 32, 48]);
+      const staleTurns = Array.from(
+        { length: Math.floor(horizon / REMIND_STALE_LIST_AFTER_TURNS) },
+        (_, index) => (index + 1) * REMIND_STALE_LIST_AFTER_TURNS,
+      );
+      assert.deepEqual(reminderTurns, staleTurns);
     });
 
     test("stalled turns never queue a reminder", () => {
@@ -495,9 +498,8 @@ describe("todo", () => {
     test("keeps its hint inside a short terminal and scrolls the items", async (t) => {
       const { commands, write } = setup();
       const rows = 20;
-      // Rows pi keeps around the page are assumed to be 4; the fake UI cannot
-      // verify the real reserve, but a page that grows past it would clip.
-      const piRows = 4;
+      // The fake UI cannot verify the real reserve, but a page that grows past
+      // it would clip.
       const items = Array.from({ length: 12 }, (_, index) => `- [ ] item ${index}`);
       await write(items.join("\n"));
 
@@ -512,7 +514,7 @@ describe("todo", () => {
       const shown = () => {
         const lines = overlay.render(80);
         assert.ok(
-          lines.length <= rows - piRows,
+          lines.length <= rows - VIEWPORT_RESERVE_ROWS,
           `page leaves pi its rows: ${lines.length} of ${rows}`,
         );
         return lines.join("\n");

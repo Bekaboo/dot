@@ -47,10 +47,19 @@ import {
   padRight,
   SELECTED_CURSOR,
 } from "./utils/overlay.ts";
-import { PAGE_PADDING_X, windowStart } from "./utils/page.ts";
+import {
+  PAGE_PADDING_X,
+  VIEWPORT_RESERVE_ROWS,
+  windowStart,
+} from "./utils/page.ts";
 import { type RunState, Spinner } from "./utils/spinner.ts";
 
-export { SELECTED_CURSOR };
+export {
+  DEFAULT_TIMEOUT_SEC,
+  MAX_RECORD_BYTES,
+  SELECTED_CURSOR,
+  VIEWPORT_RESERVE_ROWS,
+};
 
 /** Custom message type used for subagent notifications. */
 const NOTICE_TYPE = "subagent";

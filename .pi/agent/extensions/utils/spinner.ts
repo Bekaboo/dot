@@ -17,7 +17,7 @@ import type { Theme } from "@earendil-works/pi-coding-agent";
 const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
 /** Spinner frame interval in ms, matching pi's built-in working indicator. */
-const SPINNER_INTERVAL_MS = 80;
+export const SPINNER_INTERVAL_MS = 80;
 
 /**
  * Display color for each run state; the single source of truth.
