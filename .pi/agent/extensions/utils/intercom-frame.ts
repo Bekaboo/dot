@@ -1,5 +1,5 @@
 /**
- * Square-corner rendering for pi-intercom's message box and popups.
+ * Glyph alignment for pi-intercom's message box and popups.
  *
  * Two seams are used because the two kinds of frame are drawn differently.
  * The inline message box is a registered renderer, so `createRenderer` can
@@ -9,7 +9,8 @@
  * patching those component classes from here would not reach the instances
  * pi-intercom builds. What both sides share is the `Theme`, and each popup
  * border line is styled as one `theme.fg()` call, so `squareThemeFrames` swaps
- * the corners there.
+ * the corners there. The selected-row cursor takes the same route: pi-intercom
+ * draws `→ ` through `theme.fg` where Pi's own selectors use `› `.
  *
  * Workaround: this module takes pi-intercom's component class as an argument
  * instead of importing it. pi-intercom ships TypeScript inside node_modules,
@@ -39,9 +40,14 @@ const CORNERS: Record<string, string> = {
 // `m` matches line by line, so one replace covers a whole styled block without
 // splitting it first.
 const FRAME_LINE = new RegExp(`^(${ANSI})([╭╰])(.*)([╮╯])(${ANSI})$`, "gm");
-const SQUARED = Symbol.for("pi.intercom-square-ui.squared");
+// Whole-argument matches only: pi-intercom passes the cursor as one styled
+// string, while the same glyph inside body text keeps its original meaning.
+const CURSORS: Record<string, string> = {
+  "→ ": "› ",
+};
+const SQUARED = Symbol.for("pi.intercom-ui.squared");
 
-/** A theme class prototype, marked once it carries the corner swap. */
+/** A theme class prototype, marked once it carries the glyph swaps. */
 type FrameThemePrototype = Theme & { [key: symbol]: unknown };
 
 /** Details pi-intercom attaches to every `intercom_message` it emits. */
@@ -87,7 +93,14 @@ export function squareFrames(text: string): string {
 }
 
 /**
- * Square every frame drawn through a theme.
+ * Rewrite the glyphs pi-intercom hardcodes: frame corners and the row cursor.
+ */
+function restyle(text: string): string {
+  return squareFrames(CURSORS[text] ?? text);
+}
+
+/**
+ * Square every frame drawn through a theme, and align its row cursor.
  *
  * Popup frames leave as one `theme.fg()` call per border line, so the glyph
  * swap belongs on `fg` itself. The prototype is patched rather than the
@@ -106,7 +119,7 @@ export function squareThemeFrames(theme: Theme): void {
 
   const fg = prototype.fg;
   prototype.fg = function (this: Theme, color, text) {
-    return fg.call(this, color, squareFrames(text));
+    return fg.call(this, color, restyle(text));
   };
   prototype[SQUARED] = true;
 }

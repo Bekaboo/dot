@@ -4,10 +4,10 @@ import test, { describe } from "node:test";
 
 const POPUP_UI = ["session-list", "compose", "handover-picker"];
 
-describe("intercom-square-ui", () => {
+describe("intercom-ui", () => {
   test("still binds to the pi-intercom internals it overrides", () => {
     const source = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
-    const entry = source("../extensions/intercom-square-ui.ts");
+    const entry = source("../extensions/intercom-ui.ts");
     const intercom = source("../npm/node_modules/pi-intercom/index.ts");
     const component = source("../npm/node_modules/pi-intercom/ui/inline-message.ts");
 
