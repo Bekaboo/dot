@@ -50,13 +50,19 @@ function popupRow(theme, text) {
 
 describe("intercom-ui", () => {
   test("still binds to the pi-intercom internals it overrides", () => {
-    const source = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
+    const source = (path) =>
+      readFileSync(new URL(path, import.meta.url), "utf8");
     const entry = source("../extensions/intercom-ui.ts");
     const intercom = source("../npm/node_modules/pi-intercom/index.ts");
-    const component = source("../npm/node_modules/pi-intercom/ui/inline-message.ts");
+    const component = source(
+      "../npm/node_modules/pi-intercom/ui/inline-message.ts",
+    );
 
     assert.match(component, /export class InlineMessageComponent/);
-    assert.match(intercom, /registerMessageRenderer\(\s*["']intercom_message["']/);
+    assert.match(
+      intercom,
+      /registerMessageRenderer\(\s*["']intercom_message["']/,
+    );
     assert.match(entry, /registerMessageRenderer\(\s*["']intercom_message["']/);
     assert.match(entry, /squareThemeFrames\(ctx\.ui\.theme\)/);
   });
@@ -68,8 +74,16 @@ describe("intercom-ui", () => {
     for (const name of POPUP_UI) {
       const source = popupSource(name);
 
-      assert.match(source, /`╭[^`]*╮`/, `${name} draws its top border as one line`);
-      assert.match(source, /`╰[^`]*╯`/, `${name} draws its bottom border as one line`);
+      assert.match(
+        source,
+        /`╭[^`]*╮`/,
+        `${name} draws its top border as one line`,
+      );
+      assert.match(
+        source,
+        /`╰[^`]*╯`/,
+        `${name} draws its bottom border as one line`,
+      );
     }
   });
 
@@ -79,7 +93,11 @@ describe("intercom-ui", () => {
     for (const name of POPUP_UI) {
       const source = popupSource(name);
 
-      assert.match(source, /border\("│"\)/, `${name} draws a row border through theme.fg`);
+      assert.match(
+        source,
+        /border\("│"\)/,
+        `${name} draws a row border through theme.fg`,
+      );
     }
     for (const name of ["session-list", "handover-picker"]) {
       assert.match(
@@ -93,10 +111,7 @@ describe("intercom-ui", () => {
   test("puts the cursor row on Pi's selection background", () => {
     const theme = fakeTheme();
     const title = (text) => theme.fg("accent", text);
-    const selected = popupRow(
-      theme,
-      `${title("→ ")}${title("session-a")}`,
-    );
+    const selected = popupRow(theme, `${title("→ ")}${title("session-a")}`);
     const other = popupRow(theme, `  session-b`);
 
     assert.match(selected, /<bg selectedBg><fg accent>› <\/fg>/);

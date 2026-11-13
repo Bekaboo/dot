@@ -26,7 +26,10 @@ describe("page", () => {
     test("leaves the terminal's own rows and the box chrome out of the body", () => {
       // 20 rows: pi keeps its own rows, the box chrome takes 9, and the blank
       // line between the body and the content above it takes one more.
-      assert.equal(bodyRows(() => 9, 20), 20 - VIEWPORT_RESERVE_ROWS - 9 - 1);
+      assert.equal(
+        bodyRows(() => 9, 20),
+        20 - VIEWPORT_RESERVE_ROWS - 9 - 1,
+      );
       assert.equal(
         bodyRows(() => 9, 20, 0),
         20 - VIEWPORT_RESERVE_ROWS - 9,
@@ -40,8 +43,14 @@ describe("page", () => {
     });
 
     test("never goes negative when the chrome alone fills the terminal", () => {
-      assert.equal(bodyRows(() => 40, 20), 0);
-      assert.equal(bodyRows(() => 0, 1), 0);
+      assert.equal(
+        bodyRows(() => 40, 20),
+        0,
+      );
+      assert.equal(
+        bodyRows(() => 0, 1),
+        0,
+      );
     });
   });
 
@@ -63,8 +72,11 @@ describe("page", () => {
 
     test("shows the start of the hint, cut with an ellipsis", () => {
       const width = 10;
-      const narrow = hintLine(plainTheme, "Press Escape to close", width)
-        .replace(STYLED, "");
+      const narrow = hintLine(
+        plainTheme,
+        "Press Escape to close",
+        width,
+      ).replace(STYLED, "");
       assert.equal(
         plainWidth(narrow),
         width - PAGE_PADDING_X * 2,

@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test, { describe } from "node:test";
 
-import bashTimeout, { DEFAULT_TIMEOUT_SEC } from "../extensions/bash-timeout.ts";
+import bashTimeout, {
+  DEFAULT_TIMEOUT_SEC,
+} from "../extensions/bash-timeout.ts";
 
 /** Load the extension with a fake `pi` that only records hooks. */
 function setup() {
@@ -55,7 +57,9 @@ describe("bash-timeout", () => {
 
     assert.equal(guidelines.bash.length, 1);
     assert.ok(
-      guidelines.bash[0].includes(`killed after ${DEFAULT_TIMEOUT_SEC} seconds`),
+      guidelines.bash[0].includes(
+        `killed after ${DEFAULT_TIMEOUT_SEC} seconds`,
+      ),
     );
   });
 

@@ -28,13 +28,13 @@ function setupFooter(
 
   const tui = {
     mode,
-    requestRender() { },
+    requestRender() {},
     ...(scroll && { getPrimaryScrollView: () => scroll }),
   };
   const footerData = {
     getGitBranch: () => branch,
     getExtensionStatuses: () => new Map(statuses),
-    onBranchChange: () => () => { },
+    onBranchChange: () => () => {},
   };
   return factory(tui, plainTheme, footerData);
 }

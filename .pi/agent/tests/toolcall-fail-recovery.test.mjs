@@ -17,7 +17,11 @@ import * as os from "node:os";
 import * as path from "node:path";
 import test, { describe } from "node:test";
 
-import { fauxAssistantMessage, fauxProvider, fauxToolCall } from "@earendil-works/pi-ai";
+import {
+  fauxAssistantMessage,
+  fauxProvider,
+  fauxToolCall,
+} from "@earendil-works/pi-ai";
 import {
   createAgentSession,
   DefaultResourceLoader,
@@ -107,13 +111,10 @@ async function createSession(t) {
  * @param requests - Array that receives each request context.
  */
 function scripted(responses, requests) {
-  return responses.map(
-    (response) =>
-      (context) => {
-        requests.push(context);
-        return typeof response === "function" ? response() : response;
-      },
-  );
+  return responses.map((response) => (context) => {
+    requests.push(context);
+    return typeof response === "function" ? response() : response;
+  });
 }
 
 /** Concatenated text of one assistant message. */
@@ -128,7 +129,10 @@ describe("toolcall-fail-recovery", () => {
   test("re-asks once instead of ending the run", async (t) => {
     const { session, requests, assistantMessages } = await createSession(t);
     faux.setResponses(
-      scripted([failedTurn(MALFORMED_JSON), fauxAssistantMessage("done")], requests),
+      scripted(
+        [failedTurn(MALFORMED_JSON), fauxAssistantMessage("done")],
+        requests,
+      ),
     );
 
     await session.prompt("edit the file");
@@ -136,7 +140,11 @@ describe("toolcall-fail-recovery", () => {
     assert.equal(requests.length, 2, "the run made one retry request");
 
     const failed = assistantMessages[0];
-    assert.equal(failed.stopReason, "stop", "the failed turn is no longer an error");
+    assert.equal(
+      failed.stopReason,
+      "stop",
+      "the failed turn is no longer an error",
+    );
     assert.equal(
       failed.errorMessage,
       MALFORMED_JSON,
@@ -153,7 +161,10 @@ describe("toolcall-fail-recovery", () => {
     const instruction = retry.at(-1);
     assert.equal(instruction.role, "user");
     assert.match(instruction.content[0].text, /split large payloads/);
-    assert.match(instruction.content[0].text, /Invalid or incomplete tool-call JSON/);
+    assert.match(
+      instruction.content[0].text,
+      /Invalid or incomplete tool-call JSON/,
+    );
 
     const toolCalls = retry.flatMap((message) =>
       Array.isArray(message.content)

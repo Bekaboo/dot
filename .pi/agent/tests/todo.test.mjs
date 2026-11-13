@@ -65,14 +65,19 @@ describe("todo", () => {
     test("each todo action has its own tool and parameters", () => {
       const { tools } = setup();
 
-      assert.deepEqual([...tools.keys()], ["todo_list", "todo_write", "todo_edit"]);
+      assert.deepEqual(
+        [...tools.keys()],
+        ["todo_list", "todo_write", "todo_edit"],
+      );
       assert.deepEqual(tools.get("todo_list").parameters.properties, {});
-      assert.deepEqual(Object.keys(tools.get("todo_write").parameters.properties), [
-        "list",
-      ]);
-      assert.deepEqual(Object.keys(tools.get("todo_edit").parameters.properties), [
-        "edits",
-      ]);
+      assert.deepEqual(
+        Object.keys(tools.get("todo_write").parameters.properties),
+        ["list"],
+      );
+      assert.deepEqual(
+        Object.keys(tools.get("todo_edit").parameters.properties),
+        ["edits"],
+      );
       for (const tool of tools.values()) {
         assert.equal(tool.executionMode, "sequential");
       }
@@ -243,7 +248,8 @@ describe("todo", () => {
         },
       ];
 
-      for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++) workTurn(hooks);
+      for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++)
+        workTurn(hooks);
       const turnEnd = workTurn(hooks);
       assert.deepEqual(
         turnEnd.entries.map((entry) => [entry.type, entry.customType]),
@@ -263,7 +269,10 @@ describe("todo", () => {
       assert.equal(history[1].content.length, 1);
 
       // The limit restarts, so the next reminder waits another full window.
-      assert.equal(hooks.get("context_with_system")({ messages: history }), undefined);
+      assert.equal(
+        hooks.get("context_with_system")({ messages: history }),
+        undefined,
+      );
       for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++) {
         assert.equal(workTurn(hooks), undefined);
       }
@@ -273,7 +282,8 @@ describe("todo", () => {
     test("user input restarts the new-task count", () => {
       const { hooks } = setup();
 
-      for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++) workTurn(hooks);
+      for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++)
+        workTurn(hooks);
       hooks.get("input")({});
       for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++) {
         assert.equal(workTurn(hooks), undefined);
@@ -283,7 +293,8 @@ describe("todo", () => {
     test("a todo call restarts the new-task count", () => {
       const { hooks } = setup();
 
-      for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++) workTurn(hooks);
+      for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++)
+        workTurn(hooks);
       // One turn that views the checklist restarts the whole window.
       hooks.get("tool_execution_end")({ toolName: "todo_list" });
       const turnEnd = hooks.get("turn_end")({
@@ -329,13 +340,17 @@ describe("todo", () => {
       // while the new-task window counts past its limit, but the unfinished item
       // keeps that reminder silent.
       const reminderTurns = [];
-      const horizon = REMIND_NEW_TASK_AFTER_TURNS + REMIND_STALE_LIST_AFTER_TURNS;
+      const horizon =
+        REMIND_NEW_TASK_AFTER_TURNS + REMIND_STALE_LIST_AFTER_TURNS;
       for (let turn = 1; turn <= horizon; turn++) {
         const turnEnd = workTurn(hooks);
         if (!turnEnd) continue;
         reminderTurns.push(turn);
         const reminder = turnEnd.entries.at(-1).data.hint;
-        assert.match(reminder, /recently\.\n\n- \[ \] A\n\nIf progress changed/);
+        assert.match(
+          reminder,
+          /recently\.\n\n- \[ \] A\n\nIf progress changed/,
+        );
         assert.doesNotMatch(reminder, /without user input/);
       }
       const staleTurns = Array.from(
@@ -352,7 +367,8 @@ describe("todo", () => {
 
       // Turns that did not finish, or finished without any tool result, stay
       // silent even once the counters are past the long horizon.
-      for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++) workTurn(hooks);
+      for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++)
+        workTurn(hooks);
       for (let turn = 0; turn < 5; turn++) {
         assert.equal(stalledTurn("aborted", [{}]), undefined);
         assert.equal(stalledTurn("completed", []), undefined);
@@ -390,7 +406,8 @@ describe("todo", () => {
       const branch = { sessionManager: { getBranch: () => [] } };
 
       for (const event of ["session_start", "session_tree"]) {
-        for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++) workTurn(hooks);
+        for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++)
+          workTurn(hooks);
         hooks.get(event)({}, branch);
         for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++) {
           assert.equal(workTurn(hooks), undefined);
@@ -504,7 +521,10 @@ describe("todo", () => {
       const rows = 20;
       // The fake UI cannot verify the real reserve, but a page that grows past
       // it would clip.
-      const items = Array.from({ length: 12 }, (_, index) => `- [ ] item ${index}`);
+      const items = Array.from(
+        { length: 12 },
+        (_, index) => `- [ ] item ${index}`,
+      );
       await write(items.join("\n"));
 
       const screen = fakeUI(t, rows);

@@ -33,7 +33,15 @@ function fakeThemeClass() {
  */
 class StandInBox {
   constructor(...args) {
-    [this.from, this.message, this.theme, this.replyCommand, this.bodyText, this.collapsed, this.expansionState] = args;
+    [
+      this.from,
+      this.message,
+      this.theme,
+      this.replyCommand,
+      this.bodyText,
+      this.collapsed,
+      this.expansionState,
+    ] = args;
   }
 
   render(width) {
@@ -66,8 +74,13 @@ function intercomMessage(text) {
  * @param options - Renderer options; `expanded` selects the full or collapsed box.
  * @returns Rendered lines.
  */
-function renderMessage(text, { expanded = true, width = 60, renderer = createRenderer(StandInBox) } = {}) {
-  return renderer(intercomMessage(text), { expanded }, plainTheme).render(width);
+function renderMessage(
+  text,
+  { expanded = true, width = 60, renderer = createRenderer(StandInBox) } = {},
+) {
+  return renderer(intercomMessage(text), { expanded }, plainTheme).render(
+    width,
+  );
 }
 
 describe("squareFrames", () => {
@@ -147,16 +160,28 @@ describe("createRenderer", () => {
     const lines = renderMessage("glyphs ╭╮╰╯ stay rounded");
 
     assert.ok(lines[0].startsWith("┌") && lines[0].endsWith("┐"), lines[0]);
-    assert.ok(lines.at(-1).startsWith("└") && lines.at(-1).endsWith("┘"), lines.at(-1));
+    assert.ok(
+      lines.at(-1).startsWith("└") && lines.at(-1).endsWith("┘"),
+      lines.at(-1),
+    );
     assert.ok(lines[1].startsWith("│glyphs ╭╮╰╯ stay rounded"), lines[1]);
 
-    const widths = new Set(lines.map((line) => line.replace(STYLED, "").length));
+    const widths = new Set(
+      lines.map((line) => line.replace(STYLED, "").length),
+    );
     assert.deepEqual([...widths], [60]);
   });
 
   test("falls through to the host renderer without intercom details", () => {
     const renderer = createRenderer(StandInBox);
-    assert.equal(renderer({ customType: "intercom_message" }, { expanded: true }, plainTheme), undefined);
+    assert.equal(
+      renderer(
+        { customType: "intercom_message" },
+        { expanded: true },
+        plainTheme,
+      ),
+      undefined,
+    );
   });
 
   test("builds the component from the message details", () => {
@@ -195,10 +220,17 @@ describe("createRenderer", () => {
     const renderer = createRenderer(StandInBox);
     const message = intercomMessage("x");
 
-    const state = renderer(message, { expanded: true }, plainTheme).expansionState;
+    const state = renderer(
+      message,
+      { expanded: true },
+      plainTheme,
+    ).expansionState;
     state.expanded = false;
 
-    assert.equal(renderer(message, { expanded: false }, plainTheme).expansionState, state);
+    assert.equal(
+      renderer(message, { expanded: false }, plainTheme).expansionState,
+      state,
+    );
     assert.equal(state.expanded, false);
     assert.equal(state.globalExpanded, false);
 

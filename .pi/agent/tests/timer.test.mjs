@@ -350,26 +350,30 @@ describe("timer", () => {
   test("the extension registers one tool per action", (t) => {
     const { tools } = setup(t, runUntilCancelled);
 
-    assert.deepEqual([...tools.keys()], [
-      "timer_start",
-      "timer_stop",
-      "timer_status",
-    ]);
-    assert.deepEqual(Object.keys(tools.get("timer_start").parameters.properties).sort(), [
-      "condition",
-      "id",
-      "intervalSec",
-      "maxTicks",
-      "onTick",
-      "start",
-      "timeoutSec",
-    ]);
-    assert.deepEqual(Object.keys(tools.get("timer_stop").parameters.properties), [
-      "id",
-    ]);
-    assert.deepEqual(Object.keys(tools.get("timer_status").parameters.properties), [
-      "id",
-    ]);
+    assert.deepEqual(
+      [...tools.keys()],
+      ["timer_start", "timer_stop", "timer_status"],
+    );
+    assert.deepEqual(
+      Object.keys(tools.get("timer_start").parameters.properties).sort(),
+      [
+        "condition",
+        "id",
+        "intervalSec",
+        "maxTicks",
+        "onTick",
+        "start",
+        "timeoutSec",
+      ],
+    );
+    assert.deepEqual(
+      Object.keys(tools.get("timer_stop").parameters.properties),
+      ["id"],
+    );
+    assert.deepEqual(
+      Object.keys(tools.get("timer_status").parameters.properties),
+      ["id"],
+    );
   });
   test("a one-shot timer wakes once, says it stopped, then retires itself", async (t) => {
     const { start, stop, noticesAfter } = setup(t, () => exit(1));
@@ -404,7 +408,10 @@ describe("timer", () => {
     await start({ id: "broken-cond", condition: "snap", maxTicks: 0 });
     const [notice] = await noticesAfter(1);
 
-    assert.match(notice.content, /^\[timer broken-cond\] error: Error: boom; timer stopped$/);
+    assert.match(
+      notice.content,
+      /^\[timer broken-cond\] error: Error: boom; timer stopped$/,
+    );
     assert.equal(
       (await stop({ id: "broken-cond" })).content[0].text,
       'Timer "broken-cond" stopped (failed).',
@@ -439,7 +446,10 @@ describe("timer", () => {
 
     await start({ id: "peek-1", intervalSec: 5, maxTicks: 2, timeoutSec: 60 });
 
-    assert.match((await status({ id: "peek-1" })).content[0].text, /^peek-1 {2}running/);
+    assert.match(
+      (await status({ id: "peek-1" })).content[0].text,
+      /^peek-1 {2}running/,
+    );
     assert.equal(
       (await stop({ id: "peek-1" })).content[0].text,
       'Stopped "peek-1".',
@@ -460,7 +470,10 @@ describe("timer", () => {
     await wait(300);
 
     assert.equal(notices.length, 2);
-    assert.match(notices[0].content, /^\[timer monitor-1\] tick 1\/2, \d+s elapsed$/);
+    assert.match(
+      notices[0].content,
+      /^\[timer monitor-1\] tick 1\/2, \d+s elapsed$/,
+    );
     // Only the last tick may announce the end, so the first stays plain.
     assert.match(
       notices[1].content,
@@ -736,7 +749,16 @@ describe("timer", () => {
       .get("timers")
       .handler("", { mode: "tui", ui: screen.ui });
     const overlay = screen.component;
-    const ids = ["tim1", "tim2", "tim3", "tim4", "tim5", "tim6", "tim7", "tim8"];
+    const ids = [
+      "tim1",
+      "tim2",
+      "tim3",
+      "tim4",
+      "tim5",
+      "tim6",
+      "tim7",
+      "tim8",
+    ];
     for (const id of ids) {
       await start({ id, condition: "false", intervalSec: 3600 });
     }
@@ -799,7 +821,9 @@ describe("timer", () => {
     const detail = pageOf(overlay, 80);
     assert.match(
       detail,
-      new RegExp(`cond-met\\s+✓ done after \\d+s timeout=${DEFAULT_TIMEOUT_SEC}s`),
+      new RegExp(
+        `cond-met\\s+✓ done after \\d+s timeout=${DEFAULT_TIMEOUT_SEC}s`,
+      ),
     );
     assert.match(detail, /cond: true/);
     assert.match(detail, /Escape to go back/);
@@ -833,11 +857,14 @@ describe("timer", () => {
     const showing = commands
       .get("timers")
       .handler("", { mode: "tui", ui: screen.ui });
-    assert.deepEqual(listedIds(screen.component, [
-      "armed-first",
-      "armed-second",
-      "armed-third",
-    ]), ["armed-third", "armed-first", "armed-second"]);
+    assert.deepEqual(
+      listedIds(screen.component, [
+        "armed-first",
+        "armed-second",
+        "armed-third",
+      ]),
+      ["armed-third", "armed-first", "armed-second"],
+    );
 
     screen.component.handleInput("\x1b");
     await showing;
@@ -891,10 +918,13 @@ describe("timer", () => {
   });
 
   test("/timers marks failed, timed-out and signal-killed timers", async (t) => {
-    const { start, hooks, commands, noticesAfter, branch } = setup(t, (command) => {
-      if (command === "snap") throw new Error("boom");
-      return exit(1);
-    });
+    const { start, hooks, commands, noticesAfter, branch } = setup(
+      t,
+      (command) => {
+        if (command === "snap") throw new Error("boom");
+        return exit(1);
+      },
+    );
     const screen = fakeUI(t);
     const showing = commands
       .get("timers")
@@ -1316,13 +1346,19 @@ describe("timer", () => {
       ),
     );
     // The log outlives the wake, so it must record the outcome too.
-    assert.equal(readFileSync(result.details.logPath, "utf8"), "hi\n[exit 0]\n");
+    assert.equal(
+      readFileSync(result.details.logPath, "utf8"),
+      "hi\n[exit 0]\n",
+    );
   });
 
   test("a job that exits non-zero wakes with failed: exit 3", async (t) => {
     const { start, noticesAfter } = setup(t, () => exit(1));
 
-    const result = await start({ id: "job-fail", start: "echo nope >&2; exit 3" });
+    const result = await start({
+      id: "job-fail",
+      start: "echo nope >&2; exit 3",
+    });
     const [notice] = await noticesAfter(1);
 
     assert.match(
@@ -1352,7 +1388,11 @@ describe("timer", () => {
   test("a job timeout kills the job and marks the log", async (t) => {
     const { start, status, noticesAfter } = setup(t, () => exit(1));
 
-    const result = await start({ id: "job-timeout", start: "sleep 30", timeoutSec: 1 });
+    const result = await start({
+      id: "job-timeout",
+      start: "sleep 30",
+      timeoutSec: 1,
+    });
     const pid = await jobPid(status, "job-timeout");
     const [notice] = await noticesAfter(1);
 
@@ -1458,7 +1498,9 @@ describe("timer", () => {
 
   test("restoring a branch re-attaches a live job without rerunning it", async (t) => {
     const runsPath = join(agentDir, "job-reattach-runs.txt");
-    const { hooks, start, notices, noticesAfter, branch } = setup(t, () => exit(1));
+    const { hooks, start, notices, noticesAfter, branch } = setup(t, () =>
+      exit(1),
+    );
     const { details } = await start({
       id: "job-reattach",
       start: `echo run >> '${runsPath}'; sleep 0.5`,
@@ -1485,7 +1527,11 @@ describe("timer", () => {
   test("a job accepts maxTicks 0 and rejects a duplicate id", async (t) => {
     const { start, stop, noticesAfter } = setup(t, () => exit(1));
 
-    const result = await start({ id: "job-zero", start: "echo hi", maxTicks: 0 });
+    const result = await start({
+      id: "job-zero",
+      start: "echo hi",
+      maxTicks: 0,
+    });
     assert.equal(result.details.maxTicks, 0);
     assert.match(result.content[0].text, /no tick wakes/);
     await noticesAfter(1);
@@ -1513,7 +1559,10 @@ describe("timer", () => {
 
     assert.equal(notices.length, 2);
     assert.equal(notices[0].details.state, "tick");
-    assert.match(notices[0].content, /^\[timer job-tick\] tick 1\/1, \ds elapsed$/);
+    assert.match(
+      notices[0].content,
+      /^\[timer job-tick\] tick 1\/1, \ds elapsed$/,
+    );
     assert.equal(notices[1].details.state, "done");
     assert.match(
       notices[1].content,

@@ -433,10 +433,7 @@ const OWNED_ENV = [
  * @param intercom - Intercom id and session name to appear connected as.
  * @returns The fake pi, the registered tool, and a `call` helper.
  */
-function setup(
-  t,
-  { idle = () => true, model, thinkingLevel, intercom } = {},
-) {
+function setup(t, { idle = () => true, model, thinkingLevel, intercom } = {}) {
   resetChildren();
   shortKillGrace(t);
   const previous = new Map(
@@ -481,9 +478,18 @@ describe("subagent", () => {
   describe("the call contract", () => {
     test("rejects an empty id, a live duplicate, and a non-directory cwd", async (t) => {
       const { call } = setup(t);
-      assert.match((await call({ id: "", prompt: "x" })).content[0].text, /must not be empty/);
-      assert.match((await call({ id: "dup", prompt: "x" })).content[0].text, /started/);
-      assert.match((await call({ id: "dup", prompt: "x" })).content[0].text, /already running/);
+      assert.match(
+        (await call({ id: "", prompt: "x" })).content[0].text,
+        /must not be empty/,
+      );
+      assert.match(
+        (await call({ id: "dup", prompt: "x" })).content[0].text,
+        /started/,
+      );
+      assert.match(
+        (await call({ id: "dup", prompt: "x" })).content[0].text,
+        /already running/,
+      );
       const bad = await call({ id: "bad", prompt: "x", cwd: "/etc/hosts" });
       assert.match(bad.content[0].text, /not a directory/);
     });
@@ -491,15 +497,18 @@ describe("subagent", () => {
     test("rejects a timeout that could never elapse", async (t) => {
       const { call, children } = setup(t);
       assert.match(
-        (await call({ id: "bad-timeout", prompt: "x", timeoutSec: 0 })).content[0].text,
+        (await call({ id: "bad-timeout", prompt: "x", timeoutSec: 0 }))
+          .content[0].text,
         /positive number of seconds/,
       );
       assert.match(
-        (await call({ id: "bad-timeout", prompt: "x", timeoutSec: -5 })).content[0].text,
+        (await call({ id: "bad-timeout", prompt: "x", timeoutSec: -5 }))
+          .content[0].text,
         /positive number of seconds/,
       );
       assert.match(
-        (await call({ id: "bad-timeout", prompt: "x", timeoutSec: 1e9 })).content[0].text,
+        (await call({ id: "bad-timeout", prompt: "x", timeoutSec: 1e9 }))
+          .content[0].text,
         /at most \d+s/,
         "a limit setTimeout cannot hold would fire at once instead",
       );
@@ -545,7 +554,11 @@ describe("subagent", () => {
       await new Promise((resolve) => setTimeout(resolve, 20));
       await pi.hooks.get("session_shutdown")({ reason: "quit" });
       // A new instance starts with no memory of the old one, so the same id works.
-      const { call: freshCall, pi: freshPi, children: freshChildren } = setup(t);
+      const {
+        call: freshCall,
+        pi: freshPi,
+        children: freshChildren,
+      } = setup(t);
       const result = await freshCall({ id: "reuse", prompt: "x" });
       assert.match(result.content[0].text, /started/);
       freshChildren[0].write(assistantRecord("second try"));
@@ -558,7 +571,12 @@ describe("subagent", () => {
   describe("the child invocation", () => {
     test("builds the child invocation from the call", async (t) => {
       const { call, children } = setup(t);
-      await call({ id: "cfg", prompt: "do it", model: "some/model", tools: ["read", "bash"] });
+      await call({
+        id: "cfg",
+        prompt: "do it",
+        model: "some/model",
+        tools: ["read", "bash"],
+      });
       const [child] = children;
       assert.equal(child.options.cwd, workDir);
       assert.equal(child.options.shell, false);
@@ -568,8 +586,15 @@ describe("subagent", () => {
         "cfg",
         "the child's session is named after the call's id, so peers can address it",
       );
-      assert.equal(options.mode, "rpc", "the child stays alive between its turns");
-      assert.ok(flags.has("no-session"), "the child keeps no session file of its own");
+      assert.equal(
+        options.mode,
+        "rpc",
+        "the child stays alive between its turns",
+      );
+      assert.ok(
+        flags.has("no-session"),
+        "the child keeps no session file of its own",
+      );
       assert.equal(options.model, "some/model");
       assert.deepEqual(
         options.tools.split(","),
@@ -603,7 +628,11 @@ describe("subagent", () => {
         String(DEFAULT_TIMEOUT_SEC),
         "the child warns itself against the same deadline",
       );
-      assert.equal(child.command, process.argv[1], "the child reuses the running pi build");
+      assert.equal(
+        child.command,
+        process.argv[1],
+        "the child reuses the running pi build",
+      );
     });
 
     test("lets PI_BIN override the child command", async (t) => {
@@ -634,14 +663,23 @@ describe("subagent", () => {
       };
 
       assert.equal(await toolsOf(["read"]), "read,subagent_finish");
-      assert.equal(await toolsOf(["read", "subagent_finish"]), "read,subagent_finish");
-      assert.equal(await toolsOf(["+codemode"]), "+codemode", "a modifier list is left alone");
+      assert.equal(
+        await toolsOf(["read", "subagent_finish"]),
+        "read,subagent_finish",
+      );
+      assert.equal(
+        await toolsOf(["+codemode"]),
+        "+codemode",
+        "a modifier list is left alone",
+      );
       assert.equal(
         await toolsOf(["+codemode", "-subagent_finish"]),
         "+codemode,+subagent_finish",
         "an explicit removal is undone",
       );
-      await pi.tools.get("subagent_kill").execute("call", {}, undefined, undefined, {});
+      await pi.tools
+        .get("subagent_kill")
+        .execute("call", {}, undefined, undefined, {});
     });
 
     test("tells the child which session spawned it", async (t) => {
@@ -812,7 +850,10 @@ describe("subagent", () => {
       children[0].write(assistantRecord("The review is above."));
       children[0].close(0);
       const [sent] = await notices(pi);
-      assert.match(sent.message.content, /^\[subagent report\] finished in \d+s\./);
+      assert.match(
+        sent.message.content,
+        /^\[subagent report\] finished in \d+s\./,
+      );
       assert.match(sent.message.content, /REPORT/);
       assert.doesNotMatch(sent.message.content, /The review is above\./);
     });
@@ -823,7 +864,10 @@ describe("subagent", () => {
       children[0].write(finishRecord("REPORT"));
       children[0].close(0);
       const [sent] = await notices(pi);
-      assert.match(sent.message.content, /^\[subagent bare\] finished in \d+s\./);
+      assert.match(
+        sent.message.content,
+        /^\[subagent bare\] finished in \d+s\./,
+      );
       assert.match(sent.message.content, /REPORT/);
     });
 
@@ -832,7 +876,10 @@ describe("subagent", () => {
       await call({ id: "silent", prompt: "x" });
       children[0].close(0);
       const [sent] = await notices(pi);
-      assert.match(sent.message.content, /^\[subagent silent\] failed after \d+s: /);
+      assert.match(
+        sent.message.content,
+        /^\[subagent silent\] failed after \d+s: /,
+      );
       assert.match(sent.message.content, /exited without an answer/);
     });
 
@@ -860,10 +907,21 @@ describe("subagent", () => {
 
     test("classifies exit codes, signals, and JSON-mode stop reasons", async (t) => {
       const cases = [
-        { record: assistantRecord("a"), close: [3, null], expect: /exit code 3/ },
-        { record: assistantRecord("a"), close: [null, "SIGTERM"], expect: /signal SIGTERM/ },
         {
-          record: assistantRecord("a", { stopReason: "error", errorMessage: "boom" }),
+          record: assistantRecord("a"),
+          close: [3, null],
+          expect: /exit code 3/,
+        },
+        {
+          record: assistantRecord("a"),
+          close: [null, "SIGTERM"],
+          expect: /signal SIGTERM/,
+        },
+        {
+          record: assistantRecord("a", {
+            stopReason: "error",
+            errorMessage: "boom",
+          }),
           close: [0, null],
           expect: /boom/,
         },
@@ -894,7 +952,10 @@ describe("subagent", () => {
         sent.message.content,
         /^\[subagent stuck\] timeout after \d+s: no result within its 0.05s timeout/,
       );
-      assert.ok(child.kills.includes("SIGTERM"), "the child is stopped, not left running");
+      assert.ok(
+        child.kills.includes("SIGTERM"),
+        "the child is stopped, not left running",
+      );
       assert.ok(
         await waitFor(() => child.kills.includes("SIGKILL")),
         "a child that ignores SIGTERM is escalated",
@@ -903,7 +964,10 @@ describe("subagent", () => {
       const status = await pi.tools
         .get("subagent_status")
         .execute("call", { id: "stuck" }, undefined, undefined, {});
-      assert.match(status.content[0].text, /\[subagent stuck\] timeout after \d+s/);
+      assert.match(
+        status.content[0].text,
+        /\[subagent stuck\] timeout after \d+s/,
+      );
     });
 
     test("a child that finishes before its timeout is not stopped", async (t) => {
@@ -914,7 +978,11 @@ describe("subagent", () => {
       const [sent] = await notices(pi);
       assert.match(sent.message.content, /finished in \d+s\./);
       await new Promise((resolve) => setTimeout(resolve, 80));
-      assert.deepEqual(children[0].kills, [], "the deadline is cleared on result");
+      assert.deepEqual(
+        children[0].kills,
+        [],
+        "the deadline is cleared on result",
+      );
     });
 
     test("a spawn failure is reported once", async (t) => {
@@ -943,9 +1011,16 @@ describe("subagent", () => {
         }),
       );
       child.write(
-        rpcRecord({ type: "extension_ui_request", id: "ui-2", method: "notify", message: "hi" }),
+        rpcRecord({
+          type: "extension_ui_request",
+          id: "ui-2",
+          method: "notify",
+          message: "hi",
+        }),
       );
-      const answers = childCommands(child).filter((command) => command.type === "extension_ui_response");
+      const answers = childCommands(child).filter(
+        (command) => command.type === "extension_ui_response",
+      );
       assert.deepEqual(answers, [
         { type: "extension_ui_response", id: "ui-1", cancelled: true },
         // Harmless: pi ignores a response to a fire-and-forget record, and a new
@@ -958,11 +1033,20 @@ describe("subagent", () => {
       const { call, pi, children } = setup(t);
       await call({ id: "refused", prompt: "x" });
       children[0].write(
-        rpcRecord({ id: "prompt", type: "response", command: "prompt", success: false, error: "Model not found" }),
+        rpcRecord({
+          id: "prompt",
+          type: "response",
+          command: "prompt",
+          success: false,
+          error: "Model not found",
+        }),
       );
       children[0].close(143);
       const [sent] = await notices(pi);
-      assert.match(sent.message.content, /^\[subagent refused\] failed after \d+s: Model not found/);
+      assert.match(
+        sent.message.content,
+        /^\[subagent refused\] failed after \d+s: Model not found/,
+      );
       assert.ok(
         children[0].kills.includes("SIGTERM"),
         "a child that never ran is stopped instead of left waiting",
@@ -983,7 +1067,10 @@ describe("subagent", () => {
       );
       children[0].close(143);
       const [sent] = await notices(pi);
-      assert.match(sent.message.content, /failed after \d+s: the child handed its prompt/);
+      assert.match(
+        sent.message.content,
+        /failed after \d+s: the child handed its prompt/,
+      );
     });
 
     test("a child that never starts a run is stopped at the deadline", async (t) => {
@@ -991,7 +1078,10 @@ describe("subagent", () => {
       const { call, pi, children } = setup(t);
       await call({ id: "silent-start", prompt: "x" });
       const [sent] = await notices(pi);
-      assert.match(sent.message.content, /failed after \d+s: the child never started a run/);
+      assert.match(
+        sent.message.content,
+        /failed after \d+s: the child never started a run/,
+      );
       assert.ok(children[0].kills.includes("SIGTERM"));
     });
 
@@ -1001,7 +1091,11 @@ describe("subagent", () => {
       await call({ id: "starting", prompt: "x" });
       children[0].write(rpcRecord({ type: "agent_start" }));
       await new Promise((resolve) => setTimeout(resolve, 120));
-      assert.deepEqual(children[0].kills, [], "a run that started is left alone");
+      assert.deepEqual(
+        children[0].kills,
+        [],
+        "a run that started is left alone",
+      );
       children[0].write(assistantRecord("done"));
       children[0].close(0);
       const [sent] = await notices(pi);
@@ -1021,7 +1115,10 @@ describe("subagent", () => {
       );
       children[0].close(1);
       const [sent] = await notices(pi);
-      assert.match(sent.message.content, /extension error in \/ext\/bad\.ts on agent_settled: boom/);
+      assert.match(
+        sent.message.content,
+        /extension error in \/ext\/bad\.ts on agent_settled: boom/,
+      );
     });
   });
 
@@ -1035,7 +1132,10 @@ describe("subagent", () => {
       children[0].write(assistantRecord("PONG"));
       children[0].close(0);
       const [sent] = await notices(pi);
-      assert.match(sent.message.content, /^\[subagent slow\] finished in \d+s\./);
+      assert.match(
+        sent.message.content,
+        /^\[subagent slow\] finished in \d+s\./,
+      );
       assert.match(sent.message.content, /PONG/);
       assert.deepEqual(sent.options, { deliverAs: "steer", triggerTurn: true });
     });
@@ -1049,12 +1149,25 @@ describe("subagent", () => {
       await call({ id: "busy", prompt: "x" });
       children[0].write(assistantRecord("ready"));
       children[0].close(0);
-      assert.equal(pi.sent.length, 1, "delivery does not wait for idle or a poll");
+      assert.equal(
+        pi.sent.length,
+        1,
+        "delivery does not wait for idle or a poll",
+      );
       assert.match(pi.sent[0].message.content, /ready/);
-      assert.deepEqual(pi.sent[0].options, { deliverAs: "steer", triggerTurn: true });
-      const kill = await pi.tools.get("subagent_kill").execute("call", { id: "busy" });
+      assert.deepEqual(pi.sent[0].options, {
+        deliverAs: "steer",
+        triggerTurn: true,
+      });
+      const kill = await pi.tools
+        .get("subagent_kill")
+        .execute("call", { id: "busy" });
       assert.match(kill.content[0].text, /No running subagent/);
-      assert.deepEqual(children[0].kills, [], "an exited child cannot be killed");
+      assert.deepEqual(
+        children[0].kills,
+        [],
+        "an exited child cannot be killed",
+      );
       assert.equal(pi.sent.length, 1);
     });
   });
@@ -1375,7 +1488,9 @@ describe("subagent", () => {
       // One blank line separates the settings from the pinned spawn line, and
       // the steps follow it directly.
       const rows = detail.split("\n").map((line) => line.trim());
-      const spawn = rows.findIndex((line) => /^\d\d:\d\d:\d\d start$/.test(line));
+      const spawn = rows.findIndex((line) =>
+        /^\d\d:\d\d:\d\d start$/.test(line),
+      );
       assert.ok(spawn > 0, "the spawn line is rendered");
       assert.equal(rows[spawn - 1], "", "a blank line follows the settings");
       assert.match(rows[spawn + 1], /^\d\d:\d\d:\d\d text\b/);
@@ -1431,7 +1546,11 @@ describe("subagent", () => {
       overlay.handleInput("\r");
       const detail = overlay.render(160).join("\n");
       assert.match(detail, /\btext\s+Checking the overlay\./);
-      assert.doesNotMatch(detail, /\btext\s*$/m, "a text step never renders bare");
+      assert.doesNotMatch(
+        detail,
+        /\btext\s*$/m,
+        "a text step never renders bare",
+      );
 
       overlay.handleInput("\x1b");
       overlay.handleInput("\x1b");
@@ -1456,7 +1575,9 @@ describe("subagent", () => {
       });
       overlay.handleInput("\r");
       const detail = overlay.render(160).join("\n");
-      const header = detail.split("\n").find((line) => line.includes("audited"));
+      const header = detail
+        .split("\n")
+        .find((line) => line.includes("audited"));
 
       assert.ok(header, "the detail view names the child");
       assert.ok(
@@ -1477,7 +1598,12 @@ describe("subagent", () => {
       );
       assert.match(header, /timeout=90s/);
       // The header repeats the row's settings in the list's column order.
-      const settings = ["timeout=90s", "audit-model", "tools=read,bash", workDir];
+      const settings = [
+        "timeout=90s",
+        "audit-model",
+        "tools=read,bash",
+        workDir,
+      ];
       const offsets = settings.map((text) => header.indexOf(text));
       assert.deepEqual(
         offsets,
@@ -1618,9 +1744,7 @@ describe("subagent", () => {
           path: "src/auth.ts",
         }),
       );
-      children[0].write(
-        toolRecord("tool_execution_end", "call-1", "read"),
-      );
+      children[0].write(toolRecord("tool_execution_end", "call-1", "read"));
       children[0].write(assistantRecord("all done"));
       children[0].close(0);
       await notices(pi);
@@ -1744,7 +1868,16 @@ describe("subagent", () => {
         .get("subagents")
         .handler("", { mode: "tui", ui: screen.ui });
       const overlay = screen.component;
-      const ids = ["one", "two", "three", "four", "five", "six", "seven", "eight"];
+      const ids = [
+        "one",
+        "two",
+        "three",
+        "four",
+        "five",
+        "six",
+        "seven",
+        "eight",
+      ];
       for (const id of ids) await call({ id, prompt: "x" });
       for (const child of children) child.close(0);
       await notices(pi, ids.length);
@@ -1792,9 +1925,16 @@ describe("subagent", () => {
       children[1].close(0);
 
       const status = pi.tools.get("subagent_status");
-      const all = (await status.execute("call", {}, undefined, undefined, {})).content[0].text;
-      assert.match(all, /\[subagent busy\] running for \d+s \(m, tools=default, /);
-      assert.ok(all.includes(workDir), "the status shows the working directory");
+      const all = (await status.execute("call", {}, undefined, undefined, {}))
+        .content[0].text;
+      assert.match(
+        all,
+        /\[subagent busy\] running for \d+s \(m, tools=default, /,
+      );
+      assert.ok(
+        all.includes(workDir),
+        "the status shows the working directory",
+      );
       assert.match(all, /\[subagent done\] done after \d+s/);
       assert.doesNotMatch(all, /\[subagent done\] running/);
       assert.equal(pi.sent.length, 1);
@@ -1836,7 +1976,10 @@ describe("subagent", () => {
       await call({ id: "one", prompt: "x" });
       await call({ id: "two", prompt: "y" });
       const status = pi.tools.get("subagent_status");
-      const run = (id) => status.execute("call", { id }, undefined, undefined, {}).then((r) => r.content[0].text);
+      const run = (id) =>
+        status
+          .execute("call", { id }, undefined, undefined, {})
+          .then((r) => r.content[0].text);
 
       assert.match(await run("one"), /\[subagent one\]/);
       assert.doesNotMatch(await run("one"), /\[subagent two\]/);
@@ -1907,20 +2050,40 @@ describe("subagent", () => {
 
       advance(3);
       // Preparing a reply streams tool-call arguments, which are not a block.
-      children[0].write(updateRecord({ type: "toolcall_start", contentIndex: 0, id: "call-1", toolName: "bash" }));
-      children[0].write(updateRecord({ type: "toolcall_delta", contentIndex: 0, delta: "{\"command\":" }));
+      children[0].write(
+        updateRecord({
+          type: "toolcall_start",
+          contentIndex: 0,
+          id: "call-1",
+          toolName: "bash",
+        }),
+      );
+      children[0].write(
+        updateRecord({
+          type: "toolcall_delta",
+          contentIndex: 0,
+          delta: '{"command":',
+        }),
+      );
       assert.ok((await report()).includes("waiting for the model (5s)"));
 
       // A streamed block measures its own lifetime, not the last token.
       children[0].write(updateRecord({ type: "text_start", contentIndex: 0 }));
       advance(4);
-      children[0].write(updateRecord({ type: "text_delta", contentIndex: 0, delta: "draft" }));
+      children[0].write(
+        updateRecord({ type: "text_delta", contentIndex: 0, delta: "draft" }),
+      );
       const writing = await report();
-      assert.ok(writing.includes("running for 9s, writing for 4s (5 chars) ("), writing);
+      assert.ok(
+        writing.includes("running for 9s, writing for 4s (5 chars) ("),
+        writing,
+      );
       assert.doesNotMatch(writing, /last event/);
 
       // Once the block ends, the wait starts over from that moment.
-      children[0].write(updateRecord({ type: "text_end", contentIndex: 0, content: "draft" }));
+      children[0].write(
+        updateRecord({ type: "text_end", contentIndex: 0, content: "draft" }),
+      );
       advance(2);
       const waiting = await report();
       assert.ok(waiting.includes("waiting for the model (2s)"), waiting);
@@ -1985,7 +2148,11 @@ describe("subagent", () => {
       );
       advance(4);
       children[0].write(
-        updateRecord({ type: "thinking_delta", contentIndex: 0, delta: thoughts }),
+        updateRecord({
+          type: "thinking_delta",
+          contentIndex: 0,
+          delta: thoughts,
+        }),
       );
       const text = await report();
       assert.ok(
@@ -2045,7 +2212,11 @@ describe("subagent", () => {
       children[0].write(eventRecord("agent_start"));
       children[0].write(messageStartRecord("assistant"));
       children[0].write(
-        updateRecord({ type: "text_delta", contentIndex: 0, delta: "half a sen" }),
+        updateRecord({
+          type: "text_delta",
+          contentIndex: 0,
+          delta: "half a sen",
+        }),
       );
       advance(2);
       children[0].write(
@@ -2055,7 +2226,11 @@ describe("subagent", () => {
 
       // The assistant's own message_end closes the block and waits again.
       advance(3);
-      children[0].write(messageEndRecord("assistant", [{ type: "text", text: "half a sentence" }]));
+      children[0].write(
+        messageEndRecord("assistant", [
+          { type: "text", text: "half a sentence" },
+        ]),
+      );
       const waiting = await report();
       assert.ok(waiting.includes("waiting for the model (0s)"), waiting);
       assert.doesNotMatch(waiting, /writing|"\.\.\./);
@@ -2177,7 +2352,10 @@ describe("subagent", () => {
     test("subagent_kill stops one id, a list, or everything", async (t) => {
       const { call, pi, children } = setup(t);
       const kill = pi.tools.get("subagent_kill");
-      const run = (id) => kill.execute("call", { id }, undefined, undefined, {}).then((r) => r.content[0].text);
+      const run = (id) =>
+        kill
+          .execute("call", { id }, undefined, undefined, {})
+          .then((r) => r.content[0].text);
 
       await call({ id: "keep", prompt: "x" });
       await call({ id: "drop", prompt: "y" });
@@ -2188,8 +2366,14 @@ describe("subagent", () => {
       assert.deepEqual(children[1].kills, ["SIGTERM", "SIGKILL"]);
       assert.deepEqual(children[0].kills, [], "other children are untouched");
 
-      assert.match(await run(["drop2", "ghost"]), /Stopped \[subagent drop2\]\. Not running: \[subagent ghost\]\./);
-      assert.match(await run("nobody"), /No running subagent named \[subagent nobody\]\./);
+      assert.match(
+        await run(["drop2", "ghost"]),
+        /Stopped \[subagent drop2\]\. Not running: \[subagent ghost\]\./,
+      );
+      assert.match(
+        await run("nobody"),
+        /No running subagent named \[subagent nobody\]\./,
+      );
 
       // No id: everything that is left.
       assert.match(await run(undefined), /Stopped \[subagent keep\]\./);
@@ -2199,7 +2383,9 @@ describe("subagent", () => {
     test("a killed child does not report a result", async (t) => {
       const { call, pi, children } = setup(t);
       await call({ id: "killed", prompt: "x" });
-      await pi.tools.get("subagent_kill").execute("call", {}, undefined, undefined, {});
+      await pi.tools
+        .get("subagent_kill")
+        .execute("call", {}, undefined, undefined, {});
       children[0].write(assistantRecord("late answer"));
       children[0].close(0);
       await new Promise((resolve) => setTimeout(resolve, 20));
@@ -2207,7 +2393,10 @@ describe("subagent", () => {
       const status = await pi.tools
         .get("subagent_status")
         .execute("call", {}, undefined, undefined, {});
-      assert.match(status.content[0].text, /\[subagent killed\] killed after \d+s/);
+      assert.match(
+        status.content[0].text,
+        /\[subagent killed\] killed after \d+s/,
+      );
     });
 
     test("shutdown drops late child results", async (t) => {
@@ -2236,11 +2425,22 @@ describe("subagent", () => {
     test("shutdown kills children and says a reload killed them", async (t) => {
       const { call, pi, children } = setup(t, { idle: () => false });
       await call({ id: "alive", prompt: "x" });
-      assert.deepEqual(children[0].kills, [], "nothing is killed while the child runs");
+      assert.deepEqual(
+        children[0].kills,
+        [],
+        "nothing is killed while the child runs",
+      );
       await pi.hooks.get("session_shutdown")({ reason: "reload" });
-      assert.deepEqual(children[0].kills, ["SIGTERM", "SIGKILL"], "shutdown stops the child");
+      assert.deepEqual(
+        children[0].kills,
+        ["SIGTERM", "SIGKILL"],
+        "shutdown stops the child",
+      );
       const sent = await notices(pi);
-      assert.match(sent[0].message.content, /Reload killed 1 running subagent\(s\): \[subagent alive\]/);
+      assert.match(
+        sent[0].message.content,
+        /Reload killed 1 running subagent\(s\): \[subagent alive\]/,
+      );
       assert.deepEqual(sent[0].options, { triggerTurn: false });
     });
   });
@@ -2299,7 +2499,11 @@ describe("subagent", () => {
       advance(30);
       const text = await update(pi, { id: "late", timeoutSec: 20 });
       assert.match(text, /already run for 30\.0s/);
-      assert.equal(childCommands(children[0]).length, 1, "the child hears nothing");
+      assert.equal(
+        childCommands(children[0]).length,
+        1,
+        "the child hears nothing",
+      );
     });
 
     test("a shorter timeout ends the child sooner", async (t) => {
@@ -2321,7 +2525,11 @@ describe("subagent", () => {
         await update(pi, { id: "gone", timeoutSec: 60 }),
         /No running subagent named \[subagent gone\]/,
       );
-      assert.equal(childCommands(children[0]).length, 1, "the dead child hears nothing");
+      assert.equal(
+        childCommands(children[0]).length,
+        1,
+        "the dead child hears nothing",
+      );
     });
 
     test("only a running child can be updated", async (t) => {
@@ -2414,7 +2622,11 @@ describe("subagent", () => {
     test("a parent session installs no gate", async (t) => {
       const { pi } = setup(t);
       assert.equal(pi.hooks.has("agent_settled"), false);
-      assert.equal(pi.tools.has("subagent_finish"), false, "a parent has nothing to finish");
+      assert.equal(
+        pi.tools.has("subagent_finish"),
+        false,
+        "a parent has nothing to finish",
+      );
       assert.equal(
         pi.commands.has("subagent-timeout"),
         false,
@@ -2426,9 +2638,15 @@ describe("subagent", () => {
       const pi = childSetup(t);
       await pi.tools
         .get("subagent")
-        .execute("call", { id: "sel", prompt: "x", tools: ["read"] }, undefined, undefined, {
-          cwd: workDir,
-        });
+        .execute(
+          "call",
+          { id: "sel", prompt: "x", tools: ["read"] },
+          undefined,
+          undefined,
+          {
+            cwd: workDir,
+          },
+        );
       const toolSelection = childOptions(children[0]).options.tools;
       assert.deepEqual(toolSelection.split(","), ["read", "subagent_finish"]);
     });
@@ -2437,17 +2655,27 @@ describe("subagent", () => {
       const pi = childSetup(t);
       const finish = pi.tools.get("subagent_finish");
       const guidelines = finish.promptGuidelines.join(" ");
-      assert.match(finish.promptSnippet, /a turn ending does not end the session/);
+      assert.match(
+        finish.promptSnippet,
+        /a turn ending does not end the session/,
+      );
       assert.doesNotMatch(guidelines, /You are a subagent working alone/);
       assert.doesNotMatch(guidelines, /outlives its turns/);
-      assert.match(guidelines, /call `subagent_finish` when your answer is final/);
+      assert.match(
+        guidelines,
+        /call `subagent_finish` when your answer is final/,
+      );
     });
 
     test("a child stays open after a turn until its model finishes", async (t) => {
       const pi = childSetup(t);
       const { ctx, state } = settleCtx();
       await pi.hooks.get("agent_settled")({ aborted: false }, ctx);
-      assert.equal(state.shutDown, 0, "a turn ending no longer ends the session");
+      assert.equal(
+        state.shutDown,
+        0,
+        "a turn ending no longer ends the session",
+      );
     });
 
     test("the finish tool ends the child at the next settle", async (t) => {
@@ -2457,7 +2685,11 @@ describe("subagent", () => {
         .get("subagent_finish")
         .execute("call", { answer: "x" });
       assert.match(result.content[0].text, /Finishing/);
-      assert.equal(result.terminate, true, "the answer already carries the report");
+      assert.equal(
+        result.terminate,
+        true,
+        "the answer already carries the report",
+      );
       await pi.hooks.get("agent_settled")({ aborted: false }, ctx);
       assert.equal(state.shutDown, 1);
     });
@@ -2468,7 +2700,10 @@ describe("subagent", () => {
       const [sent] = await notices(pi);
       assert.equal(sent.message.customType, "subagent-deadline");
       assert.match(sent.message.content, /\[subagent deadline\] About 1s/);
-      assert.match(sent.message.content, /call `subagent_finish` with your best answer/);
+      assert.match(
+        sent.message.content,
+        /call `subagent_finish` with your best answer/,
+      );
       assert.deepEqual(
         sent.options,
         { deliverAs: "steer", triggerTurn: true },
@@ -2515,7 +2750,10 @@ describe("subagent", () => {
       const pi = childSetup(t, { timeout: "100" });
       await pi.commands.get("subagent-timeout").handler("1");
       await waitFor(() => pi.sent.length === 2);
-      assert.match(pi.sent[1].message.content, /About 1s of this session's 1s budget/);
+      assert.match(
+        pi.sent[1].message.content,
+        /About 1s of this session's 1s budget/,
+      );
     });
 
     test("a finish request waits for a turn that is already running", async (t) => {
@@ -2595,7 +2833,10 @@ describe("subagent", () => {
           waitStarted = true;
           return new Promise((resolve) => {
             releaseWait = () =>
-              resolve({ content: [{ type: "text", text: "released" }], details: {} });
+              resolve({
+                content: [{ type: "text", text: "released" }],
+                details: {},
+              });
           });
         },
       };
@@ -2640,8 +2881,15 @@ describe("subagent", () => {
 
       const run = session.prompt("start");
       try {
-        assert.ok(await waitFor(() => waitStarted), "the parent reached its busy tool");
-        assert.equal(children.length, 1, "the extension spawned one fake child");
+        assert.ok(
+          await waitFor(() => waitStarted),
+          "the parent reached its busy tool",
+        );
+        assert.equal(
+          children.length,
+          1,
+          "the extension spawned one fake child",
+        );
 
         children[0].write(assistantRecord("child answer"));
         children[0].close(0);
@@ -2650,7 +2898,11 @@ describe("subagent", () => {
           await waitFor(() => steered.length > 0),
           "a finished child is steered while the parent is still in a tool",
         );
-        assert.equal(followed.length, 0, "the result is not deferred as a follow-up");
+        assert.equal(
+          followed.length,
+          0,
+          "the result is not deferred as a follow-up",
+        );
         assert.match(JSON.stringify(steered[0]), /child answer/);
 
         releaseWait();
@@ -2717,7 +2969,11 @@ describe("subagent", () => {
         JSON.stringify(requests[2].context.messages),
         /\[subagent late\] finished in \d+s\.[\s\S]*late child answer/,
       );
-      assert.equal(requests[2].settled, true, "the wake starts after the parent was idle");
+      assert.equal(
+        requests[2].settled,
+        true,
+        "the wake starts after the parent was idle",
+      );
       assert.equal(session.getLastAssistantText(), "woken by the subagent");
     });
   });

@@ -307,7 +307,10 @@ describe("overlay", () => {
       const { calls, theme } = recordingTheme();
       const line = listRow(theme, "timer-a", ["running", "00:12"], 24, true);
 
-      assert.equal(textOf([line]).trimEnd(), `${SELECTED_CURSOR} timer-a running 00:12`);
+      assert.equal(
+        textOf([line]).trimEnd(),
+        `${SELECTED_CURSOR} timer-a running 00:12`,
+      );
       assert.equal(visibleWidth(line), 24, "the row fills the body width");
       assert.deepEqual(calls.bold, ["timer-a"], "the label is bold");
       assert.deepEqual(
@@ -337,7 +340,11 @@ describe("overlay", () => {
         ["selectedBg"],
         "only the cursor row is painted",
       );
-      assert.equal(visibleWidth(other), 20, "the plain row still fills the body");
+      assert.equal(
+        visibleWidth(other),
+        20,
+        "the plain row still fills the body",
+      );
       assert.equal(
         textOf([other]).indexOf("running"),
         textOf([selected]).indexOf("running"),
@@ -351,7 +358,11 @@ describe("overlay", () => {
 
       assert.equal(visibleWidth(line), 10);
       assert.match(textOf([line]), /\.\.\.$/);
-      assert.equal(calls.bg[0].text, line, "the band wraps the cut, padded row");
+      assert.equal(
+        calls.bg[0].text,
+        line,
+        "the band wraps the cut, padded row",
+      );
     });
   });
 });
