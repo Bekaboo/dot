@@ -1403,6 +1403,38 @@ describe("subagent", () => {
       await pi.hooks.get("session_shutdown")({ reason: "quit" });
     });
 
+    test("/subagents details name the first line of a reply that streams in one delta", async (t) => {
+      const { call, pi, children } = setup(t);
+      const screen = fakeUI(t);
+      const showing = pi.commands
+        .get("subagents")
+        .handler("", { mode: "tui", ui: screen.ui });
+      const overlay = screen.component;
+
+      await call({ id: "chunky", prompt: "x" });
+      // A provider may stream a whole block at once, past the rolling buffer
+      // the status line keeps for its tail.
+      children[0].write(updateRecord({ type: "text_start", contentIndex: 0 }));
+      children[0].write(
+        updateRecord({
+          type: "text_delta",
+          contentIndex: 0,
+          delta: `Checking the overlay. ${"filler ".repeat(80)}`,
+        }),
+      );
+      children[0].write(updateRecord({ type: "text_end", contentIndex: 0 }));
+
+      overlay.handleInput("\r");
+      const detail = overlay.render(160).join("\n");
+      assert.match(detail, /\btext\s+Checking the overlay\./);
+      assert.doesNotMatch(detail, /\btext\s*$/m, "a text step never renders bare");
+
+      overlay.handleInput("\x1b");
+      overlay.handleInput("\x1b");
+      await showing;
+      await pi.hooks.get("session_shutdown")({ reason: "quit" });
+    });
+
     test("/subagents details repeat the row's model, tools, cwd and timeout", async (t) => {
       const { call, pi } = setup(t);
       const screen = fakeUI(t);

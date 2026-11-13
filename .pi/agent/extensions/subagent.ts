@@ -422,8 +422,15 @@ interface Activity {
   phaseStartedAt: number;
   /** The last `ACTIVITY_HISTORY` steps, oldest first. */
   steps: ActivityStep[];
+  /**
+   * Start of the open text block, `ACTIVITY_LABEL_CHARS` at most.
+   *
+   * A block that arrives in one large delta never reaches the tail buffer, so
+   * the label is read from the head instead of from the step's character count.
+   */
+  textHead: string;
   /** Characters kept from the open text block, enough to derive its tail. */
-  textBuffer: string;
+  textTail: string;
 }
 
 /** One streamed assistant content-block update, as the wire carries it. */
@@ -549,7 +556,7 @@ function absorbRecord(lastTurn: LastTurn, record: unknown): void {
  * @returns Activity with no phase and no steps.
  */
 function emptyActivity(): Activity {
-  return { phaseStartedAt: Date.now(), steps: [], textBuffer: "" };
+  return { phaseStartedAt: Date.now(), steps: [], textHead: "", textTail: "" };
 }
 
 /**
@@ -754,9 +761,10 @@ function absorbActivity(activity: Activity, record: unknown): void {
  *
  * A delta with no matching open step starts one, so a missing start event
  * costs a label rather than the whole block. Thinking text is counted, never
- * kept; a text block keeps its first line as a label and the tail of a bounded
- * rolling buffer as its last line. Tool-call arguments stream while the reply
- * is still being prepared, so they open no step of their own.
+ * kept; a text block keeps its first line as a label, read from a bounded head
+ * buffer, and the last line from a bounded rolling tail buffer. Tool-call
+ * arguments stream while the reply is still being prepared, so they open no
+ * step of their own.
  *
  * @param activity - Activity of the child, updated in place.
  * @param block - Streamed assistant content-block update.
@@ -778,25 +786,29 @@ function absorbBlock(activity: Activity, block: StreamBlock): void {
       waitForModel(activity);
       return;
     case "text_start":
-      activity.textBuffer = "";
+      activity.textHead = "";
+      activity.textTail = "";
       startStep(activity, "text");
       return;
     case "text_delta": {
       let step = openStep(activity, (entry) => entry.kind === "text");
       if (!step) {
-        activity.textBuffer = "";
+        activity.textHead = "";
+        activity.textTail = "";
         step = startStep(activity, "text");
       }
-      activity.textBuffer = (activity.textBuffer + block.delta).slice(
+      activity.textHead = (activity.textHead + block.delta).slice(
+        0,
+        ACTIVITY_LABEL_CHARS,
+      );
+      activity.textTail = (activity.textTail + block.delta).slice(
         -TEXT_TAIL_BUFFER_CHARS,
       );
       step.chars += block.delta.length;
-      // The first line grows over several deltas; follow it while the buffer
-      // still holds the block's start.
-      if (step.chars <= TEXT_TAIL_BUFFER_CHARS) {
-        step.label = edgeLine(activity.textBuffer, false, ACTIVITY_LABEL_CHARS);
-      }
-      step.tail = edgeLine(activity.textBuffer, true, ACTIVITY_TAIL_CHARS);
+      // The first line grows over several deltas, so follow it for as long as
+      // the head buffer still holds the block's start.
+      step.label = edgeLine(activity.textHead, false, ACTIVITY_LABEL_CHARS);
+      step.tail = edgeLine(activity.textTail, true, ACTIVITY_TAIL_CHARS);
       return;
     }
     case "text_end":
