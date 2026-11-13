@@ -226,7 +226,7 @@ const TOOL_SUMMARY_CHARS = 60;
 /** Characters kept from an open text block, enough to derive its tail line. */
 const TEXT_TAIL_BUFFER_CHARS = 400;
 
-/** Kind column of the detail view's first line, the moment the child spawned. */
+/** Kind word of the detail view's pinned spawn line, the moment the child spawned. */
 const START_KIND = "start";
 
 /** Schema for the `subagent` tool. */
@@ -319,7 +319,7 @@ interface FinishedSubagent {
   id: string;
   /** Elapsed seconds at exit. */
   seconds: number;
-  /** Spawn time in ms, the first line of the detail view. */
+  /** Spawn time in ms, shown on the detail's pinned spawn line. */
   startedAt: number;
   /** Outcome word: done, failed, timeout, or killed. */
   state: Exclude<RunState, "running">;
@@ -350,7 +350,7 @@ interface SubagentRow {
   cwd: string;
   /** Wall-clock limit the child was given, in seconds. */
   timeoutSec: number;
-  /** Spawn time in ms, the first line of the detail view. */
+  /** Spawn time in ms, shown on the detail's pinned spawn line. */
   startedAt: number;
   /** What the child has been doing, for the detail view. */
   activity: Activity;
@@ -1466,7 +1466,7 @@ function openSuffix(step: ActivityStep): string {
 }
 
 /**
- * Header line of one child's detail view.
+ * Settings line of one child's detail view.
  *
  * @param row - Child the view shows.
  * @param stateMarker - Styled state marker of the child.
@@ -1492,6 +1492,20 @@ function detailHeader(
     theme.fg("dim", column.model),
     theme.fg("dim", column.tools),
     theme.fg("dim", column.cwd),
+  ].join(" ");
+}
+
+/**
+ * Spawn moment of one child, pinned above the steps of its detail view.
+ *
+ * @param row - Child the view shows.
+ * @param theme - Active theme.
+ * @returns Text such as "16:51:36 start".
+ */
+function startLine(row: SubagentRow, theme: Theme): string {
+  return [
+    theme.fg("dim", clockTime(row.startedAt)),
+    theme.fg("muted", START_KIND),
   ].join(" ");
 }
 
@@ -2036,6 +2050,9 @@ class SubagentsOverlay implements Component {
           )
         : summaryOf(rows, this.theme),
     );
+    // The spawn moment is pinned, so scrolling the newest step into view never
+    // hides when the child started.
+    this.page.setHead(detail ? [startLine(detail, this.theme)] : []);
     if (detail) this.detailBody(detail, width);
     else this.listBody(rows, selected, width);
     return this.page.render(width);
@@ -2172,6 +2189,9 @@ class SubagentsOverlay implements Component {
   /**
    * Render the activity of one child, one step per line.
    *
+   * The spawn moment is not a step: it sits in the detail's fixed head, so only
+   * the steps themselves scroll.
+   *
    * @param row - Child whose detail is open.
    * @param width - Overlay width, including the text padding.
    * @returns One width-truncated line per step, or the empty state.
@@ -2181,16 +2201,10 @@ class SubagentsOverlay implements Component {
     const { steps } = row.activity;
     const inner = Math.max(0, width - PAGE_PADDING_X * 2);
     const kindWidth = Math.max(
-      ...[START_KIND, ...steps.map(stepKind)].map(visibleWidth),
+      0,
+      ...steps.map((step) => visibleWidth(stepKind(step))),
     );
-    const start = [
-      theme.fg("dim", clockTime(row.startedAt)),
-      theme.fg("muted", padRight(START_KIND, kindWidth)),
-    ].join(" ");
-    const lines = [
-      start,
-      ...steps.map((step) => this.renderStep(step, kindWidth)),
-    ];
+    const lines = steps.map((step) => this.renderStep(step, kindWidth));
     if (steps.length === 0) {
       const empty =
         row.state === "running" ? "No activity yet." : "No activity recorded.";

@@ -3,14 +3,16 @@
  * overlays.
  *
  * All three take pi's editor slot while they are open: a box with a title, a
- * one-line summary, a body and a hint. Pi lays that slot out inside the dock
- * under the transcript, so a body taller than the terminal loses its last rows;
+ * summary, a body and a hint. Pi lays that slot out inside the dock under the
+ * transcript, so a body taller than the terminal loses its last rows;
  * `OverlayPage` measures its own chrome and cuts the body to the rows the
  * terminal leaves, which keeps the hint and the bottom border visible.
  *
  * `/subagents` and `/timers` also drill from their list into one row's detail.
  * `DrillDown` keeps that navigation: Enter opens the selected row, Escape walks
  * back out, and a detail follows its newest lines until the reader scrolls up.
+ * A detail can pin the lines that body hangs off, such as its spawn moment, in
+ * the page's head so they stay on screen while the body scrolls.
  */
 
 import {
@@ -89,7 +91,8 @@ export interface DrillDownState<T> {
 }
 
 /**
- * Bordered page with a title, a summary, a body and a hint.
+ * Bordered page with a title, a summary, an optional fixed head, a body and a
+ * hint.
  *
  * The body is measured and filled separately so a caller can size its rows
  * against the frame the terminal leaves before rendering them.
@@ -97,6 +100,7 @@ export interface DrillDownState<T> {
 export class OverlayPage {
   private readonly container = new Container();
   private readonly summaryText: Text;
+  private readonly headText: Text;
   private readonly bodyText: Text;
   private readonly footerText: Text;
   private readonly tui: TUI;
@@ -113,6 +117,7 @@ export class OverlayPage {
     this.tui = tui;
     this.theme = theme;
     this.summaryText = new Text("", PAGE_PADDING_X, 0);
+    this.headText = new Text("", PAGE_PADDING_X, 0);
     this.bodyText = new Text("", PAGE_PADDING_X, 0);
     this.footerText = new Text("", PAGE_PADDING_X, 1);
 
@@ -123,25 +128,40 @@ export class OverlayPage {
       new Text(theme.fg("accent", theme.bold(title)), PAGE_PADDING_X, 1),
     );
     this.container.addChild(this.summaryText);
+    this.container.addChild(this.headText);
     this.container.addChild(this.bodyText);
     this.container.addChild(this.footerText);
     this.container.addChild(border());
   }
 
   /**
-   * Replace the summary line under the title.
+   * Replace the summary under the title.
    *
-   * @param text - Styled summary, such as a count of the rows the page lists.
+   * @param text - Styled summary, such as a count of the rows the page lists, or
+   *   the settings a detail view repeats.
    */
   setSummary(text: string): void {
     this.summaryText.setText(text);
   }
 
   /**
+   * Replace the fixed head between the summary and the body.
+   *
+   * Head rows stay put while the body window scrolls, so a view that follows the
+   * end of its body can pin the context that body hangs off, such as the moment
+   * it started. An empty head reserves no rows.
+   *
+   * @param lines - Styled rows to pin above the body.
+   */
+  setHead(lines: readonly string[]): void {
+    this.headText.setText(lines.join("\n"));
+  }
+
+  /**
    * Rows the body may fill at this width, keeping the chrome and hint visible.
    *
-   * The body is emptied and the hint set first, so the measured frame matches
-   * the one the caller then fills.
+   * The body is emptied and the hint set first, so the measured frame -- title,
+   * summary, head and hint -- matches the one the caller then fills.
    *
    * @param width - Page width, including the text padding.
    * @param hint - Hint the page will show, measured without its row count.

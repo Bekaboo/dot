@@ -1285,6 +1285,15 @@ describe("subagent", () => {
       assert.match(back, /Enter for details, Escape to close/);
       assert.doesNotMatch(back, /Escape to go back/);
 
+      // A child that has done nothing yet still pins its spawn line above the
+      // empty state.
+      overlay.handleInput("\x1b[A");
+      overlay.handleInput("\r");
+      const idle = overlay.render(120).join("\n");
+      assert.match(idle, /\d\d:\d\d:\d\d start/);
+      assert.match(idle, /No activity yet\./);
+      overlay.handleInput("\x1b");
+
       overlay.handleInput("\x1b");
       await showing;
       assert.equal(screen.component, undefined, "Escape from the list closes");
@@ -1463,15 +1472,25 @@ describe("subagent", () => {
         `page leaves pi its rows: ${detail.length} of ${rows}`,
       );
       assert.match(text, /Escape to go back/);
+      assert.match(text, /\d\d:\d\d:\d\d start/, "the spawn line stays fixed");
       assert.match(text, /probe-11/, "the newest step stays in view");
       assert.doesNotMatch(text, /probe-0\b/, "older steps start out hidden");
-      assert.match(text, /\(\d+-\d+ of \d+\)/, "the hint says which lines show");
+      assert.match(
+        text,
+        /\(\d+-\d+ of 12\)/,
+        "the hint counts the steps, not the fixed head",
+      );
 
       // Paging up walks back through the steps the window hides.
       for (let page = 0; page < 5; page += 1) overlay.handleInput("\x1b[5~");
       const earlier = overlay.render(100).map(plainOf).join("\n");
       assert.match(earlier, /probe-0\b/, "paging up reveals older steps");
       assert.doesNotMatch(earlier, /probe-11/);
+      assert.match(
+        earlier,
+        /\d\d:\d\d:\d\d start/,
+        "the spawn line stays visible while paging back",
+      );
       assert.match(earlier, /Escape to go back/);
 
       for (let page = 0; page < 5; page += 1) overlay.handleInput("\x1b[6~");

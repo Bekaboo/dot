@@ -1766,8 +1766,16 @@ class TimersOverlay implements Component {
     const rows = this.readRows();
     const { selected, detail } = this.nav.sync(rows, (row) => row.id);
     this.page.setSummary(
-      detail ? this.detailSummary(detail, true) : summaryOf(rows, this.theme),
+      detail
+        ? detailTitle(
+            detail,
+            this.spinner.marker(detail.state, this.theme),
+            this.theme,
+          )
+        : summaryOf(rows, this.theme),
     );
+    // The specification is pinned, so the log tail below it keeps its rows.
+    this.page.setHead(detail ? [detailSpec(detail, this.theme)] : []);
     if (detail) this.detailBody(detail, width);
     else this.listBody(rows, selected, width);
     this.syncRefresh(rows);
@@ -1838,11 +1846,11 @@ class TimersOverlay implements Component {
     const tail = this.logTail(row);
     const hint = "Escape to go back";
     let capacity = this.page.measure(width, `${hint}, up/down scroll`);
-    // The specification wraps, so it competes with the log for the same rows. A
-    // log with no row of its own is what the reader came for, so the header
-    // stands alone then: the list row already names the pid and the log path.
+    // The specification may wrap, so it takes rows the log needs. A log with no
+    // row of its own is what the reader came for, so the head goes then: the
+    // list row already names the pid and the log path.
     if (capacity === 0 && tail.content) {
-      this.page.setSummary(this.detailSummary(row, false));
+      this.page.setHead([]);
       capacity = this.page.measure(width, `${hint}, up/down scroll`);
     }
     const start = this.nav.detailWindow(tail.lines.length, capacity);
@@ -1854,22 +1862,6 @@ class TimersOverlay implements Component {
       hint,
       width,
     );
-  }
-
-  /**
-   * Fixed head of one timer's detail: its title, then its specification.
-   *
-   * @param row - Timer whose detail is open.
-   * @param withSpec - Whether to add the specification line under the title.
-   * @returns The styled lines of that block.
-   */
-  private detailSummary(row: TimerRow, withSpec: boolean): string {
-    const title = detailTitle(
-      row,
-      this.spinner.marker(row.state, this.theme),
-      this.theme,
-    );
-    return withSpec ? `${title}\n${detailSpec(row, this.theme)}` : title;
   }
 
   /**

@@ -75,6 +75,33 @@ describe("overlay", () => {
       }
     });
 
+    test("pins its head rows above a scrolling body", () => {
+      const page = new OverlayPage(fakeTui(30), plainTheme, "Subagents");
+      page.setSummary("chatty running for 3s timeout=600s");
+      page.setHead(["16:51:36 start"]);
+      const capacity = page.measure(100, "Escape to go back");
+      page.setWindow(rowsNamed(20), 15, capacity, "Escape to go back", 100);
+
+      const text = textOf(page.render(100));
+      assert.match(text, /16:51:36 start/, "the head stays on screen");
+      assert.match(text, /row-15/);
+      assert.doesNotMatch(text, /row-0\b/, "the body window moved on");
+      assert.match(text, /\(16-20 of 20\)/);
+    });
+
+    test("reserves no rows for an empty head", () => {
+      const page = new OverlayPage(fakeTui(30), plainTheme, "Timers");
+      page.setSummary("2 running");
+      const bare = page.measure(100, "Escape to go back");
+
+      page.setHead(["started=16:51:36, pid 42"]);
+      const pinned = page.measure(100, "Escape to go back");
+      assert.equal(pinned, bare - 1, "one head row is one body row fewer");
+
+      page.setHead([]);
+      assert.equal(page.measure(100, "Escape to go back"), bare);
+    });
+
     test("shows the window's rows and names the range they sit in", () => {
       const page = new OverlayPage(fakeTui(30), plainTheme, "Todos");
       page.setSummary("5 items");
