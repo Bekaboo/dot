@@ -1,5 +1,5 @@
 /**
- * Glyph customization for pi-intercom's message box and popups, s.t. they are
+ * UI customization for pi-intercom's message box and popups, s.t. they are
  * more coherent with Pi's default UI style.
  *
  * Workaround: this module takes pi-intercom's component class as an argument
@@ -35,6 +35,11 @@ const FRAME_LINE = new RegExp(`^(${ANSI})([╭╰])(.*)([╮╯])(${ANSI})$`, "g
 const CURSORS: Record<string, string> = {
   "→ ": "› ",
 };
+// pi-intercom draws each popup row's vertical borders through separate
+// `theme.fg()` calls, so the closing one can end the cursor's band.
+const ROW_BORDER = "│";
+// Background reset, to stop a band before a border instead of painting it.
+const BG_RESET = "\x1b[49m";
 const SQUARED = Symbol.for("pi.intercom-ui.squared");
 
 /** A theme class prototype, marked once it carries the glyph swaps. */
@@ -83,14 +88,25 @@ export function squareFrames(text: string): string {
 }
 
 /**
- * Rewrite the glyphs pi-intercom hardcodes: frame corners and the row cursor.
+ * Whether one `theme.fg()` call draws the popup row cursor.
+ *
+ * Whole-argument matches only: pi-intercom passes the cursor as one styled
+ * string, while the same glyph inside body text keeps its original meaning.
  */
-function restyle(text: string): string {
-  return squareFrames(CURSORS[text] ?? text);
+function isCursor(text: string): boolean {
+  return Object.hasOwn(CURSORS, text);
 }
 
 /**
- * Square every frame drawn through a theme, and align its row cursor.
+ * Rewrite the glyphs pi-intercom hardcodes: frame corners and the row cursor.
+ */
+function restyle(text: string): string {
+  return squareFrames(isCursor(text) ? CURSORS[text] : text);
+}
+
+/**
+ * Square every frame drawn through a theme, align its row cursor, and paint
+ * the cursor's row on Pi's selection background.
  *
  * Popup frames leave as one `theme.fg()` call per border line, so the glyph
  * swap belongs on `fg` itself. The prototype is patched rather than the
@@ -108,8 +124,18 @@ export function squareThemeFrames(theme: Theme): void {
   if (prototype[SQUARED]) return;
 
   const fg = prototype.fg;
+  // pi-intercom composes one popup row as a `theme.fg()` call per piece: the
+  // frame's left border, the row's text, and its right border. The row that
+  // carries the cursor is the selected one, so the background opened on the
+  // cursor call paints the rest of the row -- its text, its padding to the
+  // content width -- and the closing border ends it before the frame, the way
+  // Pi's own select lists paint their cursor line. Pi resets every line it
+  // writes, so a row cut short cannot carry the band onto the next line.
   prototype.fg = function (this: Theme, color, text) {
-    return fg.call(this, color, restyle(text));
+    const styled = fg.call(this, color, restyle(text));
+    if (isCursor(text)) return `${this.getBgAnsi("selectedBg")}${styled}`;
+    if (text === ROW_BORDER) return `${BG_RESET}${styled}`;
+    return styled;
   };
   prototype[SQUARED] = true;
 }

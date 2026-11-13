@@ -1,15 +1,15 @@
 /**
  * Make pi-intercom's UI match Pi's
  *
- * pi-intercom hardcodes rounded frame glyphs and a `→` row cursor. Its inline
- * message box is a registered renderer, so this overlay re-registers
- * `intercom_message`:
+ * pi-intercom hardcodes rounded frame glyphs and a `→` row cursor that Pi's
+ * selectors draw as `›` on the selection background. Its inline message box is
+ * a registered renderer, so this overlay re-registers `intercom_message`:
  * discovered extensions load before packages and Pi's renderer lookup takes the
  * first match, which makes the override work without patching the installed
  * package. Its popups (session list, compose box, handover picker) are built
- * inside pi-intercom and cannot be re-registered, so their glyphs are rewritten
- * through the theme Pi hands them. Both mechanisms live in
- * `utils/intercom-frame.ts`.
+ * inside pi-intercom and cannot be re-registered, so their glyphs and the
+ * selection band of their cursor row are rewritten through the theme Pi hands
+ * them. Both mechanisms live in `utils/intercom-frame.ts`.
  *
  * The import walks into the managed install because the package is not
  * resolvable from this directory. It is the personal install path; a
