@@ -1,16 +1,6 @@
 /**
- * Glyph alignment for pi-intercom's message box and popups.
- *
- * Two seams are used because the two kinds of frame are drawn differently.
- * The inline message box is a registered renderer, so `createRenderer` can
- * subclass pi-intercom's component. Its popups (`/intercom` session list,
- * compose box, handover picker) are constructed inside pi-intercom and expose
- * no renderer registration; Pi also re-evaluates imports per extension, so
- * patching those component classes from here would not reach the instances
- * pi-intercom builds. What both sides share is the `Theme`, and each popup
- * border line is styled as one `theme.fg()` call, so `squareThemeFrames` swaps
- * the corners there. The selected-row cursor takes the same route: pi-intercom
- * draws `→ ` through `theme.fg` where Pi's own selectors use `› `.
+ * Glyph customization for pi-intercom's message box and popups, s.t. they are
+ * more coherent with Pi's default UI style.
  *
  * Workaround: this module takes pi-intercom's component class as an argument
  * instead of importing it. pi-intercom ships TypeScript inside node_modules,
