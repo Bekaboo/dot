@@ -1121,6 +1121,21 @@ describe("subagent", () => {
       return plainOf(line).length;
     }
 
+    /**
+     * The ids the list shows, in the order it shows them, top to bottom.
+     *
+     * @param overlay - Open `/subagents` overlay.
+     * @param wanted - Ids to keep, in any order.
+     * @returns One id per row whose id is in `wanted`.
+     */
+    function listedIds(overlay, wanted) {
+      return overlay
+        .render(160)
+        .map((line) => plainOf(line).replace(SELECTED_CURSOR, " ").trim())
+        .map((line) => line.split(/ +/)[0])
+        .filter((id) => wanted.includes(id));
+    }
+
     /** Spinner frame or finished-state glyph of a row's state marker. */
     const STATE_MARKER = /[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏✓✗⧖·]/;
 
@@ -1157,15 +1172,15 @@ describe("subagent", () => {
 
       await call({ id: "first", prompt: "x", model: "m", tools: ["read"] });
       await call({ id: "second", prompt: "y" });
-      // The first child finishes while the second keeps running; creation order
-      // still decides the row order.
+      // The first child finishes while the second keeps running, so the
+      // running one is above it although it was created later.
       children[0].write(assistantRecord("first done"));
       children[0].close(0);
 
       const lines = overlay.render(160);
       const text = lines.join("\n");
       assert.match(text, /1 running, 1 finished/);
-      assert.ok(text.indexOf("first") < text.indexOf("second"));
+      assert.ok(text.indexOf("second") < text.indexOf("first"));
       assert.match(text, /second +[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏] +running +0s/);
 
       // Every row starts its tools and cwd columns at the same offset.
@@ -1228,6 +1243,74 @@ describe("subagent", () => {
       assert.equal(screen.component, undefined, "Escape closes the overlay");
 
       await pi.hooks.get("session_shutdown")({ reason: "quit" });
+    });
+
+    test("/subagents lists running children above finished ones, each in creation order", async (t) => {
+      const { call, pi, children } = setup(t);
+      await call({ id: "older", prompt: "x" });
+      await call({ id: "middle", prompt: "y" });
+      await call({ id: "newer", prompt: "z" });
+
+      // Finished in the reverse of the order they were created, so only
+      // sorting the finished rows by creation lists older before middle, and
+      // the running one comes first though it was created last.
+      children[1].write(assistantRecord("middle done"));
+      children[1].close(0);
+      children[0].write(assistantRecord("older done"));
+      children[0].close(0);
+
+      const screen = fakeUI(t);
+      const showing = pi.commands
+        .get("subagents")
+        .handler("", { mode: "tui", ui: screen.ui });
+      const overlay = screen.component;
+      assert.deepEqual(listedIds(overlay, ["older", "middle", "newer"]), [
+        "newer",
+        "older",
+        "middle",
+      ]);
+
+      overlay.handleInput("\x1b");
+      await showing;
+    });
+
+    test("a row keeps its place when its child finishes while the overlay is open", async (t) => {
+      const { call, pi, children } = setup(t);
+      await call({ id: "first", prompt: "x" });
+      await call({ id: "second", prompt: "y" });
+      await call({ id: "third", prompt: "z" });
+
+      const screen = fakeUI(t);
+      const command = pi.commands.get("subagents");
+      const showing = command.handler("", { mode: "tui", ui: screen.ui });
+      const overlay = screen.component;
+      const ids = ["first", "second", "third"];
+      assert.deepEqual(listedIds(overlay, ids), ids);
+
+      // The child ends where the reader already is, so its row stays put and
+      // only its state changes under it.
+      children[1].write(assistantRecord("second done"));
+      children[1].close(0);
+      assert.deepEqual(listedIds(overlay, ids), ids);
+      const finishedRow = overlay
+        .render(160)
+        .find((line) => line.includes(" second "));
+      assert.ok(finishedRow, "the finished child is still listed");
+      assert.match(plainOf(finishedRow), / second +\S+ +done /);
+      assert.match(overlay.render(160).join("\n"), /2 running, 1 finished/);
+
+      overlay.handleInput("\x1b");
+      await showing;
+
+      // Reopening sorts the finished child below the running ones.
+      const reopened = command.handler("", { mode: "tui", ui: screen.ui });
+      assert.deepEqual(listedIds(screen.component, ids), [
+        "first",
+        "third",
+        "second",
+      ]);
+      screen.component.handleInput("\x1b");
+      await reopened;
     });
 
     test("/subagents opens the selected child's details and Escape walks back", async (t) => {

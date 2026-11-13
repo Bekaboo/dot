@@ -1547,6 +1547,20 @@ function summaryOf(rows: SubagentRow[], theme: Theme): string {
 }
 
 /**
+ * Order two subagents, or two of their rows, by when they were created.
+ *
+ * `order` is a monotonic counter rather than the spawn time, so two children
+ * started in one millisecond still have an order of their own.
+ *
+ * @param left - Left row or child.
+ * @param right - Right row or child.
+ * @returns Negative when `left` was created first.
+ */
+function byCreation(left: { order: number }, right: { order: number }): number {
+  return left.order - right.order;
+}
+
+/**
  * The session's subagents: who is running, and how their results get back.
  *
  * One instance per extension load. It owns the child processes, so a shutdown
@@ -1801,10 +1815,11 @@ class SubagentRunner {
   }
 
   /**
-   * Describe every subagent this session knows about.
+   * Describe every subagent this session knows about, running ones first.
    *
    * @param only - Ids to report, or omitted for all of them.
-   * @returns One line per subagent, or an explanation when nothing matched.
+   * @returns One line per subagent in creation order within each group, or an
+   *   explanation when nothing matched.
    */
   status(only?: string[]): string {
     const wanted = new Set(only ?? []);
@@ -1814,6 +1829,7 @@ class SubagentRunner {
       .map((job) => runningLine(job));
     const finished = this.finished
       .filter((job) => matches(job.id))
+      .sort(byCreation)
       .map(
         (job) =>
           `${marker(job.id)} ${job.state} after ${job.seconds}s (${timeoutLabel(job.timeoutSec)})${job.reason ? `: ${job.reason}` : ""}`,
@@ -1861,36 +1877,41 @@ class SubagentRunner {
   }
 
   /**
-   * Describe every subagent this session knows about, oldest first.
+   * Describe every subagent this session knows about, running ones first.
    *
-   * @returns One row per running child and per remembered finished child.
+   * @returns One row per running child and per remembered finished child, each
+   *   group in creation order.
    */
   private rows(): SubagentRow[] {
-    const running = [...this.running.values()].map((job) => ({
-      id: job.id,
-      state: "running" as const,
-      order: job.order,
-      seconds: elapsedSec(job.startedAt),
-      startedAt: job.startedAt,
-      model: job.model,
-      tools: job.tools,
-      cwd: job.cwd,
-      timeoutSec: job.timeoutSec,
-      activity: job.activity,
-    }));
-    const finished = this.finished.map((job) => ({
-      id: job.id,
-      state: job.state,
-      order: job.order,
-      seconds: job.seconds,
-      startedAt: job.startedAt,
-      model: job.model,
-      tools: job.tools,
-      cwd: job.cwd,
-      timeoutSec: job.timeoutSec,
-      activity: job.activity,
-    }));
-    return [...running, ...finished].sort((a, b) => a.order - b.order);
+    const running = [...this.running.values()]
+      .map((job) => ({
+        id: job.id,
+        state: "running" as const,
+        order: job.order,
+        seconds: elapsedSec(job.startedAt),
+        startedAt: job.startedAt,
+        model: job.model,
+        tools: job.tools,
+        cwd: job.cwd,
+        timeoutSec: job.timeoutSec,
+        activity: job.activity,
+      }))
+      .sort(byCreation);
+    const finished = this.finished
+      .map((job) => ({
+        id: job.id,
+        state: job.state,
+        order: job.order,
+        seconds: job.seconds,
+        startedAt: job.startedAt,
+        model: job.model,
+        tools: job.tools,
+        cwd: job.cwd,
+        timeoutSec: job.timeoutSec,
+        activity: job.activity,
+      }))
+      .sort(byCreation);
+    return [...running, ...finished];
   }
 
   /** Re-render the overlay after a state change, when it is open. */
@@ -2019,11 +2040,13 @@ class SubagentRunner {
 }
 
 /**
- * Overlay listing the session's subagents, oldest first.
+ * Overlay listing the session's subagents, running ones first.
  *
  * Built on the shared overlay page, like `/timers`: a bordered box with a
  * title, a summary, one line per child and an Escape hint. Rows are read from
- * the runner on every render, so elapsed time stays current; Enter opens one
+ * the runner on every render, so elapsed time stays current; the order of the
+ * rows is the one the view opened with, so a child that ends keeps its place
+ * instead of moving down to the finished group mid-read. Enter opens one
  * child's activity and Escape walks back out. A running child gets the same
  * braille spinner as pi's working indicator; the animation runs only while one
  * is alive.
@@ -2036,6 +2059,15 @@ class SubagentsOverlay implements Component {
   /** User keybindings, so the list moves with the keys every pi list uses. */
   private readonly keybindings: KeybindingsManager;
   private readonly readRows: () => SubagentRow[];
+  /**
+   * Ids in the order the view opened with.
+   *
+   * The runner orders rows by state and then by creation time, which is the
+   * order to start from but not one to re-apply: a child that ends during the
+   * session would jump out of the row the reader is looking at. Pinning the ids
+   * once keeps every row in place, while the fields of each row stay live.
+   */
+  private readonly order: readonly string[];
   private readonly close: () => void;
   private readonly spinner: Spinner;
 
@@ -2051,14 +2083,33 @@ class SubagentsOverlay implements Component {
     this.keybindings = keybindings;
     this.readRows = readRows;
     this.close = close;
+    this.order = readRows().map((row) => row.id);
     this.page = new OverlayPage(tui, theme, "Subagents");
     this.nav = new DrillDown(() => tui.requestRender());
     this.spinner = new Spinner(() => tui.requestRender());
     this.syncAnimation();
   }
 
+  /**
+   * The rows to show, in the order the view opened with.
+   *
+   * A child started while the view is open has no place yet, so it goes last,
+   * where the runner order puts it.
+   *
+   * @returns One row per child, its fields read fresh.
+   */
+  private currentRows(): SubagentRow[] {
+    const live = this.readRows();
+    const byId = new Map(live.map((row) => [row.id, row]));
+    const pinned = this.order
+      .map((id) => byId.get(id))
+      .filter((row) => row !== undefined);
+    const fresh = live.filter((row) => !this.order.includes(row.id));
+    return [...pinned, ...fresh];
+  }
+
   render(width: number): string[] {
-    const rows = this.readRows();
+    const rows = this.currentRows();
     const { selected, detail } = this.nav.sync(rows, (row) => row.id);
     this.page.setSummary(
       detail
@@ -2095,7 +2146,7 @@ class SubagentsOverlay implements Component {
   }
 
   handleInput(data: string): void {
-    const ids = this.readRows().map((row) => row.id);
+    const ids = this.currentRows().map((row) => row.id);
     const closing = this.nav.handleInput(
       data,
       this.keybindings,
@@ -2256,7 +2307,7 @@ class SubagentsOverlay implements Component {
 
   /** Start or stop the animation to match the rows. */
   private syncAnimation(): void {
-    this.spinner.sync(this.readRows().some((row) => row.state === "running"));
+    this.spinner.sync(this.currentRows().some((row) => row.state === "running"));
   }
 }
 
