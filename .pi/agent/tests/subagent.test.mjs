@@ -1052,12 +1052,14 @@ describe("subagent", () => {
      *
      * @param t - Node test context, used to dispose a component left open.
      * @param bindings - User keybindings, as `keybindings.json` holds them.
+     * @param rows - Terminal height the component sees; tall enough to fit the
+     *   whole box unless a test asks for a short terminal.
      * @returns The fake UI, its notifications, and the open component.
      */
-    function fakeUI(t, bindings = {}) {
+    function fakeUI(t, bindings = {}, rows = 40) {
       const notified = [];
       let component;
-      const tui = { requestRender() {} };
+      const tui = { requestRender() {}, terminal: { rows } };
       const theme = { fg: (_color, text) => text, bold: (text) => text };
       t.after(() => component?.dispose?.());
       return {
@@ -1421,6 +1423,136 @@ describe("subagent", () => {
         overlay.render(120).join("\n"),
         /Enter for details, Escape to close/,
       );
+      overlay.handleInput("\x1b");
+      await showing;
+      await pi.hooks.get("session_shutdown")({ reason: "quit" });
+    });
+
+    test("/subagents fits a short terminal and scrolls its details", async (t) => {
+      const { call, pi, children } = setup(t);
+      const rows = 20;
+      const screen = fakeUI(t, {}, rows);
+      const showing = pi.commands
+        .get("subagents")
+        .handler("", { mode: "tui", ui: screen.ui });
+      const overlay = screen.component;
+
+      await call({ id: "chatty", prompt: "x" });
+      const steps = 12;
+      for (let index = 0; index < steps; index += 1) {
+        children[0].write(
+          toolRecord(
+            "tool_execution_start",
+            `call-${index}`,
+            `probe-${index}`,
+            { path: `file-${index}.ts` },
+          ),
+        );
+      }
+      overlay.handleInput("\r");
+
+      // The page must leave pi its own rows above and below, so the viewport
+      // never clips the hint away. The fake UI cannot see pi's real rows; 4 is
+      // what a session with an extension footer keeps, so a page that grows past
+      // it would clip in a real terminal.
+      const piRows = 4;
+      const detail = overlay.render(100);
+      const text = detail.map(plainOf).join("\n");
+      assert.ok(
+        detail.length <= rows - piRows,
+        `page leaves pi its rows: ${detail.length} of ${rows}`,
+      );
+      assert.match(text, /Escape to go back/);
+      assert.match(text, /probe-11/, "the newest step stays in view");
+      assert.doesNotMatch(text, /probe-0\b/, "older steps start out hidden");
+      assert.match(text, /\(\d+-\d+ of \d+\)/, "the hint says which lines show");
+
+      // Paging up walks back through the steps the window hides.
+      for (let page = 0; page < 5; page += 1) overlay.handleInput("\x1b[5~");
+      const earlier = overlay.render(100).map(plainOf).join("\n");
+      assert.match(earlier, /probe-0\b/, "paging up reveals older steps");
+      assert.doesNotMatch(earlier, /probe-11/);
+      assert.match(earlier, /Escape to go back/);
+
+      for (let page = 0; page < 5; page += 1) overlay.handleInput("\x1b[6~");
+      assert.match(
+        overlay.render(100).map(plainOf).join("\n"),
+        /probe-11/,
+        "paging back down follows the newest step again",
+      );
+
+      // A view that follows the end keeps doing so when steps arrive later.
+      children[0].write(
+        toolRecord("tool_execution_start", "call-late", "probe-late", {
+          path: "late.ts",
+        }),
+      );
+      assert.match(
+        overlay.render(100).map(plainOf).join("\n"),
+        /probe-late/,
+        "a followed view shows steps that arrive later",
+      );
+
+      // A narrower terminal measures its own hint instead of the last frame's,
+      // so a resize does not waste rows on a hint that no longer fits.
+      const at40 = overlay.render(40).length;
+      overlay.render(100);
+      assert.equal(
+        overlay.render(40).length,
+        at40,
+        "a resize keeps the body rows a fresh render gives",
+      );
+
+      overlay.handleInput("\x1b");
+      overlay.handleInput("\x1b");
+      await showing;
+      await pi.hooks.get("session_shutdown")({ reason: "quit" });
+    });
+
+    test("/subagents scrolls its list to keep the selection in a short terminal", async (t) => {
+      const { call, pi, children } = setup(t);
+      const rows = 20;
+      // Rows pi keeps around the page are assumed to be 4; the fake UI cannot
+      // verify the real reserve, but a page that grows past it would clip.
+      const piRows = 4;
+      const screen = fakeUI(t, {}, rows);
+      const showing = pi.commands
+        .get("subagents")
+        .handler("", { mode: "tui", ui: screen.ui });
+      const overlay = screen.component;
+      const ids = ["one", "two", "three", "four", "five", "six", "seven", "eight"];
+      for (const id of ids) await call({ id, prompt: "x" });
+      for (const child of children) child.close(0);
+      await notices(pi, ids.length);
+
+      /** The list as the user sees it, in a terminal this short. */
+      const shown = () => {
+        const lines = overlay.render(100);
+        assert.ok(
+          lines.length <= rows - piRows,
+          `page leaves pi its rows: ${lines.length} of ${rows}`,
+        );
+        return lines.map(plainOf).join("\n");
+      };
+
+      const first = shown();
+      assert.match(first, /Subagents/);
+      assert.match(first, /0 running, 8 finished/);
+      assert.match(first, /Enter for details, Escape to close/);
+      assert.doesNotMatch(first, /eight/);
+
+      for (let move = 0; move < ids.length - 1; move += 1) {
+        overlay.handleInput("\x1b[B");
+      }
+      const moved = shown();
+      assert.match(
+        moved,
+        new RegExp(`${SELECTED_CURSOR} +eight`),
+        "the selection stays visible while the list scrolls",
+      );
+      assert.doesNotMatch(moved, /\bone\b/);
+      assert.match(moved, /Enter for details, Escape to close/);
+
       overlay.handleInput("\x1b");
       await showing;
       await pi.hooks.get("session_shutdown")({ reason: "quit" });
