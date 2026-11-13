@@ -27,6 +27,8 @@
 - Read results as a consumer would, not by current wording, layout, or
   ordering. Pin only real contracts (documented syntax, wire format, stored
   schema), never incidental representation.
+- Test shared logic where it lives, once, in the owning module's test. A
+  caller stubs what the shared code touches, but never re-asserts its output.
 
 ## Shell
 
