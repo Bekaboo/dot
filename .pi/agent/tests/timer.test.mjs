@@ -170,6 +170,38 @@ function linesOf(text) {
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
+ * A `timer_start` spec for a condition that never holds, so it keeps running.
+ *
+ * @param id - Timer id.
+ * @param startedAt - When the branch recorded it as armed.
+ * @returns Details of a start tool result.
+ */
+function armedSpec(id, startedAt) {
+  return {
+    action: "start",
+    id,
+    condition: "false",
+    intervalSec: 1,
+    maxTicks: 0,
+    timeoutSec: 600,
+    startedAt,
+  };
+}
+
+/**
+ * The ids the list shows, in the order it shows them, top to bottom.
+ *
+ * @param overlay - Open `/timers` overlay.
+ * @param wanted - Ids to keep, in any order.
+ * @returns One id per row whose id is in `wanted`.
+ */
+function listedIds(overlay, wanted) {
+  return linesOf(pageOf(overlay))
+    .map((line) => line.split(/ +/)[0])
+    .filter((id) => wanted.includes(id));
+}
+
+/**
  * Wait until `check()` holds, so a timing test never depends on a fixed sleep.
  *
  * @param check - Predicate polled every 50ms.
@@ -643,9 +675,10 @@ describe("timer", () => {
     // Every row reserves a cursor column, so the ids line up with or without
     // the mark in front of the selected row.
     const rowText = (row) => row.replace(SELECTED_CURSOR, " ").trim();
+    // Both still run, so the list reads in the order they were armed.
     assert.deepEqual(
       rows.map((row) => rowText(row).split(/ +/)[0]),
-      ["longer-timer", "timer-a"],
+      ["timer-a", "longer-timer"],
     );
     assert.equal(
       lines.filter((line) => line.includes(SELECTED_CURSOR)).length,
@@ -771,6 +804,85 @@ describe("timer", () => {
     overlay.handleInput("\x1b");
     await showing;
     assert.equal(screen.component, undefined, "Escape closes the overlay");
+  });
+
+  test("/timers lists running timers above ended ones, each oldest first", async (t) => {
+    const { hooks, stop, commands, branch } = setup(t, () => exit(1));
+
+    const now = Date.now();
+    await hooks.get("session_tree")(
+      {},
+      branch(
+        armedSpec("armed-first", now - 5_000),
+        armedSpec("armed-second", now - 3_000),
+        armedSpec("armed-third", now - 1_000),
+      ),
+    );
+    // Ended in the reverse of the order they were armed, so only sorting the
+    // ended rows by creation lists armed-first before armed-second, and the
+    // running one comes first though it was armed last.
+    await stop({ id: "armed-second" });
+    await stop({ id: "armed-first" });
+
+    const screen = fakeUI(t);
+    const showing = commands
+      .get("timers")
+      .handler("", { mode: "tui", ui: screen.ui });
+    assert.deepEqual(listedIds(screen.component, [
+      "armed-first",
+      "armed-second",
+      "armed-third",
+    ]), ["armed-third", "armed-first", "armed-second"]);
+
+    screen.component.handleInput("\x1b");
+    await showing;
+  });
+
+  test("a row keeps its place when its timer ends while the overlay is open", async (t) => {
+    const { hooks, stop, commands, branch } = setup(t, () => exit(1));
+
+    const now = Date.now();
+    await hooks.get("session_tree")(
+      {},
+      branch(
+        armedSpec("first", now - 3_000),
+        armedSpec("second", now - 2_000),
+        armedSpec("third", now - 1_000),
+      ),
+    );
+
+    const screen = fakeUI(t);
+    const command = commands.get("timers");
+    const showing = command.handler("", { mode: "tui", ui: screen.ui });
+    const overlay = screen.component;
+    assert.deepEqual(listedIds(overlay, ["first", "second", "third"]), [
+      "first",
+      "second",
+      "third",
+    ]);
+
+    // The timer ends where the reader already is, so its row stays put and only
+    // its state changes under it.
+    await stop({ id: "second" });
+    assert.match(pageOf(overlay), /^\s*second +· killed /m);
+    assert.deepEqual(listedIds(overlay, ["first", "second", "third"]), [
+      "first",
+      "second",
+      "third",
+    ]);
+    assert.match(pageOf(overlay), /2 running, 1 finished/);
+
+    overlay.handleInput("\x1b");
+    await showing;
+
+    // Reopening sorts the ended row below the running ones.
+    const reopened = command.handler("", { mode: "tui", ui: screen.ui });
+    assert.deepEqual(
+      listedIds(screen.component, ["first", "second", "third"]),
+      ["first", "third", "second"],
+    );
+    screen.component.handleInput("\x1b");
+    await reopened;
   });
 
   test("/timers marks failed, timed-out and signal-killed timers", async (t) => {

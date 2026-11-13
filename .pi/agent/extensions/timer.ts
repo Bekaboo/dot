@@ -13,9 +13,10 @@
  * notification. Timers are named by the agent, so every wake and the status
  * list are self-describing. The user-facing `/timers` command shows the
  * session's timers as an aligned table: the running ones first, then the ones
- * that ended, each with the same state marker the `/subagents` view uses.
- * Enter opens one timer's detail: what it runs or waits for, its deadlines, and
- * the tail of the job log it writes.
+ * that ended, each with the same state marker the `/subagents` view uses. The
+ * order is fixed when the view opens and does not follow state changes after
+ * that, so no row moves under the reader. Enter opens one timer's detail: what
+ * it runs or waits for, its deadlines, and the tail of the job log it writes.
  */
 
 import { type ChildProcess, spawn } from "node:child_process";
@@ -347,6 +348,21 @@ type TimerColumn = (typeof TIMER_COLUMNS)[number];
  */
 function formatTimerRow(row: TimerRow): string {
   return TIMER_COLUMNS.map((column) => row[column]).join("  ");
+}
+
+/**
+ * Order two rows by when their timers were armed.
+ *
+ * `/timers` groups the running rows above the ended ones, and reads each group
+ * oldest first, so a row keeps its place while it runs and a new one lands at
+ * the bottom of its group.
+ *
+ * @param left - Left row.
+ * @param right - Right row.
+ * @returns Negative when `left` was armed first.
+ */
+function byStartedAt(left: TimerRow, right: TimerRow): number {
+  return left.spec.startedAt - right.spec.startedAt;
 }
 
 /** Width of each timer column, in terminal columns. */
@@ -944,8 +960,8 @@ class TimerRegistry {
       return;
     }
     this.timers.delete(spec.id);
-    // A re-inserted id moves to the end, so this also keeps the display order
-    // the order the timers ended in.
+    // A re-inserted id moves to the end, so the eviction below drops the timer
+    // that ended longest ago rather than the one armed longest ago.
     this.retired.delete(spec.id);
     this.retired.set(spec.id, { reason, state, age, spec });
     // Oldest first: this drops the timer the agent is least likely to still ask
@@ -1011,30 +1027,32 @@ class TimerRegistry {
   /**
    * Collect the active timers as table rows.
    *
-   * @returns One row per active timer, sorted by id.
+   * @returns One row per active timer, oldest first.
    */
   private activeRows(): TimerRow[] {
     return [...this.timers.values()]
-      .sort((left, right) => left.id.localeCompare(right.id))
-      .map((timer) => this.row(timer));
+      .map((timer) => this.row(timer))
+      .sort(byStartedAt);
   }
 
   /**
    * Collect every timer as table rows for `/timers`.
    *
-   * @returns The active rows sorted by id, then the ended ones in the order
-   *   they ended.
+   * @returns The active rows, then the ended ones, each group oldest first --
+   *   the order `/timers` opens with.
    */
   rows(): TimerRow[] {
-    const retired = [...this.retired.entries()].map(([id, entry]) => ({
-      id,
-      state: entry.state,
-      age: entry.age,
-      ticks: "-",
-      target: entry.reason,
-      spec: entry.spec,
-      reason: entry.reason,
-    }));
+    const retired = [...this.retired.entries()]
+      .map(([id, entry]) => ({
+        id,
+        state: entry.state,
+        age: entry.age,
+        ticks: "-",
+        target: entry.reason,
+        spec: entry.spec,
+        reason: entry.reason,
+      }))
+      .sort(byStartedAt);
     return [...this.activeRows(), ...retired];
   }
 
@@ -1044,7 +1062,7 @@ class TimerRegistry {
    * Ended timers stay out of this list: the wake that announced the end already
    * told the agent, and `timer_status <id>` still reports one by name.
    *
-   * @returns Lines sorted by id, or a message when nothing is active.
+   * @returns Lines oldest first, or a message when nothing is active.
    */
   list(): string {
     const rows = this.activeRows();
@@ -1737,7 +1755,9 @@ interface LogTail {
  * Built on the shared overlay page, like `/subagents`: a bordered box with a
  * title, a summary, one line per timer and an Escape hint. Rows are read on
  * every render, so elapsed times stay current and a timer that just ended turns
- * into its finished row without reopening the view; Enter opens one timer's
+ * into its finished row without reopening the view; the order of the rows is
+ * the one the view opened with, so a running timer that ends keeps its place
+ * instead of moving to the finished group mid-read. Enter opens one timer's
  * detail, the tail of its job log included, and Escape walks back out. A
  * running timer gets the same braille spinner as pi's working indicator; the
  * animation runs only while one is running.
@@ -1749,6 +1769,15 @@ class TimersOverlay implements Component {
   /** User keybindings, so the list moves with the keys every pi list uses. */
   private readonly keybindings: KeybindingsManager;
   private readonly readRows: () => TimerRow[];
+  /**
+   * Ids in the order the view opened with.
+   *
+   * The registry orders rows by state and then by creation time, which is the
+   * order to start from but not one to re-apply: a timer that ends during the
+   * session would jump out of the row the reader is looking at. Pinning the ids
+   * once keeps every row in place, while the fields of each row stay live.
+   */
+  private readonly order: readonly string[];
   private readonly close: () => void;
   private readonly spinner: Spinner;
 
@@ -1763,14 +1792,33 @@ class TimersOverlay implements Component {
     this.keybindings = keybindings;
     this.readRows = readRows;
     this.close = close;
+    this.order = readRows().map((row) => row.id);
     this.page = new OverlayPage(tui, theme, "Timers");
     this.nav = new DrillDown(() => tui.requestRender());
     this.spinner = new Spinner(() => tui.requestRender());
     this.syncRefresh();
   }
 
+  /**
+   * The rows to show, in the order the view opened with.
+   *
+   * A timer armed while the view is open has no place yet, so it goes last,
+   * where the registry order puts it.
+   *
+   * @returns One row per timer, its fields read fresh.
+   */
+  private currentRows(): TimerRow[] {
+    const live = this.readRows();
+    const byId = new Map(live.map((row) => [row.id, row]));
+    const pinned = this.order
+      .map((id) => byId.get(id))
+      .filter((row) => row !== undefined);
+    const fresh = live.filter((row) => !this.order.includes(row.id));
+    return [...pinned, ...fresh];
+  }
+
   render(width: number): string[] {
-    const rows = this.readRows();
+    const rows = this.currentRows();
     const { selected, detail } = this.nav.sync(rows, (row) => row.id);
     this.page.setSummary(
       detail
@@ -1800,7 +1848,7 @@ class TimersOverlay implements Component {
   }
 
   handleInput(data: string): void {
-    const ids = this.readRows().map((row) => row.id);
+    const ids = this.currentRows().map((row) => row.id);
     const closing = this.nav.handleInput(
       data,
       this.keybindings,
@@ -1939,9 +1987,9 @@ class TimersOverlay implements Component {
   /**
    * Animate the spinner while some timer is still running.
    *
-   * @param rows - Rows to inspect; read from the registry when omitted.
+   * @param rows - Rows to inspect; read live when omitted.
    */
-  private syncRefresh(rows: readonly TimerRow[] = this.readRows()): void {
+  private syncRefresh(rows: readonly TimerRow[] = this.currentRows()): void {
     this.spinner.sync(rows.some((row) => row.state === "running"));
   }
 }
