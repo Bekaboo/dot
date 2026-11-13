@@ -101,6 +101,8 @@ export class OverlayPage {
   private readonly container = new Container();
   private readonly summaryText: Text;
   private readonly headText: Text;
+  /** Rows the head holds, so the gap above the body is drawn only once. */
+  private headRows = 0;
   private readonly bodyText: Text;
   private readonly footerText: Text;
   private readonly tui: TUI;
@@ -149,12 +151,15 @@ export class OverlayPage {
    *
    * Head rows stay put while the body window scrolls, so a view that follows the
    * end of its body can pin the context that body hangs off, such as the moment
-   * it started. An empty head reserves no rows.
+   * it started. The head opens with the blank line that separates it from the
+   * summary and sits directly on the body, which then draws no gap of its own.
+   * An empty head reserves no rows.
    *
    * @param lines - Styled rows to pin above the body.
    */
   setHead(lines: readonly string[]): void {
-    this.headText.setText(lines.join("\n"));
+    this.headRows = lines.length;
+    this.headText.setText(lines.length > 0 ? `\n${lines.join("\n")}` : "");
   }
 
   /**
@@ -173,6 +178,8 @@ export class OverlayPage {
     this.capacity = bodyRows(
       () => this.container.render(width).length,
       this.tui.terminal.rows,
+      // A head opens with the gap and is measured with it.
+      this.headRows > 0 ? 0 : 1,
     );
     return this.capacity;
   }
@@ -203,7 +210,9 @@ export class OverlayPage {
     width: number,
   ): void {
     const shown = rows.slice(start, start + Math.max(0, capacity));
-    this.bodyText.setText(shown.length > 0 ? `\n${shown.join("\n")}` : "");
+    // The head already drew the gap above the body.
+    const gap = this.headRows > 0 ? "" : "\n";
+    this.bodyText.setText(shown.length > 0 ? `${gap}${shown.join("\n")}` : "");
     const footer =
       shown.length < rows.length ? `${hint}, up/down scroll` : hint;
     this.footerText.setText(

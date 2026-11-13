@@ -24,20 +24,23 @@ export const PAGE_PADDING_X = 2;
 /**
  * Rows a page body may fill at this width.
  *
- * The caller empties the body and sets the hint first, so the measured chrome
- * matches the final frame: `hintLine` keeps the hint on one line, and the body
- * follows the summary after one blank line.
+ * The caller empties the body and sets the summary and the hint first, so the
+ * measured chrome matches the final frame.
  *
  * @param renderChrome - Renders the page with an empty body and its hint set.
  * @param terminalRows - Terminal height the page renders into.
+ * @param gapRows - Rows the blank line between the body and the content above it
+ *   takes. It is not part of the measured chrome while the body is empty, and 0
+ *   when that content already draws the gap itself.
  * @returns Lines left for the body, or 0 when only the chrome fits.
  */
 export function bodyRows(
   renderChrome: () => number,
   terminalRows: number,
+  gapRows = 1,
 ): number {
   const budget = Math.max(0, terminalRows - VIEWPORT_RESERVE_ROWS);
-  return Math.max(0, budget - renderChrome() - 1);
+  return Math.max(0, budget - renderChrome() - gapRows);
 }
 
 /**

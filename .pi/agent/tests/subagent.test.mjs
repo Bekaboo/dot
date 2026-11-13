@@ -1285,6 +1285,13 @@ describe("subagent", () => {
         .map((line) => line.trim().match(/^\d\d:\d\d:\d\d (\S+)/)?.[1])
         .filter(Boolean);
       assert.deepEqual(stamped, ["start", "text"]);
+      // One blank line separates the settings from the pinned spawn line, and
+      // the steps follow it directly.
+      const rows = detail.split("\n").map((line) => line.trim());
+      const spawn = rows.findIndex((line) => /^\d\d:\d\d:\d\d start$/.test(line));
+      assert.ok(spawn > 0, "the spawn line is rendered");
+      assert.equal(rows[spawn - 1], "", "a blank line follows the settings");
+      assert.match(rows[spawn + 1], /^\d\d:\d\d:\d\d text\b/);
       assert.doesNotMatch(detail, /alpha/);
       assert.equal(
         detail.split("\n").filter((line) => /\btext\b/.test(line)).length,

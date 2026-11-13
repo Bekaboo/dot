@@ -24,9 +24,14 @@ function plainWidth(line) {
 describe("page", () => {
   describe("bodyRows", () => {
     test("leaves the terminal's own rows and the box chrome out of the body", () => {
-      // 20 rows: pi keeps its own rows, the box chrome takes 9, the blank
-      // line 1.
+      // 20 rows: pi keeps its own rows, the box chrome takes 9, and the blank
+      // line between the body and the content above it takes one more.
       assert.equal(bodyRows(() => 9, 20), 20 - VIEWPORT_RESERVE_ROWS - 9 - 1);
+      assert.equal(
+        bodyRows(() => 9, 20, 0),
+        20 - VIEWPORT_RESERVE_ROWS - 9,
+        "content that draws its own gap takes no extra row",
+      );
       assert.equal(
         bodyRows(() => 5, 20),
         20 - VIEWPORT_RESERVE_ROWS - 5 - 1,
