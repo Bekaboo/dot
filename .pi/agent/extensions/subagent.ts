@@ -284,7 +284,7 @@ const UpdateParams = Type.Object({
   id: Type.String({ description: "Id of the running subagent to change." }),
   timeoutSec: Type.Number({
     description:
-      "New wall-clock limit in seconds, counted from the child's start like the original, so it must exceed the time the child has already run.",
+      "New wall-clock limit in seconds, counted from the child's start like the original, so it must exceed the time the child has already run. Raise it when the child was handed more work after it started, or is waiting on background work that needs longer than planned. Lower it when you want the result sooner: the child is warned about the nearer deadline and can wrap up and finish instead of using its full time.",
   }),
 });
 
@@ -2593,7 +2593,7 @@ function updateTool(
     name: "subagent_update",
     label: "Subagent update",
     description:
-      "Change a running subagent's wall-clock limit, either way. The new `timeoutSec` counts from the child's start, like the original, so it must exceed the time the child has already run, and the child is sent its new limit. Raise it when a child was handed more work after it started, or is waiting on background work that needs longer than planned. Lower it when you want the result sooner: the child is warned about the nearer deadline and can wrap up and finish instead of using its full time.",
+      "Change a running subagent's configuration. Only its wall-clock limit (`timeoutSec`) can be changed for now, and the child is sent the new limit.",
     parameters: UpdateParams,
     async execute(_toolCallId, params) {
       const { id, timeoutSec } = params;
