@@ -20,5 +20,6 @@ check() {
 }
 
 check .pi/agent npm run --silent check
+check .pi/agent npm run --silent test
 check .config/opencode biome check
 check .config/nvim make -s
