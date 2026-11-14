@@ -27,10 +27,21 @@ vim.o.swapfile = false
 -- and concurrent access to the same ShaDa file makes `:edit` fail with E576
 vim.o.shadafile = 'NONE'
 
--- Only the config root is added to 'runtimepath', not its `after` directory,
--- so that `after/ftplugin` and friends do not interfere with the tests.
-vim.opt.rtp:prepend(root_dir)
-vim.opt.rtp:prepend(plenary_dir)
+-- Keep only the parts of 'runtimepath' that belong to the nvim installation
+-- (its runtime and bundled tree-sitter parsers), this config and plenary: the
+-- busted runner spawns the spec processes without `--clean`, so the default
+-- 'runtimepath' also contains the user's runtime and the `after` directory of
+-- this config, whose ftplugins interfere with the specs
+local install_dir = vim.fn.fnamemodify(vim.env.VIMRUNTIME, ':h:h:h')
+local rtp = { plenary_dir, root_dir }
+for _, dir in ipairs(vim.api.nvim_list_runtime_paths()) do
+  if vim.startswith(dir, install_dir .. '/') then
+    table.insert(rtp, dir)
+  end
+end
+vim.opt.rtp = rtp
+-- Don't load packages from the user's data directory either
+vim.opt.packpath = {}
 
 -- Make test helpers requirable from specs, e.g. `require('helpers')`
 package.path = table.concat({
