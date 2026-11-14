@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test, { describe } from "node:test";
 
 import {
-  Spinner,
   SPINNER_INTERVAL_MS,
+  Spinner,
 } from "../../extensions/utils/spinner.ts";
 
 const plainTheme = { fg: (_color, text) => text };
