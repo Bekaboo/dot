@@ -23,6 +23,9 @@ if vim.fn.isdirectory(plenary_dir) == 0 then
 end
 
 vim.o.swapfile = false
+-- Don't read or write ShaDa, the busted runner spawns one nvim per spec file
+-- and concurrent access to the same ShaDa file makes `:edit` fail with E576
+vim.o.shadafile = 'NONE'
 
 -- Only the config root is added to 'runtimepath', not its `after` directory,
 -- so that `after/ftplugin` and friends do not interfere with the tests.
