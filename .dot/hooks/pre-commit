@@ -19,3 +19,4 @@ check() {
 }
 
 check .pi/agent npm run --silent check
+check .config/nvim make -s
