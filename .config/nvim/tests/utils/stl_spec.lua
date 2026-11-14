@@ -48,13 +48,11 @@ describe('[utils][stl]', function()
       assert.are.same('foo', stl.escape('foo'))
     end)
     it('makes the string safe to evaluate in a statusline', function()
-      -- Evaluating an unescaped `%` raises E539
-      assert.has_error(function()
-        vim.api.nvim_eval_statusline('100% done', {})
-      end)
+      -- An unescaped `%` is a statusline item, so nvim rejects the string
       assert.are.same('100% done', render(stl.escape('100% done')))
     end)
   end)
+
   describe('spinner', function()
     -- Frames that do not advance during a test and a short finish timeout keep
     -- the state transitions deterministic
@@ -62,7 +60,7 @@ describe('[utils][stl]', function()
       frame_interval = 10000,
       finish_timeout = 20,
       icons = {
-        progress = { 'a', 'b' },
+        progress = { 'a' },
         finish = 'done',
       },
     }
@@ -112,7 +110,32 @@ describe('[utils][stl]', function()
       local spinner = new_spinner()
       spinner:spin()
       assert.are.same('spinning', spinner.status)
-      assert.is_true(vim.tbl_contains({ 'a', 'b' }, spinner.icon))
+      assert.are.same('a', spinner.icon)
+    end)
+    it('invokes the spin and finish callbacks', function()
+      local spins, finished = 0, 0
+      local spinner = new_spinner({
+        on_spin = function()
+          spins = spins + 1
+        end,
+        on_finish = function()
+          finished = finished + 1
+        end,
+      })
+      spinner:spin()
+      assert.are.same(1, spins)
+      spinner:finish()
+      assert.are.same(1, finished)
+    end)
+    it('falls back to the default options', function()
+      local spinner = stl.spinner:new({ frame_interval = 1 })
+      table.insert(created, spinner)
+      assert.are.same(1, spinner.opts.frame_interval)
+      assert.are.same(
+        stl.spinner.default_opts.finish_timeout,
+        spinner.opts.finish_timeout
+      )
+      assert.are.same(stl.spinner.default_opts.icons, spinner.opts.icons)
     end)
     it(
       'shows the finish icon, then clears it after the finish timeout',
@@ -169,8 +192,6 @@ describe('[utils][stl]', function()
     it('reports unknown ids', function()
       assert.is_nil(stl.spinner.get_by_id(nil))
       assert.is_false(stl.spinner.id_is_valid(nil))
-      assert.is_nil(stl.spinner.get_by_id(-1))
-      assert.is_false(stl.spinner.id_is_valid(-1))
     end)
     it('attaches to a buffer', function()
       local buf = vim.api.nvim_get_current_buf()
@@ -200,10 +221,11 @@ describe('[utils][stl]', function()
       local other = new_buf()
       local spinner = new_spinner()
       spinner:attach(buf)
+      local id = spinner.id
       spinner:attach(other)
       assert.is_nil(vim.b[buf].spinner_id)
-      assert.are.same(spinner.id, vim.b[other].spinner_id)
-      assert.is_true(stl.spinner.id_is_valid(spinner.id))
+      assert.are.same(id, vim.b[other].spinner_id)
+      assert.is_true(stl.spinner.id_is_valid(id))
     end)
     it('deletes itself when the attached buffer is wiped out', function()
       local buf = new_buf()

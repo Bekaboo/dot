@@ -94,6 +94,7 @@ describe('[utils][str]', function()
       end
     end
   end)
+
   describe('escape_magic', function()
     it('escapes magic characters', function()
       assert.are.same(

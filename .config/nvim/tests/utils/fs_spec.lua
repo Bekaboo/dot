@@ -122,6 +122,7 @@ describe('[utils][fs]', function()
       assert.is_false(fs_utils.is_full_path('./foo/bar'))
     end)
   end)
+
   describe('root', function()
     it('finds the nearest directory containing a root marker', function()
       local file = create_file('project/sub/file.txt', 'hello')
@@ -131,6 +132,26 @@ describe('[utils][fs]', function()
         fs_utils.root(file, { '.git' })
       )
     end)
+    it('prefers a marker set over the string markers after it', function()
+      local file = create_file('outer/inner/file.txt', 'hello')
+      create_file('outer/.git/config', '')
+      create_file('outer/inner/.project', '')
+      assert.are.same(
+        vim.fs.joinpath(dir, 'outer/inner'),
+        fs_utils.root(file, { { '.project' }, '.git' })
+      )
+    end)
+    it(
+      'searches the string markers after a marker set that does not match',
+      function()
+        local file = create_file('project/sub/file.txt', 'hello')
+        create_file('project/.git/config', '')
+        assert.are.same(
+          vim.fs.joinpath(dir, 'project'),
+          fs_utils.root(file, { { '.project' }, '.git' })
+        )
+      end
+    )
     it('accepts a single root marker', function()
       local file = create_file('project/sub/file.txt', 'hello')
       create_file('project/.git/config', '')
