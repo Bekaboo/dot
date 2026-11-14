@@ -142,24 +142,24 @@ const STOP_TOOL_NAMES = new Set(["timer_stop", "timer"]);
 const TimerStartParams = Type.Object({
   id: Type.String({
     description:
-      "Timer name: short, unique, purpose-bearing, e.g. batch3-done or pa1-peek. It appears in every wake and in `timer_status`, and it names the job log.",
+      "Timer name: short, unique, purpose-bearing, e.g. batch3-done. It appears in every wake and names the job log.",
   }),
   start: Type.Optional(
     Type.String({
       description:
-        "Shell command to run in the background and log; the timer ends when the process exits, and the wake carries its exit code and log tail. Combine with `condition` to end early when a predicate holds; combine with `onTick` to monitor progress.",
+        "Shell command to run in the background and log; the timer ends when it exits, and the wake carries the exit code and log tail. Combine with `condition` and/or `onTick` to monitor it.",
     }),
   ),
   condition: Type.Optional(
     Type.String({
       description:
-        "Shell predicate checked immediately, then at each tick; exit code 0 ends the timer and wakes you with 'condition met'. A condition that holds kills a running job. The job's whole stdout/stderr log is its stdin when `start` is set.",
+        "Shell predicate checked immediately, then at each tick; exit 0 ends the timer with 'condition met' and kills a running job. Its stdin is the job's log when `start` is set.",
     }),
   ),
   onTick: Type.Optional(
     Type.String({
       description:
-        "Shell command run on every tick, including the one that ends a periodic timer; its output rides along with the wake, capped like a tool result, with the full text written to a file when it is large. Never block or sleep. With `start`, the job's whole log is its stdin, it also runs once at exit, and it runs every intervalSec only when maxTicks is above 0.",
+        "Shell command run on every tick, including the one that ends a periodic timer; its output rides along with the wake, capped like a tool result, with the full text saved to a file when large. Never block or sleep. With `start` it also runs once at exit, and its stdin is the job's log.",
     }),
   ),
   intervalSec: Type.Optional(
@@ -173,7 +173,7 @@ const TimerStartParams = Type.Object({
   maxTicks: Type.Optional(
     Type.Number({
       description:
-        "Maximum tick wakes. 0 disables tick wakes and is the default with `start`; set it above 0 to run `onTick` every intervalSec while a job runs. Periodic mode needs at least 1. A condition is still checked every intervalSec when maxTicks is 0. The final exit, condition, and timeout wakes do not count.",
+        "Maximum tick wakes. 0 disables tick wakes, the default with `start`; above 0 runs `onTick` every intervalSec while a job runs. Periodic mode needs at least 1. A condition is still checked every intervalSec when 0. Exit, condition and timeout wakes do not count.",
       minimum: 0,
     }),
   ),
@@ -1885,17 +1885,11 @@ function timerStartTool(
     name: "timer_start",
     label: "Timer start",
     description:
-      "Run a command in the background, wait for a condition, tick on a schedule, or combine them; every call returns immediately. " +
-      'With `start`: `timer_start { "id": "build", "start": "make" }` runs it in the background, logs to ~/.pi/agent/jobs/<id>-<startedAt>.log, and wakes you with the exit code and the log tail. ' +
-      "With `condition`: the predicate exits 0, checked now and at each intervalSec. " +
-      "With `onTick`: it runs on every tick and its output accompanies the wake. " +
-      "Pass `start` with `onTick` and/or `condition` to start and monitor one job in one call; both then read the job's stdout/stderr on stdin. Set `maxTicks` above 0 to run `onTick` every intervalSec while the job runs; with 0 it runs once at exit, and a condition is still checked every intervalSec. A condition that holds on a running job kills it. " +
-      "Without `start` or `condition`, periodic mode needs onTick or maxTicks at least 1. " +
-      "timer_stop, a timeoutSec expiry, or the end of the session (including /reload, /resume and /new) kills a running job.",
+      "Start a background command, wait for a condition, tick on a schedule, or combine them; every call returns immediately and wakes you later. Pass `start` with `condition` and/or `onTick` to start and monitor one job in one call. `timer_stop`, a `timeoutSec` expiry, or the end of the session (including /reload, /resume and /new) kills a running job.",
     promptSnippet:
       "Start a background command and wake when it exits, wait for a condition, or tick periodically -- in any combination.",
     promptGuidelines: [
-      "For a command that may take a while, use `timer_start` with `start`, never bash `&`, pid or exit files, polling, or `sleep N` waits. To also monitor it, pass `start`, `onTick`, `condition`, `intervalSec` and `maxTicks` in one call. Keep working or end your turn: an idle agent is woken in a new turn.",
+      "For a command that may take a while, use `timer_start` with `start`, never bash `&`, pid or exit files, polling, or `sleep N`. Pass `condition`/`onTick` in the same call to monitor it. Keep working or end your turn: an idle agent is woken in a new turn.",
       "A tick or condition wake from a timer says only that something happened; a job wake already carries the exit code and log tail. After a wake, do what it asks, then `timer_stop` a timer you no longer need.",
     ],
     parameters: TimerStartParams,
@@ -2240,7 +2234,7 @@ function timerStatusTool(
     name: "timer_status",
     label: "Timer status",
     description:
-      "Report every active timer: id, age, ticks spent, and what it waits for -- a condition, a running job with its pid and log, or neither. Name an id to report just that timer.",
+      "Report every active timer: id, age, ticks spent and what it waits for. Name an id to report just that timer.",
     parameters: TimerStatusParams,
 
     async execute(_toolCallId: string, params: TimerStatusInput) {
