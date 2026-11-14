@@ -40,8 +40,9 @@ for _, dir in ipairs(vim.api.nvim_list_runtime_paths()) do
   end
 end
 vim.opt.rtp = rtp
--- Don't load packages from the user's data directory either
-vim.opt.packpath = {}
+-- Keep the packages bundled with the installation (netrw and friends), but no
+-- packages from the user's data directory
+vim.opt.packpath = { vim.env.VIMRUNTIME }
 
 -- Make test helpers requirable from specs, e.g. `require('helpers')`
 package.path = table.concat({
