@@ -122,4 +122,33 @@ describe('[utils][fs]', function()
       assert.is_false(fs_utils.is_full_path('./foo/bar'))
     end)
   end)
+  describe('root', function()
+    it('finds the nearest directory containing a root marker', function()
+      local file = create_file('project/sub/file.txt', 'hello')
+      create_file('project/.git/config', '')
+      assert.are.same(
+        vim.fs.joinpath(dir, 'project'),
+        fs_utils.root(file, { '.git' })
+      )
+    end)
+    it('accepts a single root marker', function()
+      local file = create_file('project/sub/file.txt', 'hello')
+      create_file('project/.git/config', '')
+      assert.are.same(
+        vim.fs.joinpath(dir, 'project'),
+        fs_utils.root(file, '.git')
+      )
+    end)
+    it('honors the priority of layered root markers', function()
+      local file = create_file('outer/inner/file.txt', 'hello')
+      create_file('outer/.git/config', '')
+      create_file('outer/inner/.project', '')
+      -- The `.project` marker takes priority over `.git` even though it is
+      -- found further away from the file
+      assert.are.same(
+        vim.fs.joinpath(dir, 'outer/inner'),
+        fs_utils.root(file, { { '.project' }, { '.git' } })
+      )
+    end)
+  end)
 end)

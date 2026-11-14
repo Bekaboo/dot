@@ -78,6 +78,12 @@ function M.root(source, marker)
     end
     ::continue::
   end
+
+  -- Search the trailing string markers, which are not followed by a marker
+  -- set that would otherwise trigger the search above
+  if not vim.tbl_isempty(joined_markers) then
+    return fs_root(source, joined_markers)
+  end
 end
 
 ---Read file contents
