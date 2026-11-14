@@ -89,7 +89,6 @@ describe('[utils][stl]', function()
     after_each(function()
       for _, spinner in ipairs(created) do
         if stl.spinner.id_is_valid(spinner.id) then
-          spinner:detach(false)
           spinner:del()
         end
       end
@@ -159,6 +158,13 @@ describe('[utils][stl]', function()
       assert.is_false(stl.spinner.id_is_valid(id))
       assert.is_nil(stl.spinner.get_by_id(id))
       assert.is_true(timer:is_closing())
+    end)
+    it('releases the buffer it is attached to when deleted', function()
+      local buf = vim.api.nvim_get_current_buf()
+      local spinner = new_spinner()
+      spinner:attach(buf)
+      spinner:del()
+      assert.is_nil(vim.b[buf].spinner_id)
     end)
     it('reports unknown ids', function()
       assert.is_nil(stl.spinner.get_by_id(nil))

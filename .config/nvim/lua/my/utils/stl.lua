@@ -93,9 +93,13 @@ function M.spinner:new(opts)
   return spinners[spinner_id]
 end
 
----Delete the spinner instance and clean up resources
+---Delete the spinner instance, detaching it from its buffer and cleaning up
+---resources
 function M.spinner:del()
   spinners[self.id] = nil -- dereference self from the lookup table
+  if self.attached_buf then
+    self:detach(false) -- release the buffer and its autocmd
+  end
   if self.status == 'spinning' then
     self:finish()
   end
