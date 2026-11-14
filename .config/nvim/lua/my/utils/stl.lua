@@ -212,7 +212,7 @@ function M.spinner:attach(buf)
 
   -- Self attached to another buffer, detach first
   if self.attached_buf and self.attached_buf ~= buf then
-    self:detach()
+    self:detach(false)
   end
 
   -- Buffer have another spinner attached, detach it first
@@ -230,7 +230,7 @@ function M.spinner:attach(buf)
       once = true,
       buffer = buf,
       callback = function(args)
-        if vim.b[args.buf].spinner ~= self then
+        if vim.b[args.buf].spinner_id ~= self.id then
           return
         end
         self:detach()
