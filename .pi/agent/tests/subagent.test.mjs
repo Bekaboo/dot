@@ -288,20 +288,66 @@ function fakePi(sessionName) {
   const commands = new Map();
   const hooks = new Map();
   const sent = [];
+  const entries = [];
   return {
     tools,
     commands,
     hooks,
     sent,
+    entries,
     api: {
       registerTool: (definition) => tools.set(definition.name, definition),
       registerCommand: (name, definition) => commands.set(name, definition),
       on: (name, handler) => hooks.set(name, handler),
       sendMessage: (message, options) => sent.push({ message, options }),
+      appendEntry: (customType, data) => entries.push({ customType, data }),
       getSessionName: () => sessionName,
     },
   };
 }
+
+/**
+ * The session branch the entries a fake pi recorded would produce.
+ *
+ * @param pi - Fake pi that recorded the entries.
+ * @returns Branch entries, oldest first, as pi hands them back.
+ */
+const branchOf = (pi) =>
+  pi.entries.map((entry, index) => ({
+    type: "custom",
+    customType: entry.customType,
+    data: entry.data,
+    id: `entry-${index}`,
+    parentId: index === 0 ? null : `entry-${index - 1}`,
+    timestamp: new Date(0).toISOString(),
+  }));
+
+/**
+ * A `session_start` context holding a fake pi's recorded entries.
+ *
+ * @param pi - Fake pi the runner should restore from.
+ * @returns The context handed to the session_start hook.
+ */
+const sessionCtx = (pi, owner = PARENT_SESSION) => ({
+  sessionManager: {
+    getBranch: () => branchOf(pi),
+    getSessionId: () => owner,
+  },
+});
+
+/** Session id the fake tool context reports, as pi would. */
+const PARENT_SESSION = "parent-session-1";
+
+/**
+ * The run records a fake pi recorded, newest last.
+ *
+ * @param pi - Fake pi that recorded the entries.
+ * @returns One record per lifecycle step.
+ */
+const runRecords = (pi) =>
+  pi.entries
+    .filter((entry) => entry.customType === "subagent-run")
+    .map((entry) => entry.data);
 
 /**
  * How the extension launched the child pi, as pi itself would read it.
@@ -463,7 +509,13 @@ function setup(t, { idle = () => true, model, thinkingLevel, intercom } = {}) {
   const pi = fakePi(intercom?.name);
   installSubagent(pi.api);
   const tool = pi.tools.get("subagent");
-  const ctx = { cwd: workDir, isIdle: idle, model, thinkingLevel };
+  const ctx = {
+    cwd: workDir,
+    isIdle: idle,
+    model,
+    thinkingLevel,
+    sessionManager: { getSessionId: () => PARENT_SESSION },
+  };
   return {
     pi,
     tool,
@@ -620,6 +672,15 @@ describe("subagent", () => {
       assert.ok(
         flags.has("append-system-prompt"),
         "the child's role and deadline live in an appended system prompt",
+      );
+      assert.match(
+        options["session-id"],
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+        "the parent names the child's session, so it can reopen it later",
+      );
+      assert.ok(
+        !flags.has("session"),
+        "a fresh child starts its own session instead of reopening one",
       );
       assert.match(options["append-system-prompt"], /You are a subagent/);
       assert.match(
@@ -2557,26 +2618,309 @@ describe("subagent", () => {
       assert.equal(pi.sent.length, 0);
     });
 
-    test("shutdown kills children and says a reload killed them", async (t) => {
+    test("shutdown pauses a running child and keeps its record", async (t) => {
+      const advance = fakeClock(t);
       const { call, pi, children } = setup(t, { idle: () => false });
-      await call({ id: "alive", prompt: "x" });
+      await call({ id: "alive", prompt: "x", timeoutSec: 60 });
       assert.deepEqual(
         children[0].kills,
         [],
         "nothing is killed while the child runs",
       );
+      advance(5);
       await pi.hooks.get("session_shutdown")({ reason: "reload" });
       assert.deepEqual(
         children[0].kills,
         ["SIGTERM", "SIGKILL"],
         "shutdown stops the child",
       );
-      const sent = await notices(pi);
-      assert.match(
-        sent[0].message.content,
-        /Reload killed 1 running subagent\(s\): \[subagent alive\]/,
+      const [, paused] = runRecords(pi);
+      assert.equal(paused.state, "paused");
+      assert.equal(
+        paused.elapsedMs,
+        5_000,
+        "the time it ran before the pause is kept",
       );
-      assert.deepEqual(sent[0].options, { triggerTurn: false });
+      assert.equal(pi.sent.length, 0, "a pause is not a result");
+    });
+  });
+
+  describe("a run across restarts", () => {
+    /**
+     * A run record a previous pi could have left on the branch.
+     *
+     * @param overrides - Fields this test changes.
+     * @returns A complete record.
+     */
+    const runRecord = (overrides = {}) => ({
+      id: "kept",
+      state: "paused",
+      prompt: "do the thing",
+      model: "",
+      thinking: "",
+      tools: [],
+      cwd: workDir,
+      timeoutSec: 60,
+      elapsedMs: 0,
+      startedAt: 1,
+      order: 1,
+      childSessionId: "child-session-1",
+      owner: PARENT_SESSION,
+      ...overrides,
+    });
+
+    /**
+     * A fresh extension instance restoring from the given records.
+     *
+     * @param records - Records a previous pi left on the branch.
+     * @returns The fake pi holding the restored runner.
+     */
+    async function restore(records, owner = PARENT_SESSION) {
+      resetChildren();
+      const pi = fakePi();
+      installSubagent(pi.api);
+      for (const record of records) pi.api.appendEntry("subagent-run", record);
+      await pi.hooks.get("session_start")(
+        { type: "session_start", reason: "resume" },
+        sessionCtx(pi, owner),
+      );
+      return pi;
+    }
+
+    test("a started run records what a resume needs", async (t) => {
+      const { call, pi, children } = setup(t);
+      await call({ id: "kept", prompt: "do the thing", timeoutSec: 90 });
+      const [running] = runRecords(pi);
+      assert.equal(running.id, "kept");
+      assert.equal(running.state, "running");
+      assert.equal(running.owner, PARENT_SESSION);
+      assert.equal(running.timeoutSec, 90);
+      assert.equal(running.cwd, workDir);
+      assert.equal(running.elapsedMs, 0);
+      assert.equal(
+        running.childSessionId,
+        childOptions(children[0]).options["session-id"],
+        "the record names the session a resume opens",
+      );
+    });
+
+    test("a paused run resumes in its own session with what is left of its budget", async (t) => {
+      const advance = fakeClock(t);
+      const { call, pi, children } = setup(t);
+      await call({ id: "kept", prompt: "do the thing", timeoutSec: 60 });
+      const first = children[0];
+      const childSessionId = childOptions(first).options["session-id"];
+      advance(40);
+      // The pause lasts until the child is gone, and only that time counts.
+      const closing = pi.hooks.get("session_shutdown")({ reason: "quit" });
+      advance(2);
+      first.close(0);
+      await closing;
+      const paused = runRecords(pi).at(-1);
+      assert.equal(paused.state, "paused");
+      assert.equal(
+        paused.elapsedMs,
+        42_000,
+        "the termination grace period is running time, so it counts",
+      );
+
+      // Pi stays closed for a long while: none of that may reach the budget.
+      advance(1_000);
+
+      // A later pi opens the same session: a fresh extension instance replays it.
+      const next = fakePi();
+      installSubagent(next.api);
+      await next.hooks.get("session_start")(
+        { type: "session_start", reason: "resume" },
+        sessionCtx(pi),
+      );
+
+      const resumed = children.at(-1);
+      assert.notEqual(resumed, first, "the run is started again");
+      const { options, flags } = childOptions(resumed);
+      assert.equal(
+        options.session,
+        childSessionId,
+        "it reopens the session it was working in",
+      );
+      assert.ok(
+        !flags.has("session-id"),
+        "a reopened session is not created as a new one",
+      );
+      assert.equal(
+        resumed.options.env.PI_SUBAGENT_TIMEOUT_SEC,
+        "18",
+        "only the time it ran counts, not the time pi was closed",
+      );
+      assert.match(options["append-system-prompt"], /18s wall-clock limit/);
+      const [state, prompt] = childCommands(resumed);
+      assert.equal(state.type, "get_state");
+      assert.ok(
+        !prompt.message.includes("do the thing"),
+        `the task is not described again: ${prompt.message}`,
+      );
+
+      const status = await next.tools
+        .get("subagent_status")
+        .execute("call", {}, undefined, undefined, {});
+      assert.match(
+        status.content[0].text,
+        /\[subagent kept\] running for 42s/,
+        "the running time it had before the restart still counts",
+      );
+      assert.equal(
+        runRecords(next).at(-1).elapsedMs,
+        42_000,
+        "a resumed run carries its spent time, so it cannot restart the clock",
+      );
+      assert.match(next.sent[0].message.content, /Resumed 1 subagent/);
+    });
+
+    test("a moved deadline on a resumed run sends what the child has left", async () => {
+      const pi = await restore([
+        runRecord({ state: "paused", elapsedMs: 40_000, timeoutSec: 60 }),
+      ]);
+      const resumed = children.at(-1);
+      await pi.tools
+        .get("subagent_update")
+        .execute(
+          "call",
+          { id: "kept", timeoutSec: 120 },
+          undefined,
+          undefined,
+          {},
+        );
+
+      const [told] = timeoutUpdates(resumed);
+      assert.equal(
+        told.message,
+        "/subagent-timeout 80",
+        "the child's own clock starts at its spawn, so 40s of its 120s is gone",
+      );
+    });
+
+    test("the last record of a run decides its state", async () => {
+      const pi = await restore([
+        runRecord({ state: "running", elapsedMs: 0 }),
+        runRecord({ state: "paused", elapsedMs: 5_000 }),
+      ]);
+      assert.equal(children.length, 1, "the paused record wins");
+      assert.equal(runRecords(pi).at(-1).elapsedMs, 5_000);
+    });
+
+    test("a run that ended is left alone", async () => {
+      const pi = await restore([
+        runRecord({ state: "done", elapsedMs: 60_000 }),
+      ]);
+      assert.equal(children.length, 0, "nothing is started again");
+      assert.equal(pi.sent.length, 0, "and nothing is reported again");
+    });
+
+    test("a paused run without budget is reported as timed out", async () => {
+      const pi = await restore([runRecord({ elapsedMs: 60_000 })]);
+      assert.equal(children.length, 0, "nothing is spawned without a budget");
+      assert.match(
+        pi.sent[0].message.content,
+        /\[subagent kept\] timeout after 60s: no result within its 60s timeout/,
+      );
+      assert.equal(runRecords(pi).at(-1).state, "timeout");
+    });
+
+    test("a run whose pi died is reported, not resumed", async () => {
+      const pi = await restore([
+        runRecord({ state: "running", elapsedMs: 12_000 }),
+      ]);
+      assert.equal(
+        children.length,
+        0,
+        "its child may still be running, so a resume would write its session twice",
+      );
+      assert.match(
+        pi.sent[0].message.content,
+        /\[subagent kept\] failed after 12s: interrupted when pi died/,
+      );
+      assert.equal(runRecords(pi).at(-1).state, "failed");
+      assert.deepEqual(
+        pi.sent[0].options,
+        { deliverAs: "steer", triggerTurn: false },
+        "stale news waits for the user's next turn instead of spending one",
+      );
+    });
+
+    test("a run whose pi died has its orphan child stopped", async (t) => {
+      const childSessionId = "orphan-session-1";
+      // Same shape as a spawned child: this extension's mode, name and session.
+      const orphan = realSpawn(
+        "bash",
+        [
+          "-c",
+          // Two commands, so bash keeps its argv instead of exec'ing sleep:
+          // the test needs a process whose command line looks like a child's.
+          "sleep 30; true",
+          "--mode",
+          "rpc",
+          "--name",
+          "kept",
+          "--session-id",
+          childSessionId,
+        ],
+        { stdio: "ignore" },
+      );
+      t.after(() => orphan.kill("SIGKILL"));
+      const closed = new Promise((resolve) =>
+        orphan.on("close", (_code, signal) => resolve(signal)),
+      );
+      const seen = await waitFor(
+        () =>
+          childProcess
+            .spawnSync("ps", ["-Ao", "command="], { encoding: "utf8" })
+            .stdout.split("\n")
+            .some((line) => line.includes(`--session-id ${childSessionId}`)),
+        2_000,
+      );
+      assert.ok(seen, "the orphan is on the process list");
+
+      await restore([runRecord({ state: "running", childSessionId })]);
+
+      assert.equal(
+        await closed,
+        "SIGTERM",
+        "the child a dead parent left behind is stopped",
+      );
+    });
+
+    test("a fork does not resume another session's runs", async () => {
+      const pi = await restore(
+        [runRecord({ state: "paused", elapsedMs: 0 })],
+        "forked-session",
+      );
+      assert.equal(children.length, 0, "the fork owns no runs");
+      assert.equal(pi.sent.length, 0, "and it reports nothing");
+    });
+
+    test("a resume into a different session is stopped", async () => {
+      const pi = await restore([
+        runRecord({ state: "paused", childSessionId: "wanted-session" }),
+      ]);
+      const resumed = children.at(-1);
+      resumed.write(
+        rpcRecord({
+          id: "state",
+          type: "response",
+          command: "get_state",
+          success: true,
+          data: {
+            sessionFile: path.join(os.tmpdir(), "other.jsonl"),
+            sessionId: "other-session",
+          },
+        }),
+      );
+      resumed.close(0);
+      await notices(pi, 2);
+      assert.match(
+        pi.sent.map((sent) => sent.message.content).join("\n"),
+        /\[subagent kept\] failed after 0s: the child opened session other-session instead of wanted-session/,
+      );
     });
   });
 
@@ -2780,6 +3124,7 @@ describe("subagent", () => {
           undefined,
           {
             cwd: workDir,
+            sessionManager: { getSessionId: () => PARENT_SESSION },
           },
         );
       const toolSelection = childOptions(children[0]).options.tools;

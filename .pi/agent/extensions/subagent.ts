@@ -20,7 +20,8 @@
  * Child callbacks never retain a tool context; shutdown drops late results.
  */
 
-import { type ChildProcess, spawn } from "node:child_process";
+import { type ChildProcess, spawn, spawnSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { StopReason } from "@earendil-works/pi-ai";
@@ -31,6 +32,7 @@ import {
   getAgentDir,
   type JsonAgentSessionEvent,
   type KeybindingsManager,
+  type SessionEntry,
   type Theme,
   type ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
@@ -82,6 +84,79 @@ const CHILD_ENV = "PI_SUBAGENT_CHILD";
  * child as a chat.
  */
 const SUBAGENT_SESSION_DIR = "subagent-sessions";
+
+/**
+ * Custom session entry that records one subagent run.
+ *
+ * The parent's session is the run's only durable home: an entry is appended
+ * when the run starts, pauses and ends, so a pi that restarts can pick the
+ * paused ones up again.
+ */
+const RUN_ENTRY = "subagent-run";
+
+/**
+ * Prompt a child that reopens its own session after a restart.
+ *
+ * Its transcript above is its own work, so the message only says what happened
+ * and where to continue; describing the task again would restart it.
+ */
+const RESUME_MESSAGE =
+  "This is a continuation after a restart: the session that spawned you was closed and has resumed you. Your transcript above is your own finished work. Continue the task from where it stopped, without repeating steps that are already done, and call `subagent_finish` with your final answer when it is complete.";
+
+/**
+ * Lifecycle of a run as its session record states it.
+ *
+ * `paused` is a run the parent stopped on purpose and will resume; `running`
+ * left behind at a restart means the pi process died without pausing it.
+ */
+type RunRecordState =
+  | "running"
+  | "paused"
+  | "done"
+  | "failed"
+  | "timeout"
+  | "killed";
+
+/** One line of the session's record of a run, replayed after a restart. */
+interface RunRecord {
+  id: string;
+  state: RunRecordState;
+  /** Model as requested, empty when the child inherits pi's default. */
+  model: string;
+  /** Thinking level forced on the child, empty to inherit. */
+  thinking: string;
+  /** Tools as requested, empty when the child gets pi's defaults. */
+  tools: string[];
+  cwd: string;
+  /** Wall-clock limit the child was given, in seconds of running time. */
+  timeoutSec: number;
+  /** Running time already spent before this record, in ms. */
+  elapsedMs: number;
+  /** When the run first started, in ms, so the overlay keeps its order. */
+  startedAt: number;
+  /** Creation order across restarts. */
+  order: number;
+  /** The child's own pi session id: the handle a resume opens. */
+  childSessionId: string;
+  /**
+   * Session id of the parent that owns the run.
+   *
+   * A fork copies the source session's entries under a new id, so this is what
+   * stops a forked branch from respawning another session's children.
+   */
+  owner: string;
+}
+
+/** What starting a run needs, fresh or resumed. */
+interface StartRequest {
+  id: string;
+  prompt: string;
+  model: string;
+  thinking: string;
+  tools: string[];
+  cwd: string;
+  timeoutSec: number;
+}
 
 /** Id of the `prompt` command sent to the child, echoed in its response. */
 const PROMPT_ID = "prompt";
@@ -336,12 +411,21 @@ interface RunningSubagent {
   sessionFile?: string;
   /** Model as requested, empty when the child inherits pi's default. */
   model: string;
+  /** Thinking level forced on the child, empty to keep the model's own. */
+  thinking: string;
   /** Tools as requested, empty when the child gets pi's defaults. */
   tools: string[];
   cwd: string;
-  /** Wall-clock limit the child was given, in seconds. */
+  /** Wall-clock limit the child was given, in seconds of running time. */
   timeoutSec: number;
+  /** When the run first started, before any restart, in ms. */
   startedAt: number;
+  /** Running time before the current span, in ms: a restart does not count. */
+  elapsedMs: number;
+  /** When the current running span began, in ms. */
+  spanStart: number;
+  /** The child's own pi session id, which a resume reopens. */
+  childSessionId: string;
   /** Creation order, so two children started in one millisecond stay ordered. */
   order: number;
   /** What the child has been doing, updated from its records. */
@@ -899,7 +983,7 @@ function activityTail(activity: Activity): string | undefined {
  * @returns One status line, with a second line for an open text block's tail.
  */
 function runningLine(job: RunningSubagent): string {
-  const head = `${marker(job.id)} running for ${elapsedSec(job.startedAt)}s`;
+  const head = `${marker(job.id)} running for ${Math.round(runningMs(job) / 1000)}s`;
   if (job.activity.phase === undefined && job.activity.steps.length === 0)
     return `${head} (${subagentSettings(job)})`;
   const line = `${head}, ${activityNow(job.activity)} (${subagentSettings(job)})`;
@@ -978,22 +1062,29 @@ function truncateBytes(text: string, maxBytes: number): string {
  * the `close` event decide when this resolves.
  *
  * @param proc - Process to stop.
- * @returns Resolves once the process has closed.
+ * @returns Whether the process was seen to close, as opposed to surviving the
+ *   escalation until the give-up deadline.
  */
-function stopProcess(proc: ChildProcess): Promise<void> {
+function stopProcess(proc: ChildProcess): Promise<boolean> {
   return new Promise((resolve) => {
-    if (proc.exitCode !== null || proc.signalCode !== null) return resolve();
+    if (proc.exitCode !== null || proc.signalCode !== null)
+      return resolve(true);
+    let closed = false;
     const settle = () => {
       clearTimeout(escalate);
       clearTimeout(giveUp);
-      resolve();
+      resolve(closed);
     };
     const grace = killGraceMs();
     const escalate = setTimeout(() => proc.kill("SIGKILL"), grace);
     // A process that survives SIGKILL, or a handler that never fires, must not
-    // keep the session alive on its own.
+    // keep the session alive on its own. The caller then knows closure was not
+    // observed, which a pause must respect.
     const giveUp = setTimeout(settle, grace * 2);
-    proc.once("close", settle);
+    proc.once("close", () => {
+      closed = true;
+      settle();
+    });
     proc.kill("SIGTERM");
   });
 }
@@ -1013,10 +1104,9 @@ function outcomeOf(
   lastTurn: LastTurn,
   stderr: string,
   failure: string | undefined,
-  startedAt: number,
+  seconds: number,
   timedOut: boolean,
 ): Outcome {
-  const seconds = elapsedSec(startedAt);
   if (!failure && lastTurn.answer.trim()) {
     return {
       state: "done",
@@ -1044,6 +1134,31 @@ function outcomeOf(
  */
 function elapsedSec(startedAt: number): number {
   return Math.max(0, Math.round((Date.now() - startedAt) / 1000));
+}
+
+/**
+ * Seconds of a limit a child may count from its own start.
+ *
+ * Running time from before that start is taken off, so a resumed child and a
+ * child whose deadline moved both hear what is really left. One decimal keeps a
+ * sub-second limit usable without printing a long fraction.
+ *
+ * @param timeoutSec - Total running-time limit of the run.
+ * @param elapsedMs - Running time the run had spent before the child started.
+ * @returns Seconds the child may count from its start, never negative.
+ */
+function childBudget(timeoutSec: number, elapsedMs: number): number {
+  return Number(Math.max(0, timeoutSec - elapsedMs / 1000).toFixed(1));
+}
+
+/**
+ * Running milliseconds of a live run, excluding every pause it survived.
+ *
+ * @param job - Run whose running time is wanted.
+ * @returns Accumulated running time in ms, at least zero.
+ */
+function runningMs(job: { elapsedMs: number; spanStart: number }): number {
+  return job.elapsedMs + Math.max(0, Date.now() - job.spanStart);
 }
 
 /**
@@ -1179,16 +1294,25 @@ function childEnv(
  *
  * The child's own `--session-dir` outranks one inherited from this session.
  *
- * @param subagent - Id, model, thinking level, tools and timeout of the child.
+ * A resumed child reopens the session it already has, so its transcript and
+ * everything it did before the restart come back with it.
+ *
+ * @param subagent - Id, model, thinking level, tools and remaining budget.
+ * @param childSessionId - The child's own session id, for a fresh or resumed run.
+ * @param resuming - Whether that session already exists.
  * @returns Command and arguments to spawn.
  */
-function childCommand(subagent: {
-  id: string;
-  model: string;
-  thinking: string;
-  tools: string[];
-  timeoutSec: number;
-}): { command: string; args: string[] } {
+function childCommand(
+  subagent: {
+    id: string;
+    model: string;
+    thinking: string;
+    tools: string[];
+    timeoutSec: number;
+  },
+  childSessionId: string,
+  resuming: boolean,
+): { command: string; args: string[] } {
   // Reuse the build that is already running, so a second pi on PATH cannot win.
   const command = process.env.PI_BIN ?? process.argv[1] ?? "pi";
   const args = [
@@ -1196,6 +1320,10 @@ function childCommand(subagent: {
     "rpc",
     "--session-dir",
     path.join(getAgentDir(), SUBAGENT_SESSION_DIR),
+    // `--session-id` cannot be combined with `--session`, so the two are
+    // alternatives: one names a new session, the other reopens an old one.
+    resuming ? "--session" : "--session-id",
+    childSessionId,
     "--name",
     subagent.id,
   ];
@@ -1217,6 +1345,18 @@ function childCommand(subagent: {
  */
 function jsonLine(record: Record<string, unknown>): string {
   return `${JSON.stringify(record)}\n`;
+}
+
+/**
+ * Build the `prompt` command that continues a child after a restart.
+ *
+ * It is not a `Task:` prompt: the child's own session already holds the task,
+ * and a new task would send it back to the beginning.
+ *
+ * @returns One JSONL record for the child's stdin.
+ */
+function resumeCommand(): string {
+  return jsonLine({ id: PROMPT_ID, type: "prompt", message: RESUME_MESSAGE });
 }
 
 /**
@@ -1325,29 +1465,95 @@ function promptRejection(record: unknown): string | undefined {
 }
 
 /**
- * Read the child's session file from its answer to `get_state`.
+ * Stop a child that a dead parent left behind.
  *
- * A child that keeps no session file reports none, so this stays undefined
+ * A record still marked running only exists because its pi died hard, so the
+ * child may still be working with nobody to stop it at its deadline. Its own
+ * command line carries this extension's mode, name and session id, which is
+ * enough to identify that exact process: an interactive pi a user opened to
+ * inspect the child has none of them.
+ *
+ * @param run - Record the dead parent left behind.
+ */
+function reapOrphan(run: RunRecord): void {
+  const listing = spawnSync("ps", ["-Ao", "pid=,command="], {
+    encoding: "utf8",
+  });
+  if (listing.status !== 0) return;
+  for (const line of listing.stdout.split("\n")) {
+    const match = /^\s*(\d+)\s+(.*)$/.exec(line);
+    if (!match) continue;
+    const [, pid, command] = match;
+    const named =
+      command.includes(`--session-id ${run.childSessionId}`) ||
+      command.includes(`--session ${run.childSessionId}`);
+    if (!named) continue;
+    if (!command.includes("--mode rpc")) continue;
+    if (!command.includes(`--name ${run.id}`)) continue;
+    try {
+      process.kill(Number(pid), "SIGTERM");
+    } catch {
+      // It exited between the listing and the signal; nothing to reap.
+    }
+  }
+}
+
+/**
+ * The last record of every run a session branch holds.
+ *
+ * A run appends one record per lifecycle step, so only the newest one states
+ * what the run is doing now. Map order is first insertion, which is the order
+ * the runs started in.
+ *
+ * @param entries - Session branch entries, oldest first.
+ * @returns The newest record of each run id.
+ */
+function lastRunRecords(
+  entries: readonly SessionEntry[],
+): Map<string, RunRecord> {
+  const runs = new Map<string, RunRecord>();
+  for (const entry of entries) {
+    if (entry.type !== "custom" || entry.customType !== RUN_ENTRY) continue;
+    const record = entry.data as RunRecord | undefined;
+    if (record?.id) runs.set(record.id, record);
+  }
+  return runs;
+}
+
+/**
+ * Read the state a child reported in its answer to `get_state`.
+ *
+ * A child that keeps no session file reports none, so that stays undefined
  * instead of inventing a path.
  *
  * @param record - Parsed child record.
- * @returns Absolute path of the child's session file, or undefined.
+ * @returns The child's session file and id, when this record answers the query.
  */
-function sessionFileOf(record: unknown): string | undefined {
+function childState(record: unknown): {
+  sessionFile?: string;
+  sessionId?: string;
+} {
   const response = record as {
     id?: unknown;
     type?: unknown;
     command?: unknown;
-    data?: { sessionFile?: unknown };
+    data?: { sessionFile?: unknown; sessionId?: unknown };
   };
   if (
     response.type !== "response" ||
     response.command !== "get_state" ||
     response.id !== STATE_ID
   )
-    return undefined;
-  const file = response.data?.sessionFile;
-  return typeof file === "string" && file !== "" ? file : undefined;
+    return {};
+  const { sessionFile, sessionId } = response.data ?? {};
+  return {
+    sessionFile:
+      typeof sessionFile === "string" && sessionFile !== ""
+        ? sessionFile
+        : undefined,
+    sessionId:
+      typeof sessionId === "string" && sessionId !== "" ? sessionId : undefined,
+  };
 }
 
 /**
@@ -1686,6 +1892,13 @@ class SubagentRunner {
   private finishAsked = false;
   /** Monotonic creation order for the overlay rows. */
   private nextOrder = 1;
+  /**
+   * Session id that owns the runs this runner started.
+   *
+   * Set when the session starts and when a tool uses the session, so every
+   * record names its owner and a fork can tell another session's runs apart.
+   */
+  private owner = "";
   /** Overlay the `/subagents` command shows, while it is open. */
   private overlay?: SubagentsOverlay;
 
@@ -1720,43 +1933,53 @@ class SubagentRunner {
   }
 
   /**
-   * Start the child and report its result when it exits.
+   * Start a child, or resume one a previous parent paused.
    *
-   * @param subagent - Id, model, thinking level, tools, working directory,
-   *   timeout and prompt of the child.
+   * A resumed run keeps the running time it already spent, so its budget and
+   * the deadline the child is told are what is left of it, and it reopens the
+   * session it was working in.
+   *
+   * @param subagent - Id, prompt, model, thinking level, tools, working
+   *   directory and wall-clock budget of the run.
+   * @param resume - Record to continue, or undefined for a fresh run.
    */
-  start(
-    subagent: Omit<
-      RunningSubagent,
-      "startedAt" | "order" | "prompt" | "activity" | "sessionFile"
-    > & {
-      prompt: string;
-      /** Thinking level to force, empty to keep the model's own setting. */
-      thinking: string;
-    },
-  ): void {
-    const order = this.nextOrder++;
+  start(subagent: StartRequest, resume?: RunRecord): void {
+    const childSessionId = resume?.childSessionId ?? randomUUID();
+    const elapsedMs = resume?.elapsedMs ?? 0;
+    const startedAt = resume?.startedAt ?? Date.now();
+    const order = resume?.order ?? this.nextOrder++;
+    this.nextOrder = Math.max(this.nextOrder, order + 1);
+    const remainingSec = childBudget(subagent.timeoutSec, elapsedMs);
     const bridge = bridgeEnv(this.pi, subagent.id, order);
-    const { command, args } = childCommand(subagent);
+    const { command, args } = childCommand(
+      { ...subagent, timeoutSec: remainingSec },
+      childSessionId,
+      resume !== undefined,
+    );
     const proc = spawn(command, args, {
       cwd: subagent.cwd,
       shell: false,
       stdio: ["pipe", "pipe", "pipe"],
-      env: childEnv(subagent.timeoutSec, bridge),
+      env: childEnv(remainingSec, bridge),
     });
 
     this.children.set(subagent.id, proc);
     const running: RunningSubagent = {
       id: subagent.id,
       model: subagent.model,
+      thinking: subagent.thinking,
       tools: subagent.tools,
       cwd: subagent.cwd,
       timeoutSec: subagent.timeoutSec,
-      startedAt: Date.now(),
+      startedAt,
+      elapsedMs,
+      spanStart: Date.now(),
+      childSessionId,
       order,
       activity: emptyActivity(),
     };
     this.running.set(running.id, running);
+    this.record(running, "running", elapsedMs);
     this.refreshOverlay();
 
     const lastTurn: LastTurn = { answer: "" };
@@ -1782,10 +2005,17 @@ class SubagentRunner {
       // while its process is still dying.
       if (!finished && !stopped) absorbActivity(running.activity, record);
       if (isAgentStart(record)) runBegan();
-      const sessionFile = sessionFileOf(record);
-      if (sessionFile) {
-        running.sessionFile = sessionFile;
+      const state = childState(record);
+      if (state.sessionFile) {
+        running.sessionFile = state.sessionFile;
         this.refreshOverlay();
+      }
+      // Anything but the session this run named is a different conversation:
+      // resuming into it would continue someone else's work.
+      if (state.sessionId && state.sessionId !== running.childSessionId) {
+        startFailure = `the child opened session ${state.sessionId} instead of ${running.childSessionId}`;
+        void stopProcess(proc);
+        return;
       }
       const cancellation = uiCancellation(record);
       if (cancellation) {
@@ -1824,17 +2054,19 @@ class SubagentRunner {
       this.stoppers.delete(running.id);
       this.timeoutSetters.delete(running.id);
       this.running.delete(running.id);
+      const elapsed = runningMs(running);
       const outcome = outcomeOf(
         lastTurn,
         stderrTail,
         failure,
-        running.startedAt,
+        Math.round(elapsed / 1000),
         timedOut,
       );
+      this.record(running, outcome.state, elapsed);
       this.remember({
         id: running.id,
         sessionFile: running.sessionFile,
-        seconds: elapsedSec(running.startedAt),
+        seconds: Math.round(elapsed / 1000),
         startedAt: running.startedAt,
         state: outcome.state,
         reason: failure,
@@ -1855,12 +2087,11 @@ class SubagentRunner {
     });
     // A child that never calls its own finish tool, or that hangs on an
     // extension error, still has to report instead of living on. The deadline
-    // counts from the spawn, so moving it keeps the time already spent.
+    // counts running time, so it survives a pause with its budget.
     // Unref'd: this deadline must not keep the parent's event loop alive.
     const armTimeout = () => {
       clearTimeout(timeout);
-      const remainingMs =
-        running.startedAt + running.timeoutSec * 1000 - Date.now();
+      const remainingMs = running.timeoutSec * 1000 - runningMs(running);
       timeout = setTimeout(
         () => {
           finish(`no result within its ${running.timeoutSec}s timeout`, true);
@@ -1873,7 +2104,14 @@ class SubagentRunner {
     this.timeoutSetters.set(running.id, (timeoutSec) => {
       running.timeoutSec = timeoutSec;
       armTimeout();
-      writeChild(proc, timeoutCommand(timeoutSec), appendStderr);
+      // A hard crash then reports at least this much running time; the run is
+      // reported rather than resumed, so the number is only a lower bound.
+      this.record(running, "running", runningMs(running));
+      writeChild(
+        proc,
+        timeoutCommand(childBudget(timeoutSec, running.elapsedMs)),
+        appendStderr,
+      );
     });
 
     proc.on("error", (error) => finish(`spawn error: ${error.message}`));
@@ -1882,7 +2120,11 @@ class SubagentRunner {
     );
     // The readers are attached first, so a fast answer cannot arrive unread.
     writeChild(proc, stateCommand(), appendStderr);
-    writeChild(proc, promptCommand(subagent.prompt), appendStderr);
+    writeChild(
+      proc,
+      resume ? resumeCommand() : promptCommand(subagent.prompt),
+      appendStderr,
+    );
     // A child that never starts a run cannot report, and its gate never fires.
     // Unref'd: this deadline must not keep the parent's event loop alive.
     startDeadline = setTimeout(() => {
@@ -1993,7 +2235,7 @@ class SubagentRunner {
         sessionFile: job.sessionFile,
         state: "running" as const,
         order: job.order,
-        seconds: elapsedSec(job.startedAt),
+        seconds: Math.round(runningMs(job) / 1000),
         startedAt: job.startedAt,
         model: job.model,
         tools: job.tools,
@@ -2046,10 +2288,12 @@ class SubagentRunner {
         continue;
       }
       stopped.push(id);
+      const elapsed = runningMs(job);
+      this.record(job, "killed", elapsed);
       this.remember({
         id,
         sessionFile: job.sessionFile,
-        seconds: elapsedSec(job.startedAt),
+        seconds: Math.round(elapsed / 1000),
         startedAt: job.startedAt,
         state: "killed",
         model: job.model,
@@ -2082,7 +2326,7 @@ class SubagentRunner {
     const setTimeoutSec = this.timeoutSetters.get(id);
     if (!job || !setTimeoutSec)
       return `No running subagent named ${marker(id)}.`;
-    const ranSec = (Date.now() - job.startedAt) / 1000;
+    const ranSec = runningMs(job) / 1000;
     if (timeoutSec <= ranSec) {
       return `${marker(id)} has already run for ${ranSec.toFixed(1)}s; give it a timeout above that.`;
     }
@@ -2093,34 +2337,28 @@ class SubagentRunner {
   }
 
   /**
-   * Kill every child and stop delivering results.
+   * Pause every child and stop delivering results.
    *
-   * Their results are dropped, so a reload says which ones were lost instead of
-   * letting them vanish silently. `stopProcess` owns the signal escalation.
-   *
-   * @param reason - Why the session is shutting down.
+   * A pause is not a loss. Each child's running time and its own session id go
+   * into this session, so the next pi that opens the session resumes it with
+   * what is left of its budget. `stopProcess` owns the signal escalation, and
+   * SIGTERM lets a child run its own shutdown hooks before it exits.
    */
-  async shutdown(reason: string): Promise<void> {
+  async shutdown(): Promise<void> {
     this.shuttingDown = true;
     this.overlay?.dispose();
     this.overlay = undefined;
-    const killed = [...this.running.keys()];
+    const jobs = [...this.running.values()];
     this.running.clear();
-    if (killed.length > 0 && reason === "reload") {
-      // Reload keeps the session alive, so the loss is worth a notice; other
-      // reasons tear the session down and nothing would read it.
-      this.pi.sendMessage(
-        {
-          customType: NOTICE_TYPE,
-          content: `Reload killed ${killed.length} running subagent(s): ${killed.map(marker).join(", ")}. Their results are lost; start them again if you still need them.`,
-          display: true,
-          details: { state: "killed", ids: killed },
-        },
-        { triggerTurn: false },
-      );
-    }
     await Promise.all(
-      [...this.children.values()].map((proc) => stopProcess(proc)),
+      jobs.map(async (job) => {
+        const proc = this.children.get(job.id);
+        const closed = proc ? await stopProcess(proc) : true;
+        // Only a child that is gone may be resumed later: a paused record while
+        // one could still be alive would let the next parent share its session.
+        // The time is measured to the close, so the grace period counts too.
+        if (closed) this.record(job, "paused", runningMs(job));
+      }),
     );
     this.children.clear();
     this.stoppers.clear();
@@ -2128,12 +2366,186 @@ class SubagentRunner {
   }
 
   /**
+   * Resume the runs this session paused before its last shutdown.
+   *
+   * The branch records every step of a run, so the last record of each id
+   * decides. A run that ended stays ended, a paused run continues with the
+   * budget it has left, and a run still marked running belonged to a pi process
+   * that died without pausing it: its child may still be out there, so resuming
+   * it would give one child session file two writers. Only the branch counts, so
+   * a branch that predates a run's last record reads as interrupted; such a run
+   * is reported, never resumed.
+   *
+   * @param entries - Session branch entries, oldest first.
+   */
+  restore(entries: readonly SessionEntry[], owner: string): void {
+    this.owner = owner;
+    const resumed: string[] = [];
+    for (const run of lastRunRecords(entries).values()) {
+      // A fork copies another session's entries verbatim; only the session that
+      // wrote them may run their children, or two parents would share one.
+      if (run.owner !== owner) continue;
+      if (run.state === "running") {
+        this.interrupt(run);
+        continue;
+      }
+      if (run.state !== "paused") continue;
+      this.nextOrder = Math.max(this.nextOrder, run.order + 1);
+      if (run.timeoutSec * 1000 - run.elapsedMs <= 0) {
+        this.exhaust(run);
+        continue;
+      }
+      this.start(
+        {
+          id: run.id,
+          // A resumed child continues its own session; the task it was given
+          // is part of that session already.
+          prompt: "",
+          model: run.model,
+          thinking: run.thinking,
+          tools: run.tools,
+          cwd: run.cwd,
+          timeoutSec: run.timeoutSec,
+        },
+        run,
+      );
+      resumed.push(run.id);
+    }
+    if (resumed.length > 0) {
+      this.pi.sendMessage(
+        {
+          customType: NOTICE_TYPE,
+          content: `Resumed ${resumed.length} subagent(s) after a restart: ${resumed.map(marker).join(", ")}. Their running time keeps counting from where it paused.`,
+          display: true,
+          details: { state: "running", ids: resumed },
+        },
+        { triggerTurn: false },
+      );
+    }
+  }
+
+  /**
+   * Name the session that owns the runs started from here.
+   *
+   * @param owner - Session id pi has bound.
+   */
+  claim(owner: string): void {
+    this.owner = owner;
+  }
+
+  /**
+   * Append one step of a run's lifecycle to the session.
+   *
+   * @param job - Run to record.
+   * @param state - Lifecycle state this step states.
+   * @param elapsedMs - Running time spent so far, in ms.
+   */
+  private record(
+    job: RunningSubagent,
+    state: RunRecordState,
+    elapsedMs: number,
+  ): void {
+    this.pi.appendEntry(RUN_ENTRY, {
+      id: job.id,
+      state,
+      model: job.model,
+      thinking: job.thinking,
+      tools: job.tools,
+      cwd: job.cwd,
+      timeoutSec: job.timeoutSec,
+      elapsedMs,
+      startedAt: job.startedAt,
+      order: job.order,
+      childSessionId: job.childSessionId,
+      owner: this.owner,
+    } satisfies RunRecord);
+  }
+
+  /**
+   * Report a run whose parent died without pausing it.
+   *
+   * @param run - Last record the dead parent left behind.
+   */
+  private interrupt(run: RunRecord): void {
+    reapOrphan(run);
+    const reason = "interrupted when pi died";
+    this.pi.appendEntry(RUN_ENTRY, {
+      ...run,
+      state: "failed",
+    } satisfies RunRecord);
+    this.remember({
+      id: run.id,
+      seconds: Math.round(run.elapsedMs / 1000),
+      startedAt: run.startedAt,
+      state: "failed",
+      reason,
+      model: run.model,
+      tools: run.tools,
+      cwd: run.cwd,
+      timeoutSec: run.timeoutSec,
+      order: run.order,
+      activity: emptyActivity(),
+    });
+    // Not a wake: a session that opens with stale news should not spend a model
+    // turn before its user says anything. The notice waits for the next one.
+    this.deliver(
+      run.id,
+      {
+        state: "failed",
+        status: `failed after ${Math.round(run.elapsedMs / 1000)}s: ${reason}`,
+        body: "(no output)",
+      },
+      false,
+    );
+  }
+
+  /**
+   * Report a paused run that has no budget left to resume with.
+   *
+   * @param run - Last record the paused run left behind.
+   */
+  private exhaust(run: RunRecord): void {
+    const reason = `no result within its ${run.timeoutSec}s timeout`;
+    this.pi.appendEntry(RUN_ENTRY, {
+      ...run,
+      state: "timeout",
+    } satisfies RunRecord);
+    this.remember({
+      id: run.id,
+      seconds: Math.round(run.elapsedMs / 1000),
+      startedAt: run.startedAt,
+      state: "timeout",
+      reason,
+      model: run.model,
+      tools: run.tools,
+      cwd: run.cwd,
+      timeoutSec: run.timeoutSec,
+      order: run.order,
+      activity: emptyActivity(),
+    });
+    // Same as a crash report: visible at once, no turn spent on it.
+    this.deliver(
+      run.id,
+      {
+        state: "timeout",
+        status: `timeout after ${Math.round(run.elapsedMs / 1000)}s: ${reason}`,
+        body: "(no output)",
+      },
+      false,
+    );
+  }
+
+  /**
    * Queue the result at pi's next safe turn boundary, or wake an idle parent.
    *
    * Steering does not interrupt an in-flight request or tool execution. Pi
    * owns message ordering and continuation, so no idle polling is needed.
+   *
+   * @param id - Id of the run whose result this is.
+   * @param outcome - What the run ended with.
+   * @param wake - Whether an idle parent should start a turn for it.
    */
-  private deliver(id: string, outcome: Outcome): void {
+  private deliver(id: string, outcome: Outcome, wake = true): void {
     this.pi.sendMessage(
       {
         customType: NOTICE_TYPE,
@@ -2141,7 +2553,7 @@ class SubagentRunner {
         display: true,
         details: { id, state: outcome.state },
       },
-      { deliverAs: "steer", triggerTurn: true },
+      { deliverAs: "steer", triggerTurn: wake },
     );
   }
 }
@@ -2493,6 +2905,7 @@ function subagentTool(
       const reserved = runner.reserveId(params.id, cwd);
       if ("problem" in reserved) return toolText(reserved.problem);
       const { id } = reserved;
+      runner.claim(ctx.sessionManager.getSessionId());
 
       const selection = childSelection(model, ctx);
       runner.start({
@@ -2756,7 +3169,7 @@ function endChildWhenDone(pi: ExtensionAPI, runner: SubagentRunner): void {
 }
 
 /**
- * Register the subagent tools, `/subagents`, and the shutdown hook.
+ * Register the subagent tools, `/subagents`, and the session hooks.
  *
  * @param pi - Extension API.
  */
@@ -2768,9 +3181,16 @@ export default function subagent(pi: ExtensionAPI) {
   pi.registerTool(killTool(runner));
   pi.registerTool(updateTool(runner));
   pi.registerCommand("subagents", subagentsCommand(runner));
-  // Async so the handler's promise is awaited: pi waits for children to close.
-  pi.on("session_shutdown", async (event) => {
-    await runner.shutdown(event.reason);
+  // A run outlives the pi process that started it only as a record: every
+  // shutdown pauses it, and the next open of this session resumes it.
+  pi.on("session_shutdown", async () => {
+    await runner.shutdown();
+  });
+  pi.on("session_start", (_event, ctx) => {
+    runner.restore(
+      ctx.sessionManager.getBranch(),
+      ctx.sessionManager.getSessionId(),
+    );
   });
 
   // A parent session is driven by its user, who decides when pi ends; a child
