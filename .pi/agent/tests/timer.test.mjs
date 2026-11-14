@@ -1631,25 +1631,41 @@ describe("timer", () => {
     assert.equal(tickInputs[0], "job-output\n");
   });
 
-  test("a condition on a job waits for output instead of matching an empty log", async (t) => {
-    const { start, noticesAfter } = setup(t, () => exit(0));
+  test("a condition on a job is checked immediately, before output", async (t) => {
+    let conditionInput;
+    const { start, status, noticesAfter } = setup(
+      t,
+      (_command, _signal, stdin) => {
+        conditionInput = stdin;
+        return exit(0);
+      },
+    );
 
-    await start({
-      id: "job-late",
-      start: "sleep 0.2; echo boom; exit 3",
+    const { details } = await start({
+      id: "job-immediate",
+      start: "sleep 30",
       condition: "true",
       intervalSec: 1,
       timeoutSec: 5,
     });
     const [notice] = await noticesAfter(1);
 
-    // An immediate check of `true` would match the empty log and kill the job
-    // before it ran; waiting one interval lets the job exit 3 on its own.
+    // The predicate does not depend on the job's output, so it must not wait a
+    // tick just because `start` is present.
+    assert.equal(conditionInput, "");
     assert.match(
       notice.content,
-      /^\[timer job-late\] failed: exit 3 after \ds; timer stopped\n\nboom\n\[exit 3\]$/,
+      /^\[timer job-immediate\] condition met after \ds: true; timer stopped/,
     );
-    assert.equal(notice.details.state, "failed");
+    assert.equal(notice.details.state, "done");
+    assert.equal(
+      (await status({ id: "job-immediate" })).content[0].text,
+      'Timer "job-immediate" stopped (condition met).',
+    );
+    assert.match(
+      readFileSync(details.logPath, "utf8"),
+      /\[killed after condition met\]\n$/,
+    );
   });
 
   test("a job exit during a condition keeps the exit status", async (t) => {
@@ -1662,7 +1678,7 @@ describe("timer", () => {
 
     await start({
       id: "job-race",
-      start: "sleep 1.5; exit 3",
+      start: "sleep 0.5; exit 3",
       condition: "wait-for-exit",
       intervalSec: 1,
       timeoutSec: 5,

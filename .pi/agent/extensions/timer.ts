@@ -150,7 +150,7 @@ const TimerStartParams = Type.Object({
   condition: Type.Optional(
     Type.String({
       description:
-        "Shell predicate checked immediately, then at each tick; exit code 0 ends the timer and wakes you with 'condition met'. With `start`, the first check waits one intervalSec so the job can write output; a condition that holds kills the running job. The job's whole stdout/stderr log is its stdin when `start` is set; read only the tail if it may be large.",
+        "Shell predicate checked immediately, then at each tick; exit code 0 ends the timer and wakes you with 'condition met'. A condition that holds kills a running job. The job's whole stdout/stderr log is its stdin when `start` is set; read only the tail if it may be large.",
     }),
   ),
   onTick: Type.Optional(
@@ -1367,9 +1367,13 @@ class TimerRegistry {
       outcome = result;
     });
 
-    // A condition over a running job is a monitor: its first check waits one
-    // interval so the command has had time to write output. A condition-only
-    // timer still checks immediately in `poll()`.
+    // A condition can test state outside the job, so every timer checks it
+    // immediately and then at each interval, whether or not `start` is set.
+    if (await this.conditionHeld(timer, deadline)) {
+      await this.finishConditionJob(timer, job);
+      return;
+    }
+
     while (!timer.stopped && !timer.settled) {
       const paced = this.canTick(timer) || timer.condition !== undefined;
       const waitMs = paced
@@ -1815,7 +1819,7 @@ function timerStartTool(
     description:
       "Run a command in the background, wait for a condition, tick on a schedule, or combine them; every call returns immediately. " +
       'With `start`: `timer_start { "id": "build", "start": "make" }` runs it in the background, logs to ~/.pi/agent/jobs/<id>-<startedAt>.log, and wakes you with the exit code and the log tail. ' +
-      "With `condition`: the predicate exits 0, checked now and at each intervalSec (for a `start` job, the first check waits one intervalSec). " +
+      "With `condition`: the predicate exits 0, checked now and at each intervalSec. " +
       "With `onTick`: it runs on every tick and its output accompanies the wake. " +
       "Pass `start` with `onTick` and/or `condition` to start and monitor one job in one call; both then read the job's stdout/stderr on stdin. Set `maxTicks` above 0 to run `onTick` every intervalSec while the job runs; with 0 it runs once at exit, and a condition is still checked every intervalSec. A condition that holds on a running job kills it. " +
       "Without `start` or `condition`, periodic mode needs onTick or maxTicks at least 1. " +
