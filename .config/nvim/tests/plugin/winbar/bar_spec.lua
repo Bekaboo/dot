@@ -104,6 +104,9 @@ winbar_mod.setup({
 })
 
 describe('[winbar][bar]', function()
+  -- stylua: ignore
+  local PLAIN_STR = ' | 󰅩 sym2 | sym3 | sym4 | %icon5 %sym5    '
+
   local winbar = nil ---@type my.winbar.bar
   local sym1 = nil ---@type my.winbar.symbol
   local sym2 = nil ---@type my.winbar.symbol
@@ -125,7 +128,13 @@ describe('[winbar][bar]', function()
     sym5 = winbar.components[5]
   end)
 
+  local getchar_stub = nil
+
   after_each(function()
+    if getchar_stub then
+      getchar_stub:revert()
+      getchar_stub = nil
+    end
     winbar:del()
     assert.is_nil(rawget(_G._winbar.bars[winbar.buf], winbar.win))
   end)
@@ -145,10 +154,7 @@ describe('[winbar][bar]', function()
       assert.are.same(5, #winbar.components)
     end)
     it('concatenates into a statusline expression', function()
-      -- stylua: ignore start
-      local plain_str = ' | 󰅩 sym2 | sym3 | sym4 | %icon5 %sym5    '
-      -- stylua: ignore end
-      assert.are.same(plain_str, winbar:cat(true))
+      assert.are.same(PLAIN_STR, winbar:cat(true))
       assert.are.same(winbar:cat(), winbar())
 
       -- Percentage signs in symbol names must be escaped, else nvim treats
@@ -157,7 +163,7 @@ describe('[winbar][bar]', function()
         winid = winbar.win,
         highlights = true,
       })
-      assert.are.same(plain_str, rendered.str)
+      assert.are.same(PLAIN_STR, rendered.str)
       assert.is_true(vim.tbl_contains(
         vim.tbl_map(function(hl)
           return hl.group
@@ -172,10 +178,7 @@ describe('[winbar][bar]', function()
       ))
     end)
     it('calculates display width', function()
-      assert.are.same(
-        vim.fn.strdisplaywidth(' | 󰅩 sym2 | sym3 | sym4 | %icon5 %sym5    '),
-        winbar:displaywidth()
-      )
+      assert.are.same(vim.fn.strdisplaywidth(PLAIN_STR), winbar:displaywidth())
     end)
     it('truncates itself to fit the window width', function()
       vim.cmd.vsplit()
@@ -206,11 +209,10 @@ describe('[winbar][bar]', function()
       -- without user input to simulate selecting the second symbol.
       -- Notice that the first symbol is not clickable so it does not get a
       -- character assigned to it
-      stub(vim.fn, 'getchar', function()
+      getchar_stub = stub(vim.fn, 'getchar', function()
         return vim.fn.char2nr('a')
       end)
       winbar:pick()
-      vim.fn.getchar:revert() ---@diagnostic disable-line: undefined-field
       assert.spy(agent).was.called(1)
     end)
     it('picks directly', function()
@@ -220,40 +222,45 @@ describe('[winbar][bar]', function()
       assert.spy(agent).was.called(1)
     end)
     it('gets the component according to given position', function()
-      -- sym1 has width 0 and is at the beginning of the bar
-      -- thus cannot be picked by get_component_at()
-      local sep_width = winbar.separator:displaywidth()
-      local current_col = 0
-      assert.is_nil(winbar:get_component_at(current_col))
-      assert.are.equal(sym2, winbar:get_component_at(current_col, true))
-      current_col = current_col
-        + winbar.padding.left
-        + sym1:displaywidth()
-        + sep_width
-      assert.are.equal(sym2, winbar:get_component_at(current_col))
-      current_col = current_col + sym2:displaywidth()
-      assert.are.equal(sym3, winbar:get_component_at(current_col, true))
-      current_col = current_col + sep_width
-      assert.are.equal(sym3, winbar:get_component_at(current_col))
-      current_col = current_col + sym3:displaywidth()
-      assert.are.equal(sym4, winbar:get_component_at(current_col, true))
-      current_col = current_col + sep_width
-      assert.are.equal(sym4, winbar:get_component_at(current_col))
-      current_col = current_col + sym4:displaywidth()
-      assert.are.equal(sym5, winbar:get_component_at(current_col, true))
-      current_col = current_col + sep_width
-      assert.are.equal(sym5, winbar:get_component_at(current_col))
-      current_col = current_col + sym5:displaywidth()
-      assert.is_nil(winbar:get_component_at(current_col, true))
-      assert.is_nil(winbar:get_component_at(current_col))
+      -- Columns are display columns derived from the rendered winbar, not from
+      -- the symbols themselves, so a broken width calculation cannot shift
+      -- both sides of the assertions below
+      local components_with_prefix = {
+        { sym2, ' | ' },
+        { sym3, ' | 󰅩 sym2 | ' },
+        { sym4, ' | 󰅩 sym2 | sym3 | ' },
+        { sym5, ' | 󰅩 sym2 | sym3 | sym4 | ' },
+      }
+
+      -- sym1 has width 0 and is at the beginning of the bar, thus cannot be
+      -- picked by get_component_at()
+      assert.is_nil(winbar:get_component_at(0))
+      assert.are.equal(sym2, winbar:get_component_at(0, true))
+
+      for _, case in ipairs(components_with_prefix) do
+        local component, prefix = case[1], case[2]
+        local col = vim.fn.strdisplaywidth(prefix)
+        -- Looking ahead from the separator before the component finds it
+        assert.are.equal(component, winbar:get_component_at(col - 1, true))
+        assert.is_nil(winbar:get_component_at(col - 1))
+        -- The first column of the component itself finds it either way
+        assert.are.equal(component, winbar:get_component_at(col))
+      end
+
+      -- Past the end of the last component
+      local col =
+        vim.fn.strdisplaywidth(' | 󰅩 sym2 | sym3 | sym4 | %icon5 %sym5')
+      assert.is_nil(winbar:get_component_at(col))
+      assert.is_nil(winbar:get_component_at(col, true))
     end)
     it('deletes itself', function()
       local agents = vim.tbl_map(function(component)
         return spy.on(component, 'del')
       end, winbar.components)
       winbar:del()
-      assert.is_nil(rawget(_G._winbar.bars[winbar.buf], winbar.win))
-      assert.is_nil(rawget(_G._winbar.callbacks[winbar.buf], winbar.win))
+      -- The callbacks are keyed by strings, `del()` drops the whole buffer
+      -- entry once its last window is gone
+      assert.is_nil(rawget(_G._winbar.callbacks, 'buf' .. winbar.buf))
       for _, agent in ipairs(agents) do
         assert.spy(agent).was.called(1)
       end

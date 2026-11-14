@@ -422,10 +422,10 @@ describe('[winbar][menu]', function()
       local win = menu_it.win
       local sub_win = sub_menu_it.win
       local sub_sub_win = sub_sub_menu_it.win
+      assert.is_true(vim.api.nvim_win_is_valid(win))
+      assert.is_true(vim.api.nvim_win_is_valid(sub_win))
+      assert.is_true(vim.api.nvim_win_is_valid(sub_sub_win))
       menu_it:close()
-      assert(win)
-      assert(sub_win)
-      assert(sub_sub_win)
       assert.is_false(vim.api.nvim_win_is_valid(win))
       assert.is_false(vim.api.nvim_win_is_valid(sub_win))
       assert.is_false(vim.api.nvim_win_is_valid(sub_sub_win))
@@ -434,15 +434,16 @@ describe('[winbar][menu]', function()
       local win = menu_it.win
       local sub_win = sub_menu_it.win
       local sub_sub_win = sub_sub_menu_it.win
+      assert.is_true(vim.api.nvim_win_is_valid(sub_win))
+      assert.is_true(vim.api.nvim_win_is_valid(sub_sub_win))
       vim.api.nvim_set_current_win(menu_it.win)
       local new_menu = menu.winbar_menu:new()
       new_menu.prev_win = win
       new_menu:open() -- open a new sub-menu
-      assert(win)
-      assert(sub_win)
-      assert(sub_sub_win)
       assert.is_false(vim.api.nvim_win_is_valid(sub_win))
       assert.is_false(vim.api.nvim_win_is_valid(sub_sub_win))
+      assert.are.equal(new_menu, menu_it.sub_menu)
+      new_menu:del()
     end)
     it('deleting current menu will delete all sub-menus', function()
       local buf = menu_it.buf
@@ -451,6 +452,10 @@ describe('[winbar][menu]', function()
       local sub_win = sub_menu_it.win
       local sub_sub_buf = sub_sub_menu_it.buf
       local sub_sub_win = sub_sub_menu_it.win
+      assert.is_true(vim.api.nvim_buf_is_valid(buf))
+      assert.is_true(vim.api.nvim_win_is_valid(win))
+      assert.is_true(vim.api.nvim_buf_is_valid(sub_buf))
+      assert.is_true(vim.api.nvim_buf_is_valid(sub_sub_buf))
       menu_it:del()
       assert.is_nil(menu_it.buf)
       assert.is_nil(menu_it.win)
@@ -458,12 +463,6 @@ describe('[winbar][menu]', function()
       assert.is_nil(sub_menu_it.win)
       assert.is_nil(sub_sub_menu_it.buf)
       assert.is_nil(sub_sub_menu_it.win)
-      assert(buf)
-      assert(win)
-      assert(sub_buf)
-      assert(sub_win)
-      assert(sub_sub_buf)
-      assert(sub_sub_win)
       assert.is_false(vim.api.nvim_buf_is_valid(buf))
       assert.is_false(vim.api.nvim_win_is_valid(win))
       assert.is_false(vim.api.nvim_buf_is_valid(sub_buf))

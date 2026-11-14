@@ -1,6 +1,7 @@
 ---@diagnostic disable: undefined-field
 
-local winbar = require('my.plugin.winbar')
+-- The source expects `_G._winbar` to exist when it detaches from a buffer
+require('my.plugin.winbar')
 local lsp_source = require('my.plugin.winbar.sources.lsp')
 local spy = require('luassert.spy')
 local stub = require('luassert.stub')
@@ -57,18 +58,6 @@ describe('[winbar][source][lsp]', function()
   end)
 
   it('sorts symbols by their start positions', function()
-    -- Make sure function type is a valid LSP symbol type so that symbols in
-    -- mock client response will be included in `get_symbols()` result
-    winbar.setup({
-      sources = {
-        lsp = {
-          valid_symbols = {
-            'Function', -- code = 12
-          },
-        },
-      },
-    })
-
     -- Mock a client that returns response with disordered symbols on
     -- textDocument/documentSymbol request
     ---@diagnostic disable-next-line: assign-type-mismatch
@@ -140,18 +129,6 @@ describe('[winbar][source][lsp]', function()
   it(
     'handles symbols with identical start positions without sorting error',
     function()
-      -- Make sure function type is a valid LSP symbol type so that symbols in
-      -- mock client response will be included in `get_symbols()` result
-      winbar.setup({
-        sources = {
-          lsp = {
-            valid_symbols = {
-              'Function', -- code = 12
-            },
-          },
-        },
-      })
-
       -- Mock a client that returns symbols with identical start positions
       ---@diagnostic disable-next-line: assign-type-mismatch
       mock_client.request = function(_, method, _, handler)
