@@ -267,13 +267,13 @@ const SubagentParams = Type.Object({
   model: Type.Optional(
     Type.String({
       description:
-        'Model for the child, as "provider/id" or a bare id, optionally with a thinking level. Use `pi --list-models` to check available models. Omit to inherit this session\'s model and thinking level.',
+        'Model for the child, "provider/id" or a bare id, optionally with a thinking level; `pi --list-models` lists them. Omit to inherit this session\'s model and thinking level.',
     }),
   ),
   cwd: Type.Optional(
     Type.String({
       description:
-        "Working directory for the child. Defaults to the current working directory.",
+        "Working directory for the child; defaults to the current one.",
     }),
   ),
   timeoutSec: Type.Optional(
@@ -301,7 +301,7 @@ const UpdateParams = Type.Object({
   id: Type.String({ description: "Id of the running subagent to change." }),
   timeoutSec: Type.Number({
     description:
-      "New wall-clock limit in seconds, counted from the child's start like the original, so it must exceed the time the child has already run. Raise it when the child was handed more work after it started, or is waiting on background work that needs longer than planned. Lower it when you want the result sooner: the child is warned about the nearer deadline and can wrap up and finish instead of using its full time.",
+      "New wall-clock limit in seconds, counted from the child's start like the original, so it must exceed the time the child has already run. Raise it when the child was handed more work or is waiting on background work; lower it to get the result sooner, since the child is warned about the nearer deadline and can wrap up.",
   }),
 });
 
@@ -2357,21 +2357,19 @@ function subagentTool(
   return {
     name: "subagent",
     label: "Subagent",
-    description: `Start a separate pi process with a fresh context to work on a task in the background. Returns immediately; the child's answer arrives later as a "${MARKER_EXAMPLE} ..." message. The child ends itself by calling its own \`${FINISH_TOOL}\` tool, so background work it started, such as a nested subagent, can wake it after a turn and be reported too. A child still running at its timeout is stopped and reported as timed out, so a stuck child cannot go silent.`,
-    promptSnippet: `Spawn a background pi subagent with its own prompt, tools and model; its result arrives later as a ${MARKER_EXAMPLE} message. A child may wait on background work it started, such as a nested subagent, before it reports, and is stopped at its timeout.`,
+    description: `Start a separate pi process with a fresh context to work on a task in the background. Returns immediately; the child reports later as a "${MARKER_EXAMPLE} ..." message, ended by its own \`${FINISH_TOOL}\` call.`,
+    promptSnippet: `Spawn a background pi subagent with its own prompt, tools and model`,
     promptGuidelines: [
-      "Use `subagent` for one task that can run alongside your own work, such as an independent review, a long scan, or a second opinion.",
-      "Use `subagent` for several independent tasks in one turn, such as research in separate areas, a change read from several perspectives, or verification from several angles, so they finish sooner and disagreement surfaces.",
+      "Use `subagent` for a task that can run alongside your own work (an independent review, a long scan, a second opinion), or for several independent tasks in one turn, so they finish sooner and disagreement surfaces.",
       "Do not use `subagent` for work your next step depends on, for a task one or two tool calls would answer, or for a task you cannot describe concretely; do those locally.",
-      "Give `subagent` a self-contained prompt: it starts with no conversation and returns one answer capped at 16 KB, so state the files, the constraints, and the result you expect back, and ask for a file when it may write.",
+      "Give `subagent` a self-contained prompt whose answer is capped at 16 KB: state the files, the constraints and the result you expect, and ask for a file when it may write.",
       'For a fix you have already diagnosed, tell `subagent` the finding and the intended change; never write "fix what you find", which delegates the understanding instead of the work. Delegate verification of a concrete artifact; interpret an unclear finding yourself.',
-      "Split write scopes before spawning: `subagent` children share this working tree and can edit it, with no isolation, so keep concurrent writers on disjoint files.",
+      "Split write scopes: `subagent` children share this working tree with no isolation, so keep concurrent writers on disjoint files.",
       'Pass read-only `tools` such as ["read", "grep", "find"] to a research `subagent`, and give an editing child only the tools its change needs.',
-      "For review and judging, especially code review, give `subagent` a different `model` from the one that produced the work when one is available, ideally from another family: a reviewer that shares the author's model shares its blind spots.",
-      `After calling \`subagent\`, do non-overlapping work: do not poll, do not redo the task, and never predict or invent its result before the ${MARKER_EXAMPLE} message arrives.`,
-      "Use `subagent_status` to answer whether a child still runs, not to poll, and `subagent_kill` to stop one whose result you no longer need.",
-      "Use `subagent_update` to give a running child more time when its work grew after the start, instead of letting it time out or starting it again.",
-      `A child stays alive after its turns, so background work it started, such as a nested subagent, can wake it; it reports by calling its own \`${FINISH_TOOL}\` tool. A child that never calls it keeps running until its \`timeoutSec\` passes, so raise that timeout when the child is meant to wait on long background work, and tell it to stop background work it no longer needs.`,
+      "For review and judging, give `subagent` a different `model` from the one that produced the work when one is available, ideally from another family: a reviewer sharing the author's model shares its blind spots.",
+      `After calling \`subagent\`, do non-overlapping work: do not poll, do not redo the task, and never predict or invent its result before the ${MARKER_EXAMPLE} message arrives; use \`subagent_status\` instead of polling, and \`subagent_kill\` to drop a result you no longer need.`,
+      "Use `subagent_update` to give a running child more time, instead of letting it time out or starting it again.",
+      `A child stays alive after its turns, so background work it started, such as a nested subagent, can wake it; a child that never calls \`${FINISH_TOOL}\` keeps running until its \`timeoutSec\` passes, so raise that timeout when the child is meant to wait on long background work, and tell it to stop work it no longer needs.`,
       `Treat a ${MARKER_EXAMPLE} report as a claim to verify, not as proof the work is done.`,
     ],
     parameters: SubagentParams,
@@ -2425,7 +2423,7 @@ function statusTool(
   return {
     name: "subagent_status",
     label: "Subagent status",
-    description: `Report the subagents this session started: those still running, with what each is doing right now (waiting for the model, writing, thinking, running a tool, or settled and idle), and the last ${FINISHED_HISTORY} that ended. Use it to check on a subagent instead of polling its result.`,
+    description: `Report the subagents this session started: those still running with what each is doing right now, and the last ${FINISHED_HISTORY} that ended. Use it to check on a subagent instead of polling its result.`,
     parameters: StatusParams,
     async execute(_toolCallId, params) {
       return toolText(runner.status(idsOf(params.id)));
@@ -2443,7 +2441,7 @@ function killTool(runner: SubagentRunner): ToolDefinition<typeof KillParams> {
     name: "subagent_kill",
     label: "Subagent kill",
     description:
-      "Stop running subagents so their work no longer runs or reports. Kills everything by default; name one id or a list to be selective. Their output is discarded.",
+      "Stop running subagents so their work no longer runs or reports; everything by default, or the named ids. Their output is discarded.",
     parameters: KillParams,
     async execute(_toolCallId, params) {
       const { stopped, unknown } = await runner.kill(idsOf(params.id));
