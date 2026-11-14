@@ -68,6 +68,7 @@ describe('[utils][stl]', function()
     }
 
     local created = {} ---@type my.stl.spinner[]
+    local created_bufs = {} ---@type integer[]
 
     ---@param opts my.stl.spinner.opts?
     ---@return my.stl.spinner
@@ -78,13 +79,27 @@ describe('[utils][stl]', function()
       return spinner
     end
 
+    ---@return integer
+    local function new_buf()
+      local buf = vim.api.nvim_create_buf(false, true)
+      table.insert(created_bufs, buf)
+      return buf
+    end
+
     after_each(function()
       for _, spinner in ipairs(created) do
         if stl.spinner.id_is_valid(spinner.id) then
+          spinner:detach(false)
           spinner:del()
         end
       end
       created = {}
+      for _, buf in ipairs(created_bufs) do
+        if vim.api.nvim_buf_is_valid(buf) then
+          vim.api.nvim_buf_delete(buf, { force = true })
+        end
+      end
+      created_bufs = {}
     end)
 
     it('starts in the idle state', function()
@@ -104,6 +119,10 @@ describe('[utils][stl]', function()
       'shows the finish icon, then clears it after the finish timeout',
       function()
         local spinner = new_spinner()
+        -- Finishing a spinner that is not spinning is a no-op
+        spinner:finish()
+        assert.are.same('idle', spinner.status)
+
         spinner:spin()
         spinner:finish()
         assert.are.same('finish', spinner.status)
@@ -122,23 +141,24 @@ describe('[utils][stl]', function()
         local spinner = new_spinner({ finish_timeout = 10000 })
         spinner:spin()
         spinner:finish()
+        -- Let pending timers run, the finish icon must survive them
+        vim.wait(20)
+        assert.are.same('finish', spinner.status)
+        assert.are.same('done', spinner.icon)
+
         spinner:spin()
         assert.are.same('finish', spinner.status)
         assert.are.same('done', spinner.icon)
       end
     )
-    it('only finishes a spinning spinner', function()
-      local spinner = new_spinner()
-      spinner:finish()
-      assert.are.same('idle', spinner.status)
-      assert.are.same('', spinner.icon)
-    end)
     it('deletes itself', function()
       local spinner = new_spinner()
       local id = spinner.id
+      local timer = spinner.timer
       spinner:del()
       assert.is_false(stl.spinner.id_is_valid(id))
       assert.is_nil(stl.spinner.get_by_id(id))
+      assert.is_true(timer:is_closing())
     end)
     it('reports unknown ids', function()
       assert.is_nil(stl.spinner.get_by_id(nil))
@@ -170,8 +190,8 @@ describe('[utils][stl]', function()
       assert.is_true(stl.spinner.id_is_valid(spinner.id))
     end)
     it('moves to another buffer when attached again', function()
-      local buf = vim.api.nvim_create_buf(false, true)
-      local other = vim.api.nvim_create_buf(false, true)
+      local buf = new_buf()
+      local other = new_buf()
       local spinner = new_spinner()
       spinner:attach(buf)
       spinner:attach(other)
@@ -180,7 +200,7 @@ describe('[utils][stl]', function()
       assert.is_true(stl.spinner.id_is_valid(spinner.id))
     end)
     it('deletes itself when the attached buffer is wiped out', function()
-      local buf = vim.api.nvim_create_buf(false, true)
+      local buf = new_buf()
       local spinner = new_spinner()
       spinner:attach(buf)
       local id = spinner.id
@@ -192,9 +212,11 @@ describe('[utils][stl]', function()
       local first = new_spinner()
       local second = new_spinner()
       first:attach(buf)
+      local first_id = first.id
       second:attach(buf)
       assert.are.same(second.id, vim.b[buf].spinner_id)
-      assert.is_false(stl.spinner.id_is_valid(first.id))
+      assert.is_false(stl.spinner.id_is_valid(first_id))
+      assert.is_nil(stl.spinner.get_by_id(first_id))
     end)
   end)
 end)
