@@ -16,9 +16,33 @@ make lint
 
 # Run both format-check and lint
 make
+
+# Run the test suite, or a single spec, e.g. `make test-file-utils:str`
+# runs `tests/utils/str_spec.lua` and `make test-file-plugin:winbar:menu`
+# runs `tests/plugin/winbar/menu_spec.lua`
+make test
+make test-file-<dir>:<name>
 ```
 
-This is a Neovim config, not a standalone application. There is no build step, no test suite, and no CI/CD pipeline. To verify changes work, restart Neovim and check `:messages` for errors.
+This is a Neovim config, not a standalone application. There is no build step
+and no CI/CD pipeline. To verify changes work, restart Neovim and check
+`:messages` for errors.
+
+Tests run headless with plenary's busted runner against
+[`tests/minimal_init.lua`](tests/minimal_init.lua), which only puts the config
+root on 'runtimepath' (not its `after` directory) plus the `plenary.nvim`
+installed by `vim.pack`. Specs are grouped by what they cover:
+
+```
+tests/
+  plugin/        # builtin plugins under `lua/my/plugin`, one directory each
+  utils/         # utility modules under `lua/my/utils`, one file each
+  helpers/       # shared helpers, e.g. `require('helpers.winbar')`
+  assets/        # fixtures used by the specs
+```
+
+Third-party plugin tests go to `tests/thirdparty` and end to end tests to
+`tests/e2e` when they are introduced.
 
 ## Project Structure
 
