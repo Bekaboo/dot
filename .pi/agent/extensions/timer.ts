@@ -23,6 +23,7 @@
  */
 
 import { type ChildProcess, spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import {
   appendFileSync,
   closeSync,
@@ -32,18 +33,23 @@ import {
   openSync,
   readSync,
 } from "node:fs";
+import { rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import {
   type AgentToolUpdateCallback,
+  DEFAULT_MAX_BYTES,
+  DEFAULT_MAX_LINES,
   type ExtensionAPI,
   type ExtensionCommandContext,
   type ExtensionToolContext,
+  formatSize,
   getAgentDir,
   type KeybindingsManager,
   type SessionEntry,
   type Theme,
   type ToolDefinition,
+  truncateTail,
 } from "@earendil-works/pi-coding-agent";
 
 import {
@@ -69,7 +75,6 @@ export {
   DEFAULT_JOB_TIMEOUT_SEC,
   DEFAULT_TIMEOUT_SEC,
   JOB_TAIL_LINES,
-  ON_TICK_MAX_LINES,
   RETIRED_HISTORY,
   SELECTED_CURSOR,
 };
@@ -107,10 +112,8 @@ const DETAIL_TAIL_LINES = 200;
 const MIN_CONDITION_TIMEOUT_MS = 1_000;
 const MAX_CONDITION_TIMEOUT_MS = 30_000;
 
-// Snapshot deadline and size cap for the optional `onTick` callback.
+// Snapshot deadline for the optional `onTick` callback.
 const ON_TICK_TIMEOUT_MS = 10_000;
-const ON_TICK_MAX_LINES = 40;
-const ON_TICK_MAX_CHARS = 4_000;
 
 /**
  * Accepted timer ids.
@@ -150,13 +153,13 @@ const TimerStartParams = Type.Object({
   condition: Type.Optional(
     Type.String({
       description:
-        "Shell predicate checked immediately, then at each tick; exit code 0 ends the timer and wakes you with 'condition met'. A condition that holds kills a running job. The job's whole stdout/stderr log is its stdin when `start` is set; read only the tail if it may be large.",
+        "Shell predicate checked immediately, then at each tick; exit code 0 ends the timer and wakes you with 'condition met'. A condition that holds kills a running job. The job's whole stdout/stderr log is its stdin when `start` is set.",
     }),
   ),
   onTick: Type.Optional(
     Type.String({
       description:
-        "Shell command run on every tick, including the one that ends a periodic timer; its output rides along with the wake. Never block or sleep. With `start`, the job's whole log is its stdin (read only the tail if it may be large), it also runs once at exit, and it runs every intervalSec only when maxTicks is above 0.",
+        "Shell command run on every tick, including the one that ends a periodic timer; its output rides along with the wake, capped like a tool result, with the full text written to a file when it is large. Never block or sleep. With `start`, the job's whole log is its stdin, it also runs once at exit, and it runs every intervalSec only when maxTicks is above 0.",
     }),
   ),
   intervalSec: Type.Optional(
@@ -487,21 +490,66 @@ function detailSpec(row: TimerRow, theme: Theme): string {
 }
 
 /**
- * Cap a callback snapshot so a noisy command cannot flood a wake.
+ * Absolute path of one file under the job log directory.
  *
- * @param text - Raw stdout and stderr from the callback.
- * @returns At most `ON_TICK_MAX_LINES` lines and `ON_TICK_MAX_CHARS` chars.
+ * @param name - File name within that directory.
+ * @returns The absolute path, with the directory created.
  */
-function clipOutput(text: string): string {
-  const lines = text.split("\n");
-  const kept = lines.slice(0, ON_TICK_MAX_LINES).join("\n");
-  if (kept.length > ON_TICK_MAX_CHARS) {
-    return `${kept.slice(0, ON_TICK_MAX_CHARS)}\n... (clipped)`;
+function jobLogPath(name: string): string {
+  const path = join(getAgentDir(), JOB_LOG_DIR, name);
+  mkdirSync(dirname(path), { recursive: true });
+  return path;
+}
+
+/** Wake-ready callback output, plus the file holding the full text. */
+interface CallbackOutput {
+  /** Preview, or the whole output when it fits. */
+  text: string;
+  /** File containing the full output, when `text` is only a preview. */
+  savedPath?: string;
+}
+
+/**
+ * Format a callback snapshot for a wake.
+ *
+ * Output within Pi's tool-output limits is returned unchanged. A larger
+ * snapshot keeps the tail as the preview and writes the complete text to a job
+ * file, so the agent can read it without the wake carrying the whole thing.
+ *
+ * @param id - Timer id, which names the file.
+ * @param output - Combined stdout and stderr from the callback.
+ * @returns Wake-ready text and the full-output file, if one was written.
+ */
+async function formatCallbackOutput(
+  id: string,
+  output: string,
+): Promise<CallbackOutput> {
+  if (!output.trim()) {
+    return { text: "" };
   }
-  if (lines.length > ON_TICK_MAX_LINES) {
-    return `${kept}\n... (+${lines.length - ON_TICK_MAX_LINES} more lines)`;
+
+  const truncation = truncateTail(output, {
+    maxLines: DEFAULT_MAX_LINES,
+    maxBytes: DEFAULT_MAX_BYTES,
+  });
+  if (!truncation.truncated) {
+    return { text: output.trim() };
   }
-  return kept;
+
+  const path = jobLogPath(`${id}-ontick-${randomUUID()}.log`);
+  await writeFile(path, output);
+
+  const startLine = truncation.totalLines - truncation.outputLines + 1;
+  const endLine = truncation.totalLines;
+  const notice = truncation.lastLinePartial
+    ? `[Showing last ${formatSize(truncation.outputBytes)} of line ${endLine}. Full output: ${path}]`
+    : truncation.truncatedBy === "lines"
+      ? `[Showing lines ${startLine}-${endLine} of ${truncation.totalLines}. Full output: ${path}]`
+      : `[Showing lines ${startLine}-${endLine} of ${truncation.totalLines} (${formatSize(truncation.maxBytes)} limit). Full output: ${path}]`;
+  return {
+    text: [truncation.content.trimEnd(), notice].filter(Boolean).join("\n\n"),
+    savedPath: path,
+  };
 }
 
 /**
@@ -839,8 +887,7 @@ class TimerRegistry {
     startedAt: number,
     cwd: string,
   ): Job {
-    const logPath = join(getAgentDir(), JOB_LOG_DIR, `${id}-${startedAt}.log`);
-    mkdirSync(dirname(logPath), { recursive: true });
+    const logPath = jobLogPath(`${id}-${startedAt}.log`);
     const proc = spawnJob(command, cwd, logPath);
 
     const done = new Promise<JobOutcome>((resolve) => {
@@ -1216,7 +1263,7 @@ class TimerRegistry {
             elapsed(timer.startedAt),
             timer,
           );
-          this.notify(
+          void this.notify(
             timer,
             "failed",
             `error: ${String(error)}; timer stopped`,
@@ -1322,7 +1369,7 @@ class TimerRegistry {
       // Only a timer with no condition ends when it runs out of ticks: one with
       // a condition is still waiting for that condition to hold.
       const last = !timer.condition && !this.hasTicksLeft(timer);
-      this.tick(timer, body, last);
+      await this.tick(timer, body, last);
       if (last) {
         // The tick just sent was the timer's farewell.
         this.retire(
@@ -1461,7 +1508,7 @@ class TimerRegistry {
     if (timer.stopped || timer.noticePending || !this.canTick(timer)) {
       return;
     }
-    this.tick(timer, body, false);
+    await this.tick(timer, body, false);
   }
 
   /**
@@ -1647,13 +1694,13 @@ class TimerRegistry {
    * @param body - Snapshot captured for this tick, possibly empty.
    * @param last - Whether this tick spends the budget, so nothing follows it.
    */
-  private tick(timer: Timer, body: string, last: boolean): void {
+  private async tick(timer: Timer, body: string, last: boolean): Promise<void> {
     timer.ticksSent += 1;
     const count = `${timer.ticksSent}${timer.maxTicks === undefined ? "" : `/${timer.maxTicks}`}`;
     // A last tick carries the farewell, so the one wake the agent reads tells it
     // both the news and that the timer is gone.
     const ending = last ? "; timer stopped" : "";
-    this.notify(
+    await this.notify(
       timer,
       "tick",
       `tick ${count}, ${elapsed(timer.startedAt)} elapsed${ending}`,
@@ -1668,7 +1715,7 @@ class TimerRegistry {
    * wake is sent; empty output is normal, since it may be periodic work.
    *
    * @param timer - Timer whose callback to run.
-   * @returns Clipped output, or an empty string when no callback is set.
+   * @returns Wake-ready output, or an empty string when no callback is set.
    */
   private async capture(timer: Timer): Promise<string> {
     if (!timer.onTick) {
@@ -1684,7 +1731,13 @@ class TimerRegistry {
           timeout: ON_TICK_TIMEOUT_MS,
         },
       );
-      return clipOutput(`${result.stdout}${result.stderr}`.trim());
+      const output = `${result.stdout}${result.stderr}`;
+      const note = result.truncated
+        ? "[onTick output was cut at Pi's command buffer limit]"
+        : result.killed
+          ? `[onTick output was cut short by the ${ON_TICK_TIMEOUT_MS / 1000}s timeout]`
+          : "";
+      return note ? `${output}${output ? "\n\n" : ""}${note}` : output;
     } catch (error) {
       // A broken callback must not kill the timer that reports on the job.
       if (timer.stopped) {
@@ -1728,11 +1781,11 @@ class TimerRegistry {
       timer,
     );
     const tail = timer.job ? readLogTail(timer.job.logPath) : "";
-    const body = [tail, await this.capture(timer)].filter(Boolean).join("\n");
+    const body = await this.capture(timer);
     if (timer.stopped) {
       return;
     }
-    this.notify(timer, state, `${line}; timer stopped`, body);
+    await this.notify(timer, state, `${line}; timer stopped`, body, tail);
   }
 
   /**
@@ -1744,19 +1797,34 @@ class TimerRegistry {
    * @param timer - Timer that produced the update.
    * @param state - Notification kind.
    * @param line - One-line body with the timer name and the news.
-   * @param body - Optional snapshot captured by `onTick`.
+   * @param body - Optional `onTick` output to format and carry.
+   * @param tail - Optional job-log tail to put before the callback output.
    */
-  private notify(
+  private async notify(
     timer: Timer,
     state: TimerState,
     line: string,
     body = "",
-  ): void {
+    tail = "",
+  ): Promise<void> {
+    if (timer.stopped) {
+      return;
+    }
+    const captured = body
+      ? await formatCallbackOutput(timer.id, body)
+      : { text: "" };
+    if (timer.stopped) {
+      if (captured.savedPath) {
+        await rm(captured.savedPath, { force: true });
+      }
+      return;
+    }
     timer.noticePending = true;
     // A blank line keeps the captured output its own block instead of letting a
     // log line continue the summary paragraph.
-    const content = body
-      ? `[timer ${timer.id}] ${line}\n\n${body}`
+    const parts = [tail, captured.text].filter(Boolean).join("\n");
+    const content = parts
+      ? `[timer ${timer.id}] ${line}\n\n${parts}`
       : `[timer ${timer.id}] ${line}`;
     this.pi.sendMessage(
       {

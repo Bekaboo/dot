@@ -1,14 +1,22 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, describe, test } from "node:test";
-
+import {
+  DEFAULT_MAX_BYTES,
+  DEFAULT_MAX_LINES,
+} from "@earendil-works/pi-coding-agent";
 import timerExtension, {
   DEFAULT_JOB_TIMEOUT_SEC,
   DEFAULT_TIMEOUT_SEC,
   JOB_TAIL_LINES,
-  ON_TICK_MAX_LINES,
   RETIRED_HISTORY,
   SELECTED_CURSOR,
 } from "../extensions/timer.ts";
@@ -25,6 +33,27 @@ after(() => rmSync(agentDir, { recursive: true, force: true }));
 
 /** A command result, in the shape `pi.exec()` returns. */
 const exit = (code, stdout = "") => ({ code, stdout, stderr: "" });
+
+/**
+ * The body of a timer wake, after its one-line summary.
+ *
+ * @param content - Wake content.
+ * @returns Everything after the summary paragraph, or an empty string.
+ */
+function wakeBody(content) {
+  const split = content.indexOf("\n\n");
+  return split === -1 ? "" : content.slice(split + 2);
+}
+
+/**
+ * The callback preview in a wake, without its full-output notice.
+ *
+ * @param content - Wake content.
+ * @returns The preview block.
+ */
+function wakePreview(content) {
+  return wakeBody(content).split("\n\n[Showing ")[0];
+}
 
 /**
  * Split the job stdin prefix the timer adds for job callbacks.
@@ -597,10 +626,10 @@ describe("timer", () => {
     );
   });
 
-  test("onTick output is capped", async (t) => {
+  test("large onTick output is previewed and saved in full", async (t) => {
     const extra = 20;
     const many = Array.from(
-      { length: ON_TICK_MAX_LINES + extra },
+      { length: DEFAULT_MAX_LINES + extra },
       (_, index) => `line ${index}`,
     ).join("\n");
     const { start, noticesAfter } = setup(t, (command) =>
@@ -616,15 +645,95 @@ describe("timer", () => {
     });
     const [notice] = await noticesAfter(1);
 
+    const saved = /Full output: (\/.*\.log)\]$/.exec(notice.content);
+    assert.ok(saved, "the wake names the full output file");
+    assert.equal(readFileSync(saved[1], "utf8"), many);
     assert.match(
       notice.content,
-      new RegExp(
-        `line ${ON_TICK_MAX_LINES - 1}\\n\\.\\.\\. \\(\\+${extra} more lines\\)$`,
-      ),
+      new RegExp(`line ${DEFAULT_MAX_LINES + extra - 1}$`, "m"),
     );
-    assert.doesNotMatch(
-      notice.content,
-      new RegExp(`line ${ON_TICK_MAX_LINES}\\b`),
+    assert.doesNotMatch(notice.content, /^line 0$/m);
+  });
+
+  test("onTick output over the byte limit keeps a bounded tail", async (t) => {
+    const line = "x".repeat(60);
+    const many = Array.from(
+      { length: Math.ceil(DEFAULT_MAX_BYTES / line.length) + 200 },
+      (_, index) => `${index}:${line}`,
+    ).join("\n");
+    const { start, noticesAfter } = setup(t, (command) =>
+      command === "snap" ? exit(0, many) : exit(1),
+    );
+
+    await start({
+      id: "byte-limit",
+      onTick: "snap",
+      intervalSec: 1,
+      maxTicks: 1,
+      timeoutSec: 5,
+    });
+    const [notice] = await noticesAfter(1);
+
+    const saved = /Full output: (\/.*\.log)\]$/.exec(notice.content);
+    assert.ok(saved, "the wake names the full output file");
+    assert.equal(readFileSync(saved[1], "utf8"), many);
+    assert.ok(
+      Buffer.byteLength(wakePreview(notice.content)) <= DEFAULT_MAX_BYTES,
+    );
+    assert.doesNotMatch(wakePreview(notice.content), /^0:/m);
+  });
+
+  test("one oversized onTick line keeps only its tail", async (t) => {
+    const huge = "x".repeat(DEFAULT_MAX_BYTES + 1_000);
+    const { start, noticesAfter } = setup(t, (command) =>
+      command === "snap" ? exit(0, huge) : exit(1),
+    );
+
+    await start({
+      id: "one-line",
+      onTick: "snap",
+      intervalSec: 1,
+      maxTicks: 1,
+      timeoutSec: 5,
+    });
+    const [notice] = await noticesAfter(1);
+
+    const saved = /Full output: (\/.*\.log)\]$/.exec(notice.content);
+    assert.ok(saved, "the wake names the full output file");
+    assert.equal(readFileSync(saved[1], "utf8"), huge);
+    const preview = wakePreview(notice.content);
+    assert.ok(preview.length > 0);
+    assert.ok(Buffer.byteLength(preview) <= DEFAULT_MAX_BYTES);
+  });
+
+  test("large onTick output is not spilled when no wake is sent", async (t) => {
+    const many = Array.from(
+      { length: DEFAULT_MAX_LINES + 1 },
+      (_, index) => `line ${index}`,
+    ).join("\n");
+    let captures = 0;
+    const { start, notices } = setup(t, (command) => {
+      if (command !== "snap") return exit(1);
+      captures += 1;
+      return exit(0, many);
+    });
+
+    await start({
+      id: "quiet-large",
+      condition: "false",
+      onTick: "snap",
+      intervalSec: 1,
+      maxTicks: 0,
+      timeoutSec: 5,
+    });
+    await until(() => captures === 2, "onTick ran only once");
+
+    assert.equal(notices.length, 0);
+    const jobsDir = join(agentDir, "jobs");
+    const files = existsSync(jobsDir) ? readdirSync(jobsDir) : [];
+    assert.ok(
+      !files.some((name) => name.startsWith("quiet-large-ontick-")),
+      "a discarded tick must not leave an onTick output file",
     );
   });
 
