@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, describe, test } from "node:test";
@@ -27,6 +27,23 @@ after(() => rmSync(agentDir, { recursive: true, force: true }));
 const exit = (code, stdout = "") => ({ code, stdout, stderr: "" });
 
 /**
+ * Split the job stdin prefix the timer adds for job callbacks.
+ *
+ * @param command - Shell command handed to the fake `pi.exec()`.
+ * @returns The command without the prefix, and the log content it would read
+ *   on stdin, or `undefined` when the command has no job input.
+ */
+function splitJobInput(command) {
+  const match = /^\{ exec 0<(.+?); \} 2>\/dev\/null; /s.exec(command);
+  if (!match) return { command, stdin: undefined };
+  const path = match[1].slice(1, -1).replace(/'\\''/g, "'");
+  return {
+    command: command.slice(match[0].length),
+    stdin: existsSync(path) ? readFileSync(path, "utf8") : "",
+  };
+}
+
+/**
  * Load the extension with a fake `pi`.
  *
  * @param t - Test context, used to shut the session down afterwards.
@@ -49,8 +66,10 @@ function setup(t, runCommand, { ack = true } = {}) {
       commands.set(name, definition);
     },
     on: (name, handler) => hooks.set(name, handler),
-    exec: async (_bash, [_flag, command], { signal }) =>
-      runCommand(command, signal),
+    exec: async (_bash, [_flag, command], { signal }) => {
+      const { command: shell, stdin } = splitJobInput(command);
+      return runCommand(shell, signal, stdin);
+    },
     sendMessage: (message, options) => {
       notices.push({ ...message, options });
       onNotice();
@@ -250,7 +269,11 @@ async function waitGone(pid) {
 
 describe("timer", () => {
   test("a timer wakes with 'condition met' as soon as its condition holds", async (t) => {
-    const { start, noticesAfter } = setup(t, () => exit(0));
+    const { start, noticesAfter } = setup(t, (_command, _signal, stdin) => {
+      // A timer without a job has no output to feed its condition.
+      assert.equal(stdin, undefined);
+      return exit(0);
+    });
 
     const result = await start({
       id: "build-done",
@@ -310,7 +333,7 @@ describe("timer", () => {
     assert.equal(stopped.content[0].text, 'Stopped "timer-a".');
   });
 
-  test("start rejects a missing id, a bad id, a nameless timer, and two modes", async (t) => {
+  test("start rejects a missing id, a bad id, and a nameless timer", async (t) => {
     const { start } = setup(t, runUntilCancelled);
 
     await assert.rejects(start({}), /timer id is required/);
@@ -321,10 +344,6 @@ describe("timer", () => {
     await assert.rejects(
       start({ id: "bad id!", condition: "false" }),
       /Invalid timer id/,
-    );
-    await assert.rejects(
-      start({ id: "both-modes", start: "true", condition: "false" }),
-      /start and condition are mutually exclusive/,
     );
   });
 
@@ -1568,6 +1587,145 @@ describe("timer", () => {
       notices[1].content,
       /^\[timer job-tick\] exited 0 after \ds; timer stopped/,
     );
+  });
+
+  test("start, condition and onTick combine in one timer", async (t) => {
+    const conditionInputs = [];
+    const tickInputs = [];
+    const { start, noticesAfter } = setup(t, (command, _signal, stdin) => {
+      if (command === "grep -q never") {
+        conditionInputs.push(stdin);
+        return exit(1);
+      }
+      if (command === "report") {
+        tickInputs.push(stdin);
+        return exit(0, `log:${stdin.trim()}`);
+      }
+      return exit(1);
+    });
+
+    await start({
+      id: "job-combo",
+      start: "echo job-output; sleep 2.5",
+      condition: "grep -q never",
+      onTick: "report",
+      intervalSec: 1,
+      maxTicks: 1,
+      timeoutSec: 10,
+    });
+    const [tick, done] = await noticesAfter(2);
+
+    assert.match(
+      tick.content,
+      /^\[timer job-combo\] tick 1\/1, \ds elapsed\n\nlog:job-output$/,
+    );
+    assert.match(
+      done.content,
+      /^\[timer job-combo\] exited 0 after \ds; timer stopped/,
+    );
+    // Both callbacks see the job's output while it runs, not only at exit.
+    assert.ok(
+      conditionInputs.some((text) => text.includes("job-output")),
+      "condition never read the job output",
+    );
+    assert.equal(tickInputs[0], "job-output\n");
+  });
+
+  test("a condition on a job waits for output instead of matching an empty log", async (t) => {
+    const { start, noticesAfter } = setup(t, () => exit(0));
+
+    await start({
+      id: "job-late",
+      start: "sleep 0.2; echo boom; exit 3",
+      condition: "true",
+      intervalSec: 1,
+      timeoutSec: 5,
+    });
+    const [notice] = await noticesAfter(1);
+
+    // An immediate check of `true` would match the empty log and kill the job
+    // before it ran; waiting one interval lets the job exit 3 on its own.
+    assert.match(
+      notice.content,
+      /^\[timer job-late\] failed: exit 3 after \ds; timer stopped\n\nboom\n\[exit 3\]$/,
+    );
+    assert.equal(notice.details.state, "failed");
+  });
+
+  test("a job exit during a condition keeps the exit status", async (t) => {
+    const { start, noticesAfter } = setup(t, (command) => {
+      if (command !== "wait-for-exit") return exit(1);
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(exit(0)), 700);
+      });
+    });
+
+    await start({
+      id: "job-race",
+      start: "sleep 1.5; exit 3",
+      condition: "wait-for-exit",
+      intervalSec: 1,
+      timeoutSec: 5,
+    });
+    const [notice] = await noticesAfter(1);
+
+    assert.match(
+      notice.content,
+      /^\[timer job-race\] failed: exit 3 after \ds; timer stopped/,
+    );
+    assert.equal(notice.details.state, "failed");
+    assert.doesNotMatch(notice.content, /killed after condition met/);
+  });
+
+  test("a condition that holds on a running job kills it", async (t) => {
+    const { start, status, noticesAfter } = setup(
+      t,
+      (command, _signal, stdin) => {
+        if (command !== "grep -q ready") return exit(1);
+        return stdin.includes("ready") ? exit(0) : exit(1);
+      },
+    );
+
+    const { details } = await start({
+      id: "job-cond",
+      start: "sleep 0.5; echo ready; sleep 30",
+      condition: "grep -q ready",
+      intervalSec: 1,
+      timeoutSec: 10,
+    });
+    const pid = await jobPid(status, "job-cond");
+    const [notice] = await noticesAfter(1);
+
+    assert.match(
+      notice.content,
+      /^\[timer job-cond\] condition met after \ds: grep -q ready; timer stopped\n\nready\n\[killed after condition met\]$/,
+    );
+    assert.equal(notice.details.state, "done");
+    assert.equal(
+      (await status({ id: "job-cond" })).content[0].text,
+      'Timer "job-cond" stopped (condition met).',
+    );
+    const log = readFileSync(details.logPath, "utf8");
+    assert.match(log, /ready\n\[killed after condition met\]\n$/);
+    assert.equal(log.match(/\[killed after condition met\]/g).length, 1);
+    await waitGone(pid);
+  });
+
+  test("a log deleted before exit gives onTick empty stdin, not an error", async (t) => {
+    const { start, noticesAfter } = setup(t, (command) =>
+      command === "report" ? exit(0, "snapshot") : exit(1),
+    );
+
+    const { details } = await start({
+      id: "job-lost-log",
+      start: "sleep 0.3",
+      onTick: "report",
+    });
+    rmSync(details.logPath);
+    const [notice] = await noticesAfter(1);
+
+    assert.match(notice.content, /\nsnapshot$/);
+    assert.doesNotMatch(notice.content, /No such file or directory/);
   });
 
   test("a log deleted before the job exits does not crash the wake", async (t) => {

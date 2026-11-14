@@ -3,20 +3,23 @@
  *
  * Background timer tools: `timer_start`, `timer_stop`, `timer_status`.
  *
- * A timer is one of three things, told apart by what ends it:
+ * A timer combines three optional parts:
  *
- * - A background command that ends when the process exits (`start`)
- * - A poller that ends when a shell predicate exits 0 (`condition`)
- * - A periodic job that ends only on `timer_stop`
+ * - A background command that logs its output (`start`)
+ * - A callback run on every tick (`onTick`)
+ * - A shell predicate that ends the timer when it holds (`condition`)
  *
- * Its tick budget, or its deadline. Every ending wakes the agent with a short
- * notification. Timers are named by the agent, so every wake and the status
- * list are self-describing. The user-facing `/timers` command shows the
- * session's timers as an aligned table: the running ones first, then the ones
- * that ended, each with the same state marker the `/subagents` view uses. The
- * order is fixed when the view opens and does not follow state changes after
- * that, so no row moves under the reader. Enter opens one timer's detail: what
- * it runs or waits for, its deadlines, and the tail of the job log it writes.
+ * Any combination is allowed. A timer ends when its job exits, its condition
+ * exits 0, a periodic timer spends its tick budget, or its deadline passes.
+ * Every ending wakes the agent with a short notification. While a job runs,
+ * `onTick` and `condition` read its output on stdin. Timers are named by the
+ * agent, so every wake and the status list are self-describing. The user-facing
+ * `/timers` command shows the session's timers as an aligned table: the running
+ * ones first, then the ones that ended, each with the same state marker the
+ * `/subagents` view uses. The order is fixed when the view opens and does not
+ * follow state changes after that, so no row moves under the reader. Enter
+ * opens one timer's detail: what it runs or waits for, its deadlines, and the
+ * tail of the job log it writes.
  */
 
 import { type ChildProcess, spawn } from "node:child_process";
@@ -141,19 +144,19 @@ const TimerStartParams = Type.Object({
   start: Type.Optional(
     Type.String({
       description:
-        "Shell command to run in the background and log; the timer ends when the process exits, and the wake carries its exit code and log tail. Mutually exclusive with `condition`.",
+        "Shell command to run in the background and log; the timer ends when the process exits, and the wake carries its exit code and log tail. Combine with `condition` to end early when a predicate holds; combine with `onTick` to monitor progress.",
     }),
   ),
   condition: Type.Optional(
     Type.String({
       description:
-        "Shell predicate checked immediately and at each tick; exit code 0 ends the timer and wakes you with 'condition met'. Mutually exclusive with `start`.",
+        "Shell predicate checked immediately, then at each tick; exit code 0 ends the timer and wakes you with 'condition met'. With `start`, the first check waits one intervalSec so the job can write output; a condition that holds kills the running job. The job's whole stdout/stderr log is its stdin when `start` is set; read only the tail if it may be large.",
     }),
   ),
   onTick: Type.Optional(
     Type.String({
       description:
-        "Shell command run on every tick, including the one that ends a periodic timer; its output rides along with the wake. Never block or sleep. With `start` it also runs once at exit, after the log tail.",
+        "Shell command run on every tick, including the one that ends a periodic timer; its output rides along with the wake. Never block or sleep. With `start`, the job's whole log is its stdin (read only the tail if it may be large), it also runs once at exit, and it runs every intervalSec only when maxTicks is above 0.",
     }),
   ),
   intervalSec: Type.Optional(
@@ -167,7 +170,7 @@ const TimerStartParams = Type.Object({
   maxTicks: Type.Optional(
     Type.Number({
       description:
-        "Maximum tick wakes. 0 disables ticks and is the default with `start`; periodic mode needs at least 1. The final exit, condition, and timeout wakes do not count.",
+        "Maximum tick wakes. 0 disables tick wakes and is the default with `start`; set it above 0 to run `onTick` every intervalSec while a job runs. Periodic mode needs at least 1. A condition is still checked every intervalSec when maxTicks is 0. The final exit, condition, and timeout wakes do not count.",
       minimum: 0,
     }),
   ),
@@ -214,7 +217,7 @@ interface TimerSpec {
   start?: string;
   /** Absolute path of the job log; set with `start`. */
   logPath?: string;
-  /** Shell predicate; exit code 0 means the timer is done. */
+  /** Shell predicate; exit code 0 ends the timer, and kills a running job. */
   condition?: string;
   /** Shell command whose output rides along with every wake. */
   onTick?: string;
@@ -317,6 +320,19 @@ function requireId(id: string): string {
  */
 function elapsed(startedAt: number): string {
   return `${Math.floor((Date.now() - startedAt) / 1000)}s`;
+}
+
+/**
+ * Quote a value as one literal shell word.
+ *
+ * Single quotes keep every metacharacter literal; an embedded quote is closed,
+ * escaped and reopened.
+ *
+ * @param value - Raw value, such as a log path.
+ * @returns The value wrapped for use in a `bash -c` script.
+ */
+function shellQuote(value: string): string {
+  return `'${value.replace(/'/g, "'\\''")}'`;
 }
 
 /** One timer as fields, so display code can align them into columns. */
@@ -775,11 +791,6 @@ class TimerRegistry {
 
     const command = params.start?.trim() || undefined;
     const condition = params.condition?.trim() || undefined;
-    if (command && condition) {
-      throw new Error(
-        `Timer "${id}": start and condition are mutually exclusive -- use start to be told when a command exits, condition to wait for a predicate.`,
-      );
-    }
 
     const startedAt = Date.now();
     const timer: Timer = {
@@ -1337,11 +1348,12 @@ class TimerRegistry {
   }
 
   /**
-   * Watch a background job until it exits, is killed, or its deadline passes.
+   * Watch a background job until it exits, is killed, its condition holds, or
+   * its deadline passes.
    *
-   * The exit is an event, so no poll interval decides how soon the wake
-   * arrives; `intervalSec` only paces optional progress ticks, and a job timer
-   * with no tick budget waits on the exit alone.
+   * The exit is an event, so no poll interval decides how soon that wake
+   * arrives; `intervalSec` paces optional progress ticks and condition checks,
+   * and a job timer without either waits on the exit alone.
    *
    * @param timer - Timer whose `job` owns the process.
    */
@@ -1355,8 +1367,12 @@ class TimerRegistry {
       outcome = result;
     });
 
-    while (!timer.stopped) {
-      const waitMs = this.canTick(timer)
+    // A condition over a running job is a monitor: its first check waits one
+    // interval so the command has had time to write output. A condition-only
+    // timer still checks immediately in `poll()`.
+    while (!timer.stopped && !timer.settled) {
+      const paced = this.canTick(timer) || timer.condition !== undefined;
+      const waitMs = paced
         ? Math.max(0, Math.min(timer.intervalSec * 1000, deadline - Date.now()))
         : Math.max(0, deadline - Date.now());
       const result = await this.raceJob(timer, job, waitMs);
@@ -1375,7 +1391,7 @@ class TimerRegistry {
         await this.expireJob(timer, job);
         return;
       }
-      await this.tickJob(timer);
+      await this.tickJob(timer, job, deadline);
     }
   }
 
@@ -1417,19 +1433,52 @@ class TimerRegistry {
   }
 
   /**
-   * Send one progress tick while a job runs.
+   * Check the condition and send one progress tick while a job runs.
    *
    * Matches a periodic timer: the callback runs even when its wake is
-   * throttled, and a dropped wake costs no tick budget.
+   * throttled, and a dropped wake costs no tick budget. A condition that holds
+   * ends the timer and takes the job with it, like a `timer_stop`.
    *
    * @param timer - Job timer to tick.
+   * @param job - Job the timer watches.
+   * @param deadline - Unix timestamp in milliseconds when the timer expires.
    */
-  private async tickJob(timer: Timer): Promise<void> {
+  private async tickJob(
+    timer: Timer,
+    job: Job,
+    deadline: number,
+  ): Promise<void> {
+    if (await this.conditionHeld(timer, deadline)) {
+      await this.finishConditionJob(timer, job);
+      return;
+    }
+
     const body = await this.capture(timer);
     if (timer.stopped || timer.noticePending || !this.canTick(timer)) {
       return;
     }
     this.tick(timer, body, false);
+  }
+
+  /**
+   * End a job timer whose condition held, killing the job it watches.
+   *
+   * A timer owns the job it started, so ending the timer must not leave the
+   * process running with nobody watching it. The log records the reason as
+   * `killed after condition met`.
+   *
+   * @param timer - Job timer whose condition held.
+   * @param job - Job to kill.
+   */
+  private async finishConditionJob(timer: Timer, job: Job): Promise<void> {
+    await this.endJob(
+      timer,
+      job,
+      "killed after condition met",
+      "done",
+      this.conditionLine(timer),
+      "condition met",
+    );
   }
 
   /**
@@ -1442,20 +1491,51 @@ class TimerRegistry {
    * @param job - Job to kill.
    */
   private async expireJob(timer: Timer, job: Job): Promise<void> {
-    // Out of `jobs` first: a `restore()` during the grace window must not
-    // re-attach a job this loop is already killing.
-    this.jobs.delete(job.id);
-    this.kill(job, "killed by the timer");
-    await job.done;
-    if (timer.stopped) {
-      return;
-    }
-    await this.finish(
+    await this.endJob(
       timer,
+      job,
+      "killed by the timer",
       "timeout",
       `timeout after ${timer.timeoutSec}s; job killed`,
       "timed out",
     );
+  }
+
+  /**
+   * Kill a job and finish its timer with the given news.
+   *
+   * A job that already exited keeps its own exit status: killing it now would
+   * add a misleading marker and replace the real outcome with a timeout or a
+   * condition that happened at the same moment.
+   *
+   * @param timer - Timer ending.
+   * @param job - Job to kill unless it already exited.
+   * @param marker - How the log should say the timer ended it.
+   * @param state - How the timer ended, for its wake and `/timers` marker.
+   * @param line - News for the wake.
+   * @param reason - Short reason a later `timer_stop` reports.
+   */
+  private async endJob(
+    timer: Timer,
+    job: Job,
+    marker: string,
+    state: "done" | "timeout",
+    line: string,
+    reason: string,
+  ): Promise<void> {
+    if (job.proc.exitCode !== null || job.proc.signalCode !== null) {
+      await this.finishJob(timer, job, await job.done);
+      return;
+    }
+    // Out of `jobs` first: a `restore()` during the grace window must not
+    // re-attach a job this loop is already killing.
+    this.jobs.delete(job.id);
+    this.kill(job, marker);
+    await job.done;
+    if (timer.stopped) {
+      return;
+    }
+    await this.finish(timer, state, line, reason);
   }
 
   /**
@@ -1488,6 +1568,44 @@ class TimerRegistry {
   }
 
   /**
+   * Prefix a callback with the job output on its stdin.
+   *
+   * The job log is the command's stdout and stderr, so reading it directly
+   * avoids copying a log that may have grown for hours. A timer without a job
+   * has no output to feed and returns the command unchanged. A missing log is
+   * not an error: the callback runs with the empty stdin the shell already has.
+   *
+   * @param timer - Timer whose callback is about to run.
+   * @param command - Shell command to run.
+   * @returns The command, with stdin redirected from the job log when present.
+   */
+  private withJobInput(timer: Timer, command: string): string {
+    const logPath = timer.job?.logPath;
+    if (!logPath) {
+      return command;
+    }
+    return `{ exec 0<${shellQuote(logPath)}; } 2>/dev/null; ${command}`;
+  }
+
+  /**
+   * Whether a timer's condition holds now.
+   *
+   * @param timer - Timer to check.
+   * @param deadline - Unix timestamp in milliseconds when the timer expires.
+   * @returns `true` when the timer has a condition and it exited 0.
+   */
+  private async conditionHeld(
+    timer: Timer,
+    deadline: number,
+  ): Promise<boolean> {
+    const condition = timer.condition;
+    if (!condition) {
+      return false;
+    }
+    return this.matches(timer, condition, deadline);
+  }
+
+  /**
    * Run the timer's condition.
    *
    * @param timer - Timer the condition belongs to.
@@ -1501,13 +1619,17 @@ class TimerRegistry {
     deadline: number,
   ): Promise<boolean> {
     const remaining = deadline - Date.now();
-    const result = await this.pi.exec("bash", ["-lc", condition], {
-      signal: timer.controller.signal,
-      timeout: Math.min(
-        MAX_CONDITION_TIMEOUT_MS,
-        Math.max(MIN_CONDITION_TIMEOUT_MS, remaining),
-      ),
-    });
+    const result = await this.pi.exec(
+      "bash",
+      ["-lc", this.withJobInput(timer, condition)],
+      {
+        signal: timer.controller.signal,
+        timeout: Math.min(
+          MAX_CONDITION_TIMEOUT_MS,
+          Math.max(MIN_CONDITION_TIMEOUT_MS, remaining),
+        ),
+      },
+    );
     return result.code === 0;
   }
 
@@ -1550,10 +1672,14 @@ class TimerRegistry {
     }
 
     try {
-      const result = await this.pi.exec("bash", ["-lc", timer.onTick], {
-        signal: timer.controller.signal,
-        timeout: ON_TICK_TIMEOUT_MS,
-      });
+      const result = await this.pi.exec(
+        "bash",
+        ["-lc", this.withJobInput(timer, timer.onTick)],
+        {
+          signal: timer.controller.signal,
+          timeout: ON_TICK_TIMEOUT_MS,
+        },
+      );
       return clipOutput(`${result.stdout}${result.stderr}`.trim());
     } catch (error) {
       // A broken callback must not kill the timer that reports on the job.
@@ -1650,9 +1776,14 @@ function describeStart(spec: TimerSpec): string {
   if (spec.start) {
     const ticks =
       spec.maxTicks === 0
-        ? "no tick wakes"
+        ? spec.onTick
+          ? "no tick wakes (onTick runs at exit)"
+          : "no tick wakes"
         : `tick wakes every ${spec.intervalSec}s`;
-    return `Started job "${spec.id}": runs \`${spec.start}\` in the background, ${ticks}, log ${spec.logPath}; wakes you when it exits or after ${spec.timeoutSec}s. It is killed when this session ends.`;
+    const ending = spec.condition
+      ? `wakes you when it exits, when the condition first exits 0 (which kills the job), or after ${spec.timeoutSec}s`
+      : `wakes you when it exits or after ${spec.timeoutSec}s`;
+    return `Started job "${spec.id}": runs \`${spec.start}\` in the background, ${ticks}, log ${spec.logPath}; ${ending}. It is killed when this session ends.`;
   }
 
   const ticks =
@@ -1682,18 +1813,17 @@ function timerStartTool(
     name: "timer_start",
     label: "Timer start",
     description:
-      "Run a command in the background, wait for a condition, or tick on a schedule; every mode returns immediately. " +
-      'What ends the timer is the mode. With `start`: the process exits -- `timer_start { "id": "build", "start": "make" }` ' +
-      "runs it in the background, logs to ~/.pi/agent/jobs/<id>-<startedAt>.log, and wakes you once with the exit code and the log tail. " +
-      "With `condition`: the predicate exits 0, checked now and at each intervalSec. " +
-      "With neither: periodic mode, onTick does the work and you get one wake per tick. " +
-      "start and condition are mutually exclusive: pass exactly one, or neither. " +
-      "onTick runs on every tick, and its output accompanies wakes. " +
+      "Run a command in the background, wait for a condition, tick on a schedule, or combine them; every call returns immediately. " +
+      'With `start`: `timer_start { "id": "build", "start": "make" }` runs it in the background, logs to ~/.pi/agent/jobs/<id>-<startedAt>.log, and wakes you with the exit code and the log tail. ' +
+      "With `condition`: the predicate exits 0, checked now and at each intervalSec (for a `start` job, the first check waits one intervalSec). " +
+      "With `onTick`: it runs on every tick and its output accompanies the wake. " +
+      "Pass `start` with `onTick` and/or `condition` to start and monitor one job in one call; both then read the job's stdout/stderr on stdin. Set `maxTicks` above 0 to run `onTick` every intervalSec while the job runs; with 0 it runs once at exit, and a condition is still checked every intervalSec. A condition that holds on a running job kills it. " +
+      "Without `start` or `condition`, periodic mode needs onTick or maxTicks at least 1. " +
       "timer_stop, a timeoutSec expiry, or the end of the session (including /reload, /resume and /new) kills a running job.",
     promptSnippet:
-      "Start a background command and wake when it exits, wait for a condition, or tick periodically.",
+      "Start a background command and wake when it exits, wait for a condition, or tick periodically -- in any combination.",
     promptGuidelines: [
-      "For a command that may take a while, use `timer_start` with `start`, never bash `&`, pid or exit files, polling, or `sleep N` waits. Keep working or end your turn: an idle agent is woken in a new turn.",
+      "For a command that may take a while, use `timer_start` with `start`, never bash `&`, pid or exit files, polling, or `sleep N` waits. To also monitor it, pass `start`, `onTick`, `condition`, `intervalSec` and `maxTicks` in one call. Keep working or end your turn: an idle agent is woken in a new turn.",
       "A tick or condition wake from a timer says only that something happened; a job wake already carries the exit code and log tail. After a wake, do what it asks, then `timer_stop` a timer you no longer need.",
     ],
     parameters: TimerStartParams,
