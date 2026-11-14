@@ -199,6 +199,10 @@
 		.defaultModel, \
 		.defaultThinkingLevel \
 	)'
+[filter "opencode"]
+	smudge = cat
+	; Drop locally chosen models
+	clean = jq --tab 'del(.model, .small_model)'
 [filter "kglobalshortcutsrc"]
 	smudge = cat
 	clean = sed '/switch-to-activity-/d'
