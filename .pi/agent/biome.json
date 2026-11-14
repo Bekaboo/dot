@@ -12,12 +12,25 @@
       "!*-cache.json",
       "!models-store.json",
       "!auth.json",
-      "!mcp-auth.json"
+      "!mcp-auth.json",
+      "!settings.json"
     ]
   },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
     "indentWidth": 2
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["extensions/**"],
+      "linter": { "rules": { "nursery": { "noFloatingPromises": "error" } } }
+    },
+    {
+      "includes": ["tests/**"],
+      "linter": {
+        "rules": { "suspicious": { "noControlCharactersInRegex": "off" } }
+      }
+    }
+  ]
 }
