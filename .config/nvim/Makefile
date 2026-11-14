@@ -26,18 +26,6 @@ test:
 		+"PlenaryBustedDirectory tests { minimal_init = 'tests/minimal_init.lua' }" \
 		+qa!
 
-.PHONY: test-plugin
-test-plugin:
-	nvim --clean --headless -u tests/minimal_init.lua \
-		+"PlenaryBustedDirectory tests/plugin { minimal_init = 'tests/minimal_init.lua' }" \
-		+qa!
-
-.PHONY: test-utils
-test-utils:
-	nvim --clean --headless -u tests/minimal_init.lua \
-		+"PlenaryBustedDirectory tests/utils { minimal_init = 'tests/minimal_init.lua' }" \
-		+qa!
-
 # Examples:
 # test-file-plugin:winbar:bar (will run `tests/plugin/winbar/bar_spec.lua`)
 # test-file-utils:str (will run `tests/utils/str_spec.lua`)
