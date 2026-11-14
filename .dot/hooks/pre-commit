@@ -1,8 +1,9 @@
 #!/bin/sh
 # Runs a sub-project's own check when a commit stages files under it, so each
-# project keeps its own tooling (biome.json in .pi/agent, .stylua.toml and the
-# Makefile in .config/nvim) instead of one global rule set. Check-only: the hook
-# never writes to the work tree or the index. Fix, stage, and commit again.
+# project keeps its own tooling (biome.json in .pi/agent and .config/opencode,
+# .stylua.toml and the Makefile in .config/nvim) instead of one global rule set.
+# Check-only: the hook never writes to the work tree or the index. Fix, stage,
+# and commit again.
 set -eu
 
 root=$(git rev-parse --show-toplevel)
@@ -19,4 +20,5 @@ check() {
 }
 
 check .pi/agent npm run --silent check
+check .config/opencode biome check
 check .config/nvim make -s
