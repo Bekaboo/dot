@@ -94,4 +94,20 @@ describe('[utils][str]', function()
       end
     end
   end)
+  describe('escape_magic', function()
+    it('escapes magic characters', function()
+      assert.are.same(
+        '%%%$%^%(%)%.%[%]%*%+%-%?',
+        str.escape_magic('%$^().[]*+-?')
+      )
+    end)
+    it('leaves non-magic characters alone', function()
+      assert.are.same('foo_bar 123', str.escape_magic('foo_bar 123'))
+    end)
+    it('makes magic characters match literally', function()
+      local escaped = str.escape_magic('a.b*c(d)')
+      assert.is_truthy(('xa.b*c(d)y'):find(escaped))
+      assert.is_nil(('xaXbYcZd)y'):find(escaped))
+    end)
+  end)
 end)

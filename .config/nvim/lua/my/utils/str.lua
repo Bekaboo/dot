@@ -204,7 +204,10 @@ end
 ---@param str string string to escape
 ---@return string
 function M.escape_magic(str)
-  return (str:gsub('[$^()%%.%[%]*+-?]', '%%%1'))
+  -- Every magic character must be escaped explicitly, `*+-?` in the
+  -- character class would be read as the range `+` to `?`, which also
+  -- matches digits and produces back-references like `%1`
+  return (str:gsub('[%$%^%(%)%.%%%[%]%*%+%-%?]', '%%%1'))
 end
 
 return M
