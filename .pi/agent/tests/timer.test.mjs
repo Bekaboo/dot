@@ -1,10 +1,16 @@
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import {
+  closeSync,
   existsSync,
+  mkdirSync,
   mkdtempSync,
+  openSync,
   readdirSync,
   readFileSync,
   rmSync,
+  writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -25,6 +31,9 @@ import { VIEWPORT_RESERVE_ROWS } from "../extensions/utils/page.ts";
 const { KeybindingsManager, TUI_KEYBINDINGS } = await import(
   "@earendil-works/pi-tui"
 );
+
+// A pid no process can hold, for state files of jobs that are already gone.
+const DEAD_PID = 4_194_304;
 
 // Job logs go under the agent dir; keep them out of the real one.
 const agentDir = mkdtempSync(join(tmpdir(), "pi-timer-tests-"));
@@ -78,10 +87,11 @@ function splitJobInput(command) {
  * @param t - Test context, used to shut the session down afterwards.
  * @param runCommand - Fake shell for `condition` and `onTick`; `start` jobs
  *   spawn a real bash instead.
- * @param options - `ack: false` leaves wakes unread, to test coalescing.
+ * @param options - `ack: false` leaves wakes unread, to test coalescing;
+ *   `sessionId` shares one session's state file between two pi processes.
  * @returns Handles for the registered tools, hooks, and captured notices.
  */
-function setup(t, runCommand, { ack = true } = {}) {
+function setup(t, runCommand, { ack = true, sessionId = randomUUID() } = {}) {
   const tools = new Map();
   const hooks = new Map();
   const commands = new Map();
@@ -122,6 +132,8 @@ function setup(t, runCommand, { ack = true } = {}) {
   /** Make a session branch that contains these tool results. */
   const branch = (...details) => ({
     sessionManager: {
+      getSessionId: () => sessionId,
+      getHeader: () => null,
       getBranch: () =>
         details.map((detail) => ({
           type: "message",
@@ -144,6 +156,40 @@ function setup(t, runCommand, { ack = true } = {}) {
     notices,
     noticesAfter,
     branch,
+    sessionId,
+  };
+}
+
+/** Absolute path of one session's timer state file. */
+function stateFileOf(sessionId) {
+  return join(agentDir, "timers", `${sessionId}.json`);
+}
+
+/** Write a timer state file, as a previous pi process would have left it. */
+function writeState(sessionId, timers) {
+  mkdirSync(join(agentDir, "timers"), { recursive: true });
+  writeFileSync(
+    stateFileOf(sessionId),
+    `${JSON.stringify({
+      version: 1,
+      sessionId,
+      updatedAt: Date.now(),
+      timers,
+    })}\n`,
+  );
+}
+
+/** A timer record for `writeState`, with a budget already partly spent. */
+function persistedTimer(id, { activeMs = 0, job, ...spec } = {}) {
+  return {
+    id,
+    intervalSec: 1,
+    timeoutSec: 600,
+    startedAt: Date.now(),
+    ticksSent: 0,
+    ...spec,
+    activeMs,
+    job,
   };
 }
 
@@ -280,6 +326,59 @@ async function jobPid(status, id) {
 }
 
 /**
+ * Spawn a detached job shell the way the extension does.
+ *
+ * Its own process group, a tag in the command line, and a log it closes with
+ * the `[exit N]` marker. Used to stand in for a job an earlier pi process ran.
+ *
+ * @param command - Shell command for the job.
+ * @param tag - Token the extension would use to recognize the job.
+ * @returns The process, its pid, and the log it writes.
+ */
+function spawnJobShell(command, tag) {
+  const logPath = join(agentDir, "jobs", `${tag}.log`);
+  mkdirSync(join(agentDir, "jobs"), { recursive: true });
+  const log = openSync(logPath, "a");
+  const proc = spawn(
+    "bash",
+    [
+      "-c",
+      [
+        `# pi-timer-job ${tag}`,
+        `(\n${command}\n)`,
+        "code=$?",
+        "printf '[exit %s]\\n' \"$code\"",
+        'exit "$code"',
+      ].join("\n"),
+    ],
+    { detached: true, stdio: ["ignore", log, log] },
+  );
+  closeSync(log);
+  return { proc, pid: Number(proc.pid), logPath };
+}
+
+/** Kill a spawned job's process group when the test ends, whatever happened. */
+function killGroupAfter(t, pid) {
+  t.after(() => {
+    try {
+      process.kill(-pid, "SIGKILL");
+    } catch {
+      // Already gone.
+    }
+  });
+}
+
+/** Whether a pid still exists. */
+function pidAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Wait until a signalled pid is gone, outlasting the SIGTERM grace period.
  *
  * @param pid - Process that should have been killed.
@@ -322,7 +421,8 @@ describe("timer", () => {
 
   test("a timed-out timer says so and can then be stopped", async (t) => {
     const { hooks, stop, noticesAfter, branch } = setup(t, () => exit(1));
-    // A timer whose time ran out while the session was closed.
+    // A branch replay has no live state file, so the budget starts fresh and
+    // runs out one live second later.
     const expired = {
       action: "start",
       id: "stale-timer",
@@ -1071,8 +1171,9 @@ describe("timer", () => {
     assert.equal(killed.details.state, "killed");
     assert.match(pageOf(overlay), /^\s*self-kill +· killed /m);
 
-    // A deadline that passed while the session was closed times the timer out.
-    // Restoring a branch starts a fresh history, so this row stands alone.
+    // A timer restored from a branch gets a fresh budget; this one runs out a
+    // second later. Restoring a branch starts a fresh history, so it stands
+    // alone.
     await hooks.get("session_tree")(
       {},
       branch({
@@ -1377,6 +1478,33 @@ describe("timer", () => {
     assert.equal(listed.content[0].text, "No active timers.");
   });
 
+  test("a forked session does not inherit the timers of its source", async (t) => {
+    const { hooks, status, notices } = setup(t, runUntilCancelled);
+    // A fork is marked by the parent session path in its header. Its transcript
+    // is the source's, so replaying it would duplicate wakes the source owns.
+    const forked = {
+      sessionManager: {
+        getSessionId: () => randomUUID(),
+        getHeader: () => ({ parentSession: "/tmp/source.jsonl" }),
+        getBranch: () => [
+          {
+            type: "message",
+            message: {
+              role: "toolResult",
+              toolName: "timer_start",
+              details: armedSpec("inherited", Date.now()),
+            },
+          },
+        ],
+      },
+    };
+
+    await hooks.get("session_start")({}, forked);
+
+    assert.equal((await status({})).content[0].text, "No active timers.");
+    assert.deepEqual(notices, []);
+  });
+
   test("entries from the previous watch tool are ignored", async (t) => {
     const { hooks, status } = setup(t, runUntilCancelled);
     // The old tool stored a payload and ran under another tool name.
@@ -1391,6 +1519,8 @@ describe("timer", () => {
     };
     const branch = {
       sessionManager: {
+        getSessionId: () => "legacy-session",
+        getHeader: () => null,
         getBranch: () => [
           {
             type: "message",
@@ -1470,7 +1600,7 @@ describe("timer", () => {
     assert.match(
       result.content[0].text,
       new RegExp(
-        `^Started job "job-ok": runs \`echo hi\` in the background, no tick wakes, log .*\\/jobs\\/job-ok-\\d+\\.log; wakes you when it exits or after ${DEFAULT_JOB_TIMEOUT_SEC}s\\. It is killed when this session ends\\.$`,
+        `^Started job "job-ok": runs \`echo hi\` in the background, no tick wakes, log .*\\/jobs\\/job-ok-\\d+\\.log; wakes you when it exits or after ${DEFAULT_JOB_TIMEOUT_SEC}s\\. It keeps running, and is re-attached when you resume this session, across pi restarts and reloads; only \`timer_stop\` or the timeout kills it, and time while pi is closed does not count against that timeout\\.$`,
       ),
     );
     // The log outlives the wake, so it must record the outcome too.
@@ -1557,15 +1687,425 @@ describe("timer", () => {
     assert.deepEqual(notices, []);
   });
 
-  test("session shutdown kills a running job", async (t) => {
-    const { hooks, start, status } = setup(t, () => exit(1));
+  test("a pi process exits without waiting for the job it started", async (t) => {
+    // A real second process: without unref'ing the job, node waits for it, and
+    // quitting pi would hang for as long as the job runs.
+    const sessionId = randomUUID();
+    const extension = new URL("../extensions/timer.ts", import.meta.url).href;
+    const script = join(agentDir, "start-timer-child.mjs");
+    writeFileSync(
+      script,
+      `import timerExtension from ${JSON.stringify(extension)};
+const tools = new Map();
+const hooks = new Map();
+timerExtension({
+  registerTool: (definition) => tools.set(definition.name, definition),
+  registerCommand: () => {},
+  on: (name, handler) => hooks.set(name, handler),
+  exec: async () => ({ code: 1, stdout: "", stderr: "" }),
+  sendMessage: () => {},
+});
+const ctx = {
+  sessionManager: {
+    getSessionId: () => ${JSON.stringify(sessionId)},
+    getHeader: () => null,
+    getBranch: () => [],
+  },
+};
+await hooks.get("session_start")({}, ctx);
+await tools.get("timer_start").execute("test", {
+  id: "job-orphan",
+  start: "sleep 30",
+  timeoutSec: 60,
+});
+const listed = await tools.get("timer_status").execute("test", {});
+await hooks.get("session_shutdown")({});
+console.log(listed.content[0].text);
+`,
+    );
 
-    await start({ id: "job-shutdown", start: "sleep 30" });
-    const pid = await jobPid(status, "job-shutdown");
+    const child = spawn(process.execPath, [script], {
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    let output = "";
+    child.stdout.setEncoding("utf8");
+    child.stdout.on("data", (chunk) => {
+      output += chunk;
+    });
+    const exited = new Promise((resolve) => child.once("exit", resolve));
+    const code = await Promise.race([
+      exited,
+      wait(10_000).then(() => "timeout"),
+    ]);
+    if (code === "timeout") {
+      child.kill();
+      assert.fail("the pi process waited for its job instead of exiting");
+    }
 
-    await hooks.get("session_shutdown")({});
+    assert.equal(code, 0);
+    const pid = Number(output.match(/job pid (\d+)/)[1]);
+    assert.ok(
+      pidAlive(pid),
+      "the job is still running after the pi process exited",
+    );
+
+    // The next pi process adopts the same job and can still stop it.
+    const next = setup(t, () => exit(1), { sessionId });
+    await next.hooks.get("session_start")({}, next.branch());
+    assert.match(
+      (await next.status({ id: "job-orphan" })).content[0].text,
+      new RegExp(`^job-orphan +running .*job pid ${pid}, log `),
+    );
+    await next.stop({ id: "job-orphan" });
+    await waitGone(pid);
+  });
+
+  test("session shutdown leaves a running job for the next pi process", async (t) => {
+    const sessionId = randomUUID();
+    const first = setup(t, () => exit(1), { sessionId });
+    await first.hooks.get("session_start")({}, first.branch());
+    await first.start({ id: "job-pause", start: "sleep 30" });
+    const pid = await jobPid(first.status, "job-pause");
+
+    await first.hooks.get("session_shutdown")({});
+
+    // The job is the next process's to re-attach, not this one's to kill.
+    assert.ok(pidAlive(pid), "the job outlives the pi process that started it");
+    assert.ok(existsSync(stateFileOf(sessionId)), "the timer is checkpointed");
+
+    // A second pi on the same session takes it over without rerunning it.
+    const second = setup(t, () => exit(1), { sessionId });
+    await second.hooks.get("session_start")({}, second.branch());
+    assert.match(
+      (await second.status({ id: "job-pause" })).content[0].text,
+      new RegExp(`^job-pause +running .*job pid ${pid}, log `),
+    );
+    assert.equal(second.notices[0].details.restored, 1);
+    assert.doesNotMatch(second.notices[0].content, /orphaned|failed/);
+
+    const stopped = await second.stop({ id: "job-pause" });
+    assert.match(stopped.content[0].text, /killed its job/);
+    await waitGone(pid);
+  });
+
+  test("a resumed timer keeps its spent budget, not the wall clock", async (t) => {
+    const sessionId = randomUUID();
+    // Armed an hour ago, but pi only ever saw two seconds of it.
+    writeState(sessionId, [
+      persistedTimer("clock", {
+        condition: "false",
+        timeoutSec: 10,
+        activeMs: 2_000,
+        startedAt: Date.now() - 3_600_000,
+      }),
+    ]);
+    const { hooks, status, stop, notices, branch } = setup(t, () => exit(1), {
+      sessionId,
+    });
+
+    await hooks.get("session_start")({}, branch());
+
+    assert.match(
+      (await status({ id: "clock" })).content[0].text,
+      /^clock +running +[23]s /,
+      "the age is pi-live time, not the hour since it was armed",
+    );
+    assert.equal(
+      notices.length,
+      1,
+      "an unexpired timer only gets the resume notice",
+    );
+    assert.equal(notices[0].details.restored, 1);
+    await stop({ id: "clock" });
+  });
+
+  test("a timer whose budget ran out before shutdown times out on resume", async (t) => {
+    const sessionId = randomUUID();
+    writeState(sessionId, [
+      persistedTimer("spent", {
+        condition: "false",
+        timeoutSec: 2,
+        activeMs: 2_000,
+      }),
+    ]);
+    const { hooks, noticesAfter, status, branch } = setup(t, () => exit(1), {
+      sessionId,
+    });
+
+    await hooks.get("session_start")({}, branch());
+    const notices = await noticesAfter(2);
+    const wake = notices.at(-1);
+
+    assert.match(
+      wake.content,
+      /^\[timer spent\] timeout after 2s; timer stopped$/,
+    );
+    assert.equal(wake.details.state, "timeout");
+    assert.equal(
+      (await status({ id: "spent" })).content[0].text,
+      'Timer "spent" stopped (timed out).',
+    );
+  });
+
+  test("a resumed timer keeps its tick count and remaining budget", async (t) => {
+    const sessionId = randomUUID();
+    writeState(sessionId, [
+      persistedTimer("ticks", {
+        intervalSec: 1,
+        maxTicks: 2,
+        timeoutSec: 30,
+        activeMs: 5_000,
+        ticksSent: 1,
+      }),
+    ]);
+    const { hooks, noticesAfter, branch } = setup(t, () => exit(1), {
+      sessionId,
+    });
+
+    await hooks.get("session_start")({}, branch());
+    const notices = await noticesAfter(2);
+
+    assert.match(
+      notices.at(-1).content,
+      /^\[timer ticks\] tick 2\/2, [56]s elapsed; timer stopped$/,
+    );
+  });
+
+  test("a job that ended while pi was away reports its recorded exit", async (t) => {
+    const sessionId = randomUUID();
+    const logPath = join(agentDir, "jobs", "away.log");
+    mkdirSync(join(agentDir, "jobs"), { recursive: true });
+    writeFileSync(logPath, "built ok\n[exit 3]\n");
+    writeState(sessionId, [
+      persistedTimer("away", {
+        start: "make build",
+        logPath,
+        maxTicks: 0,
+        activeMs: 1_000,
+        job: {
+          pid: DEAD_PID,
+          logPath,
+          startedAt: Date.now() - 5_000,
+          tag: "gone-tag",
+        },
+      }),
+    ]);
+    const { hooks, noticesAfter, status, branch } = setup(t, () => exit(1), {
+      sessionId,
+    });
+
+    await hooks.get("session_start")({}, branch());
+    const wake = (await noticesAfter(1)).at(-1);
+
+    assert.match(
+      wake.content,
+      /^\[timer away\] failed: exit 3 after 5s; timer stopped\n\nbuilt ok\n\[exit 3\]$/,
+    );
+    assert.equal(wake.details.id, "away");
+    assert.equal(
+      (await status({ id: "away" })).content[0].text,
+      'Timer "away" stopped (failed: exit 3).',
+    );
+  });
+
+  test("a job that vanished while pi was away reports a lost exit status", async (t) => {
+    const sessionId = randomUUID();
+    const logPath = join(agentDir, "jobs", "lost.log");
+    mkdirSync(join(agentDir, "jobs"), { recursive: true });
+    writeFileSync(logPath, "still working\n");
+    writeState(sessionId, [
+      persistedTimer("lost", {
+        start: "make build",
+        logPath,
+        maxTicks: 0,
+        job: {
+          pid: DEAD_PID,
+          logPath,
+          startedAt: Date.now() - 3_000,
+          tag: "gone-tag",
+        },
+      }),
+    ]);
+    const { hooks, noticesAfter, branch } = setup(t, () => exit(1), {
+      sessionId,
+    });
+
+    await hooks.get("session_start")({}, branch());
+    const wake = (await noticesAfter(1)).at(-1);
+
+    assert.match(
+      wake.content,
+      /^\[timer lost\] the job ended while pi was not running, after 3s; timer stopped\n\nstill working$/,
+    );
+    assert.equal(wake.details.state, "failed");
+  });
+
+  test("an adopted job is killed when its remaining budget runs out", async (t) => {
+    const sessionId = randomUUID();
+    const tag = randomUUID();
+    const { pid, logPath } = spawnJobShell("sleep 30", tag);
+    killGroupAfter(t, pid);
+    writeState(sessionId, [
+      persistedTimer("adopted", {
+        start: "sleep 30",
+        logPath,
+        maxTicks: 0,
+        timeoutSec: 1,
+        job: { pid, logPath, startedAt: Date.now(), tag },
+      }),
+    ]);
+    const { hooks, noticesAfter, branch } = setup(t, () => exit(1), {
+      sessionId,
+    });
+
+    await hooks.get("session_start")({}, branch());
+    const wake = (await noticesAfter(2)).at(-1);
+
+    assert.match(
+      wake.content,
+      /^\[timer adopted\] timeout after 1s; job killed; timer stopped\n\n\[killed by the timer\]$/,
+    );
+    await waitGone(pid);
+    assert.match(readFileSync(logPath, "utf8"), /\[killed by the timer\]\n$/);
+  });
+
+  test("an adopted job that exits on its own reports its exit code", async (t) => {
+    const sessionId = randomUUID();
+    const tag = randomUUID();
+    const { pid, logPath } = spawnJobShell("sleep 0.5; exit 4", tag);
+    killGroupAfter(t, pid);
+    writeState(sessionId, [
+      persistedTimer("adopted-exit", {
+        start: "sleep 0.5; exit 4",
+        logPath,
+        maxTicks: 0,
+        timeoutSec: 60,
+        job: { pid, logPath, startedAt: Date.now(), tag },
+      }),
+    ]);
+    const { hooks, noticesAfter, branch } = setup(t, () => exit(1), {
+      sessionId,
+    });
+
+    await hooks.get("session_start")({}, branch());
+    const wake = (await noticesAfter(2)).at(-1);
+
+    // Found by the adoption poll, then read from the log the shell wrote.
+    assert.match(
+      wake.content,
+      /^\[timer adopted-exit\] failed: exit 4 after \ds; timer stopped\n\n\[exit 4\]$/,
+    );
+    assert.equal(wake.details.state, "failed");
+  });
+
+  test("an adopted job that already ended at the deadline reports its exit", async (t) => {
+    const sessionId = randomUUID();
+    const tag = randomUUID();
+    // It exits well before the 1s deadline, and the 2s adoption poll has not
+    // run yet, so the deadline path has only the log to go on.
+    const { pid, logPath } = spawnJobShell("sleep 0.2; exit 0", tag);
+    killGroupAfter(t, pid);
+    writeState(sessionId, [
+      persistedTimer("adopted-race", {
+        start: "sleep 0.2; exit 0",
+        logPath,
+        maxTicks: 0,
+        timeoutSec: 1,
+        job: { pid, logPath, startedAt: Date.now(), tag },
+      }),
+    ]);
+    const { hooks, noticesAfter, branch } = setup(t, () => exit(1), {
+      sessionId,
+    });
+
+    await hooks.get("session_start")({}, branch());
+    const wake = (await noticesAfter(2)).at(-1);
+
+    assert.match(
+      wake.content,
+      /^\[timer adopted-race\] exited 0 after \ds; timer stopped\n\n\[exit 0\]$/,
+    );
+    assert.doesNotMatch(wake.content, /timeout/);
+    await waitGone(pid);
+  });
+
+  test("a pid that no longer carries its timer's tag is not signalled", async (t) => {
+    const sessionId = randomUUID();
+    const tag = randomUUID();
+    const { pid, logPath } = spawnJobShell("sleep 30", tag);
+    killGroupAfter(t, pid);
+    // The state file names the live pid but a tag that is not its own, which is
+    // what a reboot that reused the pid looks like.
+    writeState(sessionId, [
+      persistedTimer("reused", {
+        start: "sleep 30",
+        logPath,
+        maxTicks: 0,
+        job: { pid, logPath, startedAt: Date.now(), tag: randomUUID() },
+      }),
+    ]);
+    const { hooks, noticesAfter, branch } = setup(t, () => exit(1), {
+      sessionId,
+    });
+
+    await hooks.get("session_start")({}, branch());
+    const wake = (await noticesAfter(1)).at(-1);
+
+    assert.match(
+      wake.content,
+      /^\[timer reused\] the job ended while pi was not running, after \ds; timer stopped$/,
+    );
+    assert.equal(wake.details.state, "failed");
+    assert.ok(pidAlive(pid), "a pid the timer cannot identify is left alone");
+  });
+
+  test("a branch restore kills a job its new branch no longer has", async (t) => {
+    const { hooks, start, status, branch } = setup(t, () => exit(1));
+
+    await start({ id: "abandoned", start: "sleep 30" });
+    const pid = await jobPid(status, "abandoned");
+    killGroupAfter(t, pid);
+
+    // The new branch never saw this timer, so nothing is left to watch its job.
+    await hooks.get("session_tree")({}, branch());
 
     await waitGone(pid);
+    assert.equal(
+      (await status({})).content[0].text,
+      "No active timers.",
+      "the abandoned timer is gone with its job",
+    );
+  });
+
+  test("the state file disappears when no timer is left", async (t) => {
+    const sessionId = randomUUID();
+    const { hooks, start, stop, branch } = setup(t, runUntilCancelled, {
+      sessionId,
+    });
+    await hooks.get("session_start")({}, branch());
+
+    await start({ id: "file-timer", condition: "false" });
+    assert.ok(existsSync(stateFileOf(sessionId)), "arming writes the file");
+
+    await stop({ id: "file-timer" });
+    assert.equal(existsSync(stateFileOf(sessionId)), false);
+  });
+
+  test("a branch restore keeps the budget a timer already spent", async (t) => {
+    const { hooks, start, status, branch } = setup(t, runUntilCancelled);
+    const { details } = await start({
+      id: "carried",
+      condition: "false",
+      timeoutSec: 60,
+    });
+    await wait(1_200);
+
+    await hooks.get("session_tree")({}, branch(details));
+
+    assert.match(
+      (await status({ id: "carried" })).content[0].text,
+      /^carried +running +[12]s /,
+    );
   });
 
   test(`the exit wake carries only the last ${JOB_TAIL_LINES} log lines`, async (t) => {

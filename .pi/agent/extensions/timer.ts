@@ -13,16 +13,25 @@
  * exits 0, a periodic timer spends its tick budget, or its deadline passes.
  * Every ending wakes the agent with a short notification. While a job runs,
  * `onTick` and `condition` read its output on stdin. Timers are named by the
- * agent, so every wake and the status list are self-describing. The user-facing
- * `/timers` command shows the session's timers as an aligned table: the running
- * ones first, then the ones that ended, each with the same state marker the
- * `/subagents` view uses. The order is fixed when the view opens and does not
+ * agent, so every wake and the status list are self-describing.
+ *
+ * A timer outlives the pi process that armed it. Its job runs detached with
+ * its output going to a log, and the registry checkpoints every timer to a
+ * per-session state file under the agent dir, so quitting pi, reloading
+ * extensions, rebooting, and resuming the session bring the timers back. Only
+ * pi-live time counts against `timeoutSec`: the clock stops while pi is not
+ * running, and a resumed timer continues with its remaining budget. A resumed
+ * job whose process is still alive is re-attached by its verified pid; one
+ * that ended meanwhile is reported once, with whatever its log recorded. The
+ * user-facing `/timers` command shows the session's timers as an aligned table:
+ * the running ones first, then the ones that ended, each with the same state
+ * marker the `/subagents` view uses. The order is fixed when the view opens and does not
  * follow state changes after that, so no row moves under the reader. Enter
  * opens one timer's detail: what it runs or waits for, its deadlines, and the
  * tail of the job log it writes.
  */
 
-import { type ChildProcess, spawn } from "node:child_process";
+import { type ChildProcess, execFileSync, spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import {
   appendFileSync,
@@ -31,7 +40,11 @@ import {
   fstatSync,
   mkdirSync,
   openSync,
+  readFileSync,
   readSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
 } from "node:fs";
 import { rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -42,6 +55,7 @@ import {
   DEFAULT_MAX_LINES,
   type ExtensionAPI,
   type ExtensionCommandContext,
+  type ExtensionContext,
   type ExtensionToolContext,
   formatSize,
   getAgentDir,
@@ -97,6 +111,22 @@ const MAX_TIMEOUT_MS = 2 ** 31 - 1;
 
 // Job logs live under the agent dir, one file per run.
 const JOB_LOG_DIR = "jobs";
+
+// One timer state file per session, under the agent dir, so a resumed session
+// finds the timers it left running.
+const TIMER_STATE_DIR = "timers";
+const STATE_VERSION = 1;
+
+// How often a running timer checkpoints its pi-live time, which bounds what a
+// crash or power loss can lose; a graceful shutdown checkpoints exactly.
+const CHECKPOINT_MS = 30_000;
+
+// How often a re-attached job is checked for having exited while pi was away.
+const ADOPT_POLL_MS = 2_000;
+
+// Marks a job shell in its command line, so a resumed process can tell the job
+// from an unrelated process that inherited its pid after a reboot.
+const JOB_TAG_PREFIX = "# pi-timer-job ";
 
 // A wake carries only the end of the log: read from the end, then keep a few
 // lines, so a log that grew for hours cannot flood the model.
@@ -245,6 +275,12 @@ interface JobOutcome {
   signal: NodeJS.Signals | null;
   /** Spawn failure, when the command never ran. */
   error?: string;
+  /**
+   * The job ended while no pi process watched it, so its exit status is gone.
+   *
+   * Only a re-attached job can end this way; its log still says what it did.
+   */
+  lost?: boolean;
 }
 
 /** A background command owned by one timer. */
@@ -254,13 +290,34 @@ interface Job {
   logPath: string;
   /** Unix timestamp in milliseconds when the job was spawned. */
   startedAt: number;
-  proc: ChildProcess;
-  /** Resolves once the process exited or failed to spawn. */
+  /**
+   * Token in the job shell's command line.
+   *
+   * A resumed process verifies it before trusting a pid read from disk, so a
+   * reboot that reused the pid cannot make a timer signal a stranger.
+   */
+  tag: string;
+  /** Process-group leader, or `undefined` when the spawn failed. */
+  pid?: number;
+  /** Child handle, only while this process spawned the job. */
+  proc?: ChildProcess;
+  /** The outcome, once the job ended. */
+  exit?: JobOutcome;
+  /** Resolves once the process exited, or a re-attached one vanished. */
   done: Promise<JobOutcome>;
 }
 
 /** One active timer. */
 interface Timer extends TimerSpec {
+  /**
+   * Pi-live milliseconds the timer had run at `liveSince`.
+   *
+   * Time while pi was not running does not count against `timeoutSec`, so
+   * elapsed time is this checkpoint plus the current process's monotonic time.
+   */
+  activeMs: number;
+  /** `performance.now()` at the moment `activeMs` was last checkpointed. */
+  liveSince: number;
   /** Ticks actually delivered. */
   ticksSent: number;
   /** A notification is queued and not yet acted on by the agent. */
@@ -282,11 +339,40 @@ type TimerDetails =
   | { action: "status"; id?: string };
 
 /** Details stored on a timer notification. */
-interface TimerNoticeDetails {
-  /** Timer id that produced the notification. */
-  id: string;
-  /** Notification kind; used to retire a finished timer on replay. */
-  state: TimerState;
+type TimerNoticeDetails =
+  | { id: string; state: TimerState }
+  | { restored: number };
+
+/** A job a resumed process can re-attach to, as written to its state file. */
+interface PersistedJob {
+  /** Process-group leader, absent when the spawn never produced one. */
+  pid?: number;
+  /** Absolute path of the job log. */
+  logPath: string;
+  /** Unix timestamp in milliseconds when the job was spawned. */
+  startedAt: number;
+  /** Token the job shell was started with, to verify the pid. */
+  tag: string;
+}
+
+/** One timer as written to a session's state file. */
+interface PersistedTimer extends TimerSpec {
+  /** Pi-live milliseconds the timer had run at the checkpoint. */
+  activeMs: number;
+  /** Tick wakes delivered before the checkpoint. */
+  ticksSent: number;
+  /** Background job the timer watched, when it has one. */
+  job?: PersistedJob;
+}
+
+/** Contents of one session's timer state file. */
+interface TimerStateFile {
+  version: number;
+  /** Session the timers belong to. */
+  sessionId: string;
+  /** Wall-clock time of the checkpoint, for diagnosis. */
+  updatedAt: number;
+  timers: PersistedTimer[];
 }
 
 /**
@@ -319,13 +405,27 @@ function requireId(id: string): string {
 }
 
 /**
- * Format elapsed seconds since a timer was armed.
+ * Pi-live milliseconds a timer has been running.
  *
- * @param startedAt - Unix timestamp in milliseconds when the timer was armed.
- * @returns Whole seconds, e.g. `40s`.
+ * `activeMs` holds what earlier pi processes observed; the rest is this
+ * process's monotonic clock. Wall-clock time while pi was not running is in
+ * neither term, so a restart neither spends a timer's budget nor shortens it.
+ *
+ * @param timer - Timer to measure.
+ * @returns Elapsed pi-live milliseconds.
  */
-function elapsed(startedAt: number): string {
-  return `${Math.floor((Date.now() - startedAt) / 1000)}s`;
+function liveMs(timer: Timer): number {
+  return timer.activeMs + (performance.now() - timer.liveSince);
+}
+
+/**
+ * Format a duration in whole seconds.
+ *
+ * @param ms - Duration in milliseconds.
+ * @returns Text such as `40s`.
+ */
+function durationText(ms: number): string {
+  return `${Math.floor(ms / 1000)}s`;
 }
 
 /**
@@ -504,6 +604,77 @@ function jobLogPath(name: string): string {
   return path;
 }
 
+/**
+ * Absolute path of a session's timer state file.
+ *
+ * @param sessionId - Session whose timers it holds.
+ * @returns The path, without creating anything: a session with no active timer
+ *   has no file, which is what marks it as having nothing to resume.
+ */
+function timerStatePath(sessionId: string): string {
+  return join(getAgentDir(), TIMER_STATE_DIR, `${sessionId}.json`);
+}
+
+/**
+ * Whether one record from a state file can be armed as it stands.
+ *
+ * A record that lost its numbers, or picked up a value that would make a wait
+ * loop spin, is dropped: a hand-edited or damaged file must not turn into a
+ * busy timer.
+ *
+ * @param timer - Record read from the state file.
+ * @returns `true` when every field a timer loop depends on is usable.
+ */
+function isPersistedTimer(timer: PersistedTimer): boolean {
+  if (typeof timer !== "object" || timer === null) {
+    return false;
+  }
+  return (
+    typeof timer.id === "string" &&
+    ID_PATTERN.test(timer.id) &&
+    Number.isFinite(timer.activeMs) &&
+    timer.activeMs >= 0 &&
+    Number.isFinite(timer.ticksSent) &&
+    timer.ticksSent >= 0 &&
+    Number.isFinite(timer.intervalSec) &&
+    timer.intervalSec >= MIN_INTERVAL_SEC &&
+    Number.isFinite(timer.timeoutSec) &&
+    timer.timeoutSec >= MIN_TIMEOUT_SEC
+  );
+}
+
+/**
+ * Read the timer state a session left behind.
+ *
+ * @param sessionId - Session whose timers to read.
+ * @returns The saved state with only usable records, or `undefined` when the
+ *   session left nothing to resume.
+ */
+function readTimerState(sessionId: string): TimerStateFile | undefined {
+  const path = timerStatePath(sessionId);
+  if (!existsSync(path)) {
+    return undefined;
+  }
+  let state: TimerStateFile;
+  try {
+    state = JSON.parse(readFileSync(path, "utf8")) as TimerStateFile;
+  } catch {
+    // A file that cannot be read costs only this session's timers, but leaving
+    // it in place would fail every later start of that session too.
+    rmSync(path, { force: true });
+    return undefined;
+  }
+  if (state.version !== STATE_VERSION) {
+    // A file from another build cannot be attributed to a live job, so it is
+    // ignored rather than guessed at.
+    return undefined;
+  }
+  const timers = Array.isArray(state.timers)
+    ? state.timers.filter(isPersistedTimer)
+    : [];
+  return { ...state, timers };
+}
+
 /** Wake-ready callback output, plus the file holding the full text. */
 interface CallbackOutput {
   /** Preview, or the whole output when it fits. */
@@ -558,12 +729,13 @@ async function formatCallbackOutput(
 /**
  * Classify how a job ended, for its wake and its `/timers` marker.
  *
- * @param outcome - Exit code, signal, or spawn failure.
+ * @param outcome - Exit code, signal, spawn failure, or a job that ended while
+ *   pi was not watching it.
  * @returns `killed` for a signal from outside the timer, `done` for exit 0,
  *   and `failed` otherwise.
  */
 function jobEndState(outcome: JobOutcome): "done" | "failed" | "killed" {
-  if (outcome.error) return "failed";
+  if (outcome.error || outcome.lost) return "failed";
   if (outcome.signal) return "killed";
   return outcome.code === 0 ? "done" : "failed";
 }
@@ -571,26 +743,31 @@ function jobEndState(outcome: JobOutcome): "done" | "failed" | "killed" {
 /**
  * Name how a job ended, for its wake, its log, and its retirement reason.
  *
- * @param outcome - Exit code, signal, or spawn failure.
+ * @param outcome - Exit code, signal, spawn failure, or a job that ended while
+ *   pi was not watching it.
  * @param elapsedText - Time since the job started, e.g. `41s`.
- * @returns The wake line, the short reason for `timer_stop`, and the log marker.
+ * @returns The wake line and the short reason for `timer_stop`.
  */
 function describeJobEnd(
   outcome: JobOutcome,
   elapsedText: string,
-): { line: string; reason: string; marker: string } {
+): { line: string; reason: string } {
+  if (outcome.lost) {
+    return {
+      line: `the job ended while pi was not running, after ${elapsedText}`,
+      reason: "ended while pi was not running",
+    };
+  }
   if (outcome.error) {
     return {
       line: `failed to start: ${outcome.error}`,
       reason: "failed to start",
-      marker: "",
     };
   }
   if (outcome.signal) {
     return {
       line: `killed by ${outcome.signal} after ${elapsedText}, not by the timer`,
       reason: `killed by ${outcome.signal}`,
-      marker: `killed by ${outcome.signal}`,
     };
   }
   return {
@@ -599,19 +776,20 @@ function describeJobEnd(
         ? `exited 0 after ${elapsedText}`
         : `failed: exit ${outcome.code} after ${elapsedText}`,
     reason: outcome.code === 0 ? "exited 0" : `failed: exit ${outcome.code}`,
-    marker: `exit ${outcome.code}`,
   };
 }
 
 /**
- * Append how a job ended to its log.
+ * Append to a job log how something other than its shell ended it.
  *
- * The log outlives the wake that reported the outcome, so the file has to say
- * it too. A job that failed to spawn has no log to write to, and a log that
- * disappeared is not worth an error.
+ * A job that exits by itself records its own `[exit N]` marker, so this covers
+ * a job the timer signalled and one a signal from outside ended: neither has a
+ * shell left to write the line. The log outlives the wake that reported the
+ * end, so the file has to say it too. A job that failed to spawn has no log to
+ * write to, and a log that disappeared is not worth an error.
  *
  * @param path - Absolute path of the job log.
- * @param marker - Short status, e.g. `exit 0` or `killed by the timer`.
+ * @param marker - Short status, e.g. `killed by timer_stop`.
  */
 function appendLogMarker(path: string, marker: string): void {
   if (!marker || !existsSync(path)) {
@@ -670,6 +848,92 @@ function readLogTail(
 }
 
 /**
+ * Whether a pid is still alive.
+ *
+ * `process.kill(pid, 0)` checks without signalling; ESRCH means it is gone.
+ *
+ * @param pid - Pid to check.
+ * @returns `true` while the process exists.
+ */
+function pidAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Whether a pid still runs the job shell carrying this tag.
+ *
+ * A leader pid can be recycled after a reboot, so the tag in the command line
+ * is the identity that matters. `ps` is the portable way to read it, and a pid
+ * that no longer exists makes it fail, which is the answer too.
+ *
+ * @param pid - Recorded process-group leader.
+ * @param tag - Token the job shell was started with.
+ * @returns `true` while that shell is alive.
+ */
+function jobAlive(pid: number, tag: string): boolean {
+  try {
+    const command = execFileSync("ps", ["-o", "command=", "-p", String(pid)], {
+      encoding: "utf8",
+      // A pid that no longer exists makes ps complain; that is just "gone".
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    return command.includes(`${JOB_TAG_PREFIX}${tag}`);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Recover how a job ended from its log after pi restarted.
+ *
+ * The job shell appends `[exit N]` as its last act, so the marker survives a
+ * pi restart even though the child process handle does not. Only the end of the
+ * last line is trusted, so output that merely mentions a marker cannot pass for
+ * one. A job signalled directly, or a machine that rebooted, leaves no marker:
+ * its status is gone, but the log tail still says what it did.
+ *
+ * @param logPath - Absolute path of the job log.
+ * @returns The recovered outcome, or an outcome flagged as lost.
+ */
+function recoverOutcome(logPath: string): JobOutcome {
+  const lastLine = readLogTail(logPath).split("\n").at(-1) ?? "";
+  const marker = /\[exit (\d+)\]$/.exec(lastLine);
+  return marker
+    ? { code: Number(marker[1]), signal: null }
+    : { code: null, signal: null, lost: true };
+}
+
+/**
+ * Build the shell script that runs a job's command.
+ *
+ * The subshell keeps the wrapper alive to record the exit status, and the
+ * leading comment carries the job tag into the process command line, where a
+ * resumed process can verify the pid it read from disk. The marker the wrapper
+ * prints is the same `[exit N]` line the timer used to append, so an exit that
+ * happened while pi was not running still leaves its status in the log. The
+ * wrapper exits with that same status, so this process reports what the log
+ * says even when the command never ran.
+ *
+ * @param tag - Token that identifies this job's shell.
+ * @param command - Shell command to run.
+ * @returns Script for `bash -c`.
+ */
+function jobScript(tag: string, command: string): string {
+  return [
+    `${JOB_TAG_PREFIX}${tag}`,
+    `(\n${command}\n)`,
+    "code=$?",
+    "printf '[exit %s]\\n' \"$code\"",
+    'exit "$code"',
+  ].join("\n");
+}
+
+/**
  * Spawn a job with its output going to `logPath`.
  *
  * `-c` rather than `-lc`, matching the built-in bash tool: a login shell would
@@ -677,14 +941,20 @@ function readLogTail(
  * closed even when spawning throws, so the child remains the only writer.
  *
  * @param command - Shell command to run.
+ * @param tag - Token that identifies this job's shell.
  * @param cwd - Directory to run in.
  * @param logPath - File that receives stdout and stderr.
  * @returns The spawned shell, a process-group leader.
  */
-function spawnJob(command: string, cwd: string, logPath: string): ChildProcess {
+function spawnJob(
+  command: string,
+  tag: string,
+  cwd: string,
+  logPath: string,
+): ChildProcess {
   const log = openSync(logPath, "a");
   try {
-    return spawn("bash", ["-c", command], {
+    return spawn("bash", ["-c", jobScript(tag, command)], {
       cwd,
       detached: true,
       stdio: ["ignore", log, log],
@@ -692,6 +962,53 @@ function spawnJob(command: string, cwd: string, logPath: string): ChildProcess {
   } finally {
     closeSync(log);
   }
+}
+
+/**
+ * Take over a job started by an earlier pi process.
+ *
+ * Its exit is not a child event anymore, so the pid is polled; once it is gone
+ * the log supplies whatever status the shell recorded. The poll is cheap and
+ * does not re-verify the tag: a reused pid can delay the report, but `kill()`
+ * checks the tag again before it signals anything.
+ *
+ * @param persisted - Job record read from the state file.
+ * @param id - Timer id the job belonged to.
+ * @returns A job whose `done` resolves when that process disappears.
+ */
+function adoptedJob(persisted: PersistedJob, id: string): Job {
+  let settle: (outcome: JobOutcome) => void = () => {};
+  const done = new Promise<JobOutcome>((resolve) => {
+    settle = resolve;
+  });
+  const job: Job = { id, ...persisted, done };
+  const pid = persisted.pid as number;
+  const poll = setInterval(() => {
+    if (pidAlive(pid)) {
+      return;
+    }
+    clearInterval(poll);
+    job.exit = recoverOutcome(persisted.logPath);
+    settle(job.exit);
+  }, ADOPT_POLL_MS);
+  poll.unref();
+  return job;
+}
+
+/**
+ * Describe a job that already ended before this process could watch it.
+ *
+ * @param persisted - Job record read from the state file.
+ * @param id - Timer id the job belonged to.
+ * @param outcome - What the log says, or that the status is gone.
+ * @returns A job whose `done` is already resolved.
+ */
+function endedJob(
+  persisted: PersistedJob,
+  id: string,
+  outcome: JobOutcome,
+): Job {
+  return { id, ...persisted, exit: outcome, done: Promise.resolve(outcome) };
 }
 
 /**
@@ -759,7 +1076,7 @@ function collectActiveTimers(
 
     if (entry.type === "custom_message" && entry.customType === NOTICE_TYPE) {
       const details = entry.details as TimerNoticeDetails | undefined;
-      if (details?.id && details.state !== "tick") {
+      if (details && "id" in details && details.state !== "tick") {
         active.delete(details.id);
       }
     }
@@ -808,6 +1125,10 @@ class TimerRegistry {
    * must never spawn or signal one from a pid it finds in the transcript.
    */
   private jobs: Map<string, Job>;
+  /** Session whose timers this registry owns, once a session has started. */
+  private sessionId?: string;
+  /** Periodic checkpoint while any timer is active. */
+  private heartbeat?: NodeJS.Timeout;
 
   /**
    * @param pi - Extension API used for command execution and notifications.
@@ -855,6 +1176,8 @@ class TimerRegistry {
         params.timeoutSec ??
         (command ? DEFAULT_JOB_TIMEOUT_SEC : DEFAULT_TIMEOUT_SEC),
       startedAt,
+      activeMs: 0,
+      liveSince: performance.now(),
       ticksSent: 0,
       noticePending: false,
       stopped: false,
@@ -868,15 +1191,17 @@ class TimerRegistry {
       timer.logPath = timer.job.logPath;
     }
     this.arm(timer);
+    this.persist();
     return toTimerSpec(timer);
   }
 
   /**
    * Start a command as its own process group, with its output going to a log.
    *
-   * The child is detached into its own group so `timer_stop`, a timeout, or
-   * session shutdown can signal the whole job, and so the log fd replaces the
-   * pipes that would otherwise make the exit wait on grandchildren.
+   * The child is detached into its own group so `timer_stop` or a timeout can
+   * signal the whole job, and so the log fd replaces the pipes that would
+   * otherwise make the exit wait on grandchildren. Detaching also lets the job
+   * outlive this pi process, which is what a resumed timer re-attaches to.
    *
    * @param id - Timer id, which names the log.
    * @param command - Shell command to run.
@@ -891,7 +1216,11 @@ class TimerRegistry {
     cwd: string,
   ): Job {
     const logPath = jobLogPath(`${id}-${startedAt}.log`);
-    const proc = spawnJob(command, cwd, logPath);
+    const tag = randomUUID();
+    const proc = spawnJob(command, tag, cwd, logPath);
+    // The job outlives pi, so it must not hold pi open: without this, quitting
+    // waits for a job that may run for a day.
+    proc.unref();
 
     const done = new Promise<JobOutcome>((resolve) => {
       proc.once("exit", (code, signal) => resolve({ code, signal }));
@@ -899,7 +1228,10 @@ class TimerRegistry {
         resolve({ code: null, signal: null, error: String(error) }),
       );
     });
-    const job: Job = { id, logPath, startedAt, proc, done };
+    const job: Job = { id, logPath, startedAt, tag, pid: proc.pid, proc, done };
+    void done.then((outcome) => {
+      job.exit = outcome;
+    });
     this.jobs.set(id, job);
     // A job can lose its timer when a branch is restored without it. Drop the
     // entry once it exits, so the id is reusable and nothing leaks.
@@ -912,7 +1244,7 @@ class TimerRegistry {
   }
 
   /**
-   * Stop a job: stop, expiry and session shutdown all come through here.
+   * Stop a job: stop and expiry both come through here.
    *
    * The wake that would report the exit is suppressed for a stop, since the
    * caller already told the agent. The log still records who ended it, for a
@@ -920,26 +1252,34 @@ class TimerRegistry {
    * when the leader has already exited, so a command's own background children
    * do not outlive a timeout or a stop.
    *
+   * A job restored from disk is signalled only after its tag confirms the pid
+   * is still that job, so a reboot that reused the pid cannot make a timer kill
+   * a stranger's process group.
+   *
    * @param job - Job to kill.
    * @param marker - How the log should say it ended.
+   * @returns Whether a signal was sent, so the caller only waits for an exit
+   *   that this timer caused.
    */
-  private kill(job: Job, marker: string): void {
-    const { pid } = job.proc;
-    if (pid === undefined) {
-      return;
+  private kill(job: Job, marker: string): boolean {
+    const { pid } = job;
+    if (pid === undefined || job.exit) {
+      return false;
     }
-    if (job.proc.exitCode === null && job.proc.signalCode === null) {
-      signalGroup(pid, "SIGTERM");
-      const escalate = setTimeout(
-        () => signalGroup(pid, "SIGKILL"),
-        KILL_GRACE_MS,
-      );
-      escalate.unref();
-      // A group that ended before the grace period must not be signalled again
-      // under a pid the system may have since reused.
-      void job.done.then(() => clearTimeout(escalate));
+    if (!job.proc && !jobAlive(pid, job.tag)) {
+      return false;
     }
+    signalGroup(pid, "SIGTERM");
+    const escalate = setTimeout(
+      () => signalGroup(pid, "SIGKILL"),
+      KILL_GRACE_MS,
+    );
+    escalate.unref();
+    // A group that ended before the grace period must not be signalled again
+    // under a pid the system may have since reused.
+    void job.done.then(() => clearTimeout(escalate));
     void job.done.then(() => appendLogMarker(job.logPath, marker));
+    return true;
   }
 
   /**
@@ -971,9 +1311,10 @@ class TimerRegistry {
    * row instead of dropping it from the list.
    *
    * @param id - Id of the timer to cancel.
-   * @returns The cancelled timer, or `undefined` when nothing had that id.
+   * @returns The cancelled timer and whether its job was signalled, or
+   *   `undefined` when nothing had that id.
    */
-  stop(id: string): Timer | undefined {
+  stop(id: string): { timer: Timer; signalled: boolean } | undefined {
     const timer = this.timers.get(id);
     if (!timer) {
       return undefined;
@@ -981,18 +1322,19 @@ class TimerRegistry {
 
     timer.stopped = true;
     timer.controller.abort();
+    let signalled = false;
     if (timer.job) {
-      this.kill(timer.job, "killed by timer_stop");
+      signalled = this.kill(timer.job, "killed by timer_stop");
       this.jobs.delete(id);
     }
     this.retire(
       toTimerSpec(timer),
       "killed by timer_stop",
       "killed",
-      elapsed(timer.startedAt),
+      durationText(liveMs(timer)),
       timer,
     );
-    return timer;
+    return { timer, signalled };
   }
 
   /**
@@ -1032,6 +1374,7 @@ class TimerRegistry {
     if (!oldest.done && this.retired.size > RETIRED_HISTORY) {
       this.retired.delete(oldest.value);
     }
+    this.persist();
   }
 
   /**
@@ -1047,8 +1390,9 @@ class TimerRegistry {
   /**
    * Cancel every active timer without signalling the jobs they watch.
    *
-   * `restore()` uses this: a branch switch abandons the timers of the old
-   * timeline, but the commands they started are not the branch's to kill.
+   * `close()` uses this at shutdown, where the jobs must outlive the process.
+   * `restore()` uses it too and then re-arms what the new timeline still has; a
+   * job that nothing re-arms is killed there, not here.
    */
   stopAll(): void {
     for (const timer of this.timers.values()) {
@@ -1057,26 +1401,113 @@ class TimerRegistry {
     }
     this.timers.clear();
     this.retired.clear();
+    this.stopHeartbeat();
   }
 
   /**
-   * Stop watching and kill every job, for session teardown.
+   * Stop watching for the end of the session and save what is still running.
    *
-   * Awaited so `SIGTERM` reaches each job before the process exits; the grace
-   * escalation still sends `SIGKILL` to anything that ignores it.
+   * Jobs are deliberately left running: the next pi process resumes the same
+   * timers from the state file and re-attaches them, which is what makes a
+   * timer outlive a reload, a restart, or a reboot.
    */
-  async killJobs(): Promise<void> {
-    const jobs = [...this.jobs.values()];
+  close(): void {
+    this.checkpoint();
     this.stopAll();
-    for (const job of jobs) {
-      this.kill(job, "killed at session shutdown");
+  }
+
+  /**
+   * Write the active timers to this session's state file.
+   *
+   * Called on every change and by the heartbeat, so a crash loses at most one
+   * checkpoint interval of pi-live time; a graceful shutdown checkpoints
+   * exactly. A session with no active timer drops its file, so a later resume
+   * cannot resurrect anything.
+   */
+  private persist(): void {
+    if (!this.sessionId) {
+      return;
     }
-    // Bounded: a job stuck in uninterruptible sleep must not hold pi open.
-    await Promise.race([
-      Promise.all(jobs.map((job) => job.done)),
-      sleep(KILL_GRACE_MS + 1_000),
-    ]);
-    this.jobs.clear();
+    const path = timerStatePath(this.sessionId);
+    const timers = [...this.timers.values()].map((timer) =>
+      this.persisted(timer),
+    );
+    if (timers.length === 0) {
+      rmSync(path, { force: true });
+      this.stopHeartbeat();
+      return;
+    }
+    const state: TimerStateFile = {
+      version: STATE_VERSION,
+      sessionId: this.sessionId,
+      updatedAt: Date.now(),
+      timers,
+    };
+    mkdirSync(dirname(path), { recursive: true });
+    // Written beside the target and renamed, so a crash mid-write leaves the
+    // previous state readable instead of half a file. The pid keeps two pi
+    // processes on one session from tearing each other's temp file.
+    const temp = `${path}.${process.pid}.tmp`;
+    writeFileSync(temp, `${JSON.stringify(state, null, 2)}\n`);
+    renameSync(temp, path);
+    this.startHeartbeat();
+  }
+
+  /**
+   * Snapshot every timer's pi-live time and write the state file.
+   *
+   * The checkpoint folds the current process's monotonic time into `activeMs`
+   * and restarts the live window, so a later process can resume the budget
+   * without counting the outage.
+   */
+  private checkpoint(): void {
+    const now = performance.now();
+    for (const timer of this.timers.values()) {
+      timer.activeMs = liveMs(timer);
+      timer.liveSince = now;
+    }
+    this.persist();
+  }
+
+  /**
+   * Describe one timer as the state file stores it.
+   *
+   * @param timer - Timer to serialize.
+   * @returns Its specification plus the runtime state a resume needs.
+   */
+  private persisted(timer: Timer): PersistedTimer {
+    const { job } = timer;
+    return {
+      ...toTimerSpec(timer),
+      activeMs: liveMs(timer),
+      ticksSent: timer.ticksSent,
+      // A job whose spawn never produced a pid is still recorded: on resume it
+      // reports why it has no process instead of waiting out a phantom timer.
+      job: job && {
+        pid: job.pid,
+        logPath: job.logPath,
+        startedAt: job.startedAt,
+        tag: job.tag,
+      },
+    };
+  }
+
+  /** Checkpoint periodically while a timer is active. */
+  private startHeartbeat(): void {
+    if (this.heartbeat) {
+      return;
+    }
+    this.heartbeat = setInterval(() => this.checkpoint(), CHECKPOINT_MS);
+    this.heartbeat.unref();
+  }
+
+  /** Stop the checkpoint loop once nothing is left to save. */
+  private stopHeartbeat(): void {
+    if (!this.heartbeat) {
+      return;
+    }
+    clearInterval(this.heartbeat);
+    this.heartbeat = undefined;
   }
 
   /** Forget which timers still have a queued notification. */
@@ -1192,50 +1623,189 @@ class TimerRegistry {
         ? `${timer.ticksSent}/unlimited`
         : `${timer.ticksSent}/${timer.maxTicks}`;
     const target = timer.job
-      ? `job pid ${timer.job.proc.pid ?? "?"}, log ${timer.job.logPath}`
+      ? `job pid ${timer.job.pid ?? "?"}, log ${timer.job.logPath}`
       : timer.condition
         ? `cond: ${timer.condition}`
         : "timer, no condition";
     return {
       id: timer.id,
       state: "running",
-      age: elapsed(timer.startedAt),
+      age: durationText(liveMs(timer)),
       ticks: `ticks ${ticks}`,
       target,
       spec: toTimerSpec(timer),
-      pid: timer.job?.proc.pid,
+      pid: timer.job?.pid,
     };
   }
 
   /**
-   * Replace the current timers with those recorded on a session branch.
+   * Rebuild the active timers when a session starts or its branch changes.
    *
-   * In-flight loops are cancelled first, so a branch switch cannot leave
-   * orphaned pollers that keep notifying about an abandoned timeline. A job
-   * entry replayed from the transcript is never spawned or signalled again: it
-   * either matches a job this process still runs, or it belonged to an earlier
-   * pi process and only its log is left.
+   * A started session reads its state file: that record is newer than the
+   * transcript and is the only place a live job and the pi-live elapsed time
+   * are kept, so a restart resumes the budget instead of spending it. A branch
+   * change always follows the branch it is given, carrying over the runtime
+   * state of the timers that survive the switch.
    *
-   * @param entries - Active session branch entries.
+   * A branched session (`/fork`, `/clone`, `--fork`) is the one transcript that
+   * does not bring timers along: it copies what another session said, not the
+   * work behind it, so replaying the timers there would duplicate wakes and
+   * report jobs it never started. Such a session's header names its parent.
+   *
+   * @param ctx - Context of the session that is starting or switching.
+   * @param source - `session_start` reads the state file; `session_tree` uses
+   *   the branch alone.
    */
-  restore(entries: readonly SessionEntry[]): void {
+  async restore(
+    ctx: ExtensionContext,
+    source: "session_start" | "session_tree",
+  ): Promise<void> {
+    // Snapshot before `stopAll()` clears the map: a branch switch re-arms some
+    // of these ids and must not restart their budget or their tick count.
+    const carried = new Map(this.timers);
+    this.sessionId = ctx.sessionManager.getSessionId();
     this.stopAll();
 
+    const state =
+      source === "session_start" ? readTimerState(this.sessionId) : undefined;
+    if (state) {
+      await this.restoreState(state.timers);
+      return;
+    }
+    if (
+      source === "session_start" &&
+      ctx.sessionManager.getHeader()?.parentSession
+    ) {
+      return;
+    }
+    this.restoreBranch(ctx.sessionManager.getBranch(), carried);
+    // A timer the branch no longer has leaves its job behind: no deadline, no
+    // wake, and nobody who could ever adopt it again. The branch dropped the
+    // timer, so it drops the work too.
+    for (const [id, job] of this.jobs) {
+      if (!this.timers.has(id)) {
+        this.kill(job, "killed when its timer left the branch");
+        this.jobs.delete(id);
+      }
+    }
+    this.persist();
+  }
+
+  /**
+   * Arm the timers a state file recorded.
+   *
+   * A job is re-attached when its process is still the one this timer started;
+   * otherwise it ended while pi was not running, and the session gets one wake
+   * reporting what its log holds. Timers that never had a job simply continue
+   * with the budget they had left.
+   *
+   * Everything that lives is armed before any wake is sent, so the state file
+   * is complete again before a slow callback can delay startup. A job that
+   * ended while pi was away is still news the timer owed the agent, so it
+   * arrives as a real wake, unlike the quiet "resumed" summary.
+   *
+   * @param timers - Timer records read from the state file.
+   */
+  private async restoreState(timers: readonly PersistedTimer[]): Promise<void> {
+    const ended: { timer: Timer; job: Job; outcome: JobOutcome }[] = [];
+    let resumed = 0;
+    for (const entry of timers) {
+      const timer = this.timerFromState(entry);
+      const persisted = entry.job;
+      const alive =
+        persisted?.pid !== undefined && jobAlive(persisted.pid, persisted.tag);
+      if (persisted && !alive) {
+        const outcome = recoverOutcome(persisted.logPath);
+        ended.push({
+          timer,
+          job: endedJob(persisted, entry.id, outcome),
+          outcome,
+        });
+        continue;
+      }
+      if (persisted) {
+        timer.job = adoptedJob(persisted, entry.id);
+        this.jobs.set(entry.id, timer.job);
+      }
+      this.arm(timer);
+      resumed += 1;
+    }
+    this.persist();
+    if (resumed > 0) {
+      this.noticeResumed(resumed);
+    }
+
+    for (const { timer, job, outcome } of ended) {
+      timer.job = job;
+      // `finish` retires the timer, and its ownership guard only retires one
+      // that is in the map.
+      this.timers.set(timer.id, timer);
+      const end = describeJobEnd(
+        outcome,
+        durationText(Date.now() - job.startedAt),
+      );
+      await this.finish(timer, jobEndState(outcome), end.line, end.reason);
+    }
+  }
+
+  /**
+   * Build a timer from a state record.
+   *
+   * @param entry - Record read from the state file.
+   * @returns A timer with the recorded budget and tick count, armed now.
+   */
+  private timerFromState(entry: PersistedTimer): Timer {
+    const { activeMs, ticksSent, job: _job, ...spec } = entry;
+    return {
+      ...spec,
+      activeMs,
+      liveSince: performance.now(),
+      ticksSent,
+      noticePending: false,
+      stopped: false,
+      settled: false,
+      controller: new AbortController(),
+    };
+  }
+
+  /**
+   * Arm the timers recorded on a session branch.
+   *
+   * A job entry replayed from the transcript is never spawned or signalled
+   * again: it either matches a job this process still runs, or it belonged to
+   * an earlier pi process and only its log is left. A timer that survives a
+   * branch switch keeps the budget it had already spent.
+   *
+   * @param entries - Active session branch entries.
+   * @param carried - Timers that were active before the switch, by id.
+   */
+  private restoreBranch(
+    entries: readonly SessionEntry[],
+    carried: ReadonlyMap<string, Timer>,
+  ): void {
     for (const spec of collectActiveTimers(entries).values()) {
       const job = spec.start ? this.jobs.get(spec.id) : undefined;
       if (spec.start && !job) {
         const log = spec.logPath ? `; log ${spec.logPath}` : "";
         // Its end was never observed, so it can only be reported as failed.
-        this.retire(spec, `orphaned${log}`, "failed", elapsed(spec.startedAt));
+        this.retire(
+          spec,
+          `orphaned${log}`,
+          "failed",
+          durationText(Date.now() - spec.startedAt),
+        );
         continue;
       }
+      const previous = carried.get(spec.id);
       this.arm({
         ...spec,
         // A live job for this id is what this process actually runs, so it owns
-        // the start time, the log and the deadline the wake reports.
+        // the start time, the log and the age the wake reports.
         startedAt: job?.startedAt ?? spec.startedAt,
         logPath: job?.logPath ?? spec.logPath,
-        ticksSent: 0,
+        activeMs: previous ? liveMs(previous) : 0,
+        liveSince: performance.now(),
+        ticksSent: previous?.ticksSent ?? 0,
         noticePending: false,
         stopped: false,
         settled: false,
@@ -1243,6 +1813,23 @@ class TimerRegistry {
         job,
       });
     }
+  }
+
+  /**
+   * Tell the agent that timers came back with the session.
+   *
+   * No turn is triggered: the notice only has to be in the conversation before
+   * the next request, so resuming an idle session does not start one.
+   *
+   * @param count - Timers that resumed.
+   */
+  private noticeResumed(count: number): void {
+    this.pi.sendMessage({
+      customType: NOTICE_TYPE,
+      content: `[timer] resumed ${count} ${count === 1 ? "timer" : "timers"} from before this pi start; time while pi was not running did not count against their timeouts.`,
+      display: true,
+      details: { restored: count },
+    });
   }
 
   /**
@@ -1263,7 +1850,7 @@ class TimerRegistry {
             toTimerSpec(timer),
             "failed",
             "failed",
-            elapsed(timer.startedAt),
+            durationText(liveMs(timer)),
             timer,
           );
           void this.notify(
@@ -1296,6 +1883,16 @@ class TimerRegistry {
   }
 
   /**
+   * Milliseconds left of the timer's pi-live budget.
+   *
+   * @param timer - Timer to check.
+   * @returns Remaining milliseconds; zero or less means the deadline is past.
+   */
+  private remainingMs(timer: Timer): number {
+    return timer.timeoutSec * 1000 - liveMs(timer);
+  }
+
+  /**
    * Poll a timer until it succeeds, times out, or is cancelled.
    *
    * A condition timer checks once immediately, then on every tick. A timer
@@ -1306,12 +1903,7 @@ class TimerRegistry {
    * @param timer - Timer to run.
    */
   private async poll(timer: Timer): Promise<void> {
-    const deadline = timer.startedAt + timer.timeoutSec * 1000;
-
-    if (
-      timer.condition &&
-      (await this.matches(timer, timer.condition, deadline))
-    ) {
+    if (timer.condition && (await this.matches(timer, timer.condition))) {
       await this.finish(
         timer,
         "done",
@@ -1322,7 +1914,10 @@ class TimerRegistry {
     }
 
     while (!timer.stopped) {
-      const waitMs = Math.min(timer.intervalSec * 1000, deadline - Date.now());
+      const waitMs = Math.min(
+        timer.intervalSec * 1000,
+        this.remainingMs(timer),
+      );
       if (waitMs > 0) {
         await sleep(Math.min(waitMs, MAX_TIMEOUT_MS), undefined, {
           signal: timer.controller.signal,
@@ -1332,7 +1927,7 @@ class TimerRegistry {
         return;
       }
 
-      if (Date.now() >= deadline) {
+      if (this.remainingMs(timer) <= 0) {
         await this.finish(
           timer,
           "timeout",
@@ -1342,10 +1937,7 @@ class TimerRegistry {
         return;
       }
 
-      if (
-        timer.condition &&
-        (await this.matches(timer, timer.condition, deadline))
-      ) {
+      if (timer.condition && (await this.matches(timer, timer.condition))) {
         await this.finish(
           timer,
           "done",
@@ -1379,7 +1971,7 @@ class TimerRegistry {
           toTimerSpec(timer),
           "tick budget spent",
           "done",
-          elapsed(timer.startedAt),
+          durationText(liveMs(timer)),
           timer,
         );
         return;
@@ -1394,7 +1986,7 @@ class TimerRegistry {
    * @returns One line for the final wake.
    */
   private conditionLine(timer: Timer): string {
-    return `condition met after ${elapsed(timer.startedAt)}: ${timer.condition}`;
+    return `condition met after ${durationText(liveMs(timer))}: ${timer.condition}`;
   }
 
   /**
@@ -1403,13 +1995,13 @@ class TimerRegistry {
    *
    * The exit is an event, so no poll interval decides how soon that wake
    * arrives; `intervalSec` paces optional progress ticks and condition checks,
-   * and a job timer without either waits on the exit alone.
+   * and a job timer without either waits on the exit alone. A job adopted from
+   * a previous pi process has no exit event, so its pid is polled instead.
    *
    * @param timer - Timer whose `job` owns the process.
    */
   private async watch(timer: Timer): Promise<void> {
     const job = timer.job as Job;
-    const deadline = timer.startedAt + timer.timeoutSec * 1000;
     // Captured once: a job that exits as the deadline passes still has an exit
     // code to report, which is better news than "killed".
     let outcome: JobOutcome | undefined;
@@ -1419,16 +2011,17 @@ class TimerRegistry {
 
     // A condition can test state outside the job, so every timer checks it
     // immediately and then at each interval, whether or not `start` is set.
-    if (await this.conditionHeld(timer, deadline)) {
+    if (await this.conditionHeld(timer)) {
       await this.finishConditionJob(timer, job);
       return;
     }
 
     while (!timer.stopped && !timer.settled) {
       const paced = this.canTick(timer) || timer.condition !== undefined;
+      const remaining = Math.round(this.remainingMs(timer));
       const waitMs = paced
-        ? Math.max(0, Math.min(timer.intervalSec * 1000, deadline - Date.now()))
-        : Math.max(0, deadline - Date.now());
+        ? Math.max(0, Math.min(timer.intervalSec * 1000, remaining))
+        : Math.max(0, remaining);
       const result = await this.raceJob(timer, job, waitMs);
       if (result === "stopped" || timer.stopped) {
         return;
@@ -1441,11 +2034,11 @@ class TimerRegistry {
         await this.finishJob(timer, job, outcome);
         return;
       }
-      if (Date.now() >= deadline) {
+      if (this.remainingMs(timer) <= 0) {
         await this.expireJob(timer, job);
         return;
       }
-      await this.tickJob(timer, job, deadline);
+      await this.tickJob(timer, job);
     }
   }
 
@@ -1495,14 +2088,9 @@ class TimerRegistry {
    *
    * @param timer - Job timer to tick.
    * @param job - Job the timer watches.
-   * @param deadline - Unix timestamp in milliseconds when the timer expires.
    */
-  private async tickJob(
-    timer: Timer,
-    job: Job,
-    deadline: number,
-  ): Promise<void> {
-    if (await this.conditionHeld(timer, deadline)) {
+  private async tickJob(timer: Timer, job: Job): Promise<void> {
+    if (await this.conditionHeld(timer)) {
       await this.finishConditionJob(timer, job);
       return;
     }
@@ -1538,7 +2126,7 @@ class TimerRegistry {
   /**
    * End a job timer whose deadline passed, killing the job it watches.
    *
-   * A job nobody watches must not keep running until session shutdown, so the
+   * A job nobody watches must not keep running once its budget is spent, so the
    * deadline takes the process with it.
    *
    * @param timer - Job timer whose deadline passed.
@@ -1577,14 +2165,22 @@ class TimerRegistry {
     line: string,
     reason: string,
   ): Promise<void> {
-    if (job.proc.exitCode !== null || job.proc.signalCode !== null) {
-      await this.finishJob(timer, job, await job.done);
+    if (job.exit) {
+      await this.finishJob(timer, job, job.exit);
       return;
     }
     // Out of `jobs` first: a `restore()` during the grace window must not
     // re-attach a job this loop is already killing.
     this.jobs.delete(job.id);
-    this.kill(job, marker);
+    if (!this.kill(job, marker)) {
+      // Nothing was signalled: an adopted job ended between two polls, or its
+      // pid no longer carries the tag. Either way this timer is not the one
+      // that ended it, so the job's own record is the news.
+      const outcome =
+        job.proc === undefined ? recoverOutcome(job.logPath) : await job.done;
+      await this.finishJob(timer, job, outcome);
+      return;
+    }
     await job.done;
     if (timer.stopped) {
       return;
@@ -1595,9 +2191,12 @@ class TimerRegistry {
   /**
    * Report a job that ended by itself, with its exit status and log tail.
    *
+   * The job shell already wrote its own `[exit N]` marker, so nothing is added
+   * to the log here; a job that ended while pi was away has no status to add.
+   *
    * @param timer - Timer that watched the job.
    * @param job - Job that ended.
-   * @param outcome - Exit code, signal, or spawn failure.
+   * @param outcome - Exit code, signal, spawn failure, or an unobserved end.
    */
   private async finishJob(
     timer: Timer,
@@ -1605,8 +2204,17 @@ class TimerRegistry {
     outcome: JobOutcome,
   ): Promise<void> {
     this.jobs.delete(job.id);
-    const end = describeJobEnd(outcome, elapsed(timer.startedAt));
-    appendLogMarker(job.logPath, end.marker);
+    // Wall-clock since the spawn is how long the job actually ran: it kept
+    // running while pi did not.
+    const end = describeJobEnd(
+      outcome,
+      durationText(Date.now() - job.startedAt),
+    );
+    // A job the shell exited wrote its own marker; one a signal from outside
+    // the timer ended has no shell left to write it.
+    if (outcome.signal) {
+      appendLogMarker(job.logPath, `killed by ${outcome.signal}`);
+    }
     await this.finish(timer, jobEndState(outcome), end.line, end.reason);
   }
 
@@ -1645,18 +2253,14 @@ class TimerRegistry {
    * Whether a timer's condition holds now.
    *
    * @param timer - Timer to check.
-   * @param deadline - Unix timestamp in milliseconds when the timer expires.
    * @returns `true` when the timer has a condition and it exited 0.
    */
-  private async conditionHeld(
-    timer: Timer,
-    deadline: number,
-  ): Promise<boolean> {
+  private async conditionHeld(timer: Timer): Promise<boolean> {
     const condition = timer.condition;
     if (!condition) {
       return false;
     }
-    return this.matches(timer, condition, deadline);
+    return this.matches(timer, condition);
   }
 
   /**
@@ -1664,15 +2268,10 @@ class TimerRegistry {
    *
    * @param timer - Timer the condition belongs to.
    * @param condition - Shell predicate to evaluate.
-   * @param deadline - Unix timestamp in milliseconds when the timer expires.
    * @returns `true` when the condition exited 0.
    */
-  private async matches(
-    timer: Timer,
-    condition: string,
-    deadline: number,
-  ): Promise<boolean> {
-    const remaining = deadline - Date.now();
+  private async matches(timer: Timer, condition: string): Promise<boolean> {
+    const remaining = this.remainingMs(timer);
     const result = await this.pi.exec(
       "bash",
       ["-lc", this.withJobInput(timer, condition)],
@@ -1699,6 +2298,9 @@ class TimerRegistry {
    */
   private async tick(timer: Timer, body: string, last: boolean): Promise<void> {
     timer.ticksSent += 1;
+    // The tick count is what a resumed timer continues from, so it outlives a
+    // crash even when the next heartbeat would have come later.
+    this.persist();
     const count = `${timer.ticksSent}${timer.maxTicks === undefined ? "" : `/${timer.maxTicks}`}`;
     // A last tick carries the farewell, so the one wake the agent reads tells it
     // both the news and that the timer is gone.
@@ -1706,7 +2308,7 @@ class TimerRegistry {
     await this.notify(
       timer,
       "tick",
-      `tick ${count}, ${elapsed(timer.startedAt)} elapsed${ending}`,
+      `tick ${count}, ${durationText(liveMs(timer))} elapsed${ending}`,
       body,
     );
   }
@@ -1780,7 +2382,7 @@ class TimerRegistry {
       toTimerSpec(timer),
       reason,
       state,
-      elapsed(timer.startedAt),
+      durationText(liveMs(timer)),
       timer,
     );
     const tail = timer.job ? readLogTail(timer.job.logPath) : "";
@@ -1858,7 +2460,7 @@ function describeStart(spec: TimerSpec): string {
     const ending = spec.condition
       ? `wakes you when it exits, when the condition first exits 0 (which kills the job), or after ${spec.timeoutSec}s`
       : `wakes you when it exits or after ${spec.timeoutSec}s`;
-    return `Started job "${spec.id}": runs \`${spec.start}\` in the background, ${ticks}, log ${spec.logPath}; ${ending}. It is killed when this session ends.`;
+    return `Started job "${spec.id}": runs \`${spec.start}\` in the background, ${ticks}, log ${spec.logPath}; ${ending}. It keeps running, and is re-attached when you resume this session, across pi restarts and reloads; only \`timer_stop\` or the timeout kills it, and time while pi is closed does not count against that timeout.`;
   }
 
   const ticks =
@@ -1872,7 +2474,7 @@ function describeStart(spec: TimerSpec): string {
   const ending = spec.condition
     ? `it ends when the condition first exits 0 or after ${spec.timeoutSec}s`
     : `it ends after that tick or at its ${spec.timeoutSec}s timeout`;
-  return `Started "${spec.id}": ${ticks}; ${ending}. Wakes arrive even after you end your turn.`;
+  return `Started "${spec.id}": ${ticks}; ${ending}. Wakes arrive even after you end your turn; time while pi is closed does not count against the timeout, and resuming the session resumes the timer.`;
 }
 
 /**
@@ -1888,7 +2490,7 @@ function timerStartTool(
     name: "timer_start",
     label: "Timer start",
     description:
-      "Start a background command, wait for a condition, tick on a schedule, or combine them; every call returns immediately and wakes you later. Pass `start` with `condition` and/or `onTick` to start and monitor one job in one call. `timer_stop`, a `timeoutSec` expiry, or the end of the session (including /reload, /resume and /new) kills a running job.",
+      "Start a background command, wait for a condition, tick on a schedule, or combine them; every call returns immediately and wakes you later. Pass `start` with `condition` and/or `onTick` to start and monitor one job in one call. Timers survive pi restarts, reloads, and reboots: resuming the session re-arms them, a running job is re-attached, and time while pi is not running does not count against `timeoutSec`. `timer_stop` or a `timeoutSec` expiry kills a job.",
     promptSnippet:
       "Start a background command and wake when it exits, wait for a condition, or tick periodically -- in any combination.",
     promptGuidelines: [
@@ -1933,8 +2535,9 @@ function timerStopTool(
         return timerResult(registry.retirementText(id), { action: "stop", id });
       }
       const stopped = registry.stop(id);
-      const killed = stopped?.job
-        ? `; killed its job, log ${stopped.job.logPath}`
+      const logPath = stopped?.timer.job?.logPath;
+      const killed = stopped?.signalled
+        ? `; killed its job, log ${logPath}`
         : "";
       return timerResult(`Stopped "${id}"${killed}.`, { action: "stop", id });
     },
@@ -2265,16 +2868,19 @@ export default function timer(pi: ExtensionAPI): void {
   pi.registerCommand("timers", timersCommand(registry));
 
   pi.on("session_start", async (_event, ctx) => {
-    registry.restore(ctx.sessionManager.getBranch());
+    await registry.restore(ctx, "session_start");
   });
 
   pi.on("session_tree", async (_event, ctx) => {
-    registry.restore(ctx.sessionManager.getBranch());
+    await registry.restore(ctx, "session_tree");
   });
 
   // Any tool call means the agent acted on the last wake, so the next tick may
   // be delivered again. `agent_start` covers runs that begin without a tool.
   pi.on("tool_call", async () => registry.clearPending());
   pi.on("agent_start", async () => registry.clearPending());
-  pi.on("session_shutdown", async () => registry.killJobs());
+  // Jobs keep running for the next pi process to re-attach; only the loops and
+  // the checkpoint belong to this one. `close()` saves the elapsed time, so a
+  // graceful quit does not even lose the time since the last heartbeat.
+  pi.on("session_shutdown", async () => registry.close());
 }
