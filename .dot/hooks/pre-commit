@@ -1,0 +1,21 @@
+#!/bin/sh
+# Runs a sub-project's own check when a commit stages files under it, so each
+# project keeps its own tooling (biome.json in .pi/agent, .stylua.toml and the
+# Makefile in .config/nvim) instead of one global rule set. Check-only: the hook
+# never writes to the work tree or the index. Fix, stage, and commit again.
+set -eu
+
+root=$(git rev-parse --show-toplevel)
+
+check() {
+  prefix=$1
+  shift
+  [ -n "$(git diff --cached --name-only --diff-filter=ACMR -- "$prefix/")" ] || return 0
+  printf 'pre-commit: %s (in %s)\n' "$*" "$prefix"
+  ( cd "$root/$prefix" && "$@" ) || {
+    printf 'pre-commit: %s failed in %s\n' "$*" "$prefix" >&2
+    exit 1
+  }
+}
+
+check .pi/agent npm run --silent check

@@ -3,3 +3,6 @@
 /.envvars
 /.bash_envvars
 /.gitconfig.local
+/.dot/*
+!/.dot/hooks/
+/.dot/hooks/*.sample
