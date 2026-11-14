@@ -118,10 +118,12 @@ const ON_TICK_TIMEOUT_MS = 10_000;
 /**
  * Accepted timer ids.
  *
- * A slug rather than free text: the id is echoed in every notification, listed
- * by status, and names the job log file.
+ * A slug rather than free text, because the id names the job log file.
  */
-const ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$/;
+const ID_PATTERN_SOURCE = "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$";
+
+/** Runtime form of `ID_PATTERN_SOURCE`. */
+const ID_PATTERN = new RegExp(ID_PATTERN_SOURCE);
 
 /** Custom message type used for timer notifications. */
 const NOTICE_TYPE = "timer";
@@ -141,6 +143,7 @@ const STOP_TOOL_NAMES = new Set(["timer_stop", "timer"]);
 /** Schema for the `timer_start` tool. */
 const TimerStartParams = Type.Object({
   id: Type.String({
+    pattern: ID_PATTERN_SOURCE,
     description:
       "Timer name: short, unique, purpose-bearing, e.g. batch3-done. It appears in every wake and names the job log.",
   }),
