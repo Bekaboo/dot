@@ -162,6 +162,7 @@ const { KeybindingsManager, TUI_KEYBINDINGS } = await import(
 const {
   createAgentSession,
   DefaultResourceLoader,
+  getAgentDir,
   ModelRuntime,
   SessionManager,
   SettingsManager,
@@ -356,6 +357,15 @@ const bridgeOf = (env) =>
 const childCommands = (child) =>
   child.stdin.writes.map((line) => JSON.parse(line));
 
+/**
+ * The deadline updates the extension sent a fake child.
+ *
+ * @param child - Fake child created by `spawn`.
+ * @returns One parsed command per deadline update, usually none.
+ */
+const timeoutUpdates = (child) =>
+  childCommands(child).filter((command) => command.id === "timeout-update");
+
 /** Forget the children created by an earlier test. */
 function resetChildren() {
   children.length = 0;
@@ -541,6 +551,7 @@ describe("subagent", () => {
         "the child is told the same deadline the parent reports",
       );
       assert.deepEqual(childCommands(children.at(-1)), [
+        { id: "state", type: "get_state" },
         { id: "prompt", type: "prompt", message: "Task: x" },
       ]);
       await pi.hooks.get("session_shutdown")({ reason: "quit" });
@@ -591,9 +602,14 @@ describe("subagent", () => {
         "rpc",
         "the child stays alive between its turns",
       );
+      assert.equal(
+        options["session-dir"],
+        path.join(getAgentDir(), "subagent-sessions"),
+        "the child's transcript outlives it, in a directory the main chat never lists",
+      );
       assert.ok(
-        flags.has("no-session"),
-        "the child keeps no session file of its own",
+        !flags.has("no-session"),
+        "the child keeps a session file of its own",
       );
       assert.equal(options.model, "some/model");
       assert.deepEqual(
@@ -616,6 +632,7 @@ describe("subagent", () => {
         "the prompt travels on stdin, not in argv",
       );
       assert.deepEqual(childCommands(child), [
+        { id: "state", type: "get_state" },
         { id: "prompt", type: "prompt", message: "Task: do it" },
       ]);
       assert.equal(
@@ -1617,6 +1634,124 @@ describe("subagent", () => {
       await pi.hooks.get("session_shutdown")({ reason: "quit" });
     });
 
+    test("/subagents details name the child's session file under the summary", async (t) => {
+      const { call, pi, children } = setup(t);
+      const screen = fakeUI(t);
+      const showing = pi.commands
+        .get("subagents")
+        .handler("", { mode: "tui", ui: screen.ui });
+      const overlay = screen.component;
+      const file = path.join(
+        os.tmpdir(),
+        "subagent-sessions",
+        "2026-01-02T03-04-05-678Z_ab12.jsonl",
+      );
+
+      await call({ id: "kept", prompt: "x" });
+      // The child answers the parent's `get_state` with where it keeps its file.
+      children[0].write(
+        rpcRecord({
+          id: "state",
+          type: "response",
+          command: "get_state",
+          success: true,
+          data: { sessionFile: file },
+        }),
+      );
+      overlay.handleInput("\r");
+
+      /** The detail's lines, read as a user would. */
+      const shown = () => overlay.render(160).map(plainOf);
+      const summaryRow = () =>
+        shown().findIndex((line) => line.includes("kept"));
+
+      const withPath = shown();
+      const row = summaryRow();
+      assert.ok(row >= 0, "the detail view names the child");
+      assert.ok(
+        withPath[row + 1].includes(`session ${file}`),
+        `the path sits under the summary line: ${withPath[row + 1]}`,
+      );
+
+      // The file a finished child kept is still worth showing.
+      children[0].write(assistantRecord("done"));
+      children[0].close(0);
+      await notices(pi);
+      const finished = shown();
+      const endRow = summaryRow();
+      assert.match(finished[endRow], /done after \d+s/);
+      assert.ok(
+        finished[endRow + 1].includes(`session ${file}`),
+        "a finished child keeps the path in its detail",
+      );
+
+      overlay.handleInput("\x1b");
+      overlay.handleInput("\x1b");
+      await showing;
+      await pi.hooks.get("session_shutdown")({ reason: "quit" });
+    });
+
+    test("/subagents keeps a long session path on its one summary row", async (t) => {
+      const { call, pi, children } = setup(t);
+      const rows = 16;
+      const screen = fakeUI(t, {}, rows);
+      const showing = pi.commands
+        .get("subagents")
+        .handler("", { mode: "tui", ui: screen.ui });
+      const overlay = screen.component;
+      const file = path.join(
+        os.tmpdir(),
+        "subagent-sessions",
+        `${"a".repeat(200)}.jsonl`,
+      );
+
+      await call({ id: "long", prompt: "x" });
+      children[0].write(
+        rpcRecord({
+          id: "state",
+          type: "response",
+          command: "get_state",
+          success: true,
+          data: { sessionFile: file },
+        }),
+      );
+      overlay.handleInput("\r");
+
+      const lines = overlay.render(160).map(plainOf);
+      const summary = lines.findIndex((line) => line.includes("long"));
+      const session = lines.findIndex((line) =>
+        line.trimStart().startsWith("session "),
+      );
+      assert.ok(
+        summary < session,
+        "the path sits under the summary line that names the child",
+      );
+      assert.ok(
+        lines[session].trimEnd().endsWith("..."),
+        `the path is cut, not wrapped: ${lines[session]}`,
+      );
+      const next = lines.slice(session + 1).find((line) => line.trim() !== "");
+      assert.match(
+        next,
+        /\d\d:\d\d:\d\d start/,
+        "the pinned start line follows the path, so the path took one row",
+      );
+      assert.ok(
+        lines.length <= rows - VIEWPORT_RESERVE_ROWS,
+        `the page keeps the hint in a ${rows}-row terminal: ${lines.length}`,
+      );
+      assert.match(
+        lines.join("\n"),
+        /Escape to go back/,
+        "the hint is still on the page",
+      );
+
+      overlay.handleInput("\x1b");
+      overlay.handleInput("\x1b");
+      await showing;
+      await pi.hooks.get("session_shutdown")({ reason: "quit" });
+    });
+
     test("/subagents moves its selection with the user's list keys", async (t) => {
       const { call, pi } = setup(t);
       const screen = fakeUI(t, {
@@ -2487,7 +2622,7 @@ describe("subagent", () => {
       const { call, pi, children } = setup(t);
       await call({ id: "told", prompt: "x", timeoutSec: 60 });
       await update(pi, { id: "told", timeoutSec: 120 });
-      const last = childCommands(children[0]).at(-1);
+      const [last] = timeoutUpdates(children[0]);
       assert.equal(last.type, "prompt");
       assert.equal(last.message, "/subagent-timeout 120");
     });
@@ -2500,8 +2635,8 @@ describe("subagent", () => {
       const text = await update(pi, { id: "late", timeoutSec: 20 });
       assert.match(text, /already run for 30\.0s/);
       assert.equal(
-        childCommands(children[0]).length,
-        1,
+        timeoutUpdates(children[0]).length,
+        0,
         "the child hears nothing",
       );
     });
@@ -2526,8 +2661,8 @@ describe("subagent", () => {
         /No running subagent named \[subagent gone\]/,
       );
       assert.equal(
-        childCommands(children[0]).length,
-        1,
+        timeoutUpdates(children[0]).length,
+        0,
         "the dead child hears nothing",
       );
     });

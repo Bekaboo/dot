@@ -2,6 +2,7 @@
 auth.json
 models-store.json
 sessions/
+subagent-sessions/
 tmp/
 jobs/
 

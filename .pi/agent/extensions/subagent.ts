@@ -1,11 +1,12 @@
 /**
  * Subagent tool.
  *
- * `subagent()` spawns a separate `pi --mode rpc --no-session` process for a
- * self-contained task, returns as soon as the child is running, and injects a
+ * `subagent()` spawns a separate `pi --mode rpc` process for a self-contained
+ * task, returns as soon as the child is running, and injects a
  * `[subagent <id>]` message into this session when the child finishes. The
  * child gets a fresh context window; its prompt, tools, model and working
- * directory are chosen per call.
+ * directory are chosen per call. It keeps its own session file under
+ * `<agent-dir>/subagent-sessions/`, so its transcript outlives the process.
  *
  * RPC mode, rather than a single-shot print mode, is what lets a child use
  * async tools: its prompt travels on stdin and the process survives a turn
@@ -23,14 +24,15 @@ import { type ChildProcess, spawn } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { StopReason } from "@earendil-works/pi-ai";
-import type {
-  ExtensionAPI,
-  ExtensionCommandContext,
-  ExtensionContext,
-  JsonAgentSessionEvent,
-  KeybindingsManager,
-  Theme,
-  ToolDefinition,
+import {
+  type ExtensionAPI,
+  type ExtensionCommandContext,
+  type ExtensionContext,
+  getAgentDir,
+  type JsonAgentSessionEvent,
+  type KeybindingsManager,
+  type Theme,
+  type ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
 import {
   type Component,
@@ -73,8 +75,19 @@ const NOTICE_TYPE = "subagent";
  */
 const CHILD_ENV = "PI_SUBAGENT_CHILD";
 
+/**
+ * Directory under the agent dir holding the children's session files.
+ *
+ * A sibling of `sessions/`, never a part of it, so `/resume` never offers a
+ * child as a chat.
+ */
+const SUBAGENT_SESSION_DIR = "subagent-sessions";
+
 /** Id of the `prompt` command sent to the child, echoed in its response. */
 const PROMPT_ID = "prompt";
+
+/** Id of the `get_state` command that asks the child where its transcript is. */
+const STATE_ID = "state";
 
 /** Id of the `prompt` command that carries a changed deadline to the child. */
 const TIMEOUT_UPDATE_ID = "timeout-update";
@@ -319,6 +332,8 @@ const MARKER_EXAMPLE = marker("<id>");
 /** A subagent that has not finished yet, as `/subagents` shows it. */
 interface RunningSubagent {
   id: string;
+  /** Session file the child reported, once `get_state` answered. */
+  sessionFile?: string;
   /** Model as requested, empty when the child inherits pi's default. */
   model: string;
   /** Tools as requested, empty when the child gets pi's defaults. */
@@ -336,6 +351,8 @@ interface RunningSubagent {
 /** A child that ended, kept briefly so `subagent_status` can report it. */
 interface FinishedSubagent {
   id: string;
+  /** Session file the child reported, once `get_state` answered. */
+  sessionFile?: string;
   /** Elapsed seconds at exit. */
   seconds: number;
   /** Spawn time in ms, shown on the detail's pinned spawn line. */
@@ -358,6 +375,8 @@ interface FinishedSubagent {
 /** One line of the `/subagents` overlay. */
 interface SubagentRow {
   id: string;
+  /** Session file the child reported, once `get_state` answered. */
+  sessionFile?: string;
   /** Outcome word: running, done, failed, timeout, or killed. */
   state: RunState;
   /** Creation order, so two children started in one millisecond stay ordered. */
@@ -1158,6 +1177,8 @@ function childEnv(
  * this, a parent can only tell its children apart by model, directory or
  * context size, and none of that survives two children that share them.
  *
+ * The child's own `--session-dir` outranks one inherited from this session.
+ *
  * @param subagent - Id, model, thinking level, tools and timeout of the child.
  * @returns Command and arguments to spawn.
  */
@@ -1170,7 +1191,14 @@ function childCommand(subagent: {
 }): { command: string; args: string[] } {
   // Reuse the build that is already running, so a second pi on PATH cannot win.
   const command = process.env.PI_BIN ?? process.argv[1] ?? "pi";
-  const args = ["--mode", "rpc", "--no-session", "--name", subagent.id];
+  const args = [
+    "--mode",
+    "rpc",
+    "--session-dir",
+    path.join(getAgentDir(), SUBAGENT_SESSION_DIR),
+    "--name",
+    subagent.id,
+  ];
   if (subagent.model) args.push("--model", subagent.model);
   // Only set on the inherited path: `--thinking` outranks a `:level` suffix.
   if (subagent.thinking) args.push("--thinking", subagent.thinking);
@@ -1208,6 +1236,18 @@ function promptCommand(prompt: string): string {
     type: "prompt",
     message: `Task: ${prompt}`,
   });
+}
+
+/**
+ * Ask the child where it keeps its transcript.
+ *
+ * The child names its own session file, so the parent has to be told; the
+ * answer arrives as a `response` record like any other command.
+ *
+ * @returns One JSONL record for the child's stdin.
+ */
+function stateCommand(): string {
+  return jsonLine({ id: STATE_ID, type: "get_state" });
 }
 
 /**
@@ -1282,6 +1322,32 @@ function promptRejection(record: unknown): string | undefined {
     return "the child handed its prompt to an extension instead of running";
   }
   return undefined;
+}
+
+/**
+ * Read the child's session file from its answer to `get_state`.
+ *
+ * A child that keeps no session file reports none, so this stays undefined
+ * instead of inventing a path.
+ *
+ * @param record - Parsed child record.
+ * @returns Absolute path of the child's session file, or undefined.
+ */
+function sessionFileOf(record: unknown): string | undefined {
+  const response = record as {
+    id?: unknown;
+    type?: unknown;
+    command?: unknown;
+    data?: { sessionFile?: unknown };
+  };
+  if (
+    response.type !== "response" ||
+    response.command !== "get_state" ||
+    response.id !== STATE_ID
+  )
+    return undefined;
+  const file = response.data?.sessionFile;
+  return typeof file === "string" && file !== "" ? file : undefined;
 }
 
 /**
@@ -1542,6 +1608,24 @@ function startLine(row: SubagentRow, theme: Theme): string {
 }
 
 /**
+ * Where the child keeps its transcript, under the detail's summary.
+ *
+ * One row, like the summary line above it: a path that wraps would push the
+ * body and the hint out of a short terminal.
+ *
+ * @param sessionFile - Absolute path the child reported.
+ * @param width - Columns the line may fill.
+ * @param theme - Active theme.
+ * @returns Styled text such as "session /…/2026-01-02T03-04-05-678Z_ab.jsonl".
+ */
+function sessionLine(sessionFile: string, width: number, theme: Theme): string {
+  return theme.fg(
+    "dim",
+    truncateToWidth(`session ${sessionFile}`, width, "..."),
+  );
+}
+
+/**
  * Summary line of the `/subagents` overlay.
  *
  * @param rows - Rows the overlay shows.
@@ -1644,7 +1728,7 @@ class SubagentRunner {
   start(
     subagent: Omit<
       RunningSubagent,
-      "startedAt" | "order" | "prompt" | "activity"
+      "startedAt" | "order" | "prompt" | "activity" | "sessionFile"
     > & {
       prompt: string;
       /** Thinking level to force, empty to keep the model's own setting. */
@@ -1698,6 +1782,11 @@ class SubagentRunner {
       // while its process is still dying.
       if (!finished && !stopped) absorbActivity(running.activity, record);
       if (isAgentStart(record)) runBegan();
+      const sessionFile = sessionFileOf(record);
+      if (sessionFile) {
+        running.sessionFile = sessionFile;
+        this.refreshOverlay();
+      }
       const cancellation = uiCancellation(record);
       if (cancellation) {
         writeChild(proc, cancellation, appendStderr);
@@ -1744,6 +1833,7 @@ class SubagentRunner {
       );
       this.remember({
         id: running.id,
+        sessionFile: running.sessionFile,
         seconds: elapsedSec(running.startedAt),
         startedAt: running.startedAt,
         state: outcome.state,
@@ -1791,6 +1881,7 @@ class SubagentRunner {
       finish(startFailure || failureOf(lastTurn, code, signal)),
     );
     // The readers are attached first, so a fast answer cannot arrive unread.
+    writeChild(proc, stateCommand(), appendStderr);
     writeChild(proc, promptCommand(subagent.prompt), appendStderr);
     // A child that never starts a run cannot report, and its gate never fires.
     // Unref'd: this deadline must not keep the parent's event loop alive.
@@ -1899,6 +1990,7 @@ class SubagentRunner {
     const running = [...this.running.values()]
       .map((job) => ({
         id: job.id,
+        sessionFile: job.sessionFile,
         state: "running" as const,
         order: job.order,
         seconds: elapsedSec(job.startedAt),
@@ -1913,6 +2005,7 @@ class SubagentRunner {
     const finished = this.finished
       .map((job) => ({
         id: job.id,
+        sessionFile: job.sessionFile,
         state: job.state,
         order: job.order,
         seconds: job.seconds,
@@ -1955,6 +2048,7 @@ class SubagentRunner {
       stopped.push(id);
       this.remember({
         id,
+        sessionFile: job.sessionFile,
         seconds: elapsedSec(job.startedAt),
         startedAt: job.startedAt,
         state: "killed",
@@ -2124,13 +2218,26 @@ class SubagentsOverlay implements Component {
   render(width: number): string[] {
     const rows = this.currentRows();
     const { selected, detail } = this.nav.sync(rows, (row) => row.id);
+    // The session file belongs with the settings the summary repeats, not with
+    // the steps below it.
     this.page.setSummary(
       detail
-        ? detailHeader(
-            detail,
-            this.spinner.marker(detail.state, this.theme),
-            this.theme,
-          )
+        ? [
+            detailHeader(
+              detail,
+              this.spinner.marker(detail.state, this.theme),
+              this.theme,
+            ),
+            ...(detail.sessionFile
+              ? [
+                  sessionLine(
+                    detail.sessionFile,
+                    Math.max(0, width - PAGE_PADDING_X * 2),
+                    this.theme,
+                  ),
+                ]
+              : []),
+          ].join("\n")
         : summaryOf(rows, this.theme),
     );
     // The spawn moment is pinned, so scrolling the newest step into view never
