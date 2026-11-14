@@ -1,0 +1,18 @@
+{
+  "lua/my/plugin/*.lua": {
+    "alternate": "tests/plugin/{}_spec.lua",
+    "type": "source"
+  },
+  "tests/plugin/*_spec.lua": {
+    "alternate": "lua/my/plugin/{}.lua",
+    "type": "test"
+  },
+  "lua/my/utils/*.lua": {
+    "alternate": "tests/utils/{}_spec.lua",
+    "type": "source"
+  },
+  "tests/utils/*_spec.lua": {
+    "alternate": "lua/my/utils/{}.lua",
+    "type": "test"
+  }
+}
