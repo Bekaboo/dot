@@ -29,9 +29,10 @@ and no CI/CD pipeline. To verify changes work, restart Neovim and check
 `:messages` for errors.
 
 Tests run headless with plenary's busted runner against
-[`tests/minimal_init.lua`](tests/minimal_init.lua), which only puts the config
-root on 'runtimepath' (not its `after` directory) plus the `plenary.nvim`
-installed by `vim.pack`. Specs are grouped by what they cover:
+[`tests/minimal_init.lua`](tests/minimal_init.lua), which restricts
+'runtimepath' to the nvim installation, the config root (not its `after`
+directory) and the `plenary.nvim` installed by `vim.pack`. Specs are grouped by
+what they cover:
 
 ```
 tests/
@@ -42,7 +43,9 @@ tests/
 ```
 
 Third-party plugin tests go to `tests/thirdparty` and end to end tests to
-`tests/e2e` when they are introduced.
+`tests/e2e` when they are introduced. [`.projections.json`](.projections.json)
+maps `lua/my/{plugin,utils}` sources to their specs, so `:A` jumps between a
+module and its test.
 
 ## Project Structure
 
