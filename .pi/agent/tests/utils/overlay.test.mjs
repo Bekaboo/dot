@@ -54,12 +54,12 @@ describe("overlay", () => {
   describe("OverlayPage", () => {
     test("draws the title, summary, body and hint inside the terminal's rows", () => {
       const rows = 20;
-      const page = new OverlayPage(fakeTui(rows), plainTheme, "Timers");
+      const page = new OverlayPage(fakeTui(rows), plainTheme, "Items");
       page.setSummary("2 running, 1 finished");
       const capacity = page.measure(40, "Enter for details, Escape to close");
       assert.equal(capacity, page.rowCapacity, "measure reports the body rows");
       page.setWindow(
-        ["timer-a running", "timer-b running"],
+        ["item-a running", "item-b running"],
         0,
         capacity,
         "Enter for details, Escape to close",
@@ -74,10 +74,10 @@ describe("overlay", () => {
         lines.length <= rows - VIEWPORT_RESERVE_ROWS,
         `${lines.length} of ${rows} rows`,
       );
-      assert.match(text, /Timers/);
+      assert.match(text, /Items/);
       assert.match(text, /2 running, 1 finished/);
-      assert.match(text, /timer-a running/);
-      assert.match(text, /timer-b running/);
+      assert.match(text, /item-a running/);
+      assert.match(text, /item-b running/);
       assert.match(text, /Enter for details, Escape to close/);
       for (const line of lines) {
         assert.equal(visibleWidth(line.replace(STYLED, "")), 40);
@@ -85,8 +85,8 @@ describe("overlay", () => {
     });
 
     test("pins its head rows above a scrolling body", () => {
-      const page = new OverlayPage(fakeTui(30), plainTheme, "Subagents");
-      page.setSummary("chatty running for 3s timeout=600s");
+      const page = new OverlayPage(fakeTui(30), plainTheme, "Items");
+      page.setSummary("3 running");
       page.setHead(["16:51:36 start"]);
       const capacity = page.measure(100, "Escape to go back");
       page.setWindow(rowsNamed(20), 15, capacity, "Escape to go back", 100);
@@ -99,11 +99,11 @@ describe("overlay", () => {
     });
 
     test("reserves no rows for an empty head", () => {
-      const page = new OverlayPage(fakeTui(30), plainTheme, "Timers");
+      const page = new OverlayPage(fakeTui(30), plainTheme, "Items");
       page.setSummary("2 running");
       const bare = page.measure(100, "Escape to go back");
 
-      page.setHead(["started=16:51:36, pid 42"]);
+      page.setHead(["started=16:51:36, id 42"]);
       const pinned = page.measure(100, "Escape to go back");
       assert.equal(pinned, bare - 1, "one head row is one body row fewer");
 
@@ -112,7 +112,7 @@ describe("overlay", () => {
     });
 
     test("shows the window's rows and names the range they sit in", () => {
-      const page = new OverlayPage(fakeTui(30), plainTheme, "Todos");
+      const page = new OverlayPage(fakeTui(30), plainTheme, "Items");
       page.setSummary("5 items");
       page.setWindow(rowsNamed(6), 2, 2, "Press Escape to close", 100);
 
@@ -128,7 +128,7 @@ describe("overlay", () => {
     });
 
     test("drops the scroll hint and range while every row fits", () => {
-      const page = new OverlayPage(fakeTui(30), plainTheme, "Todos");
+      const page = new OverlayPage(fakeTui(30), plainTheme, "Items");
       page.setWindow(rowsNamed(3), 0, 3, "Press Escape to close", 100);
 
       const lines = textOf(page.render(100)).split("\n");
@@ -138,7 +138,7 @@ describe("overlay", () => {
     });
 
     test("keeps the hint on one line when the terminal leaves no body row", () => {
-      const page = new OverlayPage(fakeTui(5), plainTheme, "Timers");
+      const page = new OverlayPage(fakeTui(5), plainTheme, "Items");
       const capacity = page.measure(100, "Enter for details, Escape to close");
       assert.equal(capacity, 0);
       page.setWindow(rowsNamed(4), 0, capacity, "Enter for details", 100);
@@ -148,7 +148,7 @@ describe("overlay", () => {
     });
 
     test("keeps the rows on screen after a resize", () => {
-      const page = new OverlayPage(fakeTui(20), plainTheme, "Todos");
+      const page = new OverlayPage(fakeTui(20), plainTheme, "Items");
       const wide = page.measure(100, "Press Escape to close");
       page.setWindow(rowsNamed(30), 0, wide, "Press Escape to close", 100);
       assert.equal(page.render(100).length, 20 - VIEWPORT_RESERVE_ROWS);
@@ -216,8 +216,8 @@ describe("overlay", () => {
     test("shows the end of a detail and follows it as lines arrive", () => {
       const nav = new DrillDown(() => {});
       const openDetail = () => {
-        nav.sync(["job"], (row) => row);
-        nav.handleInput(KEYS["tui.select.confirm"], keybindings, ["job"], 10);
+        nav.sync(["entry"], (row) => row);
+        nav.handleInput(KEYS["tui.select.confirm"], keybindings, ["entry"], 10);
       };
 
       openDetail();
@@ -229,31 +229,31 @@ describe("overlay", () => {
       // The overlay renders the detail before a key moves it, so the window is
       // measured first.
       const nav = new DrillDown(() => {});
-      nav.sync(["job"], (row) => row);
-      nav.handleInput(KEYS["tui.select.confirm"], keybindings, ["job"], 10);
+      nav.sync(["entry"], (row) => row);
+      nav.handleInput(KEYS["tui.select.confirm"], keybindings, ["entry"], 10);
       assert.equal(nav.detailWindow(20, 5), 15);
 
-      nav.handleInput(KEYS["tui.select.up"], keybindings, ["job"], 5);
+      nav.handleInput(KEYS["tui.select.up"], keybindings, ["entry"], 5);
       assert.equal(nav.detailWindow(20, 5), 14);
       assert.equal(nav.detailWindow(24, 5), 14, "a pinned window stays put");
 
       for (let press = 0; press < 5; press += 1) {
-        nav.handleInput(KEYS["tui.select.pageUp"], keybindings, ["job"], 5);
+        nav.handleInput(KEYS["tui.select.pageUp"], keybindings, ["entry"], 5);
       }
       assert.equal(nav.detailWindow(20, 5), 0, "scrolling stops at the top");
 
       for (let press = 0; press < 5; press += 1) {
-        nav.handleInput(KEYS["tui.select.pageDown"], keybindings, ["job"], 5);
+        nav.handleInput(KEYS["tui.select.pageDown"], keybindings, ["entry"], 5);
       }
       assert.equal(nav.detailWindow(20, 5), 15, "the end follows again");
     });
 
     test("follows the end again after the detail shrinks to fit", () => {
       const nav = new DrillDown(() => {});
-      nav.sync(["job"], (row) => row);
-      nav.handleInput(KEYS["tui.select.confirm"], keybindings, ["job"], 10);
+      nav.sync(["entry"], (row) => row);
+      nav.handleInput(KEYS["tui.select.confirm"], keybindings, ["entry"], 10);
       nav.detailWindow(20, 5);
-      nav.handleInput(KEYS["tui.select.up"], keybindings, ["job"], 5);
+      nav.handleInput(KEYS["tui.select.up"], keybindings, ["entry"], 5);
       assert.equal(nav.detailWindow(20, 5), 14, "the reader pinned the window");
 
       assert.equal(
@@ -305,14 +305,14 @@ describe("overlay", () => {
 
     test("marks the cursor row with the cursor, a bold label and the band", () => {
       const { calls, theme } = recordingTheme();
-      const line = listRow(theme, "timer-a", ["running", "00:12"], 24, true);
+      const line = listRow(theme, "item-a", ["running", "00:12"], 24, true);
 
       assert.equal(
         textOf([line]).trimEnd(),
-        `${SELECTED_CURSOR} timer-a running 00:12`,
+        `${SELECTED_CURSOR} item-a running 00:12`,
       );
       assert.equal(visibleWidth(line), 24, "the row fills the body width");
-      assert.deepEqual(calls.bold, ["timer-a"], "the label is bold");
+      assert.deepEqual(calls.bold, ["item-a"], "the label is bold");
       assert.deepEqual(
         calls.bg,
         [{ color: "selectedBg", text: line }],
@@ -327,12 +327,12 @@ describe("overlay", () => {
 
     test("leaves every other row plain and aligned with the cursor row", () => {
       const { calls, theme } = recordingTheme();
-      const selected = listRow(theme, "timer-a", ["running"], 20, true);
-      const other = listRow(theme, "timer-b", ["running"], 20, false);
+      const selected = listRow(theme, "item-a", ["running"], 20, true);
+      const other = listRow(theme, "item-b", ["running"], 20, false);
 
       assert.deepEqual(
         calls.bold,
-        ["timer-a"],
+        ["item-a"],
         "only the cursor row's label is bold",
       );
       assert.deepEqual(
