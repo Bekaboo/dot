@@ -18,17 +18,20 @@
  * A timer outlives the pi process that armed it. Its job runs detached with
  * its output going to a log, and the registry checkpoints every timer to a
  * per-session state file under the agent dir, so quitting pi, reloading
- * extensions, rebooting, and resuming the session bring the timers back. Only
- * pi-live time counts against `timeoutSec`: the clock stops while pi is not
- * running, and a resumed timer continues with its remaining budget. A resumed
- * job whose process is still alive is re-attached by its verified pid; one
- * that ended meanwhile is reported once, with whatever its log recorded. The
- * user-facing `/timers` command shows the session's timers as an aligned table:
+ * extensions, rebooting, and resuming the session bring the timers back.
+ * `timeoutSec` counts a different clock depending on what it bounds: a job
+ * keeps running, so its deadline is real time and the job's own shell enforces
+ * it even while pi is closed; a timer without a job only acts while pi runs,
+ * so its budget is pi-live time and the clock stops while pi is not running.
+ * A resumed job whose process is still alive is re-attached by its verified
+ * pid; one that ended meanwhile is reported once, with whatever its log
+ * recorded. The user-facing `/timers` command shows the session's timers as an
+ * aligned table:
  * the running ones first, then the ones that ended, each with the same state
- * marker the `/subagents` view uses. The order is fixed when the view opens and does not
- * follow state changes after that, so no row moves under the reader. Enter
- * opens one timer's detail: what it runs or waits for, its deadlines, and the
- * tail of the job log it writes.
+ * marker the `/subagents` view uses. The order is fixed when the view opens and
+ * does not follow state changes after that, so no row moves under the reader.
+ * Enter opens one timer's detail: what it runs or waits for, its deadline or
+ * budget, and the tail of the job log it writes.
  */
 
 import { type ChildProcess, execFileSync, spawn } from "node:child_process";
@@ -87,7 +90,6 @@ import { PAGE_PADDING_X, windowStart } from "./utils/page.ts";
 import { type RunState, Spinner } from "./utils/spinner.ts";
 
 export {
-  DEFAULT_JOB_TIMEOUT_SEC,
   DEFAULT_TIMEOUT_SEC,
   JOB_TAIL_LINES,
   RETIRED_HISTORY,
@@ -97,9 +99,6 @@ export {
 // Timer duration, polling, and notification defaults, in seconds.
 const DEFAULT_TIMEOUT_SEC = 3_600;
 const MIN_TIMEOUT_SEC = 1;
-
-// A job often runs for hours, so its own default deadline is a day.
-const DEFAULT_JOB_TIMEOUT_SEC = 86_400;
 
 const DEFAULT_INTERVAL_SEC = 60;
 const MIN_INTERVAL_SEC = 1;
@@ -124,6 +123,11 @@ const CHECKPOINT_MS = 30_000;
 
 // How often a re-attached job is checked for having exited while pi was away.
 const ADOPT_POLL_MS = 2_000;
+
+// How late the registry's cleanup may fire after a job's own shell deadline:
+// the wrapper signals TERM, waits KILL_GRACE_MS, then signals KILL, so the
+// registry only steps in if that shell is gone or broken.
+const JOB_BACKSTOP_SLACK_MS = KILL_GRACE_MS + 2_000;
 
 // Marks a job shell in its command line, so a resumed process can tell the job
 // from an unrelated process that inherited its pid after a reboot.
@@ -181,7 +185,7 @@ const TimerStartParams = Type.Object({
   start: Type.Optional(
     Type.String({
       description:
-        "Shell command to run in the background and log; the timer ends when it exits, and the wake carries the exit code and log tail. Combine with `condition` and/or `onTick` to monitor it.",
+        "Shell command to run detached in the background and log. It keeps running after pi closes, and is re-attached when the session resumes. The timer ends when it exits, and the wake carries the exit code and log tail. Combine with `condition` and/or `onTick` to monitor it.",
     }),
   ),
   condition: Type.Optional(
@@ -214,8 +218,9 @@ const TimerStartParams = Type.Object({
   timeoutSec: Type.Optional(
     Type.Number({
       description:
-        "Lifetime cap in seconds; expiry kills a `start` job. Default 3600, or 86400 with `start`.",
+        "For a `start` job: seconds of real time before the job is killed, counting while pi is closed; the job is detached, so a running-time budget could never bound it, and its own shell enforces this deadline. Without a job: a budget of running time, because nothing runs while pi is closed.",
       minimum: MIN_TIMEOUT_SEC,
+      default: DEFAULT_TIMEOUT_SEC,
     }),
   ),
 });
@@ -282,6 +287,13 @@ interface JobOutcome {
    * Only a re-attached job can end this way; its log still says what it did.
    */
   lost?: boolean;
+  /**
+   * The job's own shell killed it at its deadline.
+   *
+   * The wrapper writes a marker to the log before it signals, so this survives
+   * a pi restart; a live exit is classified from the same marker.
+   */
+  timedOut?: boolean;
 }
 
 /** A background command owned by one timer. */
@@ -420,6 +432,19 @@ function requireId(id: string): string {
  */
 function liveMs(timer: Timer): number {
   return timer.activeMs + (performance.now() - timer.liveSince);
+}
+
+/**
+ * How long a timer has been running, in the clock its limit uses.
+ *
+ * A job keeps running while pi is closed, so its age is real time since the
+ * spawn; a schedule only acts while pi does, so its age is pi-live time.
+ *
+ * @param timer - Timer to measure.
+ * @returns Age in milliseconds.
+ */
+function ageMs(timer: Timer): number {
+  return timer.job ? Date.now() - timer.job.startedAt : liveMs(timer);
 }
 
 /**
@@ -562,11 +587,16 @@ function detailTitle(row: TimerRow, stateMarker: string, theme: Theme): string {
   // A job timer with no tick budget runs until its process exits, so neither an
   // interval nor a tick count says anything about it.
   const ticking = row.spec.maxTicks !== 0;
+  // The two kinds of timer measure different clocks, and the label has to say
+  // which one, or a resumed timer's numbers look wrong.
+  const limit = row.spec.start
+    ? `deadline=${row.spec.timeoutSec}s`
+    : `budget=${row.spec.timeoutSec}s running`;
   return [
     theme.bold(row.id),
     stateMarker,
     theme.fg("muted", state),
-    theme.fg("dim", `timeout=${row.spec.timeoutSec}s`),
+    theme.fg("dim", limit),
     ticking ? theme.fg("dim", `interval=${row.spec.intervalSec}s`) : undefined,
     ticking && row.state === "running" ? theme.fg("dim", row.ticks) : undefined,
   ]
@@ -893,45 +923,118 @@ function jobAlive(pid: number, tag: string): boolean {
 }
 
 /**
- * Recover how a job ended from its log after pi restarted.
+ * Whether the job's own shell recorded that it hit its deadline.
  *
- * The job shell appends `[exit N]` as its last act, so the marker survives a
- * pi restart even though the child process handle does not. Only the end of the
- * last line is trusted, so output that merely mentions a marker cannot pass for
- * one. A job signalled directly, or a machine that rebooted, leaves no marker:
- * its status is gone, but the log tail still says what it did.
+ * The wrapper writes this line before it signals, so it is in the log even
+ * when pi was closed. The tag in the line keeps output that merely mentions a
+ * timeout from passing for one.
  *
  * @param logPath - Absolute path of the job log.
+ * @param tag - Token that identifies the job's shell.
+ * @returns `true` when the wrapper's deadline marker is in the log tail.
+ */
+function logHasTimeoutMarker(logPath: string, tag: string): boolean {
+  return readLogTail(logPath).includes(`[pi-timer ${tag}: timeout`);
+}
+
+/**
+ * Whether a job ended at its own shell's deadline.
+ *
+ * A clean exit wins over a marker that a racing watchdog wrote just as the
+ * command finished; anything else that died after a marker was written was
+ * ended by the deadline.
+ *
+ * @param job - Job that ended.
+ * @param outcome - Exit code, signal, or a recovered status.
+ * @returns `true` when the deadline ended the job.
+ */
+function endedByDeadline(job: Job, outcome: JobOutcome): boolean {
+  if (outcome.timedOut) return true;
+  if (outcome.error || outcome.lost) return false;
+  if (outcome.code === 0 && !outcome.signal) return false;
+  return logHasTimeoutMarker(job.logPath, job.tag);
+}
+
+/**
+ * Recover how a job ended from its log after pi restarted.
+ *
+ * The wrapper writes the deadline marker before it signals and `[exit N]` as
+ * its last act, so both survive a pi restart even though the child process
+ * handle does not. The last exit line wins over an earlier one because a job's
+ * own background child can print after the wrapper's line. Without either line
+ * the job was signalled directly or the machine rebooted: its status is gone,
+ * but the log tail still says what it did.
+ *
+ * @param logPath - Absolute path of the job log.
+ * @param tag - Token that identifies the job's shell.
  * @returns The recovered outcome, or an outcome flagged as lost.
  */
-function recoverOutcome(logPath: string): JobOutcome {
-  const lastLine = readLogTail(logPath).split("\n").at(-1) ?? "";
-  const marker = /\[exit (\d+)\]$/.exec(lastLine);
-  return marker
-    ? { code: Number(marker[1]), signal: null }
+function recoverOutcome(logPath: string, tag: string): JobOutcome {
+  const tail = readLogTail(logPath);
+  const timedOut = tail.includes(`[pi-timer ${tag}: timeout`);
+  const exits = [...tail.matchAll(/\[exit (\d+)\]/g)];
+  const last = exits.at(-1);
+  if (timedOut && (!last || Number(last[1]) !== 0)) {
+    return { code: null, signal: null, timedOut: true };
+  }
+  return last
+    ? { code: Number(last[1]), signal: null }
     : { code: null, signal: null, lost: true };
 }
 
 /**
  * Build the shell script that runs a job's command.
  *
- * The subshell keeps the wrapper alive to record the exit status, and the
- * leading comment carries the job tag into the process command line, where a
- * resumed process can verify the pid it read from disk. The marker the wrapper
- * prints is the same `[exit N]` line the timer used to append, so an exit that
- * happened while pi was not running still leaves its status in the log. The
- * wrapper exits with that same status, so this process reports what the log
- * says even when the command never ran.
+ * The wrapper owns the job's deadline, so it holds whether or not pi is
+ * watching. A watchdog in the background sleeps `timeoutSec`, checks that the
+ * wrapper it belongs to is still alive (a reused pid must not be signalled),
+ * writes `[pi-timer <tag>: timeout after Ns]`, then signals the wrapper's
+ * group: TERM first, KILL after the grace, so a job that ignores TERM still
+ * dies. The command runs in the foreground, so bash prints no job-status line
+ * into the log, and the wrapper stops the watchdog when the command ends
+ * early. The leading comment carries the tag into the process command line,
+ * where a resumed process verifies the pid it read from disk. The wrapper
+ * exits with the command's own status, and the `[exit N]` line it appends is
+ * what a later pi reports. A deadline kill is recorded by the marker alone:
+ * the group TERM ends the wrapper too, so there is no exit line to write.
  *
  * @param tag - Token that identifies this job's shell.
  * @param command - Shell command to run.
+ * @param timeoutSec - Real seconds until the wrapper kills the job.
  * @returns Script for `bash -c`.
  */
-function jobScript(tag: string, command: string): string {
+export function jobScript(
+  tag: string,
+  command: string,
+  timeoutSec: number,
+): string {
+  const marker = `[pi-timer ${tag}: timeout after ${timeoutSec}s]`;
   return [
     `${JOB_TAG_PREFIX}${tag}`,
-    `(\n${command}\n)`,
+    "(",
+    "  escalate=0",
+    // A wrapper that ended early stops the watchdog, which must not leave its
+    // own sleep behind; a deadline that has passed must not let that stop it.
+    `  trap 'if [ "$escalate" = 1 ]; then :; else kill -TERM "$slp" 2>/dev/null; exit 0; fi' TERM`,
+    `  sleep ${timeoutSec} &`,
+    "  slp=$!",
+    '  wait "$slp"',
+    // A wrapper that is gone cannot be told from a reused pid by pid alone, so
+    // the tag it was started with is checked before anything is signalled.
+    `  ps -o command= -p $$ | grep -Fq ${shellQuote(`${JOB_TAG_PREFIX}${tag}`)} || exit 0`,
+    `  printf '%s\\n' ${shellQuote(marker)}`,
+    "  escalate=1",
+    "  kill -TERM -$$",
+    `  sleep ${KILL_GRACE_MS / 1000}`,
+    "  kill -KILL -$$",
+    ") &",
+    "watchdog=$!",
+    `(
+${command}
+)`,
     "code=$?",
+    'kill -TERM "$watchdog" 2>/dev/null',
+    'wait "$watchdog" 2>/dev/null',
     "printf '[exit %s]\\n' \"$code\"",
     'exit "$code"',
   ].join("\n");
@@ -946,6 +1049,7 @@ function jobScript(tag: string, command: string): string {
  *
  * @param command - Shell command to run.
  * @param tag - Token that identifies this job's shell.
+ * @param timeoutSec - Real seconds until the wrapper kills the job.
  * @param cwd - Directory to run in.
  * @param logPath - File that receives stdout and stderr.
  * @returns The spawned shell, a process-group leader.
@@ -953,12 +1057,13 @@ function jobScript(tag: string, command: string): string {
 function spawnJob(
   command: string,
   tag: string,
+  timeoutSec: number,
   cwd: string,
   logPath: string,
 ): ChildProcess {
   const log = openSync(logPath, "a");
   try {
-    return spawn("bash", ["-c", jobScript(tag, command)], {
+    return spawn("bash", ["-c", jobScript(tag, command, timeoutSec)], {
       cwd,
       detached: true,
       stdio: ["ignore", log, log],
@@ -992,7 +1097,7 @@ function adoptedJob(persisted: PersistedJob, id: string): Job {
       return;
     }
     clearInterval(poll);
-    job.exit = recoverOutcome(persisted.logPath);
+    job.exit = recoverOutcome(persisted.logPath, persisted.tag);
     settle(job.exit);
   }, ADOPT_POLL_MS);
   poll.unref();
@@ -1176,9 +1281,7 @@ class TimerRegistry {
       onTick: params.onTick?.trim() || undefined,
       intervalSec: params.intervalSec ?? DEFAULT_INTERVAL_SEC,
       maxTicks: params.maxTicks ?? (command ? 0 : undefined),
-      timeoutSec:
-        params.timeoutSec ??
-        (command ? DEFAULT_JOB_TIMEOUT_SEC : DEFAULT_TIMEOUT_SEC),
+      timeoutSec: params.timeoutSec ?? DEFAULT_TIMEOUT_SEC,
       startedAt,
       activeMs: 0,
       liveSince: performance.now(),
@@ -1191,7 +1294,7 @@ class TimerRegistry {
 
     this.validateBudget(timer);
     if (command) {
-      timer.job = this.launch(id, command, startedAt, cwd);
+      timer.job = this.launch(id, command, startedAt, timer.timeoutSec, cwd);
       timer.logPath = timer.job.logPath;
     }
     this.arm(timer);
@@ -1210,6 +1313,7 @@ class TimerRegistry {
    * @param id - Timer id, which names the log.
    * @param command - Shell command to run.
    * @param startedAt - Spawn time, part of the log name.
+   * @param timeoutSec - Real seconds until the job's shell kills it.
    * @param cwd - Directory to run in.
    * @returns The job this timer now watches.
    */
@@ -1217,13 +1321,14 @@ class TimerRegistry {
     id: string,
     command: string,
     startedAt: number,
+    timeoutSec: number,
     cwd: string,
   ): Job {
     const logPath = jobLogPath(`${id}-${startedAt}.log`);
     const tag = randomUUID();
-    const proc = spawnJob(command, tag, cwd, logPath);
+    const proc = spawnJob(command, tag, timeoutSec, cwd, logPath);
     // The job outlives pi, so it must not hold pi open: without this, quitting
-    // waits for a job that may run for a day.
+    // waits for a job that runs until its deadline.
     proc.unref();
 
     const done = new Promise<JobOutcome>((resolve) => {
@@ -1335,7 +1440,7 @@ class TimerRegistry {
       toTimerSpec(timer),
       "killed by timer_stop",
       "killed",
-      durationText(liveMs(timer)),
+      durationText(ageMs(timer)),
       timer,
     );
     return { timer, signalled };
@@ -1634,7 +1739,7 @@ class TimerRegistry {
     return {
       id: timer.id,
       state: "running",
-      age: durationText(liveMs(timer)),
+      age: durationText(ageMs(timer)),
       ticks: `ticks ${ticks}`,
       target,
       spec: toTimerSpec(timer),
@@ -1738,7 +1843,7 @@ class TimerRegistry {
       const alive =
         persisted?.pid !== undefined && jobAlive(persisted.pid, persisted.tag);
       if (persisted && !alive) {
-        const outcome = recoverOutcome(persisted.logPath);
+        const outcome = recoverOutcome(persisted.logPath, persisted.tag);
         ended.push({
           timer,
           job: endedJob(persisted, entry.id, outcome),
@@ -1760,6 +1865,15 @@ class TimerRegistry {
       // `finish` retires the timer, and its ownership guard only retires one
       // that is in the map.
       this.timers.set(timer.id, timer);
+      if (outcome.timedOut) {
+        await this.finish(
+          timer,
+          "timeout",
+          `timeout after ${timer.timeoutSec}s; job killed`,
+          "timed out",
+        );
+        continue;
+      }
       const end = describeJobEnd(
         outcome,
         durationText(Date.now() - job.startedAt),
@@ -1854,7 +1968,7 @@ class TimerRegistry {
             toTimerSpec(timer),
             "failed",
             "failed",
-            durationText(liveMs(timer)),
+            durationText(ageMs(timer)),
             timer,
           );
           void this.notify(
@@ -1889,11 +2003,32 @@ class TimerRegistry {
   /**
    * Milliseconds left of the timer's pi-live budget.
    *
+   * Only a timer without a job uses this: its schedule runs while pi does, so
+   * time while pi is closed does not spend it.
+   *
    * @param timer - Timer to check.
    * @returns Remaining milliseconds; zero or less means the deadline is past.
    */
   private remainingMs(timer: Timer): number {
     return timer.timeoutSec * 1000 - liveMs(timer);
+  }
+
+  /**
+   * Milliseconds until the registry's last-resort job deadline cleanup.
+   *
+   * A job's own shell kills it at `timeoutSec` of real time, whether or not pi
+   * is watching. This is later by the wrapper's KILL grace plus a margin, so
+   * it only fires when that shell is gone or broken, and it is based on the
+   * spawn time so a job resumed past its deadline is killed at once.
+   *
+   * @param timer - Job timer to check.
+   * @returns Remaining milliseconds; zero or less means the backstop is due.
+   */
+  private backstopMs(timer: Timer): number {
+    const startedAt = timer.job?.startedAt ?? timer.startedAt;
+    return (
+      startedAt + timer.timeoutSec * 1000 + JOB_BACKSTOP_SLACK_MS - Date.now()
+    );
   }
 
   /**
@@ -1975,7 +2110,7 @@ class TimerRegistry {
           toTimerSpec(timer),
           "tick budget spent",
           "done",
-          durationText(liveMs(timer)),
+          durationText(ageMs(timer)),
           timer,
         );
         return;
@@ -1990,7 +2125,7 @@ class TimerRegistry {
    * @returns One line for the final wake.
    */
   private conditionLine(timer: Timer): string {
-    return `condition met after ${durationText(liveMs(timer))}: ${timer.condition}`;
+    return `condition met after ${durationText(ageMs(timer))}: ${timer.condition}`;
   }
 
   /**
@@ -2000,7 +2135,9 @@ class TimerRegistry {
    * The exit is an event, so no poll interval decides how soon that wake
    * arrives; `intervalSec` paces optional progress ticks and condition checks,
    * and a job timer without either waits on the exit alone. A job adopted from
-   * a previous pi process has no exit event, so its pid is polled instead.
+   * a previous pi process has no exit event, so its pid is polled instead. The
+   * deadline belongs to the job's own shell; this loop only adds the backstop
+   * for a shell that could not end the job itself.
    *
    * @param timer - Timer whose `job` owns the process.
    */
@@ -2022,7 +2159,7 @@ class TimerRegistry {
 
     while (!timer.stopped && !timer.settled) {
       const paced = this.canTick(timer) || timer.condition !== undefined;
-      const remaining = Math.round(this.remainingMs(timer));
+      const remaining = Math.round(this.backstopMs(timer));
       const waitMs = paced
         ? Math.max(0, Math.min(timer.intervalSec * 1000, remaining))
         : Math.max(0, remaining);
@@ -2038,7 +2175,9 @@ class TimerRegistry {
         await this.finishJob(timer, job, outcome);
         return;
       }
-      if (this.remainingMs(timer) <= 0) {
+      // The job's shell should have killed it by now; only a broken or missing
+      // wrapper reaches this.
+      if (this.backstopMs(timer) <= 0) {
         await this.expireJob(timer, job);
         return;
       }
@@ -2128,12 +2267,13 @@ class TimerRegistry {
   }
 
   /**
-   * End a job timer whose deadline passed, killing the job it watches.
+   * End a job timer whose backstop deadline passed, killing the job it watches.
    *
-   * A job nobody watches must not keep running once its budget is spent, so the
-   * deadline takes the process with it.
+   * The job's own shell normally ends it at the deadline; this is the cleanup
+   * for a shell that could not, so a job nobody watches cannot keep running
+   * past its deadline.
    *
-   * @param timer - Job timer whose deadline passed.
+   * @param timer - Job timer whose backstop deadline passed.
    * @param job - Job to kill.
    */
   private async expireJob(timer: Timer, job: Job): Promise<void> {
@@ -2181,7 +2321,9 @@ class TimerRegistry {
       // pid no longer carries the tag. Either way this timer is not the one
       // that ended it, so the job's own record is the news.
       const outcome =
-        job.proc === undefined ? recoverOutcome(job.logPath) : await job.done;
+        job.proc === undefined
+          ? recoverOutcome(job.logPath, job.tag)
+          : await job.done;
       await this.finishJob(timer, job, outcome);
       return;
     }
@@ -2197,6 +2339,7 @@ class TimerRegistry {
    *
    * The job shell already wrote its own `[exit N]` marker, so nothing is added
    * to the log here; a job that ended while pi was away has no status to add.
+   * A deadline kill is reported as a timeout, not as the signal it looks like.
    *
    * @param timer - Timer that watched the job.
    * @param job - Job that ended.
@@ -2208,6 +2351,17 @@ class TimerRegistry {
     outcome: JobOutcome,
   ): Promise<void> {
     this.jobs.delete(job.id);
+    // The deadline is the job's own shell's doing, so it is a timeout even
+    // though the process was signalled.
+    if (endedByDeadline(job, outcome)) {
+      await this.finish(
+        timer,
+        "timeout",
+        `timeout after ${timer.timeoutSec}s; job killed`,
+        "timed out",
+      );
+      return;
+    }
     // Wall-clock since the spawn is how long the job actually ran: it kept
     // running while pi did not.
     const end = describeJobEnd(
@@ -2275,7 +2429,9 @@ class TimerRegistry {
    * @returns `true` when the condition exited 0.
    */
   private async matches(timer: Timer, condition: string): Promise<boolean> {
-    const remaining = this.remainingMs(timer);
+    const remaining = timer.job
+      ? this.backstopMs(timer)
+      : this.remainingMs(timer);
     const result = await this.pi.exec(
       "bash",
       ["-lc", this.withJobInput(timer, condition)],
@@ -2312,7 +2468,7 @@ class TimerRegistry {
     await this.notify(
       timer,
       "tick",
-      `tick ${count}, ${durationText(liveMs(timer))} elapsed${ending}`,
+      `tick ${count}, ${durationText(ageMs(timer))} elapsed${ending}`,
       body,
     );
   }
@@ -2386,7 +2542,7 @@ class TimerRegistry {
       toTimerSpec(timer),
       reason,
       state,
-      durationText(liveMs(timer)),
+      durationText(ageMs(timer)),
       timer,
     );
     const tail = timer.job ? readLogTail(timer.job.logPath) : "";
@@ -2462,9 +2618,9 @@ function describeStart(spec: TimerSpec): string {
           : "no tick wakes"
         : `tick wakes every ${spec.intervalSec}s`;
     const ending = spec.condition
-      ? `wakes you when it exits, when the condition first exits 0 (which kills the job), or after ${spec.timeoutSec}s`
-      : `wakes you when it exits or after ${spec.timeoutSec}s`;
-    return `Started job "${spec.id}": runs \`${spec.start}\` in the background, ${ticks}, log ${spec.logPath}; ${ending}. It keeps running, and is re-attached when you resume this session, across pi restarts and reloads; only \`timer_stop\` or the timeout kills it, and time while pi is closed does not count against that timeout.`;
+      ? `wakes you when it exits, when the condition first exits 0 (which kills the job), or after ${spec.timeoutSec}s of real time`
+      : `wakes you when it exits or after ${spec.timeoutSec}s of real time`;
+    return `Started job "${spec.id}": runs \`${spec.start}\` in the background, ${ticks}, log ${spec.logPath}; ${ending}. Its own shell kills it at that deadline, even while pi is closed; it is re-attached when you resume this session, and only \`timer_stop\` or the deadline ends it.`;
   }
 
   const ticks =
@@ -2476,9 +2632,9 @@ function describeStart(spec: TimerSpec): string {
           ? `one tick after ${spec.intervalSec}s`
           : `tick every ${spec.intervalSec}s, at most ${spec.maxTicks}`;
   const ending = spec.condition
-    ? `it ends when the condition first exits 0 or after ${spec.timeoutSec}s`
-    : `it ends after that tick or at its ${spec.timeoutSec}s timeout`;
-  return `Started "${spec.id}": ${ticks}; ${ending}. Wakes arrive even after you end your turn; time while pi is closed does not count against the timeout, and resuming the session resumes the timer.`;
+    ? `it ends when the condition first exits 0 or after ${spec.timeoutSec}s of running time`
+    : `it ends after that tick or at its ${spec.timeoutSec}s budget of running time`;
+  return `Started "${spec.id}": ${ticks}; ${ending}. Wakes arrive even after you end your turn; time while pi is closed does not count against that budget, and resuming the session resumes the timer.`;
 }
 
 /**
@@ -2494,7 +2650,7 @@ function timerStartTool(
     name: "timer_start",
     label: "Timer start",
     description:
-      "Start a background command, wait for a condition, tick on a schedule, or combine them; every call returns immediately and wakes you later. Pass `start` with `condition` and/or `onTick` to start and monitor one job in one call. Timers survive pi restarts, reloads, and reboots: resuming the session re-arms them, a running job is re-attached, and time while pi is not running does not count against `timeoutSec`. `timer_stop` or a `timeoutSec` expiry kills a job.",
+      "Start a background command, wait for a condition, tick on a schedule, or combine them; every call returns immediately and wakes you later. Pass `start` with `condition` and/or `onTick` to start and monitor one job in one call. Timers survive pi restarts, reloads, and reboots: resuming the session re-arms them and re-attaches a running job. For a `start` job, `timeoutSec` is real time and the job's own shell kills it at that deadline even while pi is closed; without a job, `timeoutSec` is a budget of running time. `timer_stop` also kills a job.",
     promptSnippet:
       "Start a background command and wake when it exits, wait for a condition, or tick periodically -- in any combination.",
     promptGuidelines: [

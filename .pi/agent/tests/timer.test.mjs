@@ -20,9 +20,9 @@ import {
   DEFAULT_MAX_LINES,
 } from "@earendil-works/pi-coding-agent";
 import timerExtension, {
-  DEFAULT_JOB_TIMEOUT_SEC,
   DEFAULT_TIMEOUT_SEC,
   JOB_TAIL_LINES,
+  jobScript,
   RETIRED_HISTORY,
   SELECTED_CURSOR,
 } from "../extensions/timer.ts";
@@ -338,7 +338,25 @@ async function jobPid(status, id) {
  * @param tag - Token the extension would use to recognize the job.
  * @returns The process, its pid, and the log it writes.
  */
-function spawnJobShell(command, tag) {
+function spawnJobShell(command, tag, timeoutSec = 600) {
+  const logPath = join(agentDir, "jobs", `${tag}.log`);
+  mkdirSync(join(agentDir, "jobs"), { recursive: true });
+  const log = openSync(logPath, "a");
+  const proc = spawn("bash", ["-c", jobScript(tag, command, timeoutSec)], {
+    detached: true,
+    stdio: ["ignore", log, log],
+  });
+  closeSync(log);
+  return { proc, pid: Number(proc.pid), logPath };
+}
+
+/**
+ * Spawn a job shell from a pi that predates the wrapper-owned deadline.
+ *
+ * It has the tag and the `[exit N]` line, but no watchdog, so only the
+ * registry's backstop can end it.
+ */
+function spawnLegacyJobShell(command, tag) {
   const logPath = join(agentDir, "jobs", `${tag}.log`);
   mkdirSync(join(agentDir, "jobs"), { recursive: true });
   const log = openSync(logPath, "a");
@@ -369,6 +387,23 @@ function killGroupAfter(t, pid) {
       // Already gone.
     }
   });
+}
+
+/**
+ * Wait until a process group is gone, e.g. after a KILL escalation.
+ *
+ * @param pgid - Process-group leader pid.
+ */
+async function waitGroupGone(pgid) {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    try {
+      process.kill(-pgid, 0);
+    } catch {
+      return;
+    }
+    await wait(100);
+  }
+  assert.fail(`process group ${pgid} is still alive`);
 }
 
 /** Whether a pid still exists. */
@@ -516,6 +551,11 @@ describe("timer", () => {
         "start",
         "timeoutSec",
       ],
+    );
+    // The default belongs to the schema, so the prompt need not repeat it.
+    assert.equal(
+      tools.get("timer_start").parameters.properties.timeoutSec.default,
+      DEFAULT_TIMEOUT_SEC,
     );
     assert.deepEqual(
       Object.keys(tools.get("timer_stop").parameters.properties),
@@ -1053,7 +1093,7 @@ describe("timer", () => {
     assert.match(
       detail,
       new RegExp(
-        `cond-met\\s+✓ done after \\d+s timeout=${DEFAULT_TIMEOUT_SEC}s`,
+        `cond-met\\s+✓ done after \\d+s budget=${DEFAULT_TIMEOUT_SEC}s running`,
       ),
     );
     assert.match(detail, /cond: true/);
@@ -1225,7 +1265,7 @@ describe("timer", () => {
     assert.match(
       detail,
       new RegExp(
-        `^\\s*live-job\\s+[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏] running for \\d+s timeout=${DEFAULT_JOB_TIMEOUT_SEC}s\\s*$`,
+        `^\\s*live-job\\s+[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏] running for \\d+s deadline=${DEFAULT_TIMEOUT_SEC}s\\s*$`,
         "m",
       ),
     );
@@ -1331,7 +1371,7 @@ describe("timer", () => {
     assert.match(
       detail,
       new RegExp(
-        `^\\s*build\\s+✓ done after \\d+s timeout=${DEFAULT_JOB_TIMEOUT_SEC}s\\s*$`,
+        `^\\s*build\\s+✓ done after \\d+s deadline=${DEFAULT_TIMEOUT_SEC}s\\s*$`,
         "m",
       ),
     );
@@ -1600,11 +1640,11 @@ describe("timer", () => {
     assert.equal(notice.details.state, "done");
     assert.equal(result.details.start, "echo hi");
     assert.equal(result.details.maxTicks, 0);
-    assert.equal(result.details.timeoutSec, DEFAULT_JOB_TIMEOUT_SEC);
+    assert.equal(result.details.timeoutSec, DEFAULT_TIMEOUT_SEC);
     assert.match(
       result.content[0].text,
       new RegExp(
-        `^Started job "job-ok": runs \`echo hi\` in the background, no tick wakes, log .*\\/jobs\\/job-ok-\\d+\\.log; wakes you when it exits or after ${DEFAULT_JOB_TIMEOUT_SEC}s\\. It keeps running, and is re-attached when you resume this session, across pi restarts and reloads; only \`timer_stop\` or the timeout kills it, and time while pi is closed does not count against that timeout\\.$`,
+        `^Started job "job-ok": runs \`echo hi\` in the background, no tick wakes, log .*\\/jobs\\/job-ok-\\d+\\.log; wakes you when it exits or after ${DEFAULT_TIMEOUT_SEC}s of real time\\. Its own shell kills it at that deadline, even while pi is closed; it is re-attached when you resume this session, and only \`timer_stop\` or the deadline ends it\\.$`,
       ),
     );
     // The log outlives the wake, so it must record the outcome too.
@@ -1658,14 +1698,14 @@ describe("timer", () => {
     const pid = await jobPid(status, "job-timeout");
     const [notice] = await noticesAfter(1);
 
-    assert.equal(
+    assert.match(
       notice.content,
-      "[timer job-timeout] timeout after 1s; job killed; timer stopped\n\n[killed by the timer]",
+      /^\[timer job-timeout\] timeout after 1s; job killed; timer stopped\n\n\[pi-timer [0-9a-f-]+: timeout after 1s\]$/,
     );
     assert.equal(notice.details.state, "timeout");
     assert.match(
       readFileSync(result.details.logPath, "utf8"),
-      /\[killed by the timer\]\n$/,
+      /\[pi-timer [0-9a-f-]+: timeout after 1s\]\n$/,
     );
     await waitGone(pid);
   });
@@ -1962,10 +2002,10 @@ console.log(listed.content[0].text);
     assert.equal(wake.details.state, "failed");
   });
 
-  test("an adopted job is killed when its remaining budget runs out", async (t) => {
+  test("an adopted job's own shell ends it at its deadline", async (t) => {
     const sessionId = randomUUID();
     const tag = randomUUID();
-    const { pid, logPath } = spawnJobShell("sleep 30", tag);
+    const { pid, logPath } = spawnJobShell("sleep 30", tag, 1);
     killGroupAfter(t, pid);
     writeState(sessionId, [
       persistedTimer("adopted", {
@@ -1985,10 +2025,125 @@ console.log(listed.content[0].text);
 
     assert.match(
       wake.content,
-      /^\[timer adopted\] timeout after 1s; job killed; timer stopped\n\n\[killed by the timer\]$/,
+      /^\[timer adopted\] timeout after 1s; job killed; timer stopped\n\n\[pi-timer [0-9a-f-]+: timeout after 1s\]$/,
+    );
+    assert.equal(wake.details.state, "timeout");
+    await waitGone(pid);
+    assert.match(
+      readFileSync(logPath, "utf8"),
+      /\[pi-timer [0-9a-f-]+: timeout after 1s\]\n$/,
+    );
+  });
+
+  test("a job's own shell enforces its deadline while pi is not running", async (t) => {
+    const sessionId = randomUUID();
+    const first = setup(t, () => exit(1), { sessionId });
+    await first.hooks.get("session_start")({}, first.branch());
+    const { details } = await first.start({
+      id: "job-alone",
+      start: "sleep 30",
+      timeoutSec: 1,
+    });
+    const pid = await jobPid(first.status, "job-alone");
+    killGroupAfter(t, pid);
+
+    // Nothing is watching: the wrapper's watchdog is the only thing left.
+    await first.hooks.get("session_shutdown")({});
+    await waitGone(pid);
+    assert.match(
+      readFileSync(details.logPath, "utf8"),
+      /\[pi-timer [0-9a-f-]+: timeout after 1s\]\n$/,
+    );
+
+    // The next pi reports the deadline kill from the log, not a lost job.
+    const next = setup(t, () => exit(1), { sessionId });
+    await next.hooks.get("session_start")({}, next.branch());
+    const wake = (await next.noticesAfter(1)).at(-1);
+
+    assert.match(
+      wake.content,
+      /^\[timer job-alone\] timeout after 1s; job killed; timer stopped\n\n\[pi-timer [0-9a-f-]+: timeout after 1s\]$/,
+    );
+    assert.equal(
+      (await next.status({ id: "job-alone" })).content[0].text,
+      'Timer "job-alone" stopped (timed out).',
+    );
+  });
+
+  test("a resumed job past its deadline is killed by the backstop", async (t) => {
+    const sessionId = randomUUID();
+    const tag = randomUUID();
+    // A shell from a pi that predates the wrapper-owned deadline: no watchdog,
+    // so only the registry's backstop can end it.
+    const { pid, logPath } = spawnLegacyJobShell("sleep 30", tag);
+    killGroupAfter(t, pid);
+    writeState(sessionId, [
+      persistedTimer("backstop", {
+        start: "sleep 30",
+        logPath,
+        maxTicks: 0,
+        timeoutSec: 1,
+        job: { pid, logPath, startedAt: Date.now() - 60_000, tag },
+      }),
+    ]);
+    const { hooks, noticesAfter, branch } = setup(t, () => exit(1), {
+      sessionId,
+    });
+
+    await hooks.get("session_start")({}, branch());
+    const wake = (await noticesAfter(1)).at(-1);
+
+    assert.match(
+      wake.content,
+      /^\[timer backstop\] timeout after 1s; job killed; timer stopped\n\n\[killed by the timer\]$/,
     );
     await waitGone(pid);
     assert.match(readFileSync(logPath, "utf8"), /\[killed by the timer\]\n$/);
+  });
+
+  test("a job that ignores TERM is still killed at its deadline", async (t) => {
+    const { start, status, noticesAfter } = setup(t, () => exit(1));
+
+    const { details } = await start({
+      id: "job-stubborn",
+      start: "trap '' TERM; sleep 30",
+      timeoutSec: 1,
+    });
+    const pid = await jobPid(status, "job-stubborn");
+    killGroupAfter(t, pid);
+
+    // The wrapper dies on its own group TERM, so the report comes at the
+    // deadline; only the escalation after the grace takes the job down.
+    const wake = (await noticesAfter(1)).at(-1);
+    assert.match(
+      wake.content,
+      /^\[timer job-stubborn\] timeout after 1s; job killed; timer stopped\n\n\[pi-timer [0-9a-f-]+: timeout after 1s\]$/,
+    );
+    await waitGone(pid);
+    await waitGroupGone(pid);
+    assert.match(
+      readFileSync(details.logPath, "utf8"),
+      /\[pi-timer [0-9a-f-]+: timeout after 1s\]\n$/,
+    );
+  });
+
+  test("a job's own output cannot pass for a deadline marker", async (t) => {
+    const { start, noticesAfter } = setup(t, () => exit(1));
+
+    await start({
+      id: "fake-marker",
+      start:
+        "echo '[exit 124]'; echo '[pi-timer fake-tag: timeout after 1s]'; exit 3",
+      timeoutSec: 30,
+    });
+    const wake = (await noticesAfter(1)).at(-1);
+
+    // The marker must carry the job's real tag, so this is an ordinary exit 3.
+    assert.match(
+      wake.content,
+      /^\[timer fake-marker\] failed: exit 3 after \ds; timer stopped\n\n\[exit 124\]\n\[pi-timer fake-tag: timeout after 1s\]\n\[exit 3\]$/,
+    );
+    assert.equal(wake.details.state, "failed");
   });
 
   test("an adopted job that exits on its own reports its exit code", async (t) => {
@@ -2020,12 +2175,12 @@ console.log(listed.content[0].text);
     assert.equal(wake.details.state, "failed");
   });
 
-  test("an adopted job that already ended at the deadline reports its exit", async (t) => {
+  test("an adopted job that exits before its deadline reports its exit", async (t) => {
     const sessionId = randomUUID();
     const tag = randomUUID();
-    // It exits well before the 1s deadline, and the 2s adoption poll has not
-    // run yet, so the deadline path has only the log to go on.
-    const { pid, logPath } = spawnJobShell("sleep 0.2; exit 0", tag);
+    // It exits before its 1s deadline; the wrapper must stop its watchdog then,
+    // or the deadline would turn a clean exit into a timeout.
+    const { pid, logPath } = spawnJobShell("sleep 0.2; exit 0", tag, 1);
     killGroupAfter(t, pid);
     writeState(sessionId, [
       persistedTimer("adopted-race", {
