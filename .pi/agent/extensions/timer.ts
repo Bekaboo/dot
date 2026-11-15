@@ -61,6 +61,7 @@ import {
   getAgentDir,
   type KeybindingsManager,
   type SessionEntry,
+  type SessionStartEvent,
   type Theme,
   type ToolDefinition,
   truncateTail,
@@ -339,9 +340,12 @@ type TimerDetails =
   | { action: "status"; id?: string };
 
 /** Details stored on a timer notification. */
-type TimerNoticeDetails =
-  | { id: string; state: TimerState }
-  | { restored: number };
+interface TimerNoticeDetails {
+  /** Timer id that produced the notification. */
+  id: string;
+  /** Notification kind; used to retire a finished timer on replay. */
+  state: TimerState;
+}
 
 /** A job a resumed process can re-attach to, as written to its state file. */
 interface PersistedJob {
@@ -1076,7 +1080,7 @@ function collectActiveTimers(
 
     if (entry.type === "custom_message" && entry.customType === NOTICE_TYPE) {
       const details = entry.details as TimerNoticeDetails | undefined;
-      if (details && "id" in details && details.state !== "tick") {
+      if (details?.id && details.state !== "tick") {
         active.delete(details.id);
       }
     }
@@ -1652,13 +1656,22 @@ class TimerRegistry {
    * work behind it, so replaying the timers there would duplicate wakes and
    * report jobs it never started. Such a session's header names its parent.
    *
+   * A resumed timer is state, not news: the user hears about it in a toast and
+   * `/timers`, while the model only learns about a timer when one of its own
+   * wakes arrives. That keeps a reload from adding a status line to the
+   * conversation every time, and a wake already says what happened.
+   *
    * @param ctx - Context of the session that is starting or switching.
    * @param source - `session_start` reads the state file; `session_tree` uses
    *   the branch alone.
+   * @param reason - Why the session started, when `source` is `session_start`.
+   *   A reload keeps the same session and the same pi process, so it has
+   *   nothing to tell the user about.
    */
   async restore(
     ctx: ExtensionContext,
     source: "session_start" | "session_tree",
+    reason?: SessionStartEvent["reason"],
   ): Promise<void> {
     // Snapshot before `stopAll()` clears the map: a branch switch re-arms some
     // of these ids and must not restart their budget or their tick count.
@@ -1669,7 +1682,13 @@ class TimerRegistry {
     const state =
       source === "session_start" ? readTimerState(this.sessionId) : undefined;
     if (state) {
-      await this.restoreState(state.timers);
+      const resumed = await this.restoreState(state.timers);
+      if (resumed > 0 && reason !== "reload") {
+        ctx.ui.notify(
+          `Resumed ${resumed} timer${resumed === 1 ? "" : "s"} from before this pi start.`,
+          "info",
+        );
+      }
       return;
     }
     if (
@@ -1702,11 +1721,15 @@ class TimerRegistry {
    * Everything that lives is armed before any wake is sent, so the state file
    * is complete again before a slow callback can delay startup. A job that
    * ended while pi was away is still news the timer owed the agent, so it
-   * arrives as a real wake, unlike the quiet "resumed" summary.
+   * arrives as a real wake; a timer that merely kept running says nothing
+   * until its own next wake.
    *
    * @param timers - Timer records read from the state file.
+   * @returns How many timers resumed.
    */
-  private async restoreState(timers: readonly PersistedTimer[]): Promise<void> {
+  private async restoreState(
+    timers: readonly PersistedTimer[],
+  ): Promise<number> {
     const ended: { timer: Timer; job: Job; outcome: JobOutcome }[] = [];
     let resumed = 0;
     for (const entry of timers) {
@@ -1731,9 +1754,6 @@ class TimerRegistry {
       resumed += 1;
     }
     this.persist();
-    if (resumed > 0) {
-      this.noticeResumed(resumed);
-    }
 
     for (const { timer, job, outcome } of ended) {
       timer.job = job;
@@ -1746,6 +1766,7 @@ class TimerRegistry {
       );
       await this.finish(timer, jobEndState(outcome), end.line, end.reason);
     }
+    return resumed;
   }
 
   /**
@@ -1813,23 +1834,6 @@ class TimerRegistry {
         job,
       });
     }
-  }
-
-  /**
-   * Tell the agent that timers came back with the session.
-   *
-   * No turn is triggered: the notice only has to be in the conversation before
-   * the next request, so resuming an idle session does not start one.
-   *
-   * @param count - Timers that resumed.
-   */
-  private noticeResumed(count: number): void {
-    this.pi.sendMessage({
-      customType: NOTICE_TYPE,
-      content: `[timer] resumed ${count} ${count === 1 ? "timer" : "timers"} from before this pi start; time while pi was not running did not count against their timeouts.`,
-      display: true,
-      details: { restored: count },
-    });
   }
 
   /**
@@ -2867,8 +2871,8 @@ export default function timer(pi: ExtensionAPI): void {
   pi.registerTool(timerStatusTool(registry));
   pi.registerCommand("timers", timersCommand(registry));
 
-  pi.on("session_start", async (_event, ctx) => {
-    await registry.restore(ctx, "session_start");
+  pi.on("session_start", async (event, ctx) => {
+    await registry.restore(ctx, "session_start", event.reason);
   });
 
   pi.on("session_tree", async (_event, ctx) => {

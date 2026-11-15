@@ -96,6 +96,7 @@ function setup(t, runCommand, { ack = true, sessionId = randomUUID() } = {}) {
   const hooks = new Map();
   const commands = new Map();
   const notices = [];
+  const notified = [];
   let onNotice = () => {};
   timerExtension({
     registerTool: (definition) => {
@@ -144,6 +145,7 @@ function setup(t, runCommand, { ack = true, sessionId = randomUUID() } = {}) {
           },
         })),
     },
+    ui: { notify: (text) => notified.push(text) },
   });
   t.after(() => hooks.get("session_shutdown")({}));
   return {
@@ -154,6 +156,7 @@ function setup(t, runCommand, { ack = true, sessionId = randomUUID() } = {}) {
     stop,
     status,
     notices,
+    notified,
     noticesAfter,
     branch,
     sessionId,
@@ -1479,7 +1482,7 @@ describe("timer", () => {
   });
 
   test("a forked session does not inherit the timers of its source", async (t) => {
-    const { hooks, status, notices } = setup(t, runUntilCancelled);
+    const { hooks, status, notices, notified } = setup(t, runUntilCancelled);
     // A fork is marked by the parent session path in its header. Its transcript
     // is the source's, so replaying it would duplicate wakes the source owns.
     const forked = {
@@ -1503,6 +1506,7 @@ describe("timer", () => {
 
     assert.equal((await status({})).content[0].text, "No active timers.");
     assert.deepEqual(notices, []);
+    assert.deepEqual(notified, []);
   });
 
   test("entries from the previous watch tool are ignored", async (t) => {
@@ -1711,6 +1715,7 @@ const ctx = {
     getHeader: () => null,
     getBranch: () => [],
   },
+  ui: { notify: () => {} },
 };
 await hooks.get("session_start")({}, ctx);
 await tools.get("timer_start").execute("test", {
@@ -1780,8 +1785,11 @@ console.log(listed.content[0].text);
       (await second.status({ id: "job-pause" })).content[0].text,
       new RegExp(`^job-pause +running .*job pid ${pid}, log `),
     );
-    assert.equal(second.notices[0].details.restored, 1);
-    assert.doesNotMatch(second.notices[0].content, /orphaned|failed/);
+    assert.match(
+      second.notified[0],
+      /^Resumed 1 timer from before this pi start\.$/,
+    );
+    assert.deepEqual(second.notices, [], "a live job is not reported as ended");
 
     const stopped = await second.stop({ id: "job-pause" });
     assert.match(stopped.content[0].text, /killed its job/);
@@ -1799,9 +1807,11 @@ console.log(listed.content[0].text);
         startedAt: Date.now() - 3_600_000,
       }),
     ]);
-    const { hooks, status, stop, notices, branch } = setup(t, () => exit(1), {
-      sessionId,
-    });
+    const { hooks, status, stop, notices, notified, branch } = setup(
+      t,
+      () => exit(1),
+      { sessionId },
+    );
 
     await hooks.get("session_start")({}, branch());
 
@@ -1810,13 +1820,26 @@ console.log(listed.content[0].text);
       /^clock +running +[23]s /,
       "the age is pi-live time, not the hour since it was armed",
     );
-    assert.equal(
-      notices.length,
-      1,
-      "an unexpired timer only gets the resume notice",
-    );
-    assert.equal(notices[0].details.restored, 1);
+    assert.deepEqual(notices, [], "an unexpired timer sends no wake");
+    assert.match(notified[0], /^Resumed 1 timer from before this pi start\.$/);
     await stop({ id: "clock" });
+  });
+
+  test("a reload re-attaches timers without telling the user", async (t) => {
+    const sessionId = randomUUID();
+    writeState(sessionId, [persistedTimer("reloaded", { condition: "false" })]);
+    const { hooks, status, notified, branch } = setup(t, () => exit(1), {
+      sessionId,
+    });
+
+    await hooks.get("session_start")({ reason: "reload" }, branch());
+
+    assert.match(
+      (await status({ id: "reloaded" })).content[0].text,
+      /^reloaded +running /,
+      "the timer is re-attached on a reload",
+    );
+    assert.deepEqual(notified, [], "a reload is not news for the user");
   });
 
   test("a timer whose budget ran out before shutdown times out on resume", async (t) => {
@@ -1833,8 +1856,7 @@ console.log(listed.content[0].text);
     });
 
     await hooks.get("session_start")({}, branch());
-    const notices = await noticesAfter(2);
-    const wake = notices.at(-1);
+    const wake = (await noticesAfter(1)).at(-1);
 
     assert.match(
       wake.content,
@@ -1863,10 +1885,10 @@ console.log(listed.content[0].text);
     });
 
     await hooks.get("session_start")({}, branch());
-    const notices = await noticesAfter(2);
+    const wake = (await noticesAfter(1)).at(-1);
 
     assert.match(
-      notices.at(-1).content,
+      wake.content,
       /^\[timer ticks\] tick 2\/2, [56]s elapsed; timer stopped$/,
     );
   });
@@ -1959,7 +1981,7 @@ console.log(listed.content[0].text);
     });
 
     await hooks.get("session_start")({}, branch());
-    const wake = (await noticesAfter(2)).at(-1);
+    const wake = (await noticesAfter(1)).at(-1);
 
     assert.match(
       wake.content,
@@ -1988,7 +2010,7 @@ console.log(listed.content[0].text);
     });
 
     await hooks.get("session_start")({}, branch());
-    const wake = (await noticesAfter(2)).at(-1);
+    const wake = (await noticesAfter(1)).at(-1);
 
     // Found by the adoption poll, then read from the log the shell wrote.
     assert.match(
@@ -2019,7 +2041,7 @@ console.log(listed.content[0].text);
     });
 
     await hooks.get("session_start")({}, branch());
-    const wake = (await noticesAfter(2)).at(-1);
+    const wake = (await noticesAfter(1)).at(-1);
 
     assert.match(
       wake.content,
