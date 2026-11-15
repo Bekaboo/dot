@@ -169,18 +169,6 @@ const PROMPT_ID = "prompt";
 /** Id of the `get_state` command that asks the child where its transcript is. */
 const STATE_ID = "state";
 
-/** Id of the `prompt` command that carries a changed deadline to the child. */
-const TIMEOUT_UPDATE_ID = "timeout-update";
-
-/**
- * Command a spawned child registers to learn that its deadline changed.
- *
- * The parent enforces the deadline, but the child warns its own model before
- * it; the RPC protocol has no extension channel, so the new limit travels as
- * this command, which pi runs at once even while the child is mid-turn.
- */
-const TIMEOUT_COMMAND = "subagent-timeout";
-
 /**
  * Tool a spawned child uses to end its session by itself.
  *
@@ -388,15 +376,6 @@ const StatusParams = Type.Object({ id: SelectionParams });
 
 /** Schema for `subagent_kill`. */
 const KillParams = Type.Object({ id: SelectionParams });
-
-/** Schema for `subagent_update`; only the deadline can change for now. */
-const UpdateParams = Type.Object({
-  id: Type.String({ description: "Id of the running subagent to change." }),
-  timeoutSec: Type.Number({
-    description:
-      "New wall-clock limit in seconds, counted from the child's start like the original, so it must exceed the time the child has already run. Raise it when the child was handed more work or is waiting on background work; lower it to get the result sooner, since the child is warned about the nearer deadline and can wrap up.",
-  }),
-});
 
 /** Schema for `subagent_finish`, whose answer is the only text the parent sees. */
 const FinishParams = Type.Object({
@@ -1144,9 +1123,9 @@ function elapsedSec(startedAt: number): number {
 /**
  * Seconds of a limit a child may count from its own start.
  *
- * Running time from before that start is taken off, so a resumed child and a
- * child whose deadline moved both hear what is really left. One decimal keeps a
- * sub-second limit usable without printing a long fraction.
+ * Running time from before that start is taken off, so a resumed child hears
+ * what is really left. One decimal keeps a sub-second limit usable without
+ * printing a long fraction.
  *
  * @param timeoutSec - Total running-time limit of the run.
  * @param elapsedMs - Running time the run had spent before the child started.
@@ -1399,20 +1378,6 @@ function stateCommand(): string {
 }
 
 /**
- * Build the command that tells the child its deadline changed.
- *
- * @param timeoutSec - New wall-clock limit, counted from the child's start.
- * @returns One JSONL record for the child's stdin.
- */
-function timeoutCommand(timeoutSec: number): string {
-  return jsonLine({
-    id: TIMEOUT_UPDATE_ID,
-    type: "prompt",
-    message: `/${TIMEOUT_COMMAND} ${timeoutSec}`,
-  });
-}
-
-/**
  * Answer a child's extension UI record, which no user can see.
  *
  * Fire-and-forget records such as `notify` need no answer and pi ignores a
@@ -1451,8 +1416,6 @@ function promptRejection(record: unknown): string | undefined {
     error?: unknown;
     data?: { disposition?: unknown };
   };
-  // Only the task prompt starts the run; a deadline update is a command that
-  // pi reports as handled, which is exactly what it should be.
   if (
     response.type !== "response" ||
     response.command !== "prompt" ||
@@ -1887,8 +1850,6 @@ class SubagentRunner {
   private finished: FinishedSubagent[] = [];
   /** Per-child stop hooks, so a kill can end one child without touching others. */
   private stoppers = new Map<string, () => Promise<void>>();
-  /** Per-child hooks that move a running child's deadline. */
-  private timeoutSetters = new Map<string, (timeoutSec: number) => void>();
   /** Set once the session shuts down: pending notifications are dropped. */
   private shuttingDown = false;
   /** Session manager shared with the other extensions that wake Pi. */
@@ -2064,7 +2025,6 @@ class SubagentRunner {
       }
       if (this.shuttingDown || stopped) return;
       this.stoppers.delete(running.id);
-      this.timeoutSetters.delete(running.id);
       this.running.delete(running.id);
       const elapsed = runningMs(running);
       const outcome = outcomeOf(
@@ -2113,18 +2073,6 @@ class SubagentRunner {
       );
       timeout.unref();
     };
-    this.timeoutSetters.set(running.id, (timeoutSec) => {
-      running.timeoutSec = timeoutSec;
-      armTimeout();
-      // A hard crash then reports at least this much running time; the run is
-      // reported rather than resumed, so the number is only a lower bound.
-      this.record(running, "running", runningMs(running));
-      writeChild(
-        proc,
-        timeoutCommand(childBudget(timeoutSec, running.elapsedMs)),
-        appendStderr,
-      );
-    });
 
     proc.on("error", (error) => finish(`spawn error: ${error.message}`));
     proc.on("close", (code, signal) =>
@@ -2317,35 +2265,11 @@ class SubagentRunner {
       });
       this.running.delete(id);
       this.stoppers.delete(id);
-      this.timeoutSetters.delete(id);
       waits.push(stop());
     }
     await Promise.all(waits);
     this.refreshOverlay();
     return { stopped, unknown };
-  }
-
-  /**
-   * Move a running child's deadline, and send the child its new limit so it
-   * warns in time.
-   *
-   * @param id - Id of the child to change.
-   * @param timeoutSec - New wall-clock limit, counted from the child's start.
-   * @returns What changed, or why nothing did.
-   */
-  updateTimeout(id: string, timeoutSec: number): string {
-    const job = this.running.get(id);
-    const setTimeoutSec = this.timeoutSetters.get(id);
-    if (!job || !setTimeoutSec)
-      return `No running subagent named ${marker(id)}.`;
-    const ranSec = runningMs(job) / 1000;
-    if (timeoutSec <= ranSec) {
-      return `${marker(id)} has already run for ${ranSec.toFixed(1)}s; give it a timeout above that.`;
-    }
-    const previous = job.timeoutSec;
-    setTimeoutSec(timeoutSec);
-    this.refreshOverlay();
-    return `${marker(id)} timeout changed from ${previous}s to ${timeoutSec}s; about ${Math.round(timeoutSec - ranSec)}s are left.`;
   }
 
   /**
@@ -2374,7 +2298,6 @@ class SubagentRunner {
     );
     this.children.clear();
     this.stoppers.clear();
-    this.timeoutSetters.clear();
   }
 
   /**
@@ -2933,8 +2856,7 @@ function subagentTool(
       'Pass read-only `tools` such as ["read", "grep", "find"] to a research `subagent`, and give an editing child only the tools its change needs.',
       "For review and judging, give `subagent` a different `model` from the one that produced the work when one is available, ideally from another family: a reviewer sharing the author's model shares its blind spots.",
       `After calling \`subagent\`, do non-overlapping work: do not poll, do not redo the task, and never predict or invent its result before the ${MARKER_EXAMPLE} message arrives; use \`subagent_status\` instead of polling, and \`subagent_kill\` to drop a result you no longer need.`,
-      "Use `subagent_update` to give a running child more time, instead of letting it time out or starting it again.",
-      `A child stays alive after its turns, so background work it started, such as a nested subagent, can wake it; a child that never calls \`${FINISH_TOOL}\` keeps running until its \`timeoutSec\` passes, so raise that timeout when the child is meant to wait on long background work, and tell it to stop work it no longer needs.`,
+      `A child stays alive after its turns, so background work it started, such as a nested subagent, can wake it, and a child that never calls \`${FINISH_TOOL}\` keeps running until its \`timeoutSec\` passes: tell it to stop work it no longer needs.`,
       `Treat a ${MARKER_EXAMPLE} report as a claim to verify, not as proof the work is done.`,
     ],
     parameters: SubagentParams,
@@ -3028,29 +2950,6 @@ function killTool(runner: SubagentRunner): ToolDefinition<typeof KillParams> {
 }
 
 /**
- * Build the `subagent_update` tool definition.
- *
- * @param runner - Session state that owns the children.
- */
-function updateTool(
-  runner: SubagentRunner,
-): ToolDefinition<typeof UpdateParams> {
-  return {
-    name: "subagent_update",
-    label: "Subagent update",
-    description:
-      "Change a running subagent's configuration. Only its wall-clock limit (`timeoutSec`) can be changed for now, and the child is sent the new limit.",
-    parameters: UpdateParams,
-    async execute(_toolCallId, params) {
-      const { id, timeoutSec } = params;
-      const problem = timeoutProblem(timeoutSec);
-      if (problem) return toolText(problem);
-      return toolText(runner.updateTimeout(id.trim(), timeoutSec));
-    },
-  };
-}
-
-/**
  * Warn the child once its timeout approaches, so it can wrap up by itself.
  *
  * The parent still enforces the deadline; this only gives a model that forgot
@@ -3059,10 +2958,6 @@ function updateTool(
  * that is idle on background work and `steer` reaches one that is mid-turn,
  * which is exactly the delivery this needs.
  *
- * The parent may move the deadline later or earlier through `TIMEOUT_COMMAND`;
- * the warning then follows it, and the model is told the new limit at its next
- * request without being woken for it.
- *
  * @param pi - Extension API of the child process.
  * @param runner - Session state telling whether the child already finished.
  */
@@ -3070,62 +2965,38 @@ function warnBeforeDeadline(pi: ExtensionAPI, runner: SubagentRunner): void {
   // The parent counts the deadline from the spawn, which this load follows
   // closely enough for a warning that leads by seconds.
   const startedAt = Date.now();
-  let warning: ReturnType<typeof setTimeout> | undefined;
 
-  const arm = (timeoutSec: number) => {
-    clearTimeout(warning);
-    const leadSec = Math.min(
-      timeoutSec / 2,
-      Math.max(
-        MIN_TIMEOUT_WARN_LEAD_SEC,
-        timeoutSec * (1 - TIMEOUT_WARN_THRESH),
-      ),
-    );
-    warning = setTimeout(
-      () => {
-        // A child that already asked to finish needs no warning.
-        if (runner.finishRequested()) return;
-        // Said from the clock, not the lead: a deadline moved into the lead
-        // window warns at once with less time left than the lead.
-        const leftSec = Math.max(
-          0,
-          Math.ceil((startedAt + timeoutSec * 1000 - Date.now()) / 1000),
-        );
-        pi.sendMessage(
-          {
-            customType: "subagent-deadline",
-            content: `[subagent deadline] About ${leftSec}s of this session's ${timeoutSec}s budget is left. Wrap up now: finish what you can and call \`${FINISH_TOOL}\` with your best answer. Anything still pending is abandoned at the deadline, so start no background work that cannot finish in time.`,
-            display: true,
-          },
-          { deliverAs: "steer", triggerTurn: true },
-        );
-      },
-      Math.max(0, startedAt + (timeoutSec - leadSec) * 1000 - Date.now()),
-    );
-    // The warning must not be the reason the child stays alive, and process exit
-    // cancels it: no shutdown hook is needed for it.
-    warning.unref();
-  };
+  const timeoutSec = Number(process.env[TIMEOUT_ENV]);
+  if (!Number.isFinite(timeoutSec) || timeoutSec <= 0) return;
 
-  const initial = Number(process.env[TIMEOUT_ENV]);
-  if (Number.isFinite(initial) && initial > 0) arm(initial);
-
-  pi.registerCommand(TIMEOUT_COMMAND, {
-    description: "Move this subagent's deadline; sent by the parent session",
-    handler: async (args: string) => {
-      const timeoutSec = Number(args.trim());
-      if (!Number.isFinite(timeoutSec) || timeoutSec <= 0) return;
-      arm(timeoutSec);
+  const leadSec = Math.min(
+    timeoutSec / 2,
+    Math.max(MIN_TIMEOUT_WARN_LEAD_SEC, timeoutSec * (1 - TIMEOUT_WARN_THRESH)),
+  );
+  const warning = setTimeout(
+    () => {
+      // A child that already asked to finish needs no warning.
+      if (runner.finishRequested()) return;
+      // Said from the clock, not the lead: a timer that fires late still
+      // reports the time actually left.
+      const leftSec = Math.max(
+        0,
+        Math.ceil((startedAt + timeoutSec * 1000 - Date.now()) / 1000),
+      );
       pi.sendMessage(
         {
           customType: "subagent-deadline",
-          content: `[subagent deadline] The parent changed this session's wall-clock limit to ${timeoutSec}s, counted from its start.`,
+          content: `[subagent deadline] About ${leftSec}s of this session's ${timeoutSec}s budget is left. Wrap up now: finish what you can and call \`${FINISH_TOOL}\` with your best answer. Anything still pending is abandoned at the deadline, so start no background work that cannot finish in time.`,
           display: true,
         },
-        { triggerTurn: false },
+        { deliverAs: "steer", triggerTurn: true },
       );
     },
-  });
+    Math.max(0, startedAt + (timeoutSec - leadSec) * 1000 - Date.now()),
+  );
+  // The warning must not be the reason the child stays alive, and process exit
+  // cancels it: no shutdown hook is needed for it.
+  warning.unref();
 }
 
 /**
@@ -3272,7 +3143,6 @@ export default function subagent(pi: ExtensionAPI) {
   pi.registerTool(subagentTool(runner));
   pi.registerTool(statusTool(runner));
   pi.registerTool(killTool(runner));
-  pi.registerTool(updateTool(runner));
   pi.registerCommand("subagents", subagentsCommand(runner));
   // A run outlives the pi process that started it only as a record: every
   // shutdown pauses it, and the next open of this session resumes it.
