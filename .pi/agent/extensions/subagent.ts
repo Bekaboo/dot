@@ -3145,6 +3145,53 @@ function subagentsCommand(runner: SubagentRunner) {
 }
 
 /**
+ * Custom message type of the nudge a child gets after a turn without a finish.
+ */
+const FINISH_REMINDER_TYPE = "subagent-finish-reminder";
+
+/**
+ * Nudge a child whose turn ended without calling `subagent_finish`.
+ *
+ * A turn ending does not end the child's session, so a model that writes its
+ * report as plain text instead of calling the finish tool leaves the parent
+ * waiting for an answer the child has already composed: it sits idle until the
+ * deadline warning, or is cut off at the deadline with the report still in its
+ * transcript. The reminder continues the same run at the settle boundary, so
+ * the model still holds its report in context and one request is enough.
+ *
+ * @param pi - Extension API of the child process.
+ * @param runner - Session state telling whether the child already finished.
+ */
+function remindMissingFinish(pi: ExtensionAPI, runner: SubagentRunner): void {
+  /** Whether the turn that just ended emitted tool results. */
+  let worked = false;
+  /** Whether the current stretch of work was already reminded. */
+  let reminded = false;
+
+  pi.on("turn_end", (event) => {
+    worked = event.toolResults.length > 0;
+    if (worked) reminded = false;
+  });
+
+  pi.on("agent_before_settle", (event) => {
+    if (worked || reminded || runner.finishRequested()) return;
+    reminded = true;
+    return {
+      entries: [
+        ...event.entries,
+        {
+          type: "custom_message",
+          customType: FINISH_REMINDER_TYPE,
+          content: `[subagent finish] Your turn ended without calling \`${FINISH_TOOL}\`, so the parent has not received your answer: this session stays open and idle until its deadline. Anything you wrote in a message did not reach the parent. Call \`${FINISH_TOOL}\` now with your complete report, unless you are still waiting on background work -- then wait and call it as soon as that work reports.`,
+          display: false,
+        },
+      ],
+      continue: true,
+    };
+  });
+}
+
+/**
  * End a spawned child when its model says the work is done.
  *
  * A child runs in RPC mode, so a turn with no tool calls no longer ends the
@@ -3192,6 +3239,7 @@ export default function subagent(pi: ExtensionAPI) {
   if (process.env[CHILD_ENV] === "1") {
     pi.registerTool(finishTool(runner));
     endChildWhenDone(pi, runner);
+    remindMissingFinish(pi, runner);
     warnBeforeDeadline(pi, runner);
   }
 }

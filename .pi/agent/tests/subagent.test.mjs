@@ -3111,9 +3111,29 @@ describe("subagent", () => {
       };
     }
 
+    /**
+     * Drive one turn and the settle boundary that follows it.
+     *
+     * @param pi - Child instance the handlers belong to.
+     * @param toolResults - Results the turn emitted, empty for a text-only turn.
+     * @returns What the settle boundary proposed, undefined for nothing.
+     */
+    async function settleTurn(pi, toolResults = []) {
+      await pi.hooks.get("turn_end")({ turnIndex: 0, toolResults }, {});
+      return pi.hooks.get("agent_before_settle")(
+        { entries: [], continue: false, outcome: "completed" },
+        {},
+      );
+    }
+
     test("a parent session installs no gate", async (t) => {
       const { pi } = setup(t);
       assert.equal(pi.hooks.has("agent_settled"), false);
+      assert.equal(
+        pi.hooks.has("agent_before_settle"),
+        false,
+        "a parent's own settles are none of this extension's business",
+      );
       assert.equal(
         pi.tools.has("subagent_finish"),
         false,
@@ -3259,6 +3279,49 @@ describe("subagent", () => {
       const idle = settleCtx();
       await pi.hooks.get("agent_settled")({ aborted: false }, idle.ctx);
       assert.equal(idle.state.shutDown, 1);
+    });
+
+    test("a child that settles without finishing is reminded to finish", async (t) => {
+      const pi = childSetup(t);
+      const result = await settleTurn(pi);
+      assert.equal(result.continue, true, "the reminder continues the run");
+      const reminder = result.entries.at(-1);
+      assert.equal(reminder.type, "custom_message");
+      assert.equal(reminder.customType, "subagent-finish-reminder");
+      assert.equal(reminder.display, false);
+      assert.match(reminder.content, /without calling `subagent_finish`/);
+      assert.match(
+        reminder.content,
+        /wrote in a message did not reach the parent/,
+      );
+    });
+
+    test("a turn that ran tools settles without a reminder", async (t) => {
+      const pi = childSetup(t);
+      const result = await settleTurn(pi, [
+        { role: "toolResult", toolCallId: "call", toolName: "read" },
+      ]);
+      assert.equal(result, undefined);
+    });
+
+    test("a waiting child is reminded once per stretch of work", async (t) => {
+      const pi = childSetup(t);
+      assert.ok(await settleTurn(pi), "the first text-only settle is reminded");
+      assert.equal(
+        await settleTurn(pi),
+        undefined,
+        "a repeated wait is not woken again",
+      );
+      await settleTurn(pi, [
+        { role: "toolResult", toolCallId: "call", toolName: "read" },
+      ]);
+      assert.ok(await settleTurn(pi), "work in between re-arms the reminder");
+    });
+
+    test("a child that asked to finish is not reminded", async (t) => {
+      const pi = childSetup(t);
+      await pi.tools.get("subagent_finish").execute("call", { answer: "x" });
+      assert.equal(await settleTurn(pi), undefined);
     });
   });
 
@@ -3468,6 +3531,45 @@ describe("subagent", () => {
         "the wake starts after the parent was idle",
       );
       assert.equal(session.getLastAssistantText(), "woken by the subagent");
+    });
+
+    test("a child's text-only turn is reminded to finish in the same run", async (t) => {
+      resetChildren();
+      // The extension reads the marker when it loads, so this session is a child.
+      const previousChild = process.env.PI_SUBAGENT_CHILD;
+      process.env.PI_SUBAGENT_CHILD = "1";
+      t.after(() => {
+        if (previousChild === undefined) delete process.env.PI_SUBAGENT_CHILD;
+        else process.env.PI_SUBAGENT_CHILD = previousChild;
+      });
+
+      const session = await createSession(t, [], ["subagent_finish"]);
+      const requests = [];
+      faux.setResponses([
+        (context) => {
+          requests.push(context);
+          return fauxAssistantMessage("The report is ready.");
+        },
+        (context) => {
+          requests.push(context);
+          return fauxAssistantMessage(
+            fauxToolCall("subagent_finish", { answer: "The report is ready." }),
+          );
+        },
+      ]);
+
+      await session.prompt("Task: review the change");
+
+      assert.equal(requests.length, 2, "the reminder costs one more request");
+      assert.match(
+        JSON.stringify(requests[1].messages),
+        /\[subagent finish\] Your turn ended without calling `subagent_finish`/,
+      );
+      assert.match(
+        JSON.stringify(requests[1].messages),
+        /The report is ready\./,
+        "the model still holds the report it wrote",
+      );
     });
   });
 });
