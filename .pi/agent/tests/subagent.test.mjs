@@ -328,12 +328,16 @@ const branchOf = (pi) =>
  * @param pi - Fake pi the runner should restore from.
  * @returns The context handed to the session_start hook.
  */
-const sessionCtx = (pi, owner = PARENT_SESSION) => ({
-  sessionManager: {
-    getBranch: () => branchOf(pi),
-    getSessionId: () => owner,
-  },
-});
+const sessionCtx = (pi, owner = PARENT_SESSION, sink = pi) => {
+  sink.notified = [];
+  return {
+    sessionManager: {
+      getBranch: () => branchOf(pi),
+      getSessionId: () => owner,
+    },
+    ui: { notify: (message) => sink.notified.push(message) },
+  };
+};
 
 /** Session id the fake tool context reports, as pi would. */
 const PARENT_SESSION = "parent-session-1";
@@ -2675,13 +2679,13 @@ describe("subagent", () => {
      * @param records - Records a previous pi left on the branch.
      * @returns The fake pi holding the restored runner.
      */
-    async function restore(records, owner = PARENT_SESSION) {
+    async function restore(records, owner = PARENT_SESSION, reason = "resume") {
       resetChildren();
       const pi = fakePi();
       installSubagent(pi.api);
       for (const record of records) pi.api.appendEntry("subagent-run", record);
       await pi.hooks.get("session_start")(
-        { type: "session_start", reason: "resume" },
+        { type: "session_start", reason },
         sessionCtx(pi, owner),
       );
       return pi;
@@ -2732,7 +2736,7 @@ describe("subagent", () => {
       installSubagent(next.api);
       await next.hooks.get("session_start")(
         { type: "session_start", reason: "resume" },
-        sessionCtx(pi),
+        sessionCtx(pi, PARENT_SESSION, next),
       );
 
       const resumed = children.at(-1);
@@ -2773,7 +2777,16 @@ describe("subagent", () => {
         42_000,
         "a resumed run carries its spent time, so it cannot restart the clock",
       );
-      assert.match(next.sent[0].message.content, /Resumed 1 subagent/);
+      assert.equal(
+        next.sent.length,
+        0,
+        "the model is not told about the resume: the child's result is its own message",
+      );
+      assert.match(
+        next.notified.join("\n"),
+        /Resumed 1 subagent\(s\) after a restart: \[subagent kept\]/,
+        "the user is told, without a transcript line",
+      );
     });
 
     test("a moved deadline on a resumed run sends what the child has left", async () => {

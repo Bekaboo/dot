@@ -33,6 +33,7 @@ import {
   type JsonAgentSessionEvent,
   type KeybindingsManager,
   type SessionEntry,
+  type SessionStartEvent,
   type Theme,
   type ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
@@ -2376,12 +2377,14 @@ class SubagentRunner {
    * a branch that predates a run's last record reads as interrupted; such a run
    * is reported, never resumed.
    *
-   * @param entries - Session branch entries, oldest first.
+   * @param ctx - Context of the session that is starting.
+   * @param reason - Why it started, so a reload can stay quiet for the user too.
    */
-  restore(entries: readonly SessionEntry[], owner: string): void {
+  restore(ctx: ExtensionContext, reason: SessionStartEvent["reason"]): void {
+    const owner = ctx.sessionManager.getSessionId();
     this.owner = owner;
     const resumed: string[] = [];
-    for (const run of lastRunRecords(entries).values()) {
+    for (const run of lastRunRecords(ctx.sessionManager.getBranch()).values()) {
       // A fork copies another session's entries verbatim; only the session that
       // wrote them may run their children, or two parents would share one.
       if (run.owner !== owner) continue;
@@ -2411,15 +2414,9 @@ class SubagentRunner {
       );
       resumed.push(run.id);
     }
-    if (resumed.length > 0) {
-      this.pi.sendMessage(
-        {
-          customType: NOTICE_TYPE,
-          content: `Resumed ${resumed.length} subagent(s) after a restart: ${resumed.map(marker).join(", ")}. Their running time keeps counting from where it paused.`,
-          display: true,
-          details: { state: "running", ids: resumed },
-        },
-        { triggerTurn: false },
+    if (resumed.length > 0 && reason !== "reload") {
+      ctx.ui.notify(
+        `Resumed ${resumed.length} subagent(s) after a restart: ${resumed.map(marker).join(", ")}.`,
       );
     }
   }
@@ -2876,7 +2873,7 @@ function subagentTool(
   return {
     name: "subagent",
     label: "Subagent",
-    description: `Start a separate pi process with a fresh context to work on a task in the background. Returns immediately; the child reports later as a "${MARKER_EXAMPLE} ..." message, ended by its own \`${FINISH_TOOL}\` call.`,
+    description: `Start a separate pi process with a fresh context to work on a task in the background. Returns immediately; the child reports later as a "${MARKER_EXAMPLE} ..." message, ended by its own \`${FINISH_TOOL}\` call. A run outlives pi: it pauses when pi exits and resumes in its own session with whatever running time its \`timeoutSec\` has left, so \`subagent_status\` can list a run started before the last restart; do not spawn that run again.`,
     promptSnippet: `Spawn a background pi subagent with its own prompt, tools and model`,
     promptGuidelines: [
       "Use `subagent` for a task that can run alongside your own work (an independent review, a long scan, a second opinion), or for several independent tasks in one turn, so they finish sooner and disagreement surfaces.",
@@ -2943,7 +2940,7 @@ function statusTool(
   return {
     name: "subagent_status",
     label: "Subagent status",
-    description: `Report the subagents this session started: those still running with what each is doing right now, and the last ${FINISHED_HISTORY} that ended. Use it to check on a subagent instead of polling its result.`,
+    description: `Report the subagents this session started, including ones a restart resumed: those still running with what each is doing right now, and the last ${FINISHED_HISTORY} that ended. Use it to check on a subagent instead of polling its result.`,
     parameters: StatusParams,
     async execute(_toolCallId, params) {
       return toolText(runner.status(idsOf(params.id)));
@@ -3186,11 +3183,8 @@ export default function subagent(pi: ExtensionAPI) {
   pi.on("session_shutdown", async () => {
     await runner.shutdown();
   });
-  pi.on("session_start", (_event, ctx) => {
-    runner.restore(
-      ctx.sessionManager.getBranch(),
-      ctx.sessionManager.getSessionId(),
-    );
+  pi.on("session_start", (event, ctx) => {
+    runner.restore(ctx, event.reason);
   });
 
   // A parent session is driven by its user, who decides when pi ends; a child
