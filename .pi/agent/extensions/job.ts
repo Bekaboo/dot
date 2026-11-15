@@ -208,7 +208,7 @@ const JobStartParams = Type.Object({
   onTick: Type.Optional(
     Type.String({
       description:
-        "Shell command run on every tick, including the one that ends a periodic job; its output rides along with the wake, capped like a tool result, with the full text saved to a file when large. Never block or sleep. With `command` it also runs once at exit, and its stdin is the job's log.",
+        "Shell command run on every tick, including the one that ends a periodic job; its output rides along with the wake, capped like a tool result, with the full text saved to a file when large. It must never wait. With `command` it also runs once at exit, and its stdin is the job's log.",
     }),
   ),
   intervalSec: Type.Optional(
@@ -2738,12 +2738,13 @@ function jobStartTool(
     name: START_TOOL_NAME,
     label: "Job start",
     description:
-      "Start a background command, wait for a condition, tick on a schedule, or combine them; every call returns immediately and wakes you later. Pass `command` with `condition` and/or `onTick` to start and monitor one job in one call. Jobs survive pi restarts, reloads, and reboots: resuming the session re-arms them and re-attaches a running job. For a `command` job, `timeoutSec` is real time and the job's own shell kills it at that deadline even while pi is closed; without a job, `timeoutSec` is a budget of running time. `job_stop` also kills a job.",
+      "Start a background command, wait for a condition, tick on a schedule, or combine them; every call returns immediately and wakes you later. Pass `command` with `condition` and/or `onTick` to start and monitor one job in one call. Jobs survive pi restarts, reloads, and reboots: resuming the session re-arms them and re-attaches a running job.",
     promptSnippet:
-      "Start a background command and wake when it exits, wait for a condition, or tick periodically -- in any combination.",
+      "Start a background command and wake when it exits, wait for a condition, or tick periodically -- in any combination; use it for slow work to be responsive during waiting.",
     promptGuidelines: [
-      "For a command that may take a while, use `job_start` with `command`, never bash `&`, pid or exit files, or polling. Pass `condition`/`onTick` in the same call to monitor it. Keep working or end your turn: an idle agent is woken in a new turn.",
-      "A tick or condition wake from a job says only that something happened; a job wake already carries the exit code and log tail. After a wake, do what it asks, then `job_stop` a job you no longer need.",
+      "For long-running commands, use `job_start` with `command`: it logs the output and wakes you when it exits, so never bash `&`, pid or exit files, or polling. Keep working or end your turn; an idle agent is woken in a new turn.",
+      "To run a command every N seconds, use `job_start` with `onTick` and `intervalSec` N; to defer it once instead, omit `command` and set `maxTicks` 1, and its output rides the wake.",
+      "To defer a command until a predicate holds, use `job_start` with only `condition`; end your turn and run it on that wake.",
     ],
     parameters: JobStartParams,
 
