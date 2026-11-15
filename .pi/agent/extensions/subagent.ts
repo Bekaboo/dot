@@ -1314,8 +1314,11 @@ function childCommand(
   childSessionId: string,
   resuming: boolean,
 ): { command: string; args: string[] } {
-  // Reuse the build that is already running, so a second pi on PATH cannot win.
-  const command = process.env.PI_BIN ?? process.argv[1] ?? "pi";
+  // `pi` on PATH, on purpose: the child need not be the build running here
+  // because a bun-compiled pi puts its embedded entry, `/$bunfs/root/pi`, in
+  // `argv[1]`, which exists only inside bun's runtime, so `posix_spawn` failed
+  // with ENOENT
+  const command = process.env.PI_BIN ?? "pi";
   const args = [
     "--mode",
     "rpc",

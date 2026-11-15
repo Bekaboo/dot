@@ -710,11 +710,6 @@ describe("subagent", () => {
         String(DEFAULT_TIMEOUT_SEC),
         "the child warns itself against the same deadline",
       );
-      assert.equal(
-        child.command,
-        process.argv[1],
-        "the child reuses the running pi build",
-      );
     });
 
     test("lets PI_BIN override the child command", async (t) => {
