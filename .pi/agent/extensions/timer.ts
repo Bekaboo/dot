@@ -922,27 +922,61 @@ function jobAlive(pid: number, tag: string): boolean {
   }
 }
 
+/** What the wrapper's own lines at the end of a job log say. */
+interface JobLogStatus {
+  /** The deadline marker is a line of its own in the log. */
+  marker: boolean;
+  /** Last exit code the wrapper recorded, when it could write one. */
+  exitCode: number | null;
+}
+
 /**
- * Whether the job's own shell recorded that it hit its deadline.
+ * Whether a line is exactly the wrapper's deadline marker.
  *
- * The wrapper writes this line before it signals, so it is in the log even
- * when pi was closed. The tag in the line keeps output that merely mentions a
- * timeout from passing for one.
+ * The comparison is whole-line because the marker text also appears inside the
+ * wrapper's own command line, which a job that dumps `ps` can write to its log.
+ *
+ * @param line - One log line.
+ * @param tag - Token that identifies the job's shell.
+ * @returns `true` when the line is that job's deadline marker.
+ */
+function isDeadlineMarkerLine(line: string, tag: string): boolean {
+  const prefix = `[pi-timer ${tag}: timeout after `;
+  if (!line.startsWith(prefix) || !line.endsWith("s]")) {
+    return false;
+  }
+  const seconds = line.slice(prefix.length, -"s]".length);
+  return seconds !== "" && Number.isFinite(Number(seconds));
+}
+
+/**
+ * Read the wrapper's own status lines from a job log.
+ *
+ * A wider window than a wake uses: a TERM handler can flush many lines after
+ * the deadline marker, and evicting the marker would misreport the end.
  *
  * @param logPath - Absolute path of the job log.
  * @param tag - Token that identifies the job's shell.
- * @returns `true` when the wrapper's deadline marker is in the log tail.
+ * @returns The marker, and the last exit code the wrapper wrote.
  */
-function logHasTimeoutMarker(logPath: string, tag: string): boolean {
-  return readLogTail(logPath).includes(`[pi-timer ${tag}: timeout`);
+function readJobStatus(logPath: string, tag: string): JobLogStatus {
+  const text = readLogTail(logPath, DETAIL_TAIL_LINES, LOG_TAIL_BYTES);
+  let marker = false;
+  let exitCode: number | null = null;
+  for (const line of text.split("\n")) {
+    const exit = /^\[exit (\d+)\]$/.exec(line);
+    if (exit) exitCode = Number(exit[1]);
+    if (isDeadlineMarkerLine(line, tag)) marker = true;
+  }
+  return { marker, exitCode };
 }
 
 /**
  * Whether a job ended at its own shell's deadline.
  *
- * A clean exit wins over a marker that a racing watchdog wrote just as the
- * command finished; anything else that died after a marker was written was
- * ended by the deadline.
+ * The wrapper's own exit line is the truth when it wrote one, so a clean exit
+ * wins over a marker the watchdog wrote just as the command finished; anything
+ * else that died after a marker was written was ended by the deadline.
  *
  * @param job - Job that ended.
  * @param outcome - Exit code, signal, or a recovered status.
@@ -951,8 +985,11 @@ function logHasTimeoutMarker(logPath: string, tag: string): boolean {
 function endedByDeadline(job: Job, outcome: JobOutcome): boolean {
   if (outcome.timedOut) return true;
   if (outcome.error || outcome.lost) return false;
-  if (outcome.code === 0 && !outcome.signal) return false;
-  return logHasTimeoutMarker(job.logPath, job.tag);
+  const status = readJobStatus(job.logPath, job.tag);
+  const code = status.exitCode ?? outcome.code;
+  const signalled = status.exitCode === null && Boolean(outcome.signal);
+  if (code === 0 && !signalled) return false;
+  return status.marker;
 }
 
 /**
@@ -970,16 +1007,14 @@ function endedByDeadline(job: Job, outcome: JobOutcome): boolean {
  * @returns The recovered outcome, or an outcome flagged as lost.
  */
 function recoverOutcome(logPath: string, tag: string): JobOutcome {
-  const tail = readLogTail(logPath);
-  const timedOut = tail.includes(`[pi-timer ${tag}: timeout`);
-  const exits = [...tail.matchAll(/\[exit (\d+)\]/g)];
-  const last = exits.at(-1);
-  if (timedOut && (!last || Number(last[1]) !== 0)) {
+  const status = readJobStatus(logPath, tag);
+  if (status.marker && status.exitCode !== 0) {
     return { code: null, signal: null, timedOut: true };
   }
-  return last
-    ? { code: Number(last[1]), signal: null }
-    : { code: null, signal: null, lost: true };
+  if (status.exitCode !== null) {
+    return { code: status.exitCode, signal: null };
+  }
+  return { code: null, signal: null, lost: true };
 }
 
 /**
@@ -1013,17 +1048,20 @@ export function jobScript(
     `${JOB_TAG_PREFIX}${tag}`,
     "(",
     "  escalate=0",
+    "  slp=",
     // A wrapper that ended early stops the watchdog, which must not leave its
     // own sleep behind; a deadline that has passed must not let that stop it.
-    `  trap 'if [ "$escalate" = 1 ]; then :; else kill -TERM "$slp" 2>/dev/null; exit 0; fi' TERM`,
+    `  trap 'if [ "$escalate" = 0 ]; then [ -n "$slp" ] && kill -TERM "$slp" 2>/dev/null; exit 0; fi' TERM`,
     `  sleep ${timeoutSec} &`,
     "  slp=$!",
     '  wait "$slp"',
     // A wrapper that is gone cannot be told from a reused pid by pid alone, so
     // the tag it was started with is checked before anything is signalled.
     `  ps -o command= -p $$ | grep -Fq ${shellQuote(`${JOB_TAG_PREFIX}${tag}`)} || exit 0`,
-    `  printf '%s\\n' ${shellQuote(marker)}`,
+    // Committed before the marker, so a concurrent stop cannot abort the kill
+    // after the log already says the deadline passed.
     "  escalate=1",
+    `  printf '%s\\n' ${shellQuote(marker)}`,
     "  kill -TERM -$$",
     `  sleep ${KILL_GRACE_MS / 1000}`,
     "  kill -KILL -$$",
@@ -1033,6 +1071,9 @@ export function jobScript(
 ${command}
 )`,
     "code=$?",
+    // The deadline can TERM the wrapper while it is recording the outcome; the
+    // exit line is what a later report trusts, so write it before dying.
+    `trap 'printf "[exit %s]\\n" "$code"; exit "$code"' TERM`,
     'kill -TERM "$watchdog" 2>/dev/null',
     'wait "$watchdog" 2>/dev/null',
     "printf '[exit %s]\\n' \"$code\"",
@@ -2176,8 +2217,13 @@ class TimerRegistry {
         return;
       }
       // The job's shell should have killed it by now; only a broken or missing
-      // wrapper reaches this.
+      // wrapper reaches this. A condition that holds right now is still the
+      // better news, so it is checked once more before the expiry.
       if (this.backstopMs(timer) <= 0) {
+        if (await this.conditionHeld(timer)) {
+          await this.finishConditionJob(timer, job);
+          return;
+        }
         await this.expireJob(timer, job);
         return;
       }

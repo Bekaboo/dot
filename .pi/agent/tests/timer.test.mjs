@@ -2127,6 +2127,91 @@ console.log(listed.content[0].text);
     );
   });
 
+  test("a job's own command line cannot pass for a deadline marker", async (t) => {
+    const { start, noticesAfter } = setup(t, () => exit(1));
+
+    // `ps -p $$` prints the wrapper's command line, which contains the marker
+    // text verbatim; only a marker on its own line may count.
+    await start({
+      id: "ps-leak",
+      start: "ps -o command= -p $$; exit 3",
+      timeoutSec: 30,
+    });
+    const wake = (await noticesAfter(1)).at(-1);
+
+    assert.match(
+      wake.content,
+      /^\[timer ps-leak\] failed: exit 3 after \ds; timer stopped/,
+    );
+    assert.equal(wake.details.state, "failed");
+  });
+
+  test("a marker is found after the job flushes more than a wake's tail", async (t) => {
+    const { start, noticesAfter } = setup(t, () => exit(1));
+
+    // At the deadline the TERM handler writes 40 lines after the marker, more
+    // than the 10-line window a wake displays.
+    await start({
+      id: "evicted",
+      start: "trap 'seq 1 40; exit 143' TERM; sleep 30",
+      timeoutSec: 1,
+    });
+    const wake = (await noticesAfter(1)).at(-1);
+
+    assert.match(
+      wake.content,
+      /^\[timer evicted\] timeout after 1s; job killed; timer stopped/,
+    );
+    assert.equal(wake.details.state, "timeout");
+  });
+
+  test("the backstop kills a job the wrapper cannot end", async (t) => {
+    const sessionId = randomUUID();
+    const tag = randomUUID();
+    const { pid, logPath } = spawnLegacyJobShell("sleep 30", tag);
+    killGroupAfter(t, pid);
+    // Five seconds into a one-second deadline: the backstop is due in ~3s.
+    writeState(sessionId, [
+      persistedTimer("live-backstop", {
+        start: "sleep 30",
+        logPath,
+        maxTicks: 0,
+        timeoutSec: 1,
+        job: { pid, logPath, startedAt: Date.now() - 5_000, tag },
+      }),
+    ]);
+    const { hooks, noticesAfter, branch } = setup(t, () => exit(1), {
+      sessionId,
+    });
+
+    await hooks.get("session_start")({}, branch());
+    const wake = (await noticesAfter(1)).at(-1);
+
+    assert.match(
+      wake.content,
+      /^\[timer live-backstop\] timeout after 1s; job killed; timer stopped\n\n\[killed by the timer\]$/,
+    );
+    await waitGone(pid);
+  });
+
+  test("a fractional timeout is a real deadline", async (t) => {
+    const { start, noticesAfter } = setup(t, () => exit(1));
+
+    const result = await start({
+      id: "fractional",
+      start: "sleep 5",
+      timeoutSec: 1.5,
+    });
+    assert.equal(result.details.timeoutSec, 1.5);
+    const wake = (await noticesAfter(1)).at(-1);
+
+    assert.match(
+      wake.content,
+      /^\[timer fractional\] timeout after 1.5s; job killed; timer stopped\n\n\[pi-timer [0-9a-f-]+: timeout after 1.5s\]$/,
+    );
+    assert.equal(wake.details.state, "timeout");
+  });
+
   test("a job's own output cannot pass for a deadline marker", async (t) => {
     const { start, noticesAfter } = setup(t, () => exit(1));
 
