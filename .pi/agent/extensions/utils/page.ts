@@ -1,11 +1,11 @@
 /**
  * Height helpers shared by the full-page overlays.
  *
- * `/subagents`, `/timers` and `/todos` all replace pi's editor slot with a
- * bordered page. Pi lays that slot out inside the dock under the transcript, so
- * a page taller than the terminal loses its last rows: the Escape hint and the
- * bottom border. These helpers size a page body to the rows the terminal leaves,
- * move a window of rows, and say which rows it hides.
+ * The shared overlay widget replaces pi's editor slot with a bordered page. Pi
+ * lays that slot out inside the dock under the transcript, so a page taller
+ * than the terminal loses its last rows: the Escape hint and the bottom border.
+ * These helpers size a page body to the rows the terminal leaves, move a
+ * window of rows, and say which rows it hides.
  */
 
 import type { Theme } from "@earendil-works/pi-coding-agent";

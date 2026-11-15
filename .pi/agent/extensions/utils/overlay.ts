@@ -1,18 +1,17 @@
 /**
- * Bordered page widget shared by the `/subagents`, `/timers` and `/todos`
- * overlays.
+ * Shared bordered page widget.
  *
- * All three take pi's editor slot while they are open: a box with a title, a
+ * The widget take pi's editor slot while they are open: a box with a title, a
  * summary, a body and a hint. Pi lays that slot out inside the dock under the
  * transcript, so a body taller than the terminal loses its last rows;
  * `OverlayPage` measures its own chrome and cuts the body to the rows the
  * terminal leaves, which keeps the hint and the bottom border visible.
  *
- * `/subagents` and `/timers` also drill from their list into one row's detail.
- * `DrillDown` keeps that navigation: Enter opens the selected row, Escape walks
- * back out, and a detail follows its newest lines until the reader scrolls up.
- * A detail can pin the lines that body hangs off, such as its spawn moment, in
- * the page's head so they stay on screen while the body scrolls.
+ * Also supports drill-down pages: `DrillDown` keeps that navigation: Enter
+ * opens the selected row, Escape walks back out, and a detail follows its
+ * newest lines until the reader scrolls up. A detail can pin the lines that
+ * body hangs off, such as its spawn moment, in the page's head so they stay on
+ * screen while the body scrolls.
  */
 
 import {

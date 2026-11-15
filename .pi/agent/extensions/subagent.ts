@@ -2607,7 +2607,7 @@ class SubagentRunner {
 /**
  * Overlay listing the session's subagents, running ones first.
  *
- * Built on the shared overlay page, like `/timers`: a bordered box with a
+ * Built on the shared overlay page: a bordered box with a
  * title, a summary, one line per child and an Escape hint. Rows are read from
  * the runner on every render, so elapsed time stays current; the order of the
  * rows is the one the view opened with, so a child that ends keeps its place

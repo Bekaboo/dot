@@ -1,11 +1,11 @@
 /**
  * Spinner and state markers shared by the background-work overlays.
  *
- * `/subagents` and `/timers` list jobs that run, finish, fail, or run out of
- * time, and a reader moves between the two views, so the same state has to look
- * the same in both: the same spinner while a job runs, and the same glyph and
- * color once it ends. The spinner also owns its animation, so neither overlay
- * keeps its own interval bookkeeping.
+ * Extensions can list jobs that run, finish, fail, or run out of time, and a
+ * reader moves between the two views, so the same state has to look the same
+ * in both: the same spinner while a job runs, and the same glyph and color
+ * once it ends. The spinner also owns its animation, so neither overlay keeps
+ * its own interval bookkeeping.
  *
  * pi-tui's `Loader` draws the same braille frames, but as a whole line with its
  * own message; these overlays need the spinner as one cell of a table row.

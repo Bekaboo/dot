@@ -501,12 +501,6 @@ function renderTodoResult(
 /**
  * Build the overlay for the `/todos` command.
  *
- * Built on the shared overlay page, like the subagent and timer overlays: a
- * bordered box with a title, a summary, one line per item and an Escape hint.
- * The items are cut to the rows the terminal leaves and scroll with the list
- * keys, so a short terminal keeps the hint visible and no item becomes
- * unreachable.
- *
  * @param tui - TUI the overlay renders into.
  * @param list - Checklist to display.
  * @param theme - Active theme.
