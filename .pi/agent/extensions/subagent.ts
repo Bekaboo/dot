@@ -1079,7 +1079,7 @@ function stopProcess(proc: ChildProcess): Promise<boolean> {
  * @param lastTurn - Last assistant message of the child.
  * @param stderr - Child stderr, already capped.
  * @param failure - Why the child failed, or undefined for a successful run.
- * @param startedAt - Spawn time in ms, for the elapsed seconds.
+ * @param seconds - Running time of the child, in seconds, for the summary.
  * @param timedOut - Whether the child ran out of wall-clock time, which is
  *   reported as its own outcome so `/subagents` names the cause at a glance.
  * @returns Terminal state, one-line summary and body of the notification.
@@ -2356,11 +2356,6 @@ class SubagentRunner {
     }
   }
 
-  /**
-   * Name the session that owns the runs started from here.
-   *
-   * @param owner - Session id pi has bound.
-   */
   /**
    * Remember the session the wake contract is shared on.
    *

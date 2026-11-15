@@ -989,7 +989,7 @@ function readProcessStatus(logPath: string, tag: string): ProcessLogStatus {
  * wins over a marker the watchdog wrote just as the command finished; anything
  * else that died after a marker was written was ended by the deadline.
  *
- * @param job - Job that ended.
+ * @param proc - Job process that ended.
  * @param outcome - Exit code, signal, or a recovered status.
  * @returns `true` when the deadline ended the job.
  */
