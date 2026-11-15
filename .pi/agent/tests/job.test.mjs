@@ -438,7 +438,10 @@ async function waitGone(pid) {
   assert.fail(`process ${pid} is still alive`);
 }
 
-describe("job", () => {
+// Each test owns a session state file and its own job ids, and nearly all of
+// their time is spent waiting on a job tick, so they can run together: the
+// suite drops from about a minute to a few seconds.
+describe("job", { concurrency: true }, () => {
   test("a job wakes with 'condition met' as soon as its condition holds", async (t) => {
     const { start, noticesAfter } = setup(t, (_command, _signal, stdin) => {
       // A job without a process has no output to feed its condition.
@@ -454,9 +457,11 @@ describe("job", () => {
     const [notice] = await noticesAfter(1);
 
     assert.equal(result.details.id, "build-done");
-    assert.equal(
+    // The elapsed seconds depend on how fast the condition is polled, which is
+    // load, not contract; the condition and the outcome are what count.
+    assert.match(
       notice.content,
-      "[job build-done] condition met after 0s: test -f done; job stopped",
+      /^\[job build-done\] condition met after \ds: test -f done; job stopped$/,
     );
     assert.equal(notice.details.state, "done");
     assert.equal(notice.options.deliverAs, "steer");
