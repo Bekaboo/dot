@@ -63,6 +63,7 @@ import {
   type ExtensionToolContext,
   formatSize,
   getAgentDir,
+  isToolCallEventType,
   type KeybindingsManager,
   type SessionEntry,
   type SessionStartEvent,
@@ -199,6 +200,14 @@ const JobStartParams = Type.Object({
         "Shell command to run detached in the background and log. It keeps running after pi closes, and is re-attached when the session resumes. The job ends when it exits, and the wake carries the exit code and log tail. Combine with `condition` and/or `onTick` to monitor it.",
     }),
   ),
+  deferSec: Type.Optional(
+    Type.Number({
+      description:
+        "Seconds to wait before the job starts: `command` launches, and ticks and condition checks run, only after it. A job with nothing else to do wakes once after it and ends. The delay counts against `timeoutSec`.",
+      minimum: 0,
+      default: 0,
+    }),
+  ),
   condition: Type.Optional(
     Type.String({
       description:
@@ -268,6 +277,8 @@ interface JobSpec {
   id: string;
   /** Shell command run in the background; the job ends when it exits. */
   command?: string;
+  /** Seconds before the job becomes active; `0` starts it at once. */
+  deferSec: number;
   /** Absolute path of the job log; set with `command`. */
   logPath?: string;
   /** Shell predicate; exit code 0 ends the job, and kills a running job. */
@@ -383,7 +394,9 @@ interface PersistedJobProcess {
 }
 
 /** One job as written to a session's state file. */
-interface PersistedJob extends JobSpec {
+interface PersistedJob extends Omit<JobSpec, "deferSec"> {
+  /** Absent in state files written before deferrals existed. */
+  deferSec?: number;
   /** Pi-live milliseconds the job had run at the checkpoint. */
   activeMs: number;
   /** Tick wakes delivered before the checkpoint. */
@@ -608,6 +621,9 @@ function detailTitle(row: JobRow, stateMarker: string, theme: Theme): string {
     stateMarker,
     theme.fg("muted", state),
     theme.fg("dim", limit),
+    row.spec.deferSec > 0
+      ? theme.fg("dim", `defer=${row.spec.deferSec}s`)
+      : undefined,
     ticking ? theme.fg("dim", `interval=${row.spec.intervalSec}s`) : undefined,
     ticking && row.state === "running" ? theme.fg("dim", row.ticks) : undefined,
   ]
@@ -683,6 +699,10 @@ function isPersistedJob(job: PersistedJob): boolean {
     job.ticksSent >= 0 &&
     Number.isFinite(job.intervalSec) &&
     job.intervalSec >= MIN_INTERVAL_SEC &&
+    (job.deferSec === undefined ||
+      (Number.isFinite(job.deferSec) &&
+        job.deferSec >= 0 &&
+        job.deferSec < job.timeoutSec)) &&
     Number.isFinite(job.timeoutSec) &&
     job.timeoutSec >= MIN_TIMEOUT_SEC
   );
@@ -1039,20 +1059,24 @@ function recoverOutcome(logPath: string, tag: string): JobOutcome {
  * dies. The command runs in the foreground, so bash prints no job-status line
  * into the log, and the wrapper stops the watchdog when the command ends
  * early. The leading comment carries the tag into the process command line,
- * where a resumed process verifies the pid it read from disk. The wrapper
- * exits with the command's own status, and the `[exit N]` line it appends is
+ * where a resumed process verifies the pid it read from disk. A nonzero
+ * `deferSec` prefixes the command with a sleep, so a deferred command still
+ * runs when pi is closed, and the deadline covers the delay.
+ * The wrapper exits with the command's own status, and the `[exit N]` line it appends is
  * what a later pi reports. A deadline kill is recorded by the marker alone:
  * the group TERM ends the wrapper too, so there is no exit line to write.
  *
  * @param tag - Token that identifies this job's shell.
  * @param command - Shell command to run.
  * @param timeoutSec - Real seconds until the wrapper kills the job.
+ * @param deferSec - Seconds to wait before running the command.
  * @returns Script for `bash -c`.
  */
 export function jobScript(
   tag: string,
   command: string,
   timeoutSec: number,
+  deferSec = 0,
 ): string {
   const marker = `[pi-job ${tag}: timeout after ${timeoutSec}s]`;
   return [
@@ -1078,6 +1102,7 @@ export function jobScript(
     "  kill -KILL -$$",
     ") &",
     "watchdog=$!",
+    ...(deferSec > 0 ? [`sleep ${deferSec}`] : []),
     `(
 ${command}
 )`,
@@ -1102,6 +1127,7 @@ ${command}
  * @param command - Shell command to run.
  * @param tag - Token that identifies this job's shell.
  * @param timeoutSec - Real seconds until the wrapper kills the job.
+ * @param deferSec - Seconds the wrapper waits before running the command.
  * @param cwd - Directory to run in.
  * @param logPath - File that receives stdout and stderr.
  * @returns The spawned shell, a process-group leader.
@@ -1110,16 +1136,21 @@ function spawnProcess(
   command: string,
   tag: string,
   timeoutSec: number,
+  deferSec: number,
   cwd: string,
   logPath: string,
 ): ChildProcess {
   const log = openSync(logPath, "a");
   try {
-    return spawn("bash", ["-c", jobScript(tag, command, timeoutSec)], {
-      cwd,
-      detached: true,
-      stdio: ["ignore", log, log],
-    });
+    return spawn(
+      "bash",
+      ["-c", jobScript(tag, command, timeoutSec, deferSec)],
+      {
+        cwd,
+        detached: true,
+        stdio: ["ignore", log, log],
+      },
+    );
   } finally {
     closeSync(log);
   }
@@ -1203,6 +1234,7 @@ function toJobSpec(job: Job): JobSpec {
   return {
     id: job.id,
     command: job.command,
+    deferSec: job.deferSec,
     logPath: job.logPath,
     condition: job.condition,
     onTick: job.onTick,
@@ -1356,15 +1388,26 @@ class JobRegistry {
 
     const command = params.command?.trim() || undefined;
     const condition = params.condition?.trim() || undefined;
+    const onTick = params.onTick?.trim() || undefined;
+    const deferSec = params.deferSec ?? 0;
+    // A deferral with nothing else to do is a one-shot timer: it takes no tick
+    // budget, so the loop retires it after the wake instead of ticking.
+    const deferOnly =
+      deferSec > 0 &&
+      !command &&
+      !condition &&
+      !onTick &&
+      params.maxTicks === undefined;
 
     const startedAt = Date.now();
     const job: Job = {
       id,
       command,
+      deferSec,
       condition,
-      onTick: params.onTick?.trim() || undefined,
+      onTick,
       intervalSec: params.intervalSec ?? DEFAULT_INTERVAL_SEC,
-      maxTicks: params.maxTicks ?? (command ? 0 : undefined),
+      maxTicks: params.maxTicks ?? (command || deferOnly ? 0 : undefined),
       timeoutSec: params.timeoutSec ?? DEFAULT_TIMEOUT_SEC,
       startedAt,
       activeMs: 0,
@@ -1378,7 +1421,14 @@ class JobRegistry {
 
     this.validateBudget(job);
     if (command) {
-      job.process = this.launch(id, command, startedAt, job.timeoutSec, cwd);
+      job.process = this.launch(
+        id,
+        command,
+        startedAt,
+        job.timeoutSec,
+        job.deferSec,
+        cwd,
+      );
       job.logPath = job.process.logPath;
     }
     this.arm(job);
@@ -1398,6 +1448,7 @@ class JobRegistry {
    * @param command - Shell command to run.
    * @param startedAt - Spawn time, part of the log name.
    * @param timeoutSec - Real seconds until the job's shell kills it.
+   * @param deferSec - Seconds before the command starts.
    * @param cwd - Directory to run in.
    * @returns The job this job now watches.
    */
@@ -1406,11 +1457,19 @@ class JobRegistry {
     command: string,
     startedAt: number,
     timeoutSec: number,
+    deferSec: number,
     cwd: string,
   ): JobProcess {
     const logPath = jobLogPath(`${id}-${startedAt}.log`);
     const tag = randomUUID();
-    const child = spawnProcess(command, tag, timeoutSec, cwd, logPath);
+    const child = spawnProcess(
+      command,
+      tag,
+      timeoutSec,
+      deferSec,
+      cwd,
+      logPath,
+    );
     // The job outlives pi, so it must not hold pi open: without this, quitting
     // waits for a job that runs until its deadline.
     child.unref();
@@ -1492,15 +1551,27 @@ class JobRegistry {
    * @param job - Job about to be armed.
    */
   private validateBudget(job: Job): void {
+    if (job.deferSec >= job.timeoutSec) {
+      throw new Error(
+        `Job "${job.id}" cannot start: deferSec ${job.deferSec} leaves no time within timeoutSec ${job.timeoutSec}.`,
+      );
+    }
+
+    // A bare defer is a one-shot timer: it wakes once and ends, so it owns no
+    // tick budget to validate.
+    if (isDeferOnlySpec(job)) {
+      return;
+    }
+
     if (!job.condition && !job.command && job.maxTicks === 0) {
       throw new Error(
         `Job "${job.id}" has no condition, no job, and maxTicks 0, so it could never wake you.`,
       );
     }
 
-    if (this.canTick(job) && job.timeoutSec < job.intervalSec) {
+    if (this.canTick(job) && job.deferSec + job.intervalSec > job.timeoutSec) {
       throw new Error(
-        `Job "${job.id}" cannot tick: timeoutSec ${job.timeoutSec} is shorter than intervalSec ${job.intervalSec}.`,
+        `Job "${job.id}" cannot tick: deferSec ${job.deferSec} plus intervalSec ${job.intervalSec} is longer than timeoutSec ${job.timeoutSec}.`,
       );
     }
   }
@@ -1826,15 +1897,27 @@ class JobRegistry {
       : job.condition
         ? `cond: ${job.condition}`
         : "job, no condition";
+    const deferring = this.deferRemainingSec(job);
     return {
       id: job.id,
       state: "running",
       age: durationText(ageMs(job)),
       ticks: `ticks ${ticks}`,
-      target,
+      target: deferring ? `starts in ${deferring}s, ${target}` : target,
       spec: toJobSpec(job),
       pid: job.process?.pid,
     };
+  }
+
+  /**
+   * Seconds left of a job's deferral, or `undefined` once it is active.
+   *
+   * @param job - Job to describe.
+   * @returns Whole seconds still to wait, rounded up.
+   */
+  private deferRemainingSec(job: Job): number | undefined {
+    const remaining = job.startedAt + job.deferSec * 1000 - Date.now();
+    return remaining > 0 ? Math.ceil(remaining / 1000) : undefined;
   }
 
   /**
@@ -1983,6 +2066,8 @@ class JobRegistry {
     const { activeMs, ticksSent, process: _proc, ...spec } = entry;
     return {
       ...spec,
+      // A record written before deferrals existed has no delay.
+      deferSec: entry.deferSec ?? 0,
       activeMs,
       liveSince: performance.now(),
       ticksSent,
@@ -2024,6 +2109,8 @@ class JobRegistry {
       const previous = carried.get(spec.id);
       this.arm({
         ...spec,
+        // A branch entry replayed from before deferrals existed has no delay.
+        deferSec: spec.deferSec ?? 0,
         // A live job for this id is what this process actually runs, so it owns
         // the start time, the log and the age the wake reports.
         startedAt: proc?.startedAt ?? spec.startedAt,
@@ -2122,6 +2209,40 @@ class JobRegistry {
   }
 
   /**
+   * Hold a job until its `deferSec` delay has passed.
+   *
+   * The delay is measured from arming in wall-clock time, so a job resumed
+   * after the delay does not wait again. It counts against the job's budget: a
+   * job whose deadline passed while it waited ends as timed out.
+   *
+   * @param job - Job about to become active.
+   * @returns `true` when the job may act, `false` when it stopped or timed out.
+   */
+  private async waitThroughDefer(job: Job): Promise<boolean> {
+    while (true) {
+      const waitMs = job.startedAt + job.deferSec * 1000 - Date.now();
+      if (waitMs <= 0) {
+        return true;
+      }
+      await sleep(Math.min(waitMs, MAX_TIMEOUT_MS), undefined, {
+        signal: job.controller.signal,
+      });
+      if (job.stopped) {
+        return false;
+      }
+      if (this.remainingMs(job) <= 0) {
+        await this.finish(
+          job,
+          "timeout",
+          `timeout after ${job.timeoutSec}s`,
+          "timed out",
+        );
+        return false;
+      }
+    }
+  }
+
+  /**
    * Poll a job until it succeeds, times out, or is cancelled.
    *
    * A condition job checks once immediately, then on every tick. A job that
@@ -2132,6 +2253,18 @@ class JobRegistry {
    * @param job - Job to run.
    */
   private async poll(job: Job): Promise<void> {
+    if (!(await this.waitThroughDefer(job))) {
+      return;
+    }
+    if (isDeferOnlySpec(job)) {
+      await this.finish(
+        job,
+        "done",
+        `deferred ${job.deferSec}s`,
+        "deferral done",
+      );
+      return;
+    }
     if (job.condition && (await this.matches(job, job.condition))) {
       await this.finish(job, "done", this.conditionLine(job), "condition met");
       return;
@@ -2232,6 +2365,12 @@ class JobRegistry {
       outcome = result;
     });
 
+    // The wrapper sleeps out `deferSec` before it starts the command, so the
+    // watcher must not read state or tick before then either.
+    if (!(await this.waitForProcessDefer(job, proc))) {
+      return;
+    }
+
     // A condition can test state outside the job, so every job checks it
     // immediately and then at each interval, whether or not `command` is set.
     if (await this.conditionHeld(job)) {
@@ -2269,6 +2408,37 @@ class JobRegistry {
         return;
       }
       await this.tickJob(job, proc);
+    }
+  }
+
+  /**
+   * Wait out a process job's deferral without missing an early exit.
+   *
+   * The delay is measured from arming, so a job resumed after it starts at
+   * once. The process can still exit or be stopped during the delay, so it is
+   * raced with the exit rather than slept through.
+   *
+   * @param job - Job waiting out its delay.
+   * @param proc - Process the job watches.
+   * @returns `true` when the job may act, `false` when it stopped or ended.
+   */
+  private async waitForProcessDefer(
+    job: Job,
+    proc: JobProcess,
+  ): Promise<boolean> {
+    while (true) {
+      const waitMs = job.startedAt + job.deferSec * 1000 - Date.now();
+      if (waitMs <= 0) {
+        return true;
+      }
+      const result = await this.raceJob(job, proc, waitMs);
+      if (result === "stopped" || job.stopped) {
+        return false;
+      }
+      if (result !== "wait") {
+        await this.finishJob(job, proc, result);
+        return false;
+      }
     }
   }
 
@@ -2692,6 +2862,26 @@ class JobRegistry {
 }
 
 /**
+ * Whether a job does nothing but wake the agent after its deferral.
+ *
+ * A tick budget means the job still ticks, so it is not defer-only even
+ * without a callback.
+ *
+ * @param spec - Job specification to check.
+ * @returns `true` for a delayed job with no command, condition, tick callback
+ *   or tick budget.
+ */
+function isDeferOnlySpec(spec: JobSpec): boolean {
+  return (
+    spec.deferSec > 0 &&
+    !spec.command &&
+    !spec.condition &&
+    !spec.onTick &&
+    spec.maxTicks === 0
+  );
+}
+
+/**
  * Describe what a freshly armed job will do.
  *
  * @param spec - Specification returned by the registry.
@@ -2708,7 +2898,15 @@ function describeStart(spec: JobSpec): string {
     const ending = spec.condition
       ? `wakes you when it exits, when the condition first exits 0 (which kills the job), or after ${spec.timeoutSec}s of real time`
       : `wakes you when it exits or after ${spec.timeoutSec}s of real time`;
-    return `Started job "${spec.id}": runs \`${spec.command}\` in the background, ${ticks}, log ${spec.logPath}; ${ending}. Its own shell kills it at that deadline, even while pi is closed; it is re-attached when you resume this session, and only \`job_stop\` or the deadline ends it.`;
+    const start =
+      spec.deferSec > 0
+        ? `starts in ${spec.deferSec}s, then runs \`${spec.command}\` in the background`
+        : `runs \`${spec.command}\` in the background`;
+    return `Started job "${spec.id}": ${start}, ${ticks}, log ${spec.logPath}; ${ending}. Its own shell kills it at that deadline, even while pi is closed; it is re-attached when you resume this session, and only \`job_stop\` or the deadline ends it.`;
+  }
+
+  if (isDeferOnlySpec(spec)) {
+    return `Started "${spec.id}": wakes you once in ${spec.deferSec}s; nothing else runs. Time while pi is closed still counts during that delay, and resuming the session resumes the job.`;
   }
 
   const ticks =
@@ -2722,7 +2920,206 @@ function describeStart(spec: JobSpec): string {
   const ending = spec.condition
     ? `it ends when the condition first exits 0 or after ${spec.timeoutSec}s of running time`
     : `it ends after that tick or at its ${spec.timeoutSec}s budget of running time`;
-  return `Started "${spec.id}": ${ticks}; ${ending}. Wakes arrive even after you end your turn; time while pi is closed does not count against that budget, and resuming the session resumes the job.`;
+  const schedule =
+    spec.deferSec > 0 ? `starts in ${spec.deferSec}s, then ${ticks}` : ticks;
+  return `Started "${spec.id}": ${schedule}; ${ending}. Wakes arrive even after you end your turn; time while pi is closed does not count against that budget, and resuming the session resumes the job.`;
+}
+
+/** Shortest wait, in seconds, that a bash call must not hold. */
+export const BLOCKING_WAIT_SEC = 8;
+
+/**
+ * One steering message for every blocking shape, so the hint stays simple.
+ *
+ * It names the parameter that replaces each shape: `command` for a background
+ * run, `deferSec` for a delay, `condition` for a state, and `timeoutSec` for a
+ * deadline.
+ */
+export const BLOCKING_BASH_HINT =
+  "This command can hold the tool call waiting (`sleep`, `timeout` or a trailing `&`). Consider `job_start` instead: `command` runs it in the background and wakes you when it exits, `deferSec` starts it later, `condition` waits for a state, `onTick` with `intervalSec` runs periodic jobs, and `timeoutSec` bounds it.";
+
+/** Shell words that introduce a command without being the command. */
+const SEGMENT_PREFIXES = new Set([
+  "do",
+  "then",
+  "else",
+  "elif",
+  "if",
+  "while",
+  "until",
+  "{",
+  "!",
+  "time",
+]);
+
+/** Wrappers whose next non-option word is the command that actually runs. */
+const WRAPPERS = new Set(["sudo", "env", "exec", "command"]);
+
+/** Options of a wrapper that take a value, per wrapper. */
+const WRAPPER_VALUES: Record<string, Set<string>> = {
+  sudo: new Set(["-u", "-g", "-p", "-C", "-U"]),
+  env: new Set(["-u", "-C", "-S", "-P"]),
+  exec: new Set(["-a"]),
+};
+
+/** Options of `timeout` that take a value, besides their `--opt=value` forms. */
+const TIMEOUT_VALUES = new Set(["-k", "--kill-after", "-s", "--signal"]);
+
+/** Seconds in one unit of a `sleep`/`timeout` duration. */
+const DURATION_UNITS: Record<string, number> = {
+  s: 1,
+  m: 60,
+  h: 3_600,
+  d: 86_400,
+};
+
+/**
+ * Whether a bash command contains a shape that keeps the call waiting.
+ *
+ * Quoted text is ignored, and a word only counts in command position, so
+ * `command -v sleep`, `grep sleep log` and `man timeout` pass. Every match
+ * gets the same hint.
+ *
+ * @param command - Bash command from a tool call.
+ * @returns `true` for `sleep N`, `timeout N`, or a trailing `&`.
+ */
+export function blocksAgent(command: string): boolean {
+  const code = command.replace(/'[^']*'|"(?:[^"\\]|\\.)*"/g, " ");
+  // An escaped `\&` is an argument, not a background operator.
+  if (/(?:^|[^&\\])&\s*$/.test(code)) {
+    return true;
+  }
+  for (const segment of code.split(/[;&|\n()]+/)) {
+    const head = headWord(segment.trim().split(/\s+/).filter(Boolean));
+    if (!head) {
+      continue;
+    }
+    if (head.verb === "timeout") {
+      const seconds = timeoutDuration(head.args);
+      // `timeout 0` means no deadline at all.
+      if (
+        seconds === 0 ||
+        (seconds !== undefined && seconds >= BLOCKING_WAIT_SEC)
+      ) {
+        return true;
+      }
+      continue;
+    }
+    if (head.verb !== "sleep") {
+      continue;
+    }
+    const seconds = firstDuration(head.args);
+    if (seconds !== undefined && seconds >= BLOCKING_WAIT_SEC) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Find the word a command segment actually runs, past redirections,
+ * assignments, shell keywords and wrapper options.
+ *
+ * @param words - Whitespace-separated words of one command segment.
+ * @returns The command word and its arguments, or `undefined` for an empty
+ *   segment.
+ */
+function headWord(
+  words: readonly string[],
+): { verb: string; args: readonly string[] } | undefined {
+  let index = 0;
+  while (index < words.length) {
+    const word = words[index];
+    if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(word) || SEGMENT_PREFIXES.has(word)) {
+      index += 1;
+      continue;
+    }
+    if (/^\d*[<>]+$/.test(word)) {
+      // A bare redirection is followed by its target.
+      index += 2;
+      continue;
+    }
+    if (/^\d*[<>]+.+$/.test(word)) {
+      index += 1;
+      continue;
+    }
+    if (!WRAPPERS.has(word)) {
+      break;
+    }
+    // `command -v` and `command -V` ask where a word is, they do not run it.
+    if (word === "command" && ["-v", "-V"].includes(words[index + 1])) {
+      break;
+    }
+    index += 1;
+    while (index < words.length && words[index].startsWith("-")) {
+      const option = words[index];
+      index += 1;
+      if (!option.includes("=") && WRAPPER_VALUES[word]?.has(option)) {
+        index += 1;
+      }
+    }
+  }
+  const raw = words[index];
+  if (!raw) {
+    return undefined;
+  }
+  // A path or an escaped word still runs the same command.
+  const verb = raw.replace(/^.*\//, "").replace(/^\\/, "");
+  return { verb, args: words.slice(index + 1) };
+}
+
+/**
+ * Read the first duration argument of `sleep`.
+ *
+ * @param args - Arguments after the command word.
+ * @returns The duration in seconds, or `undefined` when there is none.
+ */
+function firstDuration(args: readonly string[]): number | undefined {
+  for (const arg of args) {
+    const seconds = durationSeconds(arg);
+    if (seconds !== undefined) {
+      return seconds;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Read `timeout`'s duration, skipping options that take a value.
+ *
+ * @param args - Arguments after the command word.
+ * @returns The duration in seconds, or `undefined` when there is none.
+ */
+function timeoutDuration(args: readonly string[]): number | undefined {
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (TIMEOUT_VALUES.has(arg)) {
+      index += 1;
+      continue;
+    }
+    if (/^--(?:kill-after|signal)=/.test(arg)) {
+      continue;
+    }
+    const seconds = durationSeconds(arg);
+    if (seconds !== undefined) {
+      return seconds;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Parse one duration token, with the unit suffix `sleep` and `timeout` accept.
+ *
+ * @param token - One argument, e.g. `12`, `0.5`, or `1m`.
+ * @returns The duration in seconds, or `undefined` when it is not a duration.
+ */
+function durationSeconds(token: string): number | undefined {
+  const match = /^(\d+(?:\.\d+)?)([smhd]?)$/.exec(token);
+  if (!match) {
+    return undefined;
+  }
+  return Number(match[1]) * (DURATION_UNITS[match[2]] ?? 1);
 }
 
 /**
@@ -2738,13 +3135,13 @@ function jobStartTool(
     name: START_TOOL_NAME,
     label: "Job start",
     description:
-      "Start a background command, wait for a condition, tick on a schedule, or combine them; every call returns immediately and wakes you later. Pass `command` with `condition` and/or `onTick` to start and monitor one job in one call. Jobs survive pi restarts, reloads, and reboots: resuming the session re-arms them and re-attaches a running job.",
+      "Start a background command, wait for a condition, tick on a schedule, or combine them; every call returns immediately and wakes you later. Pass `command` with `condition` and/or `onTick` to start and monitor one job in one call, and `deferSec` to start it later. Jobs survive pi restarts, reloads, and reboots: resuming the session re-arms them and re-attaches a running job.",
     promptSnippet:
       "Start a background command and wake when it exits, wait for a condition, or tick periodically -- in any combination; use it for slow work to be responsive during waiting.",
     promptGuidelines: [
-      "For long-running commands, use `job_start` with `command`: it logs the output and wakes you when it exits, so never bash `&`, pid or exit files, or polling. Keep working or end your turn; an idle agent is woken in a new turn.",
-      "To run a command every N seconds, use `job_start` with `onTick` and `intervalSec` N; to defer it once instead, omit `command` and set `maxTicks` 1, and its output rides the wake.",
-      "To defer a command until a predicate holds, use `job_start` with only `condition`; end your turn and run it on that wake.",
+      "For long-running commands, use `job_start` with `command`; add `deferSec` N to start it N seconds later. It logs the output and wakes you when it exits, so never bash `&`, pid or exit files, or polling. Keep working or end your turn; an idle agent is woken in a new turn.",
+      "To see progress while a job runs, put the report command in `onTick` with `intervalSec` N; its output rides every wake.",
+      "To wake when a predicate holds, use `condition`, alone or with `command`; end your turn and act on the wake.",
     ],
     parameters: JobStartParams,
 
@@ -3124,9 +3521,6 @@ export default function job(pi: ExtensionAPI): void {
     await registry.restore(ctx, "session_tree");
   });
 
-  // Any tool call means the agent acted on the last wake, so the next tick may
-  // be delivered again. `agent_start` covers runs that begin without a tool.
-  pi.on("tool_call", async () => registry.clearPending());
   pi.on("agent_start", async (_event, ctx) => {
     registry.setBusy(true);
     releaseIdleWake(ctx.sessionManager);
@@ -3137,4 +3531,19 @@ export default function job(pi: ExtensionAPI): void {
   // the checkpoint belong to this one. `close()` saves the elapsed time, so a
   // graceful quit does not even lose the time since the last heartbeat.
   pi.on("session_shutdown", async () => registry.close());
+
+  // Any tool call means the agent acted on the last wake, so the next tick may
+  // be delivered again. `agent_start` covers runs that begin without a tool.
+  // A bash call that waits holds the turn, which is what a job exists to
+  // avoid; the hint arrives only once the pattern is already there, so it
+  // cannot prime the idiom the way a prompt rule can.
+  pi.on("tool_call", async (event) => {
+    registry.clearPending();
+    if (!isToolCallEventType("bash", event)) return;
+    // A subagent restricted to bash has no job tool to switch to, so the gate
+    // must stay open for it.
+    if (!pi.getActiveTools().includes(START_TOOL_NAME)) return;
+    if (!blocksAgent(event.input.command)) return;
+    return { block: true, reason: BLOCKING_BASH_HINT };
+  });
 }

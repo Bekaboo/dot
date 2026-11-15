@@ -20,6 +20,9 @@ import {
   DEFAULT_MAX_LINES,
 } from "@earendil-works/pi-coding-agent";
 import jobExtension, {
+  BLOCKING_BASH_HINT,
+  BLOCKING_WAIT_SEC,
+  blocksAgent,
   DEFAULT_TIMEOUT_SEC,
   JOB_TAIL_LINES,
   jobScript,
@@ -96,7 +99,15 @@ function splitJobInput(command) {
  *   `sessionId` shares one session's state file between two pi processes.
  * @returns Handles for the registered tools, hooks, and captured notices.
  */
-function setup(t, runCommand, { ack = true, sessionId = randomUUID() } = {}) {
+function setup(
+  t,
+  runCommand,
+  {
+    ack = true,
+    sessionId = randomUUID(),
+    activeTools = ["bash", "job_start"],
+  } = {},
+) {
   const tools = new Map();
   const hooks = new Map();
   const commands = new Map();
@@ -111,6 +122,7 @@ function setup(t, runCommand, { ack = true, sessionId = randomUUID() } = {}) {
       commands.set(name, definition);
     },
     on: (name, handler) => hooks.set(name, handler),
+    getActiveTools: () => [...activeTools],
     exec: async (_bash, [_flag, command], { signal }) => {
       const { command: shell, stdin } = splitJobInput(command);
       return runCommand(shell, signal, stdin);
@@ -591,6 +603,280 @@ describe("job", { concurrency: true }, () => {
     );
   });
 
+  test("deferSec holds a job until its delay passes", async (t) => {
+    let checks = 0;
+    const { start, noticesAfter } = setup(t, () => {
+      checks += 1;
+      return exit(0);
+    });
+    const armedAt = Date.now();
+
+    await start({
+      id: "defer-cond",
+      condition: "ready",
+      deferSec: 1,
+      intervalSec: 1,
+      timeoutSec: 5,
+    });
+    await wait(300);
+    assert.equal(checks, 0, "the condition is not checked during the delay");
+
+    const [notice] = await noticesAfter(1);
+    assert.match(notice.content, /^\[job defer-cond\] condition met/);
+    assert.equal(checks, 1);
+    assert.ok(Date.now() - armedAt >= 900, "the delay was honored");
+  });
+
+  test("a bare defer wakes once and ends", async (t) => {
+    const { start, stop, noticesAfter } = setup(t, () => exit(1));
+    const armedAt = Date.now();
+
+    await start({ id: "nap", deferSec: 1, timeoutSec: 5 });
+    const [notice] = await noticesAfter(1);
+
+    assert.match(notice.content, /^\[job nap\] deferred 1s; job stopped$/);
+    assert.equal(notice.details.state, "done");
+    assert.ok(Date.now() - armedAt >= 900, "the delay was honored");
+    assert.equal(
+      (await stop({ id: "nap" })).content[0].text,
+      'Job "nap" stopped (deferral done).',
+    );
+  });
+
+  test("deferSec postpones a command job's start and log", async (t) => {
+    const { start, status, notices, noticesAfter } = setup(
+      t,
+      runUntilCancelled,
+    );
+    const armedAt = Date.now();
+
+    await start({
+      id: "defer-cmd",
+      command: "printf 'ran\\n'",
+      deferSec: 1,
+      timeoutSec: 5,
+    });
+    assert.match(
+      (await status({ id: "defer-cmd" })).content[0].text,
+      /starts in \ds, job pid \d+, log /,
+    );
+    await wait(300);
+    assert.deepEqual(notices, [], "nothing ran before the delay");
+
+    const [notice] = await noticesAfter(1);
+    assert.match(
+      notice.content,
+      /^\[job defer-cmd\] exited 0 after \ds; job stopped/,
+    );
+    assert.ok(
+      wakeBody(notice.content).includes("ran"),
+      "the log holds the run",
+    );
+    assert.ok(Date.now() - armedAt >= 900, "the delay was honored");
+  });
+
+  test("deferSec is rejected when it leaves no time to act", async (t) => {
+    const { start } = setup(t, runUntilCancelled);
+
+    await assert.rejects(
+      start({ id: "too-long", command: "true", deferSec: 10, timeoutSec: 10 }),
+      /deferSec 10 leaves no time within timeoutSec 10/,
+    );
+    await assert.rejects(
+      start({
+        id: "no-tick",
+        condition: "false",
+        deferSec: 5,
+        intervalSec: 6,
+        timeoutSec: 10,
+      }),
+      /deferSec 5 plus intervalSec 6 is longer than timeoutSec 10/,
+    );
+  });
+
+  test("a deferred job with a tick budget still ticks", async (t) => {
+    const { start, notices, noticesAfter } = setup(t, () => exit(1));
+
+    await start({
+      id: "defer-ticks",
+      deferSec: 1,
+      intervalSec: 1,
+      maxTicks: 2,
+      timeoutSec: 8,
+    });
+    await noticesAfter(2);
+    await wait(200);
+
+    assert.equal(notices.length, 2);
+    assert.match(
+      notices[0].content,
+      /^\[job defer-ticks\] tick 1\/2, \ds elapsed$/,
+    );
+    assert.match(
+      notices[1].content,
+      /^\[job defer-ticks\] tick 2\/2, \ds elapsed; job stopped$/,
+    );
+  });
+
+  test("stopping a job during its deferral wakes nobody", async (t) => {
+    const { start, stop, notices } = setup(t, () => exit(1));
+
+    await start({
+      id: "defer-stop",
+      condition: "ready",
+      deferSec: 30,
+      intervalSec: 30,
+      timeoutSec: 60,
+    });
+    const stopped = await stop({ id: "defer-stop" });
+    assert.equal(stopped.content[0].text, 'Stopped "defer-stop".');
+    await wait(200);
+
+    assert.deepEqual(notices, []);
+  });
+
+  test("a deferred command checks its condition only after the delay", async (t) => {
+    let checks = 0;
+    const { start, noticesAfter } = setup(t, () => {
+      checks += 1;
+      return exit(0);
+    });
+    const armedAt = Date.now();
+
+    await start({
+      id: "defer-guard",
+      command: "sleep 30",
+      condition: "ready",
+      deferSec: 1,
+      intervalSec: 1,
+      timeoutSec: 10,
+    });
+    await wait(300);
+    assert.equal(checks, 0, "the condition waits for the delay");
+
+    const [notice] = await noticesAfter(1);
+    assert.match(notice.content, /^\[job defer-guard\] condition met/);
+    assert.equal(checks, 1);
+    assert.ok(Date.now() - armedAt >= 900, "the delay was honored");
+  });
+
+  test("the delay counts against a command job's deadline", async (t) => {
+    const { start, noticesAfter } = setup(t, runUntilCancelled);
+    const armedAt = Date.now();
+
+    await start({
+      id: "defer-deadline",
+      command: "sleep 30",
+      deferSec: 1,
+      timeoutSec: 2,
+    });
+    const [notice] = await noticesAfter(1);
+
+    assert.match(
+      notice.content,
+      /^\[job defer-deadline\] timeout after 2s; job killed; job stopped/,
+    );
+    assert.equal(notice.details.state, "timeout");
+    assert.ok(Date.now() - armedAt >= 1_800, "the deadline includes the delay");
+  });
+
+  test("a resumed job counts an elapsed deferral as spent", async (t) => {
+    const sessionId = randomUUID();
+    writeState(sessionId, [
+      persistedJob("defer-old", {
+        condition: "ready",
+        deferSec: 2,
+        startedAt: Date.now() - 5_000,
+        timeoutSec: 30,
+      }),
+    ]);
+    const { hooks, branch, noticesAfter } = setup(t, () => exit(0), {
+      sessionId,
+    });
+
+    await hooks.get("session_start")({}, branch());
+    const [notice] = await noticesAfter(1);
+
+    assert.match(notice.content, /^\[job defer-old\] condition met/);
+  });
+
+  test("a waiting bash call is blocked with one job_start hint", async (t) => {
+    const { hooks } = setup(t, runUntilCancelled);
+    const call = (command) =>
+      hooks.get("tool_call")({
+        type: "tool_call",
+        toolName: "bash",
+        toolCallId: "call-1",
+        input: { command },
+      });
+
+    for (const command of [
+      "sleep 12",
+      "sleep 12 && ./mark.sh",
+      "sudo sleep 12",
+      "PAUSE=1 sleep 12",
+      "sleep 1m",
+      "timeout 100 git push",
+      "timeout 20 true",
+      "sudo -u root sleep 12",
+      "env -i sleep 12",
+      "exec -a name sleep 12",
+      "command -p sleep 12",
+      "/usr/bin/sleep 12",
+      "> log sleep 12",
+      "sleep 1d",
+      "timeout -k 5 20 true",
+      "timeout 0 sleep 1000",
+      "if sleep 12; then echo done; fi",
+      "while sleep 12; do :; done",
+      "make build &",
+      "for i in 1 2; do sleep 10; done",
+    ]) {
+      const result = await call(command);
+      assert.equal(result?.block, true, command);
+      assert.equal(result.reason, BLOCKING_BASH_HINT, command);
+    }
+
+    for (const command of [
+      "make build",
+      "timeout=5 make build",
+      "grep 'sleep 30' log",
+      "make build &> log",
+      "make && echo ok",
+      "sleep 7",
+      "timeout 7 make build",
+      // The words are only dangerous in command position; checking whether a
+      // tool exists, or reading a file about it, must pass.
+      "command -v sleep timeout",
+      "grep sleep 5 log",
+      "man timeout",
+      "ps aux | grep sleep",
+      "timeout -s 9 5 true",
+      "sleep 7s",
+      "echo \\&",
+    ]) {
+      assert.equal(await call(command), undefined, command);
+    }
+
+    // The threshold is the boundary: just below it is pacing, at it is a hold.
+    assert.equal(blocksAgent(`sleep ${BLOCKING_WAIT_SEC - 1}`), false);
+    assert.equal(blocksAgent(`sleep ${BLOCKING_WAIT_SEC}`), true);
+  });
+
+  test("a bash wait is not blocked when job_start is inactive", async (t) => {
+    // A subagent may be restricted to bash; blocking it would leave no job
+    // tool to switch to, so the gate must stay open.
+    const { hooks } = setup(t, runUntilCancelled, { activeTools: ["bash"] });
+    const result = await hooks.get("tool_call")({
+      type: "tool_call",
+      toolName: "bash",
+      toolCallId: "call-1",
+      input: { command: "sleep 12" },
+    });
+
+    assert.equal(result, undefined);
+  });
+
   test("the extension registers one tool per action", (t) => {
     const { tools } = setup(t, runUntilCancelled);
 
@@ -603,6 +889,7 @@ describe("job", { concurrency: true }, () => {
       [
         "command",
         "condition",
+        "deferSec",
         "id",
         "intervalSec",
         "maxTicks",
@@ -1803,6 +2090,7 @@ jobExtension({
   registerTool: (definition) => tools.set(definition.name, definition),
   registerCommand: () => {},
   on: (name, handler) => hooks.set(name, handler),
+  getActiveTools: () => ["bash", "job_start"],
   exec: async () => ({ code: 1, stdout: "", stderr: "" }),
   sendMessage: () => {},
 });
