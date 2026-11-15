@@ -26,6 +26,11 @@ import timerExtension, {
   RETIRED_HISTORY,
   SELECTED_CURSOR,
 } from "../extensions/timer.ts";
+import {
+  isIdleWakePending,
+  releaseIdleWake,
+  reserveIdleWake,
+} from "../extensions/utils/idle-wake.ts";
 import { VIEWPORT_RESERVE_ROWS } from "../extensions/utils/page.ts";
 
 const { KeybindingsManager, TUI_KEYBINDINGS } = await import(
@@ -455,6 +460,54 @@ describe("timer", () => {
     );
     assert.equal(notice.details.state, "done");
     assert.equal(notice.options.deliverAs, "steer");
+  });
+
+  test("a wake waits out another extension's wake instead of being dropped", async (t) => {
+    const { start, notices, noticesAfter, branch, hooks } = setup(t, () =>
+      exit(0),
+    );
+    const ctx = branch();
+    await hooks.get("session_start")({ reason: "startup" }, ctx);
+    // As pi-intercom or pi-subagents would leave it: a wake is in flight.
+    reserveIdleWake(ctx.sessionManager);
+
+    await start({ id: "held", condition: "true", maxTicks: 0 });
+    await wait(150);
+    assert.deepEqual(notices, [], "a held wake starts no second run");
+
+    // That other wake starts its run, which releases the session.
+    releaseIdleWake(ctx.sessionManager);
+    const [notice] = await noticesAfter(1);
+    assert.equal(notice.options.triggerTurn, true);
+    assert.match(notice.content, /^\[timer held\] condition met/);
+  });
+
+  test("an unopposed wake reserves the session until a run starts", async (t) => {
+    const { start, noticesAfter, branch, hooks } = setup(t, () => exit(0));
+    const ctx = branch();
+    await hooks.get("session_start")({ reason: "startup" }, ctx);
+
+    await start({ id: "own", condition: "true", maxTicks: 0 });
+    const [notice] = await noticesAfter(1);
+
+    assert.equal(notice.options.triggerTurn, true);
+    assert.equal(isIdleWakePending(ctx.sessionManager), true);
+    await hooks.get("agent_start")({}, ctx);
+    assert.equal(isIdleWakePending(ctx.sessionManager), false);
+  });
+
+  test("a wake during a run takes no reservation", async (t) => {
+    const { start, noticesAfter, branch, hooks } = setup(t, () => exit(0));
+    const ctx = branch();
+    await hooks.get("session_start")({ reason: "startup" }, ctx);
+    await hooks.get("agent_start")({}, ctx);
+
+    await start({ id: "busy", condition: "true", maxTicks: 0 });
+    const [notice] = await noticesAfter(1);
+
+    // Queued into the running turn, so nothing else is blocked meanwhile.
+    assert.equal(notice.options.triggerTurn, true);
+    assert.equal(isIdleWakePending(ctx.sessionManager), false);
   });
 
   test("a timed-out timer says so and can then be stopped", async (t) => {

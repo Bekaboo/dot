@@ -21,6 +21,11 @@ import { createRequire } from "node:module";
 import * as os from "node:os";
 import * as path from "node:path";
 import test, { describe } from "node:test";
+import {
+  isIdleWakePending,
+  releaseIdleWake,
+  reserveIdleWake,
+} from "../extensions/utils/idle-wake.ts";
 
 const require = createRequire(import.meta.url);
 
@@ -518,12 +523,17 @@ function setup(t, { idle = () => true, model, thinkingLevel, intercom } = {}) {
     isIdle: idle,
     model,
     thinkingLevel,
-    sessionManager: { getSessionId: () => PARENT_SESSION },
+    sessionManager: {
+      getSessionId: () => PARENT_SESSION,
+      getHeader: () => null,
+      getBranch: () => [],
+    },
   };
   return {
     pi,
     tool,
     children,
+    ctx,
     call: (params) => tool.execute("call", params, undefined, undefined, ctx),
   };
 }
@@ -1215,6 +1225,52 @@ describe("subagent", () => {
       );
       assert.match(sent.message.content, /PONG/);
       assert.deepEqual(sent.options, { deliverAs: "steer", triggerTurn: true });
+    });
+
+    test("a result waits out another extension's wake instead of being dropped", async (t) => {
+      const { call, ctx, pi, children } = setup(t);
+      await pi.hooks.get("session_start")({ reason: "startup" }, ctx);
+      // As pi-intercom or pi-subagents would leave it: a wake is in flight.
+      reserveIdleWake(ctx.sessionManager);
+      await call({ id: "held", prompt: "x" });
+      children[0].write(assistantRecord("HELD"));
+      children[0].close(0);
+
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      assert.deepEqual(pi.sent, [], "a held result starts no second run");
+
+      // That other wake starts its run, which releases the session.
+      releaseIdleWake(ctx.sessionManager);
+      const [sent] = await notices(pi);
+      assert.deepEqual(sent.options, { deliverAs: "steer", triggerTurn: true });
+      assert.match(sent.message.content, /HELD/);
+    });
+
+    test("a result during a run takes no reservation", async (t) => {
+      const { call, ctx, pi, children } = setup(t);
+      await pi.hooks.get("session_start")({ reason: "startup" }, ctx);
+      await pi.hooks.get("agent_start")({}, ctx);
+      await call({ id: "queued", prompt: "x" });
+      children[0].write(assistantRecord("QUEUED"));
+      children[0].close(0);
+
+      const [sent] = await notices(pi);
+      assert.deepEqual(sent.options, { deliverAs: "steer", triggerTurn: true });
+      assert.equal(isIdleWakePending(ctx.sessionManager), false);
+    });
+
+    test("an unopposed result reserves the wake until a run starts", async (t) => {
+      const { call, ctx, pi, children } = setup(t);
+      await pi.hooks.get("session_start")({ reason: "startup" }, ctx);
+      await call({ id: "own", prompt: "x" });
+      children[0].write(assistantRecord("OWN"));
+      children[0].close(0);
+
+      const [sent] = await notices(pi);
+      assert.deepEqual(sent.options, { deliverAs: "steer", triggerTurn: true });
+      assert.equal(isIdleWakePending(ctx.sessionManager), true);
+      await pi.hooks.get("agent_start")({}, ctx);
+      assert.equal(isIdleWakePending(ctx.sessionManager), false);
     });
 
     test("queues a result immediately while the parent remains busy", async (t) => {
@@ -3123,7 +3179,8 @@ describe("subagent", () => {
 
     test("a parent session installs no gate", async (t) => {
       const { pi } = setup(t);
-      assert.equal(pi.hooks.has("agent_settled"), false);
+      // A parent does track its own runs for the wake contract, but the
+      // keep-alive gate itself stays child-only.
       assert.equal(
         pi.hooks.has("agent_before_settle"),
         false,

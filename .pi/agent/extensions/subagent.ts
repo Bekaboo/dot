@@ -44,7 +44,11 @@ import {
   visibleWidth,
 } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
-
+import {
+  deliverWake,
+  releaseIdleWake,
+  type WakeSession,
+} from "./utils/idle-wake.ts";
 import {
   DrillDown,
   listRow,
@@ -1887,6 +1891,10 @@ class SubagentRunner {
   private timeoutSetters = new Map<string, (timeoutSec: number) => void>();
   /** Set once the session shuts down: pending notifications are dropped. */
   private shuttingDown = false;
+  /** Session manager shared with the other extensions that wake Pi. */
+  private session?: WakeSession;
+  /** Whether a run is active, i.e. whether a result would start one. */
+  private busy = false;
   /**
    * Set when the child's model called `subagent_finish`.
    *
@@ -2384,6 +2392,7 @@ class SubagentRunner {
    * @param reason - Why it started, so a reload can stay quiet for the user too.
    */
   restore(ctx: ExtensionContext, reason: SessionStartEvent["reason"]): void {
+    this.attach(ctx.sessionManager);
     const owner = ctx.sessionManager.getSessionId();
     this.owner = owner;
     const resumed: string[] = [];
@@ -2422,6 +2431,36 @@ class SubagentRunner {
         `Resumed ${resumed.length} subagent(s) after a restart: ${resumed.map(marker).join(", ")}.`,
       );
     }
+  }
+
+  /**
+   * Name the session that owns the runs started from here.
+   *
+   * @param owner - Session id pi has bound.
+   */
+  /**
+   * Remember the session the wake contract is shared on.
+   *
+   * Called from `restore()`, which every session runs before a tool can, so a
+   * result delivered later always has a session to check.
+   *
+   * @param session - Session manager of the calling context.
+   */
+  attach(session: WakeSession): void {
+    this.session = session;
+  }
+
+  /**
+   * Track whether a run is active.
+   *
+   * A result only starts a run for an idle session; during a run pi queues it,
+   * so the result must neither wait for a reservation nor hold one that would
+   * keep another extension from waking an idle session later.
+   *
+   * @param busy - True between `agent_start` and `agent_settled`.
+   */
+  setBusy(busy: boolean): void {
+    this.busy = busy;
   }
 
   /**
@@ -2546,14 +2585,21 @@ class SubagentRunner {
    * @param wake - Whether an idle parent should start a turn for it.
    */
   private deliver(id: string, outcome: Outcome, wake = true): void {
-    this.pi.sendMessage(
-      {
-        customType: NOTICE_TYPE,
-        content: `${marker(id)} ${outcome.status}\n\n${outcome.body}`,
-        display: true,
-        details: { id, state: outcome.state },
-      },
-      { deliverAs: "steer", triggerTurn: wake },
+    const message = {
+      customType: NOTICE_TYPE,
+      content: `${marker(id)} ${outcome.status}\n\n${outcome.body}`,
+      display: true,
+      details: { id, state: outcome.state },
+    };
+    const session = this.session;
+    // During a run the result is queued, not run-starting: no reservation is
+    // needed, and holding one would block another extension for its window.
+    if (!wake || !session || this.busy) {
+      this.pi.sendMessage(message, { deliverAs: "steer", triggerTurn: wake });
+      return;
+    }
+    deliverWake(session, () =>
+      this.pi.sendMessage(message, { deliverAs: "steer", triggerTurn: true }),
     );
   }
 }
@@ -3236,6 +3282,13 @@ export default function subagent(pi: ExtensionAPI) {
   pi.on("session_start", (event, ctx) => {
     runner.restore(ctx, event.reason);
   });
+  // A started run ends whichever wake was in flight, including another
+  // extension's: the reservation covers the preflight gap, nothing more.
+  pi.on("agent_start", (_event, ctx) => {
+    runner.setBusy(true);
+    releaseIdleWake(ctx.sessionManager);
+  });
+  pi.on("agent_settled", () => runner.setBusy(false));
 
   // A parent session is driven by its user, who decides when pi ends; a child
   // has nobody to close it, so it ends itself with the finish tool.

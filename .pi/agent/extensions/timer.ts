@@ -78,7 +78,11 @@ import {
 } from "@earendil-works/pi-tui";
 
 import { type Static, Type } from "typebox";
-
+import {
+  deliverWake,
+  releaseIdleWake,
+  type WakeSession,
+} from "./utils/idle-wake.ts";
 import {
   DrillDown,
   listRow,
@@ -162,6 +166,9 @@ const ID_PATTERN = new RegExp(ID_PATTERN_SOURCE);
 
 /** Custom message type used for timer notifications. */
 const NOTICE_TYPE = "timer";
+
+/** Delivery options for a wake that starts a run when the session is idle. */
+const WAKE_OPTIONS = { triggerTurn: true, deliverAs: "steer" } as const;
 
 /**
  * How many ended timers are remembered, for `/timers`, `timer_status` and a
@@ -1277,6 +1284,10 @@ class TimerRegistry {
   private jobs: Map<string, Job>;
   /** Session whose timers this registry owns, once a session has started. */
   private sessionId?: string;
+  /** Session manager shared with the other extensions that wake Pi. */
+  private session?: WakeSession;
+  /** Whether a run is active, i.e. whether a wake would start one. */
+  private busy = false;
   /** Periodic checkpoint while any timer is active. */
   private heartbeat?: NodeJS.Timeout;
 
@@ -1288,6 +1299,31 @@ class TimerRegistry {
     this.timers = new Map();
     this.retired = new Map();
     this.jobs = new Map();
+  }
+
+  /**
+   * Remember the session the wake contract is shared on.
+   *
+   * Called from the session hooks and from every tool call, so a wake delivered
+   * later always has a session to check, whatever order pi runs them in.
+   *
+   * @param session - Session manager of the calling context.
+   */
+  attach(session: WakeSession): void {
+    this.session = session;
+  }
+
+  /**
+   * Track whether a run is active.
+   *
+   * A wake only starts a run for an idle session; during a run pi queues the
+   * message instead, so the wake must neither wait for a reservation nor hold
+   * one that would keep another extension from waking an idle session later.
+   *
+   * @param busy - True between `agent_start` and `agent_settled`.
+   */
+  setBusy(busy: boolean): void {
+    this.busy = busy;
   }
 
   /**
@@ -1822,6 +1858,7 @@ class TimerRegistry {
     // Snapshot before `stopAll()` clears the map: a branch switch re-arms some
     // of these ids and must not restart their budget or their tick count.
     const carried = new Map(this.timers);
+    this.attach(ctx.sessionManager);
     this.sessionId = ctx.sessionManager.getSessionId();
     this.stopAll();
 
@@ -2637,15 +2674,20 @@ class TimerRegistry {
     const content = parts
       ? `[timer ${timer.id}] ${line}\n\n${parts}`
       : `[timer ${timer.id}] ${line}`;
-    this.pi.sendMessage(
-      {
-        customType: NOTICE_TYPE,
-        content,
-        display: true,
-        details: { id: timer.id, state },
-      },
-      { triggerTurn: true, deliverAs: "steer" },
-    );
+    const message = {
+      customType: NOTICE_TYPE,
+      content,
+      display: true,
+      details: { id: timer.id, state },
+    };
+    const session = this.session;
+    // During a run the wake is queued, not run-starting: no reservation is
+    // needed, and holding one would block another extension for its window.
+    if (!session || this.busy) {
+      this.pi.sendMessage(message, WAKE_OPTIONS);
+      return;
+    }
+    deliverWake(session, () => this.pi.sendMessage(message, WAKE_OPTIONS));
   }
 }
 
@@ -3084,7 +3126,12 @@ export default function timer(pi: ExtensionAPI): void {
   // Any tool call means the agent acted on the last wake, so the next tick may
   // be delivered again. `agent_start` covers runs that begin without a tool.
   pi.on("tool_call", async () => registry.clearPending());
-  pi.on("agent_start", async () => registry.clearPending());
+  pi.on("agent_start", async (_event, ctx) => {
+    registry.setBusy(true);
+    releaseIdleWake(ctx.sessionManager);
+    registry.clearPending();
+  });
+  pi.on("agent_settled", async () => registry.setBusy(false));
   // Jobs keep running for the next pi process to re-attach; only the loops and
   // the checkpoint belong to this one. `close()` saves the elapsed time, so a
   // graceful quit does not even lose the time since the last heartbeat.
