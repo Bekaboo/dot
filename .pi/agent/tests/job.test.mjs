@@ -1835,10 +1835,14 @@ console.log(listed.content[0].text);
       output += chunk;
     });
     const exited = new Promise((resolve) => child.once("exit", resolve));
-    const code = await Promise.race([
-      exited,
-      wait(10_000).then(() => "timeout"),
-    ]);
+    // The losing timer is cleared: it is ref'd, so the runner would keep the
+    // process alive until it fired, seconds after the suite ended.
+    let giveUp;
+    const timeout = new Promise((resolve) => {
+      giveUp = setTimeout(() => resolve("timeout"), 10_000);
+    });
+    const code = await Promise.race([exited, timeout]);
+    clearTimeout(giveUp);
     if (code === "timeout") {
       child.kill();
       assert.fail("the pi process waited for its job instead of exiting");
