@@ -2742,7 +2742,7 @@ function jobStartTool(
     promptSnippet:
       "Start a background command and wake when it exits, wait for a condition, or tick periodically -- in any combination.",
     promptGuidelines: [
-      "For a command that may take a while, use `job_start` with `command`, never bash `&`, pid or exit files, polling, or `sleep N`. Pass `condition`/`onTick` in the same call to monitor it. Keep working or end your turn: an idle agent is woken in a new turn.",
+      "For a command that may take a while, use `job_start` with `command`, never bash `&`, pid or exit files, or polling. Pass `condition`/`onTick` in the same call to monitor it. Keep working or end your turn: an idle agent is woken in a new turn.",
       "A tick or condition wake from a job says only that something happened; a job wake already carries the exit code and log tail. After a wake, do what it asks, then `job_stop` a job you no longer need.",
     ],
     parameters: JobStartParams,
