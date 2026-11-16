@@ -68,7 +68,7 @@ const MORPH_MS = MORPH_STEPS * FRAME_INTERVAL_MS;
 export const ANIMATION_START_MS = LOGO_DELAY_MS + MORPH_MS;
 
 /** The motions a session picks one of at random, so greetings differ. */
-export const MOTIONS = ["flap", "nod"] as const;
+export const MOTIONS = ["flap", "nod", "look-around"] as const;
 export type Motion = (typeof MOTIONS)[number];
 
 /** One flap: 2 resting ticks, then 5 upstroke and 5 downstroke ticks. */
@@ -86,10 +86,15 @@ const NOD_LIFT_TICKS = 6;
 /** Pixel rows the head dips for a nod: half a terminal cell. */
 const NOD_DIP_PX = 1;
 
+/** One look-around: the head faces forward for 14 ticks, glances back for 6. */
+const LOOK_PERIOD_TICKS = 20;
+const LOOK_FORWARD_TICKS = 16;
+
 /** Ticks in one cycle of each motion. */
 export const MOTION_PERIOD_TICKS: Record<Motion, number> = {
   flap: FLAP_PERIOD_TICKS,
   nod: NOD_PERIOD_TICKS,
+  "look-around": LOOK_PERIOD_TICKS,
 };
 
 /** The moving wing's azure, against the Pi blue tail it folds above. */
@@ -300,10 +305,10 @@ const HEAD_PIXELS: readonly (readonly [number, number])[] = [
 ];
 
 /**
- * Nod: dip the whole head, so the crown drops and the beak swings down over
- * the chest.
+ * Dip the head for a nod, so the crown drops and the beak swings down over the
+ * chest.
  *
- * The head covers the body pixels it lands on, which is what a nod looks like,
+ * The head covers the body pixels it lands on, which is what a dip looks like,
  * and the crown it vacates opens no hole because nothing else sits above the
  * head.
  *
@@ -318,6 +323,23 @@ function applyHeadNod(parrot: Grid): void {
   });
 }
 
+/**
+ * Turn the head to look back: mirror its pixels left to right, so the face and
+ * beak end up on the left and the beak's black lower half lands on the wing's
+ * top pixel. The crown mirrors onto itself and the vacated right column simply
+ * empties, so the head reads as turned rather than moved.
+ *
+ * @param parrot - Parrot pixels to edit in place, PARROT-shaped.
+ */
+function applyHeadTurn(parrot: Grid): void {
+  const head = HEAD_PIXELS.map(([row, col]) => parrot[row][col]);
+  for (const [row, col] of HEAD_PIXELS) parrot[row][col] = null;
+
+  HEAD_PIXELS.forEach(([row, col], index) => {
+    parrot[row][PARROT[0].length - 1 - col] = head[index];
+  });
+}
+
 /** Compose one nod frame: the head dips and lifts while the body holds. */
 function nodCanvas(tick: number): Grid {
   const parrot = bitmapGrid(PARROT);
@@ -328,10 +350,24 @@ function nodCanvas(tick: number): Grid {
   return canvas;
 }
 
+/**
+ * Compose one look-around frame: the head glances back over the shoulder and
+ * turns forward again, while the body and tail hold still.
+ */
+function lookAroundCanvas(tick: number): Grid {
+  const parrot = bitmapGrid(PARROT);
+  if (tick % LOOK_PERIOD_TICKS >= LOOK_FORWARD_TICKS) applyHeadTurn(parrot);
+
+  const canvas = emptyCanvas();
+  placeGrid(canvas, parrot, PARROT_TOP, PARROT_LEFT);
+  return canvas;
+}
+
 /** One frame of each motion at a tick, so a motion is just a frame function. */
 const MOTION_FRAMES: Record<Motion, (tick: number) => Grid> = {
   flap: flapCanvas,
   nod: nodCanvas,
+  "look-around": lookAroundCanvas,
 };
 
 export type Phase = "logo" | "morph" | "animate" | "shatter";
