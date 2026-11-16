@@ -67,13 +67,30 @@ export const PARROT_LEFT = 0;
 const MORPH_MS = MORPH_STEPS * FRAME_INTERVAL_MS;
 export const ANIMATION_START_MS = LOGO_DELAY_MS + MORPH_MS;
 
+/** The motions a session picks one of at random, so greetings differ. */
+export const MOTIONS = ["flap", "nod"] as const;
+export type Motion = (typeof MOTIONS)[number];
+
 /** One flap: 2 resting ticks, then 5 upstroke and 5 downstroke ticks. */
-export const FLAP_PERIOD_TICKS = 12;
+const FLAP_PERIOD_TICKS = 12;
 const FLAP_REST_TICKS = 2;
 const FLAP_UPSTROKE_TICKS = 5;
 
 /** Pixel rows the body sinks while the wing is up: one terminal cell. */
-export const FLOAT_DROP_PX = 2;
+const FLOAT_DROP_PX = 2;
+
+/** One nod: the head lifts for 6 ticks, then dips for 3. */
+const NOD_PERIOD_TICKS = 9;
+const NOD_LIFT_TICKS = 6;
+
+/** Pixel rows the head dips for a nod: half a terminal cell. */
+const NOD_DIP_PX = 1;
+
+/** Ticks in one cycle of each motion. */
+export const MOTION_PERIOD_TICKS: Record<Motion, number> = {
+  flap: FLAP_PERIOD_TICKS,
+  nod: NOD_PERIOD_TICKS,
+};
 
 /** The moving wing's azure, against the Pi blue tail it folds above. */
 const WING = PALETTE.A;
@@ -258,10 +275,10 @@ function applyWingFlap(parrot: Grid, phase: FlapPhase): void {
 }
 
 /**
- * Compose one animation frame: the parrot flaps in its column and floats, its
- * body sinking a cell while the wing is up and lifting again on the downstroke.
+ * Compose one flap frame: the parrot flaps in its column and floats, its body
+ * sinking a cell while the wing is up and lifting again on the downstroke.
  */
-function animateCanvas(tick: number): Grid {
+function flapCanvas(tick: number): Grid {
   const phase = flapPhase(tick);
   const parrot = bitmapGrid(PARROT);
   applyWingFlap(parrot, phase);
@@ -271,6 +288,51 @@ function animateCanvas(tick: number): Grid {
   placeGrid(canvas, parrot, top, PARROT_LEFT);
   return canvas;
 }
+
+/** The head's pixels in PARROT coordinates, crown through beak. */
+const HEAD_PIXELS: readonly (readonly [number, number])[] = [
+  [0, 1],
+  [0, 2],
+  [1, 1],
+  [1, 2],
+  [1, 3],
+  [2, 3],
+];
+
+/**
+ * Nod: dip the whole head, so the crown drops and the beak swings down over
+ * the chest.
+ *
+ * The head covers the body pixels it lands on, which is what a nod looks like,
+ * and the crown it vacates opens no hole because nothing else sits above the
+ * head.
+ *
+ * @param parrot - Parrot pixels to edit in place, PARROT-shaped.
+ */
+function applyHeadNod(parrot: Grid): void {
+  const head = HEAD_PIXELS.map(([row, col]) => parrot[row][col]);
+  for (const [row, col] of HEAD_PIXELS) parrot[row][col] = null;
+
+  HEAD_PIXELS.forEach(([row, col], index) => {
+    parrot[row + NOD_DIP_PX][col] = head[index];
+  });
+}
+
+/** Compose one nod frame: the head dips and lifts while the body holds. */
+function nodCanvas(tick: number): Grid {
+  const parrot = bitmapGrid(PARROT);
+  if (tick % NOD_PERIOD_TICKS >= NOD_LIFT_TICKS) applyHeadNod(parrot);
+
+  const canvas = emptyCanvas();
+  placeGrid(canvas, parrot, PARROT_TOP, PARROT_LEFT);
+  return canvas;
+}
+
+/** One frame of each motion at a tick, so a motion is just a frame function. */
+const MOTION_FRAMES: Record<Motion, (tick: number) => Grid> = {
+  flap: flapCanvas,
+  nod: nodCanvas,
+};
 
 export type Phase = "logo" | "morph" | "animate" | "shatter";
 
@@ -307,11 +369,16 @@ function shatterFrame(elapsedMs: number, shatterAtMs: number): Frame {
  * Build the frame shown `elapsedMs` after the session started.
  *
  * @param elapsedMs - Time since session_start.
+ * @param motion - The motion this session picked.
  * @param shatterAtMs - Time since session_start when the user first typed, or
  *   undefined while the parrot is still welcome.
  * @returns The phase and its pixel grid.
  */
-export function frameFor(elapsedMs: number, shatterAtMs?: number): Frame {
+export function frameFor(
+  elapsedMs: number,
+  motion: Motion,
+  shatterAtMs?: number,
+): Frame {
   if (shatterAtMs !== undefined) return shatterFrame(elapsedMs, shatterAtMs);
 
   if (elapsedMs < LOGO_DELAY_MS) {
@@ -323,7 +390,7 @@ export function frameFor(elapsedMs: number, shatterAtMs?: number): Frame {
   }
 
   const tick = Math.floor((elapsedMs - ANIMATION_START_MS) / FRAME_INTERVAL_MS);
-  return { phase: "animate", grid: animateCanvas(tick) };
+  return { phase: "animate", grid: MOTION_FRAMES[motion](tick) };
 }
 
 function foreground(color: Rgb, mode: TerminalColorMode): string {
@@ -411,8 +478,11 @@ function isTyping(data: string): boolean {
 
 /** Shared frame clock and header lifecycle for one extension instance. */
 class ParrotAnimation {
-  /** Elapsed ms of the first typed character; undefined while the bird flaps. */
+  /** Elapsed ms of the first typed character; undefined while the bird plays. */
   shatterAt: number | undefined;
+
+  /** The motion this session picked at random in start(). */
+  motion: Motion = MOTIONS[0];
 
   private startedAt = 0;
   private shatterSteps = 0;
@@ -431,6 +501,7 @@ class ParrotAnimation {
     this.startedAt = Date.now();
     this.shatterAt = undefined;
     this.shatterSteps = 0;
+    this.motion = MOTIONS[Math.floor(Math.random() * MOTIONS.length)];
     ctx.ui.setHeader((tui, theme) => {
       this.header = new ParrotHeader(tui, theme, this);
       return this.header;
@@ -561,6 +632,7 @@ class ParrotHeader implements Component {
   render(width: number): string[] {
     const frame = frameFor(
       this.animation.elapsedMs(),
+      this.animation.motion,
       this.animation.shatterAt,
     );
     const canvas = renderCanvas(frame.grid, this.theme.getColorMode());
