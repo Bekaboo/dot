@@ -12,7 +12,6 @@ import parrot, {
   frameFor,
   LOGO_DELAY_MS,
   MORPH_STEPS,
-  MOTION_PERIOD_TICKS,
   MOTIONS,
   PALETTE,
   PARROT,
@@ -32,6 +31,12 @@ const TEXT_SCREEN_COLUMN = HEADER_PADDING_X + PI_LOGO[0].length + 1;
 
 /** Terminal rows the brand cell occupies. */
 const CANVAS_ROWS = CANVAS_HEIGHT_PX / 2;
+
+/** The logo and morph phases ignore the motion, so any one renders them. */
+const MOTION = MOTIONS[0];
+
+/** A motion's class name, for readable failure messages. */
+const motionName = (motion) => motion.constructor.name;
 
 /** A session that already holds a conversation. */
 const CONVERSATION = [
@@ -129,7 +134,7 @@ function framesFor(motion, count) {
 }
 
 /** Ticks long enough to cover every motion's cycle twice. */
-const CYCLE_TICKS = Math.max(...Object.values(MOTION_PERIOD_TICKS)) * 2;
+const CYCLE_TICKS = Math.max(...MOTIONS.map((motion) => motion.end())) * 2;
 
 /** Install the extension and return the event hooks it registered. */
 function loadExtension() {
@@ -214,21 +219,23 @@ const brandCell = (lines) =>
 
 describe("parrot", () => {
   describe("canvas", () => {
-    test("the logo shows until the morph starts", () => {
-      assert.equal(frameFor(0, "flap").phase, "logo");
-      assert.equal(frameFor(LOGO_DELAY_MS - 1, "flap").phase, "logo");
-      assert.equal(frameFor(LOGO_DELAY_MS, "flap").phase, "morph");
-      assert.equal(frameFor(ANIMATION_START_MS - 1, "flap").phase, "morph");
-      assert.equal(frameFor(ANIMATION_START_MS, "flap").phase, "animate");
+    test("the logo shows until the morph starts, for every motion", () => {
+      for (const motion of MOTIONS) {
+        assert.equal(frameFor(0, motion).phase, "logo");
+        assert.equal(frameFor(LOGO_DELAY_MS - 1, motion).phase, "logo");
+        assert.equal(frameFor(LOGO_DELAY_MS, motion).phase, "morph");
+        assert.equal(frameFor(ANIMATION_START_MS - 1, motion).phase, "morph");
+        assert.equal(frameFor(ANIMATION_START_MS, motion).phase, "animate");
 
-      const logo = frameFor(0, "flap").grid;
-      assert.equal(logo.length, CANVAS_HEIGHT_PX);
-      assert.ok(logo.every((row) => row.length === CANVAS_WIDTH_PX));
-      assertCanvas(logo, PI_LOGO, 0, 0);
+        const logo = frameFor(0, motion).grid;
+        assert.equal(logo.length, CANVAS_HEIGHT_PX);
+        assert.ok(logo.every((row) => row.length === CANVAS_WIDTH_PX));
+        assertCanvas(logo, PI_LOGO, 0, 0);
+      }
     });
 
     test("the logo is rendered with its exact half-block colors", () => {
-      const [top, bottom] = renderCanvas(frameFor(0, "flap").grid, "truecolor");
+      const [top, bottom] = renderCanvas(frameFor(0, MOTION).grid, "truecolor");
       const fg = (key) => `\x1b[38;2;${PALETTE[key].join(";")}m`;
       const bg = (key) => `\x1b[48;2;${PALETTE[key].join(";")}m`;
 
@@ -244,7 +251,7 @@ describe("parrot", () => {
       const morphed = Array.from(
         { length: MORPH_STEPS },
         (_, index) =>
-          frameFor(LOGO_DELAY_MS + index * FRAME_INTERVAL_MS, "flap").grid,
+          frameFor(LOGO_DELAY_MS + index * FRAME_INTERVAL_MS, MOTION).grid,
       );
 
       assert.ok(
@@ -253,7 +260,7 @@ describe("parrot", () => {
       );
       assert.notEqual(
         signature(morphed[0]),
-        signature(frameFor(0, "flap").grid),
+        signature(frameFor(0, MOTION).grid),
       );
 
       // It lands on the intact parrot, and every motion opens on that frame.
@@ -262,8 +269,22 @@ describe("parrot", () => {
         assert.equal(
           signature(frameFor(ANIMATION_START_MS, motion).grid),
           signature(morphed.at(-1)),
-          `${motion} does not open on the frame the morph ended with`,
+          `${motionName(motion)} does not open on the frame the morph ended with`,
         );
+      }
+    });
+
+    test("every motion holds the resting parrot until it starts", () => {
+      for (const motion of MOTIONS) {
+        for (let tick = 0; tick < motion.start(); tick++) {
+          assertCanvas(
+            frameFor(ANIMATION_START_MS + tick * FRAME_INTERVAL_MS, motion)
+              .grid,
+            PARROT,
+            PARROT_TOP,
+            PARROT_LEFT,
+          );
+        }
       }
     });
 
@@ -273,19 +294,25 @@ describe("parrot", () => {
           assert.deepEqual(
             holes(grid),
             [],
-            `${motion} opened a hole at tick ${tick}`,
+            `${motionName(motion)} opened a hole at tick ${tick}`,
           );
 
           const box = bounds(grid);
-          assert.ok(box.top >= 0, `${motion} tick ${tick} left the top`);
+          assert.ok(
+            box.top >= 0,
+            `${motionName(motion)} tick ${tick} left the top`,
+          );
           assert.ok(
             box.bottom < CANVAS_HEIGHT_PX,
-            `${motion} tick ${tick} left the bottom`,
+            `${motionName(motion)} tick ${tick} left the bottom`,
           );
-          assert.ok(box.left >= 0, `${motion} tick ${tick} left the canvas`);
+          assert.ok(
+            box.left >= 0,
+            `${motionName(motion)} tick ${tick} left the canvas`,
+          );
           assert.ok(
             box.right < CANVAS_WIDTH_PX,
-            `${motion} tick ${tick} left the canvas`,
+            `${motionName(motion)} tick ${tick} left the canvas`,
           );
         }
       }
@@ -293,16 +320,16 @@ describe("parrot", () => {
 
     test("every motion moves, and repeats on its own cycle", () => {
       for (const motion of MOTIONS) {
-        const period = MOTION_PERIOD_TICKS[motion];
+        const period = motion.end();
         const cycle = framesFor(motion, period).map(signature);
 
-        assert.ok(new Set(cycle).size > 1, `${motion} never moves`);
+        assert.ok(new Set(cycle).size > 1, `${motionName(motion)} never moves`);
         assert.deepEqual(
           framesFor(motion, period * 2)
             .slice(period)
             .map(signature),
           cycle,
-          `${motion} does not repeat`,
+          `${motionName(motion)} does not repeat`,
         );
       }
     });
@@ -320,7 +347,11 @@ describe("parrot", () => {
 
           for (const elapsed of [landed, landed + 60_000]) {
             const frame = frameFor(elapsed, motion, shatterAt);
-            assert.equal(frame.phase, "logo", `${motion} at ${shatterAt}`);
+            assert.equal(
+              frame.phase,
+              "logo",
+              `${motionName(motion)} at ${shatterAt}`,
+            );
             assertCanvas(frame.grid, PI_LOGO, 0, 0);
           }
         }

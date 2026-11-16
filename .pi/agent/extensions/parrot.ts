@@ -67,38 +67,34 @@ export const PARROT_LEFT = 0;
 const MORPH_MS = MORPH_STEPS * FRAME_INTERVAL_MS;
 export const ANIMATION_START_MS = LOGO_DELAY_MS + MORPH_MS;
 
-/** The motions a session picks one of at random, so greetings differ. */
-export const MOTIONS = ["flap", "nod", "look-around"] as const;
-export type Motion = (typeof MOTIONS)[number];
+/**
+ * A looping pose sequence the parrot plays once the morph hands over.
+ *
+ * A motion owns its own timing and pixels. `start()` is the first tick of a
+ * cycle at which the bird may leave the resting parrot, which is what lets the
+ * morph's last frame and the motion's first frames agree; `end()` is the tick
+ * at which the cycle completes and repeats.
+ */
+export interface Motion {
+  start(): number;
+  end(): number;
+  /** The posed pixels for a tick within one cycle, on a canvas-tall grid. */
+  pose(tick: number): Grid;
+}
 
-/** One flap: 2 resting ticks, then 5 upstroke and 5 downstroke ticks. */
-const FLAP_PERIOD_TICKS = 12;
-const FLAP_REST_TICKS = 2;
-const FLAP_UPSTROKE_TICKS = 5;
+/** An empty canvas-tall grid, one column per parrot column. */
+function poseGrid(): Grid {
+  return Array.from({ length: CANVAS_HEIGHT_PX }, () =>
+    Array.from({ length: PARROT[0].length }, () => null),
+  );
+}
 
-/** Pixel rows the body sinks while the wing is up: one terminal cell. */
-const FLOAT_DROP_PX = 2;
-
-/** One nod: the head lifts for 6 ticks, then dips for 3. */
-const NOD_PERIOD_TICKS = 9;
-const NOD_LIFT_TICKS = 6;
-
-/** Pixel rows the head dips for a nod: half a terminal cell. */
-const NOD_DIP_PX = 1;
-
-/** One look-around: the head faces forward for 14 ticks, glances back for 6. */
-const LOOK_PERIOD_TICKS = 20;
-const LOOK_FORWARD_TICKS = 16;
-
-/** Ticks in one cycle of each motion. */
-export const MOTION_PERIOD_TICKS: Record<Motion, number> = {
-  flap: FLAP_PERIOD_TICKS,
-  nod: NOD_PERIOD_TICKS,
-  "look-around": LOOK_PERIOD_TICKS,
-};
-
-/** The moving wing's azure, against the Pi blue tail it folds above. */
-const WING = PALETTE.A;
+/** The resting parrot on a canvas-tall grid, ready for a motion to pose. */
+function restingPose(): Grid {
+  const grid = poseGrid();
+  placeGrid(grid, bitmapGrid(PARROT), 0, 0);
+  return grid;
+}
 
 /**
  * Layout of Pi's built-in header, which this one reproduces: every line
@@ -175,6 +171,16 @@ const PARROT_PIXELS: readonly BitmapPixel[] = PARROT.flatMap((line, row) =>
   }),
 );
 
+/** The head's pixels in PARROT coordinates, crown through beak. */
+const HEAD_PIXELS: readonly (readonly [number, number])[] = [
+  [0, 1],
+  [0, 2],
+  [1, 1],
+  [1, 2],
+  [1, 3],
+  [2, 3],
+];
+
 /**
  * Pi-logo pixel each parrot pixel travels from, in PARROT_PIXELS order.
  *
@@ -241,134 +247,123 @@ function morphCanvas(step: number): Grid {
   return canvas;
 }
 
-/** Which stroke of the flap cycle a frame falls in. */
-type FlapPhase = "rest" | "up" | "down";
-
-/** The stroke the frame `tick` shows. */
-function flapPhase(tick: number): FlapPhase {
-  const phase = tick % FLAP_PERIOD_TICKS;
-  if (phase < FLAP_REST_TICKS) return "rest";
-  if (phase < FLAP_REST_TICKS + FLAP_UPSTROKE_TICKS) return "up";
-  return "down";
-}
-
 /**
- * Draw the wing for one flap phase: one cell of it rises above the back, then
- * one cell sweeps below the belly.
- *
- * The wing is azure against the Pi blue tail, so the two blues read as
- * separate limbs, and a stroke moves exactly one terminal cell, which keeps
- * the flap iconic. It only ever recolors or adds a pixel, never erases one,
- * so the silhouette stays solid and no gap opens inside the bird.
- *
- * @param parrot - Parrot pixels to edit in place, PARROT-shaped.
- * @param phase - The stroke this frame shows.
+ * The wing flap: one azure cell rises above the back, then sweeps under the
+ * belly, while the body floats a cell down on the upstroke.
  */
-function applyWingFlap(parrot: Grid, phase: FlapPhase): void {
-  switch (phase) {
-    case "rest":
-      return;
-    case "up":
-      parrot[0][0] = WING; // the wing lifted clear of the back
-      parrot[1][0] = WING;
-      return;
-    case "down":
-      parrot[4][1] = WING; // the wing swept under the belly
-      parrot[5][1] = WING;
-      return;
+class Flap implements Motion {
+  private static readonly PERIOD_TICKS = 12;
+  private static readonly REST_TICKS = 2;
+  private static readonly UPSTROKE_TICKS = 5;
+  private static readonly FLOAT_DROP_PX = 2;
+  /** The wing's azure, against the Pi blue tail it folds above. */
+  private static readonly WING = PALETTE.A;
+
+  start(): number {
+    return Flap.REST_TICKS;
+  }
+
+  end(): number {
+    return Flap.PERIOD_TICKS;
+  }
+
+  pose(tick: number): Grid {
+    const phase = tick % Flap.PERIOD_TICKS;
+    const up =
+      phase >= Flap.REST_TICKS && phase < Flap.REST_TICKS + Flap.UPSTROKE_TICKS;
+    const parrot = bitmapGrid(PARROT);
+
+    // A stroke moves exactly one terminal cell and only ever adds or recolors
+    // a pixel, never erases one, so the silhouette stays solid, no gap opens.
+    if (phase >= Flap.REST_TICKS) {
+      if (up) {
+        parrot[0][0] = Flap.WING; // the wing lifted clear of the back
+        parrot[1][0] = Flap.WING;
+      } else {
+        parrot[4][1] = Flap.WING; // the wing swept under the belly
+        parrot[5][1] = Flap.WING;
+      }
+    }
+
+    const grid = poseGrid();
+    placeGrid(grid, parrot, up ? Flap.FLOAT_DROP_PX : 0, 0);
+    return grid;
   }
 }
 
 /**
- * Compose one flap frame: the parrot flaps in its column and floats, its body
- * sinking a cell while the wing is up and lifting again on the downstroke.
- */
-function flapCanvas(tick: number): Grid {
-  const phase = flapPhase(tick);
-  const parrot = bitmapGrid(PARROT);
-  applyWingFlap(parrot, phase);
-
-  const top = PARROT_TOP + (phase === "up" ? FLOAT_DROP_PX : 0);
-  const canvas = emptyCanvas();
-  placeGrid(canvas, parrot, top, PARROT_LEFT);
-  return canvas;
-}
-
-/** The head's pixels in PARROT coordinates, crown through beak. */
-const HEAD_PIXELS: readonly (readonly [number, number])[] = [
-  [0, 1],
-  [0, 2],
-  [1, 1],
-  [1, 2],
-  [1, 3],
-  [2, 3],
-];
-
-/**
- * Dip the head for a nod, so the crown drops and the beak swings down over the
- * chest.
+ * The nod: the head dips half a cell and lifts again while the body holds.
  *
  * The head covers the body pixels it lands on, which is what a dip looks like,
  * and the crown it vacates opens no hole because nothing else sits above the
  * head.
- *
- * @param parrot - Parrot pixels to edit in place, PARROT-shaped.
  */
-function applyHeadNod(parrot: Grid): void {
-  const head = HEAD_PIXELS.map(([row, col]) => parrot[row][col]);
-  for (const [row, col] of HEAD_PIXELS) parrot[row][col] = null;
+class Nod implements Motion {
+  private static readonly PERIOD_TICKS = 9;
+  private static readonly LIFT_TICKS = 6;
+  private static readonly DIP_PX = 1;
 
-  HEAD_PIXELS.forEach(([row, col], index) => {
-    parrot[row + NOD_DIP_PX][col] = head[index];
-  });
+  start(): number {
+    return Nod.LIFT_TICKS;
+  }
+
+  end(): number {
+    return Nod.PERIOD_TICKS;
+  }
+
+  pose(tick: number): Grid {
+    const grid = restingPose();
+    if (tick % Nod.PERIOD_TICKS < Nod.LIFT_TICKS) return grid;
+
+    const head = HEAD_PIXELS.map(([row, col]) => grid[row][col]);
+    for (const [row, col] of HEAD_PIXELS) grid[row][col] = null;
+
+    HEAD_PIXELS.forEach(([row, col], index) => {
+      grid[row + Nod.DIP_PX][col] = head[index];
+    });
+    return grid;
+  }
 }
 
 /**
- * Turn the head to look back: mirror its pixels left to right, so the face and
- * beak end up on the left and the beak's black lower half lands on the wing's
- * top pixel. The crown mirrors onto itself and the vacated right column simply
- * empties, so the head reads as turned rather than moved.
- *
- * @param parrot - Parrot pixels to edit in place, PARROT-shaped.
- */
-function applyHeadTurn(parrot: Grid): void {
-  const head = HEAD_PIXELS.map(([row, col]) => parrot[row][col]);
-  for (const [row, col] of HEAD_PIXELS) parrot[row][col] = null;
-
-  HEAD_PIXELS.forEach(([row, col], index) => {
-    parrot[row][PARROT[0].length - 1 - col] = head[index];
-  });
-}
-
-/** Compose one nod frame: the head dips and lifts while the body holds. */
-function nodCanvas(tick: number): Grid {
-  const parrot = bitmapGrid(PARROT);
-  if (tick % NOD_PERIOD_TICKS >= NOD_LIFT_TICKS) applyHeadNod(parrot);
-
-  const canvas = emptyCanvas();
-  placeGrid(canvas, parrot, PARROT_TOP, PARROT_LEFT);
-  return canvas;
-}
-
-/**
- * Compose one look-around frame: the head glances back over the shoulder and
+ * The look-around: the head mirrors to glance back over the shoulder, then
  * turns forward again, while the body and tail hold still.
+ *
+ * The beak's black lower half lands on the wing's top pixel, and the vacated
+ * right column simply empties, so the head reads as turned rather than moved.
  */
-function lookAroundCanvas(tick: number): Grid {
-  const parrot = bitmapGrid(PARROT);
-  if (tick % LOOK_PERIOD_TICKS >= LOOK_FORWARD_TICKS) applyHeadTurn(parrot);
+class LookAround implements Motion {
+  private static readonly PERIOD_TICKS = 20;
+  private static readonly FORWARD_TICKS = 16;
 
-  const canvas = emptyCanvas();
-  placeGrid(canvas, parrot, PARROT_TOP, PARROT_LEFT);
-  return canvas;
+  start(): number {
+    return LookAround.FORWARD_TICKS;
+  }
+
+  end(): number {
+    return LookAround.PERIOD_TICKS;
+  }
+
+  pose(tick: number): Grid {
+    const grid = restingPose();
+    if (tick % LookAround.PERIOD_TICKS < LookAround.FORWARD_TICKS) return grid;
+
+    const head = HEAD_PIXELS.map(([row, col]) => grid[row][col]);
+    for (const [row, col] of HEAD_PIXELS) grid[row][col] = null;
+
+    HEAD_PIXELS.forEach(([row, col], index) => {
+      grid[row][PARROT[0].length - 1 - col] = head[index];
+    });
+    return grid;
+  }
 }
 
-/** One frame of each motion at a tick, so a motion is just a frame function. */
-const MOTION_FRAMES: Record<Motion, (tick: number) => Grid> = {
-  flap: flapCanvas,
-  nod: nodCanvas,
-  "look-around": lookAroundCanvas,
-};
+/** The motions a session picks one of at random, so greetings differ. */
+export const MOTIONS: readonly Motion[] = [
+  new Flap(),
+  new Nod(),
+  new LookAround(),
+];
 
 export type Phase = "logo" | "morph" | "animate" | "shatter";
 
@@ -426,7 +421,9 @@ export function frameFor(
   }
 
   const tick = Math.floor((elapsedMs - ANIMATION_START_MS) / FRAME_INTERVAL_MS);
-  return { phase: "animate", grid: MOTION_FRAMES[motion](tick) };
+  const canvas = emptyCanvas();
+  placeGrid(canvas, motion.pose(tick), PARROT_TOP, PARROT_LEFT);
+  return { phase: "animate", grid: canvas };
 }
 
 function foreground(color: Rgb, mode: TerminalColorMode): string {
