@@ -2926,20 +2926,30 @@ console.log(listed.content[0].text);
   });
 
   test("a job exit during a condition keeps the exit status", async (t) => {
-    const { start, noticesAfter } = setup(t, (command) => {
+    // The condition holds only once the job's own shell has exited, so the
+    // exit never races the condition on a loaded machine. The log is the only
+    // observable the fake shell has: it is written before the process ends.
+    let logPath;
+    const { start, noticesAfter } = setup(t, async (command) => {
       if (command !== "wait-for-exit") return exit(1);
-      return new Promise((resolve) => {
-        setTimeout(() => resolve(exit(0)), 700);
-      });
+      await until(
+        () =>
+          logPath !== undefined &&
+          existsSync(logPath) &&
+          readFileSync(logPath, "utf8").includes("[exit 3]"),
+        "the job never exited on its own",
+      );
+      return exit(0);
     });
 
-    await start({
+    const { details } = await start({
       id: "job-race",
       command: "sleep 0.5; exit 3",
       condition: "wait-for-exit",
       intervalSec: 1,
       timeoutSec: 5,
     });
+    logPath = details.logPath;
     const [notice] = await noticesAfter(1);
 
     assert.match(
