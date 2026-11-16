@@ -550,24 +550,6 @@ describe("parrot", () => {
     test("the motion is picked once per session, at random", (t) => {
       mockTimers(t);
       // Pin the motion so both sessions greet alike.
-      t.mock.method(Math, "random", () => 0);
-      const session = startSession();
-      const first = session.header();
-      const elapsed = ANIMATION_START_MS + 3 * FRAME_INTERVAL_MS;
-
-      startSession();
-      assert.equal(random.mock.callCount(), 1);
-
-      // A reload is a new pick, and a session already under way gets none.
-      const reloaded = startSession();
-      reloaded.restart();
-      assert.equal(random.mock.callCount(), 3);
-      startSession(CONVERSATION);
-      assert.equal(random.mock.callCount(), 3);
-    });
-
-    test("the motion is picked once per session, at random", (t) => {
-      mockTimers(t);
       const random = t.mock.method(Math, "random", () => 0);
 
       startSession();
