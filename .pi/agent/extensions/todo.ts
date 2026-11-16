@@ -27,9 +27,11 @@
  *   started; a stale list is left to the stale-list hint above. This catches
  *   long-horizon agents that never wrote a list, including small models that
  *   only reach for `bash`;
- * - When the agent stops with unfinished todo items, it will be reminded
- *   about them to either continue working for the target or mark the items
- *   cancelled.
+ * - When the agent stops while items are still pending or in progress, it is
+ *   reminded about them to either continue working or mark them
+ *   blocked/cancelled. Items the agent marks blocked wait for a user decision
+ *   or any other prerequisite, so a stop with nothing actionable left is a
+ *   discussion, not abandoned work.
  */
 
 import type {
@@ -93,6 +95,7 @@ const TODO_TOOLS = new Set(["todo_list", "todo_write", "todo_edit", "todo"]);
 const MARKERS = {
   pending: " ",
   in_progress: "~",
+  blocked: "!",
   completed: "x",
   cancelled: "-",
 } as const;
@@ -110,6 +113,7 @@ const STATUS_BY_MARKER = new Map<string, TodoStatus>(
 /** Bracketed markers as they appear in prompts and messages. */
 const PENDING_BOX = box("pending");
 const IN_PROGRESS_BOX = box("in_progress");
+const BLOCKED_BOX = box("blocked");
 const COMPLETED_BOX = box("completed");
 const CANCELLED_BOX = box("cancelled");
 
@@ -150,6 +154,7 @@ const TodoEditParams = Type.Object({
 const STATUS_COLOR = {
   pending: "muted",
   in_progress: "accent",
+  blocked: "warning",
   completed: "success",
   cancelled: "dim",
 } as const;
@@ -240,12 +245,29 @@ function normalizeList(text: string): string {
 }
 
 /**
- * Check whether the list still has work left.
+ * Check whether the list still has work left, blocked items included.
+ *
+ * @param list - Current checklist.
+ * @returns True when an item is pending, in progress or blocked.
+ */
+function hasUnfinished(list: string): boolean {
+  return parseList(list).some(
+    (item) => item.status !== "completed" && item.status !== "cancelled",
+  );
+}
+
+/**
+ * Check whether the list has work the agent can do right now.
+ *
+ * Blocked items wait for a user decision or any other prerequisite, so a
+ * stopped agent with nothing actionable left is discussing, not abandoning the
+ * list. This is the strict subset of `hasUnfinished`: blocked items are
+ * unfinished but not actionable.
  *
  * @param list - Current checklist.
  * @returns True when an item is pending or in progress.
  */
-function hasUnfinished(list: string): boolean {
+function hasActionable(list: string): boolean {
   return parseList(list).some(
     (item) => item.status === "pending" || item.status === "in_progress",
   );
@@ -356,7 +378,7 @@ function staleListHint(list: string): string | undefined {
     ``,
     list,
     ``,
-    `If progress changed, update it with todo_edit: mark the current item ${IN_PROGRESS_BOX}, finished items ${COMPLETED_BOX}, abandoned items ${CANCELLED_BOX}. Ignore this if the list is accurate.`,
+    `If progress changed, update it with todo_edit: mark the current item ${IN_PROGRESS_BOX}, finished items ${COMPLETED_BOX}, abandoned items ${CANCELLED_BOX}. Clear ${BLOCKED_BOX} once the user decision or the prerequisite is settled, and keep it on items still waiting. Ignore this if the list is accurate.`,
     `</todo-reminder>`,
   ].join("\n");
 }
@@ -397,8 +419,8 @@ function continueMessage(list: string): string {
     list,
     ``,
     `Continue with the next item if it is actionable now.`,
-    `If you are waiting for the user's answer, say so briefly and stop.`,
-    `If remaining items are blocked or no longer relevant, mark them ${CANCELLED_BOX} with todo_edit, then stop.`,
+    `If items need a user decision or any other prerequisite, mark them ${BLOCKED_BOX} with \`todo_edit\`.`,
+    `If remaining items are no longer relevant, mark them ${CANCELLED_BOX} with \`todo_edit\`.`,
   ].join("\n");
 }
 
@@ -789,19 +811,23 @@ class Todo {
   }
 
   /**
-   * Steering: push an agent that stops with unfinished items, once per input.
+   * Steering: push an agent that stops with actionable items, once per input.
+   *
+   * Items the agent marked blocked wait for a user decision or any other
+   * prerequisite, so a stop with nothing actionable left is discussion and
+   * gets no push.
    *
    * @param event - Final boundary before the agent settles.
    * @returns A continue request with a visible message, or nothing.
    */
-  pushUnfinished(
+  pushActionable(
     event: AgentBeforeSettleEvent,
   ): AgentBeforeSettleEventResult | undefined {
     if (event.outcome !== "completed" || this.pushedSinceInput) {
       return undefined;
     }
     // A reply without any tool call is discussion, not abandoned work.
-    if (!this.workedSinceInput || !hasUnfinished(this.items)) {
+    if (!this.workedSinceInput || !hasActionable(this.items)) {
       return undefined;
     }
     this.pushedSinceInput = true;
@@ -862,7 +888,7 @@ function todoWriteTool(
   return {
     name: "todo_write",
     label: "Todo Write",
-    description: `Replace the session todo list, a Markdown checklist, one item per line. Markers: \`- ${PENDING_BOX}\` pending, \`- ${IN_PROGRESS_BOX}\` in progress (at most one), \`- ${COMPLETED_BOX}\` done, \`- ${CANCELLED_BOX}\` cancelled.`,
+    description: `Replace the session todo list, a Markdown checklist, one item per line. Markers: \`- ${PENDING_BOX}\` pending, \`- ${IN_PROGRESS_BOX}\` in progress (at most one), \`- ${BLOCKED_BOX}\` waiting on a user decision or any other prerequisite, \`- ${COMPLETED_BOX}\` done, \`- ${CANCELLED_BOX}\` cancelled.`,
     promptSnippet: "Replace the session todo checklist with a new plan",
     promptGuidelines: [
       "Use `todo_write` for the initial plan of multi-step work, or when the user lists several items; skip it for single-step or conversational requests.",
@@ -903,7 +929,7 @@ function todoEditTool(
     description: `Update the session todo list with exact-text replacements like the \`edit\` tool: each oldText must match the current list exactly and uniquely, otherwise nothing changes.`,
     promptSnippet: "Edit the session todo checklist in place",
     promptGuidelines: [
-      `Use \`todo_edit\` to mark the current item ${IN_PROGRESS_BOX} when starting it and ${COMPLETED_BOX} right after finishing it, and to mark abandoned items ${CANCELLED_BOX} when requirements change.`,
+      `Use \`todo_edit\` to mark the current item ${IN_PROGRESS_BOX} when starting it, ${COMPLETED_BOX} right after finishing it, ${BLOCKED_BOX} before you stop to ask the user or wait on any other prerequisite, and ${CANCELLED_BOX} when an item is abandoned.`,
     ],
     parameters: TodoEditParams,
     // The todo tools share one mutable list, so Pi must run them in order.
@@ -967,7 +993,7 @@ export default function todoExtension(pi: ExtensionAPI): void {
   pi.on("tool_execution_end", (event) => todo.trackToolExecution(event));
   pi.on("turn_end", (event) => todo.countTurn(event));
   pi.on("context_with_system", (event) => todo.injectHint(event));
-  pi.on("agent_before_settle", (event) => todo.pushUnfinished(event));
+  pi.on("agent_before_settle", (event) => todo.pushActionable(event));
   pi.registerEntryRenderer(HINT_ENTRY_TYPE, (_entry, _options, theme) =>
     renderHintEntry(pi.getSettings().outputPad ?? 1, theme),
   );

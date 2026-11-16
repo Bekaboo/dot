@@ -170,6 +170,15 @@ describe("todo", () => {
       assert.equal(await list(), "");
     });
 
+    test("items waiting on the user are a status of their own", async () => {
+      const { write, list } = setup();
+
+      // A blocked item sits next to an in-progress one without counting towards
+      // the single in-progress slot.
+      await write("- [!] A\n- [~] B");
+      assert.equal(await list(), "- [!] A\n- [~] B");
+    });
+
     test("two edits sent at once both stay in the checklist", async () => {
       const { tools, write, list } = setup();
       await write("- [ ] A\n- [ ] B");
@@ -359,6 +368,17 @@ describe("todo", () => {
       assert.deepEqual(reminderTurns, staleTurns);
     });
 
+    test("an all-blocked list still gets the stale-list hint", async () => {
+      const { hooks, write } = setup();
+      await write("- [!] A");
+
+      const hint = idleUntilReminder(hooks).entries.at(-1).data.hint;
+      // Blocked work is unfinished, so it keeps the list fresh until the agent
+      // clears the marker; it is not a reason to ask for a new plan.
+      assert.match(hint, /recently\.\n\n- \[!\] A\n/);
+      assert.doesNotMatch(hint, /without user input/);
+    });
+
     test("a todo call restarts the stale-list window, not just its follow-up", async () => {
       const { hooks, write } = setup();
       await write("- [ ] A");
@@ -481,13 +501,43 @@ describe("todo", () => {
         pushed.entries[0].content,
         /unfinished items:\n\n- \[x\] A\n- \[ \] B\n\nContinue with the next item/,
       );
+      // The push teaches the status that would have kept it silent.
+      assert.match(pushed.entries[0].content, /mark them \[!\] .*todo_edit/);
 
       assert.equal(hooks.get("agent_before_settle")(settle), undefined);
     });
 
-    test("stopping with every item closed does not ask the agent to continue", async () => {
+    test("items waiting on the user do not ask the agent to continue", async () => {
+      const { hooks, write, list } = setup();
+      await write("- [x] A\n- [!] B\n- [!] C");
+      // Without the write taking effect, an empty list would pass this test for
+      // the wrong reason.
+      assert.equal(await list(), "- [x] A\n- [!] B\n- [!] C");
+      hooks.get("input")({});
+      hooks.get("tool_execution_end")({ toolName: "read" });
+
+      const settle = { outcome: "completed", entries: [] };
+      assert.equal(hooks.get("agent_before_settle")(settle), undefined);
+    });
+
+    test("one actionable item next to blocked ones still asks to continue", async () => {
       const { hooks, write } = setup();
+      await write("- [!] A\n- [ ] B");
+      hooks.get("input")({});
+      hooks.get("tool_execution_end")({ toolName: "read" });
+
+      const pushed = hooks.get("agent_before_settle")({
+        outcome: "completed",
+        entries: [],
+      });
+      assert.equal(pushed.continue, true);
+      assert.match(pushed.entries[0].content, /- \[!\] A\n- \[ \] B/);
+    });
+
+    test("stopping with every item closed does not ask the agent to continue", async () => {
+      const { hooks, write, list } = setup();
       await write("- [x] A\n- [-] B");
+      assert.equal(await list(), "- [x] A\n- [-] B");
       hooks.get("input")({});
       hooks.get("tool_execution_end")({ toolName: "read" });
 
