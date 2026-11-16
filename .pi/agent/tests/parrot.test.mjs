@@ -229,13 +229,13 @@ describe("parrot", () => {
 
     test("the logo is rendered with its exact half-block colors", () => {
       const [top, bottom] = renderCanvas(frameFor(0, "flap").grid, "truecolor");
+      const fg = (key) => `\x1b[38;2;${PALETTE[key].join(";")}m`;
+      const bg = (key) => `\x1b[48;2;${PALETTE[key].join(";")}m`;
 
       // Top-left cell stacks coral over blue, like pi's own logo.
-      assert.ok(
-        top.startsWith(`\x1b[38;2;228;138;122m\x1b[48;2;79;142;179m▀\x1b[0m`),
-      );
-      assert.ok(top.includes("\x1b[38;2;228;138;122m█\x1b[0m"));
-      assert.ok(bottom.includes("\x1b[38;2;234;182;93m█\x1b[0m"));
+      assert.ok(top.startsWith(`${fg("C")}${bg("B")}▀\x1b[0m`));
+      assert.ok(top.includes(`${fg("C")}█\x1b[0m`));
+      assert.ok(bottom.includes(`${fg("Y")}█\x1b[0m`));
       assert.equal(visibleWidth(top), CANVAS_WIDTH_PX);
       assert.equal(visibleWidth(bottom), CANVAS_WIDTH_PX);
     });
@@ -357,7 +357,7 @@ describe("parrot", () => {
 
       // A narrow render keeps the brand ANSI escape sequences.
       const narrow = session.header().render(8);
-      assert.ok(narrow[0].includes("\x1b[38;2;228;138;122m"));
+      assert.ok(narrow[0].includes(`\x1b[38;2;${PALETTE.C.join(";")}m`));
       assert.ok(narrow[0].includes("\x1b[0m"));
     });
 
@@ -547,20 +547,42 @@ describe("parrot", () => {
       assert.equal(session.counted.renders, 4);
     });
 
-    test("the motion is picked once per session, at random", (t) => {
+    test("the random pick chooses the motion a session plays", (t) => {
       mockTimers(t);
-      // Pin the motion so both sessions greet alike.
       const random = t.mock.method(Math, "random", () => 0);
 
-      startSession();
-      assert.equal(random.mock.callCount(), 1);
+      // Each stubbed value selects another motion, and each session plays the
+      // motion it picked: three different birds, not one repeated greeting.
+      const cells = MOTIONS.map((_motion, index) => {
+        random.mock.mockImplementation(() => (index + 0.5) / MOTIONS.length);
+        const session = startSession();
+        const header = session.header();
+        t.mock.timers.tick(ANIMATION_START_MS + 8 * FRAME_INTERVAL_MS);
+        return brandCell(header.render(120));
+      });
+      assert.equal(random.mock.callCount(), MOTIONS.length);
+      assert.notDeepEqual(
+        cells[0],
+        cells[1],
+        "the pick did not change the motion",
+      );
+      assert.notDeepEqual(
+        cells[1],
+        cells[2],
+        "the pick did not change the motion",
+      );
+      assert.notDeepEqual(
+        cells[0],
+        cells[2],
+        "the pick did not change the motion",
+      );
 
-      // A reload is a new pick, and a session already under way gets none.
+      // A reload picks again; a session already under way never does.
       const reloaded = startSession();
       reloaded.restart();
-      assert.equal(random.mock.callCount(), 3);
+      assert.equal(random.mock.callCount(), MOTIONS.length + 2);
       startSession(CONVERSATION);
-      assert.equal(random.mock.callCount(), 3);
+      assert.equal(random.mock.callCount(), MOTIONS.length + 2);
     });
 
     test("session_shutdown and dispose stop the frame clock", (t) => {
