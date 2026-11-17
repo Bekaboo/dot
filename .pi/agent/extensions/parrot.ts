@@ -34,7 +34,7 @@ export const PALETTE = {
   K: [23, 36, 44], // Black lower beak
 } as const satisfies Record<string, readonly [number, number, number]>;
 
-type PixelColor = keyof typeof PALETTE;
+type PaletteKey = keyof typeof PALETTE;
 type Rgb = readonly [number, number, number];
 
 /** One canvas of pixels; null is transparent. Rows pair up into terminal rows. */
@@ -68,6 +68,21 @@ const MORPH_MS = MORPH_STEPS * FRAME_INTERVAL_MS;
 export const ANIMATION_START_MS = LOGO_DELAY_MS + MORPH_MS;
 
 /**
+ * One glyph drawn in front of the header's text, in header rows and columns.
+ * `Sing` produces them, `ParrotAnimation` composites them; what they are or
+ * why they fly is not the header's business.
+ *
+ * @param row - Zero-based header row, counted from the top of the header.
+ * @param col - Zero-based column of the header's content, the brand cell
+ *   included: a glyph may fly well past the four columns the bird occupies.
+ */
+interface HeaderGlyph {
+  readonly row: number;
+  readonly col: number;
+  readonly glyph: string;
+}
+
+/**
  * A looping pose sequence the parrot plays once the morph hands over.
  *
  * A motion owns its own timing and pixels. `start()` is the first tick of a
@@ -78,7 +93,10 @@ export const ANIMATION_START_MS = LOGO_DELAY_MS + MORPH_MS;
 export interface Motion {
   start(): number;
   end(): number;
-  /** The posed pixels for a tick within one cycle, on a canvas-tall grid. */
+  /**
+   * The posed pixels for a tick since the animation began, on a canvas-tall
+   * grid. A motion repeats its own cycle, so the tick is not bounded.
+   */
   pose(tick: number): Grid;
 }
 
@@ -123,7 +141,7 @@ const PAINTED_CELL = new RegExp(
 function colorFor(char: string): Rgb | null {
   if (char === ".") return null;
   if (!(char in PALETTE)) throw new Error(`Unknown bitmap pixel: ${char}`);
-  return PALETTE[char as PixelColor];
+  return PALETTE[char as PaletteKey];
 }
 
 /** Turn a character bitmap into a grid with exact dimensions. */
@@ -158,11 +176,11 @@ function logoCanvas(): Grid {
   return canvas;
 }
 
-type BitmapPixel = {
+interface BitmapPixel {
   readonly row: number;
   readonly col: number;
   readonly color: Rgb;
-};
+}
 
 const PARROT_PIXELS: readonly BitmapPixel[] = PARROT.flatMap((line, row) =>
   [...line].flatMap((char, col) => {
@@ -184,8 +202,8 @@ const HEAD_PIXELS: readonly (readonly [number, number])[] = [
 /**
  * Pi-logo pixel each parrot pixel travels from, in PARROT_PIXELS order.
  *
- * Some parrot pixels share a source pixel: the logo has 10 colored pixels and
- * the parrot 15, so the extra ones grow out of the nearest matching color.
+ * The parrot has more colored pixels than the logo, so some parrot pixels
+ * share a source and the extra ones grow out of the nearest matching color.
  */
 const MORPH_SOURCES: readonly (readonly [number, number])[] = [
   [0, 1],
@@ -358,11 +376,99 @@ class LookAround implements Motion {
   }
 }
 
+/**
+ * The song: the beak opens and closes on a slow warble while the body holds.
+ *
+ * The beak is a white upper mandible over a black lower one, so an open beak
+ * drops the black one a pixel and leaves the background showing between them.
+ * That mouth is the one interior gap a pose may open, and it opens down a
+ * column, so every row of the bird still stays one unbroken run.
+ */
+class Sing implements Motion {
+  private static readonly PERIOD_TICKS = 12;
+  private static readonly REST_TICKS = 2;
+  /** Two beats per cycle, each open for its first ticks and shut after. */
+  private static readonly BEAT_TICKS = 6;
+  private static readonly OPEN_TICKS = 4;
+  /** The lower mandible's row, in parrot pixel rows like its neighbours. */
+  private static readonly BEAK_ROW = 2;
+  /** The music glyphs it sings, in the order it lets them go. */
+  private static readonly NOTES = ["🎵", "🎶", "🎼"] as const;
+  /** Ticks between two notes, and columns a note gains per tick. */
+  private static readonly NOTE_EMIT_TICKS = 3;
+  private static readonly NOTE_COLUMNS_PER_TICK = 2;
+  /** Ticks a note takes to climb one header row. */
+  private static readonly NOTE_RISE_TICKS = 4;
+  /**
+   * Where a note leaves, in header rows and columns rather than parrot pixels:
+   * the mouth's row, one column past the beak.
+   */
+  private static readonly NOTE_HEADER_ROW = 1;
+  private static readonly NOTE_COLUMN = PARROT[0].length;
+
+  start(): number {
+    return Sing.REST_TICKS;
+  }
+
+  end(): number {
+    return Sing.PERIOD_TICKS;
+  }
+
+  pose(tick: number): Grid {
+    const grid = restingPose();
+    const phase = tick % Sing.PERIOD_TICKS;
+    if (phase < Sing.REST_TICKS) return grid;
+
+    const beatTick = (phase - Sing.REST_TICKS) % Sing.BEAT_TICKS;
+    if (beatTick >= Sing.OPEN_TICKS) return grid;
+
+    const beakCol = PARROT[0].length - 1;
+    const lowerBeak = grid[Sing.BEAK_ROW][beakCol];
+    grid[Sing.BEAK_ROW][beakCol] = null;
+    grid[Sing.BEAK_ROW + 1][beakCol] = lowerBeak;
+    return grid;
+  }
+
+  /**
+   * The song: a glyph leaves the mouth every NOTE_EMIT_TICKS.
+   *
+   * A note keeps drifting forward and climbing, a row every NOTE_RISE_TICKS,
+   * and disappears the moment it goes over the top of the terminal or past the
+   * right edge of the header, rather than be cut in half or hang there.
+   *
+   * @param tick - Ticks into the motion, the clock pose() runs on.
+   * @param width - Header width in columns, the right boundary.
+   * @returns The notes still on screen, oldest first.
+   */
+  notes(tick: number, width: number): HeaderGlyph[] {
+    const newest = tick - (tick % Sing.NOTE_EMIT_TICKS);
+    const notes: HeaderGlyph[] = [];
+
+    // Walk back through the births: every older note is further right and
+    // higher, so the first one out of the terminal ends the walk.
+    for (let born = newest; born >= 0; born -= Sing.NOTE_EMIT_TICKS) {
+      const age = tick - born;
+      const row = Sing.NOTE_HEADER_ROW - Math.floor(age / Sing.NOTE_RISE_TICKS);
+      if (row < 0) break;
+
+      const glyph =
+        Sing.NOTES[(born / Sing.NOTE_EMIT_TICKS) % Sing.NOTES.length];
+      const col = Sing.NOTE_COLUMN + age * Sing.NOTE_COLUMNS_PER_TICK;
+      if (col + visibleWidth(glyph) > width) break;
+
+      notes.push({ row, col, glyph });
+    }
+
+    return notes.reverse();
+  }
+}
+
 /** The motions a session picks one of at random, so greetings differ. */
 export const MOTIONS: readonly Motion[] = [
   new Flap(),
   new Nod(),
   new LookAround(),
+  new Sing(),
 ];
 
 export type Phase = "logo" | "morph" | "animate" | "shatter";
@@ -372,14 +478,32 @@ export interface Frame {
   readonly grid: Grid;
 }
 
-/** Morph step the pixels have reached `elapsedMs` in, 0 through MORPH_STEPS. */
+/**
+ * Morph step the pixels have reached `elapsedMs` in, 0 through MORPH_STEPS.
+ */
 function morphStepAt(elapsedMs: number): number {
   if (elapsedMs < LOGO_DELAY_MS) return 0;
   if (elapsedMs >= ANIMATION_START_MS) return MORPH_STEPS;
-  return Math.min(
-    MORPH_STEPS,
-    Math.floor((elapsedMs - LOGO_DELAY_MS) / FRAME_INTERVAL_MS) + 1,
-  );
+  // Between the two, one step per frame lands inside 1..MORPH_STEPS.
+  return Math.floor((elapsedMs - LOGO_DELAY_MS) / FRAME_INTERVAL_MS) + 1;
+}
+
+/** Ticks of motion played `elapsedMs` in, once the morph has handed over. */
+function animateTick(elapsedMs: number): number {
+  return Math.floor((elapsedMs - ANIMATION_START_MS) / FRAME_INTERVAL_MS);
+}
+
+/**
+ * Morph step the pixels have left to fly back into the logo: the step they had
+ * reached when the user typed, less the steps played backwards since.
+ *
+ * @param elapsedMs - Time since session_start.
+ * @param shatterAtMs - Time since session_start when the user first typed.
+ * @returns The step still to fly, 0 once the logo has landed.
+ */
+function shatterStepAt(elapsedMs: number, shatterAtMs: number): number {
+  const played = Math.floor((elapsedMs - shatterAtMs) / FRAME_INTERVAL_MS);
+  return morphStepAt(shatterAtMs) - played;
 }
 
 /**
@@ -390,8 +514,7 @@ function morphStepAt(elapsedMs: number): number {
  * @param shatterAtMs - Time since session_start when the user first typed.
  */
 function shatterFrame(elapsedMs: number, shatterAtMs: number): Frame {
-  const flown = Math.floor((elapsedMs - shatterAtMs) / FRAME_INTERVAL_MS);
-  const step = morphStepAt(shatterAtMs) - flown;
+  const step = shatterStepAt(elapsedMs, shatterAtMs);
   if (step <= 0) return { phase: "logo", grid: logoCanvas() };
   return { phase: "shatter", grid: morphCanvas(step) };
 }
@@ -420,7 +543,7 @@ export function frameFor(
     return { phase: "morph", grid: morphCanvas(morphStepAt(elapsedMs)) };
   }
 
-  const tick = Math.floor((elapsedMs - ANIMATION_START_MS) / FRAME_INTERVAL_MS);
+  const tick = animateTick(elapsedMs);
   const canvas = emptyCanvas();
   placeGrid(canvas, motion.pose(tick), PARROT_TOP, PARROT_LEFT);
   return { phase: "animate", grid: canvas };
@@ -512,13 +635,12 @@ function isTyping(data: string): boolean {
 /** Shared frame clock and header lifecycle for one extension instance. */
 class ParrotAnimation {
   /** Elapsed ms of the first typed character; undefined while the bird plays. */
-  shatterAt: number | undefined;
+  private shatterAtMs: number | undefined;
 
   /** The motion this session picked at random in start(). */
-  motion: Motion = MOTIONS[0];
+  private motion: Motion = MOTIONS[0];
 
   private startedAt = 0;
-  private shatterSteps = 0;
   private timer: ReturnType<typeof setInterval> | undefined;
   private startTimer: ReturnType<typeof setTimeout> | undefined;
   private unsubscribe: (() => void) | undefined;
@@ -532,8 +654,7 @@ class ParrotAnimation {
     this.stop();
 
     this.startedAt = Date.now();
-    this.shatterAt = undefined;
-    this.shatterSteps = 0;
+    this.shatterAtMs = undefined;
     this.motion = MOTIONS[Math.floor(Math.random() * MOTIONS.length)];
     ctx.ui.setHeader((tui, theme) => {
       this.header = new ParrotHeader(tui, theme, this);
@@ -565,23 +686,122 @@ class ParrotAnimation {
   }
 
   /** Send the parrot back to the Pi logo, once per session. */
-  beginShatter(): void {
-    if (this.shatterAt !== undefined) return;
-    this.shatterAt = this.elapsedMs();
-    this.shatterSteps = morphStepAt(this.shatterAt);
+  private beginShatter(): void {
+    if (this.shatterAtMs !== undefined) return;
+    this.shatterAtMs = this.elapsedMs();
   }
 
   /** Time since this animation's session started. */
-  elapsedMs(): number {
+  private elapsedMs(): number {
     return Date.now() - this.startedAt;
+  }
+
+  /**
+   * Draw the greeting over the header's text rows: the bird's pixels first,
+   * then any glyphs in front of them. The header owns the text and its layout,
+   * the animation owns every layer drawn on top of it.
+   *
+   * @param rows - The wrapped, themed header rows.
+   * @param width - Width in columns of the rows, and the glyphs' boundary.
+   * @param mode - Terminal color mode, so brand colors follow the terminal.
+   * @returns The rows with the greeting drawn over them.
+   */
+  paint(
+    rows: readonly string[],
+    width: number,
+    mode: TerminalColorMode,
+  ): string[] {
+    // One clock reading per frame, so every layer draws the same instant.
+    const elapsedMs = this.elapsedMs();
+    const frame = frameFor(elapsedMs, this.motion, this.shatterAtMs);
+    const canvas = renderCanvas(frame.grid, mode);
+    const glyphs = this.glyphs(elapsedMs, width);
+
+    return rows.map((row, index) => {
+      const line =
+        index < canvas.length
+          ? ParrotAnimation.pixelsOverText(canvas[index], row)
+          : row;
+      return ParrotAnimation.glyphsOverText(line, glyphs, index, width);
+    });
+  }
+
+  /**
+   * Draw one brand-cell row of animation pixels over an already wrapped header
+   * row: the bird wins, the text keeps its column.
+   *
+   * @param canvasLine - Rendered canvas row pair, CANVAS_WIDTH_PX columns wide.
+   * @param text - The wrapped row, already themed and placed.
+   * @returns The composited row, at least as wide as either input.
+   */
+  private static pixelsOverText(canvasLine: string, text: string): string {
+    const totalWidth = Math.max(visibleWidth(canvasLine), visibleWidth(text));
+    let line = text;
+
+    for (let column = 0; column < visibleWidth(canvasLine); column++) {
+      const pixel = sliceByColumn(canvasLine, column, 1, true);
+      if (!PAINTED_CELL.test(pixel)) continue;
+      line = compositeTuiLine(line, pixel, column, 1, totalWidth);
+    }
+
+    return line;
+  }
+
+  /**
+   * Draw one row's glyphs in front of an already composited row: a glyph covers
+   * the cells it lands on, letters included, and the text returns once it has
+   * moved on, so the row never shifts.
+   *
+   * @param line - The row, already themed and composited with the bird.
+   * @param glyphs - Every glyph in front of the header, in any row.
+   * @param row - The header row being drawn.
+   * @param width - The row's full width; a glyph may fly out past the end of its
+   *   text, which is trimmed of trailing spaces.
+   * @returns The row with the glyphs it carries drawn on it.
+   */
+  private static glyphsOverText(
+    line: string,
+    glyphs: readonly HeaderGlyph[],
+    row: number,
+    width: number,
+  ): string {
+    let drawn = line;
+
+    for (const glyph of glyphs) {
+      if (glyph.row !== row) continue;
+      const glyphWidth = visibleWidth(glyph.glyph);
+      drawn = compositeTuiLine(
+        drawn,
+        glyph.glyph,
+        glyph.col,
+        glyphWidth,
+        width,
+      );
+    }
+
+    return drawn;
+  }
+
+  /**
+   * Glyphs the picked motion sends over the header's text; the silent motions
+   * send none.
+   *
+   * @param elapsedMs - Time since session_start, so every layer agrees.
+   * @param width - Header width in columns, the right boundary.
+   * @returns The glyphs still in front of the text, empty until the morph
+   *   hands over and again once the user has typed.
+   */
+  private glyphs(elapsedMs: number, width: number): HeaderGlyph[] {
+    if (!(this.motion instanceof Sing)) return [];
+    if (this.shatterAtMs !== undefined) return [];
+    if (elapsedMs < ANIMATION_START_MS) return [];
+    return this.motion.notes(animateTick(elapsedMs), width);
   }
 
   /** True once the shatter has landed on the logo for good. */
   private settled(): boolean {
-    if (this.shatterAt === undefined) return false;
-    return (
-      this.elapsedMs() - this.shatterAt >= this.shatterSteps * FRAME_INTERVAL_MS
-    );
+    if (this.shatterAtMs === undefined) return false;
+    return shatterStepAt(this.elapsedMs(), this.shatterAtMs) <= 0;
   }
 
   /** Stop the frame clock and input listener; safe to call more than once. */
@@ -625,28 +845,8 @@ function piOnboarding(): string {
   return "Pi can explain its own features and look up its docs. Ask it how to use or extend Pi.";
 }
 
-/**
- * Draw one brand-cell row of animation pixels over an already wrapped header
- * line: the bird wins, the text keeps its column.
- *
- * @param canvasLine - Rendered canvas row pair, CANVAS_WIDTH_PX columns wide.
- * @param text - The wrapped line, already themed and placed.
- * @returns The composited line, at least as wide as either input.
- */
-function withAnimationOverText(canvasLine: string, text: string): string {
-  const totalWidth = Math.max(visibleWidth(canvasLine), visibleWidth(text));
-  let line = text;
-
-  for (let column = 0; column < visibleWidth(canvasLine); column++) {
-    const pixel = sliceByColumn(canvasLine, column, 1, true);
-    if (!PAINTED_CELL.test(pixel)) continue;
-    line = compositeTuiLine(line, pixel, column, 1, totalWidth);
-  }
-
-  return line;
-}
-
-/** Custom header component: the animated brand cell and Pi's startup text. */
+/** Custom header component: Pi's startup text, with the greeting drawn over
+ * it. */
 class ParrotHeader implements Component {
   private readonly tui: TUI;
   private readonly theme: Theme;
@@ -662,13 +862,13 @@ class ParrotHeader implements Component {
     this.tui.requestRender();
   }
 
+  /**
+   * Render Pi's startup header with the greeting drawn over it.
+   *
+   * @param width - Terminal columns this header may occupy.
+   * @returns The header lines, each within `width` columns.
+   */
   render(width: number): string[] {
-    const frame = frameFor(
-      this.animation.elapsedMs(),
-      this.animation.motion,
-      this.animation.shatterAt,
-    );
-    const canvas = renderCanvas(frame.grid, this.theme.getColorMode());
     const version = this.theme.fg("dim", `v${VERSION}`);
     const hints = compactInstructions(this.theme);
     const onboarding = this.theme.fg("dim", compactOnboarding());
@@ -683,20 +883,22 @@ class ParrotHeader implements Component {
     const contentWidth = Math.max(1, width - paddingX * 2);
 
     // Wrap the same block Pi's header wraps, brand cell left as blank space so
-    // the text beside it keeps its column, then draw the bird over the first
-    // rows: it stays in one piece while the text wraps at Pi's own width.
+    // the text beside it keeps its column, then let the animation draw over
+    // the first rows: it stays in one piece while the text wraps at Pi's own
+    // width.
     const beside = " ".repeat(BRAND_TEXT_COLUMN);
     const rows = wrapTextWithAnsi(
       [beside + version, beside + hints, onboarding, "", closing].join("\n"),
       contentWidth,
     );
 
+    const drawn = this.animation.paint(
+      rows,
+      contentWidth,
+      this.theme.getColorMode(),
+    );
     const indent = " ".repeat(paddingX);
-    return rows.map((row, index) => {
-      const line =
-        index < canvas.length ? withAnimationOverText(canvas[index], row) : row;
-      return indent + truncateToWidth(line, contentWidth, "");
-    });
+    return drawn.map((row) => indent + truncateToWidth(row, contentWidth, ""));
   }
 
   invalidate(): void {
@@ -708,7 +910,13 @@ class ParrotHeader implements Component {
   }
 }
 
-export default function parrot(pi: ExtensionAPI) {
+/**
+ * Register the parrot greeting: a fresh TUI session gets the animated header,
+ * while a session that already holds a conversation keeps Pi's own header.
+ *
+ * @param pi - Extension API used to hook the session lifecycle.
+ */
+export default function parrot(pi: ExtensionAPI): void {
   const animation = new ParrotAnimation();
 
   pi.on("session_start", (_event, ctx) => {

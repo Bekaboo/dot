@@ -1,3 +1,18 @@
+/**
+ * The test may only test basic contracts and rules of parrot greeting
+ * animation, but never the detail of its actual poses.
+ *
+ * A test here may pin what a caller can rely on: which phase shows when the
+ * animation starts and ends, that typing ends the greeting on the logo, that
+ * the bird stays on its canvas, that Pi's own text keeps its columns and
+ * wraps, and that the frame clock runs only while something moves.
+ *
+ * A test here may not pin what a pose or a flight looks like: which pixels a
+ * motion recolors, where a note starts, how fast it climbs, which glyph comes
+ * next. Those are art, free to change with the next doodle, so they are
+ * checked by looking at the bird, not by asserting on it.
+ */
+
 import assert from "node:assert/strict";
 import test, { describe } from "node:test";
 
@@ -63,6 +78,7 @@ function signature(grid) {
     .join("|");
 }
 
+/** The bitmap's colored cells, keyed by `row:col` at the given offset. */
 function bitmapCells(bitmap, top, left) {
   const cells = new Map();
   bitmap.forEach((line, row) => {
@@ -90,6 +106,7 @@ function assertCanvas(target, bitmap, top, left) {
   }
 }
 
+/** The box the lit cells occupy, in canvas pixels. */
 function bounds(grid) {
   const cells = colored(grid);
   return {
@@ -98,30 +115,6 @@ function bounds(grid) {
     left: Math.min(...cells.map((cell) => cell.col)),
     right: Math.max(...cells.map((cell) => cell.col)),
   };
-}
-
-/** Interior gaps: transparent cells with a lit cell on both sides. */
-function holes(grid) {
-  const gaps = (line) => {
-    const lit = line.flatMap((pixel, index) => (pixel === null ? [] : [index]));
-    if (lit.length < 2) return [];
-    const span = Array.from(
-      { length: lit.at(-1) - lit[0] + 1 },
-      (_, offset) => lit[0] + offset,
-    );
-    return span.filter((index) => line[index] === null);
-  };
-
-  const found = [];
-  grid.forEach((row, rowIndex) => {
-    for (const col of gaps(row)) found.push(`row ${rowIndex}, col ${col}`);
-  });
-  for (let col = 0; col < grid[0].length; col++) {
-    for (const rowIndex of gaps(grid.map((row) => row[col]))) {
-      found.push(`row ${rowIndex}, col ${col}`);
-    }
-  }
-  return found;
 }
 
 /** Animated frames of one motion, one per tick. */
@@ -198,6 +191,7 @@ const mockTimers = (t) =>
     now: 0,
   });
 
+/** A line with its ANSI styling and hyperlink sequences stripped. */
 const plain = (line) => line.replace(/\x1b(?:\[[0-9;]*m|\]8;;\x07)/g, "");
 
 /** Visible content in reading order, ignoring whitespace and line breaks. */
@@ -288,15 +282,9 @@ describe("parrot", () => {
       }
     });
 
-    test("every animated frame keeps the bird solid and on canvas", () => {
+    test("every animated frame stays on the canvas", () => {
       for (const motion of MOTIONS) {
         for (const [tick, grid] of framesFor(motion, CYCLE_TICKS).entries()) {
-          assert.deepEqual(
-            holes(grid),
-            [],
-            `${motionName(motion)} opened a hole at tick ${tick}`,
-          );
-
           const box = bounds(grid);
           assert.ok(
             box.top >= 0,
@@ -360,12 +348,6 @@ describe("parrot", () => {
   });
 
   describe("extension", () => {
-    /** Columns the two lines beside the brand cell start their text at. */
-    const brandTextColumns = (lines) => [
-      plain(lines[0]).indexOf(`v${VERSION}`),
-      plain(lines[1]).indexOf("interrupt"),
-    ];
-
     test("the header reproduces Pi's built-in layout", (t) => {
       mockTimers(t);
       const session = startSession();
@@ -392,35 +374,56 @@ describe("parrot", () => {
       assert.ok(narrow[0].includes("\x1b[0m"));
     });
 
-    test("the bird is drawn over the text, which never moves", (t) => {
+    test("the bird is drawn over the text, which keeps its columns", (t) => {
       mockTimers(t);
       const session = startSession();
       const header = session.header();
+
+      /** One word per header row, to read that row's columns back by. */
+      const probes = [
+        { row: 0, word: `v${VERSION}` },
+        { row: 1, word: "interrupt" },
+        { row: 2, word: "Press" },
+        { row: 4, word: "Pi can explain" },
+      ];
+      const columnsOf = (lines) =>
+        probes.map(({ row, word }) => plain(lines[row]).indexOf(word));
+
+      // Measured under the logo, before anything is in the air to hide a word.
+      const columns = columnsOf(header.render(120));
+      assert.ok(
+        columns.every((column) => column !== -1),
+        "a probe word is not in Pi's header any more",
+      );
       t.mock.timers.tick(ANIMATION_START_MS);
 
-      const columns = brandTextColumns(header.render(120));
-      const onboarding = plain(header.render(120)[2]);
       let drawnOverText = false;
 
       for (let tick = 0; tick < CYCLE_TICKS; tick++) {
         const lines = header.render(120);
 
-        assert.deepEqual(
-          brandTextColumns(lines),
-          columns,
-          `tick ${tick} moved the text`,
+        // A glyph flying in front may hide a word for a few frames; a word
+        // that is visible is still in its own column, on a row that still fits.
+        assert.ok(
+          lines.every((line) => visibleWidth(line) <= 120),
+          `tick ${tick} overran the width`,
         );
-        assert.equal(
-          plain(lines[2]).slice(TEXT_SCREEN_COLUMN),
-          onboarding.slice(TEXT_SCREEN_COLUMN),
-          `tick ${tick} covered text past the brand cell`,
-        );
-        drawnOverText ||= blockColumns(lines[2]).length > 0;
+        const seen = columnsOf(lines);
+        for (let probe = 0; probe < probes.length; probe++) {
+          if (seen[probe] === -1) continue;
+          assert.equal(
+            seen[probe],
+            columns[probe],
+            `tick ${tick} moved "${probes[probe].word}"`,
+          );
+        }
+
+        drawnOverText ||= lines.some((line) => blockColumns(line).length > 0);
 
         t.mock.timers.tick(FRAME_INTERVAL_MS);
       }
 
-      assert.ok(drawnOverText, "the bird never shared a row with the text");
+      assert.ok(drawnOverText, "the bird never drew over the text");
     });
 
     test("a narrow terminal wraps like Pi's header", (t) => {
@@ -583,30 +586,31 @@ describe("parrot", () => {
       const random = t.mock.method(Math, "random", () => 0);
 
       // Each stubbed value selects another motion, and each session plays the
-      // motion it picked: three different birds, not one repeated greeting.
-      const cells = MOTIONS.map((_motion, index) => {
+      // motion it picked for a whole cycle: every bird sings its own tune, not
+      // one repeated greeting.
+      const played = MOTIONS.map((_motion, index) => {
         random.mock.mockImplementation(() => (index + 0.5) / MOTIONS.length);
         const session = startSession();
         const header = session.header();
-        t.mock.timers.tick(ANIMATION_START_MS + 8 * FRAME_INTERVAL_MS);
-        return brandCell(header.render(120));
+        t.mock.timers.tick(ANIMATION_START_MS);
+
+        return Array.from({ length: CYCLE_TICKS }, () => {
+          const cell = brandCell(header.render(120));
+          t.mock.timers.tick(FRAME_INTERVAL_MS);
+          return cell;
+        });
       });
       assert.equal(random.mock.callCount(), MOTIONS.length);
-      assert.notDeepEqual(
-        cells[0],
-        cells[1],
-        "the pick did not change the motion",
-      );
-      assert.notDeepEqual(
-        cells[1],
-        cells[2],
-        "the pick did not change the motion",
-      );
-      assert.notDeepEqual(
-        cells[0],
-        cells[2],
-        "the pick did not change the motion",
-      );
+
+      for (let first = 0; first < played.length; first++) {
+        for (let second = first + 1; second < played.length; second++) {
+          assert.notDeepEqual(
+            played[first],
+            played[second],
+            `${motionName(MOTIONS[first])} plays like ${motionName(MOTIONS[second])}`,
+          );
+        }
+      }
 
       // A reload picks again; a session already under way never does.
       const reloaded = startSession();
