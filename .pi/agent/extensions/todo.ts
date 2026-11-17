@@ -31,7 +31,10 @@
  *   reminded about them to either continue working or mark them
  *   blocked/cancelled. Items the agent marks blocked wait for a user decision
  *   or any other prerequisite, so a stop with nothing actionable left is a
- *   discussion, not abandoned work.
+ *   discussion, not abandoned work. That push only speaks for work nobody is
+ *   driving, so a stop within `CONTINUE_QUIET_SEC` of a human prompt is held
+ *   rather than dropped: once that window passes with no further input the
+ *   push goes out on its own, because the user answered and walked away.
  */
 
 import type {
@@ -43,6 +46,7 @@ import type {
   ExtensionAPI,
   ExtensionCommandContext,
   ExtensionContext,
+  InputEvent,
   Theme,
   ToolDefinition,
   ToolExecutionEndEvent,
@@ -61,6 +65,11 @@ import {
 } from "@earendil-works/pi-tui";
 import { type Static, Type } from "typebox";
 
+import {
+  deliverWake,
+  releaseIdleWake,
+  type WakeSession,
+} from "./utils/idle-wake.ts";
 import { OverlayPage } from "./utils/overlay.ts";
 import { scrolledStart } from "./utils/page.ts";
 
@@ -78,6 +87,24 @@ export const REMIND_NEW_TASK_AFTER_TURNS = 32;
  * i.e. the checklist and the user have stayed silent since it was sent.
  */
 export const REMIND_FOLLOW_UP_TURNS = 8;
+
+/**
+ * Seconds after a human prompt that a stop is still their conversation.
+ *
+ * The continue push takes the wheel, which is what an unattended agent needs
+ * and what a user asking a question must not get: the reply arrives while the
+ * user is reading, and a push then sends the agent off on work they did not
+ * request, see https://github.com/anthropics/claude-code/issues/41091. The
+ * window is measured from the last human prompt, so any later input reopens it.
+ *
+ * A turn that itself outlasts the window settles with it already over, which
+ * suits an agent working while nobody types; a user still reading that long
+ * answer is the case this window cannot see.
+ */
+export const CONTINUE_QUIET_SEC = 300;
+
+/** A held push starts its own run when the session is idle. */
+const WAKE_OPTIONS = { triggerTurn: true, deliverAs: "steer" } as const;
 
 const LIST_NAME = "todo-list";
 const HINT_ENTRY_TYPE = "todo-hint";
@@ -630,6 +657,8 @@ function renderHintEntry(padding: number, theme: Theme): Text {
 
 /** Checklist and steering state owned by one extension instance. */
 class Todo {
+  /** Extension API used to deliver a held push. */
+  private readonly pi: ExtensionAPI;
   /** Markdown checklist currently shown to the model. */
   private items = "";
   /** Turns since the last todo call or user input. */
@@ -642,10 +671,25 @@ class Todo {
   private touchedThisTurn = false;
   /** Reminder waiting to be appended to the next request. */
   private pendingHint?: string;
-  /** Whether a stopped agent was pushed since the last user input. */
+  /** Whether a stopped agent was pushed since the last prompt or wake. */
   private pushedSinceInput = false;
-  /** Whether any tool ran since the last user input. */
+  /** When a human last sent input, in epoch milliseconds; 0 before the first. */
+  private inputAt = 0;
+  /** Whether any tool ran since the last prompt or wake. */
   private workedSinceInput = false;
+  /** Session manager a held push wakes, set by the last restore. */
+  private session?: WakeSession;
+  /** Whether an agent run is in flight. */
+  private running = false;
+  /** Timer of the push a recent user input held back. */
+  private heldPush?: ReturnType<typeof setTimeout>;
+
+  /**
+   * @param pi - Extension API used to deliver a held push.
+   */
+  constructor(pi: ExtensionAPI) {
+    this.pi = pi;
+  }
 
   /** Current checklist text, as the tools and the overlay show it. */
   get list(): string {
@@ -726,6 +770,7 @@ class Todo {
    */
   restore(ctx: ExtensionContext): void {
     this.items = "";
+    this.session = ctx.sessionManager;
     this.resetSteering();
 
     for (const entry of ctx.sessionManager.getBranch()) {
@@ -739,13 +784,35 @@ class Todo {
     }
   }
 
-  /** Reset the steering state after user input or a session change. */
+  /**
+   * Steering: start the reminder windows over and note who sent the prompt.
+   *
+   * A human prompt in a mode that can show them the answer marks the user
+   * present for `CONTINUE_QUIET_SEC`; a headless run or an injected wake leaves
+   * the push armed, so an unattended session still picks up its own work.
+   *
+   * @param event - The submitted input, including a steer sent mid-run.
+   * @param ctx - Context of the input, for whether a front end can show it.
+   */
+  noteInput(event: InputEvent, ctx: ExtensionContext): void {
+    this.resetSteering();
+    if (ctx.hasUI && event.source !== "extension") this.inputAt = Date.now();
+  }
+
+  /**
+   * Reset the steering state after user input or a session change.
+   *
+   * A session change also forgets who was present, because the previous tree's
+   * user typed into a conversation this one never had.
+   */
   resetSteering(): void {
+    this.cancelHeldPush();
     this.restartIdleWindows();
     this.touchedThisTurn = false;
     this.pendingHint = undefined;
     this.pushedSinceInput = false;
     this.workedSinceInput = false;
+    this.inputAt = 0;
   }
 
   /** Restart both reminder windows from an untouched checklist. */
@@ -753,6 +820,15 @@ class Todo {
     this.idleTurns = 0;
     this.staleListDueAt = REMIND_STALE_LIST_AFTER_TURNS;
     this.newTaskDueAt = REMIND_NEW_TASK_AFTER_TURNS;
+  }
+
+  /**
+   * Steering: track whether a run is in flight, which a held push waits out.
+   *
+   * @param running - Whether a run just started or just settled.
+   */
+  trackRun(running: boolean): void {
+    this.running = running;
   }
 
   /**
@@ -846,7 +922,9 @@ class Todo {
    *
    * Items the agent marked blocked wait for a user decision or any other
    * prerequisite, so a stop with nothing actionable left is discussion and
-   * gets no push.
+   * gets no push. A stop inside the quiet window of a human prompt is held
+   * instead: the user may be reading the reply, so the push waits for them to
+   * leave before it speaks for the work they left behind.
    *
    * @param event - Final boundary before the agent settles.
    * @returns A continue request with a visible message, or nothing.
@@ -861,18 +939,78 @@ class Todo {
     if (!this.workedSinceInput || !hasActionable(this.items)) {
       return undefined;
     }
+    const quietLeftMs = CONTINUE_QUIET_SEC * 1000 - (Date.now() - this.inputAt);
+    if (quietLeftMs > 0) {
+      this.holdPush(quietLeftMs);
+      return undefined;
+    }
     this.pushedSinceInput = true;
+    this.cancelHeldPush();
     return {
       entries: [
         ...event.entries,
-        {
-          type: "custom_message",
-          customType: CONTINUE_MESSAGE_TYPE,
-          content: continueMessage(this.items),
-          display: true,
-        },
+        { type: "custom_message", ...this.continueEntry() },
       ],
       continue: true,
+    };
+  }
+
+  /**
+   * Steering: deliver a push that a human prompt held back.
+   *
+   * Runs from the timer only, so the user stayed silent for the whole window.
+   * A run in flight settles on its own and pushes then, and a checklist that
+   * closed meanwhile needs no push at all.
+   */
+  private deliverHeldPush(): void {
+    this.heldPush = undefined;
+    if (this.running || !hasActionable(this.items)) return;
+    this.pushedSinceInput = true;
+    const message = this.continueEntry();
+    // Without a session to reserve, Pi queues the message itself.
+    if (!this.session) {
+      this.pi.sendMessage(message, WAKE_OPTIONS);
+      return;
+    }
+    // Another extension may be mid-wake; this one waits its turn.
+    deliverWake(this.session, () => this.pi.sendMessage(message, WAKE_OPTIONS));
+  }
+
+  /**
+   * Hold the push until the quiet window of the last prompt has passed.
+   *
+   * @param delayMs - Time left in that window.
+   */
+  private holdPush(delayMs: number): void {
+    // A later stop moves the deadline, which is measured from the same input.
+    this.cancelHeldPush();
+    this.heldPush = setTimeout(() => this.deliverHeldPush(), delayMs);
+    // Unref'd: a held push must not be the reason the process stays alive.
+    this.heldPush.unref();
+  }
+
+  /** Drop a held push: its deadline belongs to a prompt that is over. */
+  private cancelHeldPush(): void {
+    if (this.heldPush === undefined) return;
+    clearTimeout(this.heldPush);
+    this.heldPush = undefined;
+  }
+
+  /**
+   * Build the push message.
+   *
+   * @returns Its type, content and display flag, for a boundary entry or for
+   * `pi.sendMessage` alike.
+   */
+  private continueEntry(): {
+    customType: string;
+    content: string;
+    display: boolean;
+  } {
+    return {
+      customType: CONTINUE_MESSAGE_TYPE,
+      content: continueMessage(this.items),
+      display: true,
     };
   }
 }
@@ -1012,7 +1150,7 @@ function todosCommand(todo: Todo) {
  * @param pi - Extension API used to register tools, commands and handlers.
  */
 export default function todoExtension(pi: ExtensionAPI): void {
-  const todo = new Todo();
+  const todo = new Todo(pi);
 
   pi.registerTool(todoListTool(todo));
   pi.registerTool(todoWriteTool(todo));
@@ -1020,7 +1158,12 @@ export default function todoExtension(pi: ExtensionAPI): void {
   pi.registerCommand("todos", todosCommand(todo));
   pi.on("session_start", (_event, ctx) => todo.restore(ctx));
   pi.on("session_tree", (_event, ctx) => todo.restore(ctx));
-  pi.on("input", () => todo.resetSteering());
+  pi.on("input", (event, ctx) => todo.noteInput(event, ctx));
+  pi.on("agent_start", (_event, ctx) => {
+    todo.trackRun(true);
+    releaseIdleWake(ctx.sessionManager);
+  });
+  pi.on("agent_settled", () => todo.trackRun(false));
   pi.on("tool_execution_end", (event) => todo.trackToolExecution(event));
   pi.on("turn_end", (event) => todo.countTurn(event));
   pi.on("context_with_system", (event) => todo.injectHint(event));

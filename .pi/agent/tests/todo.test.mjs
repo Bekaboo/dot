@@ -5,6 +5,7 @@ import { Agent } from "@earendil-works/pi-agent-core";
 import { createAssistantMessageEventStream } from "@earendil-works/pi-ai";
 
 import todoExtension, {
+  CONTINUE_QUIET_SEC,
   REMIND_FOLLOW_UP_TURNS,
   REMIND_NEW_TASK_AFTER_TURNS,
   REMIND_STALE_LIST_AFTER_TURNS,
@@ -16,12 +17,14 @@ function setup() {
   const tools = new Map();
   const hooks = new Map();
   const commands = new Map();
+  const messages = [];
   todoExtension({
     registerTool: (definition) => {
       tools.set(definition.name, definition);
     },
     registerCommand: (name, command) => commands.set(name, command),
     registerEntryRenderer() {},
+    sendMessage: (message, options) => messages.push({ message, options }),
     on: (name, handler) => hooks.set(name, handler),
   });
   const run = (name, params, signal) =>
@@ -30,10 +33,13 @@ function setup() {
   const write = (list, signal) => run("todo_write", { list }, signal);
   const edit = (edits, signal) => run("todo_edit", { edits }, signal);
   const list = async () => (await view()).details.list;
-  return { tools, hooks, commands, view, write, edit, list };
+  return { tools, hooks, commands, messages, view, write, edit, list };
 }
 
 const done = (item) => ({ oldText: `- [ ] ${item}`, newText: `- [x] ${item}` });
+
+/** Wall-clock instant the stop-to-continue tests start their mocked clock at. */
+const PROMPTED_AT = Date.parse("2026-11-18T09:00:00Z");
 
 describe("todo", () => {
   describe("the todo tools", () => {
@@ -288,7 +294,7 @@ describe("todo", () => {
 
       for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++)
         workTurn(hooks);
-      hooks.get("input")({});
+      hooks.get("input")({ source: "interactive" }, { hasUI: true });
       for (let turn = 0; turn < REMIND_NEW_TASK_AFTER_TURNS - 1; turn++) {
         assert.equal(workTurn(hooks), undefined);
       }
@@ -488,11 +494,45 @@ describe("todo", () => {
   });
 
   describe("stopping with unfinished items", () => {
-    test("stopping with unfinished items asks the agent to continue once", async () => {
+    /**
+     * Install the mocked clock these timing tests measure against.
+     *
+     * Node refuses a second install, so this runs once per test.
+     *
+     * @param t - Node test context, which owns the mocked clock.
+     */
+    function armClock(t) {
+      t.mock.timers.enable({ apis: ["Date", "setTimeout"], now: PROMPTED_AT });
+    }
+
+    /**
+     * Fire one prompt, as Pi reports it.
+     *
+     * @param hooks - Extension hooks recorded by `setup()`.
+     * @param mode - `hasUI` of its context: false is a headless run.
+     * @param source - Where the input came from, as Pi reports it.
+     */
+    function prompted(hooks, { hasUI = true, source = "interactive" } = {}) {
+      hooks.get("input")({ source }, { hasUI });
+    }
+
+    /** Move the clock past the quiet window a prompt opens. */
+    function userLeft(t) {
+      t.mock.timers.tick(CONTINUE_QUIET_SEC * 1000);
+    }
+
+    /** A session manager as the shared wake contract sees it. */
+    function fakeSession() {
+      return { getSessionId: () => "test-session" };
+    }
+
+    test("stopping with unfinished items asks the agent to continue once", async (t) => {
       const { hooks, write } = setup();
       await write("- [x] A\n- [ ] B");
-      hooks.get("input")({});
+      armClock(t);
+      prompted(hooks);
       hooks.get("tool_execution_end")({ toolName: "read" });
+      userLeft(t);
       const settle = { outcome: "completed", entries: [] };
 
       const pushed = hooks.get("agent_before_settle")(settle);
@@ -507,24 +547,201 @@ describe("todo", () => {
       assert.equal(hooks.get("agent_before_settle")(settle), undefined);
     });
 
-    test("items waiting on the user do not ask the agent to continue", async () => {
+    test("a stop while the user is still there holds the push instead of sending it", async (t) => {
+      const { hooks, write, messages } = setup();
+      await write("- [x] A\n- [ ] B");
+      armClock(t);
+      prompted(hooks);
+      hooks.get("tool_execution_end")({ toolName: "read" });
+      const settle = { outcome: "completed", entries: [] };
+
+      // The user asked a question and the agent just answered it.
+      t.mock.timers.tick(CONTINUE_QUIET_SEC * 1000 - 1);
+      assert.equal(hooks.get("agent_before_settle")(settle), undefined);
+      assert.deepEqual(messages, []);
+
+      // Nobody wrote again, so the work the agent left behind is picked up.
+      t.mock.timers.tick(1);
+      assert.equal(messages.length, 1);
+      assert.match(
+        messages[0].message.content,
+        /unfinished items:\n\n- \[x\] A\n- \[ \] B\n\nContinue with the next item/,
+      );
+      assert.equal(messages[0].message.display, true);
+      // The held push starts a run of its own, like any other wake.
+      assert.equal(messages[0].options.triggerTurn, true);
+    });
+
+    test("a held push wakes the session it was armed in", async (t) => {
+      const { hooks, write, messages } = setup();
+      // A restored session knows the manager it may wake, unlike a bare one.
+      const sessionManager = { ...fakeSession(), getBranch: () => [] };
+      hooks.get("session_start")({}, { sessionManager });
+      await write("- [ ] A");
+      armClock(t);
+      prompted(hooks);
+      hooks.get("tool_execution_end")({ toolName: "read" });
+      hooks.get("agent_before_settle")({ outcome: "completed", entries: [] });
+
+      userLeft(t);
+      assert.equal(messages.length, 1);
+      assert.match(messages[0].message.content, /- \[ \] A/);
+    });
+
+    test("the next user message cancels the held push", async (t) => {
+      const { hooks, write, messages } = setup();
+      await write("- [ ] A");
+      armClock(t);
+      prompted(hooks);
+      hooks.get("tool_execution_end")({ toolName: "read" });
+      hooks.get("agent_before_settle")({ outcome: "completed", entries: [] });
+
+      // The user keeps the conversation going, so the stop answered them.
+      prompted(hooks);
+      userLeft(t);
+      assert.deepEqual(messages, []);
+    });
+
+    test("a headless prompt leaves the push armed", async (t) => {
+      const { hooks, write, messages } = setup();
+      await write("- [ ] A");
+      armClock(t);
+      // No front end can show a `pi -p` prompt to anyone.
+      prompted(hooks, { hasUI: false });
+      hooks.get("tool_execution_end")({ toolName: "read" });
+
+      const settle = { outcome: "completed", entries: [] };
+      assert.equal(hooks.get("agent_before_settle")(settle).continue, true);
+      assert.deepEqual(messages, []);
+    });
+
+    test("a session change forgets the user who was present", async (t) => {
+      const { hooks, write } = setup();
+      await write("- [ ] A");
+      armClock(t);
+      prompted(hooks);
+      hooks.get("tool_execution_end")({ toolName: "read" });
+
+      // A fork or resume starts a conversation the old user never typed into.
+      const branch = [
+        {
+          type: "message",
+          message: {
+            role: "toolResult",
+            toolName: "todo_write",
+            details: { list: "- [ ] A" },
+          },
+        },
+      ];
+      const sessionManager = { ...fakeSession(), getBranch: () => branch };
+      hooks.get("session_tree")({}, { sessionManager });
+      hooks.get("tool_execution_end")({ toolName: "read" });
+      const settle = { outcome: "completed", entries: [] };
+      assert.equal(hooks.get("agent_before_settle")(settle).continue, true);
+    });
+
+    test("an injected wake re-arms the push a human prompt held", async (t) => {
+      const { hooks, write } = setup();
+      await write("- [ ] A");
+      armClock(t);
+      prompted(hooks);
+      hooks.get("tool_execution_end")({ toolName: "read" });
+      hooks.get("agent_before_settle")({ outcome: "completed", entries: [] });
+
+      // An intercom message is nobody's answer, so that run may be pushed.
+      prompted(hooks, { source: "extension" });
+      hooks.get("tool_execution_end")({ toolName: "read" });
+      const settle = { outcome: "completed", entries: [] };
+      assert.equal(hooks.get("agent_before_settle")(settle).continue, true);
+    });
+
+    test("a checklist that closed in the window needs no held push", async (t) => {
+      const { hooks, write, edit, messages } = setup();
+      await write("- [x] A\n- [ ] B");
+      armClock(t);
+      prompted(hooks);
+      hooks.get("tool_execution_end")({ toolName: "read" });
+      hooks.get("agent_before_settle")({ outcome: "completed", entries: [] });
+
+      await edit([done("B")]);
+      userLeft(t);
+      assert.deepEqual(messages, []);
+    });
+
+    test("a held push waits out a run already in flight", async (t) => {
+      const { hooks, write, messages } = setup();
+      await write("- [ ] A");
+      armClock(t);
+      prompted(hooks);
+      hooks.get("tool_execution_end")({ toolName: "read" });
+      hooks.get("agent_before_settle")({ outcome: "completed", entries: [] });
+
+      // A job tick woke the session, so pushing now would talk over it.
+      hooks.get("agent_start")({}, { sessionManager: fakeSession() });
+      userLeft(t);
+      assert.deepEqual(messages, []);
+
+      // That run's own stop carries the push instead.
+      hooks.get("agent_settled")({});
+      const settle = { outcome: "completed", entries: [] };
+      assert.equal(hooks.get("agent_before_settle")(settle).continue, true);
+    });
+
+    test("a steer mid-run restarts the quiet window", async (t) => {
+      const { hooks, write, messages } = setup();
+      await write("- [ ] A");
+      armClock(t);
+      prompted(hooks);
+      hooks.get("tool_execution_end")({ toolName: "read" });
+      userLeft(t);
+
+      // The user interrupted the run, so the stop that follows answers them.
+      prompted(hooks);
+      hooks.get("tool_execution_end")({ toolName: "read" });
+      const settle = { outcome: "completed", entries: [] };
+      t.mock.timers.tick(CONTINUE_QUIET_SEC * 1000 - 1);
+      assert.equal(hooks.get("agent_before_settle")(settle), undefined);
+      assert.deepEqual(messages, []);
+
+      // Their window runs out like any other, with nobody writing again.
+      t.mock.timers.tick(1);
+      assert.equal(messages.length, 1);
+    });
+
+    test("an extension prompt leaves the push armed", async (t) => {
+      const { hooks, write } = setup();
+      await write("- [ ] A");
+      armClock(t);
+      prompted(hooks, { source: "extension" });
+      hooks.get("tool_execution_end")({ toolName: "read" });
+
+      // No human is waiting on a prompt another extension injected.
+      const settle = { outcome: "completed", entries: [] };
+      assert.equal(hooks.get("agent_before_settle")(settle).continue, true);
+    });
+
+    test("items waiting on the user do not ask the agent to continue", async (t) => {
       const { hooks, write, list } = setup();
       await write("- [x] A\n- [!] B\n- [!] C");
       // Without the write taking effect, an empty list would pass this test for
       // the wrong reason.
       assert.equal(await list(), "- [x] A\n- [!] B\n- [!] C");
-      hooks.get("input")({});
+      armClock(t);
+      prompted(hooks);
       hooks.get("tool_execution_end")({ toolName: "read" });
+      userLeft(t);
 
       const settle = { outcome: "completed", entries: [] };
       assert.equal(hooks.get("agent_before_settle")(settle), undefined);
     });
 
-    test("one actionable item next to blocked ones still asks to continue", async () => {
+    test("one actionable item next to blocked ones still asks to continue", async (t) => {
       const { hooks, write } = setup();
       await write("- [!] A\n- [ ] B");
-      hooks.get("input")({});
+      armClock(t);
+      prompted(hooks);
       hooks.get("tool_execution_end")({ toolName: "read" });
+      userLeft(t);
 
       const pushed = hooks.get("agent_before_settle")({
         outcome: "completed",
@@ -534,12 +751,14 @@ describe("todo", () => {
       assert.match(pushed.entries[0].content, /- \[!\] A\n- \[ \] B/);
     });
 
-    test("stopping with every item closed does not ask the agent to continue", async () => {
+    test("stopping with every item closed does not ask the agent to continue", async (t) => {
       const { hooks, write, list } = setup();
       await write("- [x] A\n- [-] B");
       assert.equal(await list(), "- [x] A\n- [-] B");
-      hooks.get("input")({});
+      armClock(t);
+      prompted(hooks);
       hooks.get("tool_execution_end")({ toolName: "read" });
+      userLeft(t);
 
       const settle = { outcome: "completed", entries: [] };
       assert.equal(hooks.get("agent_before_settle")(settle), undefined);
