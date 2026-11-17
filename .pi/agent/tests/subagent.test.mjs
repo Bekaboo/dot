@@ -1204,7 +1204,7 @@ describe("subagent", () => {
     test("returns before the child finishes and reports it once", async (t) => {
       const { call, pi, children } = setup(t);
       const result = await call({ id: "slow", prompt: "x" });
-      assert.match(result.content[0].text, /Subagent "slow" started/);
+      assert.match(result.content[0].text, /Subagent `slow` started/);
       assert.equal(pi.sent.length, 0, "nothing is sent until the child exits");
 
       children[0].write(assistantRecord("PONG"));

@@ -231,7 +231,7 @@ const JobStartParams = Type.Object({
   maxTicks: Type.Optional(
     Type.Number({
       description:
-        "Maximum tick wakes. 0 disables tick wakes, the default with `command`; above 0 runs `onTick` every intervalSec while a job runs. Periodic mode needs at least 1. A condition is still checked every intervalSec when 0. Exit, condition and timeout wakes do not count.",
+        "Maximum tick wakes. 0 disables tick wakes, the default with `command`; above 0 runs `onTick` every `intervalSec` while a job runs. Periodic mode needs at least 1. A condition is still checked every `intervalSec` when 0. Exit, condition and timeout wakes do not count.",
       minimum: 0,
     }),
   ),
@@ -438,7 +438,7 @@ function requireId(id: string): string {
   }
   if (!ID_PATTERN.test(id)) {
     throw new Error(
-      `Invalid job id "${id}": use 3-40 characters from A-Z a-z 0-9 . _ -, starting with a letter or digit, e.g. batch3-done.`,
+      `Invalid job id \`${id}\`: use 3-40 characters from \`A-Z a-z 0-9 . _ -\`, starting with a letter or digit, e.g. batch3-done.`,
     );
   }
   return id;
@@ -781,10 +781,10 @@ async function formatCallbackOutput(
   const startLine = truncation.totalLines - truncation.outputLines + 1;
   const endLine = truncation.totalLines;
   const notice = truncation.lastLinePartial
-    ? `[Showing last ${formatSize(truncation.outputBytes)} of line ${endLine}. Full output: ${path}]`
+    ? `[Showing last ${formatSize(truncation.outputBytes)} of line ${endLine}. Full output: \`${path}\`]`
     : truncation.truncatedBy === "lines"
-      ? `[Showing lines ${startLine}-${endLine} of ${truncation.totalLines}. Full output: ${path}]`
-      : `[Showing lines ${startLine}-${endLine} of ${truncation.totalLines} (${formatSize(truncation.maxBytes)} limit). Full output: ${path}]`;
+      ? `[Showing lines ${startLine}-${endLine} of ${truncation.totalLines}. Full output: \`${path}\`]`
+      : `[Showing lines ${startLine}-${endLine} of ${truncation.totalLines} (${formatSize(truncation.maxBytes)} limit). Full output: \`${path}\`]`;
   return {
     text: [truncation.content.trimEnd(), notice].filter(Boolean).join("\n\n"),
     savedPath: path,
@@ -1377,12 +1377,12 @@ class JobRegistry {
     const running = this.processes.get(id);
     if (running) {
       throw new Error(
-        `Job "${id}" is already active: its job is still running, log ${running.logPath}; stop it or pick another id.`,
+        `Job \`${id}\` is already active: its job is still running, log \`${running.logPath}\`; stop it or pick another id.`,
       );
     }
     if (this.jobs.has(id)) {
       throw new Error(
-        `Job "${id}" is already active; stop it first or pick another id.`,
+        `Job \`${id}\` is already active; stop it first or pick another id.`,
       );
     }
 
@@ -1553,7 +1553,7 @@ class JobRegistry {
   private validateBudget(job: Job): void {
     if (job.deferSec >= job.timeoutSec) {
       throw new Error(
-        `Job "${job.id}" cannot start: deferSec ${job.deferSec} leaves no time within timeoutSec ${job.timeoutSec}.`,
+        `Job \`${job.id}\` cannot start: \`deferSec\` ${job.deferSec} leaves no time within \`timeoutSec\` ${job.timeoutSec}.`,
       );
     }
 
@@ -1565,13 +1565,13 @@ class JobRegistry {
 
     if (!job.condition && !job.command && job.maxTicks === 0) {
       throw new Error(
-        `Job "${job.id}" has no condition, no job, and maxTicks 0, so it could never wake you.`,
+        `Job \`${job.id}\` has no condition, no job, and \`maxTicks\` 0, so it could never wake you.`,
       );
     }
 
     if (this.canTick(job) && job.deferSec + job.intervalSec > job.timeoutSec) {
       throw new Error(
-        `Job "${job.id}" cannot tick: deferSec ${job.deferSec} plus intervalSec ${job.intervalSec} is longer than timeoutSec ${job.timeoutSec}.`,
+        `Job \`${job.id}\` cannot tick: \`deferSec\` ${job.deferSec} plus \`intervalSec\` ${job.intervalSec} is longer than \`timeoutSec\` ${job.timeoutSec}.`,
       );
     }
   }
@@ -1656,7 +1656,7 @@ class JobRegistry {
    * @returns A sentence ending in a period.
    */
   retirementText(id: string): string {
-    return `Job "${id}" stopped (${this.retired.get(id)?.reason}).`;
+    return `Job \`${id}\` stopped (${this.retired.get(id)?.reason}).`;
   }
 
   /**
@@ -1876,8 +1876,8 @@ class JobRegistry {
   private unknownId(id: string): string {
     const active = [...this.jobs.keys()].sort();
     return active.length === 0
-      ? `No job "${id}"; nothing is active.`
-      : `No job "${id}"; active: ${active.join(", ")}.`;
+      ? `No job \`${id}\`; nothing is active.`
+      : `No job \`${id}\`; active: ${active.map((name) => `\`${name}\``).join(", ")}.`;
   }
 
   /**
@@ -1893,9 +1893,9 @@ class JobRegistry {
         ? `${job.ticksSent}/unlimited`
         : `${job.ticksSent}/${job.maxTicks}`;
     const target = job.process
-      ? `job pid ${job.process.pid ?? "?"}, log ${job.process.logPath}`
+      ? `job pid ${job.process.pid ?? "?"}, log \`${job.process.logPath}\``
       : job.condition
-        ? `cond: ${job.condition}`
+        ? `cond: \`${job.condition}\``
         : "job, no condition";
     const deferring = this.deferRemainingSec(job);
     return {
@@ -2096,7 +2096,7 @@ class JobRegistry {
     for (const spec of collectActiveJobs(entries).values()) {
       const proc = spec.command ? this.processes.get(spec.id) : undefined;
       if (spec.command && !proc) {
-        const log = spec.logPath ? `; log ${spec.logPath}` : "";
+        const log = spec.logPath ? `; log \`${spec.logPath}\`` : "";
         // Its end was never observed, so it can only be reported as failed.
         this.retire(
           spec,
@@ -2340,7 +2340,7 @@ class JobRegistry {
    * @returns One line for the final wake.
    */
   private conditionLine(job: Job): string {
-    return `condition met after ${durationText(ageMs(job))}: ${job.condition}`;
+    return `condition met after ${durationText(ageMs(job))}: \`${job.condition}\``;
   }
 
   /**
@@ -2902,11 +2902,11 @@ function describeStart(spec: JobSpec): string {
       spec.deferSec > 0
         ? `starts in ${spec.deferSec}s, then runs \`${spec.command}\` in the background`
         : `runs \`${spec.command}\` in the background`;
-    return `Started job "${spec.id}": ${start}, ${ticks}, log ${spec.logPath}; ${ending}. Its own shell kills it at that deadline, even while pi is closed; it is re-attached when you resume this session, and only \`job_stop\` or the deadline ends it.`;
+    return `Started job \`${spec.id}\`: ${start}, ${ticks}, log \`${spec.logPath}\`; ${ending}. Its own shell kills it at that deadline, even while pi is closed; it is re-attached when you resume this session, and only \`job_stop\` or the deadline ends it.`;
   }
 
   if (isDeferOnlySpec(spec)) {
-    return `Started "${spec.id}": wakes you once in ${spec.deferSec}s; nothing else runs. Time while pi is closed still counts during that delay, and resuming the session resumes the job.`;
+    return `Started \`${spec.id}\`: wakes you once in ${spec.deferSec}s; nothing else runs. Time while pi is closed still counts during that delay, and resuming the session resumes the job.`;
   }
 
   const ticks =
@@ -2922,7 +2922,7 @@ function describeStart(spec: JobSpec): string {
     : `it ends after that tick or at its ${spec.timeoutSec}s budget of running time`;
   const schedule =
     spec.deferSec > 0 ? `starts in ${spec.deferSec}s, then ${ticks}` : ticks;
-  return `Started "${spec.id}": ${schedule}; ${ending}. Wakes arrive even after you end your turn; time while pi is closed does not count against that budget, and resuming the session resumes the job.`;
+  return `Started \`${spec.id}\`: ${schedule}; ${ending}. Wakes arrive even after you end your turn; time while pi is closed does not count against that budget, and resuming the session resumes the job.`;
 }
 
 /** Shortest wait, in seconds, that a bash call must not hold. */
@@ -3183,9 +3183,9 @@ function jobStopTool(
       const stopped = registry.stop(id);
       const logPath = stopped?.job.process?.logPath;
       const killed = stopped?.signalled
-        ? `; killed its job, log ${logPath}`
+        ? `; killed its job, log \`${logPath}\``
         : "";
-      return jobResult(`Stopped "${id}"${killed}.`, { action: "stop", id });
+      return jobResult(`Stopped \`${id}\`${killed}.`, { action: "stop", id });
     },
   };
 }

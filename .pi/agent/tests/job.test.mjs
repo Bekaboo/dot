@@ -473,7 +473,7 @@ describe("job", { concurrency: true }, () => {
     // load, not contract; the condition and the outcome are what count.
     assert.match(
       notice.content,
-      /^\[job build-done\] condition met after \ds: test -f done; job stopped$/,
+      /^\[job build-done\] condition met after \ds: `test -f done`; job stopped$/,
     );
     assert.equal(notice.details.state, "done");
     assert.equal(notice.options.deliverAs, "steer");
@@ -553,7 +553,7 @@ describe("job", { concurrency: true }, () => {
     const stopped = await stop({ id: "stale-job" });
     assert.equal(
       stopped.content[0].text,
-      'Job "stale-job" stopped (timed out).',
+      "Job `stale-job` stopped (timed out).",
     );
   });
 
@@ -564,10 +564,10 @@ describe("job", { concurrency: true }, () => {
 
     await assert.rejects(
       stop({ id: "job-c" }),
-      /No job "job-c"; active: job-a, job-b\./,
+      /No job `job-c`; active: `job-a`, `job-b`\./,
     );
     const stopped = await stop({ id: "job-a" });
-    assert.equal(stopped.content[0].text, 'Stopped "job-a".');
+    assert.equal(stopped.content[0].text, "Stopped `job-a`.");
   });
 
   test("start rejects a missing id, a bad id, and a nameless job", async (t) => {
@@ -639,7 +639,7 @@ describe("job", { concurrency: true }, () => {
     assert.ok(Date.now() - armedAt >= 900, "the delay was honored");
     assert.equal(
       (await stop({ id: "nap" })).content[0].text,
-      'Job "nap" stopped (deferral done).',
+      "Job `nap` stopped (deferral done).",
     );
   });
 
@@ -680,7 +680,7 @@ describe("job", { concurrency: true }, () => {
 
     await assert.rejects(
       start({ id: "too-long", command: "true", deferSec: 10, timeoutSec: 10 }),
-      /deferSec 10 leaves no time within timeoutSec 10/,
+      /`deferSec` 10 leaves no time within `timeoutSec` 10/,
     );
     await assert.rejects(
       start({
@@ -690,7 +690,7 @@ describe("job", { concurrency: true }, () => {
         intervalSec: 6,
         timeoutSec: 10,
       }),
-      /deferSec 5 plus intervalSec 6 is longer than timeoutSec 10/,
+      /`deferSec` 5 plus `intervalSec` 6 is longer than `timeoutSec` 10/,
     );
   });
 
@@ -729,7 +729,7 @@ describe("job", { concurrency: true }, () => {
       timeoutSec: 60,
     });
     const stopped = await stop({ id: "defer-stop" });
-    assert.equal(stopped.content[0].text, 'Stopped "defer-stop".');
+    assert.equal(stopped.content[0].text, "Stopped `defer-stop`.");
     await wait(200);
 
     assert.deepEqual(notices, []);
@@ -931,7 +931,7 @@ describe("job", { concurrency: true }, () => {
     const stopped = await stop({ id: "peek-1" });
     assert.equal(
       stopped.content[0].text,
-      'Job "peek-1" stopped (tick budget spent).',
+      "Job `peek-1` stopped (tick budget spent).",
     );
   });
 
@@ -949,7 +949,7 @@ describe("job", { concurrency: true }, () => {
     );
     assert.equal(
       (await stop({ id: "broken-cond" })).content[0].text,
-      'Job "broken-cond" stopped (failed).',
+      "Job `broken-cond` stopped (failed).",
     );
   });
 
@@ -965,10 +965,10 @@ describe("job", { concurrency: true }, () => {
     }
 
     // The history is bounded, so the oldest id is forgotten and errors again.
-    await assert.rejects(stop({ id: "peek-0" }), /No job "peek-0"/);
+    await assert.rejects(stop({ id: "peek-0" }), /No job `peek-0`/);
     assert.equal(
       (await stop({ id: `peek-${started - 1}` })).content[0].text,
-      `Job "peek-${started - 1}" stopped (condition met).`,
+      `Job \`peek-${started - 1}\` stopped (condition met).`,
     );
   });
 
@@ -987,7 +987,7 @@ describe("job", { concurrency: true }, () => {
     );
     assert.equal(
       (await stop({ id: "peek-1" })).content[0].text,
-      'Stopped "peek-1".',
+      "Stopped `peek-1`.",
     );
   });
 
@@ -1132,7 +1132,7 @@ describe("job", { concurrency: true }, () => {
     });
     const [notice] = await noticesAfter(1);
 
-    const saved = /Full output: (\/.*\.log)\]$/.exec(notice.content);
+    const saved = /Full output: `(\/.*\.log)`\]$/.exec(notice.content);
     assert.ok(saved, "the wake names the full output file");
     assert.equal(readFileSync(saved[1], "utf8"), many);
     assert.match(
@@ -1161,7 +1161,7 @@ describe("job", { concurrency: true }, () => {
     });
     const [notice] = await noticesAfter(1);
 
-    const saved = /Full output: (\/.*\.log)\]$/.exec(notice.content);
+    const saved = /Full output: `(\/.*\.log)`\]$/.exec(notice.content);
     assert.ok(saved, "the wake names the full output file");
     assert.equal(readFileSync(saved[1], "utf8"), many);
     assert.ok(
@@ -1185,7 +1185,7 @@ describe("job", { concurrency: true }, () => {
     });
     const [notice] = await noticesAfter(1);
 
-    const saved = /Full output: (\/.*\.log)\]$/.exec(notice.content);
+    const saved = /Full output: `(\/.*\.log)`\]$/.exec(notice.content);
     assert.ok(saved, "the wake names the full output file");
     assert.equal(readFileSync(saved[1], "utf8"), huge);
     const preview = wakePreview(notice.content);
@@ -1262,7 +1262,7 @@ describe("job", { concurrency: true }, () => {
       notices.filter((notice) => notice.details.state === "tick"),
       [],
     );
-    assert.match(result.content[0].text, /^Started "quiet-job": no ticks; /);
+    assert.match(result.content[0].text, /^Started `quiet-job`: no ticks; /);
   });
 
   test("/jobs opens a live overlay showing active jobs in aligned columns", async (t) => {
@@ -1765,7 +1765,7 @@ describe("job", { concurrency: true }, () => {
     assert.equal(notices.length, 0, "a stopped job does not wake the agent");
     assert.equal(
       (await status({ id: "last-tick" })).content[0].text,
-      'Job "last-tick" stopped (killed by job_stop).',
+      "Job `last-tick` stopped (killed by job_stop).",
     );
   });
 
@@ -1813,14 +1813,14 @@ describe("job", { concurrency: true }, () => {
     await start({ id: "job-b", intervalSec: 5, maxTicks: 2 });
 
     const all = (await status({})).content[0].text;
-    assert.match(all, /^job-a +running .*ticks 0\/unlimited +cond: false$/m);
+    assert.match(all, /^job-a +running .*ticks 0\/unlimited +cond: `false`$/m);
     assert.match(all, /^job-b +running .*ticks 0\/2 +job, no condition$/m);
 
     const one = (await status({ id: "job-b" })).content[0].text;
     assert.match(one, /^job-b +running .*ticks 0\/2/m);
 
     const unknown = (await status({ id: "ghost" })).content[0].text;
-    assert.equal(unknown, 'No job "ghost"; active: job-a, job-b.');
+    assert.equal(unknown, "No job `ghost`; active: `job-a`, `job-b`.");
   });
 
   test("restoring a session keeps the onTick callback", async (t) => {
@@ -1968,7 +1968,7 @@ describe("job", { concurrency: true }, () => {
     await new Promise(setImmediate);
 
     const stopped = await stop({ id: "job-a" });
-    assert.equal(stopped.content[0].text, 'Stopped "job-a".');
+    assert.equal(stopped.content[0].text, "Stopped `job-a`.");
   });
 
   test("a job that exits 0 wakes with its output and the exit marker", async (t) => {
@@ -1988,7 +1988,7 @@ describe("job", { concurrency: true }, () => {
     assert.match(
       result.content[0].text,
       new RegExp(
-        `^Started job "job-ok": runs \`echo hi\` in the background, no tick wakes, log .*\\/jobs\\/job-ok-\\d+\\.log; wakes you when it exits or after ${DEFAULT_TIMEOUT_SEC}s of real time\\. Its own shell kills it at that deadline, even while pi is closed; it is re-attached when you resume this session, and only \`job_stop\` or the deadline ends it\\.$`,
+        `^Started job \`job-ok\`: runs \`echo hi\` in the background, no tick wakes, log \`.*\\/jobs\\/job-ok-\\d+\\.log\`; wakes you when it exits or after ${DEFAULT_TIMEOUT_SEC}s of real time\\. Its own shell kills it at that deadline, even while pi is closed; it is re-attached when you resume this session, and only \`job_stop\` or the deadline ends it\\.$`,
       ),
     );
     // The log outlives the wake, so it must record the outcome too.
@@ -2063,7 +2063,7 @@ describe("job", { concurrency: true }, () => {
 
     assert.equal(
       stopped.content[0].text,
-      `Stopped "job-stop"; killed its job, log ${result.details.logPath}.`,
+      `Stopped \`job-stop\`; killed its job, log \`${result.details.logPath}\`.`,
     );
     await waitGone(pid);
     assert.match(
@@ -2251,7 +2251,7 @@ console.log(listed.content[0].text);
     assert.equal(wake.details.state, "timeout");
     assert.equal(
       (await status({ id: "spent" })).content[0].text,
-      'Job "spent" stopped (timed out).',
+      "Job `spent` stopped (timed out).",
     );
   });
 
@@ -2312,7 +2312,7 @@ console.log(listed.content[0].text);
     assert.equal(wake.details.id, "away");
     assert.equal(
       (await status({ id: "away" })).content[0].text,
-      'Job "away" stopped (failed: exit 3).',
+      "Job `away` stopped (failed: exit 3).",
     );
   });
 
@@ -2412,7 +2412,7 @@ console.log(listed.content[0].text);
     );
     assert.equal(
       (await next.status({ id: "job-alone" })).content[0].text,
-      'Job "job-alone" stopped (timed out).',
+      "Job `job-alone` stopped (timed out).",
     );
   });
 
@@ -2768,7 +2768,7 @@ console.log(listed.content[0].text);
     assert.deepEqual(notices, []);
     assert.equal(
       (await status({ id: "job-orphan" })).content[0].text,
-      `Job "job-orphan" stopped (orphaned; log ${spec.logPath}).`,
+      `Job \`job-orphan\` stopped (orphaned; log \`${spec.logPath}\`).`,
     );
   });
 
@@ -2912,12 +2912,12 @@ console.log(listed.content[0].text);
     assert.equal(conditionInput, "");
     assert.match(
       notice.content,
-      /^\[job job-immediate\] condition met after \ds: true; job stopped/,
+      /^\[job job-immediate\] condition met after \ds: `true`; job stopped/,
     );
     assert.equal(notice.details.state, "done");
     assert.equal(
       (await status({ id: "job-immediate" })).content[0].text,
-      'Job "job-immediate" stopped (condition met).',
+      "Job `job-immediate` stopped (condition met).",
     );
     assert.match(
       readFileSync(details.logPath, "utf8"),
@@ -2981,12 +2981,12 @@ console.log(listed.content[0].text);
 
     assert.match(
       notice.content,
-      /^\[job job-cond\] condition met after \ds: grep -q ready; job stopped\n\nready\n\[killed after condition met\]$/,
+      /^\[job job-cond\] condition met after \ds: `grep -q ready`; job stopped\n\nready\n\[killed after condition met\]$/,
     );
     assert.equal(notice.details.state, "done");
     assert.equal(
       (await status({ id: "job-cond" })).content[0].text,
-      'Job "job-cond" stopped (condition met).',
+      "Job `job-cond` stopped (condition met).",
     );
     const log = readFileSync(details.logPath, "utf8");
     assert.match(log, /ready\n\[killed after condition met\]\n$/);
@@ -3032,7 +3032,7 @@ console.log(listed.content[0].text);
     const listed = (await status({ id: "job-h" })).content[0].text;
     assert.match(
       listed,
-      /^job-h {2}running {2}\d+s {2}ticks 0\/0 {2}job pid \d+, log .*\/jobs\/job-h-\d+\.log$/,
+      /^job-h {2}running {2}\d+s {2}ticks 0\/0 {2}job pid \d+, log `.*\/jobs\/job-h-\d+\.log`$/,
     );
     await stop({ id: "job-h" });
   });

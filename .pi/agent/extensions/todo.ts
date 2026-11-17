@@ -185,7 +185,7 @@ const ITEM_PATTERN = new RegExp(`^- \\[([${MARKER_CLASS}])\\] (\\S.*)$`);
 
 /** Accepted line formats, listed in error messages. */
 const LINE_FORMATS = Object.keys(MARKERS)
-  .map((status) => `"- ${box(status as TodoStatus)} text"`)
+  .map((status) => `\`- ${box(status as TodoStatus)} text\``)
   .join(", ");
 
 /** Schema for the `todo_list` tool. */
@@ -286,7 +286,7 @@ function normalizeList(text: string): string {
   for (const line of lines) {
     if (!ITEM_PATTERN.test(line)) {
       throw new Error(
-        `Invalid todo line: "${line}". Each line must be one of ${LINE_FORMATS}.`,
+        `Invalid todo line: \`${line}\`. Each line must be one of ${LINE_FORMATS}.`,
       );
     }
   }
@@ -459,7 +459,7 @@ function staleListHint(list: string): string | undefined {
     ``,
     list,
     ``,
-    `If progress changed, update it with todo_edit: mark the item you are working on now ${IN_PROGRESS_BOX}, finished items ${COMPLETED_BOX}, abandoned items ${CANCELLED_BOX}, and items that wait on somebody else ${BLOCKED_BOX}. Clear ${BLOCKED_BOX} once what it waits on is settled. Ignore this if the list is accurate.`,
+    `If progress changed, update it with \`todo_edit\`: mark the item you are working on now ${IN_PROGRESS_BOX}, finished items ${COMPLETED_BOX}, abandoned items ${CANCELLED_BOX}, and items that wait on somebody else ${BLOCKED_BOX}. Clear ${BLOCKED_BOX} once what it waits on is settled. Ignore this if the list is accurate.`,
     `</todo-reminder>`,
   ].join("\n");
 }
@@ -479,8 +479,8 @@ function newTaskHint(list: string, turns: number): string {
   return [
     `<todo-reminder>`,
     `You have worked ${turns} turns without user input, which usually means a long-horizon task. Plan and track it with the todo tools instead of keeping progress in your head:`,
-    `- todo_write records the remaining work as a checklist;`,
-    `- todo_edit marks the item you are working on now ${IN_PROGRESS_BOX} when you start it and ${COMPLETED_BOX} right after finishing it, before starting the next one.`,
+    `- \`todo_write\` records the remaining work as a checklist;`,
+    `- \`todo_edit\` marks the item you are working on now ${IN_PROGRESS_BOX} when you start it and ${COMPLETED_BOX} right after finishing it, before starting the next one.`,
     ``,
     describeList(list),
     `</todo-reminder>`,

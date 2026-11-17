@@ -342,7 +342,7 @@ const SubagentParams = Type.Object({
   tools: Type.Optional(
     Type.Array(Type.String(), {
       description:
-        'pi tool-selection for the child, passed to --tools: either exact names, e.g. ["read", "bash"], or only +name/-name modifiers on the defaults, e.g. ["+codemode"]. Omit or leave empty for pi defaults.',
+        'pi tool-selection for the child, passed to `--tools`: either exact names, e.g. `["read", "bash"]`, or only `+name`/`-name` modifiers on the defaults, e.g. `["+codemode"]`. Omit or leave empty for pi defaults.',
     }),
   ),
   model: Type.Optional(
@@ -1897,10 +1897,12 @@ class SubagentRunner {
     if (requested === "")
       return { problem: "The subagent id must not be empty." };
     if (this.running.has(requested)) {
-      return { problem: `A subagent named "${requested}" is already running.` };
+      return {
+        problem: `A subagent named \`${requested}\` is already running.`,
+      };
     }
     if (!fs.statSync(cwd, { throwIfNoEntry: false })?.isDirectory()) {
-      return { problem: `Working directory is not a directory: ${cwd}` };
+      return { problem: `Working directory is not a directory: \`${cwd}\`` };
     }
     return { id: requested };
   }
@@ -2888,7 +2890,7 @@ function subagentTool(
         `timeout=${timeoutSec}s`,
       ].join(", ");
       return toolText(
-        `Subagent "${id}" started (${config}). Its result arrives as a "${marker(id)}" message.`,
+        `Subagent \`${id}\` started (${config}). Its result arrives as a "${marker(id)}" message.`,
         { id, cwd, model: selection.model, tools, timeoutSec },
       );
     },

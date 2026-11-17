@@ -120,9 +120,9 @@ function formatReminder(dir: string, resources: DirResources): string {
   const skillCatalog = skills
     ? skills.slice(skills.indexOf("<available_skills>"))
     : "";
-  const files = resources.contextFiles.map((file) => `- ${file.path}`);
+  const files = resources.contextFiles.map((file) => `- \`${file.path}\``);
   return [
-    `You are accessing ${dir}, whose project instructions and skills are not in your system prompt.`,
+    `You are accessing \`${dir}\`, whose project instructions and skills are not in your system prompt.`,
     files.length > 0
       ? `<project_context>\nProject instruction files are available at these paths. Decide whether to read them based on the task:\n\n${files.join("\n")}\n</project_context>`
       : "",
@@ -215,7 +215,7 @@ async function handleToolCall(
 
   return {
     block: true,
-    reason: `Not applied yet: project context references for ${dir} are delivered in the next message. Read relevant context, then retry this ${event.toolName}.`,
+    reason: `Not applied yet: project context references for \`${dir}\` are delivered in the next message. Read relevant context, then retry this \`${event.toolName}\`.`,
   };
 }
 

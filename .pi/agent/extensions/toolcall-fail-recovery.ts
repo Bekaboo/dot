@@ -116,7 +116,7 @@ function neutralize(
     `No tool ran: the provider rejected this response because its tool-call JSON ` +
     `did not parse (${errorMessage}).` +
     (dropped.length > 0
-      ? ` Dropped tool call(s): ${dropped.join(", ")}.`
+      ? ` Dropped tool call(s): ${dropped.map((name) => `\`${name}\``).join(", ")}.`
       : "") +
     " Re-issuing the request in smaller steps.";
   return {
