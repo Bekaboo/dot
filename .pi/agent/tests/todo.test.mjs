@@ -493,7 +493,7 @@ describe("todo", () => {
     });
   });
 
-  describe("stopping with unfinished items", () => {
+  describe("stopping with actionable items", () => {
     /**
      * Install the mocked clock these timing tests measure against.
      *
@@ -526,7 +526,7 @@ describe("todo", () => {
       return { getSessionId: () => "test-session" };
     }
 
-    test("stopping with unfinished items asks the agent to continue once", async (t) => {
+    test("stopping with actionable items asks the agent to continue once", async (t) => {
       const { hooks, write } = setup();
       await write("- [x] A\n- [ ] B");
       armClock(t);
@@ -539,10 +539,10 @@ describe("todo", () => {
       assert.equal(pushed.continue, true);
       assert.match(
         pushed.entries[0].content,
-        /unfinished items:\n\n- \[x\] A\n- \[ \] B\n\nContinue with the next item/,
+        /actionable items:\n\n- \[ \] B\n\nContinue with the next one/,
       );
       // The push teaches the status that would have kept it silent.
-      assert.match(pushed.entries[0].content, /mark them \[!\] .*todo_edit/);
+      assert.match(pushed.entries[0].content, /mark it \[!\] .*todo_edit/);
 
       assert.equal(hooks.get("agent_before_settle")(settle), undefined);
     });
@@ -565,7 +565,7 @@ describe("todo", () => {
       assert.equal(messages.length, 1);
       assert.match(
         messages[0].message.content,
-        /unfinished items:\n\n- \[x\] A\n- \[ \] B\n\nContinue with the next item/,
+        /actionable items:\n\n- \[ \] B\n\nContinue with the next one/,
       );
       assert.equal(messages[0].message.display, true);
       // The held push starts a run of its own, like any other wake.
@@ -748,7 +748,35 @@ describe("todo", () => {
         entries: [],
       });
       assert.equal(pushed.continue, true);
-      assert.match(pushed.entries[0].content, /- \[!\] A\n- \[ \] B/);
+      assert.match(
+        pushed.entries[0].content,
+        /actionable items:\n\n- \[ \] B\n/,
+      );
+      assert.doesNotMatch(pushed.entries[0].content, /- \[!\] A/);
+    });
+
+    test("a long checklist travels as its actionable items only", async (t) => {
+      const { hooks, write } = setup();
+      const closed = Array.from(
+        { length: 40 },
+        (_, index) => `- [x] finished work ${index}`,
+      );
+      await write(
+        ["- [!] waits on a peer", "- [ ] next step", ...closed].join("\n"),
+      );
+      armClock(t);
+      prompted(hooks);
+      hooks.get("tool_execution_end")({ toolName: "read" });
+      userLeft(t);
+
+      const pushed = hooks.get("agent_before_settle")({
+        outcome: "completed",
+        entries: [],
+      });
+      const content = pushed.entries[0].content;
+      assert.match(content, /- \[ \] next step/);
+      assert.doesNotMatch(content, /finished work/);
+      assert.ok(content.length < 500, `push stays small: ${content.length}`);
     });
 
     test("stopping with every item closed does not ask the agent to continue", async (t) => {

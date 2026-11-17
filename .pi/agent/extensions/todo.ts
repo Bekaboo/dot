@@ -315,6 +315,21 @@ function hasUnfinished(list: string): boolean {
 }
 
 /**
+ * Keep the items the agent can act on now.
+ *
+ * Blocked items wait on somebody else, so only pending and in-progress items
+ * belong in a push that asks for the next step.
+ *
+ * @param list - Current checklist.
+ * @returns The actionable items, in list order.
+ */
+function actionableItems(list: string): TodoItem[] {
+  return parseList(list).filter(
+    (item) => item.status === "pending" || item.status === "in_progress",
+  );
+}
+
+/**
  * Check whether the list has work the agent can do right now.
  *
  * Blocked items wait for a user decision or any other prerequisite, so a
@@ -326,9 +341,17 @@ function hasUnfinished(list: string): boolean {
  * @returns True when an item is pending or in progress.
  */
 function hasActionable(list: string): boolean {
-  return parseList(list).some(
-    (item) => item.status === "pending" || item.status === "in_progress",
-  );
+  return actionableItems(list).length > 0;
+}
+
+/**
+ * Render items back to their checklist lines.
+ *
+ * @param items - Items to render.
+ * @returns One `- [m] text` line per item, in the order given.
+ */
+function formatItems(items: TodoItem[]): string {
+  return items.map((item) => `- ${box(item.status)} ${item.text}`).join("\n");
 }
 
 /**
@@ -465,20 +488,23 @@ function newTaskHint(list: string, turns: number): string {
 }
 
 /**
- * Build the message that pushes a stopped agent with unfinished items.
+ * Build the message that pushes a stopped agent with actionable items.
+ *
+ * Only those items travel, so a long checklist costs a few hundred bytes
+ * instead of kilobytes; the rest of it is one `todo_list` call away.
  *
  * @param list - Current checklist.
  * @returns Message text that also offers legitimate ways to stop.
  */
 function continueMessage(list: string): string {
   return [
-    `You stopped, but the todo list still has unfinished items:`,
+    `You stopped, but the todo list still has actionable items:`,
     ``,
-    list,
+    formatItems(actionableItems(list)),
     ``,
-    `Continue with the next item if it is actionable now.`,
-    `If items wait on somebody else -- a decision, an upstream dependency, or work you handed off -- mark them ${BLOCKED_BOX} with \`todo_edit\`.`,
-    `If remaining items are no longer relevant, mark them ${CANCELLED_BOX} with \`todo_edit\`.`,
+    `Continue with the next one.`,
+    `If it waits on somebody else -- a decision, an upstream dependency, or work you handed off -- mark it ${BLOCKED_BOX} with \`todo_edit\`.`,
+    `If it is no longer relevant, mark it ${CANCELLED_BOX} with \`todo_edit\`.`,
   ].join("\n");
 }
 
