@@ -102,6 +102,30 @@ const MARKERS = {
 
 type TodoStatus = keyof typeof MARKERS;
 
+/**
+ * Marker meanings in the agent's own terms, the single source for every
+ * prompt string that explains a marker.
+ *
+ * Prompt strings therefore explain a marker once, in `MARKER_GUIDE`, and
+ * `promptGuidelines` say only when to reach for each tool: restating the
+ * markers per tool would bill the same legend on every request and let the
+ * copies drift apart.
+ *
+ * Each meaning describes who makes progress on the item, never which tool does
+ * it: naming `subagent`, `job_start` or `intercom` here would make this file
+ * depend on extensions it must outlive, and a renamed or removed tool would
+ * leave the wording stale. "Finishes without you" stays true for a background
+ * job, a peer session or an upstream team alike.
+ */
+const STATUS_MEANING = {
+  pending: "not started",
+  in_progress: "the one item you are working on now",
+  blocked:
+    "waiting on something that must finish without you: a decision, an upstream dependency, or work you handed off",
+  completed: "done",
+  cancelled: "dropped",
+} as const;
+
 /** Item status keyed by its checklist marker. */
 const STATUS_BY_MARKER = new Map<string, TodoStatus>(
   Object.entries(MARKERS).map(([status, marker]) => [
@@ -111,11 +135,18 @@ const STATUS_BY_MARKER = new Map<string, TodoStatus>(
 );
 
 /** Bracketed markers as they appear in prompts and messages. */
-const PENDING_BOX = box("pending");
 const IN_PROGRESS_BOX = box("in_progress");
 const BLOCKED_BOX = box("blocked");
 const COMPLETED_BOX = box("completed");
 const CANCELLED_BOX = box("cancelled");
+
+/** The marker list shown in tool descriptions, e.g. \`- [~]\` in progress. */
+const MARKER_GUIDE = Object.keys(MARKERS)
+  .map(
+    (status) =>
+      `\`- ${box(status as TodoStatus)}\` ${STATUS_MEANING[status as TodoStatus]}`,
+  )
+  .join(", ");
 
 /** Regex character class matching any status marker. */
 const MARKER_CLASS = Object.values(MARKERS)
@@ -378,7 +409,7 @@ function staleListHint(list: string): string | undefined {
     ``,
     list,
     ``,
-    `If progress changed, update it with todo_edit: mark the current item ${IN_PROGRESS_BOX}, finished items ${COMPLETED_BOX}, abandoned items ${CANCELLED_BOX}. Clear ${BLOCKED_BOX} once the user decision or the prerequisite is settled, and keep it on items still waiting. Ignore this if the list is accurate.`,
+    `If progress changed, update it with todo_edit: mark the item you are working on now ${IN_PROGRESS_BOX}, finished items ${COMPLETED_BOX}, abandoned items ${CANCELLED_BOX}, and items that wait on somebody else ${BLOCKED_BOX}. Clear ${BLOCKED_BOX} once what it waits on is settled. Ignore this if the list is accurate.`,
     `</todo-reminder>`,
   ].join("\n");
 }
@@ -399,7 +430,7 @@ function newTaskHint(list: string, turns: number): string {
     `<todo-reminder>`,
     `You have worked ${turns} turns without user input, which usually means a long-horizon task. Plan and track it with the todo tools instead of keeping progress in your head:`,
     `- todo_write records the remaining work as a checklist;`,
-    `- todo_edit marks the current item ${IN_PROGRESS_BOX} when you start it and ${COMPLETED_BOX} right after finishing it, before starting the next one.`,
+    `- todo_edit marks the item you are working on now ${IN_PROGRESS_BOX} when you start it and ${COMPLETED_BOX} right after finishing it, before starting the next one.`,
     ``,
     describeList(list),
     `</todo-reminder>`,
@@ -419,7 +450,7 @@ function continueMessage(list: string): string {
     list,
     ``,
     `Continue with the next item if it is actionable now.`,
-    `If items need a user decision or any other prerequisite, mark them ${BLOCKED_BOX} with \`todo_edit\`.`,
+    `If items wait on somebody else -- a decision, an upstream dependency, or work you handed off -- mark them ${BLOCKED_BOX} with \`todo_edit\`.`,
     `If remaining items are no longer relevant, mark them ${CANCELLED_BOX} with \`todo_edit\`.`,
   ].join("\n");
 }
@@ -888,7 +919,7 @@ function todoWriteTool(
   return {
     name: "todo_write",
     label: "Todo Write",
-    description: `Replace the session todo list, a Markdown checklist, one item per line. Markers: \`- ${PENDING_BOX}\` pending, \`- ${IN_PROGRESS_BOX}\` in progress (at most one), \`- ${BLOCKED_BOX}\` waiting on a user decision or any other prerequisite, \`- ${COMPLETED_BOX}\` done, \`- ${CANCELLED_BOX}\` cancelled.`,
+    description: `Replace the session todo list, a Markdown checklist, one item per line. Markers: ${MARKER_GUIDE}.`,
     promptSnippet: "Replace the session todo checklist with a new plan",
     promptGuidelines: [
       "Use `todo_write` for the initial plan of multi-step work, or when the user lists several items; skip it for single-step or conversational requests.",
@@ -929,7 +960,7 @@ function todoEditTool(
     description: `Update the session todo list with exact-text replacements like the \`edit\` tool: each oldText must match the current list exactly and uniquely, otherwise nothing changes.`,
     promptSnippet: "Edit the session todo checklist in place",
     promptGuidelines: [
-      `Use \`todo_edit\` to mark the current item ${IN_PROGRESS_BOX} when starting it, ${COMPLETED_BOX} right after finishing it, ${BLOCKED_BOX} before you stop to ask the user or wait on any other prerequisite, and ${CANCELLED_BOX} when an item is abandoned.`,
+      "Use `todo_edit` to mark progress in place instead of re-writing the whole list.",
     ],
     parameters: TodoEditParams,
     // The todo tools share one mutable list, so Pi must run them in order.
