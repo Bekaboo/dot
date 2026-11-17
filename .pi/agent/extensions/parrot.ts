@@ -52,7 +52,8 @@ export const PARROT = [".CC.", ".CWW", "ACYK", "ACY.", "BC..", "B..."] as const;
 
 export const FRAME_INTERVAL_MS = 120;
 export const LOGO_DELAY_MS = 2000;
-export const MORPH_STEPS = 10;
+/** Ticks the intro and the outro each take: one morph step per tick. */
+export const INTRO_TICKS = 10;
 export const CANVAS_WIDTH_PX = 16;
 /** Four terminal rows: the bird's three, plus one for it to float down into. */
 export const CANVAS_HEIGHT_PX = 8;
@@ -64,8 +65,8 @@ export const CANVAS_HEIGHT_PX = 8;
 export const PARROT_TOP = 0;
 export const PARROT_LEFT = 0;
 
-const MORPH_MS = MORPH_STEPS * FRAME_INTERVAL_MS;
-export const ANIMATION_START_MS = LOGO_DELAY_MS + MORPH_MS;
+const INTRO_MS = INTRO_TICKS * FRAME_INTERVAL_MS;
+export const ANIMATION_START_MS = LOGO_DELAY_MS + INTRO_MS;
 
 /**
  * One glyph drawn in front of the header's text, in header rows and columns.
@@ -83,21 +84,28 @@ interface HeaderGlyph {
 }
 
 /**
- * A looping pose sequence the parrot plays once the morph hands over.
+ * One greeting: three stretches of animation, each posed one tick at a time.
  *
- * A motion owns its own timing and pixels. `start()` is the first tick of a
- * cycle at which the bird may leave the resting parrot, which is what lets the
- * morph's last frame and the motion's first frames agree; `end()` is the tick
- * at which the cycle completes and repeats.
+ * `pose()` loops for as long as the user lets the bird play. `start()` and
+ * `end()` are played once and glue the loop to the Pi logo: the intro
+ * recomposes the logo into the parrot the loop opens on, the outro flies the
+ * parrot back to within a step of the logo. Each returns the whole canvas for
+ * its tick.
  */
 export interface Motion {
-  start(): number;
-  end(): number;
   /**
-   * The posed pixels for a tick since the animation began, on a canvas-tall
-   * grid. A motion repeats its own cycle, so the tick is not bounded.
+   * Frames of the intro, ticks 0 through INTRO_TICKS - 1: the logo recomposing
+   * into the resting parrot that `pose(0)` shows.
    */
+  start(tick: number): Grid;
+  /** Frames of the loop, one per tick, repeating on the motion's own cycle. */
   pose(tick: number): Grid;
+  /**
+   * Frames of the outro, ticks 0 through INTRO_TICKS - 1: from the resting
+   * parrot `pose(0)` shows back to one morph step short of the logo, which the
+   * logo phase then shows.
+   */
+  end(tick: number): Grid;
 }
 
 /** An empty canvas-tall grid, one column per parrot column. */
@@ -237,12 +245,12 @@ function mixRgb(from: Rgb, to: Rgb, progress: number): Rgb {
  * Interpolate one morph step: every parrot pixel travels from its Pi-logo
  * source while its color blends toward the parrot palette.
  *
- * @param step - Morph step, 1 through MORPH_STEPS.
- * @returns The canvas at `step / MORPH_STEPS` progress; the last step is the
+ * @param step - Morph step, 1 through INTRO_TICKS.
+ * @returns The canvas at `step / INTRO_TICKS` progress; the last step is the
  *   exact resting parrot.
  */
 function morphCanvas(step: number): Grid {
-  const progress = step / MORPH_STEPS;
+  const progress = step / INTRO_TICKS;
   const canvas = emptyCanvas();
 
   for (let index = 0; index < PARROT_PIXELS.length; index++) {
@@ -265,25 +273,43 @@ function morphCanvas(step: number): Grid {
   return canvas;
 }
 
+/** Place a motion's bird pixels on the canvas, where the morph left the bird. */
+function birdCanvas(bird: Grid): Grid {
+  const canvas = emptyCanvas();
+  placeGrid(canvas, bird, PARROT_TOP, PARROT_LEFT);
+  return canvas;
+}
+
+/**
+ * The brand transition every motion shares: the intro recomposes the Pi logo
+ * into the parrot and the outro flies it back, one morph step per tick.
+ *
+ * A motion only poses its loop; overriding a transition is for a motion that
+ * wants to enter or leave the screen its own way.
+ */
+abstract class BrandMotion implements Motion {
+  start(tick: number): Grid {
+    return morphCanvas(tick + 1);
+  }
+
+  end(tick: number): Grid {
+    return morphCanvas(INTRO_TICKS - tick);
+  }
+
+  abstract pose(tick: number): Grid;
+}
+
 /**
  * The wing flap: one azure cell rises above the back, then sweeps under the
  * belly, while the body floats a cell down on the upstroke.
  */
-class Flap implements Motion {
+class Flap extends BrandMotion {
   private static readonly PERIOD_TICKS = 12;
   private static readonly REST_TICKS = 2;
   private static readonly UPSTROKE_TICKS = 5;
   private static readonly FLOAT_DROP_PX = 2;
   /** The wing's azure, against the Pi blue tail it folds above. */
   private static readonly WING = PALETTE.A;
-
-  start(): number {
-    return Flap.REST_TICKS;
-  }
-
-  end(): number {
-    return Flap.PERIOD_TICKS;
-  }
 
   pose(tick: number): Grid {
     const phase = tick % Flap.PERIOD_TICKS;
@@ -303,9 +329,9 @@ class Flap implements Motion {
       }
     }
 
-    const grid = poseGrid();
-    placeGrid(grid, parrot, up ? Flap.FLOAT_DROP_PX : 0, 0);
-    return grid;
+    const bird = poseGrid();
+    placeGrid(bird, parrot, up ? Flap.FLOAT_DROP_PX : 0, 0);
+    return birdCanvas(bird);
   }
 }
 
@@ -316,22 +342,14 @@ class Flap implements Motion {
  * and the crown it vacates opens no hole because nothing else sits above the
  * head.
  */
-class Nod implements Motion {
+class Nod extends BrandMotion {
   private static readonly PERIOD_TICKS = 9;
   private static readonly LIFT_TICKS = 6;
   private static readonly DIP_PX = 1;
 
-  start(): number {
-    return Nod.LIFT_TICKS;
-  }
-
-  end(): number {
-    return Nod.PERIOD_TICKS;
-  }
-
   pose(tick: number): Grid {
     const grid = restingPose();
-    if (tick % Nod.PERIOD_TICKS < Nod.LIFT_TICKS) return grid;
+    if (tick % Nod.PERIOD_TICKS < Nod.LIFT_TICKS) return birdCanvas(grid);
 
     const head = HEAD_PIXELS.map(([row, col]) => grid[row][col]);
     for (const [row, col] of HEAD_PIXELS) grid[row][col] = null;
@@ -339,7 +357,7 @@ class Nod implements Motion {
     HEAD_PIXELS.forEach(([row, col], index) => {
       grid[row + Nod.DIP_PX][col] = head[index];
     });
-    return grid;
+    return birdCanvas(grid);
   }
 }
 
@@ -350,21 +368,15 @@ class Nod implements Motion {
  * The beak's black lower half lands on the wing's top pixel, and the vacated
  * right column simply empties, so the head reads as turned rather than moved.
  */
-class LookAround implements Motion {
+class LookAround extends BrandMotion {
   private static readonly PERIOD_TICKS = 20;
   private static readonly FORWARD_TICKS = 16;
 
-  start(): number {
-    return LookAround.FORWARD_TICKS;
-  }
-
-  end(): number {
-    return LookAround.PERIOD_TICKS;
-  }
-
   pose(tick: number): Grid {
     const grid = restingPose();
-    if (tick % LookAround.PERIOD_TICKS < LookAround.FORWARD_TICKS) return grid;
+    if (tick % LookAround.PERIOD_TICKS < LookAround.FORWARD_TICKS) {
+      return birdCanvas(grid);
+    }
 
     const head = HEAD_PIXELS.map(([row, col]) => grid[row][col]);
     for (const [row, col] of HEAD_PIXELS) grid[row][col] = null;
@@ -372,7 +384,7 @@ class LookAround implements Motion {
     HEAD_PIXELS.forEach(([row, col], index) => {
       grid[row][PARROT[0].length - 1 - col] = head[index];
     });
-    return grid;
+    return birdCanvas(grid);
   }
 }
 
@@ -384,7 +396,7 @@ class LookAround implements Motion {
  * That mouth is the one interior gap a pose may open, and it opens down a
  * column, so every row of the bird still stays one unbroken run.
  */
-class Sing implements Motion {
+class Sing extends BrandMotion {
   private static readonly PERIOD_TICKS = 12;
   private static readonly REST_TICKS = 2;
   /** Two beats per cycle, each open for its first ticks and shut after. */
@@ -406,27 +418,19 @@ class Sing implements Motion {
   private static readonly NOTE_HEADER_ROW = 1;
   private static readonly NOTE_COLUMN = PARROT[0].length;
 
-  start(): number {
-    return Sing.REST_TICKS;
-  }
-
-  end(): number {
-    return Sing.PERIOD_TICKS;
-  }
-
   pose(tick: number): Grid {
     const grid = restingPose();
     const phase = tick % Sing.PERIOD_TICKS;
-    if (phase < Sing.REST_TICKS) return grid;
+    if (phase < Sing.REST_TICKS) return birdCanvas(grid);
 
     const beatTick = (phase - Sing.REST_TICKS) % Sing.BEAT_TICKS;
-    if (beatTick >= Sing.OPEN_TICKS) return grid;
+    if (beatTick >= Sing.OPEN_TICKS) return birdCanvas(grid);
 
     const beakCol = PARROT[0].length - 1;
     const lowerBeak = grid[Sing.BEAK_ROW][beakCol];
     grid[Sing.BEAK_ROW][beakCol] = null;
     grid[Sing.BEAK_ROW + 1][beakCol] = lowerBeak;
-    return grid;
+    return birdCanvas(grid);
   }
 
   /**
@@ -471,82 +475,74 @@ export const MOTIONS: readonly Motion[] = [
   new Sing(),
 ];
 
-export type Phase = "logo" | "morph" | "animate" | "shatter";
+export type Phase = "logo" | "intro" | "loop" | "outro";
 
 export interface Frame {
   readonly phase: Phase;
   readonly grid: Grid;
 }
 
-/**
- * Morph step the pixels have reached `elapsedMs` in, 0 through MORPH_STEPS.
- */
-function morphStepAt(elapsedMs: number): number {
-  if (elapsedMs < LOGO_DELAY_MS) return 0;
-  if (elapsedMs >= ANIMATION_START_MS) return MORPH_STEPS;
-  // Between the two, one step per frame lands inside 1..MORPH_STEPS.
-  return Math.floor((elapsedMs - LOGO_DELAY_MS) / FRAME_INTERVAL_MS) + 1;
+/** Ticks of intro played `elapsedMs` in, once the logo's delay is over. */
+function introTickAt(elapsedMs: number): number {
+  return Math.floor((elapsedMs - LOGO_DELAY_MS) / FRAME_INTERVAL_MS);
 }
 
-/** Ticks of motion played `elapsedMs` in, once the morph has handed over. */
-function animateTick(elapsedMs: number): number {
+/** Ticks of loop played `elapsedMs` in, once the intro has handed over. */
+function loopTickAt(elapsedMs: number): number {
   return Math.floor((elapsedMs - ANIMATION_START_MS) / FRAME_INTERVAL_MS);
 }
 
 /**
- * Morph step the pixels have left to fly back into the logo: the step they had
- * reached when the user typed, less the steps played backwards since.
- *
- * @param elapsedMs - Time since session_start.
- * @param shatterAtMs - Time since session_start when the user first typed.
- * @returns The step still to fly, 0 once the logo has landed.
+ * Morph step on screen `elapsedMs` in: 0 while the logo still stands, 1 through
+ * INTRO_TICKS while the intro recomposes it, the parrot from then on.
  */
-function shatterStepAt(elapsedMs: number, shatterAtMs: number): number {
-  const played = Math.floor((elapsedMs - shatterAtMs) / FRAME_INTERVAL_MS);
-  return morphStepAt(shatterAtMs) - played;
+function shownStep(elapsedMs: number): number {
+  return Math.min(INTRO_TICKS, introTickAt(elapsedMs) + 1);
 }
 
 /**
- * Fly the pixels back into the Pi logo: the morph played backwards from the
- * step it had reached when the user typed, then the logo for good.
- *
- * @param elapsedMs - Time since session_start.
- * @param shatterAtMs - Time since session_start when the user first typed.
+ * Ticks the outro still has to play, `elapsedMs` after the user typed: it flies
+ * home from the step on screen when they typed, so typing under the logo calls
+ * for none at all.
  */
-function shatterFrame(elapsedMs: number, shatterAtMs: number): Frame {
-  const step = shatterStepAt(elapsedMs, shatterAtMs);
-  if (step <= 0) return { phase: "logo", grid: logoCanvas() };
-  return { phase: "shatter", grid: morphCanvas(step) };
+function outroTicksLeft(elapsedMs: number, outroAtMs: number): number {
+  const played = Math.floor((elapsedMs - outroAtMs) / FRAME_INTERVAL_MS);
+  return shownStep(outroAtMs) - played;
 }
 
 /**
  * Build the frame shown `elapsedMs` after the session started.
  *
+ * The greeting runs the motion's own three stretches: its intro recomposing
+ * the logo, then its loop, then, once the user types, its outro flying the
+ * parrot home, after which the Pi logo stands for good.
+ *
  * @param elapsedMs - Time since session_start.
  * @param motion - The motion this session picked.
- * @param shatterAtMs - Time since session_start when the user first typed, or
+ * @param outroAtMs - Time since session_start when the user first typed, or
  *   undefined while the parrot is still welcome.
- * @returns The phase and its pixel grid.
+ * @returns The phase and its canvas.
  */
 export function frameFor(
   elapsedMs: number,
   motion: Motion,
-  shatterAtMs?: number,
+  outroAtMs?: number,
 ): Frame {
-  if (shatterAtMs !== undefined) return shatterFrame(elapsedMs, shatterAtMs);
+  if (outroAtMs !== undefined) {
+    const left = outroTicksLeft(elapsedMs, outroAtMs);
+    if (left <= 0) return { phase: "logo", grid: logoCanvas() };
+    return { phase: "outro", grid: motion.end(INTRO_TICKS - left) };
+  }
 
   if (elapsedMs < LOGO_DELAY_MS) {
     return { phase: "logo", grid: logoCanvas() };
   }
 
   if (elapsedMs < ANIMATION_START_MS) {
-    return { phase: "morph", grid: morphCanvas(morphStepAt(elapsedMs)) };
+    return { phase: "intro", grid: motion.start(introTickAt(elapsedMs)) };
   }
 
-  const tick = animateTick(elapsedMs);
-  const canvas = emptyCanvas();
-  placeGrid(canvas, motion.pose(tick), PARROT_TOP, PARROT_LEFT);
-  return { phase: "animate", grid: canvas };
+  return { phase: "loop", grid: motion.pose(loopTickAt(elapsedMs)) };
 }
 
 function foreground(color: Rgb, mode: TerminalColorMode): string {
@@ -635,7 +631,7 @@ function isTyping(data: string): boolean {
 /** Shared frame clock and header lifecycle for one extension instance. */
 class ParrotAnimation {
   /** Elapsed ms of the first typed character; undefined while the bird plays. */
-  private shatterAtMs: number | undefined;
+  private outroAtMs: number | undefined;
 
   /** The motion this session picked at random in start(). */
   private motion: Motion = MOTIONS[0];
@@ -654,14 +650,14 @@ class ParrotAnimation {
     this.stop();
 
     this.startedAt = Date.now();
-    this.shatterAtMs = undefined;
+    this.outroAtMs = undefined;
     this.motion = MOTIONS[Math.floor(Math.random() * MOTIONS.length)];
     ctx.ui.setHeader((tui, theme) => {
       this.header = new ParrotHeader(tui, theme, this);
       return this.header;
     });
     this.unsubscribe = ctx.ui.onTerminalInput((data) => {
-      if (isTyping(data)) this.beginShatter();
+      if (isTyping(data)) this.beginOutro();
       return undefined;
     });
     // The opening logo does not change, so the frame clock only starts when its
@@ -685,10 +681,10 @@ class ParrotAnimation {
     }, FRAME_INTERVAL_MS);
   }
 
-  /** Send the parrot back to the Pi logo, once per session. */
-  private beginShatter(): void {
-    if (this.shatterAtMs !== undefined) return;
-    this.shatterAtMs = this.elapsedMs();
+  /** Send the parrot back into the Pi logo, once per session. */
+  private beginOutro(): void {
+    if (this.outroAtMs !== undefined) return;
+    this.outroAtMs = this.elapsedMs();
   }
 
   /** Time since this animation's session started. */
@@ -713,7 +709,7 @@ class ParrotAnimation {
   ): string[] {
     // One clock reading per frame, so every layer draws the same instant.
     const elapsedMs = this.elapsedMs();
-    const frame = frameFor(elapsedMs, this.motion, this.shatterAtMs);
+    const frame = frameFor(elapsedMs, this.motion, this.outroAtMs);
     const canvas = renderCanvas(frame.grid, mode);
     const glyphs = this.glyphs(elapsedMs, width);
 
@@ -788,20 +784,20 @@ class ParrotAnimation {
    *
    * @param elapsedMs - Time since session_start, so every layer agrees.
    * @param width - Header width in columns, the right boundary.
-   * @returns The glyphs still in front of the text, empty until the morph
+   * @returns The glyphs still in front of the text, empty until the intro
    *   hands over and again once the user has typed.
    */
   private glyphs(elapsedMs: number, width: number): HeaderGlyph[] {
     if (!(this.motion instanceof Sing)) return [];
-    if (this.shatterAtMs !== undefined) return [];
+    if (this.outroAtMs !== undefined) return [];
     if (elapsedMs < ANIMATION_START_MS) return [];
-    return this.motion.notes(animateTick(elapsedMs), width);
+    return this.motion.notes(loopTickAt(elapsedMs), width);
   }
 
-  /** True once the shatter has landed on the logo for good. */
+  /** True once the outro has landed on the logo for good. */
   private settled(): boolean {
-    if (this.shatterAtMs === undefined) return false;
-    return shatterStepAt(this.elapsedMs(), this.shatterAtMs) <= 0;
+    if (this.outroAtMs === undefined) return false;
+    return outroTicksLeft(this.elapsedMs(), this.outroAtMs) <= 0;
   }
 
   /** Stop the frame clock and input listener; safe to call more than once. */

@@ -25,8 +25,8 @@ import parrot, {
   CANVAS_WIDTH_PX,
   FRAME_INTERVAL_MS,
   frameFor,
+  INTRO_TICKS,
   LOGO_DELAY_MS,
-  MORPH_STEPS,
   MOTIONS,
   PALETTE,
   PARROT,
@@ -117,17 +117,22 @@ function bounds(grid) {
   };
 }
 
-/** Animated frames of one motion, one per tick. */
-function framesFor(motion, count) {
+/** Time since session_start of a tick of the loop. */
+const loopAt = (tick) => ANIMATION_START_MS + tick * FRAME_INTERVAL_MS;
+
+/** Time since session_start of a tick of the intro. */
+const introAt = (tick) => LOGO_DELAY_MS + tick * FRAME_INTERVAL_MS;
+
+/** Loop frames of one motion, one per tick. */
+function loopFrames(motion, count) {
   return Array.from(
     { length: count },
-    (_, tick) =>
-      frameFor(ANIMATION_START_MS + tick * FRAME_INTERVAL_MS, motion).grid,
+    (_, tick) => frameFor(loopAt(tick), motion).grid,
   );
 }
 
-/** Ticks long enough to cover every motion's cycle twice. */
-const CYCLE_TICKS = Math.max(...MOTIONS.map((motion) => motion.end())) * 2;
+/** Ticks long enough to watch any motion's loop come round twice. */
+const LOOP_TICKS = 60;
 
 /** Install the extension and return the event hooks it registered. */
 function loadExtension() {
@@ -213,13 +218,14 @@ const brandCell = (lines) =>
 
 describe("parrot", () => {
   describe("canvas", () => {
-    test("the logo shows until the morph starts, for every motion", () => {
+    test("the logo, the intro, the loop, then the outro run in that order", () => {
       for (const motion of MOTIONS) {
         assert.equal(frameFor(0, motion).phase, "logo");
         assert.equal(frameFor(LOGO_DELAY_MS - 1, motion).phase, "logo");
-        assert.equal(frameFor(LOGO_DELAY_MS, motion).phase, "morph");
-        assert.equal(frameFor(ANIMATION_START_MS - 1, motion).phase, "morph");
-        assert.equal(frameFor(ANIMATION_START_MS, motion).phase, "animate");
+        assert.equal(frameFor(LOGO_DELAY_MS, motion).phase, "intro");
+        assert.equal(frameFor(ANIMATION_START_MS - 1, motion).phase, "intro");
+        assert.equal(frameFor(ANIMATION_START_MS, motion).phase, "loop");
+        assert.equal(frameFor(loopAt(60_000), motion).phase, "loop");
 
         const logo = frameFor(0, motion).grid;
         assert.equal(logo.length, CANVAS_HEIGHT_PX);
@@ -241,51 +247,127 @@ describe("parrot", () => {
       assert.equal(visibleWidth(bottom), CANVAS_WIDTH_PX);
     });
 
-    test("the morph progresses and hands over without a jump", () => {
-      const morphed = Array.from(
-        { length: MORPH_STEPS },
-        (_, index) =>
-          frameFor(LOGO_DELAY_MS + index * FRAME_INTERVAL_MS, MOTION).grid,
+    test("the intro recomposes the logo and hands over to every motion", () => {
+      const intro = Array.from(
+        { length: INTRO_TICKS },
+        (_, tick) => frameFor(introAt(tick), MOTION).grid,
       );
-
       assert.ok(
-        new Set(morphed.map(signature)).size > 1,
-        "the morph does not move",
+        new Set(intro.map(signature)).size > 1,
+        "the intro does not move",
       );
       assert.notEqual(
-        signature(morphed[0]),
+        signature(intro[0]),
         signature(frameFor(0, MOTION).grid),
+        "the intro starts on the logo it leaves behind",
       );
+      assertCanvas(intro.at(-1), PARROT, PARROT_TOP, PARROT_LEFT);
 
-      // It lands on the intact parrot, and every motion opens on that frame.
-      assertCanvas(morphed.at(-1), PARROT, PARROT_TOP, PARROT_LEFT);
       for (const motion of MOTIONS) {
+        // The loop opens on the parrot the intro ended with, and the outro
+        // opens on the same one.
+        const opening = signature(frameFor(ANIMATION_START_MS, motion).grid);
         assert.equal(
-          signature(frameFor(ANIMATION_START_MS, motion).grid),
-          signature(morphed.at(-1)),
-          `${motionName(motion)} does not open on the frame the morph ended with`,
+          signature(
+            frameFor(ANIMATION_START_MS - FRAME_INTERVAL_MS, motion).grid,
+          ),
+          opening,
+          `${motionName(motion)} jumps when the intro hands over`,
+        );
+        assertCanvas(
+          frameFor(ANIMATION_START_MS, motion).grid,
+          PARROT,
+          PARROT_TOP,
+          PARROT_LEFT,
         );
       }
     });
 
-    test("every motion holds the resting parrot until it starts", () => {
+    test("every loop moves and repeats, without being told its cycle", () => {
       for (const motion of MOTIONS) {
-        for (let tick = 0; tick < motion.start(); tick++) {
-          assertCanvas(
-            frameFor(ANIMATION_START_MS + tick * FRAME_INTERVAL_MS, motion)
-              .grid,
-            PARROT,
-            PARROT_TOP,
-            PARROT_LEFT,
+        const frames = loopFrames(motion, LOOP_TICKS).map(signature);
+        assert.ok(
+          new Set(frames).size > 1,
+          `${motionName(motion)} never moves`,
+        );
+
+        // The first period after which the whole window agrees with itself.
+        const period = frames.findIndex(
+          (_frame, candidate) =>
+            candidate > 0 &&
+            frames.every(
+              (frame, tick) =>
+                tick + candidate >= frames.length ||
+                frame === frames[tick + candidate],
+            ),
+        );
+        assert.ok(period > 0, `${motionName(motion)} never repeats`);
+      }
+    });
+
+    test("typing during the loop flies home to the logo", () => {
+      for (const motion of MOTIONS) {
+        const typed = loopAt(3);
+
+        // The outro flies the resting parrot home, dropping whatever pose the
+        // loop was showing when the user typed.
+        assert.equal(
+          signature(frameFor(typed, motion, typed).grid),
+          signature(frameFor(introAt(INTRO_TICKS - 1), motion).grid),
+          `${motionName(motion)} does not fly home from the resting parrot`,
+        );
+
+        const landed = typed + INTRO_TICKS * FRAME_INTERVAL_MS;
+        for (const elapsed of [landed, landed + 60_000]) {
+          const frame = frameFor(elapsed, motion, typed);
+          assert.equal(
+            frame.phase,
+            "logo",
+            `${motionName(motion)} at ${typed}`,
           );
+          assertCanvas(frame.grid, PI_LOGO, 0, 0);
         }
       }
     });
 
-    test("every animated frame stays on the canvas", () => {
+    test("typing mid-intro flies home from the step on screen", () => {
+      for (let tick = 0; tick < INTRO_TICKS; tick++) {
+        const typed = introAt(tick);
+        assert.equal(
+          signature(frameFor(typed, MOTION, typed).grid),
+          signature(frameFor(typed, MOTION).grid),
+          `typing at intro tick ${tick} jumped`,
+        );
+
+        // One tick of outro per step of intro already on screen.
+        const landed = typed + (tick + 1) * FRAME_INTERVAL_MS;
+        assert.equal(
+          frameFor(landed, MOTION, typed).phase,
+          "logo",
+          `intro tick ${tick} did not land on the logo`,
+        );
+      }
+
+      // Typing under the logo needs no outro at all.
+      const typed = FRAME_INTERVAL_MS;
+      assert.equal(frameFor(typed, MOTION, typed).phase, "logo");
+      assertCanvas(frameFor(typed, MOTION, typed).grid, PI_LOGO, 0, 0);
+    });
+
+    test("every frame of a greeting stays on the canvas", () => {
+      const typed = loopAt(5);
+      const times = [
+        ...Array.from({ length: INTRO_TICKS }, (_, tick) => introAt(tick)),
+        ...Array.from({ length: LOOP_TICKS }, (_, tick) => loopAt(tick)),
+        ...Array.from(
+          { length: INTRO_TICKS + 1 },
+          (_, tick) => typed + tick * FRAME_INTERVAL_MS,
+        ),
+      ];
+
       for (const motion of MOTIONS) {
-        for (const [tick, grid] of framesFor(motion, CYCLE_TICKS).entries()) {
-          const box = bounds(grid);
+        for (const [tick, elapsed] of times.entries()) {
+          const box = bounds(frameFor(elapsed, motion).grid);
           assert.ok(
             box.top >= 0,
             `${motionName(motion)} tick ${tick} left the top`,
@@ -302,46 +384,6 @@ describe("parrot", () => {
             box.right < CANVAS_WIDTH_PX,
             `${motionName(motion)} tick ${tick} left the canvas`,
           );
-        }
-      }
-    });
-
-    test("every motion moves, and repeats on its own cycle", () => {
-      for (const motion of MOTIONS) {
-        const period = motion.end();
-        const cycle = framesFor(motion, period).map(signature);
-
-        assert.ok(new Set(cycle).size > 1, `${motionName(motion)} never moves`);
-        assert.deepEqual(
-          framesFor(motion, period * 2)
-            .slice(period)
-            .map(signature),
-          cycle,
-          `${motionName(motion)} does not repeat`,
-        );
-      }
-    });
-
-    test("typing at any point ends the greeting on the logo", () => {
-      const shatterAts = [
-        FRAME_INTERVAL_MS, // during the logo
-        LOGO_DELAY_MS + 4 * FRAME_INTERVAL_MS, // mid-morph
-        ANIMATION_START_MS + 3 * FRAME_INTERVAL_MS, // while animating
-      ];
-
-      for (const motion of MOTIONS) {
-        for (const shatterAt of shatterAts) {
-          const landed = shatterAt + MORPH_STEPS * FRAME_INTERVAL_MS;
-
-          for (const elapsed of [landed, landed + 60_000]) {
-            const frame = frameFor(elapsed, motion, shatterAt);
-            assert.equal(
-              frame.phase,
-              "logo",
-              `${motionName(motion)} at ${shatterAt}`,
-            );
-            assertCanvas(frame.grid, PI_LOGO, 0, 0);
-          }
         }
       }
     });
@@ -399,7 +441,7 @@ describe("parrot", () => {
 
       let drawnOverText = false;
 
-      for (let tick = 0; tick < CYCLE_TICKS; tick++) {
+      for (let tick = 0; tick < LOOP_TICKS; tick++) {
         const lines = header.render(120);
 
         // A glyph flying in front may hide a word for a few frames; a word
@@ -496,7 +538,7 @@ describe("parrot", () => {
       assert.equal(session.counted.renders, 1);
 
       const morphAndMotion =
-        ANIMATION_START_MS - LOGO_DELAY_MS + CYCLE_TICKS * FRAME_INTERVAL_MS;
+        ANIMATION_START_MS - LOGO_DELAY_MS + LOOP_TICKS * FRAME_INTERVAL_MS;
       t.mock.timers.tick(morphAndMotion);
       assert.ok(
         session.counted.renders > 2,
@@ -525,7 +567,7 @@ describe("parrot", () => {
 
       // A typed character ends the greeting, and the header keeps the logo.
       assert.equal(session.state.input("h"), undefined);
-      t.mock.timers.tick(MORPH_STEPS * FRAME_INTERVAL_MS);
+      t.mock.timers.tick(INTRO_TICKS * FRAME_INTERVAL_MS);
       assert.deepEqual(brandCell(header.render(120)), logoCell);
 
       // The clock stops for good, the listener goes, the bird never returns.
@@ -594,7 +636,7 @@ describe("parrot", () => {
         const header = session.header();
         t.mock.timers.tick(ANIMATION_START_MS);
 
-        return Array.from({ length: CYCLE_TICKS }, () => {
+        return Array.from({ length: LOOP_TICKS }, () => {
           const cell = brandCell(header.render(120));
           t.mock.timers.tick(FRAME_INTERVAL_MS);
           return cell;
