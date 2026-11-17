@@ -501,9 +501,9 @@ function shownStep(elapsedMs: number): number {
 }
 
 /**
- * Ticks the outro still has to play, `elapsedMs` after the user typed: it flies
- * home from the step on screen when they typed, so typing under the logo calls
- * for none at all.
+ * Ticks the outro still has to play, `elapsedMs` after the first message: it
+ * flies home from the step on screen when that message ends, so a message
+ * under the logo calls for none at all.
  */
 function outroTicksLeft(elapsedMs: number, outroAtMs: number): number {
   const played = Math.floor((elapsedMs - outroAtMs) / FRAME_INTERVAL_MS);
@@ -514,13 +514,13 @@ function outroTicksLeft(elapsedMs: number, outroAtMs: number): number {
  * Build the frame shown `elapsedMs` after the session started.
  *
  * The greeting runs the motion's own three stretches: its intro recomposing
- * the logo, then its loop, then, once the user types, its outro flying the
- * parrot home, after which the Pi logo stands for good.
+ * the logo, then its loop, then, once the conversation holds a message, its
+ * outro flying the parrot home, after which the Pi logo stands for good.
  *
  * @param elapsedMs - Time since session_start.
  * @param motion - The motion this session picked.
- * @param outroAtMs - Time since session_start when the user first typed, or
- *   undefined while the parrot is still welcome.
+ * @param outroAtMs - Time since session_start when the conversation's first
+ *   message ended, or undefined while the parrot is still welcome.
  * @returns The phase and its canvas.
  */
 export function frameFor(
@@ -601,9 +601,6 @@ export function renderCanvas(grid: Grid, mode: TerminalColorMode): string[] {
   return lines;
 }
 
-const FIRST_PRINTABLE_CODE = 0x20;
-const DELETE_CHARACTER = "\x7f";
-
 /**
  * True when the session already holds a conversation. The greeting belongs to
  * a fresh start, so a resumed, forked, or reloaded session with messages keeps
@@ -615,22 +612,9 @@ function hasConversation(ctx: ExtensionContext): boolean {
     .some((entry) => entry.type === "message");
 }
 
-/**
- * True when raw terminal input carries a typed character. Escape sequences
- * (arrows, mouse, bracketed paste) and lone control bytes are not typing, so
- * scrolling or interrupting does not end the greeting.
- */
-function isTyping(data: string): boolean {
-  if (data.startsWith("\x1b")) return false;
-  return [...data].some(
-    (char) =>
-      char.charCodeAt(0) >= FIRST_PRINTABLE_CODE && char !== DELETE_CHARACTER,
-  );
-}
-
 /** Shared frame clock and header lifecycle for one extension instance. */
 class ParrotAnimation {
-  /** Elapsed ms of the first typed character; undefined while the bird plays. */
+  /** Elapsed ms of the first message; undefined while the bird plays. */
   private outroAtMs: number | undefined;
 
   /** The motion this session picked at random in start(). */
@@ -639,12 +623,11 @@ class ParrotAnimation {
   private startedAt = 0;
   private timer: ReturnType<typeof setInterval> | undefined;
   private startTimer: ReturnType<typeof setTimeout> | undefined;
-  private unsubscribe: (() => void) | undefined;
   private header: ParrotHeader | undefined;
 
   /**
    * Start the greeting in a TUI session, without leaving a previous session's
-   * clock or input listener alive.
+   * clock alive.
    */
   start(ctx: ExtensionContext): void {
     this.stop();
@@ -655,10 +638,6 @@ class ParrotAnimation {
     ctx.ui.setHeader((tui, theme) => {
       this.header = new ParrotHeader(tui, theme, this);
       return this.header;
-    });
-    this.unsubscribe = ctx.ui.onTerminalInput((data) => {
-      if (isTyping(data)) this.beginOutro();
-      return undefined;
     });
     // The opening logo does not change, so the frame clock only starts when its
     // first pixel is due to move.
@@ -682,7 +661,7 @@ class ParrotAnimation {
   }
 
   /** Send the parrot back into the Pi logo, once per session. */
-  private beginOutro(): void {
+  beginOutro(): void {
     if (this.outroAtMs !== undefined) return;
     this.outroAtMs = this.elapsedMs();
   }
@@ -785,7 +764,7 @@ class ParrotAnimation {
    * @param elapsedMs - Time since session_start, so every layer agrees.
    * @param width - Header width in columns, the right boundary.
    * @returns The glyphs still in front of the text, empty until the intro
-   *   hands over and again once the user has typed.
+   *   hands over and again once the conversation starts.
    */
   private glyphs(elapsedMs: number, width: number): HeaderGlyph[] {
     if (!(this.motion instanceof Sing)) return [];
@@ -800,10 +779,8 @@ class ParrotAnimation {
     return outroTicksLeft(this.elapsedMs(), this.outroAtMs) <= 0;
   }
 
-  /** Stop the frame clock and input listener; safe to call more than once. */
+  /** Stop the frame clock; safe to call more than once. */
   stop(): void {
-    this.unsubscribe?.();
-    this.unsubscribe = undefined;
     if (this.startTimer !== undefined) {
       clearTimeout(this.startTimer);
       this.startTimer = undefined;
@@ -929,5 +906,8 @@ export default function parrot(pi: ExtensionAPI): void {
     animation.start(ctx);
   });
 
+  // The greeting belongs to an empty session, so the first message it holds
+  // sends the bird home.
+  pi.on("message_end", () => animation.beginOutro());
   pi.on("session_shutdown", () => animation.stop());
 }

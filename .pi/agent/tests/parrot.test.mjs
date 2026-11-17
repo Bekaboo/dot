@@ -3,9 +3,9 @@
  * animation, but never the detail of its actual poses.
  *
  * A test here may pin what a caller can rely on: which phase shows when the
- * animation starts and ends, that typing ends the greeting on the logo, that
- * the bird stays on its canvas, that Pi's own text keeps its columns and
- * wraps, and that the frame clock runs only while something moves.
+ * animation starts and ends, that the first message ends the greeting on the
+ * logo, that the bird stays on its canvas, that Pi's own text keeps its
+ * columns and wraps, and that the frame clock runs only while something moves.
  *
  * A test here may not pin what a pose or a flight looks like: which pixels a
  * motion recolors, where a note starts, how fast it climbs, which glyph comes
@@ -141,9 +141,9 @@ function loadExtension() {
   return hooks;
 }
 
-/** Session context capturing the header slot, the input hook, and entries. */
+/** Session context capturing the header slot and the branch entries. */
 function tuiContext(entries = []) {
-  const state = { headers: [], factory: undefined, input: undefined };
+  const state = { headers: [], factory: undefined, entries };
   const ctx = {
     mode: "tui",
     ui: {
@@ -151,16 +151,19 @@ function tuiContext(entries = []) {
         state.headers.push(factory);
         state.factory = factory;
       },
-      onTerminalInput: (handler) => {
-        state.input = handler;
-        return () => {
-          state.input = undefined;
-        };
-      },
     },
-    sessionManager: { getEntries: () => entries },
+    sessionManager: { getEntries: () => state.entries },
   };
   return { ctx, state };
+}
+
+/**
+ * The first message of a session: Pi appends it and fires its message_end, so
+ * the session both holds the entry and has announced it.
+ */
+function speak(session) {
+  session.state.entries.push(CONVERSATION[0]);
+  session.hooks.get("message_end")({}, session.ctx);
 }
 
 const plainTheme = {
@@ -182,6 +185,7 @@ function startSession(entries = []) {
   hooks.get("session_start")({}, ctx);
   return {
     hooks,
+    ctx,
     state,
     counted,
     header: () => state.factory(tui, plainTheme),
@@ -305,53 +309,53 @@ describe("parrot", () => {
       }
     });
 
-    test("typing during the loop flies home to the logo", () => {
+    test("a message during the loop flies home to the logo", () => {
       for (const motion of MOTIONS) {
-        const typed = loopAt(3);
+        const ended = loopAt(3);
 
         // The outro flies the resting parrot home, dropping whatever pose the
-        // loop was showing when the user typed.
+        // loop was showing when the message landed.
         assert.equal(
-          signature(frameFor(typed, motion, typed).grid),
+          signature(frameFor(ended, motion, ended).grid),
           signature(frameFor(introAt(INTRO_TICKS - 1), motion).grid),
           `${motionName(motion)} does not fly home from the resting parrot`,
         );
 
-        const landed = typed + INTRO_TICKS * FRAME_INTERVAL_MS;
+        const landed = ended + INTRO_TICKS * FRAME_INTERVAL_MS;
         for (const elapsed of [landed, landed + 60_000]) {
-          const frame = frameFor(elapsed, motion, typed);
+          const frame = frameFor(elapsed, motion, ended);
           assert.equal(
             frame.phase,
             "logo",
-            `${motionName(motion)} at ${typed}`,
+            `${motionName(motion)} at ${ended}`,
           );
           assertCanvas(frame.grid, PI_LOGO, 0, 0);
         }
       }
     });
 
-    test("typing mid-intro flies home from the step on screen", () => {
+    test("a message mid-intro flies home from the step on screen", () => {
       for (let tick = 0; tick < INTRO_TICKS; tick++) {
-        const typed = introAt(tick);
+        const ended = introAt(tick);
         assert.equal(
-          signature(frameFor(typed, MOTION, typed).grid),
-          signature(frameFor(typed, MOTION).grid),
-          `typing at intro tick ${tick} jumped`,
+          signature(frameFor(ended, MOTION, ended).grid),
+          signature(frameFor(ended, MOTION).grid),
+          `a message at intro tick ${tick} jumped`,
         );
 
         // One tick of outro per step of intro already on screen.
-        const landed = typed + (tick + 1) * FRAME_INTERVAL_MS;
+        const landed = ended + (tick + 1) * FRAME_INTERVAL_MS;
         assert.equal(
-          frameFor(landed, MOTION, typed).phase,
+          frameFor(landed, MOTION, ended).phase,
           "logo",
           `intro tick ${tick} did not land on the logo`,
         );
       }
 
-      // Typing under the logo needs no outro at all.
-      const typed = FRAME_INTERVAL_MS;
-      assert.equal(frameFor(typed, MOTION, typed).phase, "logo");
-      assertCanvas(frameFor(typed, MOTION, typed).grid, PI_LOGO, 0, 0);
+      // A message under the logo needs no outro at all.
+      const ended = FRAME_INTERVAL_MS;
+      assert.equal(frameFor(ended, MOTION, ended).phase, "logo");
+      assertCanvas(frameFor(ended, MOTION, ended).grid, PI_LOGO, 0, 0);
     });
 
     test("every frame of a greeting stays on the canvas", () => {
@@ -546,50 +550,42 @@ describe("parrot", () => {
       );
     });
 
-    test("typing stops the animation for the rest of the session", (t) => {
+    test("the first message ends the greeting for the rest of the session", (t) => {
       mockTimers(t);
       const session = startSession();
       const header = session.header();
       const logoCell = brandCell(header.render(120));
 
       t.mock.timers.tick(ANIMATION_START_MS);
+      assert.notDeepEqual(
+        brandCell(header.render(120)),
+        logoCell,
+        "the bird never landed in its loop",
+      );
 
-      // Scrolling, interrupts, and submitting are not typing: the bird stays.
-      for (const data of ["\x1b[A", "\x1b[5~", "\x03", "\x7f", "\r"]) {
-        assert.equal(
-          session.state.input(data),
-          undefined,
-          `"${data}" was consumed`,
-        );
-      }
-      t.mock.timers.tick(FRAME_INTERVAL_MS);
-      assert.notDeepEqual(brandCell(header.render(120)), logoCell);
-
-      // A typed character ends the greeting, and the header keeps the logo.
-      assert.equal(session.state.input("h"), undefined);
+      // The first message sends the bird home, and the header keeps the logo.
+      speak(session);
       t.mock.timers.tick(INTRO_TICKS * FRAME_INTERVAL_MS);
       assert.deepEqual(brandCell(header.render(120)), logoCell);
 
-      // The clock stops for good, the listener goes, the bird never returns.
+      // The clock stops for good, the bird never returns.
       const rendersAtRest = session.counted.renders;
       t.mock.timers.tick(60_000);
       assert.equal(session.counted.renders, rendersAtRest);
       assert.deepEqual(brandCell(header.render(120)), logoCell);
-      assert.equal(session.state.input, undefined);
     });
 
-    test("typing during the logo phase skips the greeting entirely", (t) => {
+    test("a message during the logo phase skips the greeting entirely", (t) => {
       mockTimers(t);
       const session = startSession();
       const header = session.header();
       const logoCell = brandCell(header.render(120));
 
-      session.state.input("h");
+      speak(session);
       t.mock.timers.tick(ANIMATION_START_MS);
 
       assert.equal(session.counted.renders, 0, "a static logo needs no clock");
       assert.deepEqual(brandCell(header.render(120)), logoCell);
-      assert.equal(session.state.input, undefined);
     });
 
     test("a session already under way keeps Pi's header", (t) => {
@@ -597,7 +593,6 @@ describe("parrot", () => {
       const session = startSession(CONVERSATION);
 
       assert.deepEqual(session.state.headers, [undefined]);
-      assert.equal(session.state.input, undefined);
       t.mock.timers.tick(ANIMATION_START_MS + FRAME_INTERVAL_MS);
       assert.equal(session.counted.renders, 0);
     });
@@ -696,9 +691,6 @@ describe("parrot", () => {
           setHeader: () => {
             throw new Error("must not replace the header outside the TUI");
           },
-          onTerminalInput: () => {
-            throw new Error("must not listen for input outside the TUI");
-          },
         },
         sessionManager: {
           getEntries: () => {
@@ -708,6 +700,7 @@ describe("parrot", () => {
       };
 
       hooks.get("session_start")({}, ctx);
+      hooks.get("message_end")({}, ctx);
       hooks.get("session_shutdown")();
     });
   });
