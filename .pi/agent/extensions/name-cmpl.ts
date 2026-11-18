@@ -135,7 +135,13 @@ function formatAge(ageMs: number): string {
   return `${Math.floor(ageMs / DAY_MS)}d ago`;
 }
 
-/** Right-align the age so the "ago" suffix and the directory column line up. */
+/**
+ * Format the age and directory columns of a suggestion.
+ *
+ * `SelectList` trims leading whitespace from descriptions before rendering, so
+ * the age is padded on the right; padding on the left would be stripped and
+ * shift the directory column for shorter ages.
+ */
 function formatColumns(
   rows: { session: NamedSession; age: string }[],
 ): AutocompleteItem[] {
@@ -146,7 +152,7 @@ function formatColumns(
   return rows.map(({ session, age }) => ({
     value: session.name,
     label: session.name,
-    description: `${age.padStart(ageWidth)}  ${displayCwd(session.cwd)}`,
+    description: `${age.padEnd(ageWidth)}  ${displayCwd(session.cwd)}`,
   }));
 }
 

@@ -114,6 +114,18 @@ function complete(line, cursorCol = line.length) {
   return provider.getSuggestions([line], 0, cursorCol, options);
 }
 
+const identity = (text) => text;
+const editorTheme = {
+  borderColor: identity,
+  selectList: {
+    selectedPrefix: identity,
+    selectedText: identity,
+    description: identity,
+    scrollInfo: identity,
+    noMatch: identity,
+  },
+};
+
 describe("name-cmpl", () => {
   test("fuzzy matches session names for the /name argument", async () => {
     const suggestions = await complete("/name parr");
@@ -144,17 +156,13 @@ describe("name-cmpl", () => {
     ]);
   });
 
-  test("aligns the age and directory columns", async () => {
+  test("renders the directory column aligned", async () => {
     const suggestions = await complete("/name ");
 
-    // 9m ago / 10h ago / 3d ago render at different unpadded widths.
-    const ageEndColumns = suggestions.items.map((item) =>
-      item.description.indexOf("ago"),
-    );
-    const directoryColumns = suggestions.items.map((item) =>
-      item.description.search(/[~/]/),
-    );
-    assert.equal(new Set(ageEndColumns).size, 1);
+    const list = new SelectList(suggestions.items, 10, editorTheme.selectList);
+    const directoryColumns = list
+      .render(200)
+      .map((line) => line.search(/[~/]/));
     assert.equal(new Set(directoryColumns).size, 1);
   });
 
@@ -198,17 +206,6 @@ const OTHER_ITEMS = [
   { value: "Beta session", label: "Beta session" },
   { value: "Gamma session", label: "Gamma session" },
 ];
-const identity = (text) => text;
-const editorTheme = {
-  borderColor: identity,
-  selectList: {
-    selectedPrefix: identity,
-    selectedText: identity,
-    description: identity,
-    scrollInfo: identity,
-    noMatch: identity,
-  },
-};
 const tui = { terminal: { rows: 24 }, requestRender() {} };
 const keybindings = new KeybindingsManager(TUI_KEYBINDINGS);
 
