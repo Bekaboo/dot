@@ -70,12 +70,18 @@ writeSession("unnamed.jsonl", {
   ageMs: 5 * DAY_MS,
 });
 
-const { CombinedAutocompleteProvider } = await import("@earendil-works/pi-tui");
+const {
+  CombinedAutocompleteProvider,
+  KeybindingsManager,
+  SelectList,
+  TUI_KEYBINDINGS,
+} = await import("@earendil-works/pi-tui");
 const { default: nameCompletion } = await import("../extensions/name-cmpl.ts");
 
-/** Load the extension and return its wrapper around Pi's combined provider. */
-function loadProvider() {
+/** Load the extension and return its provider wrapper and editor factory. */
+function loadExtension() {
   let wrapProvider;
+  let editorFactory;
   nameCompletion({
     on: (name, handler) => {
       if (name !== "session_start") return;
@@ -86,15 +92,22 @@ function loadProvider() {
             addAutocompleteProvider: (factory) => {
               wrapProvider = factory;
             },
+            getEditorComponent: () => undefined,
+            setEditorComponent: (factory) => {
+              editorFactory = factory;
+            },
           },
         },
       );
     },
   });
-  return wrapProvider(new CombinedAutocompleteProvider([], root));
+  return {
+    provider: wrapProvider(new CombinedAutocompleteProvider([], root)),
+    editorFactory,
+  };
 }
 
-const provider = loadProvider();
+const { provider, editorFactory } = loadExtension();
 const options = { signal: new AbortController().signal };
 
 function complete(line, cursorCol = line.length) {
@@ -177,5 +190,173 @@ describe("name-cmpl", () => {
   test("leaves other input to the wrapped provider", async () => {
     assert.equal(await complete("hello parr"), null);
     assert.equal(await complete("/name"), null);
+  });
+});
+
+const OTHER_ITEMS = [
+  { value: "Alpha session", label: "Alpha session" },
+  { value: "Beta session", label: "Beta session" },
+  { value: "Gamma session", label: "Gamma session" },
+];
+const identity = (text) => text;
+const editorTheme = {
+  borderColor: identity,
+  selectList: {
+    selectedPrefix: identity,
+    selectedText: identity,
+    description: identity,
+    scrollInfo: identity,
+    noMatch: identity,
+  },
+};
+const tui = { terminal: { rows: 24 }, requestRender() {} };
+const keybindings = new KeybindingsManager(TUI_KEYBINDINGS);
+
+/** Create the extension's editor with the given prompt text. */
+function createEditor(line) {
+  const editor = editorFactory(tui, editorTheme, keybindings);
+  editor.setText(line);
+  return editor;
+}
+
+/**
+ * Open a menu on the editor the way its autocomplete request would.
+ *
+ * Without `items`, the extension's provider builds them from the editor text.
+ * `items` stands in for a menu the wrapped provider returned for the same line.
+ */
+async function openMenu(editor, items) {
+  const line = editor.getText();
+  const suggestions = await complete(line);
+  editor.autocompleteProvider = provider;
+  // A delegated menu still replaces the typed argument, so fall back to it.
+  editor.autocompletePrefix =
+    suggestions?.prefix ?? line.slice("/name ".length);
+  editor.autocompleteList = new SelectList(
+    items ?? suggestions.items,
+    5,
+    editorTheme.selectList,
+  );
+  editor.autocompleteState = "regular";
+  return items ?? suggestions.items;
+}
+
+describe("name-cmpl editor", () => {
+  test("enter submits the typed argument instead of an entry", async () => {
+    const editor = createEditor("/name parr");
+    const submitted = [];
+    editor.onSubmit = (text) => submitted.push(text);
+    await openMenu(editor);
+
+    editor.handleInput("\r");
+
+    assert.deepEqual(submitted, ["/name parr"]);
+    assert.equal(editor.isShowingAutocomplete(), false);
+  });
+
+  test("opens the menu with no highlighted entry", async () => {
+    const editor = createEditor("/name ");
+    const items = await openMenu(editor);
+
+    const menu = editor.render(80).filter((line) => line.includes("ago"));
+    assert.equal(editor.autocompleteList.getSelectedItem(), null);
+    assert.equal(menu.length, items.length);
+    assert.ok(menu.every((line) => !line.includes("\u2192")));
+  });
+
+  test("down selects the first entry and enter applies it", async () => {
+    const editor = createEditor("/name ");
+    const items = await openMenu(editor);
+
+    editor.handleInput("\x1b[B");
+
+    assert.equal(
+      editor.autocompleteList.getSelectedItem().value,
+      items[0].value,
+    );
+    editor.handleInput("\r");
+    assert.equal(editor.getText(), `/name ${items[0].value}`);
+  });
+
+  test("up selects the last entry", async () => {
+    const editor = createEditor("/name ");
+    const items = await openMenu(editor);
+
+    editor.handleInput("\x1b[A");
+
+    assert.equal(
+      editor.autocompleteList.getSelectedItem().value,
+      items[items.length - 1].value,
+    );
+  });
+
+  test("a fully typed name is still not pre-selected", async () => {
+    const name = "Pi parrot extension";
+    const editor = createEditor(`/name ${name}`);
+    const submitted = [];
+    editor.onSubmit = (text) => submitted.push(text);
+    await openMenu(editor);
+
+    editor.render(80);
+    assert.equal(editor.autocompleteList.getSelectedItem(), null);
+    editor.handleInput("\r");
+    assert.deepEqual(submitted, [`/name ${name}`]);
+  });
+
+  test("escape closes the menu without submitting", async () => {
+    const editor = createEditor("/name ");
+    const submitted = [];
+    editor.onSubmit = (text) => submitted.push(text);
+    await openMenu(editor);
+
+    editor.handleInput("\x1b");
+
+    assert.equal(editor.isShowingAutocomplete(), false);
+    assert.deepEqual(submitted, []);
+  });
+
+  test("a menu rebuilt for a new argument is unselected again", async () => {
+    const editor = createEditor("/name p");
+    await openMenu(editor);
+    editor.render(80);
+    editor.handleInput("\x1b[B");
+    assert.ok(editor.autocompleteList.getSelectedItem());
+
+    editor.setText("/name pa");
+    await openMenu(editor);
+    editor.render(80);
+
+    assert.equal(editor.autocompleteList.getSelectedItem(), null);
+  });
+
+  test("keeps the initial selection of menus from the wrapped provider", async () => {
+    const editor = createEditor("/name zzzz");
+    const submitted = [];
+    editor.onSubmit = (text) => submitted.push(text);
+    await openMenu(editor, OTHER_ITEMS);
+
+    editor.handleInput("\r");
+
+    assert.deepEqual(submitted, []);
+    assert.equal(editor.getText(), `/name ${OTHER_ITEMS[0].value}`);
+  });
+
+  test("keeps the initial selection of menus outside /name", () => {
+    const editor = createEditor("hello ");
+    editor.autocompleteProvider = provider;
+    editor.autocompletePrefix = "hello";
+    editor.autocompleteList = new SelectList(
+      OTHER_ITEMS,
+      5,
+      editorTheme.selectList,
+    );
+    editor.autocompleteState = "regular";
+
+    editor.handleInput("\x1b[B");
+
+    assert.equal(
+      editor.autocompleteList.getSelectedItem().value,
+      OTHER_ITEMS[1].value,
+    );
   });
 });

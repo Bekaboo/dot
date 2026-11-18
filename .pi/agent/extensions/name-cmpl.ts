@@ -12,13 +12,18 @@
  * `listAll` reads all session files, so the result is cached for
  * `SESSIONS_CACHE_TTL_MS` and shared by concurrent requests; typing the
  * argument triggers one scan per TTL, not one per keystroke.
+ *
+ * The menu opens without a highlighted entry, so Enter submits the argument
+ * that was typed and `tui.select.up`/`tui.select.down` start the selection.
  */
 
 import { homedir } from "node:os";
 import { sep } from "node:path";
 
 import {
+  CustomEditor,
   type ExtensionAPI,
+  type KeybindingsManager,
   SessionManager,
 } from "@earendil-works/pi-coding-agent";
 
@@ -26,13 +31,25 @@ import {
   type AutocompleteItem,
   type AutocompleteProvider,
   type AutocompleteSuggestions,
+  type EditorTheme,
   fuzzyFilter,
+  type SelectList,
+  type TUI,
 } from "@earendil-works/pi-tui";
 
 /** A `/name` line at the start of the message, capturing the argument typed so far. */
 const NAME_ARGUMENT_PATTERN = /^\s*\/name\s+([^\n]*)$/;
 
 const MAX_SUGGESTIONS = 20;
+
+/** Selection index for a menu with no highlighted entry; `SelectList` starts at 0. */
+const NO_SELECTION = -1;
+
+/** Marks suggestion arrays built here, so the editor can recognise its menu. */
+const NAME_SUGGESTIONS: unique symbol = Symbol("name-completion-suggestions");
+
+/** Name suggestions, tagged for `NameCompletionEditor`. */
+type NameSuggestions = AutocompleteItem[] & { [NAME_SUGGESTIONS]?: true };
 
 const SESSIONS_CACHE_TTL_MS = 30_000;
 
@@ -172,7 +189,9 @@ function createProvider(current: AutocompleteProvider): AutocompleteProvider {
         session,
         age: formatAge(now - session.modified.getTime()),
       }));
-      return { prefix, items: formatColumns(rows) };
+      const items: NameSuggestions = formatColumns(rows);
+      items[NAME_SUGGESTIONS] = true;
+      return { prefix, items };
     },
 
     applyCompletion(lines, cursorLine, cursorCol, item, prefix) {
@@ -194,8 +213,102 @@ function createProvider(current: AutocompleteProvider): AutocompleteProvider {
   };
 }
 
+/**
+ * Editor that keeps the `/name` menu free of an initial selection.
+ *
+ * Pi's editor highlights the first autocomplete entry as soon as a menu opens
+ * and Enter applies that entry before submitting, so `/name <typed>` became
+ * `/name <first session name>`. Here the menu opens with nothing highlighted,
+ * which leaves Enter submitting the typed argument, and `tui.select.up` /
+ * `tui.select.down` start an explicit selection. While nothing is selected Tab
+ * does nothing; once an entry is selected, Tab and Enter apply it.
+ *
+ * A menu is recognised by the marker on the suggestion array built in
+ * `getSuggestions`, not by the editor text, so a menu that the wrapped provider
+ * returned for the same `/name` line (for example a Tab-triggered path menu)
+ * keeps its normal pre-selection.
+ *
+ * `autocompleteList`, `SelectList.items` and `SelectList.selectedIndex` are
+ * private in the pi-tui typings and no public option controls the initial
+ * selection, so they are reached through narrowed casts. Drop the casts once
+ * pi-tui exposes a way to open a menu unselected.
+ */
+class NameCompletionEditor extends CustomEditor {
+  // Named apart from CustomEditor's own `keybindings` field to avoid shadowing it.
+  private readonly selectKeybindings: KeybindingsManager;
+  private nameMenu?: SelectList;
+
+  constructor(tui: TUI, theme: EditorTheme, keybindings: KeybindingsManager) {
+    super(tui, theme, keybindings, { embedWorkingStatus: true });
+    this.selectKeybindings = keybindings;
+  }
+
+  render(width: number): string[] {
+    this.prepareNameMenu();
+    return super.render(width);
+  }
+
+  /**
+   * Handle the first selection key on a freshly opened `/name` menu.
+   *
+   * Down picks the first entry. Up also starts at the first entry and lets
+   * `SelectList` wrap, so both ends of the list stay one press away.
+   */
+  handleInput(data: string): void {
+    const list = this.prepareNameMenu();
+    if (list && list.getSelectedItem() === null) {
+      if (this.selectKeybindings.matches(data, "tui.select.down")) {
+        list.setSelectedIndex(0);
+        return;
+      }
+      if (this.selectKeybindings.matches(data, "tui.select.up")) {
+        list.setSelectedIndex(0);
+        list.handleInput(data);
+        return;
+      }
+    }
+    super.handleInput(data);
+  }
+
+  /**
+   * Return the completion list while the open menu holds this extension's
+   * suggestions, clearing the pre-selection of a list that was just rebuilt
+   * for the current keystroke.
+   *
+   * @returns The menu's list for a name suggestion set, otherwise undefined
+   *   for other menus and for a closed menu.
+   */
+  private prepareNameMenu(): SelectList | undefined {
+    if (!this.isShowingAutocomplete()) {
+      this.nameMenu = undefined;
+      return undefined;
+    }
+    const list = (this as unknown as { autocompleteList?: SelectList })
+      .autocompleteList;
+    if (!list) return undefined;
+    if (list === this.nameMenu) return list;
+    const items = (list as unknown as { items?: NameSuggestions }).items;
+    if (!items?.[NAME_SUGGESTIONS]) {
+      this.nameMenu = undefined;
+      return undefined;
+    }
+    (list as unknown as { selectedIndex: number }).selectedIndex = NO_SELECTION;
+    this.nameMenu = list;
+    return list;
+  }
+}
+
 export default function (pi: ExtensionAPI): void {
   pi.on("session_start", (_event, ctx) => {
+    // The app drops autocomplete wrappers on every session switch and reload
+    // (`resetExtensionUI`), so the provider has to be added again each time.
     ctx.ui.addAutocompleteProvider((current) => createProvider(current));
+    // Another extension's editor already owns the input; replacing it would
+    // lose that editor, so the safer default behaviour stays in place.
+    if (ctx.ui.getEditorComponent()) return;
+    ctx.ui.setEditorComponent(
+      (tui, theme, keybindings) =>
+        new NameCompletionEditor(tui, theme, keybindings),
+    );
   });
 }
