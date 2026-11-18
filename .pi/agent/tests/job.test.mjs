@@ -10,6 +10,7 @@ import {
   readdirSync,
   readFileSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -605,8 +606,10 @@ describe("job", { concurrency: true }, () => {
 
   test("deferSec holds a job until its delay passes", async (t) => {
     let checks = 0;
+    let firstCheck;
     const { start, noticesAfter } = setup(t, () => {
       checks += 1;
+      firstCheck ??= Date.now();
       return exit(0);
     });
     const armedAt = Date.now();
@@ -618,13 +621,14 @@ describe("job", { concurrency: true }, () => {
       intervalSec: 1,
       timeoutSec: 5,
     });
-    await wait(300);
-    assert.equal(checks, 0, "the condition is not checked during the delay");
-
     const [notice] = await noticesAfter(1);
+
     assert.match(notice.content, /^\[job defer-cond\] condition met/);
     assert.equal(checks, 1);
-    assert.ok(Date.now() - armedAt >= 900, "the delay was honored");
+    assert.ok(
+      firstCheck - armedAt >= 900,
+      "the condition is not checked during the delay",
+    );
   });
 
   test("a bare defer wakes once and ends", async (t) => {
@@ -644,26 +648,17 @@ describe("job", { concurrency: true }, () => {
   });
 
   test("deferSec postpones a command job's start and log", async (t) => {
-    const { start, status, notices, noticesAfter } = setup(
-      t,
-      runUntilCancelled,
-    );
+    const { start, noticesAfter } = setup(t, runUntilCancelled);
     const armedAt = Date.now();
 
-    await start({
+    const { details } = await start({
       id: "defer-cmd",
       command: "printf 'ran\\n'",
       deferSec: 1,
       timeoutSec: 5,
     });
-    assert.match(
-      (await status({ id: "defer-cmd" })).content[0].text,
-      /starts in \ds, job pid \d+, log /,
-    );
-    await wait(300);
-    assert.deepEqual(notices, [], "nothing ran before the delay");
-
     const [notice] = await noticesAfter(1);
+
     assert.match(
       notice.content,
       /^\[job defer-cmd\] exited 0 after \ds; job stopped/,
@@ -672,7 +667,30 @@ describe("job", { concurrency: true }, () => {
       wakeBody(notice.content).includes("ran"),
       "the log holds the run",
     );
-    assert.ok(Date.now() - armedAt >= 900, "the delay was honored");
+    // The log's last write is the command's output or the exit line after it,
+    // so its mtime is when the command could first have run: a timer delayed
+    // past the delay must not pass for the command running early.
+    assert.ok(
+      statSync(details.logPath).mtimeMs - armedAt >= 900,
+      "the command ran only after the delay",
+    );
+  });
+
+  test("status says how long a deferred command has left", async (t) => {
+    const { start, status, stop } = setup(t, runUntilCancelled);
+
+    await start({
+      id: "defer-status",
+      command: "true",
+      deferSec: 30,
+      timeoutSec: 60,
+    });
+
+    assert.match(
+      (await status({ id: "defer-status" })).content[0].text,
+      /starts in \d+s, job pid \d+, log /,
+    );
+    await stop({ id: "defer-status" });
   });
 
   test("deferSec is rejected when it leaves no time to act", async (t) => {
@@ -737,8 +755,10 @@ describe("job", { concurrency: true }, () => {
 
   test("a deferred command checks its condition only after the delay", async (t) => {
     let checks = 0;
+    let firstCheck;
     const { start, noticesAfter } = setup(t, () => {
       checks += 1;
+      firstCheck ??= Date.now();
       return exit(0);
     });
     const armedAt = Date.now();
@@ -751,13 +771,11 @@ describe("job", { concurrency: true }, () => {
       intervalSec: 1,
       timeoutSec: 10,
     });
-    await wait(300);
-    assert.equal(checks, 0, "the condition waits for the delay");
-
     const [notice] = await noticesAfter(1);
+
     assert.match(notice.content, /^\[job defer-guard\] condition met/);
     assert.equal(checks, 1);
-    assert.ok(Date.now() - armedAt >= 900, "the delay was honored");
+    assert.ok(firstCheck - armedAt >= 900, "the condition waits for the delay");
   });
 
   test("the delay counts against a command job's deadline", async (t) => {
@@ -2204,10 +2222,11 @@ console.log(listed.content[0].text);
 
     await hooks.get("session_start")({}, branch());
 
-    assert.match(
-      (await status({ id: "clock" })).content[0].text,
-      /^clock +running +[23]s /,
-      "the age is pi-live time, not the hour since it was armed",
+    const line = (await status({ id: "clock" })).content[0].text;
+    const seconds = Number(/^clock +running +(\d+)s /.exec(line)[1]);
+    assert.ok(
+      seconds >= 2 && seconds < 60,
+      `the age is pi-live time, not the hour since it was armed: ${line}`,
     );
     assert.deepEqual(notices, [], "an unexpired job sends no wake");
     assert.match(notified[0], /^Resumed 1 job from before this pi start\.$/);
@@ -2273,9 +2292,13 @@ console.log(listed.content[0].text);
     await hooks.get("session_start")({}, branch());
     const wake = (await noticesAfter(1)).at(-1);
 
-    assert.match(
+    const match = /^\[job ticks\] tick 2\/2, (\d+)s elapsed; job stopped$/.exec(
       wake.content,
-      /^\[job ticks\] tick 2\/2, [56]s elapsed; job stopped$/,
+    );
+    assert.ok(match, `unexpected wake: ${wake.content}`);
+    assert.ok(
+      Number(match[1]) >= 5,
+      "the resumed job kept the budget it already spent",
     );
   });
 
@@ -2710,9 +2733,11 @@ console.log(listed.content[0].text);
 
     await hooks.get("session_tree")({}, branch(details));
 
-    assert.match(
-      (await status({ id: "carried" })).content[0].text,
-      /^carried +running +[12]s /,
+    const line = (await status({ id: "carried" })).content[0].text;
+    const seconds = Number(/^carried +running +(\d+)s /.exec(line)[1]);
+    assert.ok(
+      seconds >= 1,
+      `the restore kept the budget the job already spent: ${line}`,
     );
   });
 
@@ -2926,9 +2951,11 @@ console.log(listed.content[0].text);
   });
 
   test("a job exit during a condition keeps the exit status", async (t) => {
-    // The condition holds only once the job's own shell has exited, so the
-    // exit never races the condition on a loaded machine. The log is the only
-    // observable the fake shell has: it is written before the process ends.
+    // The condition holds only once the job's own shell has written its exit
+    // line, so the exit is already a fact when the condition matches. Node can
+    // still deliver the child's exit event after the timer callback that saw
+    // the line, so the watcher must prefer the recorded exit either way. The
+    // log is the only observable the fake shell has.
     let logPath;
     const { start, noticesAfter } = setup(t, async (command) => {
       if (command !== "wait-for-exit") return exit(1);

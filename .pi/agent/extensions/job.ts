@@ -2571,6 +2571,12 @@ class JobRegistry {
       await this.finishJob(job, proc, proc.exit);
       return;
     }
+    // A condition or the backstop can land in the same loop turn as an exit
+    // whose event is still queued: the job's own status is the better news.
+    if (this.endedBeforeExit(proc)) {
+      await this.finishJob(job, proc, await proc.done);
+      return;
+    }
     // Out of `jobs` first: a `restore()` during the grace window must not
     // re-attach a job this loop is already killing.
     this.processes.delete(proc.id);
@@ -2590,6 +2596,29 @@ class JobRegistry {
       return;
     }
     await this.finish(job, state, line, reason);
+  }
+
+  /**
+   * Whether a watched process already ended, before Node delivered its exit.
+   *
+   * The wrapper writes its `[exit N]` line as its last act. Node delivers the
+   * child's `exit` event in the poll phase, and timers run before poll in the
+   * same loop turn, so a condition checked from a timer can see the line while
+   * `proc.exit` is still unset. The tag check keeps a job that only printed an
+   * exit-shaped line from passing for an ended one.
+   *
+   * @param proc - Process to check.
+   * @returns `true` when the process is gone and its log already has the
+   *   wrapper's exit line.
+   */
+  private endedBeforeExit(proc: JobProcess): boolean {
+    if (proc.pid === undefined || proc.child === undefined) {
+      return false;
+    }
+    return (
+      readProcessStatus(proc.logPath, proc.tag).exitCode !== null &&
+      !processAlive(proc.pid, proc.tag)
+    );
   }
 
   /**
