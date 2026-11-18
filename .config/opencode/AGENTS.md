@@ -14,6 +14,9 @@
   unless genuinely required.
 - Let unexpected errors crash: no defensive `try`-`catch`, fallbacks, or
   recovery for states that should not occur.
+- No redundant checks: if a library or upstream code already guarantees a
+  property (existence, types, size, content, etc.), you must not not re-assert
+  it. Extra guards cost readability, not safety.
 - Doc-comment non-trivial functions, methods, types, and interfaces: purpose
   and contract, `@param`/`@returns` when the signature is not self-explanatory.
 - Name constants that carry domain meaning; no magic numbers, but no trivial
