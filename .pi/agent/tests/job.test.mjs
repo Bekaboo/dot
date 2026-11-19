@@ -21,9 +21,9 @@ import {
   DEFAULT_MAX_LINES,
 } from "@earendil-works/pi-coding-agent";
 import jobExtension, {
-  BLOCKING_BASH_HINT,
-  BLOCKING_WAIT_SEC,
-  blocksAgent,
+  BASH_DEFAULT_TIMEOUT_SEC,
+  BASH_MAX_TIMEOUT_SEC,
+  BASH_TIMEOUT_DESCRIPTION,
   DEFAULT_TIMEOUT_SEC,
   JOB_TAIL_LINES,
   jobScript,
@@ -112,6 +112,14 @@ function setup(
   const tools = new Map();
   const hooks = new Map();
   const commands = new Map();
+  const bashParameters = {
+    type: "object",
+    properties: {
+      timeout: {
+        description: "Timeout in seconds (optional, no default timeout)",
+      },
+    },
+  };
   const notices = [];
   const notified = [];
   let onNotice = () => {};
@@ -122,8 +130,16 @@ function setup(
     registerCommand: (name, definition) => {
       commands.set(name, definition);
     },
-    on: (name, handler) => hooks.set(name, handler),
+    on: (name, handler) => {
+      const previous = hooks.get(name);
+      if (name === "tool_call" && previous) {
+        hooks.set(name, (event) => previous(event) ?? handler(event));
+        return;
+      }
+      hooks.set(name, handler);
+    },
     getActiveTools: () => [...activeTools],
+    getAllTools: () => [{ name: "bash", parameters: bashParameters }],
     exec: async (_bash, [_flag, command], { signal }) => {
       const { command: shell, stdin } = splitJobInput(command);
       return runCommand(shell, signal, stdin);
@@ -142,6 +158,17 @@ function setup(
   const start = (params) => call("job_start", params);
   const stop = (params) => call("job_stop", params);
   const status = (params) => call("job_status", params);
+  const toolCall = (toolName, input) => {
+    const event = { type: "tool_call", toolName, toolCallId: "call-1", input };
+    const result = hooks.get("tool_call")(event);
+    return { input: event.input, result };
+  };
+  const startAgent = (toolGuidelines = {}) => {
+    hooks.get("before_agent_start")({
+      systemPromptOptions: { toolGuidelines },
+    });
+    return toolGuidelines;
+  };
   /** Wait until the job sends `count` notifications in total. */
   const noticesAfter = (count) =>
     new Promise((resolve) => {
@@ -176,6 +203,9 @@ function setup(
     notices,
     notified,
     noticesAfter,
+    bashParameters,
+    toolCall,
+    startAgent,
     branch,
     sessionId,
   };
@@ -818,82 +848,104 @@ describe("job", { concurrency: true }, () => {
     assert.match(notice.content, /^\[job defer-old\] condition met/);
   });
 
-  test("a waiting bash call is blocked with one job_start hint", async (t) => {
-    const { hooks } = setup(t, runUntilCancelled);
-    const call = (command) =>
-      hooks.get("tool_call")({
-        type: "tool_call",
-        toolName: "bash",
-        toolCallId: "call-1",
-        input: { command },
-      });
+  test("bash without a timeout gets the default timeout", (t) => {
+    const { toolCall } = setup(t, runUntilCancelled);
 
-    for (const command of [
-      "sleep 300",
-      "sleep 300 && ./mark.sh",
-      "sudo sleep 300",
-      "PAUSE=1 sleep 300",
-      "sleep 5m",
-      "timeout 300 git push",
-      "timeout 300 true",
-      "sudo -u root sleep 300",
-      "env -i sleep 300",
-      "exec -a name sleep 300",
-      "command -p sleep 300",
-      "/usr/bin/sleep 300",
-      "> log sleep 300",
-      "sleep 1d",
-      "timeout -k 5 300 true",
-      "timeout 0 sleep 1000",
-      "if sleep 300; then echo done; fi",
-      "while sleep 300; do :; done",
-      "make build &",
-      "for i in 1 2; do sleep 300; done",
-    ]) {
-      const result = await call(command);
-      assert.equal(result?.block, true, command);
-      assert.equal(result.reason, BLOCKING_BASH_HINT, command);
-    }
+    const { input, result } = toolCall("bash", { command: "make" });
 
-    for (const command of [
-      "make build",
-      "timeout=5 make build",
-      "grep 'sleep 30' log",
-      "make build &> log",
-      "make && echo ok",
-      "sleep 7",
-      "sleep 1m",
-      "timeout 7 make build",
-      // The words are only dangerous in command position; checking whether a
-      // tool exists, or reading a file about it, must pass.
-      "command -v sleep timeout",
-      "grep sleep 5 log",
-      "man timeout",
-      "ps aux | grep sleep",
-      "timeout -s 9 5 true",
-      "sleep 7s",
-      "echo \\&",
-    ]) {
-      assert.equal(await call(command), undefined, command);
-    }
-
-    // The threshold is the boundary: just below it is pacing, at it is a hold.
-    assert.equal(blocksAgent(`sleep ${BLOCKING_WAIT_SEC - 1}`), false);
-    assert.equal(blocksAgent(`sleep ${BLOCKING_WAIT_SEC}`), true);
+    assert.equal(result, undefined);
+    assert.equal(input.timeout, BASH_DEFAULT_TIMEOUT_SEC);
   });
 
-  test("a bash wait is not blocked when job_start is inactive", async (t) => {
-    // A subagent may be restricted to bash; blocking it would leave no job
-    // tool to switch to, so the gate must stay open.
-    const { hooks } = setup(t, runUntilCancelled, { activeTools: ["bash"] });
-    const result = await hooks.get("tool_call")({
-      type: "tool_call",
-      toolName: "bash",
-      toolCallId: "call-1",
-      input: { command: "sleep 300" },
+  test("bash keeps an explicit timeout at the limit", (t) => {
+    const { toolCall } = setup(t, runUntilCancelled);
+
+    const { input, result } = toolCall("bash", {
+      command: "make",
+      timeout: BASH_MAX_TIMEOUT_SEC,
     });
 
     assert.equal(result, undefined);
+    assert.equal(input.timeout, BASH_MAX_TIMEOUT_SEC);
+  });
+
+  test("bash blocks a timeout above the limit with a job_start hint", (t) => {
+    const { toolCall } = setup(t, runUntilCancelled);
+    const timeout = BASH_MAX_TIMEOUT_SEC + 1;
+
+    const { input, result } = toolCall("bash", { command: "make", timeout });
+
+    assert.equal(result.block, true);
+    assert.match(result.reason, new RegExp(`timeout.*${timeout}s`));
+    assert.match(result.reason, /job_start.*command/);
+    assert.equal(input.timeout, timeout);
+  });
+
+  test("bash admission depends only on timeout, not command text", (t) => {
+    const { toolCall } = setup(t, runUntilCancelled);
+
+    for (const command of ["sleep 300", "make build &", "timeout 0 make"]) {
+      const { input, result } = toolCall("bash", { command });
+      assert.equal(result, undefined, command);
+      assert.equal(input.timeout, BASH_DEFAULT_TIMEOUT_SEC, command);
+    }
+  });
+
+  test("other tools are left unchanged", (t) => {
+    const { toolCall } = setup(t, runUntilCancelled);
+
+    assert.deepEqual(toolCall("read", { path: "a.txt" }), {
+      input: { path: "a.txt" },
+      result: undefined,
+    });
+  });
+
+  test("bash keeps its built-in behavior when job_start is inactive", (t) => {
+    const { toolCall, startAgent, bashParameters } = setup(
+      t,
+      runUntilCancelled,
+      { activeTools: ["bash"] },
+    );
+    const timeout = BASH_MAX_TIMEOUT_SEC + 1;
+
+    const { input, result } = toolCall("bash", { command: "make", timeout });
+    const guidelines = startAgent();
+
+    assert.equal(result, undefined);
+    assert.equal(input.timeout, timeout);
+    assert.deepEqual(guidelines, {});
+    assert.equal(
+      bashParameters.properties.timeout.description,
+      "Timeout in seconds (optional, no default timeout)",
+    );
+  });
+
+  test("the prompt and bash schema describe the timeout contract once", (t) => {
+    const { startAgent, bashParameters } = setup(t, runUntilCancelled);
+    const guidelines = { bash: ["Prefer rg over grep."] };
+
+    startAgent(guidelines);
+    startAgent(guidelines);
+
+    assert.equal(guidelines.bash[0], "Prefer rg over grep.");
+    assert.equal(guidelines.bash.length, 2);
+    assert.match(
+      guidelines.bash[1],
+      new RegExp(`killed after ${BASH_DEFAULT_TIMEOUT_SEC} seconds`),
+    );
+    assert.match(
+      guidelines.bash[1],
+      new RegExp(`above ${BASH_MAX_TIMEOUT_SEC} seconds are blocked`),
+    );
+    assert.match(guidelines.bash[1], /job_start.*command/);
+    assert.equal(
+      bashParameters.properties.timeout.description,
+      BASH_TIMEOUT_DESCRIPTION,
+    );
+    assert.match(
+      bashParameters.properties.timeout.description,
+      /long-running background jobs/,
+    );
   });
 
   test("the extension registers one tool per action", (t) => {

@@ -3,6 +3,10 @@
  *
  * Background job tools: `job_start`, `job_stop`, `job_status`.
  *
+ * While `job_start` is active, foreground bash calls default to a 120s
+ * timeout, and explicit timeouts above 300s are blocked to steer stubborn
+ * small models that favor bash over other tools toward background jobs.
+ *
  * A job combines three optional parts:
  *
  * - A background command that logs its output (`command`)
@@ -55,6 +59,7 @@ import { dirname, join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import {
   type AgentToolUpdateCallback,
+  type BeforeAgentStartEvent,
   DEFAULT_MAX_BYTES,
   DEFAULT_MAX_LINES,
   type ExtensionAPI,
@@ -68,6 +73,8 @@ import {
   type SessionEntry,
   type SessionStartEvent,
   type Theme,
+  type ToolCallEvent,
+  type ToolCallEventResult,
   type ToolDefinition,
   truncateTail,
 } from "@earendil-works/pi-coding-agent";
@@ -2954,201 +2961,77 @@ function describeStart(spec: JobSpec): string {
   return `Started \`${spec.id}\`: ${schedule}; ${ending}. Wakes arrive even after you end your turn; time while pi is closed does not count against that budget, and resuming the session resumes the job.`;
 }
 
-/** Shortest wait, in seconds, that a bash call must not hold. */
-export const BLOCKING_WAIT_SEC = 8;
+/** Default foreground bash timeout while `job_start` is active. */
+export const BASH_DEFAULT_TIMEOUT_SEC = 120;
+
+/** Longest foreground bash timeout allowed while `job_start` is active. */
+export const BASH_MAX_TIMEOUT_SEC = 600;
+
+/** Model-facing contract for the built-in bash `timeout` parameter. */
+export const BASH_TIMEOUT_DESCRIPTION =
+  `Timeout in seconds (optional, defaults to ${BASH_DEFAULT_TIMEOUT_SEC}, maximum ${BASH_MAX_TIMEOUT_SEC}). ` +
+  "Use `job_start` with `command` for long-running background jobs instead of a large bash timeout.";
+
+const BASH_TIMEOUT_GUIDELINE =
+  `bash commands without \`timeout\` are killed after ${BASH_DEFAULT_TIMEOUT_SEC} seconds, and \`timeout\` values above ${BASH_MAX_TIMEOUT_SEC} seconds are blocked. ` +
+  "Use `job_start` with `command` for long-running background jobs; a longer foreground timeout can block the agent loop unnecessarily.";
 
 /**
- * One steering message for every blocking shape, so the hint stays simple.
+ * Build the prompt hook that tells the model about the foreground bash limits.
  *
- * It names the parameter that replaces each shape: `command` for a background
- * run, `deferSec` for a delay, `condition` for a state, and `timeoutSec` for a
- * deadline.
+ * @param pi - Extension API used to inspect the active tools and bash schema.
+ * @returns Handler for `before_agent_start`.
  */
-export const BLOCKING_BASH_HINT =
-  "This command can hold the tool call waiting (`sleep`, `timeout` or a trailing `&`). Consider `job_start` instead: `command` runs it in the background and wakes you when it exits, `deferSec` starts it later, `condition` waits for a state, `onTick` with `intervalSec` runs periodic jobs, and `timeoutSec` bounds it.";
+function bashTimeoutPromptHandler(pi: ExtensionAPI) {
+  return (event: BeforeAgentStartEvent): void => {
+    if (!pi.getActiveTools().includes(START_TOOL_NAME)) return;
 
-/** Shell words that introduce a command without being the command. */
-const SEGMENT_PREFIXES = new Set([
-  "do",
-  "then",
-  "else",
-  "elif",
-  "if",
-  "while",
-  "until",
-  "{",
-  "!",
-  "time",
-]);
+    // ToolInfo shares the registered schema with the provider loadout, so this
+    // replaces the built-in "no default timeout" text in the declaration too.
+    const parameters = pi.getAllTools().find((tool) => tool.name === "bash")
+      ?.parameters as
+      | { properties?: { timeout?: { description?: string } } }
+      | undefined;
+    const timeout = parameters?.properties?.timeout;
+    if (timeout) timeout.description = BASH_TIMEOUT_DESCRIPTION;
 
-/** Wrappers whose next non-option word is the command that actually runs. */
-const WRAPPERS = new Set(["sudo", "env", "exec", "command"]);
-
-/** Options of a wrapper that take a value, per wrapper. */
-const WRAPPER_VALUES: Record<string, Set<string>> = {
-  sudo: new Set(["-u", "-g", "-p", "-C", "-U"]),
-  env: new Set(["-u", "-C", "-S", "-P"]),
-  exec: new Set(["-a"]),
-};
-
-/** Options of `timeout` that take a value, besides their `--opt=value` forms. */
-const TIMEOUT_VALUES = new Set(["-k", "--kill-after", "-s", "--signal"]);
-
-/** Seconds in one unit of a `sleep`/`timeout` duration. */
-const DURATION_UNITS: Record<string, number> = {
-  s: 1,
-  m: 60,
-  h: 3_600,
-  d: 86_400,
-};
-
-/**
- * Whether a bash command contains a shape that keeps the call waiting.
- *
- * Quoted text is ignored, and a word only counts in command position, so
- * `command -v sleep`, `grep sleep log` and `man timeout` pass. Every match
- * gets the same hint.
- *
- * @param command - Bash command from a tool call.
- * @returns `true` for `sleep N`, `timeout N`, or a trailing `&`.
- */
-export function blocksAgent(command: string): boolean {
-  const code = command.replace(/'[^']*'|"(?:[^"\\]|\\.)*"/g, " ");
-  // An escaped `\&` is an argument, not a background operator.
-  if (/(?:^|[^&\\])&\s*$/.test(code)) {
-    return true;
-  }
-  for (const segment of code.split(/[;&|\n()]+/)) {
-    const head = headWord(segment.trim().split(/\s+/).filter(Boolean));
-    if (!head) {
-      continue;
+    const { toolGuidelines } = event.systemPromptOptions;
+    const guidelines = toolGuidelines.bash ?? [];
+    toolGuidelines.bash = guidelines;
+    if (!guidelines.includes(BASH_TIMEOUT_GUIDELINE)) {
+      guidelines.push(BASH_TIMEOUT_GUIDELINE);
     }
-    if (head.verb === "timeout") {
-      const seconds = timeoutDuration(head.args);
-      // `timeout 0` means no deadline at all.
-      if (
-        seconds === 0 ||
-        (seconds !== undefined && seconds >= BLOCKING_WAIT_SEC)
-      ) {
-        return true;
-      }
-      continue;
-    }
-    if (head.verb !== "sleep") {
-      continue;
-    }
-    const seconds = firstDuration(head.args);
-    if (seconds !== undefined && seconds >= BLOCKING_WAIT_SEC) {
-      return true;
-    }
-  }
-  return false;
+  };
 }
 
 /**
- * Find the word a command segment actually runs, past redirections,
- * assignments, shell keywords and wrapper options.
+ * Build the tool hook that bounds foreground bash.
  *
- * @param words - Whitespace-separated words of one command segment.
- * @returns The command word and its arguments, or `undefined` for an empty
- *   segment.
+ * @param pi - Extension API used to check whether `job_start` is available.
+ * @returns Handler for `tool_call`.
  */
-function headWord(
-  words: readonly string[],
-): { verb: string; args: readonly string[] } | undefined {
-  let index = 0;
-  while (index < words.length) {
-    const word = words[index];
-    if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(word) || SEGMENT_PREFIXES.has(word)) {
-      index += 1;
-      continue;
+function bashTimeoutToolCallHandler(pi: ExtensionAPI) {
+  return (event: ToolCallEvent): ToolCallEventResult | undefined => {
+    if (
+      !isToolCallEventType("bash", event) ||
+      // A subagent restricted to bash has no job tool to switch to, so its bash
+      // calls keep the built-in timeout behavior.
+      !pi.getActiveTools().includes(START_TOOL_NAME)
+    ) {
+      return;
     }
-    if (/^\d*[<>]+$/.test(word)) {
-      // A bare redirection is followed by its target.
-      index += 2;
-      continue;
-    }
-    if (/^\d*[<>]+.+$/.test(word)) {
-      index += 1;
-      continue;
-    }
-    if (!WRAPPERS.has(word)) {
-      break;
-    }
-    // `command -v` and `command -V` ask where a word is, they do not run it.
-    if (word === "command" && ["-v", "-V"].includes(words[index + 1])) {
-      break;
-    }
-    index += 1;
-    while (index < words.length && words[index].startsWith("-")) {
-      const option = words[index];
-      index += 1;
-      if (!option.includes("=") && WRAPPER_VALUES[word]?.has(option)) {
-        index += 1;
-      }
-    }
-  }
-  const raw = words[index];
-  if (!raw) {
-    return undefined;
-  }
-  // A path or an escaped word still runs the same command.
-  const verb = raw.replace(/^.*\//, "").replace(/^\\/, "");
-  return { verb, args: words.slice(index + 1) };
-}
 
-/**
- * Read the first duration argument of `sleep`.
- *
- * @param args - Arguments after the command word.
- * @returns The duration in seconds, or `undefined` when there is none.
- */
-function firstDuration(args: readonly string[]): number | undefined {
-  for (const arg of args) {
-    const seconds = durationSeconds(arg);
-    if (seconds !== undefined) {
-      return seconds;
+    const timeout = event.input.timeout;
+    if (timeout !== undefined && timeout > BASH_MAX_TIMEOUT_SEC) {
+      return {
+        block: true,
+        reason:
+          `bash \`timeout\` ${timeout}s exceeds the ${BASH_MAX_TIMEOUT_SEC}s limit. ` +
+          "Use `job_start` with `command` for long-running background jobs; it returns immediately and wakes you when the job exits.",
+      };
     }
-  }
-  return undefined;
-}
-
-/**
- * Read `timeout`'s duration, skipping options that take a value.
- *
- * @param args - Arguments after the command word.
- * @returns The duration in seconds, or `undefined` when there is none.
- */
-function timeoutDuration(args: readonly string[]): number | undefined {
-  for (let index = 0; index < args.length; index += 1) {
-    const arg = args[index];
-    if (TIMEOUT_VALUES.has(arg)) {
-      index += 1;
-      continue;
-    }
-    if (/^--(?:kill-after|signal)=/.test(arg)) {
-      continue;
-    }
-    const seconds = durationSeconds(arg);
-    if (seconds !== undefined) {
-      return seconds;
-    }
-  }
-  return undefined;
-}
-
-/**
- * Parse one duration token, with the unit suffix `sleep` and `timeout` accept.
- *
- * @param token - One argument, e.g. `12`, `0.5`, or `1m`.
- * @returns The duration in seconds, or `undefined` when it is not a duration.
- */
-function durationSeconds(token: string): number | undefined {
-  const match = /^(\d+(?:\.\d+)?)([smhd]?)$/.exec(token);
-  if (!match) {
-    return undefined;
-  }
-  return Number(match[1]) * (DURATION_UNITS[match[2]] ?? 1);
+    event.input.timeout ??= BASH_DEFAULT_TIMEOUT_SEC;
+  };
 }
 
 /**
@@ -3560,19 +3443,10 @@ export default function job(pi: ExtensionAPI): void {
   // the checkpoint belong to this one. `close()` saves the elapsed time, so a
   // graceful quit does not even lose the time since the last heartbeat.
   pi.on("session_shutdown", async () => registry.close());
+  pi.on("tool_call", () => registry.clearPending());
 
-  // Any tool call means the agent acted on the last wake, so the next tick may
-  // be delivered again. `agent_start` covers runs that begin without a tool.
-  // A bash call that waits holds the turn, which is what a job exists to
-  // avoid; the hint arrives only once the pattern is already there, so it
-  // cannot prime the idiom the way a prompt rule can.
-  pi.on("tool_call", async (event) => {
-    registry.clearPending();
-    if (!isToolCallEventType("bash", event)) return;
-    // A subagent restricted to bash has no job tool to switch to, so the gate
-    // must stay open for it.
-    if (!pi.getActiveTools().includes(START_TOOL_NAME)) return;
-    if (!blocksAgent(event.input.command)) return;
-    return { block: true, reason: BLOCKING_BASH_HINT };
-  });
+  // Smaller models, especially DeepSeek v4.1 Flash, tend to default to `bash`
+  // even for long-running jobs. Steer them toward `job_start()` instead.
+  pi.on("before_agent_start", bashTimeoutPromptHandler(pi));
+  pi.on("tool_call", bashTimeoutToolCallHandler(pi));
 }
