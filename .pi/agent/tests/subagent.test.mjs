@@ -3429,4 +3429,189 @@ describe("subagent", () => {
       );
     });
   });
+
+  describe("tool rows", () => {
+    // Colors are dropped so a test reads the row as the terminal shows it,
+    // without the specific tokens a theme happens to use.
+    const theme = {
+      fg: (_color, text) => text,
+      bold: (text) => text,
+      bg: (_color, text) => text,
+    };
+    const PROMPT =
+      "Review /Users/zeng/src/auth.ts for the token-refresh bug.\nReport findings with file:line evidence.";
+
+    /** Render a tool row as plain text, one trimmed line per row. */
+    const rowOf = (component, width = 120) =>
+      component
+        .render(width)
+        .map((line) => line.replace(/\x1b\[[0-9;]*m/g, "").trimEnd());
+
+    test("a subagent row shows the id, the call's own settings, then the task", (t) => {
+      const { tool } = setup(t);
+
+      assert.deepEqual(
+        rowOf(
+          tool.renderCall({ id: "review-auth", prompt: PROMPT }, theme, {
+            expanded: false,
+          }),
+        ),
+        [
+          "subagent review-auth Review /Users/zeng/src/auth.ts for the token-refresh bug.",
+        ],
+        "an inherited model, tool loadout and cwd stay out of the row",
+      );
+      assert.deepEqual(
+        rowOf(
+          tool.renderCall(
+            {
+              id: "review-auth",
+              prompt: PROMPT,
+              model: "anthropic/claude-sonnet-4-5",
+              tools: ["read", "grep"],
+              timeoutSec: 900,
+            },
+            theme,
+            { expanded: false },
+          ),
+          200,
+        ),
+        [
+          "subagent review-auth anthropic/claude-sonnet-4-5, tools=read,grep, timeout=900s Review /Users/zeng/src/auth.ts for the token-refresh bug.",
+        ],
+      );
+    });
+
+    test("a narrow subagent row is cut, not wrapped", (t) => {
+      const { tool } = setup(t);
+
+      const rows = rowOf(
+        tool.renderCall({ id: "review-auth", prompt: PROMPT }, theme, {
+          expanded: false,
+        }),
+        40,
+      );
+
+      assert.equal(rows.length, 1);
+      assert.match(rows[0], /^subagent review-auth/);
+      assert.ok(rows[0].endsWith("..."), rows[0]);
+      assert.ok(rows[0].length <= 40, rows[0]);
+    });
+
+    test("an expanded subagent row carries the whole prompt", (t) => {
+      const { tool } = setup(t);
+
+      const rows = rowOf(
+        tool.renderCall(
+          {
+            id: "review-auth",
+            prompt: PROMPT,
+            tools: ["read"],
+            timeoutSec: 900,
+          },
+          theme,
+          { expanded: true },
+        ),
+      );
+
+      assert.deepEqual(
+        rows.slice(0, 2),
+        ["subagent review-auth", "  id: review-auth"],
+        "the settings of the call live in the arguments only",
+      );
+      assert.ok(rows.includes('  tools: ["read"]'), rows.join("\n"));
+      assert.ok(rows.includes("  timeoutSec: 900"), rows.join("\n"));
+      assert.ok(
+        rows.includes(
+          "  prompt: Review /Users/zeng/src/auth.ts for the token-refresh bug.",
+        ),
+        "the prompt appears once, under its key",
+      );
+      assert.ok(
+        rows.some(
+          (row) => row.trim() === "Report findings with file:line evidence.",
+        ),
+        rows.join("\n"),
+      );
+      assert.equal(
+        rows.filter(
+          (row) =>
+            row.trim() ===
+            "Review /Users/zeng/src/auth.ts for the token-refresh bug.",
+        ).length,
+        0,
+        "the preview does not repeat above the arguments",
+      );
+    });
+
+    test("a started subagent adds no result row of its own", async (t) => {
+      const { call, tool } = setup(t);
+      const result = await call({ id: "review-auth", prompt: "x" });
+      const row = (expanded) =>
+        rowOf(tool.renderResult(result, { expanded }, theme, {}));
+
+      assert.deepEqual(row(false), [], "the call row already names the child");
+      assert.equal(
+        row(true)[0],
+        "",
+        "an empty line sets the expanded result off from the arguments",
+      );
+      assert.match(
+        row(true).join("\n"),
+        /Subagent `review-auth` started/,
+        "the full message is one keypress away",
+      );
+    });
+
+    test("a rejected subagent call shows Pi's error, not a start row", (t) => {
+      const { tool } = setup(t);
+      // A call that never spawned a child carries no id in its details.
+      const result = {
+        content: [{ type: "text", text: "`review-auth` is already running." }],
+        details: {},
+      };
+
+      assert.deepEqual(
+        rowOf(tool.renderResult(result, { expanded: false }, theme, {})),
+        ["`review-auth` is already running."],
+      );
+    });
+
+    test("status and kill rows list the ids they act on", (t) => {
+      const { pi } = setup(t);
+      const row = (name, args) =>
+        rowOf(pi.tools.get(name).renderCall(args, theme));
+
+      assert.deepEqual(row("subagent_status", {}), ["subagent_status"]);
+      assert.deepEqual(row("subagent_status", { id: "review-auth" }), [
+        "subagent_status review-auth",
+      ]);
+      assert.deepEqual(
+        row("subagent_status", { id: ["review-auth", "scan-tests"] }),
+        ["subagent_status review-auth, scan-tests"],
+      );
+      assert.deepEqual(row("subagent_kill", { id: "review-auth" }), [
+        "subagent_kill review-auth",
+      ]);
+    });
+
+    test("a finish row previews the report's first line", () => {
+      // The finish tool is registered only in a child process.
+      process.env.PI_SUBAGENT_CHILD = "1";
+      try {
+        const pi = fakePi();
+        installSubagent(pi.api);
+
+        const rows = rowOf(
+          pi.tools
+            .get("subagent_finish")
+            .renderCall({ answer: "## Summary\n\nI read the file." }, theme),
+        );
+
+        assert.deepEqual(rows, ["subagent_finish ## Summary"]);
+      } finally {
+        delete process.env.PI_SUBAGENT_CHILD;
+      }
+    });
+  });
 });

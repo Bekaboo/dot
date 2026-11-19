@@ -81,6 +81,7 @@ import {
 
 import {
   type Component,
+  Text,
   type TUI,
   truncateToWidth,
   visibleWidth,
@@ -101,6 +102,13 @@ import {
 } from "./utils/overlay.ts";
 import { PAGE_PADDING_X, windowStart } from "./utils/page.ts";
 import { type RunState, Spinner } from "./utils/spinner.ts";
+import {
+  expandedArgs,
+  firstLine,
+  OneLine,
+  resultText,
+  toolRowHeader,
+} from "./utils/tool-row.ts";
 
 export {
   DEFAULT_TIMEOUT_SEC,
@@ -3035,6 +3043,32 @@ function bashTimeoutToolCallHandler(pi: ExtensionAPI) {
 }
 
 /**
+ * What a `job_start` call runs, waits for, and is bounded by, on one line.
+ *
+ * Every part is short by construction; the row truncates the whole line, so a
+ * long command's tail is cut rather than wrapped.
+ *
+ * @param args - Call arguments, which may still be streaming in.
+ * @returns Comma-separated parts, possibly empty for an empty call.
+ */
+function startSummary(args: JobStartInput): string {
+  const parts: string[] = [];
+  if (args.deferSec) parts.push(`in ${args.deferSec}s`);
+  if (args.command) parts.push(`$ ${firstLine(args.command)}`);
+  if (args.condition) parts.push(`until ${firstLine(args.condition)}`);
+  if (args.onTick) parts.push(`on tick ${firstLine(args.onTick)}`);
+  // A command job with no tick budget runs until it exits, so a cadence would
+  // be noise; a schedule is exactly what the other jobs do.
+  if (!args.command && args.maxTicks !== 0) {
+    parts.push(`every ${args.intervalSec ?? DEFAULT_INTERVAL_SEC}s`);
+  }
+  if (args.timeoutSec !== undefined) {
+    parts.push(`${args.command ? "deadline" : "budget"} ${args.timeoutSec}s`);
+  }
+  return parts.join(", ");
+}
+
+/**
  * Build the `job_start` tool definition.
  *
  * @param registry - Job registry shared with the session handlers.
@@ -3067,6 +3101,24 @@ function jobStartTool(
       const spec = registry.start(params, ctx?.cwd ?? process.cwd());
       return jobResult(describeStart(spec), { action: "start", ...spec });
     },
+
+    renderCall(args, theme, context) {
+      const head = toolRowHeader(START_TOOL_NAME, args.id, theme);
+      if (context.expanded) {
+        return new Text([head, ...expandedArgs(args, theme)].join("\n"), 0, 0);
+      }
+      const summary = startSummary(args);
+      return new OneLine(
+        summary ? `${head} ${theme.fg("muted", summary)}` : head,
+      );
+    },
+
+    renderResult(result, options, theme) {
+      const started = result.details?.action === "start";
+      if (started && !options.expanded) return new Text("", 0, 0);
+      const message = theme.fg("toolOutput", resultText(result));
+      return new Text(options.expanded ? `\n${message}` : message, 0, 0);
+    },
   };
 }
 
@@ -3098,6 +3150,10 @@ function jobStopTool(
         ? `; killed its job, log \`${logPath}\``
         : "";
       return jobResult(`Stopped \`${id}\`${killed}.`, { action: "stop", id });
+    },
+
+    renderCall(args, theme) {
+      return new OneLine(toolRowHeader(STOP_TOOL_NAME, args.id, theme));
     },
   };
 }
@@ -3407,6 +3463,10 @@ function jobStatusTool(
       }
       const id = requireId(params.id);
       return jobResult(registry.status(id), { action: "status", id });
+    },
+
+    renderCall(args, theme) {
+      return new OneLine(toolRowHeader(STATUS_TOOL_NAME, args.id, theme));
     },
   };
 }

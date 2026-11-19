@@ -3116,4 +3116,151 @@ console.log(listed.content[0].text);
     );
     await stop({ id: "job-h" });
   });
+
+  describe("tool rows", () => {
+    // Colors are dropped so a test reads the row as the terminal shows it,
+    // without the specific tokens a theme happens to use.
+    const theme = {
+      fg: (_color, text) => text,
+      bold: (text) => text,
+      bg: (_color, text) => text,
+    };
+    const HEREDOC = `python3 -u - <<'PY'\nprint("step 1")\nprint("step 2")\nPY`;
+
+    /** Render a tool row as plain text, one trimmed line per row. */
+    const rowOf = (component, width = 100) =>
+      component
+        .render(width)
+        .map((line) => line.replace(/\x1b\[[0-9;]*m/g, "").trimEnd());
+
+    test("a job_start row shows the command's first line and its deadline", (t) => {
+      const { tools } = setup(t, () => exit(1));
+
+      const rows = rowOf(
+        tools
+          .get("job_start")
+          .renderCall(
+            { id: "flow-watch", command: HEREDOC, timeoutSec: 7200 },
+            theme,
+            { expanded: false },
+          ),
+      );
+
+      assert.deepEqual(rows, [
+        "job_start flow-watch $ python3 -u - <<'PY', deadline 7200s",
+      ]);
+    });
+
+    test("a narrow job_start row is cut, not wrapped", (t) => {
+      const { tools } = setup(t, () => exit(1));
+
+      const rows = rowOf(
+        tools
+          .get("job_start")
+          .renderCall({ id: "flow-watch", command: HEREDOC }, theme, {
+            expanded: false,
+          }),
+        24,
+      );
+
+      assert.equal(rows.length, 1);
+      assert.ok(rows[0].endsWith("..."), rows[0]);
+      assert.ok(rows[0].length <= 24, rows[0]);
+      assert.match(rows[0], /^job_start flow-watch/);
+    });
+
+    test("an expanded job_start row carries the whole command", (t) => {
+      const { tools } = setup(t, () => exit(1));
+
+      const rows = rowOf(
+        tools
+          .get("job_start")
+          .renderCall(
+            { id: "flow-watch", command: HEREDOC, timeoutSec: 7200 },
+            theme,
+            { expanded: true },
+          ),
+      );
+
+      assert.equal(
+        rows[0],
+        "job_start flow-watch",
+        "the expanded row leaves every argument to the list below",
+      );
+      assert.ok(
+        rows.includes("  command: python3 -u - <<'PY'"),
+        rows.join("\n"),
+      );
+      assert.ok(rows.includes("  timeoutSec: 7200"), rows.join("\n"));
+      for (const line of ['print("step 1")', 'print("step 2")']) {
+        assert.ok(
+          rows.some((row) => row.trim() === line),
+          `missing ${line} in\n${rows.join("\n")}`,
+        );
+      }
+    });
+
+    test("a started job adds no result row of its own", (t) => {
+      const { tools } = setup(t, () => exit(1));
+      const jobStart = tools.get("job_start");
+      const result = {
+        content: [
+          { type: "text", text: "Started job `flow-watch`: it is running." },
+        ],
+        details: {
+          action: "start",
+          id: "flow-watch",
+          command: "sleep 1",
+          deferSec: 0,
+          intervalSec: 60,
+          maxTicks: 0,
+          timeoutSec: 7200,
+          logPath: "/tmp/jobs/flow-watch.log",
+          startedAt: Date.now(),
+        },
+      };
+      const row = (expanded) =>
+        rowOf(jobStart.renderResult(result, { expanded }, theme, {}));
+
+      assert.deepEqual(row(false), [], "the call row already names the job");
+      assert.deepEqual(
+        row(true),
+        ["", "Started job `flow-watch`: it is running."],
+        "the expanded result is set off from the arguments above it",
+      );
+    });
+
+    test("a rejected job_start shows Pi's error, not an empty row", (t) => {
+      const { tools } = setup(t, () => exit(1));
+
+      const rows = rowOf(
+        tools
+          .get("job_start")
+          .renderResult(
+            { content: [{ type: "text", text: "Invalid job id `no`" }] },
+            { expanded: false },
+            theme,
+            {},
+          ),
+      );
+
+      assert.deepEqual(rows, ["Invalid job id `no`"]);
+    });
+
+    test("stop and status rows name the job they act on", (t) => {
+      const { tools } = setup(t, () => exit(1));
+
+      assert.deepEqual(
+        rowOf(tools.get("job_stop").renderCall({ id: "flow-watch" }, theme)),
+        ["job_stop flow-watch"],
+      );
+      assert.deepEqual(rowOf(tools.get("job_status").renderCall({}, theme)), [
+        "job_status",
+      ]);
+      assert.deepEqual(
+        rowOf(tools.get("job_status").renderCall({ id: "flow-watch" }, theme)),
+        ["job_status flow-watch"],
+      );
+    });
+  });
 });

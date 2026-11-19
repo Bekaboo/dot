@@ -39,11 +39,12 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import {
   type Component,
+  Text,
   type TUI,
   truncateToWidth,
   visibleWidth,
 } from "@earendil-works/pi-tui";
-import { Type } from "typebox";
+import { type Static, Type } from "typebox";
 import {
   deliverWake,
   releaseIdleWake,
@@ -63,6 +64,13 @@ import {
   windowStart,
 } from "./utils/page.ts";
 import { type RunState, Spinner } from "./utils/spinner.ts";
+import {
+  expandedArgs,
+  firstLine,
+  OneLine,
+  resultText,
+  toolRowHeader,
+} from "./utils/tool-row.ts";
 
 export {
   DEFAULT_TIMEOUT_SEC,
@@ -363,6 +371,9 @@ const SubagentParams = Type.Object({
     }),
   ),
 });
+
+/** Input accepted by the `subagent` tool. */
+type SubagentInput = Static<typeof SubagentParams>;
 
 /** Ids accepted by `subagent_status` and `subagent_kill`. */
 const SelectionParams = Type.Optional(
@@ -2832,6 +2843,29 @@ function timeoutProblem(timeoutSec: number): string | undefined {
 }
 
 /**
+ * What a `subagent` call decides, on one line.
+ *
+ * Only settings the call states appear: an inherited model, tool loadout or
+ * working directory is what pi would use anyway, so naming it would crowd the
+ * row with defaults.
+ *
+ * @param args - Call arguments, which may still be streaming in.
+ * @returns Comma-separated parts, possibly empty for a bare call.
+ */
+function subagentSummary(args: SubagentInput): string {
+  const parts: string[] = [];
+  if (args.model) parts.push(modelLabel({ model: args.model }));
+  if (args.tools && args.tools.length > 0) {
+    parts.push(toolsLabel({ tools: args.tools }));
+  }
+  if (args.cwd) parts.push(args.cwd);
+  if (args.timeoutSec !== undefined) {
+    parts.push(timeoutLabel(args.timeoutSec));
+  }
+  return parts.join(", ");
+}
+
+/**
  * Build the `subagent` tool definition.
  *
  * @param runner - Session state that spawns and tracks the children.
@@ -2894,6 +2928,26 @@ function subagentTool(
         { id, cwd, model: selection.model, tools, timeoutSec },
       );
     },
+
+    renderCall(args, theme, context) {
+      const head = toolRowHeader("subagent", args.id, theme);
+      if (context.expanded) {
+        return new Text([head, ...expandedArgs(args, theme)].join("\n"), 0, 0);
+      }
+      const settings = subagentSummary(args);
+      const prompt = firstLine(args.prompt ?? "");
+      const row = [head];
+      if (settings) row.push(theme.fg("dim", settings));
+      if (prompt) row.push(theme.fg("muted", prompt));
+      return new OneLine(row.join(" "));
+    },
+
+    renderResult(result, options, theme) {
+      const started = (result.details as { id?: string } | undefined)?.id;
+      if (started && !options.expanded) return new Text("", 0, 0);
+      const message = theme.fg("toolOutput", resultText(result));
+      return new Text(options.expanded ? `\n${message}` : message, 0, 0);
+    },
   };
 }
 
@@ -2912,6 +2966,12 @@ function statusTool(
     parameters: StatusParams,
     async execute(_toolCallId, params) {
       return toolText(runner.status(idsOf(params.id)));
+    },
+
+    renderCall(args, theme) {
+      return new OneLine(
+        toolRowHeader("subagent_status", idsOf(args.id)?.join(", "), theme),
+      );
     },
   };
 }
@@ -2942,6 +3002,12 @@ function killTool(runner: SubagentRunner): ToolDefinition<typeof KillParams> {
           ? ` Not running: ${unknown.map(marker).join(", ")}.`
           : "";
       return toolText(`Stopped ${stopped.map(marker).join(", ")}.${kept}`);
+    },
+
+    renderCall(args, theme) {
+      return new OneLine(
+        toolRowHeader("subagent_kill", idsOf(args.id)?.join(", "), theme),
+      );
     },
   };
 }
@@ -3036,6 +3102,16 @@ function finishTool(
         ),
         terminate: true,
       };
+    },
+
+    renderCall(args, theme) {
+      const row = [
+        toolRowHeader(FINISH_TOOL, undefined, theme),
+        theme.fg("muted", firstLine(args.answer ?? "")),
+      ]
+        .filter(Boolean)
+        .join(" ");
+      return new OneLine(row);
     },
   };
 }

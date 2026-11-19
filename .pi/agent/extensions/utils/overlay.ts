@@ -28,6 +28,7 @@ import {
   visibleWidth,
 } from "@earendil-works/pi-tui";
 
+import { truncateKeepingBackground } from "./ansi.ts";
 import { bodyRows, hintLine, PAGE_PADDING_X, windowLabel } from "./page.ts";
 
 /** Cursor in front of a selected row, as pi's select lists draw it. */
@@ -95,8 +96,14 @@ export function listRow(
 ): string {
   const cursor = selected ? theme.fg("accent", SELECTED_CURSOR) : " ";
   const row = [cursor, selected ? theme.bold(label) : label, ...columns];
-  const line = truncateToWidth(row.join(" "), width, "...", true);
-  return selected ? theme.bg("selectedBg", line) : line;
+  const line = row.join(" ");
+  // The selected row paints its own band, so its cut must not clear it.
+  return selected
+    ? theme.bg(
+        "selectedBg",
+        truncateKeepingBackground(line, width, "...", true),
+      )
+    : truncateToWidth(line, width, "...", true);
 }
 
 /**
