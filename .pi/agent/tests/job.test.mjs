@@ -829,26 +829,26 @@ describe("job", { concurrency: true }, () => {
       });
 
     for (const command of [
-      "sleep 12",
-      "sleep 12 && ./mark.sh",
-      "sudo sleep 12",
-      "PAUSE=1 sleep 12",
-      "sleep 1m",
-      "timeout 100 git push",
-      "timeout 20 true",
-      "sudo -u root sleep 12",
-      "env -i sleep 12",
-      "exec -a name sleep 12",
-      "command -p sleep 12",
-      "/usr/bin/sleep 12",
-      "> log sleep 12",
+      "sleep 300",
+      "sleep 300 && ./mark.sh",
+      "sudo sleep 300",
+      "PAUSE=1 sleep 300",
+      "sleep 5m",
+      "timeout 300 git push",
+      "timeout 300 true",
+      "sudo -u root sleep 300",
+      "env -i sleep 300",
+      "exec -a name sleep 300",
+      "command -p sleep 300",
+      "/usr/bin/sleep 300",
+      "> log sleep 300",
       "sleep 1d",
-      "timeout -k 5 20 true",
+      "timeout -k 5 300 true",
       "timeout 0 sleep 1000",
-      "if sleep 12; then echo done; fi",
-      "while sleep 12; do :; done",
+      "if sleep 300; then echo done; fi",
+      "while sleep 300; do :; done",
       "make build &",
-      "for i in 1 2; do sleep 10; done",
+      "for i in 1 2; do sleep 300; done",
     ]) {
       const result = await call(command);
       assert.equal(result?.block, true, command);
@@ -862,6 +862,7 @@ describe("job", { concurrency: true }, () => {
       "make build &> log",
       "make && echo ok",
       "sleep 7",
+      "sleep 1m",
       "timeout 7 make build",
       // The words are only dangerous in command position; checking whether a
       // tool exists, or reading a file about it, must pass.
@@ -889,7 +890,7 @@ describe("job", { concurrency: true }, () => {
       type: "tool_call",
       toolName: "bash",
       toolCallId: "call-1",
-      input: { command: "sleep 12" },
+      input: { command: "sleep 300" },
     });
 
     assert.equal(result, undefined);
