@@ -2059,7 +2059,7 @@ describe("job", { concurrency: true }, () => {
     assert.match(
       result.content[0].text,
       new RegExp(
-        `^Started job \`job-ok\`: runs \`echo hi\` in the background, no tick wakes, log \`.*\\/jobs\\/job-ok-\\d+\\.log\`; wakes you when it exits or after ${DEFAULT_TIMEOUT_SEC}s of real time\\. Its own shell kills it at that deadline, even while pi is closed; it is re-attached when you resume this session, and only \`job_stop\` or the deadline ends it\\.$`,
+        `^Started job \`job-ok\`: it is running, no tick wakes, log \`.*\\/jobs\\/job-ok-\\d+\\.log\`; wakes you when it exits or after ${DEFAULT_TIMEOUT_SEC}s of real time\\. Its own shell kills it at that deadline, even while pi is closed; it is re-attached when you resume this session, and only \`job_stop\` or the deadline ends it\\.$`,
       ),
     );
     // The log outlives the wake, so it must record the outcome too.

@@ -2943,10 +2943,8 @@ function describeStart(spec: JobSpec): string {
       ? `wakes you when it exits, when the condition first exits 0 (which kills the job), or after ${spec.timeoutSec}s of real time`
       : `wakes you when it exits or after ${spec.timeoutSec}s of real time`;
     const start =
-      spec.deferSec > 0
-        ? `starts in ${spec.deferSec}s, then runs \`${spec.command}\` in the background`
-        : `runs \`${spec.command}\` in the background`;
-    return `Started job \`${spec.id}\`: ${start}, ${ticks}, log \`${spec.logPath}\`; ${ending}. Its own shell kills it at that deadline, even while pi is closed; it is re-attached when you resume this session, and only \`job_stop\` or the deadline ends it.`;
+      spec.deferSec > 0 ? `starts in ${spec.deferSec}s` : "is running";
+    return `Started job \`${spec.id}\`: it ${start}, ${ticks}, log \`${spec.logPath}\`; ${ending}. Its own shell kills it at that deadline, even while pi is closed; it is re-attached when you resume this session, and only \`job_stop\` or the deadline ends it.`;
   }
 
   if (isDeferOnlySpec(spec)) {
