@@ -10,6 +10,10 @@ import todoExtension, {
   REMIND_NEW_TASK_AFTER_TURNS,
   REMIND_STALE_LIST_AFTER_TURNS,
 } from "../extensions/todo.ts";
+import {
+  releaseIdleWake,
+  reserveIdleWake,
+} from "../extensions/utils/idle-wake.ts";
 import { VIEWPORT_RESERVE_ROWS } from "../extensions/utils/page.ts";
 
 /** Load the extension with a fake `pi` that only records registrations. */
@@ -636,6 +640,48 @@ describe("todo", () => {
       userLeft(t);
       assert.equal(messages.length, 1);
       assert.match(messages[0].message.content, /- \[ \] A/);
+    });
+
+    test("a held push dies with the session that armed it", async (t) => {
+      const { hooks, write, messages } = setup();
+      await write("- [ ] A");
+      armClock(t);
+      prompted(hooks);
+      hooks.get("tool_execution_end")({ toolName: "read" });
+      hooks.get("agent_before_settle")({ outcome: "completed", entries: [] });
+
+      // Regression: `/new` or a reload tears this instance down and invalidates
+      // its `pi`, but the held timer outlives both and fires ten minutes later.
+      // `sendMessage` then throws inside that timer callback, and pi exits on
+      // the uncaughtException.
+      hooks.get("session_shutdown")({ reason: "new" });
+      userLeft(t);
+      assert.deepEqual(messages, []);
+    });
+
+    test("a queued wake is dropped when its session ends first", async (t) => {
+      const { hooks, write, messages } = setup();
+      const sessionManager = { ...fakeSession(), getBranch: () => [] };
+      hooks.get("session_start")({}, { sessionManager });
+      await write("- [ ] A");
+      armClock(t);
+      prompted(hooks);
+      hooks.get("tool_execution_end")({ toolName: "read" });
+      hooks.get("agent_before_settle")({ outcome: "completed", entries: [] });
+
+      // Another extension's wake holds the session when this push falls due.
+      t.mock.timers.tick(CONTINUE_QUIET_SEC * 1000 - 1);
+      reserveIdleWake(sessionManager);
+      t.mock.timers.tick(1);
+      assert.deepEqual(messages, []);
+
+      // Regression, one branch deeper: a send already queued in `deliverWake`
+      // and retried until the other wake clears keeps the same stale `pi`, so
+      // it would fire after this session is gone.
+      hooks.get("session_shutdown")({ reason: "new" });
+      releaseIdleWake(sessionManager);
+      t.mock.timers.tick(1000);
+      assert.deepEqual(messages, []);
     });
 
     test("the next user message cancels the held push", async (t) => {

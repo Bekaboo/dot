@@ -1340,6 +1340,8 @@ class JobRegistry {
   private sessionId?: string;
   /** Session manager shared with the other extensions that wake Pi. */
   private session?: WakeSession;
+  /** Whether this session ended; a wake already queued must not fire. */
+  private closed = false;
   /** Whether a run is active, i.e. whether a wake would start one. */
   private busy = false;
   /** Periodic checkpoint while any job is active. */
@@ -1699,6 +1701,7 @@ class JobRegistry {
    * job outlive a reload, a restart, or a reboot.
    */
   close(): void {
+    this.closed = true;
     this.checkpoint();
     this.stopAll();
   }
@@ -2901,7 +2904,10 @@ class JobRegistry {
       this.pi.sendMessage(message, WAKE_OPTIONS);
       return;
     }
-    deliverWake(session, () => this.pi.sendMessage(message, WAKE_OPTIONS));
+    deliverWake(session, () => {
+      if (this.closed) return;
+      this.pi.sendMessage(message, WAKE_OPTIONS);
+    });
   }
 }
 

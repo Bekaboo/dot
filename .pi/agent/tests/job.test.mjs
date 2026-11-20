@@ -530,6 +530,26 @@ describe("job", { concurrency: true }, () => {
     assert.match(notice.content, /^\[job held\] condition met/);
   });
 
+  test("a queued wake is dropped when the session ends first", async (t) => {
+    const { start, notices, branch, hooks } = setup(t, () => exit(0));
+    const ctx = branch();
+    await hooks.get("session_start")({ reason: "startup" }, ctx);
+    // As pi-intercom or pi-subagents would leave it: a wake is in flight.
+    reserveIdleWake(ctx.sessionManager);
+
+    await start({ id: "gone", condition: "true", maxTicks: 0 });
+    await wait(150);
+    assert.deepEqual(notices, [], "a held wake starts no second run");
+
+    // Regression: `/new` or a reload tears the registry down and invalidates
+    // its `pi`, but the retry of this wake keeps that stale closure and fires
+    // after the session is gone, ending pi on the uncaughtException.
+    await hooks.get("session_shutdown")({ reason: "new" });
+    releaseIdleWake(ctx.sessionManager);
+    await wait(400);
+    assert.deepEqual(notices, []);
+  });
+
   test("an unopposed wake reserves the session until a run starts", async (t) => {
     const { start, noticesAfter, branch, hooks } = setup(t, () => exit(0));
     const ctx = branch();

@@ -1237,6 +1237,27 @@ describe("subagent", () => {
       assert.match(sent.message.content, /HELD/);
     });
 
+    test("a queued result is dropped when the session ends first", async (t) => {
+      const { call, ctx, pi, children } = setup(t);
+      await pi.hooks.get("session_start")({ reason: "startup" }, ctx);
+      // As pi-intercom or another extension would leave it: a wake is in flight.
+      reserveIdleWake(ctx.sessionManager);
+      await call({ id: "gone", prompt: "x" });
+      children[0].write(assistantRecord("GONE"));
+      children[0].close(0);
+
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      assert.deepEqual(pi.sent, [], "a held result starts no second run");
+
+      // Regression: `/new` or a reload tears the runner down and invalidates
+      // its `pi`, but the retry of this result keeps that stale closure and
+      // fires after the session is gone, ending pi on the uncaughtException.
+      await pi.hooks.get("session_shutdown")({ reason: "new" });
+      releaseIdleWake(ctx.sessionManager);
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      assert.deepEqual(pi.sent, []);
+    });
+
     test("a result during a run takes no reservation", async (t) => {
       const { call, ctx, pi, children } = setup(t);
       await pi.hooks.get("session_start")({ reason: "startup" }, ctx);

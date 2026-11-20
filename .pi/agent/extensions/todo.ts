@@ -707,6 +707,8 @@ class Todo {
   private running = false;
   /** Timer of the push held for the user to read the latest reply. */
   private heldPush?: ReturnType<typeof setTimeout>;
+  /** Whether this instance's session ended, which invalidates its `pi`. */
+  private closed = false;
 
   /**
    * @param pi - Extension API used to deliver a held push.
@@ -812,6 +814,17 @@ class Todo {
       this.holdNextPush = true;
       this.holdPush();
     }
+  }
+
+  /**
+   * Drop the push this instance still owes when its session ends.
+   *
+   * Session replacement and reload tear the instance down and invalidate its
+   * `pi`, so a push delivered afterwards would take the process down instead.
+   */
+  shutdown(): void {
+    this.closed = true;
+    this.cancelHeldPush();
   }
 
   /**
@@ -996,8 +1009,12 @@ class Todo {
       this.pi.sendMessage(message, WAKE_OPTIONS);
       return;
     }
-    // Another extension may be mid-wake; this one waits its turn.
-    deliverWake(this.session, () => this.pi.sendMessage(message, WAKE_OPTIONS));
+    // Another extension may be mid-wake; this one waits its turn, and a
+    // shutdown meanwhile cannot reach a send already queued there.
+    deliverWake(this.session, () => {
+      if (this.closed) return;
+      this.pi.sendMessage(message, WAKE_OPTIONS);
+    });
   }
 
   /** Hold the push for a full reading window after the latest reply. */
@@ -1180,6 +1197,7 @@ export default function todoExtension(pi: ExtensionAPI): void {
   pi.registerTool(todoEditTool(todo));
   pi.registerCommand("todos", todosCommand(todo));
   pi.on("session_start", (_event, ctx) => todo.restore(ctx));
+  pi.on("session_shutdown", () => todo.shutdown());
   pi.on("session_tree", (_event, ctx) => todo.restore(ctx));
   pi.on("input", (event, ctx) => todo.noteInput(event, ctx));
   pi.on("agent_start", (_event, ctx) => {

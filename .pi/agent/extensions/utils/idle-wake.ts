@@ -100,7 +100,9 @@ export function releaseIdleWake(session: WakeSession): void {
  * is in flight, and otherwise re-checks until the reservation clears, so the
  * message is always delivered exactly once.
  *
- * `send` may run later than this call and must stay valid until it does.
+ * `send` may run later than this call and must stay valid until it does. A
+ * caller whose session can end in that window must make `send` a no-op then:
+ * the extension API it closes over is stale from that point on.
  *
  * @param session - Session manager shared with the other extensions.
  * @param send - Sends the message with `triggerTurn` set.

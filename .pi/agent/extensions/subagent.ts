@@ -2529,9 +2529,10 @@ class SubagentRunner {
       this.pi.sendMessage(message, { deliverAs: "steer", triggerTurn: wake });
       return;
     }
-    deliverWake(session, () =>
-      this.pi.sendMessage(message, { deliverAs: "steer", triggerTurn: true }),
-    );
+    deliverWake(session, () => {
+      if (this.shuttingDown) return;
+      this.pi.sendMessage(message, { deliverAs: "steer", triggerTurn: true });
+    });
   }
 }
 
