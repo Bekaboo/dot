@@ -103,7 +103,7 @@ export const REMIND_FOLLOW_UP_TURNS = 8;
  * long-running reply cannot consume its own reading window. Any later human
  * input opens a fresh window after the next reply.
  */
-export const CONTINUE_QUIET_SEC = 300;
+export const CONTINUE_QUIET_SEC = 600;
 
 /** A held push starts its own run when the session is idle. */
 const WAKE_OPTIONS = { triggerTurn: true, deliverAs: "steer" } as const;
