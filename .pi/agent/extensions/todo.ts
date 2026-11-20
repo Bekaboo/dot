@@ -32,10 +32,11 @@
  *   blocked/cancelled. Every stop is pushed until no actionable items remain.
  *   Items the agent marks blocked wait for a user decision or any other
  *   prerequisite, so a stop with nothing actionable left is a discussion, not
- *   abandoned work. A stop within `CONTINUE_QUIET_SEC` of a human prompt is
- *   held rather than dropped: once that window passes with no further input
- *   the push goes out on its own, and later stops push immediately because
- *   the user has had their quiet window. A new human prompt starts it again.
+ *   abandoned work. After a human prompt, the first stop holds the push for a
+ *   full `CONTINUE_QUIET_SEC` reading window to avoid pushing the agent to work
+ *   without finishing current discussion with the user. Once that window
+ *   passes with no further input the push goes out on its own, and later stops
+ *   push immediately. A new human prompt starts it again.
  */
 
 import type {
@@ -90,17 +91,15 @@ export const REMIND_NEW_TASK_AFTER_TURNS = 32;
 export const REMIND_FOLLOW_UP_TURNS = 8;
 
 /**
- * Seconds after a human prompt that a stop is still their conversation.
+ * Seconds the user gets to read a reply before the first continue push.
  *
  * The continue push takes the wheel, which is what an unattended agent needs
  * and what a user asking a question must not get: the reply arrives while the
  * user is reading, and a push then sends the agent off on work they did not
  * request, see https://github.com/anthropics/claude-code/issues/41091. The
- * window is measured from the last human prompt, so any later input reopens it.
- *
- * A turn that itself outlasts the window settles with it already over, which
- * suits an agent working while nobody types; a user still reading that long
- * answer is the case this window cannot see.
+ * window starts when that reply settles, not when the user prompted, so a
+ * long-running reply cannot consume its own reading window. Any later human
+ * input opens a fresh window after the next reply.
  */
 export const CONTINUE_QUIET_SEC = 300;
 
@@ -698,15 +697,13 @@ class Todo {
   private touchedThisTurn = false;
   /** Reminder waiting to be appended to the next request. */
   private pendingHint?: string;
-  /** When a human last sent input, in epoch milliseconds; 0 before the first. */
-  private inputAt = 0;
-  /** Whether any tool ran since the last prompt or wake. */
-  private workedSinceInput = false;
+  /** Whether the next push must wait a full reading window after settling. */
+  private holdNextPush = false;
   /** Session manager a held push wakes, set by the last restore. */
   private session?: WakeSession;
   /** Whether an agent run is in flight. */
   private running = false;
-  /** Timer of the push a recent user input held back. */
+  /** Timer of the push held for the user to read the latest reply. */
   private heldPush?: ReturnType<typeof setTimeout>;
 
   /**
@@ -812,16 +809,17 @@ class Todo {
   /**
    * Steering: start the reminder windows over and note who sent the prompt.
    *
-   * A human prompt in a mode that can show them the answer marks the user
-   * present for `CONTINUE_QUIET_SEC`; a headless run or an injected wake leaves
-   * the push armed, so an unattended session still picks up its own work.
+   * A human prompt in a mode that can show them the answer gives the next
+   * reply a full reading window after it settles; a headless run or an
+   * injected wake leaves the push armed, so an unattended session still picks
+   * up its own work.
    *
    * @param event - The submitted input, including a steer sent mid-run.
    * @param ctx - Context of the input, for whether a front end can show it.
    */
   noteInput(event: InputEvent, ctx: ExtensionContext): void {
     this.resetSteering();
-    if (ctx.hasUI && event.source !== "extension") this.inputAt = Date.now();
+    if (ctx.hasUI && event.source !== "extension") this.holdNextPush = true;
   }
 
   /**
@@ -835,8 +833,7 @@ class Todo {
     this.restartIdleWindows();
     this.touchedThisTurn = false;
     this.pendingHint = undefined;
-    this.workedSinceInput = false;
-    this.inputAt = 0;
+    this.holdNextPush = false;
   }
 
   /** Restart both reminder windows from an untouched checklist. */
@@ -856,12 +853,11 @@ class Todo {
   }
 
   /**
-   * Steering: track tool work and todo calls for the turn counters and push.
+   * Steering: track todo calls for the turn counters.
    *
    * @param event - Finished tool execution.
    */
   trackToolExecution(event: ToolExecutionEndEvent): void {
-    this.workedSinceInput = true;
     if (TODO_TOOLS.has(event.toolName)) this.touchedThisTurn = true;
   }
 
@@ -946,9 +942,8 @@ class Todo {
    *
    * Items the agent marked blocked wait for a user decision or any other
    * prerequisite, so a stop with nothing actionable left is discussion and
-   * gets no push. A stop inside the quiet window of a human prompt is held
-   * instead: the user may be reading the reply, so the push waits for them to
-   * leave before it speaks for the work they left behind.
+   * gets no push. The first stop after a human prompt is held for a full
+   * reading window; subsequent stops push immediately until the user returns.
    *
    * @param event - Final boundary before the agent settles.
    * @returns A continue request with a visible message, or nothing.
@@ -959,13 +954,11 @@ class Todo {
     if (event.outcome !== "completed") {
       return undefined;
     }
-    // A reply without any tool call is discussion, not abandoned work.
-    if (!this.workedSinceInput || !hasActionable(this.items)) {
+    if (!hasActionable(this.items)) {
       return undefined;
     }
-    const quietLeftMs = CONTINUE_QUIET_SEC * 1000 - (Date.now() - this.inputAt);
-    if (quietLeftMs > 0) {
-      this.holdPush(quietLeftMs);
+    if (this.holdNextPush) {
+      this.holdPush();
       return undefined;
     }
     this.cancelHeldPush();
@@ -987,6 +980,7 @@ class Todo {
    */
   private deliverHeldPush(): void {
     this.heldPush = undefined;
+    this.holdNextPush = false;
     if (this.running || !hasActionable(this.items)) return;
     const message = this.continueEntry();
     // Without a session to reserve, Pi queues the message itself.
@@ -998,15 +992,14 @@ class Todo {
     deliverWake(this.session, () => this.pi.sendMessage(message, WAKE_OPTIONS));
   }
 
-  /**
-   * Hold the push until the quiet window of the last prompt has passed.
-   *
-   * @param delayMs - Time left in that window.
-   */
-  private holdPush(delayMs: number): void {
-    // A later stop moves the deadline, which is measured from the same input.
+  /** Hold the push for a full reading window after the latest reply. */
+  private holdPush(): void {
+    // A later stop restarts the reading window for that reply.
     this.cancelHeldPush();
-    this.heldPush = setTimeout(() => this.deliverHeldPush(), delayMs);
+    this.heldPush = setTimeout(
+      () => this.deliverHeldPush(),
+      CONTINUE_QUIET_SEC * 1000,
+    );
     // Unref'd: a held push must not be the reason the process stays alive.
     this.heldPush.unref();
   }

@@ -516,7 +516,7 @@ describe("todo", () => {
       hooks.get("input")({ source }, { hasUI });
     }
 
-    /** Move the clock past the quiet window a prompt opens. */
+    /** Move the clock through the reading window that opens at settle. */
     function userLeft(t) {
       t.mock.timers.tick(CONTINUE_QUIET_SEC * 1000);
     }
@@ -530,7 +530,7 @@ describe("todo", () => {
       const { hooks, write } = setup();
       await write("- [x] A\n- [ ] B");
       armClock(t);
-      prompted(hooks);
+      prompted(hooks, { hasUI: false });
       hooks.get("tool_execution_end")({ toolName: "read" });
       userLeft(t);
       const settle = { outcome: "completed", entries: [] };
@@ -553,7 +553,7 @@ describe("todo", () => {
       const { hooks, write, messages } = setup();
       await write("- [ ] A");
       armClock(t);
-      prompted(hooks);
+      prompted(hooks, { hasUI: false });
       hooks.get("tool_execution_end")({ toolName: "read" });
       userLeft(t);
       const settle = { outcome: "completed", entries: [] };
@@ -581,8 +581,10 @@ describe("todo", () => {
       const settle = { outcome: "completed", entries: [] };
 
       // The user asked a question and the agent just answered it.
-      t.mock.timers.tick(CONTINUE_QUIET_SEC * 1000 - 1);
       assert.equal(hooks.get("agent_before_settle")(settle), undefined);
+      assert.deepEqual(messages, []);
+
+      t.mock.timers.tick(CONTINUE_QUIET_SEC * 1000 - 1);
       assert.deepEqual(messages, []);
 
       // Nobody wrote again, so the work the agent left behind is picked up.
@@ -595,6 +597,29 @@ describe("todo", () => {
       assert.equal(messages[0].message.display, true);
       // The held push starts a run of its own, like any other wake.
       assert.equal(messages[0].options.triggerTurn, true);
+    });
+
+    test("a long reply still gets a full reading window without tool calls", async (t) => {
+      const { hooks, write, messages } = setup();
+      await write("- [ ] A");
+      armClock(t);
+      prompted(hooks);
+
+      // The model took longer than the old prompt-relative window and answered
+      // without calling a tool. The user still needs time to read that answer.
+      userLeft(t);
+      const settle = { outcome: "completed", entries: [] };
+      assert.equal(hooks.get("agent_before_settle")(settle), undefined);
+      assert.deepEqual(messages, []);
+
+      t.mock.timers.tick(CONTINUE_QUIET_SEC * 1000 - 1);
+      assert.deepEqual(messages, []);
+      t.mock.timers.tick(1);
+      assert.equal(messages.length, 1);
+      assert.match(messages[0].message.content, /- \[ \] A/);
+
+      // Once the first push went out, an autonomous stop has no reading window.
+      assert.equal(hooks.get("agent_before_settle")(settle).continue, true);
     });
 
     test("a held push wakes the session it was armed in", async (t) => {
@@ -724,8 +749,10 @@ describe("todo", () => {
       prompted(hooks);
       hooks.get("tool_execution_end")({ toolName: "read" });
       const settle = { outcome: "completed", entries: [] };
-      t.mock.timers.tick(CONTINUE_QUIET_SEC * 1000 - 1);
       assert.equal(hooks.get("agent_before_settle")(settle), undefined);
+      assert.deepEqual(messages, []);
+
+      t.mock.timers.tick(CONTINUE_QUIET_SEC * 1000 - 1);
       assert.deepEqual(messages, []);
 
       // Their window runs out like any other, with nobody writing again.
@@ -764,7 +791,7 @@ describe("todo", () => {
       const { hooks, write } = setup();
       await write("- [!] A\n- [ ] B");
       armClock(t);
-      prompted(hooks);
+      prompted(hooks, { hasUI: false });
       hooks.get("tool_execution_end")({ toolName: "read" });
       userLeft(t);
 
@@ -790,7 +817,7 @@ describe("todo", () => {
         ["- [!] waits on a peer", "- [ ] next step", ...closed].join("\n"),
       );
       armClock(t);
-      prompted(hooks);
+      prompted(hooks, { hasUI: false });
       hooks.get("tool_execution_end")({ toolName: "read" });
       userLeft(t);
 
