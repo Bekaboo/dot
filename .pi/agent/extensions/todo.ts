@@ -37,6 +37,8 @@
  *   without finishing current discussion with the user. Once that window
  *   passes with no further input the push goes out on its own, and later stops
  *   push immediately. A new human prompt starts it again.
+ *   Restoring a session with actionable items also starts that window, so a
+ *   reload or restart does not strand unfinished work.
  */
 
 import type {
@@ -786,7 +788,9 @@ class Todo {
    * Rebuild the list from the active session branch.
    *
    * The latest todo result on the branch wins, so forks and branches see the
-   * list that existed at that point in history.
+   * list that existed at that point in history. Actionable restored work gets
+   * a fresh reading window because in-memory held pushes do not survive a
+   * reload or restart.
    *
    * @param ctx - Session context providing the active branch.
    */
@@ -803,6 +807,10 @@ class Todo {
       const details = message.details as TodoDetails | undefined;
       if (typeof details?.list !== "string") continue;
       this.items = details.list;
+    }
+    if (hasActionable(this.items)) {
+      this.holdNextPush = true;
+      this.holdPush();
     }
   }
 

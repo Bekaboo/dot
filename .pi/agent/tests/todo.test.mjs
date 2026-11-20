@@ -665,14 +665,12 @@ describe("todo", () => {
       assert.deepEqual(messages, []);
     });
 
-    test("a session change forgets the user who was present", async (t) => {
-      const { hooks, write } = setup();
+    test("a restored session waits for the quiet window before continuing actionable items", async (t) => {
+      const { hooks, write, messages } = setup();
       await write("- [ ] A");
       armClock(t);
-      prompted(hooks);
-      hooks.get("tool_execution_end")({ toolName: "read" });
 
-      // A fork or resume starts a conversation the old user never typed into.
+      // A reload or restart restores the checklist but not the old timer.
       const branch = [
         {
           type: "message",
@@ -684,10 +682,20 @@ describe("todo", () => {
         },
       ];
       const sessionManager = { ...fakeSession(), getBranch: () => branch };
-      hooks.get("session_tree")({}, { sessionManager });
-      hooks.get("tool_execution_end")({ toolName: "read" });
+      hooks.get("session_start")({}, { sessionManager });
+      assert.deepEqual(messages, []);
+
+      // Even a run that settles immediately cannot bypass the restore window.
       const settle = { outcome: "completed", entries: [] };
-      assert.equal(hooks.get("agent_before_settle")(settle).continue, true);
+      assert.equal(hooks.get("agent_before_settle")(settle), undefined);
+      t.mock.timers.tick(CONTINUE_QUIET_SEC * 1000 - 1);
+      assert.deepEqual(messages, []);
+
+      // No user input arrived, so the restored work wakes on its own.
+      t.mock.timers.tick(1);
+      assert.equal(messages.length, 1);
+      assert.match(messages[0].message.content, /- \[ \] A/);
+      assert.equal(messages[0].options.triggerTurn, true);
     });
 
     test("an injected wake re-arms the push a human prompt held", async (t) => {
