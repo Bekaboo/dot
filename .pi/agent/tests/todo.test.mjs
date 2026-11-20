@@ -526,7 +526,7 @@ describe("todo", () => {
       return { getSessionId: () => "test-session" };
     }
 
-    test("stopping with actionable items asks the agent to continue once", async (t) => {
+    test("stopping with actionable items asks the agent to continue on every stop", async (t) => {
       const { hooks, write } = setup();
       await write("- [x] A\n- [ ] B");
       armClock(t);
@@ -544,7 +544,32 @@ describe("todo", () => {
       // The push teaches the status that would have kept it silent.
       assert.match(pushed.entries[0].content, /mark it \[!\] .*todo_edit/);
 
+      const pushedAgain = hooks.get("agent_before_settle")(settle);
+      assert.equal(pushedAgain.continue, true);
+      assert.match(pushedAgain.entries[0].content, /- \[ \] B/);
+    });
+
+    test("a new user message restores the quiet window after an earlier push", async (t) => {
+      const { hooks, write, messages } = setup();
+      await write("- [ ] A");
+      armClock(t);
+      prompted(hooks);
+      hooks.get("tool_execution_end")({ toolName: "read" });
+      userLeft(t);
+      const settle = { outcome: "completed", entries: [] };
+      assert.equal(hooks.get("agent_before_settle")(settle).continue, true);
+
+      // Once the first push has gone out, later stops need no further delay.
+      assert.equal(hooks.get("agent_before_settle")(settle).continue, true);
+
+      // A new human message means the next reply is their conversation again.
+      prompted(hooks);
+      hooks.get("tool_execution_end")({ toolName: "read" });
       assert.equal(hooks.get("agent_before_settle")(settle), undefined);
+      assert.deepEqual(messages, []);
+
+      userLeft(t);
+      assert.equal(messages.length, 1);
     });
 
     test("a stop while the user is still there holds the push instead of sending it", async (t) => {

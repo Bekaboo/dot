@@ -29,12 +29,13 @@
  *   only reach for `bash`;
  * - When the agent stops while items are still pending or in progress, it is
  *   reminded about them to either continue working or mark them
- *   blocked/cancelled. Items the agent marks blocked wait for a user decision
- *   or any other prerequisite, so a stop with nothing actionable left is a
- *   discussion, not abandoned work. That push only speaks for work nobody is
- *   driving, so a stop within `CONTINUE_QUIET_SEC` of a human prompt is held
- *   rather than dropped: once that window passes with no further input the
- *   push goes out on its own, because the user answered and walked away.
+ *   blocked/cancelled. Every stop is pushed until no actionable items remain.
+ *   Items the agent marks blocked wait for a user decision or any other
+ *   prerequisite, so a stop with nothing actionable left is a discussion, not
+ *   abandoned work. A stop within `CONTINUE_QUIET_SEC` of a human prompt is
+ *   held rather than dropped: once that window passes with no further input
+ *   the push goes out on its own, and later stops push immediately because
+ *   the user has had their quiet window. A new human prompt starts it again.
  */
 
 import type {
@@ -697,8 +698,6 @@ class Todo {
   private touchedThisTurn = false;
   /** Reminder waiting to be appended to the next request. */
   private pendingHint?: string;
-  /** Whether a stopped agent was pushed since the last prompt or wake. */
-  private pushedSinceInput = false;
   /** When a human last sent input, in epoch milliseconds; 0 before the first. */
   private inputAt = 0;
   /** Whether any tool ran since the last prompt or wake. */
@@ -836,7 +835,6 @@ class Todo {
     this.restartIdleWindows();
     this.touchedThisTurn = false;
     this.pendingHint = undefined;
-    this.pushedSinceInput = false;
     this.workedSinceInput = false;
     this.inputAt = 0;
   }
@@ -944,7 +942,7 @@ class Todo {
   }
 
   /**
-   * Steering: push an agent that stops with actionable items, once per input.
+   * Steering: push an agent that stops with actionable items, on every stop.
    *
    * Items the agent marked blocked wait for a user decision or any other
    * prerequisite, so a stop with nothing actionable left is discussion and
@@ -958,7 +956,7 @@ class Todo {
   pushActionable(
     event: AgentBeforeSettleEvent,
   ): AgentBeforeSettleEventResult | undefined {
-    if (event.outcome !== "completed" || this.pushedSinceInput) {
+    if (event.outcome !== "completed") {
       return undefined;
     }
     // A reply without any tool call is discussion, not abandoned work.
@@ -970,7 +968,6 @@ class Todo {
       this.holdPush(quietLeftMs);
       return undefined;
     }
-    this.pushedSinceInput = true;
     this.cancelHeldPush();
     return {
       entries: [
@@ -991,7 +988,6 @@ class Todo {
   private deliverHeldPush(): void {
     this.heldPush = undefined;
     if (this.running || !hasActionable(this.items)) return;
-    this.pushedSinceInput = true;
     const message = this.continueEntry();
     // Without a session to reserve, Pi queues the message itself.
     if (!this.session) {
