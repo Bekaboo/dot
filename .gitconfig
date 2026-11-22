@@ -192,12 +192,13 @@
 		-e '/defaultInterpreterPath/d'
 [filter "pi-settings"]
 	smudge = cat
-	; Drop machine-specific model selection
+	; Drop machine-specific model selection and extension changelog state
 	clean = jq --indent 2 'del( \
 		.hideThinkingBlock, \
 		.defaultProvider, \
 		.defaultModel, \
-		.defaultThinkingLevel \
+		.defaultThinkingLevel, \
+		.extensionChangelogVersions \
 	)'
 [filter "opencode"]
 	smudge = cat
