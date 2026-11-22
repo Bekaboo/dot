@@ -37,6 +37,8 @@ local function get_current_line()
 end
 
 ---Get current column number
+---Bytes, not characters: `col()` and `getcmdpos()` are byte offsets, matching
+---`string.sub()` offsets but not key counts, use `strchars()` for the latter
 ---@return integer
 local function get_current_col()
   return vim.fn.mode() == 'c' and vim.fn.getcmdpos() or vim.fn.col('.')
@@ -102,6 +104,8 @@ local function small_del(text_deleted, forward)
   end
   vim.g._rl_del_lock = true
 
+  -- `<Left>`/`<Del>` act on characters, `#text_deleted` counts bytes
+  local count = vim.fn.strchars(text_deleted)
   local in_cmdline = vim.fn.mode() == 'c'
   -- We want to concatenate the deleted text in the '-' register if we are
   -- deleting 'continuously'. In insert mode, 'continuously' means that, after
@@ -169,8 +173,8 @@ local function small_del(text_deleted, forward)
   -- to avoid deleting multiple indent backspaces in one `<BS>`
   return (
     (in_cmdline and '' or '<C-g>u')
-    .. (forward and '' or string.rep('<Left>', #text_deleted))
-    .. string.rep('<Del>', #text_deleted)
+    .. (forward and '' or string.rep('<Left>', count))
+    .. string.rep('<Del>', count)
   )
 end
 
@@ -254,10 +258,11 @@ function M.setup()
 
   vim.keymap.set('!', '<C-a>', function()
     local current_line = get_current_line()
+    local indent = current_line:match('^%s*')
     return '<Home>'
       .. (
         current_line:sub(1, get_current_col() - 1):match('%S')
-          and string.rep('<Right>', #current_line:match('^%s*'))
+          and string.rep('<Right>', vim.fn.strchars(indent))
         or ''
       )
   end, { expr = true, desc = 'Go to the beginning of the line' })
@@ -292,16 +297,17 @@ function M.setup()
   vim.keymap.set('!', '<M-b>', function()
     local word_before = get_word_before()
     if not str_isempty(word_before) or vim.fn.mode() == 'c' then
-      return string.rep('<Left>', #word_before)
+      return string.rep('<Left>', vim.fn.strchars(word_before))
     end
     -- No word before cursor and is in insert mode
     local current_linenr = vim.fn.line('.')
     local target_linenr = vim.fn.prevnonblank(current_linenr - 1)
     target_linenr = target_linenr ~= 0 and target_linenr or 1
     local line_str = vim.fn.getline(target_linenr) --[[@as string]]
+    word_before = get_word_before(line_str, #line_str)
     return (current_linenr == target_linenr and '' or '<End>')
       .. string.rep('<Up>', current_linenr - target_linenr)
-      .. string.rep('<Left>', #get_word_before(line_str, #line_str))
+      .. string.rep('<Left>', vim.fn.strchars(word_before))
   end, {
     expr = true,
     desc = 'Move cursor backward by word',
@@ -310,16 +316,17 @@ function M.setup()
   vim.keymap.set('!', '<M-f>', function()
     local word_after = get_word_after()
     if not str_isempty(word_after) or vim.fn.mode() == 'c' then
-      return string.rep('<Right>', #word_after)
+      return string.rep('<Right>', vim.fn.strchars(word_after))
     end
     -- No word after cursor and is in insert mode
     local current_linenr = vim.fn.line('.')
     local target_linenr = vim.fn.nextnonblank(current_linenr + 1)
     target_linenr = target_linenr ~= 0 and target_linenr or vim.fn.line('$')
     local line_str = vim.fn.getline(target_linenr) --[[@as string]]
+    word_after = get_word_after(line_str, 1)
     return (current_linenr == target_linenr and '' or '<Home>')
       .. string.rep('<Down>', target_linenr - current_linenr)
-      .. string.rep('<Right>', #get_word_after(line_str, 1))
+      .. string.rep('<Right>', vim.fn.strchars(word_after))
   end, {
     expr = true,
     desc = 'Move cursor forward by word',
