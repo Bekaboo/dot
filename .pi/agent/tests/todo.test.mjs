@@ -3,6 +3,7 @@ import test, { describe } from "node:test";
 
 import { Agent } from "@earendil-works/pi-agent-core";
 import { createAssistantMessageEventStream } from "@earendil-works/pi-ai";
+import { KeybindingsManager, TUI_KEYBINDINGS } from "@earendil-works/pi-tui";
 
 import todoExtension, {
   CONTINUE_QUIET_SEC,
@@ -905,9 +906,10 @@ describe("todo", () => {
      *
      * @param t - Node test context, used to dispose a component left open.
      * @param rows - Terminal height the component sees.
+     * @param bindings - User keybindings, as `keybindings.json` holds them.
      * @returns The fake UI and the open component.
      */
-    function fakeUI(t, rows) {
+    function fakeUI(t, rows, bindings = {}) {
       let component;
       const tui = { requestRender() {}, terminal: { rows } };
       const theme = {
@@ -930,7 +932,11 @@ describe("todo", () => {
                 closing?.dispose?.();
                 resolve();
               };
-              component = factory(tui, theme, undefined, done);
+              const keybindings = new KeybindingsManager(
+                TUI_KEYBINDINGS,
+                bindings,
+              );
+              component = factory(tui, theme, keybindings, done);
             });
           },
         },
@@ -948,12 +954,16 @@ describe("todo", () => {
       );
       await write(items.join("\n"));
 
-      const screen = fakeUI(t, rows);
+      const screen = fakeUI(t, rows, {
+        "tui.select.pageUp": ["ctrl+p"],
+        "tui.select.pageDown": ["ctrl+n"],
+      });
       const showing = commands.get("todos").handler("", {
         mode: "tui",
         ui: screen.ui,
       });
       const overlay = screen.component;
+      assert.equal(overlay.capturesViewportInput, true);
 
       /** The list as the user sees it, in a terminal this short. */
       const shown = () => {
@@ -972,14 +982,22 @@ describe("todo", () => {
       assert.match(first, /item 0\b/);
       assert.doesNotMatch(first, /item 11\b/);
 
-      // Paging down reaches the items the window hides.
-      for (let page = 0; page < 3; page += 1) overlay.handleInput("\x1b[6~");
+      // User-configured paging keys reach the items the window hides.
+      for (let page = 0; page < 3; page += 1) overlay.handleInput("\x0e");
       const later = shown();
       assert.match(later, /item 11\b/);
       assert.match(later, /Press Escape to close/);
 
+      assert.deepEqual(
+        overlay.handleMouse({ type: "wheel", wheelDelta: -100 }),
+        { handled: true },
+      );
+      assert.match(shown(), /item 0\b/, "wheel scrolling returns to the head");
+      overlay.handleMouse({ type: "wheel", wheelDelta: 100 });
+      assert.match(shown(), /item 11\b/);
+
       // Paging back up returns to the head of the list.
-      for (let page = 0; page < 3; page += 1) overlay.handleInput("\x1b[5~");
+      for (let page = 0; page < 3; page += 1) overlay.handleInput("\x10");
       assert.match(shown(), /item 0\b/);
 
       overlay.handleInput("\x1b");

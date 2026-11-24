@@ -41,6 +41,7 @@ import {
   type Component,
   Text,
   type TUI,
+  type TuiMouseEvent,
   truncateToWidth,
   visibleWidth,
 } from "@earendil-works/pi-tui";
@@ -2549,6 +2550,7 @@ class SubagentRunner {
  * is alive.
  */
 class SubagentsOverlay implements Component {
+  readonly capturesViewportInput = true;
   private readonly page: OverlayPage;
   private readonly nav: DrillDown;
   private readonly tui: TUI;
@@ -2665,6 +2667,13 @@ class SubagentsOverlay implements Component {
     );
     if (!closing) return;
     this.close();
+  }
+
+  handleMouse(event: TuiMouseEvent) {
+    return this.nav.handleMouse(
+      event,
+      this.currentRows().map((row) => row.id),
+    );
   }
 
   /**

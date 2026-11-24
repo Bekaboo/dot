@@ -24,6 +24,8 @@ import {
   type Keybinding,
   Text,
   type TUI,
+  type TuiMouseEvent,
+  type TuiMouseEventResult,
   truncateToWidth,
   visibleWidth,
 } from "@earendil-works/pi-tui";
@@ -46,6 +48,46 @@ const MOVE_KEYS: readonly [Keybinding, (page: number) => number][] = [
   ["tui.select.pageUp", (page) => -page],
   ["tui.select.pageDown", (page) => page],
 ];
+
+/**
+ * Resolve a scrolling key through pi's list keybindings.
+ *
+ * @param data - Raw input the overlay received.
+ * @param keybindings - User keybindings, read through pi's action names.
+ * @param capacity - Rows the window holds, for its page keys.
+ * @returns Rows to move, or undefined when the input is not a scroll key.
+ */
+export function scrollKeyLines(
+  data: string,
+  keybindings: KeybindingsManager,
+  capacity: number,
+): number | undefined {
+  const page = Math.max(1, capacity);
+  for (const [action, rowsOf] of MOVE_KEYS) {
+    if (keybindings.matches(data, action)) return rowsOf(page);
+  }
+  return undefined;
+}
+
+/**
+ * Route a wheel event to an overlay and keep it away from the transcript.
+ *
+ * Wheel input is consumed even at the top or bottom of the overlay: letting it
+ * fall through there would unexpectedly scroll the chat underneath.
+ *
+ * @param event - Normalized mouse event dispatched to the overlay.
+ * @param scroll - Moves the overlay by the event's logical line delta.
+ * @returns A handled result for wheel input, undefined for every other event.
+ */
+export function handleOverlayWheel(
+  event: TuiMouseEvent,
+  scroll: (lines: number) => void,
+): TuiMouseEventResult | undefined {
+  if (event.type !== "wheel") return undefined;
+  const lines = event.wheelDelta ?? 0;
+  if (lines !== 0) scroll(lines);
+  return { handled: true };
+}
 
 /**
  * Pad plain text on the right to a terminal width.
@@ -374,6 +416,23 @@ export class DrillDown {
     this.viewport = undefined;
   }
 
+  /**
+   * Scroll the list or open detail with the pointer over the overlay.
+   *
+   * @param event - Normalized mouse event dispatched to the overlay.
+   * @param rows - Keys of the list rows, in order.
+   * @returns A handled wheel result, or undefined for other mouse input.
+   */
+  handleMouse(
+    event: TuiMouseEvent,
+    rows: readonly string[],
+  ): TuiMouseEventResult | undefined {
+    return handleOverlayWheel(event, (lines) => {
+      if (this.detailKey === undefined) this.moveSelection(lines, rows);
+      else this.scroll(lines);
+    });
+  }
+
   /** Move the list, or open the selected row on confirm. */
   private moveList(
     data: string,
@@ -381,14 +440,9 @@ export class DrillDown {
     rows: readonly string[],
     capacity: number,
   ): void {
-    const page = Math.max(1, capacity);
-    for (const [action, rowsOf] of MOVE_KEYS) {
-      if (!keybindings.matches(data, action)) continue;
-      this.selectedIndex = Math.max(
-        0,
-        Math.min(rows.length - 1, this.selectedIndex + rowsOf(page)),
-      );
-      this.requestRender();
+    const lines = scrollKeyLines(data, keybindings, capacity);
+    if (lines !== undefined) {
+      this.moveSelection(lines, rows);
       return;
     }
     const row = rows[this.selectedIndex];
@@ -400,14 +454,23 @@ export class DrillDown {
     this.requestRender();
   }
 
+  /** Move the selected list row and redraw the window that follows it. */
+  private moveSelection(lines: number, rows: readonly string[]): void {
+    this.selectedIndex = Math.max(
+      0,
+      Math.min(rows.length - 1, this.selectedIndex + lines),
+    );
+    this.requestRender();
+  }
+
   /** Scroll the open detail with the list keys. */
   private scrollDetail(data: string, keybindings: KeybindingsManager): void {
-    const page = Math.max(1, this.viewport?.capacity ?? 1);
-    for (const [action, rowsOf] of MOVE_KEYS) {
-      if (!keybindings.matches(data, action)) continue;
-      this.scroll(rowsOf(page));
-      return;
-    }
+    const lines = scrollKeyLines(
+      data,
+      keybindings,
+      this.viewport?.capacity ?? 1,
+    );
+    if (lines !== undefined) this.scroll(lines);
   }
 
   /** Move the detail window, following the end again when it reaches it. */

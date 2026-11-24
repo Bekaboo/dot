@@ -197,6 +197,25 @@ describe("overlay", () => {
       assert.equal(state().selected, 0);
     });
 
+    test("scrolls the list with wheel input and consumes it at the boundary", () => {
+      const nav = new DrillDown(() => {});
+      const rows = rowsNamed(3);
+      const state = () => nav.sync(rows, (row) => row);
+
+      assert.deepEqual(
+        nav.handleMouse({ type: "wheel", wheelDelta: 2 }, rows),
+        { handled: true },
+      );
+      assert.equal(state().selected, 2);
+      assert.deepEqual(
+        nav.handleMouse({ type: "wheel", wheelDelta: 1 }, rows),
+        { handled: true },
+        "wheel input does not fall through to the chat at the list's end",
+      );
+      assert.equal(state().selected, 2);
+      assert.equal(nav.handleMouse({ type: "move" }, rows), undefined);
+    });
+
     test("drops a detail whose row went away", () => {
       const nav = new DrillDown(() => {});
       nav.sync(["one", "two"], (row) => row);
@@ -246,6 +265,22 @@ describe("overlay", () => {
         nav.handleInput(KEYS["tui.select.pageDown"], keybindings, ["entry"], 5);
       }
       assert.equal(nav.detailWindow(20, 5), 15, "the end follows again");
+    });
+
+    test("scrolls an open detail by the wheel's line delta", () => {
+      const nav = new DrillDown(() => {});
+      nav.sync(["entry"], (row) => row);
+      nav.handleInput(KEYS["tui.select.confirm"], keybindings, ["entry"], 10);
+      assert.equal(nav.detailWindow(20, 5), 15);
+
+      nav.handleMouse({ type: "wheel", wheelDelta: -4 }, ["entry"]);
+      assert.equal(nav.detailWindow(20, 5), 11);
+      nav.handleMouse({ type: "wheel", wheelDelta: 20 }, ["entry"]);
+      assert.equal(
+        nav.detailWindow(24, 5),
+        19,
+        "reaching the end follows new detail lines again",
+      );
     });
 
     test("follows the end again after the detail shrinks to fit", () => {

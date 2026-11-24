@@ -83,6 +83,7 @@ import {
   type Component,
   Text,
   type TUI,
+  type TuiMouseEvent,
   truncateToWidth,
   visibleWidth,
 } from "@earendil-works/pi-tui";
@@ -3184,6 +3185,7 @@ interface LogTail {
  * animation runs only while one is running.
  */
 class JobsOverlay implements Component {
+  readonly capturesViewportInput = true;
   private readonly page: OverlayPage;
   private readonly nav: DrillDown;
   private readonly theme: Theme;
@@ -3278,6 +3280,13 @@ class JobsOverlay implements Component {
     );
     if (!closing) return;
     this.close();
+  }
+
+  handleMouse(event: TuiMouseEvent) {
+    return this.nav.handleMouse(
+      event,
+      this.currentRows().map((row) => row.id),
+    );
   }
 
   /**

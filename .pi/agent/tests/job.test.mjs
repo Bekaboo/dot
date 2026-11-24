@@ -1455,6 +1455,7 @@ describe("job", { concurrency: true }, () => {
       .get("jobs")
       .handler("", { mode: "tui", ui: screen.ui });
     const overlay = screen.component;
+    assert.equal(overlay.capturesViewportInput, true);
     const ids = [
       "tim1",
       "tim2",
@@ -1491,6 +1492,13 @@ describe("job", { concurrency: true }, () => {
     const later = shown();
     assert.match(later, /\btim8\b/);
     assert.match(later, /Escape to close/);
+
+    assert.deepEqual(overlay.handleMouse({ type: "wheel", wheelDelta: -100 }), {
+      handled: true,
+    });
+    const wheeled = shown();
+    assert.match(wheeled, /\btim1\b/);
+    assert.doesNotMatch(wheeled, /\btim8\b/);
 
     overlay.handleInput("\x1b");
     await showing;
@@ -1718,6 +1726,14 @@ describe("job", { concurrency: true }, () => {
     // Paging up walks back towards the oldest line.
     for (let step = 0; step < 8; step += 1) overlay.handleInput("\x1b[5~");
     assert.ok(linesOf(pageOf(overlay)).includes("line-1"), "oldest log line");
+
+    assert.deepEqual(overlay.handleMouse({ type: "wheel", wheelDelta: 100 }), {
+      handled: true,
+    });
+    assert.ok(
+      linesOf(pageOf(overlay, 200)).includes("line-40"),
+      "wheel scrolling reaches the newest log line",
+    );
 
     // Escape walks back to the list; a second one closes the overlay.
     overlay.handleInput("\x1b");

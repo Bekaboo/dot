@@ -51,6 +51,7 @@ import type {
   ExtensionCommandContext,
   ExtensionContext,
   InputEvent,
+  KeybindingsManager,
   Theme,
   ToolDefinition,
   ToolExecutionEndEvent,
@@ -60,13 +61,7 @@ import type {
 
 import { createEditToolDefinition } from "@earendil-works/pi-coding-agent";
 
-import {
-  type Component,
-  type KeyId,
-  matchesKey,
-  Text,
-  type TUI,
-} from "@earendil-works/pi-tui";
+import { type Component, Text, type TUI } from "@earendil-works/pi-tui";
 import { type Static, Type } from "typebox";
 
 import {
@@ -74,7 +69,11 @@ import {
   releaseIdleWake,
   type WakeSession,
 } from "./utils/idle-wake.ts";
-import { OverlayPage } from "./utils/overlay.ts";
+import {
+  handleOverlayWheel,
+  OverlayPage,
+  scrollKeyLines,
+} from "./utils/overlay.ts";
 import { scrolledStart } from "./utils/page.ts";
 
 /** Turns of an unchanged checklist before the agent is nudged to update it. */
@@ -612,6 +611,7 @@ function renderTodoResult(
  * @param tui - TUI the overlay renders into.
  * @param list - Checklist to display.
  * @param theme - Active theme.
+ * @param keybindings - User keybindings, read through pi's action names.
  * @param close - Closes the overlay.
  * @returns An overlay component that closes on Escape or Ctrl+C.
  */
@@ -619,6 +619,7 @@ function createTodoOverlay(
   tui: TUI,
   list: string,
   theme: Theme,
+  keybindings: KeybindingsManager,
   close: () => void,
 ): Component {
   const items = parseList(list);
@@ -636,6 +637,7 @@ function createTodoOverlay(
   let start = 0;
 
   return {
+    capturesViewportInput: true,
     render(width) {
       const capacity = page.measure(width, hint);
       start = scrolledStart(start, 0, rendered.length, capacity);
@@ -644,23 +646,22 @@ function createTodoOverlay(
     },
     invalidate: () => page.invalidate(),
     handleInput(data) {
-      if (matchesKey(data, "escape") || matchesKey(data, "ctrl+c")) {
+      if (keybindings.matches(data, "tui.select.cancel")) {
         close();
         return;
       }
       const pageRows = Math.max(1, page.rowCapacity);
-      const moves: [KeyId, number][] = [
-        ["up", -1],
-        ["down", 1],
-        ["pageUp", -pageRows],
-        ["pageDown", pageRows],
-      ];
-      for (const [key, lines] of moves) {
-        if (!matchesKey(data, key)) continue;
+      const lines = scrollKeyLines(data, keybindings, pageRows);
+      if (lines === undefined) return;
+      start = scrolledStart(start, lines, rendered.length, pageRows);
+      tui.requestRender();
+    },
+    handleMouse(event) {
+      return handleOverlayWheel(event, (lines) => {
+        const pageRows = Math.max(1, page.rowCapacity);
         start = scrolledStart(start, lines, rendered.length, pageRows);
         tui.requestRender();
-        return;
-      }
+      });
     },
   };
 }
@@ -1177,8 +1178,8 @@ function todosCommand(todo: Todo) {
         ctx.ui.notify("/todos requires interactive mode", "error");
         return;
       }
-      await ctx.ui.custom<void>((tui, theme, _kb, done) =>
-        createTodoOverlay(tui, todo.list, theme, () => done()),
+      await ctx.ui.custom<void>((tui, theme, keybindings, done) =>
+        createTodoOverlay(tui, todo.list, theme, keybindings, () => done()),
       );
     },
   };

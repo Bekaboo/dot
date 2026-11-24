@@ -2040,6 +2040,7 @@ describe("subagent", () => {
         .get("subagents")
         .handler("", { mode: "tui", ui: screen.ui });
       const overlay = screen.component;
+      assert.equal(overlay.capturesViewportInput, true);
 
       await call({ id: "chatty", prompt: "x" });
       const steps = 12;
@@ -2086,11 +2087,14 @@ describe("subagent", () => {
       );
       assert.match(earlier, /Escape to go back/);
 
-      for (let page = 0; page < 5; page += 1) overlay.handleInput("\x1b[6~");
+      assert.deepEqual(
+        overlay.handleMouse({ type: "wheel", wheelDelta: 100 }),
+        { handled: true },
+      );
       assert.match(
         overlay.render(100).map(plainOf).join("\n"),
         /probe-11/,
-        "paging back down follows the newest step again",
+        "wheel scrolling back down follows the newest step again",
       );
 
       // A view that follows the end keeps doing so when steps arrive later.
@@ -2172,6 +2176,16 @@ describe("subagent", () => {
       );
       assert.doesNotMatch(moved, /\bone\b/);
       assert.match(moved, /Enter for details, Escape to close/);
+
+      assert.deepEqual(
+        overlay.handleMouse({ type: "wheel", wheelDelta: -100 }),
+        { handled: true },
+      );
+      assert.match(
+        shown(),
+        new RegExp(`${SELECTED_CURSOR} +one`),
+        "wheel scrolling moves the list selection back to the first row",
+      );
 
       overlay.handleInput("\x1b");
       await showing;
