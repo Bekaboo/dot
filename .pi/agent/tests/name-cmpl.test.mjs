@@ -156,13 +156,15 @@ describe("name-cmpl", () => {
     ]);
   });
 
-  test("renders the directory column aligned", async () => {
+  test("renders the ago and directory columns aligned", async () => {
     const suggestions = await complete("/name ");
 
     const list = new SelectList(suggestions.items, 10, editorTheme.selectList);
-    const directoryColumns = list
-      .render(200)
-      .map((line) => line.search(/[~/]/));
+    const lines = list.render(200);
+    const agoColumns = lines.map((line) => line.search(/ago/));
+    const directoryColumns = lines.map((line) => line.search(/[~/]/));
+    assert.ok(lines.length > 1);
+    assert.equal(new Set(agoColumns).size, 1);
     assert.equal(new Set(directoryColumns).size, 1);
   });
 

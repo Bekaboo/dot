@@ -127,32 +127,32 @@ function displayCwd(cwd: string): string {
   return cwd;
 }
 
-/** Describe how long ago a session was last active. */
-function formatAge(ageMs: number): string {
-  if (ageMs < HOUR_MS)
-    return `${Math.max(1, Math.floor(ageMs / MINUTE_MS))}m ago`;
-  if (ageMs < DAY_MS) return `${Math.floor(ageMs / HOUR_MS)}h ago`;
-  return `${Math.floor(ageMs / DAY_MS)}d ago`;
+/** Describe how long ago a session was last active, as `<amount><unit>`. */
+function formatAmount(ageMs: number): string {
+  if (ageMs < HOUR_MS) return `${Math.max(1, Math.floor(ageMs / MINUTE_MS))}m`;
+  if (ageMs < DAY_MS) return `${Math.floor(ageMs / HOUR_MS)}h`;
+  return `${Math.floor(ageMs / DAY_MS)}d`;
 }
 
 /**
  * Format the age and directory columns of a suggestion.
  *
- * `SelectList` trims leading whitespace from descriptions before rendering, so
- * the age is padded on the right; padding on the left would be stripped and
- * shift the directory column for shorter ages.
+ * The amount is padded up to the widest one before `ago`, so `ago` and the
+ * directory start in one column for every row. `SelectList` trims leading
+ * whitespace from descriptions before rendering, so the amount cannot be
+ * right-aligned by padding its left side.
  */
 function formatColumns(
   rows: { session: NamedSession; age: string }[],
 ): AutocompleteItem[] {
-  const ageWidth = rows.reduce(
+  const amountWidth = rows.reduce(
     (width, row) => Math.max(width, row.age.length),
     0,
   );
   return rows.map(({ session, age }) => ({
     value: session.name,
     label: session.name,
-    description: `${age.padEnd(ageWidth)}  ${displayCwd(session.cwd)}`,
+    description: `${age.padEnd(amountWidth)} ago  ${displayCwd(session.cwd)}`,
   }));
 }
 
@@ -193,7 +193,7 @@ function createProvider(current: AutocompleteProvider): AutocompleteProvider {
       const now = Date.now();
       const rows = matched.slice(0, MAX_SUGGESTIONS).map((session) => ({
         session,
-        age: formatAge(now - session.modified.getTime()),
+        age: formatAmount(now - session.modified.getTime()),
       }));
       const items: NameSuggestions = formatColumns(rows);
       items[NAME_SUGGESTIONS] = true;
