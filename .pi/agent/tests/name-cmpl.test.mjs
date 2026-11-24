@@ -69,11 +69,18 @@ writeSession("unnamed.jsonl", {
   cwd: "/work/unnamed",
   ageMs: 5 * DAY_MS,
 });
+// Longer than the 30 cells `SelectList` gives a name column by default.
+writeSession("rollout.jsonl", {
+  cwd: "/work/rollout",
+  name: "Rollout sweep capacity planning",
+  ageMs: 2 * HOUR_MS,
+});
 
 const {
   CombinedAutocompleteProvider,
   KeybindingsManager,
   SelectList,
+  stripTerminalSequences,
   TUI_KEYBINDINGS,
 } = await import("@earendil-works/pi-tui");
 const { default: nameCompletion } = await import("../extensions/name-cmpl.ts");
@@ -153,6 +160,7 @@ describe("name-cmpl", () => {
       "Pi parrot extension",
       "Pi parrot extension cont.",
       "Refactor auth module",
+      "Rollout sweep capacity planning",
     ]);
   });
 
@@ -160,7 +168,9 @@ describe("name-cmpl", () => {
     const suggestions = await complete("/name ");
 
     const list = new SelectList(suggestions.items, 10, editorTheme.selectList);
-    const lines = list.render(200);
+    // A name that overflows its column is cut mid-string, which leaves an
+    // escape reset behind; measure the text a user actually sees.
+    const lines = list.render(200).map((line) => stripTerminalSequences(line));
     const agoColumns = lines.map((line) => line.search(/ago/));
     const directoryColumns = lines.map((line) => line.search(/[~/]/));
     assert.ok(lines.length > 1);
@@ -251,6 +261,19 @@ describe("name-cmpl editor", () => {
 
     assert.deepEqual(submitted, ["/name parr"]);
     assert.equal(editor.isShowingAutocomplete(), false);
+  });
+
+  test("shows a long name in full beside its age and directory", async () => {
+    const name = "Rollout sweep capacity planning";
+    const editor = createEditor("/name Rollout");
+    await openMenu(editor);
+
+    const menu = editor.render(80).filter((line) => line.includes("ago"));
+
+    assert.equal(menu.length, 1);
+    assert.ok(menu[0].includes(name));
+    assert.ok(menu[0].includes("2h"));
+    assert.ok(menu[0].includes("/work/rollout"));
   });
 
   test("opens the menu with no highlighted entry", async () => {

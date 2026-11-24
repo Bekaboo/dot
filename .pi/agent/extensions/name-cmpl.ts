@@ -35,6 +35,7 @@ import {
   fuzzyFilter,
   type SelectList,
   type TUI,
+  visibleWidth,
 } from "@earendil-works/pi-tui";
 
 /** A `/name` line at the start of the message, capturing the argument typed so far. */
@@ -44,6 +45,18 @@ const MAX_SUGGESTIONS = 20;
 
 /** Selection index for a menu with no highlighted entry; `SelectList` starts at 0. */
 const NO_SELECTION = -1;
+
+/**
+ * Cells `SelectList` uses beside the columns: the `→ `/`  ` prefix, the
+ * editor's horizontal padding, and the truncation safety margin.
+ */
+const ROW_CHROME_WIDTH = 6;
+
+/** Room kept for the age and directory before `SelectList` drops them. */
+const MIN_DESCRIPTION_WIDTH = 12;
+
+/** Gap `SelectList` leaves between the name column and the description. */
+const NAME_COLUMN_GAP = 2;
 
 /** Marks suggestion arrays built here, so the editor can recognise its menu. */
 const NAME_SUGGESTIONS: unique symbol = Symbol("name-completion-suggestions");
@@ -157,6 +170,35 @@ function formatColumns(
 }
 
 /**
+ * Widen the name column of a `/name` menu to its longest suggestion.
+ *
+ * `SelectList` fixes that column at 32 cells for menus under a `/`-prefixed
+ * prefix and cuts overflow without an ellipsis, so longer session names are
+ * lost even on a wide terminal. The column keeps `MIN_DESCRIPTION_WIDTH`
+ * cells for the age and directory, and `SelectList` still truncates a name
+ * that does not fit.
+ *
+ * @param list Menu holding this extension's suggestions.
+ * @param width Width the editor was rendered at.
+ */
+function fitNameColumn(list: SelectList, width: number): void {
+  const items = (list as unknown as { items?: AutocompleteItem[] }).items;
+  if (!items) return;
+  const widestName = items.reduce(
+    (widest, item) => Math.max(widest, visibleWidth(item.label)),
+    0,
+  );
+  const availableWidth = width - ROW_CHROME_WIDTH - MIN_DESCRIPTION_WIDTH;
+  const columnWidth = Math.min(
+    widestName + NAME_COLUMN_GAP,
+    Math.max(1, availableWidth),
+  );
+  (list as unknown as { layout: object }).layout = {
+    maxPrimaryColumnWidth: columnWidth,
+  };
+}
+
+/**
  * Wrap Pi's provider with `/name` argument completion.
  *
  * The returned prefix is the argument text only; the base provider's
@@ -234,10 +276,11 @@ function createProvider(current: AutocompleteProvider): AutocompleteProvider {
  * returned for the same `/name` line (for example a Tab-triggered path menu)
  * keeps its normal pre-selection.
  *
- * `autocompleteList`, `SelectList.items` and `SelectList.selectedIndex` are
- * private in the pi-tui typings and no public option controls the initial
- * selection, so they are reached through narrowed casts. Drop the casts once
- * pi-tui exposes a way to open a menu unselected.
+ * `autocompleteList`, `SelectList.items`, `SelectList.layout` and
+ * `SelectList.selectedIndex` are private in the pi-tui typings and no public
+ * option controls the initial selection or the column layout, so they are
+ * reached through narrowed casts. Drop the casts once pi-tui exposes a way to
+ * open a menu unselected with its own layout.
  */
 class NameCompletionEditor extends CustomEditor {
   // Named apart from CustomEditor's own `keybindings` field to avoid shadowing it.
@@ -250,7 +293,8 @@ class NameCompletionEditor extends CustomEditor {
   }
 
   render(width: number): string[] {
-    this.prepareNameMenu();
+    const list = this.prepareNameMenu();
+    if (list) fitNameColumn(list, width);
     return super.render(width);
   }
 
