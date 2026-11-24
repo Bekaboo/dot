@@ -75,6 +75,18 @@ writeSession("rollout.jsonl", {
   name: "Rollout sweep capacity planning",
   ageMs: 2 * HOUR_MS,
 });
+writeSession("archive.jsonl", {
+  cwd: "/work/archive",
+  name: "Archive sweep review",
+  ageMs: 20 * HOUR_MS,
+});
+// Deep enough that a column sized for it would flatten every name, and old
+// enough to sit below the five rows the menu shows.
+writeSession("deep.jsonl", {
+  cwd: "/work/a-very-deeply-nested/project/directory/name",
+  name: "Deep workspace session",
+  ageMs: 40 * DAY_MS,
+});
 
 const {
   CombinedAutocompleteProvider,
@@ -157,6 +169,8 @@ describe("name-cmpl", () => {
     const suggestions = await complete("/name ");
 
     assert.deepEqual(suggestions.items.map((item) => item.value).sort(), [
+      "Archive sweep review",
+      "Deep workspace session",
       "Pi parrot extension",
       "Pi parrot extension cont.",
       "Refactor auth module",
@@ -283,7 +297,7 @@ describe("name-cmpl editor", () => {
     // 60 cells leave the longest name short of its 31 cells.
     const menu = editor.render(60).filter((line) => line.includes("ago"));
 
-    assert.equal(menu.length, 4);
+    assert.equal(menu.length, 5);
     for (const directory of [
       "/work/auth-service",
       "/work/parrot",
@@ -300,13 +314,26 @@ describe("name-cmpl editor", () => {
     );
   });
 
-  test("opens the menu with no highlighted entry", async () => {
+  test("a directory outside the menu window does not shrink names", async () => {
     const editor = createEditor("/name ");
     const items = await openMenu(editor);
 
+    // The deepest directory, /work/a-very-deeply-nested/..., belongs to an old
+    // session, so it sits below the five rows shown at 60 cells.
+    assert.ok(items.some((item) => item.value === "Deep workspace session"));
+    const menu = editor.render(60).filter((line) => line.includes("ago"));
+
+    assert.ok(menu.some((line) => line.includes("Rollout sweep capacity")));
+  });
+
+  test("opens the menu with no highlighted entry", async () => {
+    const editor = createEditor("/name ");
+    await openMenu(editor);
+
     const menu = editor.render(80).filter((line) => line.includes("ago"));
     assert.equal(editor.autocompleteList.getSelectedItem(), null);
-    assert.equal(menu.length, items.length);
+    // The menu shows five rows at a time, the rest scroll.
+    assert.equal(menu.length, 5);
     assert.ok(menu.every((line) => !line.includes("\u2192")));
   });
 

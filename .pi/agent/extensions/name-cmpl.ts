@@ -172,27 +172,29 @@ function formatColumns(
 }
 
 /**
- * Size the name column of a `/name` menu to its suggestions and the room left.
+ * Size the name column of a `/name` menu to the rows it shows.
  *
  * `SelectList` fixes that column at 32 cells for menus under a `/`-prefixed
- * prefix and cuts overflow without an ellipsis, so longer session names are
- * lost even on a wide terminal. A name column as wide as the longest name
- * cannot steal width from the age and directory either: the paths would end
- * as `~/Cod`. So the column takes what the longest name needs, up to the room
- * the longest description leaves, and a name that still does not fit is cut
- * with `TRUNCATION_MARK`.
+ * prefix, so longer session names are lost even on a wide terminal. A name
+ * column as wide as the longest name cannot steal width from the age and
+ * directory either: the paths would end as `~/Cod`. So the column takes what
+ * the widest shown name needs, up to the room the widest shown description
+ * leaves, and a name that still does not fit is cut with `TRUNCATION_MARK`.
+ *
+ * Only the rows on screen count: one deep working directory anywhere else in
+ * the list would otherwise flatten every name to a few cells.
  *
  * @param list Menu holding this extension's suggestions.
  * @param width Width the editor was rendered at.
  */
 function fitNameColumn(list: SelectList, width: number): void {
-  const items = (list as unknown as { items?: AutocompleteItem[] }).items;
-  if (!items) return;
-  const widestName = items.reduce(
+  const rows = shownRows(list);
+  if (!rows) return;
+  const widestName = rows.reduce(
     (widest, item) => Math.max(widest, visibleWidth(item.label)),
     0,
   );
-  const widestDescription = items.reduce(
+  const widestDescription = rows.reduce(
     (widest, item) => Math.max(widest, visibleWidth(item.description ?? "")),
     0,
   );
@@ -205,6 +207,24 @@ function fitNameColumn(list: SelectList, width: number): void {
     truncatePrimary: ({ text, maxWidth }: SelectListTruncatePrimaryContext) =>
       truncateToWidth(text, maxWidth, TRUNCATION_MARK),
   };
+}
+
+/**
+ * Return the suggestions `SelectList` draws in its next frame.
+ *
+ * Which of them fit depends on the menu height and the selection, both private
+ * to pi-tui, so they are read through a narrowed cast beside `layout`.
+ *
+ * @returns The rows on screen, or undefined if pi-tui no longer exposes them.
+ */
+function shownRows(list: SelectList): AutocompleteItem[] | undefined {
+  const menu = list as unknown as {
+    filteredItems?: AutocompleteItem[];
+    getVisibleRange?: () => { startIndex: number; endIndex: number };
+  };
+  if (!menu.filteredItems || !menu.getVisibleRange) return undefined;
+  const { startIndex, endIndex } = menu.getVisibleRange();
+  return menu.filteredItems.slice(startIndex, endIndex);
 }
 
 /**
@@ -285,7 +305,8 @@ function createProvider(current: AutocompleteProvider): AutocompleteProvider {
  * returned for the same `/name` line (for example a Tab-triggered path menu)
  * keeps its normal pre-selection.
  *
- * `autocompleteList`, `SelectList.items`, `SelectList.layout` and
+ * `autocompleteList`, `SelectList.items`, `SelectList.layout`,
+ * `SelectList.filteredItems`, `SelectList.getVisibleRange` and
  * `SelectList.selectedIndex` are private in the pi-tui typings and no public
  * option controls the initial selection or the column layout, so they are
  * reached through narrowed casts. Drop the casts once pi-tui exposes a way to
