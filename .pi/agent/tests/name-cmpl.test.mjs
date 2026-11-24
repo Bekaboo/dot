@@ -80,8 +80,12 @@ writeSession("archive.jsonl", {
   name: "Archive sweep review",
   ageMs: 20 * HOUR_MS,
 });
-// Deep enough that a column sized for it would flatten every name, and old
-// enough to sit below the five rows the menu shows.
+// Cut at 104 cells and whole at 120, like the session names this menu sees.
+writeSession("sweep.jsonl", {
+  cwd: "/work/rollout",
+  name: "Quarterly capacity sweep, rollout on the tuning model review board plus audit",
+  ageMs: 5 * HOUR_MS,
+});
 writeSession("deep.jsonl", {
   cwd: "/work/a-very-deeply-nested/project/directory/name",
   name: "Deep workspace session",
@@ -153,6 +157,8 @@ describe("name-cmpl", () => {
     assert.deepEqual(suggestions.items.map((item) => item.value).sort(), [
       "Pi parrot extension",
       "Pi parrot extension cont.",
+      // Longest name, matched by the letter "a" between the two "r"s.
+      "Quarterly capacity sweep, rollout on the tuning model review board plus audit",
     ]);
   });
 
@@ -173,6 +179,7 @@ describe("name-cmpl", () => {
       "Deep workspace session",
       "Pi parrot extension",
       "Pi parrot extension cont.",
+      "Quarterly capacity sweep, rollout on the tuning model review board plus audit",
       "Refactor auth module",
       "Rollout sweep capacity planning",
     ]);
@@ -264,6 +271,20 @@ async function openMenu(editor, items) {
   return items ?? suggestions.items;
 }
 
+/** Return the rendered menu row, not the prompt line, naming `prefix`. */
+function menuRow(lines, prefix) {
+  const row = lines.find(
+    (line) => line.includes(prefix) && /\d+[mhd]\s+ago/.test(line),
+  );
+  assert.ok(row, `a menu row naming ${prefix}`);
+  return row;
+}
+
+/** Column where a rendered row's age starts, which is where its name column ends. */
+function ageColumn(line) {
+  return line.match(/(\d+[mhd])\s+ago/).index;
+}
+
 describe("name-cmpl editor", () => {
   test("enter submits the typed argument instead of an entry", async () => {
     const editor = createEditor("/name parr");
@@ -277,53 +298,52 @@ describe("name-cmpl editor", () => {
     assert.equal(editor.isShowingAutocomplete(), false);
   });
 
-  test("shows a long name in full beside its age and directory", async () => {
+  test("shows a long name whole beside its age and directory", async () => {
     const name = "Rollout sweep capacity planning";
-    const editor = createEditor("/name Rollout");
+    const editor = createEditor("/name Rollout sweep");
     await openMenu(editor);
 
-    const menu = editor.render(80).filter((line) => line.includes("ago"));
+    const row = menuRow(editor.render(104), name);
 
-    assert.equal(menu.length, 1);
-    assert.ok(menu[0].includes(name));
-    assert.ok(menu[0].includes("2h"));
-    assert.ok(menu[0].includes("/work/rollout"));
+    assert.ok(row.includes(name));
+    assert.ok(row.includes("2h"));
+    assert.ok(row.includes("/work/rollout"));
   });
 
-  test("keeps a directory whole when the name has to be cut", async () => {
+  test("keeps the name column still while the argument narrows", async () => {
     const editor = createEditor("/name ");
     await openMenu(editor);
+    const wide = editor.render(104);
 
-    // 60 cells leave the longest name short of its 31 cells.
-    const menu = editor.render(60).filter((line) => line.includes("ago"));
+    editor.setText("/name Rollout");
+    await openMenu(editor);
+    const narrow = editor.render(104);
 
-    assert.equal(menu.length, 5);
-    for (const directory of [
-      "/work/auth-service",
-      "/work/parrot",
-      "/work/rollout",
-    ]) {
-      assert.ok(
-        menu.some((line) => line.includes(directory)),
-        `${directory} is shown whole`,
-      );
-    }
-    assert.ok(
-      menu.some((line) => line.includes("\u2026")),
-      "a cut name is marked",
+    assert.equal(
+      ageColumn(menuRow(narrow, "Rollout")),
+      ageColumn(menuRow(wide, "Rollout")),
     );
   });
 
-  test("a directory outside the menu window does not shrink names", async () => {
+  test("gives the name column three quarters of a wide row", async () => {
     const editor = createEditor("/name ");
-    const items = await openMenu(editor);
+    await openMenu(editor);
 
-    // The deepest directory, /work/a-very-deeply-nested/..., belongs to an old
-    // session, so it sits below the five rows shown at 60 cells.
-    assert.ok(items.some((item) => item.value === "Deep workspace session"));
-    const menu = editor.render(60).filter((line) => line.includes("ago"));
+    const row = menuRow(editor.render(120), "Quarterly capacity");
 
-    assert.ok(menu.some((line) => line.includes("Rollout sweep capacity")));
+    // 0.75 of 120, after the two-cell selection prefix, and long names fit.
+    assert.equal(ageColumn(row), 92);
+    assert.ok(row.includes("plus audit"));
+  });
+
+  test("cuts a name longer than its column, and marks it", async () => {
+    const editor = createEditor("/name Quarterly");
+    await openMenu(editor);
+
+    const row = menuRow(editor.render(104), "Quarterly capacity");
+
+    assert.ok(row.includes("\u2026"));
+    assert.ok(!row.includes("plus audit"));
   });
 
   test("opens the menu with no highlighted entry", async () => {
