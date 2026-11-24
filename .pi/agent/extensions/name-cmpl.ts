@@ -34,7 +34,9 @@ import {
   type EditorTheme,
   fuzzyFilter,
   type SelectList,
+  type SelectListTruncatePrimaryContext,
   type TUI,
+  truncateToWidth,
   visibleWidth,
 } from "@earendil-works/pi-tui";
 
@@ -47,16 +49,16 @@ const MAX_SUGGESTIONS = 20;
 const NO_SELECTION = -1;
 
 /**
- * Cells `SelectList` uses beside the columns: the `→ `/`  ` prefix, the
- * editor's horizontal padding, and the truncation safety margin.
+ * Cells `SelectList` uses beside the two columns: the `→ `/`  ` prefix and
+ * the two cells it keeps as truncation safety.
  */
-const ROW_CHROME_WIDTH = 6;
-
-/** Room kept for the age and directory before `SelectList` drops them. */
-const MIN_DESCRIPTION_WIDTH = 12;
+const ROW_CHROME_WIDTH = 4;
 
 /** Gap `SelectList` leaves between the name column and the description. */
 const NAME_COLUMN_GAP = 2;
+
+/** Marks a name cut to fit its column, so a clipped name reads as clipped. */
+const TRUNCATION_MARK = "…";
 
 /** Marks suggestion arrays built here, so the editor can recognise its menu. */
 const NAME_SUGGESTIONS: unique symbol = Symbol("name-completion-suggestions");
@@ -170,13 +172,15 @@ function formatColumns(
 }
 
 /**
- * Widen the name column of a `/name` menu to its longest suggestion.
+ * Size the name column of a `/name` menu to its suggestions and the room left.
  *
  * `SelectList` fixes that column at 32 cells for menus under a `/`-prefixed
  * prefix and cuts overflow without an ellipsis, so longer session names are
- * lost even on a wide terminal. The column keeps `MIN_DESCRIPTION_WIDTH`
- * cells for the age and directory, and `SelectList` still truncates a name
- * that does not fit.
+ * lost even on a wide terminal. A name column as wide as the longest name
+ * cannot steal width from the age and directory either: the paths would end
+ * as `~/Cod`. So the column takes what the longest name needs, up to the room
+ * the longest description leaves, and a name that still does not fit is cut
+ * with `TRUNCATION_MARK`.
  *
  * @param list Menu holding this extension's suggestions.
  * @param width Width the editor was rendered at.
@@ -188,13 +192,18 @@ function fitNameColumn(list: SelectList, width: number): void {
     (widest, item) => Math.max(widest, visibleWidth(item.label)),
     0,
   );
-  const availableWidth = width - ROW_CHROME_WIDTH - MIN_DESCRIPTION_WIDTH;
-  const columnWidth = Math.min(
-    widestName + NAME_COLUMN_GAP,
-    Math.max(1, availableWidth),
+  const widestDescription = items.reduce(
+    (widest, item) => Math.max(widest, visibleWidth(item.description ?? "")),
+    0,
   );
+  const roomForName = width - ROW_CHROME_WIDTH - widestDescription;
   (list as unknown as { layout: object }).layout = {
-    maxPrimaryColumnWidth: columnWidth,
+    maxPrimaryColumnWidth: Math.min(
+      widestName + NAME_COLUMN_GAP,
+      Math.max(1, roomForName),
+    ),
+    truncatePrimary: ({ text, maxWidth }: SelectListTruncatePrimaryContext) =>
+      truncateToWidth(text, maxWidth, TRUNCATION_MARK),
   };
 }
 

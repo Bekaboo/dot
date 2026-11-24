@@ -276,6 +276,30 @@ describe("name-cmpl editor", () => {
     assert.ok(menu[0].includes("/work/rollout"));
   });
 
+  test("keeps a directory whole when the name has to be cut", async () => {
+    const editor = createEditor("/name ");
+    await openMenu(editor);
+
+    // 60 cells leave the longest name short of its 31 cells.
+    const menu = editor.render(60).filter((line) => line.includes("ago"));
+
+    assert.equal(menu.length, 4);
+    for (const directory of [
+      "/work/auth-service",
+      "/work/parrot",
+      "/work/rollout",
+    ]) {
+      assert.ok(
+        menu.some((line) => line.includes(directory)),
+        `${directory} is shown whole`,
+      );
+    }
+    assert.ok(
+      menu.some((line) => line.includes("\u2026")),
+      "a cut name is marked",
+    );
+  });
+
   test("opens the menu with no highlighted entry", async () => {
     const editor = createEditor("/name ");
     const items = await openMenu(editor);
