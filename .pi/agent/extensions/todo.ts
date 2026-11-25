@@ -36,7 +36,8 @@
  *   full `CONTINUE_QUIET_SEC` reading window to avoid pushing the agent to work
  *   without finishing current discussion with the user. Once that window
  *   passes with no further input the push goes out on its own, and later stops
- *   push immediately. A new human prompt starts it again.
+ *   push immediately. A new human prompt starts it again. A user-aborted run
+ *   cancels a held push instead of starting another turn after the abort.
  *   Restoring a session with actionable items also starts that window, so a
  *   reload or restart does not strand unfinished work.
  */
@@ -44,6 +45,7 @@
 import type {
   AgentBeforeSettleEvent,
   AgentBeforeSettleEventResult,
+  AgentSettledEvent,
   AgentToolResult,
   ContextEventResult,
   ContextWithSystemEvent,
@@ -869,9 +871,11 @@ class Todo {
    * Steering: track whether a run is in flight, which a held push waits out.
    *
    * @param running - Whether a run just started or just settled.
+   * @param event - Settlement event, when a run just settled.
    */
-  trackRun(running: boolean): void {
+  trackRun(running: boolean, event?: AgentSettledEvent): void {
     this.running = running;
+    if (event?.aborted) this.cancelHeldPush();
   }
 
   /**
@@ -1205,7 +1209,7 @@ export default function todoExtension(pi: ExtensionAPI): void {
     todo.trackRun(true);
     releaseIdleWake(ctx.sessionManager);
   });
-  pi.on("agent_settled", () => todo.trackRun(false));
+  pi.on("agent_settled", (event) => todo.trackRun(false, event));
   pi.on("tool_execution_end", (event) => todo.trackToolExecution(event));
   pi.on("turn_end", (event) => todo.countTurn(event));
   pi.on("context_with_system", (event) => todo.injectHint(event));

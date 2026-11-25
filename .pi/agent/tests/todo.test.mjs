@@ -643,6 +643,21 @@ describe("todo", () => {
       assert.match(messages[0].message.content, /- \[ \] A/);
     });
 
+    test("an aborted run cancels a push held from an earlier reply", async (t) => {
+      const { hooks, write, messages } = setup();
+      await write("- [ ] A");
+      armClock(t);
+      prompted(hooks);
+      hooks.get("agent_before_settle")({ outcome: "completed", entries: [] });
+
+      // The user aborts a later run before the reading window expires. Its
+      // settlement must not leave the old timer to start an unwanted next turn.
+      hooks.get("agent_start")({}, { sessionManager: fakeSession() });
+      hooks.get("agent_settled")({ aborted: true });
+      userLeft(t);
+      assert.deepEqual(messages, []);
+    });
+
     test("a held push dies with the session that armed it", async (t) => {
       const { hooks, write, messages } = setup();
       await write("- [ ] A");
