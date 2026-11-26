@@ -4,7 +4,7 @@
   "showHardwareCursor": true,
   "packages": [
     "npm:pi-intercom@^0.18.1",
-    "npm:@injaneity/pi-computer-use@^0.5.1",
+    "npm:pi-browser-use@^0.12.24",
     "npm:speak-like-you-eat@^1.6.1",
     "npm:pi-free@^2.9.0"
   ]
