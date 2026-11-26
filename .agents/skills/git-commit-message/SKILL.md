@@ -59,8 +59,19 @@ still needs:
 - A user-visible side effect that the subject does not imply
 - A migration or breaking-change note
 
-Keep it to one short paragraph, at most two. Hold the whole message to about
-five body lines; if it needs more, it is usually restating the diff, so cut it.
+## Write a readable body
+
+One or two short paragraphs, about five body lines.
+
+For a replacement or fix: what rejected the old choice, then what the new one
+buys.
+
+State observed symptoms, not internals:
+
+- What a person experienced (slower, needs a manual step), not the mechanics.
+- The named thing as subject: package, command, file, flag; not "the path".
+- Internals only to re-judge the decision; if rewriting them falsifies the
+  sentence, it is too low-level.
 
 ## Never include
 
