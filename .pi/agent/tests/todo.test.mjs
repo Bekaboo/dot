@@ -1019,6 +1019,56 @@ describe("todo", () => {
       await showing;
       assert.equal(screen.component, undefined, "Escape closes the overlay");
     });
+
+    test("wraps long items to the page width and scrolls their rows", async (t) => {
+      const { commands, write } = setup();
+      const rows = 16;
+      const width = 60;
+      // Few items, each far wider than the page: counting items instead of
+      // their wrapped rows would both overflow the page and leave it with
+      // nothing to scroll.
+      const items = Array.from(
+        { length: 6 },
+        (_, index) =>
+          `- [ ] item ${index} ${"padding ".repeat(20)}tail-${index}`,
+      );
+      await write(items.join("\n"));
+
+      const screen = fakeUI(t, rows);
+      const showing = commands.get("todos").handler("", {
+        mode: "tui",
+        ui: screen.ui,
+      });
+      const overlay = screen.component;
+
+      /** The list as the user sees it, in a terminal this short. */
+      const shown = () => {
+        const lines = overlay.render(width);
+        assert.ok(
+          lines.length <= rows - VIEWPORT_RESERVE_ROWS,
+          `page leaves pi its rows: ${lines.length} of ${rows}`,
+        );
+        return lines.join("\n");
+      };
+
+      const first = shown();
+      assert.match(first, /0\/6 closed/);
+      assert.match(first, /Press Escape to close/);
+      assert.match(first, /item 0\b/);
+      assert.doesNotMatch(first, /tail-5/, "the window hides the last item");
+
+      // Wheel input reaches rows the items wrap into, not just the items.
+      overlay.handleMouse({ type: "wheel", wheelDelta: 100 });
+      const last = shown();
+      assert.match(last, /tail-5/);
+      assert.match(last, /Press Escape to close/);
+
+      overlay.handleMouse({ type: "wheel", wheelDelta: -100 });
+      assert.match(shown(), /item 0\b/, "wheel scrolling returns to the head");
+
+      overlay.handleInput("\x1b");
+      await showing;
+    });
   });
 
   describe("rendering", () => {

@@ -11,6 +11,7 @@ import {
   VIEWPORT_RESERVE_ROWS,
   windowLabel,
   windowStart,
+  wrapPageRows,
 } from "../../extensions/utils/page.ts";
 
 const plainTheme = { fg: (_color, text) => text };
@@ -83,6 +84,44 @@ describe("page", () => {
         "the hint fills the line inside the padding before it is cut",
       );
       assert.match(narrow, /^Pre\.\.\.$/);
+    });
+  });
+
+  describe("wrapPageRows", () => {
+    test("splits a row wider than the body, keeping its styling per line", () => {
+      const width = 40;
+      const body = width - PAGE_PADDING_X * 2;
+      const red = "\x1b[31m";
+      const reset = "\x1b[39m";
+      const lines = wrapPageRows(
+        [`${red}${"word ".repeat(20).trim()}${reset}`],
+        width,
+      );
+
+      assert.ok(lines.length > 1, "a long row takes several lines");
+      for (const line of lines) {
+        assert.ok(
+          plainWidth(line) <= body,
+          `line fits the body: ${plainWidth(line)} of ${body}`,
+        );
+        assert.match(line, /\x1b\[31m/, "the row's color carries into it");
+      }
+    });
+
+    test("leaves rows that fit, blank rows included, one line each", () => {
+      assert.deepEqual(wrapPageRows(["short", "", "exactly"], 80), [
+        "short",
+        "",
+        "exactly",
+      ]);
+    });
+
+    test("breaks a word with no space to wrap at", () => {
+      const lines = wrapPageRows(["x".repeat(25)], 10);
+      for (const line of lines) {
+        assert.ok(plainWidth(line) <= 10 - PAGE_PADDING_X * 2);
+      }
+      assert.equal(lines.join(""), "x".repeat(25), "no text is lost");
     });
   });
 

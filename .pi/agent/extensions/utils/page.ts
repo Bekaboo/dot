@@ -4,12 +4,12 @@
  * The shared overlay widget replaces pi's editor slot with a bordered page. Pi
  * lays that slot out inside the dock under the transcript, so a page taller
  * than the terminal loses its last rows: the Escape hint and the bottom border.
- * These helpers size a page body to the rows the terminal leaves, move a
- * window of rows, and say which rows it hides.
+ * These helpers size a page body to the rows the terminal leaves, wrap a row
+ * wider than the body, move a window of rows, and say which rows it hides.
  */
 
 import type { Theme } from "@earendil-works/pi-coding-agent";
-import { truncateToWidth } from "@earendil-works/pi-tui";
+import { truncateToWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
 
 /**
  * Rows pi keeps for itself around a custom component: the transcript line above
@@ -54,6 +54,24 @@ export function bodyRows(
 export function hintLine(theme: Theme, text: string, width: number): string {
   const inner = Math.max(1, width - PAGE_PADDING_X * 2);
   return theme.fg("dim", truncateToWidth(text, inner, "...", true));
+}
+
+/**
+ * Wrap body rows to the columns a page gives them.
+ *
+ * A page body draws one terminal line per row it is handed, so a row wider than
+ * the body is wrapped by its `Text` only after the page has sized its window: the
+ * box then grows past the terminal and loses its hint and bottom border.
+ * Wrapping rows first keeps every row one line, and lets a view that scrolls long
+ * rows count the lines they take.
+ *
+ * @param rows - Rows to wrap; styled rows keep their attributes.
+ * @param width - Page width, including the text padding.
+ * @returns The rows, each split into lines no wider than the body.
+ */
+export function wrapPageRows(rows: readonly string[], width: number): string[] {
+  const body = Math.max(1, width - PAGE_PADDING_X * 2);
+  return rows.flatMap((row) => wrapTextWithAnsi(row, body));
 }
 
 /**

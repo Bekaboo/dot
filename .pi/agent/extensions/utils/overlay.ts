@@ -31,7 +31,13 @@ import {
 } from "@earendil-works/pi-tui";
 
 import { truncateKeepingBackground } from "./ansi.ts";
-import { bodyRows, hintLine, PAGE_PADDING_X, windowLabel } from "./page.ts";
+import {
+  bodyRows,
+  hintLine,
+  PAGE_PADDING_X,
+  windowLabel,
+  wrapPageRows,
+} from "./page.ts";
 
 /** Cursor in front of a selected row, as pi's select lists draw it. */
 export const SELECTED_CURSOR = "›";
@@ -271,12 +277,18 @@ export class OverlayPage {
    * Show a window of rows, with a hint that says how to move it and which rows
    * are on screen.
    *
+   * Rows wider than the body are wrapped first, so a long row takes the lines it
+   * needs instead of growing the box past the rows `measure()` granted. The
+   * window is a range of those body lines: a view that scrolls rows wide enough
+   * to wrap passes lines from `wrapPageRows()` and moves its window by
+   * `lines.length`, so the two agree on how many rows exist.
+   *
    * The scroll keys are named only while the window hides rows, and the hint
    * ends with the range on screen, so a reader knows how much is left.
    *
-   * @param rows - Every row of the view, rendered one per line.
-   * @param start - Index of the window's first row.
-   * @param capacity - Rows the window holds.
+   * @param rows - Every row of the view, one row per logical line.
+   * @param start - Index of the window's first body line.
+   * @param capacity - Body lines the window holds.
    * @param hint - Hint for the view, without its scroll and range suffixes.
    * @param width - Page width, including the text padding.
    */
@@ -287,16 +299,17 @@ export class OverlayPage {
     hint: string,
     width: number,
   ): void {
-    const shown = rows.slice(start, start + Math.max(0, capacity));
+    const lines = wrapPageRows(rows, width);
+    const shown = lines.slice(start, start + Math.max(0, capacity));
     // The head already drew the gap above the body.
     const gap = this.headRows > 0 ? "" : "\n";
     this.bodyText.setText(shown.length > 0 ? `${gap}${shown.join("\n")}` : "");
     const footer =
-      shown.length < rows.length ? `${hint}, up/down scroll` : hint;
+      shown.length < lines.length ? `${hint}, up/down scroll` : hint;
     this.footerText.setText(
       hintLine(
         this.theme,
-        `${footer}${windowLabel(start, shown.length, rows.length)}`,
+        `${footer}${windowLabel(start, shown.length, lines.length)}`,
         width,
       ),
     );

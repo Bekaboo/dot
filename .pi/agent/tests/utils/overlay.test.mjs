@@ -147,6 +147,37 @@ describe("overlay", () => {
       assert.match(text, /\(4 hidden\)/);
     });
 
+    test("wraps a row wider than the body instead of outgrowing the page", () => {
+      const rows = 16;
+      const width = 70;
+      const page = new OverlayPage(fakeTui(rows), plainTheme, "Items");
+      page.setSummary("1 item");
+      const capacity = page.measure(width, "Press Escape to close");
+      // A caller that hands the page one long row, as a checklist does, must not
+      // lose the hint and bottom border to the row's wrapping.
+      page.setWindow(
+        ["word ".repeat(60).trim()],
+        0,
+        capacity,
+        "Press Escape to close",
+        width,
+      );
+
+      const lines = page.render(width);
+      assert.ok(
+        lines.length <= rows - VIEWPORT_RESERVE_ROWS,
+        `${lines.length} of ${rows} rows`,
+      );
+      assert.match(
+        textOf(lines),
+        /Press Escape to close, up\/down scroll {2}\(1-\d+ of \d+\)/,
+        "the hint stays, and says the wrapped row continues below",
+      );
+      for (const line of lines) {
+        assert.equal(visibleWidth(line.replace(STYLED, "")), width);
+      }
+    });
+
     test("keeps the rows on screen after a resize", () => {
       const page = new OverlayPage(fakeTui(20), plainTheme, "Items");
       const wide = page.measure(100, "Press Escape to close");

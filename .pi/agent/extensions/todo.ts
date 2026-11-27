@@ -76,7 +76,7 @@ import {
   OverlayPage,
   scrollKeyLines,
 } from "./utils/overlay.ts";
-import { scrolledStart } from "./utils/page.ts";
+import { scrolledStart, wrapPageRows } from "./utils/page.ts";
 
 /** Turns of an unchanged checklist before the agent is nudged to update it. */
 export const REMIND_STALE_LIST_AFTER_TURNS = 16;
@@ -631,19 +631,33 @@ function createTodoOverlay(
   const summary = items.length
     ? theme.fg("muted", `${closed}/${items.length} closed`)
     : theme.fg("dim", "No todos yet. Ask the agent to add some!");
-  const rendered = renderItems(list, theme);
   const hint = "Press Escape to close";
   const page = new OverlayPage(tui, theme, "Todos");
   page.setSummary(summary);
-  /** First item the window shows. */
+  /** Rows the list took at the last rendered width. */
+  let rows: string[] = [];
+  /** First row the window shows. */
   let start = 0;
+
+  /**
+   * Move the window and redraw it.
+   *
+   * @param lines - Rows to move; negative moves towards the top.
+   */
+  const scroll = (lines: number) => {
+    const pageRows = Math.max(1, page.rowCapacity);
+    start = scrolledStart(start, lines, rows.length, pageRows);
+    tui.requestRender();
+  };
 
   return {
     capturesViewportInput: true,
     render(width) {
+      // Items wider than the page wrap, so the window counts body lines.
+      rows = wrapPageRows(renderItems(list, theme), width);
       const capacity = page.measure(width, hint);
-      start = scrolledStart(start, 0, rendered.length, capacity);
-      page.setWindow(rendered, start, capacity, hint, width);
+      start = scrolledStart(start, 0, rows.length, capacity);
+      page.setWindow(rows, start, capacity, hint, width);
       return page.render(width);
     },
     invalidate: () => page.invalidate(),
@@ -652,18 +666,11 @@ function createTodoOverlay(
         close();
         return;
       }
-      const pageRows = Math.max(1, page.rowCapacity);
-      const lines = scrollKeyLines(data, keybindings, pageRows);
-      if (lines === undefined) return;
-      start = scrolledStart(start, lines, rendered.length, pageRows);
-      tui.requestRender();
+      const lines = scrollKeyLines(data, keybindings, page.rowCapacity);
+      if (lines !== undefined) scroll(lines);
     },
     handleMouse(event) {
-      return handleOverlayWheel(event, (lines) => {
-        const pageRows = Math.max(1, page.rowCapacity);
-        start = scrolledStart(start, lines, rendered.length, pageRows);
-        tui.requestRender();
-      });
+      return handleOverlayWheel(event, scroll);
     },
   };
 }
