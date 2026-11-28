@@ -9,10 +9,6 @@ Switch to Last-Used Keyboard Layout=none,Meta+Alt+L,Switch to Last-Used Keyboard
 Switch to Next Keyboard Layout=none,Meta+Alt+K,Switch to Next Keyboard Layout
 _k_friendly_name=Keyboard Layout Switcher
 
-[kaccess]
-Toggle Screen Reader On and Off=Meta+Alt+S,Meta+Alt+S,Toggle Screen Reader On and Off
-_k_friendly_name=Accessibility
-
 [kmix]
 _k_friendly_name=Audio Volume
 decrease_microphone_volume=Microphone Volume Down,Microphone Volume Down,Decrease Microphone Volume
