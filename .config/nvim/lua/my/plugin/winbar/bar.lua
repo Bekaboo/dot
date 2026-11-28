@@ -1,5 +1,6 @@
 local configs = require('my.plugin.winbar.configs')
 local utils = require('my.plugin.winbar.utils')
+local groupid = vim.api.nvim_create_augroup('my.winbar.bar', {})
 
 ---Sanitize string by removing the newline character and all that follows
 ---Symbols with newline in their name can cause error when creating menu
@@ -287,6 +288,7 @@ end
 ---@field in_pick_mode boolean?
 ---@field symbol_on_hover my.winbar.symbol?
 ---@field last_update_request_time number? timestamp of the last update request in ms, see :h uv.now()
+---@field update_pending boolean? whether an update waits for an open menu
 local winbar = {}
 winbar.__index = winbar
 
@@ -515,10 +517,44 @@ function winbar:_update()
   self:redraw()
 end
 
+---Menu opened from one of the components of the winbar, if any
+---@return my.winbar.menu?
+function winbar:_open_menu()
+  for _, component in ipairs(self.components) do
+    if component.menu and component.menu.is_opened then
+      return component.menu:root()
+    end
+  end
+end
+
 ---Update winbar from sources and redraw winbar with debounce, supposed to be
 ---called at CursorMoved, CursorMovedI, TextChanged, and TextChangedI
 ---@return nil
 function winbar:update()
+  -- `_update()` deletes every component and with it the menu it opened, see
+  -- `winbar_symbol:del()`, so hold the update back until the menu is gone
+  -- instead of yanking the user out of it. `is_opened` turns false before the
+  -- root menu window is closed, so wait for the root window to go away.
+  local root = self:_open_menu()
+  if root and root.win and vim.api.nvim_win_is_valid(root.win) then
+    if self.update_pending then
+      return
+    end
+    self.update_pending = true
+    vim.api.nvim_create_autocmd('WinClosed', {
+      desc = 'Update winbar once its open menu is closed.',
+      group = groupid,
+      pattern = tostring(root.win),
+      once = true,
+      callback = vim.schedule_wrap(function()
+        self.update_pending = nil
+        self:update()
+      end),
+    })
+    return
+  end
+  self.update_pending = nil
+
   local first_request = not self.last_update_request_time
   local request_time = vim.uv.now()
   self.last_update_request_time = request_time

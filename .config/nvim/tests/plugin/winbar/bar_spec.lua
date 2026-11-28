@@ -3,6 +3,7 @@
 local helpers = require('helpers')
 local winbar_mod = require('my.plugin.winbar')
 local bar = require('my.plugin.winbar.bar')
+local configs = require('my.plugin.winbar.configs')
 local menu = require('my.plugin.winbar.menu')
 local spy = require('luassert.spy')
 local stub = require('luassert.stub')
@@ -277,6 +278,34 @@ describe('[winbar][bar]', function()
       for _, agent in ipairs(agents) do
         assert.spy(agent).was.called(1)
       end
+    end)
+    it('holds back an update while its menu is open', function()
+      local calls = 0
+      local get_symbols = source.get_symbols
+      stub(source, 'get_symbols', function(...)
+        calls = calls + 1
+        return get_symbols(...)
+      end)
+
+      sym3:on_click()
+      local root_menu = sym3.menu
+      assert.is_true(root_menu.is_opened)
+
+      -- An update arriving while the menu is open must keep the menu and stay
+      -- held back, and must not evaluate the sources with a stale cursor
+      calls = 0
+      winbar:update()
+      vim.wait(2 * configs.opts.bar.update_debounce)
+      assert.are.equal(0, calls)
+      assert.is_true(root_menu.is_opened)
+
+      -- Leaving the menu releases the held-back update
+      root_menu:close()
+      vim.wait(500, function()
+        return calls > 0
+      end, 10)
+      assert.is_true(calls > 0)
+      source.get_symbols:revert() ---@diagnostic disable-line: undefined-field
     end)
   end)
 
