@@ -336,6 +336,53 @@ describe('[winbar][source][lsp]', function()
       assert.is_true(refreshed)
     end)
 
+    it('does not retry a canceled request', function()
+      local requests = 0
+      local handlers = {} ---@type table<integer, function>
+      ---@diagnostic disable-next-line: assign-type-mismatch
+      mock_client.request = function(_, _, _, handler)
+        requests = requests + 1
+        handlers[requests] = handler
+        return true, requests
+      end
+      ---@diagnostic disable-next-line: assign-type-mismatch
+      mock_client.cancel_request = function(_, id)
+        local handler = handlers[id]
+        handlers[id] = nil
+        if handler then
+          handler({ code = -32800 }, nil, {})
+        end
+      end
+
+      winbar_mod.setup({
+        bar = {
+          update_debounce = 0,
+          sources = { lsp_source },
+        },
+        sources = {
+          lsp = {
+            valid_symbols = { 'Function' },
+            request = { interval = 10 },
+          },
+        },
+      })
+
+      _G._winbar.bars[test_buf][win]:update()
+      vim.api.nvim_exec_autocmds('LspAttach', {
+        buffer = test_buf,
+        data = { client_id = mock_client.id },
+      })
+      assert.are.equal(1, requests)
+
+      -- Supersede the in-flight request, whose cancellation must not schedule
+      -- a retry of its own next to the request that replaced it
+      vim.api.nvim_exec_autocmds('TextChanged', { buffer = test_buf })
+      assert.are.equal(2, requests)
+
+      vim.wait(50) -- several request intervals
+      assert.are.equal(2, requests)
+    end)
+
     it(
       'refreshes winbar on LspProgress end after initial requests gave up',
       function()

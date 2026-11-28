@@ -263,6 +263,11 @@ local function update_symbols(buf, ttl)
     'textDocument/documentSymbol',
     { textDocument = vim.lsp.util.make_text_document_params(buf) },
     function(err, symbols, _)
+      -- A canceled request was superseded by a newer one that owns the
+      -- retries now, retrying it here would only multiply request chains
+      if err and err.code == vim.lsp.protocol.ErrorCodes.RequestCancelled then
+        return
+      end
       if err or not symbols or vim.tbl_isempty(symbols) then
         defer_update()
         return
