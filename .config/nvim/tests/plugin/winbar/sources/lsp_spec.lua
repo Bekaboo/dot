@@ -214,6 +214,7 @@ describe('[winbar][source][lsp]', function()
       })
     end
   )
+
   describe('refresh on LSP load', function()
     local bar = require('my.plugin.winbar.bar')
     local utils = require('my.plugin.winbar.utils')
@@ -470,6 +471,49 @@ describe('[winbar][source][lsp]', function()
             and bar_t.components[1].name == 'lsp_progress_fn'
         end, 10)
         assert.is_true(refreshed)
+      end
+    )
+
+    it(
+      'does not restart a running request chain on LspProgress end',
+      function()
+        local requests = 0
+        mock_client.attached_buffers = { [test_buf] = true }
+        ---@diagnostic disable-next-line: assign-type-mismatch
+        mock_client.request = function()
+          requests = requests + 1
+          return true, requests
+        end
+
+        winbar_mod.setup({
+          bar = {
+            update_debounce = 0,
+            sources = { lsp_source },
+          },
+          sources = {
+            lsp = {
+              valid_symbols = { 'Function' },
+            },
+          },
+        })
+
+        _G._winbar.bars[test_buf][win]:update()
+        vim.api.nvim_exec_autocmds('LspAttach', {
+          buffer = test_buf,
+          data = { client_id = mock_client.id },
+        })
+        assert.are.equal(1, requests)
+
+        -- The request never answers, so its chain is still running and owns
+        -- the request budget. Progress events must neither cancel it nor add
+        -- requests.
+        for _ = 1, 5 do
+          vim.api.nvim_exec_autocmds('LspProgress', {
+            pattern = 'end',
+            data = { client_id = mock_client.id },
+          })
+        end
+        assert.are.equal(1, requests)
       end
     )
 

@@ -13,6 +13,12 @@ setmetatable(lsp_buf_symbols, {
   end,
 })
 
+---Whether the last request chain of a buffer ended without symbols
+---A chain schedules its own retries, so this is set only when nothing is
+---scheduled anymore, and cleared when a new chain starts
+---@type table<integer, boolean>
+local lsp_buf_gave_up = {}
+
 ---@alias my.winbar.sources.lsp.client table
 
 ---@class my.winbar.sources.lsp.loc
@@ -230,10 +236,17 @@ end
 ---@param ttl integer? limit the number of recursive requests, default 60
 local function update_symbols(buf, ttl)
   ttl = ttl or configs.opts.sources.lsp.request.ttl_init
-  if ttl <= 0 or not vim.api.nvim_buf_is_valid(buf) then
+  if not vim.api.nvim_buf_is_valid(buf) then
     lsp_buf_symbols[buf] = nil
+    lsp_buf_gave_up[buf] = nil
     return
   end
+  if ttl <= 0 then
+    lsp_buf_symbols[buf] = nil
+    lsp_buf_gave_up[buf] = true
+    return
+  end
+  lsp_buf_gave_up[buf] = nil
 
   local function defer_update()
     vim.defer_fn(function()
@@ -359,6 +372,7 @@ local function detach(buf)
     vim.api.nvim_del_autocmd(vim.b[buf].winbar_lsp_attached)
     vim.b[buf].winbar_lsp_attached = nil
     lsp_buf_symbols[buf] = nil
+    lsp_buf_gave_up[buf] = nil
     utils.bar.exec('update', { buf = buf })
   end
 end
@@ -418,6 +432,7 @@ local function init()
         if
           vim.api.nvim_buf_is_valid(buf)
           and vim.b[buf].winbar_lsp_attached
+          and lsp_buf_gave_up[buf]
           and vim.tbl_isempty(lsp_buf_symbols[buf])
         then
           update_symbols(buf)
