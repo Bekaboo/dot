@@ -338,6 +338,7 @@ local function attach(buf)
       callback = function(args)
         update_symbols(args.buf)
       end,
+      desc = 'Update LSP symbols of the buffer on winbar update events.',
     }
   )
 end
@@ -354,6 +355,17 @@ local function detach(buf)
     vim.b[buf].winbar_lsp_attached = nil
     lsp_buf_symbols[buf] = nil
     utils.bar.exec('update', { buf = buf })
+  end
+end
+
+---Get the LSP client behind an autocmd's `data.client_id` if it supports
+---document symbols
+---@param data {client_id: integer} `args.data` of an LSP autocmd
+---@return vim.lsp.Client?
+local function symbol_client(data)
+  local client = vim.lsp.get_client_by_id(data.client_id)
+  if client and client:supports_method('textDocument/documentSymbol') then
+    return client
   end
 end
 
@@ -380,8 +392,7 @@ local function init()
     desc = 'Attach LSP symbol getter to buffer when an LS that supports documentSymbol attaches.',
     group = groupid,
     callback = function(args)
-      local client = vim.lsp.get_client_by_id(args.data.client_id)
-      if client and client:supports_method('textDocument/documentSymbol') then
+      if symbol_client(args.data) then
         attach(args.buf)
       end
     end,
@@ -392,22 +403,19 @@ local function init()
     group = groupid,
     pattern = 'end',
     callback = function(args)
-      local id = args.data and args.data.client_id
-      if not id then
+      local client = symbol_client(args.data)
+      if not client then
         return
       end
-      local client = vim.lsp.get_client_by_id(id)
-      if client and client:supports_method('textDocument/documentSymbol') then
-        local attached_bufs = client.attached_buffers
-          or (args.buf and { [args.buf] = true } or {})
-        for buf in pairs(attached_bufs) do
-          if
-            vim.api.nvim_buf_is_valid(buf)
-            and vim.b[buf].winbar_lsp_attached
-            and vim.tbl_isempty(lsp_buf_symbols[buf])
-          then
-            update_symbols(buf)
-          end
+      for buf in pairs(client.attached_buffers) do
+        -- `vim.b[buf]` errors on a buffer that is already gone, and a client
+        -- can still list one while it is being detached
+        if
+          vim.api.nvim_buf_is_valid(buf)
+          and vim.b[buf].winbar_lsp_attached
+          and vim.tbl_isempty(lsp_buf_symbols[buf])
+        then
+          update_symbols(buf)
         end
       end
     end,
