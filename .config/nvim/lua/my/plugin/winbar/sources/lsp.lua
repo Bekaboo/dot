@@ -224,6 +224,75 @@ local function unify(symbols)
   return document_symbols
 end
 
+---@type table<my.winbar.bar, boolean>
+local pending_winbar_updates = setmetatable({}, { __mode = 'k' })
+
+---Find an opened root menu associated with the given winbar
+---@param bar_t my.winbar.bar
+---@return my.winbar.menu?
+local function get_open_root_menu(bar_t)
+  for _, menu_t in pairs(utils.menu.get() or {}) do
+    local root = menu_t:root()
+    if root and root.is_opened and root.prev_win == bar_t.win then
+      return root
+    end
+  end
+  for _, component in ipairs(bar_t.components) do
+    if component.menu and component.menu.is_opened then
+      return component.menu:root()
+    end
+  end
+end
+
+---Update a winbar, holding back the update until the user leaves any menu
+---@param bar_t my.winbar.bar
+local function update_winbar(bar_t)
+  if
+    not bar_t.win
+    or not bar_t.buf
+    or not vim.api.nvim_win_is_valid(bar_t.win)
+    or not vim.api.nvim_buf_is_valid(bar_t.buf)
+  then
+    pending_winbar_updates[bar_t] = nil
+    return
+  end
+
+  local root_menu = get_open_root_menu(bar_t)
+  if
+    root_menu
+    and root_menu.win
+    and vim.api.nvim_win_is_valid(root_menu.win)
+  then
+    if pending_winbar_updates[bar_t] then
+      return
+    end
+    pending_winbar_updates[bar_t] = true
+    vim.api.nvim_create_autocmd('WinClosed', {
+      group = groupid,
+      pattern = tostring(root_menu.win),
+      once = true,
+      callback = vim.schedule_wrap(function()
+        pending_winbar_updates[bar_t] = nil
+        update_winbar(bar_t)
+      end),
+    })
+    return
+  end
+
+  pending_winbar_updates[bar_t] = nil
+  if vim.api.nvim_win_get_buf(bar_t.win) == bar_t.buf then
+    bar_t:update()
+  end
+end
+
+---Update all winbars attached to `buf`, deferring any with an open menu
+---@param buf integer
+local function update_buf_winbars(buf)
+  for _, bar_t in pairs(utils.bar.get({ buf = buf })) do
+    update_winbar(bar_t)
+  end
+end
+
 ---Update LSP symbols for given buffer
 ---Side effect: update symbol_list
 ---@param buf integer buffer handler
@@ -268,6 +337,8 @@ local function update_symbols(buf, ttl)
         return
       end
 
+      local was_empty = vim.tbl_isempty(lsp_buf_symbols[buf])
+
       -- Unify symbols to common format and sort by position since LSP
       -- responses can be disordered i.e. later symbols can appear first
       lsp_buf_symbols[buf] = unify(symbols)
@@ -292,6 +363,12 @@ local function update_symbols(buf, ttl)
         -- - https://github.com/Bekaboo/dropbar.nvim/issues/255
         return l1 < l2 or l1 == l2 and c1 < c2
       end)
+
+      if was_empty then
+        vim.schedule(function()
+          update_buf_winbars(buf)
+        end)
+      end
     end,
     buf
   )
@@ -345,9 +422,7 @@ local function detach(buf)
     vim.api.nvim_del_autocmd(vim.b[buf].winbar_lsp_attached)
     vim.b[buf].winbar_lsp_attached = nil
     lsp_buf_symbols[buf] = nil
-    for _, winbar in pairs(_G._winbar.bars[buf]) do
-      winbar:update()
-    end
+    update_buf_winbars(buf)
   end
 end
 
@@ -377,6 +452,32 @@ local function init()
       local client = vim.lsp.get_client_by_id(args.data.client_id)
       if client and client:supports_method('textDocument/documentSymbol') then
         attach(args.buf)
+      end
+    end,
+  })
+
+  vim.api.nvim_create_autocmd({ 'LspProgress' }, {
+    desc = 'Update LSP symbols when LS finishes loading.',
+    group = groupid,
+    pattern = 'end',
+    callback = function(args)
+      local id = args.data and args.data.client_id
+      if not id then
+        return
+      end
+      local client = vim.lsp.get_client_by_id(id)
+      if client and client:supports_method('textDocument/documentSymbol') then
+        local attached_bufs = client.attached_buffers
+          or (args.buf and { [args.buf] = true } or {})
+        for buf in pairs(attached_bufs) do
+          if
+            vim.api.nvim_buf_is_valid(buf)
+            and vim.b[buf].winbar_lsp_attached
+            and vim.tbl_isempty(lsp_buf_symbols[buf])
+          then
+            update_symbols(buf)
+          end
+        end
       end
     end,
   })
